@@ -102,7 +102,11 @@ writes it whole (a `.d3b-tmp` file beside it, then a rename); a file that does n
 name is not its id, in any case (a copy made by hand: the owner, 2026-11-14), is kept untouched, reported with why,
 and never written over, as is one of mine holding the id of one of D3B's. The temporary file is flushed to the disk
 before the rename, one save at a time. The folder is the system's documents folder's `D3B`, else the app's data
-folder; the IPC lists D3B's blueprints, then mine, and the files kept with a typed reason the interface words. A character's file needs a key stable across
+folder; the IPC lists D3B's blueprints, then mine, and the files kept with a typed reason the interface words.
+A character played is `characters/<server>-<id>.json` (its id carries its server in its low 16 bits,
+`artifacts/studies/character-key.md`): its id, name, level, breed, sex, when and on which map it was last seen,
+written when it is first known, when who it is changes and when its connection closes; Forget sends it to the
+system's trash (the `trash` crate, the owner, 2026-11-14). A character's file needs a key stable across
 servers: its study comes first.
 
 A blueprint's file (`bot::json`, schema 1, the owner's choices of 2026-11-13): its `id`, `name`, `description`,
