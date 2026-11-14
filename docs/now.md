@@ -138,6 +138,16 @@ _Updated 2026-11-14._
     5. right-click an offline row, Forget: the row goes, the file is in the system's Recycle Bin and can be restored;
        Ctrl+Shift+P, "Oublier <nom>" does the same;
     6. make a character's file unreadable by hand (a stray letter): the row is gone and D3B's log names the file kept.
+- **step 3, the Library**, on Windows x64 from `bun run app` on `next` or the next release:
+    1. the activity bar has "Bibliothèque" under "Personnages"; it lists "Donnés par D3B": Récolte automatique, Récolte
+       d'un métier, Chasse (in English after switching the language), and "Les miens", empty at first;
+    2. click Récolte automatique: its tab says "Donné par D3B · v1 · verrouillé", its description, and its settings:
+       Zone à choisir, Banque à 90 %, Banque la plus proche, Garder rien;
+    3. Dupliquer (the tab's button or a right-click): "Récolte automatique (copie)" under "Les miens", its tab says
+       "À moi · basé sur Récolte automatique v1", `Documents/D3B/blueprints/recolte-automatique-copie.json` exists,
+       and it is still listed after a restart;
+    4. put a broken file in `Documents/D3B/blueprints` (a stray letter), then show the Library again (Personnages,
+       then Bibliothèque): "Ignorés 1" appears folded at the bottom; open it: the file, and why in its hover.
 - **Done in code, step 1**: `tools/extractor` reads the client's bundles, data tables, texts in five languages and flag
   enums, and writes the map positions, sub-areas, areas, zaaps, worlds and their tiles, maps, and the world graph,
   checked against one another, with the `client-<build>-format<n>.tar.gz` that `data:fetch` reads (ADR 0013); the app reads it all at start
@@ -222,7 +232,7 @@ _Updated 2026-11-14._
   2026-11-14 from mock-up 8: the offline ones under the connected ones, the most recently seen first, "Seen 2 h ago";
   Forget by right-click, the file to the system's trash through the `trash` crate; an offline character's tab says
   when and where it was last seen, without a map or gauges): its file `characters/<server>-<id>.json`, remembered as
-  it is seen and when its connection closes, the IPC's list and Forget (done in code), then the view and the tab (done in code); (6) the Library; (7) the blueprint
+  it is seen and when its connection closes, the IPC's list and Forget (done in code), then the view and the tab (done in code); (6) the Library (the owner's mock-up 9 of 2026-11-14; done in code); (7) the blueprint
   editor read-only: My Blueprint and the graph; (8) its Details and Summary; (9) the World view and tab from the tiles; (9b) the extractor: the client's hints
   (`World.HintsDataRoot`, 835 on 3.7.13.17 in 6 categories, measured by the C# version) and their pictures, a new data
   format (ADR 0013); (9c) the hints on the World's map, one switch per kind, which also give the nearest bank;

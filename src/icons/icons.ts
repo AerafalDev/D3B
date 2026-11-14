@@ -2,7 +2,10 @@ import {
   ArrowLeftRight,
   CircleAlert,
   CircleArrowDown,
+  Copy,
+  FileWarning,
   Library,
+  LibraryBig,
   type LucideIcon,
   PanelBottom,
   PanelLeft,
@@ -11,6 +14,7 @@ import {
   Search,
   TriangleAlert,
   User,
+  Workflow,
   X,
 } from "lucide-react";
 
@@ -27,9 +31,13 @@ interface AppIcon {
  */
 export const icons = {
   arrowLeftRight: { icon: ArrowLeftRight },
+  blueprint: { icon: Workflow },
   close: { icon: X },
+  copy: { icon: Copy },
   error: { icon: CircleAlert, tone: "text-[#db5c5c]" },
+  fileWarning: { icon: FileWarning },
   library: { icon: Library },
+  libraryView: { icon: LibraryBig },
   panelBottom: { icon: PanelBottom },
   panelLeft: { icon: PanelLeft },
   panelRight: { icon: PanelRight },
