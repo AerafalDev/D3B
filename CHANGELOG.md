@@ -1,5 +1,32 @@
 # Changelog
 
+## [0.15.0](https://github.com/AerafalDev/D3B/compare/v0.14.0...v0.15.0) (2026-11-14)
+
+
+### Features
+
+* **bot:** a blueprint read from and written to its JSON file, with its problems ([#216](https://github.com/AerafalDev/D3B/issues/216)) ([2d8efdf](https://github.com/AerafalDev/D3B/commit/2d8efdf97901a6baa6c272b62f2e42134affe77d))
+* **bot:** D3B's blueprints: automatic harvest, profession harvest and hunt ([#223](https://github.com/AerafalDev/D3B/issues/223)) ([bab17ac](https://github.com/AerafalDev/D3B/commit/bab17ac3384572fbe6070cb8ddb6fcafc89db07e))
+* **bot:** each node's sentence, description and pins' labels in French and English ([#219](https://github.com/AerafalDev/D3B/issues/219)) ([54071ed](https://github.com/AerafalDev/D3B/commit/54071ed80e27b9b6fce91374c41665613171cfbb))
+* **bot:** the catalogue of nodes, and the problems of their pins and wires ([#218](https://github.com/AerafalDev/D3B/issues/218)) ([20686d8](https://github.com/AerafalDev/D3B/commit/20686d828e2ef00263cd0f65adb9b5becb926dcd))
+* **data:** every item's icon at 32 px and the jobs' icons, in the data's format 3 ([#224](https://github.com/AerafalDev/D3B/issues/224)) ([eebc484](https://github.com/AerafalDev/D3B/commit/eebc484b4c9b3ca0778ce3ff364bbf4dc0a940b1))
+* **data:** the items, their types, the jobs and their skills, in the data's format 3 ([#222](https://github.com/AerafalDev/D3B/issues/222)) ([fb57007](https://github.com/AerafalDev/D3B/commit/fb5700743f653bed1c57aa055660dff75ffd47cc))
+* **ipc:** a blueprint's graphs as the editor draws them ([#229](https://github.com/AerafalDev/D3B/issues/229)) ([6aaee39](https://github.com/AerafalDev/D3B/commit/6aaee39842091397d96ba54f0e70b8a7aaf6acae))
+* **ipc:** the Library's blueprints, D3B's and mine, and Duplicate into Documents/D3B ([#225](https://github.com/AerafalDev/D3B/issues/225)) ([a4ec4e5](https://github.com/AerafalDev/D3B/commit/a4ec4e53b38861114d38df4152d4fc79ac91f191))
+* **ipc:** what the editor's Details need: the problems where they are, events' settings, functions' signatures ([#232](https://github.com/AerafalDev/D3B/issues/232)) ([d6b78b0](https://github.com/AerafalDev/D3B/commit/d6b78b05b4e1529c80d2b4ae207ccaa1a6ac5443))
+* **storage:** the characters played, remembered as they are seen and forgotten into the trash ([#226](https://github.com/AerafalDev/D3B/issues/226)) ([144a9a5](https://github.com/AerafalDev/D3B/commit/144a9a5d07a9bf31ff45d8fdc9b0d2a7c241f3d0))
+* **storage:** the player's blueprints read from and written whole to Documents/D3B ([#220](https://github.com/AerafalDev/D3B/issues/220)) ([baf7061](https://github.com/AerafalDev/D3B/commit/baf706104568d631ba569a7b5f509b25c48f5595))
+* **ui:** a blueprint's graph drawn read-only, its nodes' sentences and look ([#230](https://github.com/AerafalDev/D3B/issues/230)) ([e31deab](https://github.com/AerafalDev/D3B/commit/e31deab84c472ca00d01d74d230caa8d5480be72))
+* **ui:** the blueprint editor's Details: a node, an event's modes, a variable, the problems ([#233](https://github.com/AerafalDev/D3B/issues/233)) ([4dbb863](https://github.com/AerafalDev/D3B/commit/4dbb8637fecd5242fc5fdbc952484a84538562d2))
+* **ui:** the blueprint's tab is its read-only editor, My Blueprint and the graph ([#231](https://github.com/AerafalDev/D3B/issues/231)) ([f02abb0](https://github.com/AerafalDev/D3B/commit/f02abb0a82b1e88589a957170d25ff3921a1c93b))
+* **ui:** the Characters view keeps the characters played, greyed, and an offline character's tab ([#227](https://github.com/AerafalDev/D3B/issues/227)) ([0c97d70](https://github.com/AerafalDev/D3B/commit/0c97d70cd58796eb5397a078f80fadc00c613e0f))
+* **ui:** the Library, D3B's blueprints and mine, Duplicate, and a blueprint's preview ([#228](https://github.com/AerafalDev/D3B/issues/228)) ([002fa8b](https://github.com/AerafalDev/D3B/commit/002fa8b1271316f8bb4bd3e89c48c2a32b43eeb9))
+
+
+### Bug Fixes
+
+* **bot:** wait for life rather than sit, which no longer gives life back faster ([#221](https://github.com/AerafalDev/D3B/issues/221)) ([25c5c4c](https://github.com/AerafalDev/D3B/commit/25c5c4c824ed6bb6126f10b96a5c0dd6a68bfa49))
+
 ## [0.14.0](https://github.com/AerafalDev/D3B/compare/v0.13.0...v0.14.0) (2026-11-13)
 
 
