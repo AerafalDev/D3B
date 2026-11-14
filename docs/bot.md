@@ -89,7 +89,8 @@ The shell's parts (`docs/shell.md`); no information is shown twice:
   Details hold its priority, its re-arming and its four modes, each drawn as a small timeline. **Summary** reads the
   blueprint as sentences. The IPC's `blueprint_graphs` gives the editor each graph's nodes (what each does, its family,
   the step from which it runs, its pins, the values typed and its place) and wires, typed; a blueprint's variables come
-  with the Library's list; each node's problems come with its Details (PR 8). The graph is drawn read-only
+  with the Library's list; its problems, each with its kind, graph, node, pin and what it names, an event's priority and mode, a function's
+  inputs and outputs, and a variable's bounds, for the Details (PR 8). The graph is drawn read-only
   with React Flow: each node where the file puts it (a column on the left for those it does not place), its sentence's
   holes filled with what feeds them (a variable's name, a query's own sentence, a source pin's label, a value typed or
   a default), a get as a pill of its type's colour, an action the bot does not do yet tagged "étape N", pins and wires

@@ -16,6 +16,7 @@ const harvest = {
   pins: [pin("zone", "zone"), pin("what", "items", '"all"'), pin("pods", "percentage", "90")],
   inputs: { what: '"none"' },
   position: [0, 0],
+  event: null,
 } as GraphNode;
 
 const names = new Map([

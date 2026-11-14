@@ -66,6 +66,8 @@ pub struct VariableView {
     pub value_type: String,
     /// Its default as JSON, which the interface reads by its type; `None` when the blueprint gives none.
     pub default: Option<String>,
+    /// The smallest and largest value of a number or a percentage.
+    pub bounds: Option<[i32; 2]>,
     pub per_character: bool,
     pub memory: bool,
     pub help: String,
@@ -194,6 +196,10 @@ fn summary(blueprint: &Blueprint, given: bool) -> BlueprintSummary {
                     .and_then(|value| value.as_str().map(str::to_owned))
                     .unwrap_or_default(),
                 default: (!variable.default.is_null()).then(|| variable.default.to_string()),
+                // Bounds a file can hold beyond a 32-bit number read as its ends.
+                bounds: variable.bounds.map(|bounds| {
+                    bounds.map(|end| i32::try_from(end).unwrap_or(if end < 0 { i32::MIN } else { i32::MAX }))
+                }),
                 per_character: variable.per_character,
                 memory: variable.memory,
                 help: variable.help.clone(),
@@ -322,6 +328,7 @@ mod tests {
             "no default: each character chooses"
         );
         assert_eq!(settings[1], ("pods", "percentage", Some("90"), true));
+        assert_eq!(list.blueprints[0].variables[1].bounds, Some([10, 100]));
         assert_eq!(
             settings[2],
             ("bank", "bank", Some("\"nearest\""), true),

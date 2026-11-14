@@ -18,6 +18,7 @@ const node = (id: string, more: object): GraphNode =>
     pins: [],
     inputs: {},
     position: null,
+    event: null,
     ...more,
   }) as GraphNode;
 

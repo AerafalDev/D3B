@@ -19,6 +19,7 @@ const harvest = {
   pins: [pin("run", "in", "exec"), pin("done", "out", "exec"), pin("failed", "out", "exec"), pin("zone", "in", "zone")],
   inputs: {},
   position: [0, 0],
+  event: null,
 } as GraphNode;
 
 function node(data: GraphNode) {

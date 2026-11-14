@@ -240,7 +240,9 @@ _Updated 2026-11-14._
   editor read-only: My Blueprint and the graph, in two PRs: a blueprint's graphs through the IPC, each node with its
   family, its step, its pins and its place (done in code), then the graph drawn: its nodes, their sentences and look (an "étape N" tag on what
   does not run yet; the types' colours, Profession, Route and Text added: the owner, 2026-11-14; done in code), then
-  My Blueprint and the tab (done in code); (8) its Details and Summary; (9) the World view and tab from the tiles; (9b) the extractor: the client's hints
+  My Blueprint and the tab (done in code); (8) its Details and Summary, in three PRs: what Details needs through the IPC (the problems where they
+  are, an event's settings, a function's signature, a variable's bounds; done in code), then Details in a column on the
+  tab's right (the owner, 2026-11-14), then the Summary; (9) the World view and tab from the tiles; (9b) the extractor: the client's hints
   (`World.HintsDataRoot`, 835 on 3.7.13.17 in 6 categories, measured by the C# version) and their pictures, a new data
   format (ADR 0013); (9c) the hints on the World's map, one switch per kind, which also give the nearest bank;
   (10) sub-areas as zones, a Zone chosen in a list or on the map; (11) a character's blueprint and settings in its tab;
