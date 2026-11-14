@@ -246,6 +246,10 @@
         "sentence": "Pods %",
         "description": "Pods, as a percentage of their maximum."
       },
+      "job_resources": {
+        "sentence": "Resources of {{job}}",
+        "description": "The resources this profession harvests, read in the game's data."
+      },
       "level": {
         "sentence": "Level",
         "description": "The character's level."
@@ -293,7 +297,80 @@
       "false": "False",
       "minutes": "Minutes",
       "a": "A",
-      "b": "B"
+      "b": "B",
+      "job": "Profession"
+    }
+  },
+  "given": {
+    "automatic-harvest": {
+      "name": "Automatic harvest",
+      "description": "Harvests what grows in a zone, empties its pods at the bank, and starts again.",
+      "variables": {
+        "zone": {
+          "name": "Zone",
+          "help": "Where to harvest."
+        },
+        "pods": {
+          "name": "Bank at",
+          "help": "The share of the pods at which the character goes to the bank."
+        },
+        "bank": {
+          "name": "Bank",
+          "help": "Where to deposit."
+        },
+        "keep": {
+          "name": "Keep",
+          "help": "What stays in the bag at the bank."
+        }
+      }
+    },
+    "job-harvest": {
+      "name": "Profession harvest",
+      "description": "Harvests a profession's resources in a zone, empties its pods at the bank, and starts again.",
+      "variables": {
+        "job": {
+          "name": "Profession",
+          "help": "What it harvests."
+        },
+        "zone": {
+          "name": "Zone",
+          "help": "Where to harvest."
+        },
+        "pods": {
+          "name": "Bank at",
+          "help": "The share of the pods at which the character goes to the bank."
+        },
+        "bank": {
+          "name": "Bank",
+          "help": "Where to deposit."
+        },
+        "keep": {
+          "name": "Keep",
+          "help": "What stays in the bag at the bank."
+        }
+      }
+    },
+    "hunt": {
+      "name": "Hunt",
+      "description": "Fights the monsters of a zone, empties its pods at the bank, and starts again.",
+      "variables": {
+        "zone": {
+          "name": "Zone",
+          "help": "Where to hunt."
+        },
+        "pods": {
+          "name": "Bank at",
+          "help": "The share of the pods at which the character goes to the bank."
+        },
+        "bank": {
+          "name": "Bank",
+          "help": "Where to deposit."
+        },
+        "keep": {
+          "name": "Keep",
+          "help": "What stays in the bag at the bank."
+        }
+      }
     }
   }
 }

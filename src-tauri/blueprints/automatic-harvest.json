@@ -1,0 +1,47 @@
+{
+  "schema": 1, "id": "automatic-harvest", "name": "Automatic harvest", "version": 1,
+  "description": "Harvests what grows in a zone, empties its pods at the bank, and starts again.",
+  "variables": [
+    {"id": "zone", "name": "Zone", "type": "zone", "per_character": true, "help": "Where to harvest."},
+    {"id": "pods", "name": "Bank at", "type": "percentage", "default": 90, "bounds": [10, 100], "per_character": true,
+     "help": "The share of the pods at which the character goes to the bank."},
+    {"id": "bank", "name": "Bank", "type": "bank", "default": "nearest", "per_character": true,
+     "help": "Where to deposit."},
+    {"id": "keep", "name": "Keep", "type": "items", "default": "none", "per_character": true,
+     "help": "What stays in the bag at the bank."}
+  ],
+  "graphs": [
+    {"id": "events", "name": "Event graph",
+     "nodes": [
+       {"id": "start", "kind": "on_start"},
+       {"id": "go", "kind": "go_to_zone"},
+       {"id": "harvest", "kind": "harvest_until", "inputs": {"what": "all"}},
+       {"id": "to_bank", "kind": "go_to_bank"},
+       {"id": "deposit", "kind": "deposit_all_but"},
+       {"id": "zone", "get": "zone"},
+       {"id": "pods", "get": "pods"},
+       {"id": "bank", "get": "bank"},
+       {"id": "keep", "get": "keep"},
+       {"id": "life", "kind": "life_below", "event": {"priority": 1}},
+       {"id": "wait", "kind": "wait_for_life"}
+     ],
+     "wires": [
+       {"from": ["start", "then"], "to": ["go", "run"]},
+       {"from": ["go", "done"], "to": ["harvest", "run"]},
+       {"from": ["harvest", "done"], "to": ["to_bank", "run"]},
+       {"from": ["to_bank", "done"], "to": ["deposit", "run"]},
+       {"from": ["deposit", "done"], "to": ["go", "run"]},
+       {"from": ["zone", "value"], "to": ["go", "zone"]},
+       {"from": ["zone", "value"], "to": ["harvest", "zone"]},
+       {"from": ["pods", "value"], "to": ["harvest", "pods"]},
+       {"from": ["bank", "value"], "to": ["to_bank", "bank"]},
+       {"from": ["keep", "value"], "to": ["deposit", "keep"]},
+       {"from": ["life", "then"], "to": ["wait", "run"]}
+     ]}
+  ],
+  "layout": {"events": {
+    "start": [0, 0], "go": [220, 0], "harvest": [480, 0], "to_bank": [760, 0], "deposit": [1020, 0],
+    "zone": [220, 160], "pods": [480, 200], "bank": [760, 160], "keep": [1020, 160],
+    "life": [0, 360], "wait": [260, 360]
+  }}
+}
