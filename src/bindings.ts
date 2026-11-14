@@ -686,13 +686,15 @@ export type ProblemKind = "malformedId" | "variableTwice" | "graphTwice" | "node
 
 /**
  *  A problem of a blueprint (`bot::Problem`), its kind for the interface to word, and where it is: its graph, its node
- *  and pin, and the variable, function, kind or other id it names.
+ *  and pin, and the id it names as `subject`: the variable, function, kind, parameter or malformed id; for a wire to no
+ *  node, that node; for a wire twice or of another type, the node it goes to, its source being `node` (and `pin`).
  */
 export type ProblemView = ProblemView_Serialize | ProblemView_Deserialize;
 
 /**
  *  A problem of a blueprint (`bot::Problem`), its kind for the interface to word, and where it is: its graph, its node
- *  and pin, and the variable, function, kind or other id it names.
+ *  and pin, and the id it names as `subject`: the variable, function, kind, parameter or malformed id; for a wire to no
+ *  node, that node; for a wire twice or of another type, the node it goes to, its source being `node` (and `pin`).
  */
 export type ProblemView_Deserialize = {
 	kind: ProblemKind,
@@ -704,7 +706,8 @@ export type ProblemView_Deserialize = {
 
 /**
  *  A problem of a blueprint (`bot::Problem`), its kind for the interface to word, and where it is: its graph, its node
- *  and pin, and the variable, function, kind or other id it names.
+ *  and pin, and the id it names as `subject`: the variable, function, kind, parameter or malformed id; for a wire to no
+ *  node, that node; for a wire twice or of another type, the node it goes to, its source being `node` (and `pin`).
  */
 export type ProblemView_Serialize = {
 	kind: ProblemKind,
