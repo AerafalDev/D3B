@@ -11,7 +11,11 @@ const opened = vi.hoisted(() => ({ editors: [] as unknown[] }));
 vi.mock("@/shell/parts/editor-store.ts", () => ({ openEditor: (editor: unknown) => opened.editors.push(editor) }));
 // The graph, faked: React Flow plays no part here, only which graph the tab shows.
 vi.mock("@/blueprint/blueprint-graph.tsx", () => ({
-  BlueprintGraph: ({ graph }: { graph: { id: string } }) => <p>graphe {graph.id}</p>,
+  BlueprintGraph: ({ graph, names }: { graph: { id: string }; names: ReadonlyMap<string, string> }) => (
+    <p>
+      graphe {graph.id}, {names.get("pods")}, {names.get("empty_at_bank")}
+    </p>
+  ),
 }));
 // The back end, faked: the graphs the tab reads.
 const backEnd = vi.hoisted(() => ({ graphs: vi.fn() }));
@@ -81,7 +85,7 @@ describe("a blueprint's tab, its editor read-only", () => {
     expect(screen.getByRole("heading", { level: 2 }).textContent).toBe("Récolte automatique");
     expect(container.textContent).toContain("Donné par D3B · v1 · verrouillé");
     expect(container.textContent).toContain("Récolte ce qui pousse dans une zone");
-    expect(await screen.findByText("graphe events")).toBeTruthy();
+    expect(await screen.findByText("graphe events, Banque à, Vider à la banque")).toBeTruthy();
     expect(backEnd.graphs).toHaveBeenCalledWith("automatic-harvest");
     expect(screen.getByRole("navigation", { name: "Mon blueprint" })).toBeTruthy();
     expect(screen.getByRole("button", { name: "Dupliquer" })).toBeTruthy();
@@ -92,7 +96,7 @@ describe("a blueprint's tab, its editor read-only", () => {
     useLibrary.setState({ blueprints: [harvest] });
     tab("automatic-harvest");
     fireEvent.click(await screen.findByRole("button", { name: "Vider à la banque" }));
-    expect(screen.getByText("graphe empty_at_bank")).toBeTruthy();
+    expect(screen.getByText(/^graphe empty_at_bank/)).toBeTruthy();
   });
 
   it("says the blueprint is gone when the back end no longer has it", async () => {
@@ -100,6 +104,13 @@ describe("a blueprint's tab, its editor read-only", () => {
     useLibrary.setState({ blueprints: [harvest] });
     tab("automatic-harvest");
     expect(await screen.findByText("Ce blueprint n'est plus là.")).toBeTruthy();
+  });
+
+  it("says a bug when the graphs could not be read, whatever the back end rejected", async () => {
+    backEnd.graphs.mockRejectedValue("the task panicked");
+    useLibrary.setState({ blueprints: [harvest] });
+    tab("automatic-harvest");
+    expect(await screen.findByText("Le blueprint n'a pas pu être lu : the task panicked")).toBeTruthy();
   });
 
   it("says what a copy of mine is based on, and its problems", () => {

@@ -57,7 +57,9 @@ export function BlueprintTab({ api, params }: IDockviewPanelProps<BlueprintParam
     ...blueprint.variables.map(
       (variable) => [variable.id, read(`variables.${variable.id}.name`, variable.name)] as const,
     ),
-    ...graphs.filter((graph) => graph.function).map((graph) => [graph.id, graph.name] as const),
+    ...graphs
+      .filter((graph) => graph.function)
+      .map((graph) => [graph.id, read(`graphs.${graph.id}`, graph.name)] as const),
   ]);
   const whose = blueprint.given
     ? t("library.givenLine", { version: blueprint.version })
@@ -100,7 +102,9 @@ export function BlueprintTab({ api, params }: IDockviewPanelProps<BlueprintParam
             {t("library.duplicate")}
           </button>
         </header>
-        <p className="text-text-muted truncate text-xs">{read("description", blueprint.description)}</p>
+        <p className="text-text-muted truncate text-xs" title={read("description", blueprint.description)}>
+          {read("description", blueprint.description)}
+        </p>
       </div>
       <div className="grid min-h-0 flex-1 grid-cols-[220px_1fr]">
         {read_ === undefined || read_.state === "loading" ? (

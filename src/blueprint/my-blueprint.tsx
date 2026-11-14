@@ -25,8 +25,11 @@ export function MyBlueprint({ blueprint, graphs, shown, onShow }: MyBlueprintPro
   const { t, i18n } = useTranslation();
   const read = (path: string, fallback: string) =>
     blueprint.given ? givenText(blueprint.id, path, fallback) : fallback;
-  // An event graph reads as Unreal's "Event Graph" in the player's language; a function by its name.
-  const graphName = (graph: GraphView_Serialize) => (graph.function ? graph.name : t("blueprint.eventGraph"));
+  // A blueprint's one event graph reads as Unreal's "Event Graph" in the player's language; several, and a function,
+  // by their names (a given blueprint's translated).
+  const eventGraphs = graphs.filter((graph) => !graph.function).length;
+  const graphName = (graph: GraphView_Serialize) =>
+    !graph.function && eventGraphs === 1 ? t("blueprint.eventGraph") : read(`graphs.${graph.id}`, graph.name);
 
   const graphRow = (graph: GraphView_Serialize) => (
     <li key={graph.id}>

@@ -44,6 +44,9 @@ describe("My Blueprint", () => {
     const [events, bank] = screen.getAllByRole("button");
     expect([events?.textContent, bank?.textContent]).toEqual(["Graphe d'événements", "Vider à la banque"]);
     expect(events?.getAttribute("aria-current")).toBe("true");
+    expect(bank?.hasAttribute("aria-current")).toBe(false);
+    const [graphsList, functionsList] = screen.getAllByRole("list");
+    expect([graphsList?.textContent, functionsList?.textContent]).toEqual(["Graphe d'événements", "Vider à la banque"]);
     expect(screen.getByText("Banque à")).toBeTruthy();
   });
 
@@ -55,6 +58,8 @@ describe("My Blueprint", () => {
     );
     expect(pods?.textContent).toContain("Réglée par personnage");
     expect(harvests?.textContent).not.toContain("Réglée par personnage");
+    // The eye, on the variable set per character alone.
+    expect([pods, harvests].map((row) => row?.querySelector("svg") !== null)).toEqual([true, false]);
   });
 
   it("shows the graph chosen", () => {
@@ -62,5 +67,15 @@ describe("My Blueprint", () => {
     render(<MyBlueprint blueprint={harvest} graphs={graphs} shown="events" onShow={onShow} />);
     fireEvent.click(screen.getByRole("button", { name: "Vider à la banque" }));
     expect(onShow).toHaveBeenCalledWith("empty_at_bank");
+  });
+
+  it("names several event graphs by their names, to tell them apart", () => {
+    const two = [...graphs, { id: "second", name: "Combats", function: false, nodes: [], wires: [] }];
+    render(<MyBlueprint blueprint={harvest} graphs={two} shown="events" onShow={() => {}} />);
+    expect(screen.getAllByRole("button").map((button) => button.textContent)).toEqual([
+      "Event graph",
+      "Combats",
+      "Vider à la banque",
+    ]);
   });
 });
