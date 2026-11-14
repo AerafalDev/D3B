@@ -23,6 +23,8 @@ vi.mock("@/bindings.ts", () => ({ commands: { blueprintGraphs: backEnd.graphs } 
 
 const { BlueprintTab } = await import("./blueprint-tab.tsx");
 const { useGraphs } = await import("@/blueprint/graph-store.ts");
+const { BlueprintActions } = await import("./blueprint-actions.tsx");
+const { useBlueprintView } = await import("./blueprint-view.ts");
 
 const variable = (id: string, valueType: string, json: string | null, perCharacter = true) => ({
   id,
@@ -56,7 +58,7 @@ const titles: string[] = [];
 
 function tab(id: string) {
   // The tab reads its params and sets its title; the rest of the panel's API plays no part.
-  const api = { setTitle: (title: string) => titles.push(title) };
+  const api = { id: `blueprint:${id}`, setTitle: (title: string) => titles.push(title) };
   const props = { api, params: { id, icon: "blueprint" } } as unknown as Parameters<typeof BlueprintTab>[0];
   return render(<BlueprintTab {...props} />);
 }
@@ -99,6 +101,24 @@ describe("a blueprint's tab, its editor read-only", () => {
     tab("automatic-harvest");
     fireEvent.click(await screen.findByRole("button", { name: "Vider à la banque" }));
     expect(screen.getByText(/^graphe empty_at_bank/)).toBeTruthy();
+  });
+
+  it("shows its Summary or its graph, as its toggle in the tab strip says, and a step chosen in Details", async () => {
+    useLibrary.setState({ blueprints: [harvest] });
+    useBlueprintView.setState({ view: {} });
+    tab("automatic-harvest");
+    render(<BlueprintActions tab="blueprint:automatic-harvest" />);
+    await screen.findByText(/^graphe events/);
+    const summary = screen.getByRole("button", { name: "Résumé" });
+    expect(summary.getAttribute("aria-pressed")).toBe("false");
+    fireEvent.click(summary);
+    expect(summary.getAttribute("aria-pressed")).toBe("true");
+    expect(screen.queryByText(/^graphe events/)).toBeNull();
+    expect(screen.getByText("Fonction Vider à la banque")).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Graphe" }));
+    expect(screen.getByText(/^graphe events/)).toBeTruthy();
+    // Kept by its tab, so another tab of a blueprint keeps its own.
+    expect(useBlueprintView.getState().view).toEqual({ "blueprint:automatic-harvest": "graph" });
   });
 
   it("says the blueprint is gone when the back end no longer has it", async () => {

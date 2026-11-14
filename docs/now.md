@@ -154,6 +154,11 @@ _Updated 2026-11-14._
        and "Interrompre, puis reprendre" marked among the four modes, each drawn; click Récolter: "Le bot le fera à
        partir de l'étape 5" and what an unlinked Échec does; click Banque à in Mon blueprint: Pourcentage, 90 %, de 10
        à 100, set per character, 1 nœud; click the empty graph: "Choisis un nœud ou une variable.";
+    5b. with the blueprint's tab active, "Graphe | Résumé" sits at the right of the tabs; Résumé shows "Au lancement"
+       with steps 1 to 4 (Aller dans [Zone] étape 4 … Déposer à la banque, garder [Garder]) and "Revenir à 1.", then
+       "Vie sous [40 %] · priorité 1 · Interrompre, puis reprendre" with Attendre [90 %] de vie, then the three
+       defaults (Un combat commence, Le personnage est mort, Une action échoue · par défaut); click step 2: Details
+       shows Récolter; Graphe brings the graph back; a character's tab shows no toggle;
     6. put a broken file in `Documents/D3B/blueprints` (a stray letter), then show the Library again (Personnages,
        then Bibliothèque): "Ignorés 1" appears folded at the bottom; open it: the file, and why in its hover.
 - **Done in code, step 1**: `tools/extractor` reads the client's bundles, data tables, texts in five languages and flag
@@ -246,7 +251,8 @@ _Updated 2026-11-14._
   does not run yet; the types' colours, Profession, Route and Text added: the owner, 2026-11-14; done in code), then
   My Blueprint and the tab (done in code); (8) its Details and Summary, in three PRs: what Details needs through the IPC (the problems where they
   are, an event's settings, a function's signature, a variable's bounds; done in code), then Details in a column on the
-  tab's right (the owner, 2026-11-14; done in code), then the Summary; (9) the World view and tab from the tiles; (9b) the extractor: the client's hints
+  tab's right (the owner, 2026-11-14; done in code), then the Summary, toggled in the tab strip's editor actions (the
+  owner, 2026-11-14; done in code); (9) the World view and tab from the tiles; (9b) the extractor: the client's hints
   (`World.HintsDataRoot`, 835 on 3.7.13.17 in 6 categories, measured by the C# version) and their pictures, a new data
   format (ADR 0013); (9c) the hints on the World's map, one switch per kind, which also give the nearest bank;
   (10) sub-areas as zones, a Zone chosen in a list or on the map; (11) a character's blueprint and settings in its tab;
