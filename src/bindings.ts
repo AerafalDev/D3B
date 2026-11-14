@@ -8,6 +8,10 @@ import * as __TAURI_EVENT from "@tauri-apps/api/event";
 /** Commands */
 export const commands = {
 	appInfo: () => __TAURI_INVOKE<AppInfo_Serialize>("app_info"),
+	/**  The Library's blueprints and the files kept. */
+	blueprints: () => __TAURI_INVOKE<BlueprintList_Serialize>("blueprints"),
+	/**  Duplicate: a copy of the blueprint `id` among mine, named and worded by `texts`; its id. */
+	duplicateBlueprint: (id: string, texts: CopyTexts) => __TAURI_INVOKE<string>("duplicate_blueprint", { id, texts }),
 	/**  The relay's status now. */
 	relayStatus: () => __TAURI_INVOKE<RelayStatus_Serialize>("relay_status"),
 	/**
@@ -82,6 +86,60 @@ export type AppInfo_Serialize = {
 	dataError: string | null,
 	/**  `windows`, `macos` or `linux`. */
 	os: string,
+};
+
+/**  What a copy is based on. */
+export type BasedOnView = {
+	id: string,
+	version: number,
+};
+
+/**  The Library's content. */
+export type BlueprintList = BlueprintList_Serialize | BlueprintList_Deserialize;
+
+/**  The Library's content. */
+export type BlueprintList_Deserialize = {
+	blueprints: BlueprintSummary_Deserialize[],
+	kept: KeptFile[],
+};
+
+/**  The Library's content. */
+export type BlueprintList_Serialize = {
+	blueprints: BlueprintSummary_Serialize[],
+	kept: KeptFile[],
+};
+
+/**  A blueprint as the Library lists it. */
+export type BlueprintSummary = BlueprintSummary_Serialize | BlueprintSummary_Deserialize;
+
+/**  A blueprint as the Library lists it. */
+export type BlueprintSummary_Deserialize = {
+	id: string,
+	/**  The file's name; a given blueprint's is read in the interface's translations, `given.<id>.name`. */
+	name: string,
+	description: string,
+	/**  D3B's own, locked. */
+	given: boolean,
+	version: number,
+	/**  The given blueprint a copy is based on, and its version then. */
+	basedOn?: BasedOnView | null,
+	/**  How many problems keep it from running. */
+	problems: number,
+};
+
+/**  A blueprint as the Library lists it. */
+export type BlueprintSummary_Serialize = {
+	id: string,
+	/**  The file's name; a given blueprint's is read in the interface's translations, `given.<id>.name`. */
+	name: string,
+	description: string,
+	/**  D3B's own, locked. */
+	given: boolean,
+	version: number,
+	/**  The given blueprint a copy is based on, and its version then. */
+	basedOn: BasedOnView | null,
+	/**  How many problems keep it from running. */
+	problems: number,
 };
 
 /**  A connection's character changed; `view` is `None` once the connection closed. */
@@ -171,6 +229,13 @@ export type CharacterView_Serialize = {
 	stale: StaleParts,
 };
 
+/**  A copy's texts in the player's language: its name, description, and each variable's name and help by id. */
+export type CopyTexts = {
+	name: string,
+	description: string,
+	variables: { [key in string]: VariableTexts },
+};
+
 /**
  *  A line of a frame's detail (`protocol::detail`). A 64-bit value is written out, as JavaScript's numbers would round
  *  it.
@@ -182,6 +247,15 @@ export type DetailLine =
 { kind: "bytes"; number: number; length: number } | 
 /**  What the wire walker could not read further. */
 { kind: "unreadable" };
+
+/**  Why Duplicate made nothing. */
+export type DuplicateError = 
+/**  No blueprint has this id. */
+{ kind: "noSuchBlueprint" } | 
+/**  The system names no folder for the player's files. */
+{ kind: "noFolder" } | 
+/**  The copy could not be saved: the reason. */
+{ kind: "notSaved"; reason: string };
 
 /**  An interactive element of the map and its cell. */
 export type ElementAt = {
@@ -314,6 +388,12 @@ export type InteractiveSeen = {
 	usable: boolean,
 };
 
+/**  A file of the player's folder kept as it is, and why. */
+export type KeptFile = {
+	path: string,
+	why: string,
+};
+
 /**  A map's coordinates in the world, as the game shows them. */
 export type MapAt = {
 	x: number,
@@ -430,6 +510,12 @@ export type StatedSeen_Serialize = {
 	elementId: number,
 	cell: number | null,
 	state: number,
+};
+
+/**  A variable's name and help line. */
+export type VariableTexts = {
+	name: string,
+	help: string,
 };
 
 /* Tauri Specta runtime */

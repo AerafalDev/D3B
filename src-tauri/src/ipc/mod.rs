@@ -1,12 +1,14 @@
 //! The typed bridge to the webview: every command and event it may use. `src/bindings.ts` is generated from
 //! [`builder`] by the `bindings_are_current` test, so the TypeScript side never declares an IPC type by hand.
 
+mod blueprints;
 mod character;
 mod commands;
 mod inspector;
 mod map;
 mod relay;
 
+pub use blueprints::open_store;
 pub use commands::LoadedData;
 pub use relay::{start as start_relay, stop as stop_relay};
 
@@ -18,6 +20,8 @@ pub fn builder() -> Builder<tauri::Wry> {
     Builder::<tauri::Wry>::new()
         .commands(collect_commands![
             commands::app_info,
+            blueprints::blueprints,
+            blueprints::duplicate_blueprint,
             relay::relay_status,
             relay::relay_restore,
             map::map_cells,

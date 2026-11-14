@@ -203,8 +203,8 @@ _Updated 2026-11-14._
   until then `.github/game-data.json` names format 3, so `data:fetch` and a release find no data; (4) D3B's blueprints in the app, and
   Duplicate, in two PRs: automatic harvest, profession harvest (its profession a setting, through a new "resources of"
   node and a profession value: the owner, 2026-11-14) and hunt, each without problems, their texts in the
-  translations (done in code), then the IPC lists them with mine and Duplicate makes "<name> (copie)" in
-  `Documents/D3B` (the owner, 2026-11-14); (5) the Characters view keeps the characters played, greyed when gone; (6) the Library; (7) the blueprint
+  translations (done in code), then the IPC lists them with mine and the files kept, and Duplicate makes
+  "<name> (copie)" in `Documents/D3B` (the owner, 2026-11-14; done in code); (5) the Characters view keeps the characters played, greyed when gone; (6) the Library; (7) the blueprint
   editor read-only: My Blueprint and the graph; (8) its Details and Summary; (9) the World view and tab from the tiles; (9b) the extractor: the client's hints
   (`World.HintsDataRoot`, 835 on 3.7.13.17 in 6 categories, measured by the C# version) and their pictures, a new data
   format (ADR 0013); (9c) the hints on the World's map, one switch per kind, which also give the nearest bank;

@@ -1,23 +1,12 @@
 //! D3B's back end. Each folder is one domain (`data`, then `relay`, `protocol`, `game`, `bot`, `storage` as they come),
 //! and `ipc` is the only one the webview talks to.
 
-#[cfg_attr(
-    not(test),
-    expect(dead_code, reason = "the Library and the editor read blueprints from step 3's PR 4")
-)]
 mod bot;
 mod data;
 mod game;
 mod ipc;
 mod protocol;
 mod relay;
-#[cfg_attr(
-    not(test),
-    expect(
-        dead_code,
-        reason = "the Library reads and saves the player's blueprints from step 3's PR 4"
-    )
-)]
 mod storage;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -54,6 +43,7 @@ pub fn run() {
         .setup(move |app| {
             use tauri::Manager;
             app.manage(ipc::LoadedData::load(app.handle()));
+            app.manage(ipc::open_store(app.handle()));
             ipc.mount_events(app);
             ipc::start_relay(app);
             Ok(())
