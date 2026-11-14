@@ -421,6 +421,7 @@
       "givenId": "It holds the id of one of D3B's blueprints ({{id}})."
     },
     "value": {
+      "percent": "{{value}}%",
       "none": "to choose",
       "yes": "Yes",
       "no": "No",

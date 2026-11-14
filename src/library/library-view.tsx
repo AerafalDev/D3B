@@ -1,32 +1,22 @@
 import { ChevronDown, ChevronRight } from "lucide-react";
-import { type ReactNode, useState } from "react";
+import { type ReactNode, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import type { KeptFile } from "@/bindings.ts";
 import { ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuTrigger } from "@/components/ui/context-menu.tsx";
 import { Icon } from "@/icons/icon.tsx";
 import { cn } from "@/lib/utils.ts";
-import { openEditor, useEditors } from "@/shell/parts/editor-store.ts";
+import { useEditors } from "@/shell/parts/editor-store.ts";
 import { givenText } from "./given-text.ts";
 import { type BlueprintSummary, useLibrary } from "./library-store.ts";
-
-const EDITOR = "blueprint:";
-
-/** Opens a blueprint in its tab, or brings that tab forward. */
-export function openBlueprint(id: string, title: string): void {
-  openEditor({ id: `${EDITOR}${id}`, component: "blueprint", title, params: { icon: "blueprint", id } });
-}
-
-/** A blueprint's name as the player reads it: a given one's in their language. */
-export function blueprintName(blueprint: BlueprintSummary): string {
-  return blueprint.given ? givenText(blueprint.id, "name", blueprint.name) : blueprint.name;
-}
+import { BLUEPRINT_EDITOR, blueprintName, openBlueprint } from "./open-blueprint.ts";
 
 /**
  * The Library view of the primary side bar (the owner's mock-up 9, variant A): "Given by D3B", then "Mine", one row
  * per blueprint, its name alone, its description or what a copy is based on in its hover, an amber mark with how
  * many problems it has; a right-click offers Duplicate. Last, folded, the player's files kept as they are, each
- * with why in its hover.
+ * with why in its hover. The list is read again each time the view is shown, so a file the player put in the folder
+ * appears without a restart.
  */
 export function LibraryView() {
   const { t } = useTranslation();
@@ -34,6 +24,11 @@ export function LibraryView() {
   const kept = useLibrary((store) => store.kept);
   const duplicate = useLibrary((store) => store.duplicate);
   const active = useEditors((store) => store.active);
+  const refresh = useLibrary((store) => store.refresh);
+
+  useEffect(() => {
+    void refresh();
+  }, [refresh]);
   const byName = new Map(blueprints.map((blueprint) => [blueprint.id, blueprintName(blueprint)]));
 
   const row = (blueprint: BlueprintSummary) => {
@@ -58,7 +53,7 @@ export function LibraryView() {
               type="button"
               title={hover}
               onClick={() => openBlueprint(blueprint.id, name)}
-              aria-current={active === `${EDITOR}${blueprint.id}` ? "true" : undefined}
+              aria-current={active === `${BLUEPRINT_EDITOR}${blueprint.id}` ? "true" : undefined}
               className="hover:bg-hover focus-visible:outline-focus mx-1 flex w-[calc(100%-0.5rem)] items-center gap-2 rounded-[5px] px-2 py-1 text-left focus-visible:outline-1 aria-[current=true]:bg-[#2a2c30] aria-[current=true]:text-white"
             >
               <Icon name="blueprint" />
@@ -104,6 +99,7 @@ export function LibraryView() {
               >
                 <Icon name="fileWarning" className="text-[#d29922]" />
                 <span className="min-w-0 flex-1 truncate">{fileName(file.path)}</span>
+                <span className="sr-only">{keptWhy(file, t)}</span>
               </span>
             </li>
           ))}

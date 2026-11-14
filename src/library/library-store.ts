@@ -63,14 +63,20 @@ function duplicateFailure(error: DuplicateError, name: string): string {
   }
 }
 
+// Each read is numbered: an older one that ends after a newer one is dropped.
+let asked = 0;
+
 export const useLibrary = create<LibraryStore>((set, get) => ({
   blueprints: [],
   kept: [],
 
   refresh: async () => {
+    const number = ++asked;
     try {
       const [library, played] = await Promise.all([commands.blueprints(), commands.playedCharacters()]);
-      set({ blueprints: library.blueprints, kept: [...library.kept, ...played.kept] });
+      if (number === asked) {
+        set({ blueprints: library.blueprints, kept: [...library.kept, ...played.kept] });
+      }
     } catch (error) {
       toast.error(i18next.t("library.unread", { reason: String(error) }));
     }

@@ -1,12 +1,12 @@
 import type { IDockviewPanelProps } from "dockview-react";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import { Icon } from "@/icons/icon.tsx";
 import type { EditorParams } from "@/shell/parts/editor-store.ts";
 import { givenText } from "./given-text.ts";
 import { useLibrary } from "./library-store.ts";
-import { blueprintName, openBlueprint } from "./library-view.tsx";
+import { blueprintName, openBlueprint } from "./open-blueprint.ts";
 import { valueText } from "./value-text.ts";
 
 interface BlueprintParams extends EditorParams {
@@ -23,6 +23,8 @@ export function BlueprintTab({ api, params }: IDockviewPanelProps<BlueprintParam
   const blueprint = useLibrary((store) => store.blueprints.find((one) => one.id === params.id));
   const duplicate = useLibrary((store) => store.duplicate);
   const name = blueprint === undefined ? null : blueprintName(blueprint);
+  // One copy at a time: a second click while the first is made does nothing.
+  const [duplicating, setDuplicating] = useState(false);
 
   useEffect(() => {
     if (name !== null) {
@@ -55,13 +57,16 @@ export function BlueprintTab({ api, params }: IDockviewPanelProps<BlueprintParam
         </div>
         <button
           type="button"
-          onClick={() =>
+          disabled={duplicating}
+          onClick={() => {
+            setDuplicating(true);
             void duplicate(blueprint).then((id) => {
+              setDuplicating(false);
               if (id !== null) {
                 openBlueprint(id, t("library.copyName", { name }));
               }
-            })
-          }
+            });
+          }}
           className="bg-focus hover:bg-focus/90 focus-visible:outline-focus flex items-center gap-1.5 rounded px-3 py-1 text-xs text-white focus-visible:outline-1 focus-visible:outline-offset-2"
         >
           <Icon name="copy" className="size-3.5 text-white" />
@@ -75,7 +80,10 @@ export function BlueprintTab({ api, params }: IDockviewPanelProps<BlueprintParam
           <dl className="grid grid-cols-[140px_1fr] gap-y-1.5 text-xs">
             {settings.map((variable) => (
               <div key={variable.id} className="contents" title={read(`variables.${variable.id}.help`, variable.help)}>
-                <dt className="text-text-muted">{read(`variables.${variable.id}.name`, variable.name)}</dt>
+                <dt className="text-text-muted">
+                  {read(`variables.${variable.id}.name`, variable.name)}
+                  <span className="sr-only">{read(`variables.${variable.id}.help`, variable.help)}</span>
+                </dt>
                 <dd className={variable.default === null ? "text-text-muted" : undefined}>
                   {valueText(variable.valueType, variable.default, i18n.language)}
                 </dd>

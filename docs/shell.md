@@ -17,7 +17,7 @@ VS Code's, part for part (`src/shell/`):
   (2026-11-12): our frame only, rounded corners, drag, double-click, the window's buttons.
 - **Activity bar** (48 px, left): one entry per view of the primary side bar (`src/shell/side-views.ts`), a 20 px
   Lucide icon (Characters: a person, the owner's pick of 2026-11-13); the view showing is a rounded pill, and choosing it again hides the side bar, as in VS Code. Today:
-  Characters.
+  Characters, then the Library (Lucide's `library-big`, the owner's mock-up 9 of 2026-11-14).
 - **Primary side bar** (300 px, left), **panel** (260 px, under the editor area), **secondary side bar** (300 px,
   right): each resizable, and hidden by its header's button or VS Code's keys (Ctrl+B, Ctrl+J, Ctrl+Alt+B); the
   title bar's toggles or the View menu. Hidden by a command, a part keeps its size for its return; dragged

@@ -17,23 +17,25 @@ export function valueText(valueType: string, json: string | null, language: stri
   const number = new Intl.NumberFormat(language);
   switch (valueType) {
     case "percentage":
-      return typeof value === "number" ? `${number.format(value)} %` : json;
+      return typeof value === "number" ? i18next.t("library.value.percent", { value: number.format(value) }) : json;
     case "number":
       return typeof value === "number" ? number.format(value) : json;
     case "bool":
-      return i18next.t(value === true ? "library.value.yes" : "library.value.no");
+      return typeof value === "boolean" ? i18next.t(value ? "library.value.yes" : "library.value.no") : json;
     case "text":
       return typeof value === "string" ? value : json;
-    case "bank":
+    case "bank": {
       if (value === "nearest") {
         return i18next.t("library.value.nearestBank");
       }
-      return i18next.t("library.value.bankOn", { map: (value as { map?: number }).map ?? "?" });
+      const map = (value as { map?: unknown } | null)?.map;
+      return typeof map === "number" ? i18next.t("library.value.bankOn", { map }) : json;
+    }
     case "items":
       if (value === "all" || value === "none") {
         return i18next.t(value === "all" ? "library.value.allItems" : "library.value.noItem");
       }
-      return i18next.t("library.value.items", { count: Array.isArray(value) ? value.length : 0 });
+      return Array.isArray(value) ? i18next.t("library.value.items", { count: value.length }) : json;
     case "zone":
       return i18next.t("library.value.zone");
     default:

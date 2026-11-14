@@ -147,8 +147,8 @@ _Updated 2026-11-14._
        miens", its tab opens with "À moi · basé sur Récolte automatique v1", and
        `Documents/D3B/blueprints/recolte-automatique-copie.json` exists; again: "(copie)" a second time, a file `-2`;
     4. restart D3B: the copies are still listed;
-    5. put a broken file in `Documents/D3B/blueprints` (a stray letter): "Ignorés 1" appears folded at the bottom; open
-       it: the file, and why in its hover.
+    5. put a broken file in `Documents/D3B/blueprints` (a stray letter), then show the Library again (Personnages,
+       then Bibliothèque): "Ignorés 1" appears folded at the bottom; open it: the file, and why in its hover.
 - **Done in code, step 1**: `tools/extractor` reads the client's bundles, data tables, texts in five languages and flag
   enums, and writes the map positions, sub-areas, areas, zaaps, worlds and their tiles, maps, and the world graph,
   checked against one another, with the `client-<build>-format<n>.tar.gz` that `data:fetch` reads (ADR 0013); the app reads it all at start
