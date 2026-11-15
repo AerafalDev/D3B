@@ -3,6 +3,7 @@ import { create } from "zustand";
 import { type Atlas_Serialize, type AtlasError, commands, type HintKind } from "@/bindings.ts";
 import { useEditors } from "@/shell/parts/editor-store.ts";
 import { HIDDEN_KINDS } from "./hint-layout.ts";
+import { WORLD_EDITOR } from "./open-world.ts";
 
 /** The atlas as read: loading, read, or why not. */
 export type AtlasRead =
@@ -18,6 +19,8 @@ export interface Choosing {
   choose: (subArea: number) => void;
   /** The editor whose tab was active when the choice began, brought back when it ends. */
   back: string | null;
+  /** Stops watching for the World tab's closing, which cancels the choice. */
+  unwatch: () => void;
 }
 
 /** The world the tab opens on: the Twelve's, the client's first. */
@@ -42,7 +45,7 @@ interface WorldStore {
   show: (world: number) => void;
   /** Sets the kinds of hints the map leaves out. */
   hide: (kinds: ReadonlySet<HintKind>) => void;
-  /** Begins choosing `who`'s Zone on the map, remembering the tab active now. */
+  /** Begins choosing `who`'s Zone on the map, remembering the tab active now; closing the World tab cancels it. */
   startChoosing: (who: string, choose: (subArea: number) => void) => void;
   /** Ends the choice with the sub-area chosen, also shown on the map, or `null` when cancelled; the tab it began in
    * comes back. */
@@ -90,10 +93,21 @@ export const useWorld = create<WorldStore>((set, get) => ({
 
   hide: (hidden) => set({ hidden }),
 
-  startChoosing: (who, choose) => set({ choosing: { who, choose, back: useEditors.getState().active } }),
+  startChoosing: (who, choose) => {
+    get().choosing?.unwatch();
+    const { api, active } = useEditors.getState();
+    // A choice left by closing the World tab must not wait for its next opening.
+    const closing = api?.onDidRemovePanel((panel) => {
+      if (panel.id === WORLD_EDITOR) {
+        get().endChoosing(null);
+      }
+    });
+    set({ choosing: { who, choose, back: active, unwatch: () => closing?.dispose() } });
+  },
 
   endChoosing: (subArea) => {
     const { choosing, pick } = get();
+    choosing?.unwatch();
     set({ choosing: null });
     if (subArea !== null) {
       pick(subArea);

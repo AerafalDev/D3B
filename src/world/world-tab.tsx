@@ -43,7 +43,8 @@ export function WorldTab() {
       return;
     }
     const cancel = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
+      // Not an Escape a menu or a dialog already took to close itself.
+      if (event.key === "Escape" && !event.defaultPrevented) {
         endChoosing(null);
       }
     };

@@ -1,5 +1,5 @@
 import { ChevronDown, Crosshair, MapPin, MapPinOff } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import { named } from "@/characters/names.ts";
@@ -41,6 +41,12 @@ export function ZoneField({ value, onChange, who }: ZoneFieldProps) {
     void load();
   }, [load]);
 
+  // The latest `onChange`, for a choice on the map that ends after renders with another.
+  const latest = useRef(onChange);
+  useEffect(() => {
+    latest.current = onChange;
+  }, [onChange]);
+
   const choose = (chosen: ZoneValue) => {
     setOpen(false);
     setQuery("");
@@ -48,7 +54,7 @@ export function ZoneField({ value, onChange, who }: ZoneFieldProps) {
   };
   const chooseOnMap = () => {
     setOpen(false);
-    useWorld.getState().startChoosing(who, (subArea) => onChange({ sub_area: subArea }));
+    useWorld.getState().startChoosing(who, (subArea) => latest.current({ sub_area: subArea }));
     openWorld();
   };
 
@@ -92,6 +98,9 @@ export function ZoneField({ value, onChange, who }: ZoneFieldProps) {
             <CommandGroup heading={t("zone.mine")}>
               <p className="text-text-faint px-2 pb-1 text-xs">{t("zone.mineLater")}</p>
             </CommandGroup>
+            {read?.state === "failed" && (
+              <p className="text-text-muted px-2 py-1 text-xs">{t("world.noData", { reason: read.error.reason })}</p>
+            )}
             {tree.length === 0 && query.trim() !== "" && (
               <p className="text-text-muted px-2 py-1 text-xs">{t("world.nothingFound")}</p>
             )}
@@ -142,7 +151,8 @@ function ZoneText({ value }: { value: ZoneValue | null }) {
     return <span className="truncate text-white">{value.zone}</span>;
   }
   if (read?.state !== "read") {
-    return null;
+    // Without the game data, the sub-area by its number.
+    return <span className="truncate text-white">{t("zone.subArea", { id: value.sub_area })}</span>;
   }
   const subArea = findSubArea(read.atlas, value.sub_area);
   if (subArea === undefined) {

@@ -71,6 +71,13 @@ export function WorldMap({ world, chosen, nameAt, hints, onPick, outlineAt }: Wo
   // The maps outlined under the pointer: React draws only when the pointer reaches another group of them.
   const [hovered, setHovered] = useState<readonly (readonly [number, number])[] | null>(null);
   const hoveredPaths = useMemo(() => (hovered === null ? null : mapsPaths(world, hovered)), [world, hovered]);
+  // Outlines no longer asked for, as a choice ends, leave none behind, nor one to show when they are asked for again.
+  const outlining = outlineAt !== undefined;
+  useEffect(() => {
+    if (!outlining) {
+      setHovered(null);
+    }
+  }, [outlining]);
 
   const draw = useCallback(() => {
     const element = box.current;
@@ -296,7 +303,7 @@ export function WorldMap({ world, chosen, nameAt, hints, onPick, outlineAt }: Wo
                 />
               </>
             )}
-            {hoveredPaths !== null && hovered !== chosen && (
+            {hoveredPaths !== null && (
               <>
                 <path d={hoveredPaths.cells} fill="#ffffff" fillOpacity={0.08} />
                 <path

@@ -111,6 +111,35 @@ describe("the Zone field", () => {
     expect(onChange.mock.calls).toEqual([[{ sub_area: 10 }]]);
   });
 
+  it("hands a sub-area chosen on the map to the latest onChange given, and chooses from the keyboard", async () => {
+    const [first, latest] = [vi.fn(), vi.fn()];
+    const { rerender } = render(<ZoneField value={null} onChange={first} who="Aerinth" />);
+    await act(async () => {});
+    fireEvent.click(screen.getByRole("button", { name: "Choisir sur la carte" }));
+    rerender(<ZoneField value={null} onChange={latest} who="Aerinth" />);
+    act(() => useWorld.getState().endChoosing(10));
+    expect([first.mock.calls, latest.mock.calls]).toEqual([[], [[{ sub_area: 10 }]]]);
+    // The arrows move from the first sub-area listed, Enter chooses.
+    fireEvent.click(screen.getByRole("combobox", { name: "Zone" }));
+    const search = screen.getByRole("combobox", { name: "Chercher une zone" });
+    fireEvent.keyDown(search, { key: "ArrowDown" });
+    fireEvent.keyDown(search, { key: "Enter" });
+    expect(latest.mock.calls[1]).toEqual([{ sub_area: 97 }]);
+    // After a search, Enter takes what it found.
+    fireEvent.click(screen.getByRole("combobox", { name: "Zone" }));
+    fireEvent.change(screen.getByRole("combobox", { name: "Chercher une zone" }), { target: { value: "egout" } });
+    fireEvent.keyDown(screen.getByRole("combobox", { name: "Chercher une zone" }), { key: "Enter" });
+    expect(latest.mock.calls[2]).toEqual([{ sub_area: 11 }]);
+  });
+
+  it("says a sub-area by its number, and why the list is empty, without game data", async () => {
+    backEnd.atlas.mockReset().mockRejectedValue({ kind: "noData", reason: "no folder" });
+    await shown(<ZoneField value={{ sub_area: 97 }} onChange={() => {}} who="Aerinth" />);
+    expect(screen.getByRole("combobox", { name: "Zone" }).textContent).toBe("Sous-zone 97");
+    fireEvent.click(screen.getByRole("combobox", { name: "Zone" }));
+    expect(screen.getByRole("listbox").textContent).toContain("Pas de données du jeu : no folder");
+  });
+
   it("offers the map from its list too", async () => {
     await shown(<ZoneField value={null} onChange={() => {}} who="Aerinth" />);
     fireEvent.click(screen.getByRole("combobox", { name: "Zone" }));

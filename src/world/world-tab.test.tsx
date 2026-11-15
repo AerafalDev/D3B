@@ -40,12 +40,23 @@ vi.mock("./world-details.tsx", () => ({
 }));
 
 // The editor area, faked: the tab active before the map was opened, brought back.
-const editors = vi.hoisted(() => ({ active: null as string | null, shown: [] as string[] }));
+// The editor area, faked: the tab active before the map was opened, brought back, and the panels' closing.
+const editors = vi.hoisted(() => ({
+  active: null as string | null,
+  shown: [] as string[],
+  closed: null as ((panel: { id: string }) => void) | null,
+}));
 vi.mock("@/shell/parts/editor-store.ts", () => ({
   useEditors: {
     getState: () => ({
       active: editors.active,
-      api: { getPanel: (id: string) => ({ api: { setActive: () => editors.shown.push(id) } }) },
+      api: {
+        getPanel: (id: string) => ({ api: { setActive: () => editors.shown.push(id) } }),
+        onDidRemovePanel: (listener: (panel: { id: string }) => void) => {
+          editors.closed = listener;
+          return { dispose: () => (editors.closed = null) };
+        },
+      },
     }),
   },
 }));
@@ -170,7 +181,7 @@ describe("the World tab", () => {
     useWorld.setState({ picked: 3 });
     useWorld.getState().startChoosing("Aerinth", choose);
     await shown(<WorldTab />);
-    expect(screen.getByRole("status").textContent).toContain("Choisis la Zone de Aerinth : clique une sous-zone.");
+    expect(screen.getByRole("status").textContent).toContain("Aerinth : clique une sous-zone pour en faire sa Zone.");
     // Map 1, 0 is Forêt d'Astrub's: its two maps are outlined.
     expect(document.querySelector("[data-outline]")?.getAttribute("data-outline")).toBe("2");
     fireEvent.click(screen.getByRole("button", { name: "clic 1, 0" }));
@@ -189,6 +200,11 @@ describe("the World tab", () => {
     await shown(<WorldTab />);
     fireEvent.click(screen.getByRole("button", { name: "clic 5, 5" }));
     expect(useWorld.getState().choosing?.who).toBe("Aerinth");
+    // An Escape a menu already took to close itself leaves the choice.
+    const taken = new KeyboardEvent("keydown", { key: "Escape", cancelable: true });
+    taken.preventDefault();
+    window.dispatchEvent(taken);
+    expect(useWorld.getState().choosing?.who).toBe("Aerinth");
     fireEvent.keyDown(window, { key: "Escape" });
     expect(useWorld.getState().choosing).toBeNull();
     useWorld.getState().startChoosing("Aerinth", choose);
@@ -197,6 +213,20 @@ describe("the World tab", () => {
     expect(useWorld.getState()).toMatchObject({ choosing: null, picked: null });
     expect(choose).not.toHaveBeenCalled();
     expect(editors.shown).toEqual(["character:1", "character:1"]);
+  });
+
+  it("cancels a choice when the World tab closes, not another tab, and stops watching once it ends", () => {
+    const choose = vi.fn();
+    editors.active = "character:1";
+    editors.shown = [];
+    useWorld.getState().startChoosing("Aerinth", choose);
+    editors.closed?.({ id: "character:2" });
+    expect(useWorld.getState().choosing?.who).toBe("Aerinth");
+    editors.closed?.({ id: "world" });
+    expect(useWorld.getState().choosing).toBeNull();
+    expect(editors.shown).toEqual(["character:1"]);
+    expect(editors.closed).toBeNull();
+    expect(choose).not.toHaveBeenCalled();
   });
 
   it("says why there is no map without game data, and offers no worlds", async () => {

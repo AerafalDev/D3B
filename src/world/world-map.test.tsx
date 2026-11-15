@@ -154,14 +154,9 @@ describe("the World's map", () => {
       [7, 7],
       [8, 7],
     ];
-    render(
-      <WorldMap
-        world={world}
-        chosen={null}
-        nameAt={() => null}
-        hints={[]}
-        outlineAt={(x, y) => (y === 7 && (x === 7 || x === 8) ? forest : null)}
-      />,
+    const outlineAt = (x: number, y: number) => (y === 7 && (x === 7 || x === 8) ? forest : null);
+    const { rerender } = render(
+      <WorldMap world={world} chosen={null} nameAt={() => null} hints={[]} outlineAt={outlineAt} />,
     );
     const map = screen.getByRole("application");
     const dashed = () => document.querySelector("path[stroke-dasharray]")?.getAttribute("d") ?? null;
@@ -173,6 +168,15 @@ describe("the World's map", () => {
     expect(dashed()).toBeNull();
     fireEvent.pointerMove(map, { clientX: 10, clientY: 10 });
     fireEvent.pointerLeave(map);
+    expect(dashed()).toBeNull();
+    // The chosen maps hovered are outlined too; once outlines are no longer asked for, nothing stays.
+    rerender(<WorldMap world={world} chosen={forest} nameAt={() => null} hints={[]} outlineAt={outlineAt} />);
+    // The view now fits the forest in the empty box at 20 %: the box's 1, -1 is the image's 85, 70, map 8, 7.
+    fireEvent.pointerMove(map, { clientX: 1, clientY: -1 });
+    expect(dashed()).not.toBeNull();
+    rerender(<WorldMap world={world} chosen={forest} nameAt={() => null} hints={[]} />);
+    expect(dashed()).toBeNull();
+    rerender(<WorldMap world={world} chosen={forest} nameAt={() => null} hints={[]} outlineAt={outlineAt} />);
     expect(dashed()).toBeNull();
   });
 

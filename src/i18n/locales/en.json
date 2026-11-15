@@ -595,7 +595,7 @@
       "noResource": "No resource."
     },
     "choosing": {
-      "banner": "Choose {{who}}'s Zone: click a sub-area.",
+      "banner": "{{who}}: click a sub-area to make it their Zone.",
       "cancel": "Cancel",
       "escape": "Esc"
     }
@@ -608,6 +608,7 @@
     "mine": "My zones",
     "mineLater": "Your painted zones will come here.",
     "onMap": "Choose on the map",
-    "keys": "↑ ↓ Enter"
+    "keys": "↑ ↓ Enter",
+    "subArea": "Sub-area {{id}}"
   }
 }

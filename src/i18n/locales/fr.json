@@ -595,7 +595,7 @@
       "noResource": "Aucune ressource."
     },
     "choosing": {
-      "banner": "Choisis la Zone de {{who}} : clique une sous-zone.",
+      "banner": "{{who}} : clique une sous-zone pour en faire sa Zone.",
       "cancel": "Annuler",
       "escape": "Échap"
     }
@@ -608,6 +608,7 @@
     "mine": "Mes zones",
     "mineLater": "Tes zones peintes viendront ici.",
     "onMap": "Choisir sur la carte",
-    "keys": "↑ ↓ Entrée"
+    "keys": "↑ ↓ Entrée",
+    "subArea": "Sous-zone {{id}}"
   }
 }
