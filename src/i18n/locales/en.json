@@ -580,6 +580,19 @@
       "transport": "Other transports",
       "place": "Other places",
       "passage": "Passages"
+    },
+    "details": {
+      "title": "Details",
+      "none": "Choose a sub-area in the view or on the map.",
+      "subArea": "Game sub-area · {{area}}",
+      "level": "Level",
+      "maps": "Maps",
+      "monsters": "Monsters",
+      "noMonster": "None",
+      "kinds_one": "{{count}} kind",
+      "kinds_other": "{{count}} kinds",
+      "resources": "Resources",
+      "noResource": "No resource."
     }
   }
 }

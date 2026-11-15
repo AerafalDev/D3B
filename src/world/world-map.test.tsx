@@ -113,6 +113,59 @@ describe("the World's map", () => {
     expect(tip.hidden).toBe(true);
   });
 
+  it("picks the map clicked, not one dragged over, and leaves the view where it is for what it picked", async () => {
+    const onPick = vi.fn((_x: number, _y: number) => true);
+    const shown = (chosen: [number, number][] | null) => (
+      <WorldMap world={world} chosen={chosen} nameAt={() => null} hints={[]} onPick={onPick} />
+    );
+    const { rerender } = render(shown(null));
+    await zoomSaid();
+    const map = screen.getByRole("application");
+    const moved = () => document.querySelector("g")?.getAttribute("transform");
+    const before = moved();
+    // The box's 10, 10 is the image's 70, 70: map 7, 7.
+    fireEvent.pointerDown(map, { clientX: 10, clientY: 10 });
+    fireEvent.pointerUp(map, { clientX: 11, clientY: 10 });
+    expect(onPick.mock.calls).toEqual([[7, 7]]);
+    rerender(shown([[7, 7]]));
+    await zoomSaid();
+    expect(moved()).toBe(before);
+    // A drag moves the map and picks nothing.
+    fireEvent.pointerDown(map, { clientX: 10, clientY: 10 });
+    fireEvent.pointerMove(map, { clientX: 40, clientY: 40 });
+    fireEvent.pointerUp(map, { clientX: 40, clientY: 40 });
+    expect(onPick).toHaveBeenCalledTimes(1);
+    // A drag that comes back near its start, and a press of another button, pick nothing either.
+    fireEvent.pointerDown(map, { clientX: 10, clientY: 10 });
+    fireEvent.pointerMove(map, { clientX: 60, clientY: 60 });
+    fireEvent.pointerMove(map, { clientX: 11, clientY: 10 });
+    fireEvent.pointerUp(map, { clientX: 11, clientY: 10 });
+    fireEvent.pointerDown(map, { button: 2, clientX: 10, clientY: 10 });
+    fireEvent.pointerUp(map, { button: 2, clientX: 10, clientY: 10 });
+    expect(onPick).toHaveBeenCalledTimes(1);
+    // A choice made elsewhere, as the view's, fits the view to it: map 1, 1 in an empty box, at the least zoom.
+    rerender(shown([[1, 1]]));
+    await zoomSaid();
+    expect(moved()).toBe("translate(-3 -3) scale(0.2)");
+  });
+
+  it("fits the view again after a click that picked nothing new", async () => {
+    const onPick = vi.fn(() => false);
+    const shown = (chosen: [number, number][] | null) => (
+      <WorldMap world={world} chosen={chosen} nameAt={() => null} hints={[]} onPick={onPick} />
+    );
+    const { rerender } = render(shown(null));
+    await zoomSaid();
+    const map = screen.getByRole("application");
+    fireEvent.pointerDown(map, { clientX: 10, clientY: 10 });
+    fireEvent.pointerUp(map, { clientX: 10, clientY: 10 });
+    expect(onPick).toHaveBeenCalledTimes(1);
+    const before = document.querySelector("g")?.getAttribute("transform");
+    rerender(shown([[1, 1]]));
+    await zoomSaid();
+    expect(document.querySelector("g")?.getAttribute("transform")).not.toBe(before);
+  });
+
   it("draws the hints' pictures, a dot for one without, and says a hint's name over its map's", async () => {
     const hint = { name: { fr: "Zaap", en: "Zaap" }, level: 0 };
     render(

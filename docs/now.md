@@ -178,7 +178,14 @@ _Updated 2026-11-15._
        says "Zaap" and its coordinates, a dungeon also its level;
     8. "Indices" beside the worlds lists the kinds the world holds, each with its picture and count, all ticked but
        "Autres lieux" and "Passages"; unticking Zaaps takes them off the map with the menu still open; "Tout cacher"
-       and "Tout montrer" do what they say; Incarnam's list has only its own kinds.
+       and "Tout montrer" do what they say; Incarnam's list has only its own kinds;
+    9. with nothing chosen, Details on the right of the World tab says "Choisis une sous-zone dans la vue ou sur la
+       carte."; choose Forêt d'Astrub in the view: Details says "Forêt d'Astrub", "Sous-zone du jeu · Astrub", Niveau
+       20, Cartes 68, Monstres 8 sortes, then Ressources: Bûcheron, ten woods from Bois de Frêne 1 to Bois d'Orme 180,
+       each with its icon, and Alchimiste, five plants from Ortie 1 to Orchidée Freyesque 80;
+    10. click a map of another sub-area: it turns teal, the forest no longer, the card and Details follow it, and the map
+       stays where it was; dragging the map chooses nothing; a click on the sea changes nothing; a dungeon chosen in the
+       view says "Pas sur la carte" beside Cartes.
 - **Done in code, step 1**: `tools/extractor` reads the client's bundles, data tables, texts in five languages and flag
   enums, and writes the map positions, sub-areas, areas, zaaps, worlds and their tiles, maps, and the world graph,
   checked against one another, with the `client-<build>-format<n>.tar.gz` that `data:fetch` reads (ADR 0013); the app reads it all at start
@@ -283,7 +290,7 @@ _Updated 2026-11-15._
   (10) sub-areas as zones, a Zone chosen in a list or on the map (the owner's mock-up 12, 2026-11-15: the field's list
   unfolding under it and its target, one click on the map choosing and going back, Details on the World tab's right),
   in three PRs: each sub-area's resources by profession and its monsters counted through the atlas (done in code), then
-  the World tab's Details and a click on its map, then the Zone field and the map's choosing mode, which (11) puts in
+  the World tab's Details and a click on its map (done in code), then the Zone field and the map's choosing mode, which (11) puts in
   the character's tab and is measured with it; (11) a character's blueprint and settings in its tab;
   (12) links checked by type, and the picker; (13) delete, undo, autosave; (14) variables; (15) functions opened in
   place; (16) events: priority, re-arming, modes, the defaults; (17) comments and reroutes; (18) Align, copy and paste,

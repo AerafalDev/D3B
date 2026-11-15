@@ -134,7 +134,8 @@ The shell's parts (`docs/shell.md`); no information is shown twice:
   a click unfolds a list under it, searched as the World view, "My zones" first (empty until mine are painted), then
   the sub-areas by area and level, the arrows and Enter choosing; its target opens the World tab in a choosing mode, a
   banner saying for what, a map hovered outlining its whole sub-area, one click choosing it and going back to the tab
-  it came from, Escape cancelling. A click on the map otherwise chooses its sub-area as the view does, and **Details**,
+  it came from, Escape cancelling. A click on the map otherwise chooses its sub-area as the view does, the map staying
+  where it is (a drag chooses nothing, nor a click off the maps), and **Details**,
   a column on the World tab's right, says what it is as a zone: its area, level and maps, its resources by profession
   with their icons and levels, how many kinds of monsters live there (their names need a data format the hunt, step 6,
   can bring), and, from step 3's PR 11, whose Zone it is. `world_atlas` gives each sub-area its resources, the items
