@@ -562,6 +562,9 @@
     "zoomIn": "Zoom in",
     "zoomOut": "Zoom out",
     "fit": "Fit",
-    "noWorld": "The game data holds no world map."
+    "noWorld": "The game data holds no world map.",
+    "search": "Search a sub-area",
+    "subAreas": "Game sub-areas",
+    "nothingFound": "No sub-area matches."
   }
 }

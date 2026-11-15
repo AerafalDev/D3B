@@ -161,6 +161,17 @@ _Updated 2026-11-14._
        shows Récolter; Graphe brings the graph back; a character's tab shows no toggle;
     6. put a broken file in `Documents/D3B/blueprints` (a stray letter), then show the Library again (Personnages,
        then Bibliothèque): "Ignorés 1" appears folded at the bottom; open it: the file, and why in its hover.
+- **step 3, the World**, on Windows x64 from `bun run app` on `next` or the next release:
+    1. the activity bar has "Monde" under "Bibliothèque"; its view lists "Sous-zones du jeu" by area, folded, each
+       area with its count; a click on Astrub unfolds it, its sub-areas by level, then by name;
+    2. type "foret" in the search: the areas holding a matching sub-area unfold, the others go; a nonsense word says
+       "Aucune sous-zone ne correspond.";
+    3. click Forêt d'Astrub: the World tab opens on "Monde des Douze" (its editor action), the forest in translucent
+       teal with a sharp outline, fitted in view, "Forêt d'Astrub · Astrub · niv. 20 · N cartes" on top left;
+    4. the map is sharp at every zoom from 20 % to 100 % (the wheel, + and − on the focused map, the buttons); dragging
+       moves it; hovering a map says its sub-area and coordinates; 0 or the fit button frames the forest again;
+    5. choose Incarnam in the editor action: its map shows; click an Incarnam sub-area in the view: it shows there;
+    6. a sub-area marked "Pas sur la carte" (a dungeon) is greyed; clicking it says so on top of the map.
 - **Done in code, step 1**: `tools/extractor` reads the client's bundles, data tables, texts in five languages and flag
   enums, and writes the map positions, sub-areas, areas, zaaps, worlds and their tiles, maps, and the world graph,
   checked against one another, with the `client-<build>-format<n>.tar.gz` that `data:fetch` reads (ADR 0013); the app reads it all at start
@@ -254,7 +265,7 @@ _Updated 2026-11-14._
   tab's right (the owner, 2026-11-14; done in code), then the Summary, toggled in the tab strip's editor actions (the
   owner, 2026-11-14; done in code); (9) the World view and tab from the tiles (the owner's mock-up 10 of 2026-11-15), in three PRs: the atlas
   through the IPC, the worlds with their tiles and the sub-areas by area (done in code), then the tab and its map (done
-  in code), then the view that opens it; (9b) the extractor: the client's hints
+  in code), then the view that opens it (done in code); (9b) the extractor: the client's hints
   (`World.HintsDataRoot`, 835 on 3.7.13.17 in 6 categories, measured by the C# version) and their pictures, a new data
   format (ADR 0013); (9c) the hints on the World's map, one switch per kind, which also give the nearest bank;
   (10) sub-areas as zones, a Zone chosen in a list or on the map; (11) a character's blueprint and settings in its tab;
