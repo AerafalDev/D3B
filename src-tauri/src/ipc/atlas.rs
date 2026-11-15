@@ -1,6 +1,6 @@
 //! The world's atlas, what the World view and tab draw (`docs/bot.md`, "In the app"): the worlds the client shows,
 //! each zoom with the files of its tiles and its hints, and the game's sub-areas grouped by area, each with the maps it
-//! covers on each of those worlds.
+//! covers on each of those worlds, the resources it holds and how many monsters live there.
 
 use std::collections::{BTreeMap, BTreeSet};
 use std::path::Path;
@@ -11,13 +11,36 @@ use tauri::Manager;
 
 use super::LoadedData;
 use super::character::Names;
-use crate::data::{self, Hint, World, WorldMap};
+use crate::data::{self, Hint, ItemTables, World, WorldMap};
 
 /// The worlds and the sub-areas the World view lists, in order of id.
 #[derive(Debug, Clone, PartialEq, Serialize, Type)]
 pub struct Atlas {
     pub worlds: Vec<AtlasWorld>,
     pub areas: Vec<AtlasArea>,
+    /// The professions whose resources a sub-area holds, in order of id.
+    pub jobs: Vec<AtlasJob>,
+    /// The resources a sub-area holds, in order of profession, then level, then id.
+    pub resources: Vec<AtlasResource>,
+}
+
+/// A harvesting profession, and its icon's file.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Type)]
+pub struct AtlasJob {
+    pub id: i32,
+    pub name: Names,
+    pub icon: Option<String>,
+}
+
+/// A resource: an item a profession gathers, its level, and its icon's file, none for an item whose icon the client
+/// lacks.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Type)]
+pub struct AtlasResource {
+    pub id: i32,
+    pub name: Names,
+    pub level: u8,
+    pub job: i32,
+    pub icon: Option<String>,
 }
 
 /// A world the client shows, as its map is drawn: map `x, y` covers the image from `origin + (x, y) * mapSize`, at
@@ -115,6 +138,10 @@ pub struct AtlasSubArea {
     pub name: Names,
     pub level: u32,
     pub maps: Vec<WorldMaps>,
+    /// The resources it holds, ids of the atlas's, in their order.
+    pub resources: Vec<i32>,
+    /// How many kinds of monsters live there; the data names none of them yet.
+    pub monsters: u32,
 }
 
 /// The maps of a sub-area on one world, by their coordinates, each once.
@@ -141,7 +168,7 @@ pub async fn world_atlas(app: tauri::AppHandle) -> Result<Atlas, AtlasError> {
         let game = data
             .0
             .as_ref()
-            .map(|game| (&game.world, game.worlds.as_slice(), game.hints.as_slice()));
+            .map(|game| (&game.world, game.worlds.as_slice(), game.hints.as_slice(), &game.items));
         read(game, data.1.as_deref())
     });
     built.await.unwrap_or_else(|error| {
@@ -151,8 +178,8 @@ pub async fn world_atlas(app: tauri::AppHandle) -> Result<Atlas, AtlasError> {
     })
 }
 
-/// The game data's world, worlds and hints.
-type Game<'a> = (&'a World, &'a [WorldMap], &'a [Hint]);
+/// The game data's world, worlds, hints and items.
+type Game<'a> = (&'a World, &'a [WorldMap], &'a [Hint], &'a ItemTables);
 
 /// The atlas of the game data, whose tiles and pictures are in `folder`, or why there is none.
 fn read(game: Result<Game, &String>, folder: Option<&Path>) -> Result<Atlas, AtlasError> {
@@ -173,8 +200,8 @@ fn names(text: &crate::data::Text) -> Names {
 }
 
 /// The atlas of the game data, whose tiles and pictures are in `folder`: the worlds the client shows with their hints,
-/// and the named areas' named sub-areas that hold at least one map, their maps on the worlds shown.
-fn atlas((world, worlds, hints): Game, folder: &Path) -> Atlas {
+/// and the named areas' named sub-areas that hold at least one map, their maps on the worlds shown and their resources.
+fn atlas((world, worlds, hints, items): Game, folder: &Path) -> Atlas {
     let shown: Vec<&WorldMap> = worlds.iter().filter(|one| one.visible).collect();
     let shown_ids: BTreeSet<i32> = shown.iter().map(|one| one.id).collect();
     // Each sub-area's maps, by world then by coordinates: a map's floors share them.
@@ -190,6 +217,9 @@ fn atlas((world, worlds, hints): Game, folder: &Path) -> Atlas {
                 .insert([position.x, position.y]);
         }
     }
+    // The professions and resources the sub-areas listed hold, gathered as they are listed.
+    let mut jobs = BTreeMap::new();
+    let mut resources = BTreeMap::new();
     let areas = world
         .areas
         .iter()
@@ -199,6 +229,13 @@ fn atlas((world, worlds, hints): Game, folder: &Path) -> Atlas {
                 .iter()
                 .filter(|sub_area| sub_area.area_id == area.id && held.contains(&sub_area.id))
                 .filter_map(|sub_area| {
+                    let held = items.resources(&sub_area.harvestables);
+                    for resource in &held {
+                        jobs.entry(resource.job.id).or_insert(resource.job);
+                        resources
+                            .entry((resource.job.id, resource.item.level, resource.item.id))
+                            .or_insert(resource.item);
+                    }
                     Some(AtlasSubArea {
                         id: sub_area.id,
                         name: names(sub_area.name.as_ref()?),
@@ -212,6 +249,9 @@ fn atlas((world, worlds, hints): Game, folder: &Path) -> Atlas {
                                 at: at.iter().copied().collect(),
                             })
                             .collect(),
+                        resources: held.iter().map(|resource| resource.item.id).collect(),
+                        monsters: u32::try_from(sub_area.monsters.iter().collect::<BTreeSet<_>>().len())
+                            .unwrap_or(u32::MAX),
                     })
                 })
                 .collect();
@@ -226,7 +266,33 @@ fn atlas((world, worlds, hints): Game, folder: &Path) -> Atlas {
     Atlas {
         worlds: shown.into_iter().map(|one| atlas_world(one, hints, folder)).collect(),
         areas,
+        jobs: jobs
+            .into_values()
+            .map(|job| AtlasJob {
+                id: job.id,
+                name: names(&job.name),
+                icon: ItemTables::job_icon(job).map(|file| in_folder(folder, &file)),
+            })
+            .collect(),
+        resources: resources
+            .into_iter()
+            .map(|((job, _, _), item)| AtlasResource {
+                id: item.id,
+                name: names(&item.name),
+                level: item.level,
+                job,
+                icon: items.item_icon(item).map(|file| in_folder(folder, &file)),
+            })
+            .collect(),
     }
+}
+
+/// The file of the data folder's `file`, a path relative to it, as the platform writes it.
+fn in_folder(folder: &Path, file: &str) -> String {
+    file.split('/')
+        .fold(folder.to_path_buf(), |path, part| path.join(part))
+        .to_string_lossy()
+        .into_owned()
 }
 
 fn atlas_world(world: &WorldMap, hints: &[Hint], folder: &Path) -> AtlasWorld {
@@ -352,10 +418,83 @@ mod tests {
             .unwrap_or_else(|error| panic!("{error}"))
     }
 
+    // The extractor's own tests write these files (tools/extractor/tests/Items/): wheat and wood, the lumberjack
+    // cutting the wood.
+    fn items() -> ItemTables {
+        let read = |text: &str| -> Vec<serde_json::Value> { parse(text) };
+        let mut jobs = read(include_str!("../../../tools/extractor/tests/fixtures/items/jobs.json"));
+        let mut skills = read(include_str!(
+            "../../../tools/extractor/tests/fixtures/items/skills.json"
+        ));
+        // A farmer reaping the wheat.
+        jobs.push(serde_json::json!({"id": 28, "name": jobs[1]["name"], "iconId": 28}));
+        skills.push(
+            serde_json::json!({"id": 45, "name": skills[0]["name"], "parentJobId": 28, "gatheredItemId": 289,
+            "levelMin": 1, "range": 1, "clientDisplay": true}),
+        );
+        ItemTables {
+            items: parse(include_str!("../../../tools/extractor/tests/fixtures/items/items.json")),
+            types: parse(include_str!(
+                "../../../tools/extractor/tests/fixtures/items/item-types.json"
+            )),
+            jobs: parse(&serde_json::Value::from(jobs).to_string()),
+            skills: parse(&serde_json::Value::from(skills).to_string()),
+            // The wheat's icon; the wood names none.
+            item_icons: std::collections::HashSet::from([42011]),
+        }
+    }
+
+    #[test]
+    fn gives_each_sub_area_its_resources_and_how_many_monsters_live_there() {
+        let mut world = world();
+        // A loot box (30562) among the resources, a monster listed twice.
+        world.sub_areas[0].harvestables = vec![289, 30562, 303];
+        world.sub_areas[0].monsters = vec![31, 34, 31];
+        let folder = Path::new("data");
+        let atlas = atlas((&world, &worlds(), &[], &items()), folder);
+        let file = |path: &str| {
+            let joined = path.split('/').fold(folder.to_path_buf(), |path, part| path.join(part));
+            Some(joined.to_string_lossy().into_owned())
+        };
+
+        let jobs: Vec<(i32, &str, Option<String>)> = atlas
+            .jobs
+            .iter()
+            .map(|job| (job.id, job.name.en.as_str(), job.icon.clone()))
+            .collect();
+        assert_eq!(
+            jobs,
+            [
+                (2, "Lumberjack", file("icons/jobs/1.png")),
+                (28, "Lumberjack", file("icons/jobs/28.png"))
+            ]
+        );
+        let resources: Vec<(i32, &str, u8, i32, Option<String>)> = atlas
+            .resources
+            .iter()
+            .map(|one| (one.id, one.name.fr.as_str(), one.level, one.job, one.icon.clone()))
+            .collect();
+        assert_eq!(
+            resources,
+            [
+                (303, "Bois", 1, 2, None),
+                (289, "Blé", 1, 28, file("icons/items/42011.png"))
+            ]
+        );
+        let forest = &atlas.areas[0].sub_areas[0];
+        assert_eq!(
+            (forest.id, forest.resources.as_slice(), forest.monsters),
+            (95, [303, 289].as_slice(), 2)
+        );
+        // A sub-area that lists nothing holds nothing.
+        let other = &atlas.areas[0].sub_areas[1];
+        assert_eq!((other.resources.as_slice(), other.monsters), ([].as_slice(), 0));
+    }
+
     #[test]
     fn gives_the_worlds_shown_with_each_tile_s_file() {
         let folder = Path::new("data");
-        let atlas = atlas((&world(), &worlds(), &[]), folder);
+        let atlas = atlas((&world(), &worlds(), &[], &items()), folder);
         assert_eq!(atlas.worlds.iter().map(|one| one.id).collect::<Vec<_>>(), [1, 2]);
         let first = &atlas.worlds[0];
         assert_eq!(
@@ -382,7 +521,7 @@ mod tests {
 
     #[test]
     fn groups_the_named_sub_areas_that_hold_a_map_by_named_area_with_their_maps_on_the_worlds_shown() {
-        let atlas = atlas((&world(), &worlds(), &[]), Path::new("data"));
+        let atlas = atlas((&world(), &worlds(), &[], &items()), Path::new("data"));
         // Area 1 is unnamed and area 2's sub-area holds no map; sub-area 96 is unnamed.
         assert_eq!(atlas.areas.len(), 1);
         let astrub = &atlas.areas[0];
@@ -434,7 +573,7 @@ mod tests {
         std::fs::create_dir_all(&pictures).unwrap_or_else(|error| panic!("{error}"));
         std::fs::write(pictures.join("401.png"), b"png").unwrap_or_else(|error| panic!("{error}"));
         let hints = [bank.clone(), dungeon.clone(), zaap, hidden];
-        let atlas = atlas((&world(), &worlds(), &hints), &folder);
+        let atlas = atlas((&world(), &worlds(), &hints, &items()), &folder);
         std::fs::remove_dir_all(&folder).unwrap_or_else(|error| panic!("{error}"));
 
         // World 1: the zaap before the bank, whatever their ids; world 9 is not shown.
@@ -468,7 +607,7 @@ mod tests {
         );
         let (world, worlds) = (world(), worlds());
         assert_eq!(
-            read(Ok((&world, &worlds, &[])), None),
+            read(Ok((&world, &worlds, &[], &items())), None),
             Err(AtlasError::NoData {
                 reason: "the game data's folder is unknown".into()
             })
@@ -480,6 +619,6 @@ mod tests {
         let mut world = world();
         world.areas.retain(|area| area.id != 0);
         // Only area 2 is left, whose sub-area holds no map.
-        assert_eq!(atlas((&world, &worlds(), &[]), Path::new("data")).areas, []);
+        assert_eq!(atlas((&world, &worlds(), &[], &items()), Path::new("data")).areas, []);
     }
 }

@@ -26,6 +26,8 @@ const world = (id: number, fr: string) =>
 
 const ATLAS: Atlas_Serialize = {
   worlds: [world(1, "Monde des Douze"), world(2, "Monde d'Incarnam")],
+  jobs: [],
+  resources: [],
   areas: [
     {
       id: 0,
@@ -44,14 +46,18 @@ const ATLAS: Atlas_Serialize = {
               ],
             },
           ],
+          resources: [],
+          monsters: 0,
         },
-        { id: 4, name: names("Antre d'Astrub"), level: 30, maps: [] },
+        { id: 4, name: names("Antre d'Astrub"), level: 30, maps: [], resources: [], monsters: 0 },
       ],
     },
     {
       id: 1,
       name: names("Incarnam"),
-      subAreas: [{ id: 5, name: names("Pâturages"), level: 1, maps: [{ world: 2, at: [[2, 2]] }] }],
+      subAreas: [
+        { id: 5, name: names("Pâturages"), level: 1, maps: [{ world: 2, at: [[2, 2]] }], resources: [], monsters: 0 },
+      ],
     },
   ],
 };

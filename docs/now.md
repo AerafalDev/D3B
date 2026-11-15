@@ -280,7 +280,11 @@ _Updated 2026-11-15._
   overlap thinned out by kind over the whole world, a switch per kind behind "Indices" in the tab's editor action, nine
   kinds told apart by picture before category, the other places and passages off by default (done in code; the nearest
   bank waits for step 4, measured by path with going to the bank);
-  (10) sub-areas as zones, a Zone chosen in a list or on the map; (11) a character's blueprint and settings in its tab;
+  (10) sub-areas as zones, a Zone chosen in a list or on the map (the owner's mock-up 12, 2026-11-15: the field's list
+  unfolding under it and its target, one click on the map choosing and going back, Details on the World tab's right),
+  in three PRs: each sub-area's resources by profession and its monsters counted through the atlas (done in code), then
+  the World tab's Details and a click on its map, then the Zone field and the map's choosing mode, which (11) puts in
+  the character's tab and is measured with it; (11) a character's blueprint and settings in its tab;
   (12) links checked by type, and the picker; (13) delete, undo, autosave; (14) variables; (15) functions opened in
   place; (16) events: priority, re-arming, modes, the defaults; (17) comments and reroutes; (18) Align, copy and paste,
   search; (19) editing by keyboard; (20) my zones painted; (21) routes; (22) the `.d3b` file; (23) a given blueprint's
