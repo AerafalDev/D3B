@@ -562,6 +562,9 @@
     "zoomIn": "Zoom avant",
     "zoomOut": "Zoom arrière",
     "fit": "Recadrer",
-    "noWorld": "Les données du jeu n'ont aucune carte du monde."
+    "noWorld": "Les données du jeu n'ont aucune carte du monde.",
+    "search": "Chercher une sous-zone",
+    "subAreas": "Sous-zones du jeu",
+    "nothingFound": "Aucune sous-zone ne correspond."
   }
 }
