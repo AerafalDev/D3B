@@ -2,10 +2,14 @@ import type { IDockviewHeaderActionsProps } from "dockview-react";
 import type { ReactNode } from "react";
 
 import { BlueprintActions } from "@/library/blueprint-actions.tsx";
+import { WorldActions } from "@/world/world-actions.tsx";
 
 // The actions each editor has, by the name `openEditor` gives its component; step 4 adds a character's Play, Pause and
 // Stop.
-const ACTIONS: Record<string, (props: { tab: string }) => ReactNode> = { blueprint: BlueprintActions };
+const ACTIONS: Record<string, (props: { tab: string }) => ReactNode> = {
+  blueprint: BlueprintActions,
+  world: WorldActions,
+};
 
 /**
  * VS Code's editor actions, at the right of a group's tabs: those of the editor its active tab holds (the owner,

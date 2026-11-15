@@ -30,7 +30,8 @@ VS Code's, part for part (`src/shell/`):
 - **Editor area**: tabs and splits by `dockview-react`. An editor opens by `openEditor` (one tab per id; opening it
   again brings its tab forward). With no editor open it shows the app's mark in relief and the main shortcuts, these
   only when it is at least 480 px wide. At the right of a group's tabs, VS Code's **editor actions**: those of the
-  editor its active tab holds (`EditorActions`, the owner, 2026-11-14), a blueprint's "Graph | Summary" first.
+  editor its active tab holds (`EditorActions`, the owner, 2026-11-14): a blueprint's "Graph | Summary", the World's
+  list of worlds.
 - **Tabs** (`EditorTab`, the owner's choice from mock-ups, 2026-11-12): an icon, the title, a close button; the active
   tab rises from the strip with rounded top corners on the editor's ground and merges into it, without a blue line;
   the strip lies on the frame's ground so the active tab stands out, the others' text dimmer.

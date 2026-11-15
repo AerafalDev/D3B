@@ -4,9 +4,11 @@ import {
   CircleArrowDown,
   Copy,
   FileWarning,
+  Globe,
   Library,
   LibraryBig,
   type LucideIcon,
+  Map as MapIcon,
   PanelBottom,
   PanelLeft,
   PanelRight,
@@ -38,6 +40,7 @@ export const icons = {
   copy: { icon: Copy },
   error: { icon: CircleAlert, tone: "text-[#db5c5c]" },
   fileWarning: { icon: FileWarning },
+  globe: { icon: Globe },
   library: { icon: Library },
   libraryView: { icon: LibraryBig },
   panelBottom: { icon: PanelBottom },
@@ -48,6 +51,7 @@ export const icons = {
   update: { icon: CircleArrowDown, tone: "text-[#c77d55]" },
   user: { icon: User },
   warning: { icon: TriangleAlert, tone: "text-[#f2c55c]" },
+  worldView: { icon: MapIcon },
 } as const satisfies Record<string, AppIcon>;
 
 export type IconName = keyof typeof icons;
