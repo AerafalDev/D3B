@@ -135,10 +135,18 @@ describe("the World's map", () => {
     fireEvent.pointerMove(map, { clientX: 40, clientY: 40 });
     fireEvent.pointerUp(map, { clientX: 40, clientY: 40 });
     expect(onPick).toHaveBeenCalledTimes(1);
-    // A choice made elsewhere, as the view's, fits the view to it.
+    // A drag that comes back near its start, and a press of another button, pick nothing either.
+    fireEvent.pointerDown(map, { clientX: 10, clientY: 10 });
+    fireEvent.pointerMove(map, { clientX: 60, clientY: 60 });
+    fireEvent.pointerMove(map, { clientX: 11, clientY: 10 });
+    fireEvent.pointerUp(map, { clientX: 11, clientY: 10 });
+    fireEvent.pointerDown(map, { button: 2, clientX: 10, clientY: 10 });
+    fireEvent.pointerUp(map, { button: 2, clientX: 10, clientY: 10 });
+    expect(onPick).toHaveBeenCalledTimes(1);
+    // A choice made elsewhere, as the view's, fits the view to it: map 1, 1 in an empty box, at the least zoom.
     rerender(shown([[1, 1]]));
     await zoomSaid();
-    expect(moved()).not.toBe(before);
+    expect(moved()).toBe("translate(-3 -3) scale(0.2)");
   });
 
   it("fits the view again after a click that picked nothing new", async () => {

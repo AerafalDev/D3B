@@ -55,7 +55,7 @@ export function WorldMap({ world, chosen, nameAt, hints, onPick }: WorldMapProps
   const view = useRef<View>({ x: 0, y: 0, scale: world.startScale });
   const frame = useRef(0);
   const drag = useRef<{ x: number; y: number } | null>(null);
-  // Where a press began on the screen, to tell a click from a drag.
+  // Where a press of the main button began on the screen, until it moves further than a click would.
   const press = useRef<{ x: number; y: number } | null>(null);
   // A choice made by a click here: the view stays where the player clicked rather than fitting it.
   const stay = useRef(false);
@@ -173,7 +173,7 @@ export function WorldMap({ world, chosen, nameAt, hints, onPick }: WorldMapProps
     press.current = null;
   };
 
-  // A press released where it began is a click on the map under it.
+  // A press of the main button released without having moved further than a click would is a click on the map.
   const click = (event: PointerEvent) => {
     const start = press.current;
     release();
@@ -236,10 +236,14 @@ export function WorldMap({ world, chosen, nameAt, hints, onPick }: WorldMapProps
         }}
         onPointerDown={(event) => {
           drag.current = { x: event.clientX - view.current.x, y: event.clientY - view.current.y };
-          press.current = { x: event.clientX, y: event.clientY };
+          press.current = event.button === 0 ? { x: event.clientX, y: event.clientY } : null;
           event.currentTarget.setPointerCapture?.(event.pointerId);
         }}
         onPointerMove={(event) => {
+          const pressed = press.current;
+          if (pressed !== null && Math.hypot(event.clientX - pressed.x, event.clientY - pressed.y) > CLICK) {
+            press.current = null;
+          }
           const start = drag.current;
           if (start !== null) {
             view.current = { ...view.current, x: event.clientX - start.x, y: event.clientY - start.y };

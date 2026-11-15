@@ -54,7 +54,10 @@ describe("the World tab's Details", () => {
     initI18n();
     await i18next.changeLanguage("fr");
   });
-  afterEach(cleanup);
+  afterEach(async () => {
+    cleanup();
+    await i18next.changeLanguage("fr");
+  });
 
   it("asks for a sub-area while none is chosen", () => {
     render(<WorldDetails atlas={ATLAS} subArea={null} />);
@@ -96,6 +99,21 @@ describe("the World tab's Details", () => {
     expect(details.textContent).toContain("Game sub-area · Astrub");
     expect(details.textContent).toContain("Ash Wood");
     expect(details.textContent).toContain("8 kinds");
-    await i18next.changeLanguage("fr");
+  });
+
+  it("leaves out a resource the atlas lacks, and names a profession it lacks by its number", () => {
+    const forest = ATLAS.areas[0]?.subAreas[0];
+    if (forest === undefined) {
+      throw new Error("the fixture's forest");
+    }
+    const atlas: Atlas_Serialize = {
+      ...ATLAS,
+      resources: [...ATLAS.resources, { id: 600, name: names("Truite"), level: 1, job: 36, icon: null }],
+      areas: [{ id: 0, name: names("Astrub"), subAreas: [{ ...forest, resources: [999, 600] }] }],
+    };
+    render(<WorldDetails atlas={atlas} subArea={97} />);
+    const details = screen.getByRole("complementary", { name: "Détails" });
+    const jobs = within(details).getAllByRole("list", { name: /./ });
+    expect(jobs.map((job) => [job.getAttribute("aria-label"), job.textContent])).toEqual([["36", "Truite1"]]);
   });
 });
