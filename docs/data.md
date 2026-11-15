@@ -17,7 +17,7 @@ flowchart LR
 
 ## The folder
 
-- `manifest.json`: `format` (equal to `data::FORMAT`, currently 3), `build` (such as `3.7.13.17`), `extractor` (its
+- `manifest.json`: `format` (equal to `data::FORMAT`, currently 4), `build` (such as `3.7.13.17`), `extractor` (its
   version) and `tables`, one entry per file, tiles included, in order of `path` (relative, forward slashes), with its
   `name` (the path without its extension, such as `maps/37`, unique) and its `sha256`. Unknown fields are refused.
 - One JSON file per table, an array of records sorted by id, one record per line; names in camelCase.
@@ -44,6 +44,13 @@ flowchart LR
   named by a number, or named twice, and on a job whose icon is missing; four items name an icon the client lacks: they keep their
   `iconId`, are counted, and have none in the app. The app refuses a folder where a job's icon is missing (`-1` is
   none, Base's).
+- **Hints' pictures** are PNG files at the client's size with their transparency, `icons/hints/<gfx>.png` (the owner,
+  2026-11-15): one for each picture a hint of `hints.json` names, the textures of `aa/<platform>/uidarkstone_assets_all.bundle`
+  named by the number, DXT5 at 64 px (streamed, but 470 held in its object) and the class places' RGBA32 at 62 px held
+  in their object, drawn whole and upright (3.7.13.17, `main:docs/client.md`, "Hints"). The extraction fails on such a
+  texture of another shape or format, or named twice, and on a hint without a name, of a category the client lacks, or
+  on a map without a position; graphic 475 has no texture: its one hint keeps its `gfx`, is counted, and has no
+  picture in the app. `realMapId` is not read.
 - **Flags** are the list of the names of the bits a record sets, in camelCase, as the client's enums name them, read
   from its code with Cpp2IL (ADR [0010](adr/0010-flags-by-the-names-of-the-clients-enums.md)).
 - The shape of each table is written down here when its reader lands (`src-tauri/src/data/`, `deny_unknown_fields`).
@@ -67,6 +74,9 @@ flowchart LR
 | `skills.json` | `id`, `name`, `parentJobId`, `gatheredItemId` (its `gatheredRessourceItem`, `null` for -1 and 0), `levelMin`, `range`, `clientDisplay` | `SkillData`, 373 records, 372 written |
 | `icons/items/<iconId>.png` | one item's icon, PNG, 32 px | 12,295 textures, 11,768 written, 19.7 MB as PNG; 4 items name an icon the client lacks |
 | `icons/jobs/<iconId>.png` | one job's icon, PNG, 32 px | 21 BC7 textures, 54 KB as PNG; jobs 75 and 78 share icon 42 |
+| `hints.json` | `id`, `categoryId`, `gfx`, `name`, `mapId`, `x`, `y`, `outdoor`, `subAreaId`, `worldMapId` (the world the client draws it on), `level` | `HintsData`, 835 records in 6 categories |
+| `hint-categories.json` | `id`, `name` | `HintCategoryData`, 12 records |
+| `icons/hints/<gfx>.png` | one hint's picture, PNG, 64 or 62 px | 91 of the 92 pictures the hints name, 395 KB as PNG |
 
 A cell's `flags` pack its booleans, bit 0 first: `mov` (walkable), `los` (line of sight), `nonWalkableDuringFight`,
 `nonWalkableDuringRP`, `farmCell`, `visible`, `havenbagCell`, `roleplayMonstersMovementBlocked`, `red`, `blue`: fields
@@ -110,7 +120,7 @@ OS). It is the file the `data` skill publishes and `data:fetch` unpacks. Format 
 named `client-<build>.tar.gz`; format 2 added the breeds and their heads (the owner, 2026-11-13): since a published
 asset is never replaced, a build's data in a new format is a second asset of the build's release, named by its format.
 Format 3 adds the items, their types, the jobs and their skills, and the items' and jobs' icons (the owner,
-2026-11-14). The C# version's tools on `main`
+2026-11-14); format 4 the world map's hints, their categories and their pictures (step 3's (9b), 2026-11-15). The C# version's tools on `main`
 (`scripts/extract/`, `scripts/unity/`) and its measures (`docs/client.md`) are the sources it was rewritten from.
 
 ## Where it lives

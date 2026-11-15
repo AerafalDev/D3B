@@ -110,11 +110,11 @@ _Updated 2026-11-14._
        `dotnet run --project tools/extractor/src` also prints "Breeds: 19 breeds, 38 heads of 64 px" and writes
        `artifacts/data/client-3.7.13.17-format2.tar.gz`; then `tar -xzf artifacts/data/client-3.7.13.17-format2.tar.gz
        -C data` (after emptying `data/` but its README): a `data/` still in format 1 makes `bun run app` say there is
-       no game data and fails the Rust test that reads `data/`. On a later `next`, the same with format 3's archive,
-       `client-3.7.13.17-format3.tar.gz`, whose run also prints the breeds' line;
+       no game data and fails the Rust test that reads `data/`. On a later `next`, the same with format 4's archive,
+       `client-3.7.13.17-format4.tar.gz`, whose run also prints the breeds' and the hints' lines;
     2. on the same commit, `bun run data:fetch 3.7.13.17` fills `data/` with format 2 (published on 2026-11-13, from
-       `next` 2b0577c), and `bun run app`'s status bar says "Client 3.7.13.17"; on a later `next`, once format 3 is
-       published, the same with format 3;
+       `next` 2b0577c), and `bun run app`'s status bar says "Client 3.7.13.17"; on a later `next`, once format 4 is
+       published, the same with format 4;
     3. with that data, start D3B, then a client, and open a character from the Characters view: its tab shows its
        breed's head, 40 px in a rounded square, in place of its initials, the head of its sex, and "Niveau <n> ·
        <breed> · <state>" with the breed's French name (in English after switching the language: "Level <n> ·
@@ -248,8 +248,7 @@ _Updated 2026-11-14._
   `skills.json`, an item of a missing type and a skill gathering a missing item left out and counted (done in code:
   the installed 3.7.13.17 gives 21,621 items, 236 types, 23 jobs, 372 skills, one item and one skill left out), then the items'
   and jobs' icons at 32 px, still format 3 (done in code: 11,768 items' and 21 jobs' icons, 19.7 MB, four items naming
-  an icon the client lacks counted, an archive of 105 MB in 30 s, the same bytes on two runs); then the owner's extraction and publishing of `client-3.7.13.17-format3.tar.gz`:
-  until then `.github/game-data.json` names format 3, so `data:fetch` and a release find no data; (4) D3B's blueprints in the app, and
+  an icon the client lacks counted, an archive of 105 MB in 30 s, the same bytes on two runs); its publishing superseded by format 4's, (9b); (4) D3B's blueprints in the app, and
   Duplicate, in two PRs: automatic harvest, profession harvest (its profession a setting, through a new "resources of"
   node and a profession value: the owner, 2026-11-14) and hunt, each without problems, their texts in the
   translations (done in code), then the IPC lists them with mine and the files kept, and Duplicate makes
@@ -267,8 +266,11 @@ _Updated 2026-11-14._
   owner, 2026-11-14; done in code); (9) the World view and tab from the tiles (the owner's mock-up 10 of 2026-11-15), in three PRs: the atlas
   through the IPC, the worlds with their tiles and the sub-areas by area (done in code), then the tab and its map (done
   in code), then the view that opens it (done in code); (9b) the extractor: the client's hints
-  (`World.HintsDataRoot`, 835 on 3.7.13.17 in 6 categories, measured by the C# version) and their pictures, a new data
-  format (ADR 0013); (9c) the hints on the World's map, one switch per kind, which also give the nearest bank;
+  (`World.HintsDataRoot`, 835 on 3.7.13.17 in 6 categories, measured by the C# version) and their pictures at the
+  client's 64 px (the owner, 2026-11-15), a new data format, 4 (ADR 0013; done in code: 835 hints, 12 categories, 91
+  pictures of 395 KB, graphic 475's missing one counted, an archive of 105 MB in 28 s); format 3 is then never
+  published: the owner's extraction and publishing of `client-3.7.13.17-format4.tar.gz` replaces it, and until then
+  `.github/game-data.json` names format 4, so `data:fetch` and a release find no data; (9c) the hints on the World's map, one switch per kind, which also give the nearest bank;
   (10) sub-areas as zones, a Zone chosen in a list or on the map; (11) a character's blueprint and settings in its tab;
   (12) links checked by type, and the picker; (13) delete, undo, autosave; (14) variables; (15) functions opened in
   place; (16) events: priority, re-arming, modes, the defaults; (17) comments and reroutes; (18) Align, copy and paste,

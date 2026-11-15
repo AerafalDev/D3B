@@ -5,7 +5,7 @@ use super::graph::WorldGraph;
 use super::items::ItemTables;
 use super::manifest::{DataError, Manifest};
 use super::world::World;
-use super::world_maps::WorldMap;
+use super::world_maps::{Hint, HintCategory, WorldMap};
 
 /// Everything a data folder holds, read and checked once when the app starts.
 #[derive(Debug, Clone, PartialEq)]
@@ -16,6 +16,9 @@ pub struct GameData {
     pub world: World,
     /// The worlds of the map, whose tiles the webview loads from the folder.
     pub worlds: Vec<WorldMap>,
+    /// The world map's hints, whose pictures the webview loads from the folder, and their categories.
+    pub hints: Vec<Hint>,
+    pub hint_categories: Vec<HintCategory>,
     /// The ways between maps.
     pub graph: WorldGraph,
     /// The breeds, in order of id, whose heads the webview loads from the folder.
@@ -30,6 +33,8 @@ impl GameData {
         let manifest = Manifest::load(folder)?;
         let world = World::load(folder, &manifest)?;
         let worlds = manifest.read(folder, "worlds")?;
+        let hints = manifest.read(folder, "hints")?;
+        let hint_categories = manifest.read(folder, "hint-categories")?;
         let graph = WorldGraph::load(folder, &manifest)?;
         let breeds = breeds::load(folder, &manifest)?;
         let items = ItemTables::load(folder, &manifest)?;
@@ -37,6 +42,8 @@ impl GameData {
             manifest,
             world,
             worlds,
+            hints,
+            hint_categories,
             graph,
             breeds,
             items,
@@ -75,6 +82,14 @@ mod tests {
         std::fs::copy(fixtures.join("../breeds/breeds.json"), folder.join("breeds.json"))
             .unwrap_or_else(|error| panic!("{error}"));
         tables.push(r#"{"name":"breeds","path":"breeds.json","sha256":"00"}"#.to_owned());
+        for name in ["hints", "hint-categories"] {
+            std::fs::copy(
+                fixtures.join(format!("../hints/{name}.json")),
+                folder.join(format!("{name}.json")),
+            )
+            .unwrap_or_else(|error| panic!("{error}"));
+            tables.push(format!(r#"{{"name":"{name}","path":"{name}.json","sha256":"00"}}"#));
+        }
         for name in ["items", "item-types", "jobs", "skills"] {
             std::fs::copy(
                 fixtures.join(format!("../items/{name}.json")),
@@ -102,6 +117,7 @@ mod tests {
         assert_eq!(data.graph.edges.len(), 1);
         assert_eq!(data.breeds.len(), 2);
         assert_eq!(data.items.skills.len(), 2);
+        assert_eq!((data.hints.len(), data.hint_categories.len()), (2, 1));
     }
 
     #[test]
@@ -122,5 +138,6 @@ mod tests {
         assert_ne!(data.items.items.len(), 0);
         assert_ne!(data.items.skills.len(), 0);
         assert_ne!(data.items.item_icons.len(), 0);
+        assert_ne!(data.hints.len(), 0);
     }
 }

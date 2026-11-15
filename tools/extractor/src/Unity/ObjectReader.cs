@@ -255,6 +255,17 @@ internal ref struct ObjectReader
         return values;
     }
 
+    /// <summary>Reads an array of bytes, such as a texture's texels held in its object.</summary>
+    public byte[] ReadByteArray(int node)
+    {
+        var array = Items(node, "an array of bytes", "UInt8");
+        var values = Take(Count(1)).ToArray();
+
+        EndItems(node, array);
+
+        return values;
+    }
+
     /// <summary>Reads an array, or a vector, of strings.</summary>
     public string[] ReadStringArray(int node)
     {
