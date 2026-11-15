@@ -133,8 +133,8 @@ mod tests {
         let hints: Vec<Hint> = serde_json::from_str(HINTS).unwrap_or_else(|error| panic!("{error}"));
         let kind = |gfx: i32, category_id: i32| {
             Hint {
-                gfx,
                 category_id,
+                gfx,
                 ..hints[0].clone()
             }
             .kind()

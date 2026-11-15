@@ -60,8 +60,8 @@ describe("the World tab's hints", () => {
     open();
     const switches = screen.getAllByRole("menuitemcheckbox");
     expect(switches.map((one) => [one.textContent, one.getAttribute("aria-checked")])).toEqual([
-      ["Zaaps2", "true"],
-      ["Passages1", "false"],
+      ["Zaaps 2", "true"],
+      ["Passages 1", "false"],
     ]);
     expect(switches[0]?.querySelector("img")?.getAttribute("src")).toBe("asset://410.png");
   });

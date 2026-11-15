@@ -96,6 +96,7 @@ function HintSwitches({ hints }: { hints: readonly AtlasHint_Serialize[] }) {
               <img src={convertFileSrc(picture)} alt="" className="size-5" />
             )}
             {t(`world.kind.${kind}`)}
+            {/* A space, so that a screen reader says the count apart from the name. */}{" "}
             <span className="text-text-muted ml-auto tabular-nums">{count}</span>
           </DropdownMenuCheckboxItem>
         ))}

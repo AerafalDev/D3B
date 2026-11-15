@@ -420,8 +420,8 @@ mod tests {
         let (bank, dungeon) = (&read[0], &read[1]);
         let zaap = Hint {
             id: 9000,
-            gfx: 410,
             category_id: 9,
+            gfx: 410,
             ..bank.clone()
         };
         let hidden = Hint {

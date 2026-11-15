@@ -153,5 +153,15 @@ describe("the World's map", () => {
     // Off the pictures, the map's own name.
     fireEvent.pointerMove(map, { clientX: 2, clientY: 40 });
     expect(tip.textContent).toBe("Forêt · 5, 13");
+    // Zoomed out to 24 %, the pictures are placed again, 116 pixels of the image, and the dungeon, 60 from the zaap,
+    // is crowded out.
+    fireEvent.keyDown(map, { key: "-" });
+    fireEvent.keyDown(map, { key: "-" });
+    fireEvent.keyDown(map, { key: "-" });
+    fireEvent.keyDown(map, { key: "-" });
+    await zoomSaid();
+    expect(document.querySelectorAll("image")).toHaveLength(1);
+    expect(Number(document.querySelector("image")?.getAttribute("width"))).toBeCloseTo(28 / (0.5 / 1.2 ** 4));
+    expect(document.querySelector("circle")).toBeNull();
   });
 });
