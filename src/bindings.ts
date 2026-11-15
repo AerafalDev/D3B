@@ -113,6 +113,38 @@ export type AtlasError =
 { kind: "noData"; reason: string };
 
 /**
+ *  A hint of the world map: what it is, its name, its map's coordinates, a dungeon's level (0 for most others), and its
+ *  picture's file, none for the one the client lacks (475, "Portail vers la Source", on 3.7.13.17).
+ */
+export type AtlasHint = AtlasHint_Serialize | AtlasHint_Deserialize;
+
+/**
+ *  A hint of the world map: what it is, its name, its map's coordinates, a dungeon's level (0 for most others), and its
+ *  picture's file, none for the one the client lacks (475, "Portail vers la Source", on 3.7.13.17).
+ */
+export type AtlasHint_Deserialize = {
+	id: number,
+	kind: HintKind,
+	name: Names,
+	at: [number, number],
+	level: number,
+	picture?: string | null,
+};
+
+/**
+ *  A hint of the world map: what it is, its name, its map's coordinates, a dungeon's level (0 for most others), and its
+ *  picture's file, none for the one the client lacks (475, "Portail vers la Source", on 3.7.13.17).
+ */
+export type AtlasHint_Serialize = {
+	id: number,
+	kind: HintKind,
+	name: Names,
+	at: [number, number],
+	level: number,
+	picture: string | null,
+};
+
+/**
  *  A sub-area, a ready-made zone, and the maps it covers on each world shown; none when no world shows it (112 on
  *  3.7.13.17, dungeons and hidden worlds' among them), and never more than one world there, so its maps say its world.
  */
@@ -148,6 +180,8 @@ export type AtlasWorld_Deserialize = {
 	startScale: number | null,
 	/**  Its levels of zoom, largest first. */
 	zooms: AtlasZoom[],
+	/**  The hints the client draws on it, by kind then id. */
+	hints: AtlasHint_Deserialize[],
 };
 
 /**
@@ -168,6 +202,8 @@ export type AtlasWorld_Serialize = {
 	startScale: number | null,
 	/**  Its levels of zoom, largest first. */
 	zooms: AtlasZoom[],
+	/**  The hints the client draws on it, by kind then id. */
+	hints: AtlasHint_Serialize[],
 };
 
 /**
@@ -545,6 +581,9 @@ export type GraphsError =
 { kind: "noSuchBlueprint" } | 
 /**  A bug of this version, said as it came: D3B's own blueprints do not read, or the read panicked. */
 { kind: "bug"; reason: string };
+
+/**  What a hint is, in order of use to a bot (`data::HintKind`). */
+export type HintKind = "zaap" | "bank" | "dungeon" | "workshop" | "auctionHouse" | "classPlace" | "transport" | "place" | "passage";
 
 /**  New frames of the connection watched; `skipped` more came than one batch carries. */
 export type InspectorFrames = InspectorFrames_Serialize | InspectorFrames_Deserialize;

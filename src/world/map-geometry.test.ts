@@ -22,6 +22,7 @@ const world: AtlasWorld = {
   maxScale: 1,
   startScale: 0.5,
   zooms: [zoom(100, 2500, 1100, 3, 2), zoom(40, 1000, 440, 1, 1), zoom(20, 500, 220, 1, 1)],
+  hints: [],
 };
 
 describe("the World's map geometry", () => {

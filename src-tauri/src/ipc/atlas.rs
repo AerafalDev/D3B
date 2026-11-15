@@ -1,6 +1,6 @@
 //! The world's atlas, what the World view and tab draw (`docs/bot.md`, "In the app"): the worlds the client shows,
-//! each zoom with the files of its tiles, and the game's sub-areas grouped by area, each with the maps it covers on
-//! each of those worlds.
+//! each zoom with the files of its tiles and its hints, and the game's sub-areas grouped by area, each with the maps it
+//! covers on each of those worlds.
 
 use std::collections::{BTreeMap, BTreeSet};
 use std::path::Path;
@@ -11,7 +11,7 @@ use tauri::Manager;
 
 use super::LoadedData;
 use super::character::Names;
-use crate::data::{World, WorldMap};
+use crate::data::{self, Hint, World, WorldMap};
 
 /// The worlds and the sub-areas the World view lists, in order of id.
 #[derive(Debug, Clone, PartialEq, Serialize, Type)]
@@ -38,6 +38,51 @@ pub struct AtlasWorld {
     pub start_scale: f32,
     /// Its levels of zoom, largest first.
     pub zooms: Vec<AtlasZoom>,
+    /// The hints the client draws on it, by kind then id.
+    pub hints: Vec<AtlasHint>,
+}
+
+/// A hint of the world map: what it is, its name, its map's coordinates, a dungeon's level (0 for most others), and its
+/// picture's file, none for the one the client lacks (475, "Portail vers la Source", on 3.7.13.17).
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Type)]
+pub struct AtlasHint {
+    pub id: i32,
+    pub kind: HintKind,
+    pub name: Names,
+    pub at: [i32; 2],
+    pub level: u32,
+    pub picture: Option<String>,
+}
+
+/// What a hint is, in order of use to a bot (`data::HintKind`).
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Type)]
+#[serde(rename_all = "camelCase")]
+pub enum HintKind {
+    Zaap,
+    Bank,
+    Dungeon,
+    Workshop,
+    AuctionHouse,
+    ClassPlace,
+    Transport,
+    Place,
+    Passage,
+}
+
+impl From<data::HintKind> for HintKind {
+    fn from(kind: data::HintKind) -> Self {
+        match kind {
+            data::HintKind::Zaap => Self::Zaap,
+            data::HintKind::Bank => Self::Bank,
+            data::HintKind::Dungeon => Self::Dungeon,
+            data::HintKind::Workshop => Self::Workshop,
+            data::HintKind::AuctionHouse => Self::AuctionHouse,
+            data::HintKind::ClassPlace => Self::ClassPlace,
+            data::HintKind::Transport => Self::Transport,
+            data::HintKind::Place => Self::Place,
+            data::HintKind::Passage => Self::Passage,
+        }
+    }
 }
 
 /// A level of a world's image: its size, and its tiles' files row by row from the top left, 1,024 pixels a side but for
@@ -93,7 +138,10 @@ pub enum AtlasError {
 pub async fn world_atlas(app: tauri::AppHandle) -> Result<Atlas, AtlasError> {
     let built = tauri::async_runtime::spawn_blocking(move || {
         let data = app.state::<LoadedData>();
-        let game = data.0.as_ref().map(|game| (&game.world, game.worlds.as_slice()));
+        let game = data
+            .0
+            .as_ref()
+            .map(|game| (&game.world, game.worlds.as_slice(), game.hints.as_slice()));
         read(game, data.1.as_deref())
     });
     built.await.unwrap_or_else(|error| {
@@ -103,10 +151,13 @@ pub async fn world_atlas(app: tauri::AppHandle) -> Result<Atlas, AtlasError> {
     })
 }
 
-/// The atlas of the game data's world and worlds, whose tiles are in `folder`, or why there is none.
-fn read(game: Result<(&World, &[WorldMap]), &String>, folder: Option<&Path>) -> Result<Atlas, AtlasError> {
+/// The game data's world, worlds and hints.
+type Game<'a> = (&'a World, &'a [WorldMap], &'a [Hint]);
+
+/// The atlas of the game data, whose tiles and pictures are in `folder`, or why there is none.
+fn read(game: Result<Game, &String>, folder: Option<&Path>) -> Result<Atlas, AtlasError> {
     match (game, folder) {
-        (Ok((world, worlds)), Some(folder)) => Ok(atlas(world, worlds, folder)),
+        (Ok(game), Some(folder)) => Ok(atlas(game, folder)),
         (Err(reason), _) => Err(AtlasError::NoData { reason: reason.clone() }),
         (Ok(_), None) => Err(AtlasError::NoData {
             reason: "the game data's folder is unknown".into(),
@@ -121,9 +172,9 @@ fn names(text: &crate::data::Text) -> Names {
     }
 }
 
-/// The atlas of `world` and `worlds`, whose tiles are in `folder`: the worlds the client shows, and the named areas'
-/// named sub-areas that hold at least one map, their maps on the worlds shown.
-fn atlas(world: &World, worlds: &[WorldMap], folder: &Path) -> Atlas {
+/// The atlas of the game data, whose tiles and pictures are in `folder`: the worlds the client shows with their hints,
+/// and the named areas' named sub-areas that hold at least one map, their maps on the worlds shown.
+fn atlas((world, worlds, hints): Game, folder: &Path) -> Atlas {
     let shown: Vec<&WorldMap> = worlds.iter().filter(|one| one.visible).collect();
     let shown_ids: BTreeSet<i32> = shown.iter().map(|one| one.id).collect();
     // Each sub-area's maps, by world then by coordinates: a map's floors share them.
@@ -173,13 +224,30 @@ fn atlas(world: &World, worlds: &[WorldMap], folder: &Path) -> Atlas {
         })
         .collect();
     Atlas {
-        worlds: shown.into_iter().map(|one| atlas_world(one, folder)).collect(),
+        worlds: shown.into_iter().map(|one| atlas_world(one, hints, folder)).collect(),
         areas,
     }
 }
 
-fn atlas_world(world: &WorldMap, folder: &Path) -> AtlasWorld {
+fn atlas_world(world: &WorldMap, hints: &[Hint], folder: &Path) -> AtlasWorld {
     let tiles = folder.join("tiles").join(world.id.to_string());
+    let pictures = folder.join("icons").join("hints");
+    let mut drawn: Vec<&Hint> = hints.iter().filter(|hint| hint.world_map_id == world.id).collect();
+    drawn.sort_by_key(|hint| (hint.kind(), hint.id));
+    let drawn = drawn
+        .into_iter()
+        .map(|hint| {
+            let picture = pictures.join(format!("{}.png", hint.gfx));
+            AtlasHint {
+                id: hint.id,
+                kind: hint.kind().into(),
+                name: names(&hint.name),
+                at: [hint.x, hint.y],
+                level: hint.level,
+                picture: picture.is_file().then(|| picture.to_string_lossy().into_owned()),
+            }
+        })
+        .collect();
     AtlasWorld {
         id: world.id,
         name: world.name.as_ref().map(names),
@@ -206,6 +274,7 @@ fn atlas_world(world: &WorldMap, folder: &Path) -> AtlasWorld {
                 }
             })
             .collect(),
+        hints: drawn,
     }
 }
 
@@ -286,7 +355,7 @@ mod tests {
     #[test]
     fn gives_the_worlds_shown_with_each_tile_s_file() {
         let folder = Path::new("data");
-        let atlas = atlas(&world(), &worlds(), folder);
+        let atlas = atlas((&world(), &worlds(), &[]), folder);
         assert_eq!(atlas.worlds.iter().map(|one| one.id).collect::<Vec<_>>(), [1, 2]);
         let first = &atlas.worlds[0];
         assert_eq!(
@@ -313,7 +382,7 @@ mod tests {
 
     #[test]
     fn groups_the_named_sub_areas_that_hold_a_map_by_named_area_with_their_maps_on_the_worlds_shown() {
-        let atlas = atlas(&world(), &worlds(), Path::new("data"));
+        let atlas = atlas((&world(), &worlds(), &[]), Path::new("data"));
         // Area 1 is unnamed and area 2's sub-area holds no map; sub-area 96 is unnamed.
         assert_eq!(atlas.areas.len(), 1);
         let astrub = &atlas.areas[0];
@@ -341,6 +410,54 @@ mod tests {
         assert_eq!(astrub.sub_areas[1].maps, []);
     }
 
+    // The extractor's own tests write this file (tools/extractor/tests/Hints/HintTablesTests.cs): a bank on world 1, a
+    // dungeon on world 2.
+    const HINTS: &str = include_str!("../../../tools/extractor/tests/fixtures/hints/hints.json");
+
+    #[test]
+    fn gives_each_world_shown_its_hints_by_kind_with_their_pictures() {
+        let read: Vec<Hint> = parse(HINTS);
+        let (bank, dungeon) = (&read[0], &read[1]);
+        let zaap = Hint {
+            id: 9000,
+            category_id: 9,
+            gfx: 410,
+            ..bank.clone()
+        };
+        let hidden = Hint {
+            id: 9001,
+            world_map_id: 9,
+            ..bank.clone()
+        };
+        let folder = std::env::temp_dir().join(format!("d3b-atlas-{}", std::process::id()));
+        let pictures = folder.join("icons").join("hints");
+        std::fs::create_dir_all(&pictures).unwrap_or_else(|error| panic!("{error}"));
+        std::fs::write(pictures.join("401.png"), b"png").unwrap_or_else(|error| panic!("{error}"));
+        let hints = [bank.clone(), dungeon.clone(), zaap, hidden];
+        let atlas = atlas((&world(), &worlds(), &hints), &folder);
+        std::fs::remove_dir_all(&folder).unwrap_or_else(|error| panic!("{error}"));
+
+        // World 1: the zaap before the bank, whatever their ids; world 9 is not shown.
+        let first: Vec<(i32, HintKind)> = atlas.worlds[0].hints.iter().map(|hint| (hint.id, hint.kind)).collect();
+        assert_eq!(first, [(9000, HintKind::Zaap), (2733, HintKind::Bank)]);
+        let bank = &atlas.worlds[0].hints[1];
+        assert_eq!((bank.name.fr.as_str(), bank.at, bank.level), ("Banque", [4, -18], 0));
+        assert_eq!(
+            bank.picture,
+            Some(pictures.join("401.png").to_string_lossy().into_owned())
+        );
+        // The zaap's picture is not in the folder, as 475's is not in the client.
+        assert_eq!(atlas.worlds[0].hints[0].picture, None);
+        let second = &atlas.worlds[1].hints;
+        assert_eq!(
+            second
+                .iter()
+                .map(|hint| (hint.id, hint.kind, hint.level))
+                .collect::<Vec<_>>(),
+            [(2800, HintKind::Dungeon, 50)]
+        );
+    }
+
     #[test]
     fn says_why_there_is_no_atlas() {
         assert_eq!(
@@ -351,7 +468,7 @@ mod tests {
         );
         let (world, worlds) = (world(), worlds());
         assert_eq!(
-            read(Ok((&world, &worlds)), None),
+            read(Ok((&world, &worlds, &[])), None),
             Err(AtlasError::NoData {
                 reason: "the game data's folder is unknown".into()
             })
@@ -363,6 +480,6 @@ mod tests {
         let mut world = world();
         world.areas.retain(|area| area.id != 0);
         // Only area 2 is left, whose sub-area holds no map.
-        assert_eq!(atlas(&world, &worlds(), Path::new("data")).areas, []);
+        assert_eq!(atlas((&world, &worlds(), &[]), Path::new("data")).areas, []);
     }
 }
