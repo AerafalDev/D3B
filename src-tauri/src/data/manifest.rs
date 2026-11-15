@@ -124,7 +124,7 @@ mod tests {
     use super::*;
 
     const VALID: &str = r#"{
-        "format": 3,
+        "format": 4,
         "build": "3.7.13.17",
         "extractor": "0.1.0",
         "tables": [{ "name": "items", "path": "items.json", "sha256": "00" }]
@@ -148,10 +148,10 @@ mod tests {
 
     #[test]
     fn refuses_another_format() {
-        let text = VALID.replace("\"format\": 3", "\"format\": 2");
+        let text = VALID.replace("\"format\": 4", "\"format\": 3");
         assert!(matches!(
             Manifest::parse(&text),
-            Err(DataError::Format { found: 2, expected: 3 })
+            Err(DataError::Format { found: 3, expected: 4 })
         ));
     }
 

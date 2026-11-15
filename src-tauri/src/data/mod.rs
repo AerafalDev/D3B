@@ -40,8 +40,9 @@ pub use world_maps::WorldMap;
 
 /// The format of the folder this version of the code reads. The extractor writes the same number in the manifest
 /// (`DataFolder.Format`); a different one is refused rather than half read. Format 2 adds the breeds and their heads,
-/// format 3 the items, their types, the jobs and their skills, and the items' and jobs' icons.
-pub const FORMAT: u32 = 3;
+/// format 3 the items, their types, the jobs and their skills, and the items' and jobs' icons, format 4 the world map's
+/// hints, their categories and their pictures.
+pub const FORMAT: u32 = 4;
 
 #[cfg(test)]
 mod tests {

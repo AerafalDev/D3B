@@ -38,9 +38,65 @@ pub struct Zoom {
     pub rows: u32,
 }
 
+/// A hint of the world map (`HintsData`, 3.7.13.17, `main:docs/client.md`, "Hints"): what stands on a map, a zaap,
+/// a bank or a dungeon's door, drawn with its picture `icons/hints/<gfx>.png`, which the client lacks for a few.
+#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct Hint {
+    pub id: i32,
+    pub category_id: i32,
+    /// Its picture's number, which tells apart what a category mixes: 401 a bank, 410 a zaap.
+    pub gfx: i32,
+    pub name: Text,
+    pub map_id: i32,
+    pub x: i32,
+    pub y: i32,
+    pub outdoor: bool,
+    pub sub_area_id: i32,
+    /// The world the client draws it on, which for 36 hints is not its map's.
+    pub world_map_id: i32,
+    /// A dungeon's level, 0 for most others.
+    pub level: u32,
+}
+
+/// A category of the hints (`HintCategoryData`, 3.7.13.17), such as Transports; 6 of the 12 hold hints.
+#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct HintCategory {
+    pub id: i32,
+    pub name: Text,
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    // The extractor's own tests write these files byte for byte (tools/extractor/tests/Hints/HintTablesTests.cs).
+    const HINTS: &str = include_str!("../../../tools/extractor/tests/fixtures/hints/hints.json");
+    const CATEGORIES: &str = include_str!("../../../tools/extractor/tests/fixtures/hints/hint-categories.json");
+
+    #[test]
+    fn reads_the_hints_and_categories_the_extractor_writes() {
+        let hints: Vec<Hint> = serde_json::from_str(HINTS).unwrap_or_else(|error| panic!("{error}"));
+        let categories: Vec<HintCategory> = serde_json::from_str(CATEGORIES).unwrap_or_else(|error| panic!("{error}"));
+        assert_eq!(
+            (
+                hints[0].gfx,
+                hints[0].name.fr.as_str(),
+                hints[0].outdoor,
+                hints[0].world_map_id
+            ),
+            (401, "Banque", true, 1)
+        );
+        assert_eq!((hints[1].level, hints[1].outdoor), (50, false));
+        assert_eq!((categories[0].id, categories[0].name.en.as_str()), (4, "Miscellaneous"));
+    }
+
+    #[test]
+    fn refuses_a_hint_of_another_shape() {
+        let unknown = HINTS.replacen(r#""level":0"#, r#""level":0,"realMapId":0"#, 1);
+        assert!(serde_json::from_str::<Vec<Hint>>(&unknown).is_err());
+    }
 
     // The extractor's own tests write this file byte for byte (tools/extractor/tests/WorldMaps/WorldMapTablesTests.cs).
     const WORLDS: &str = include_str!("../../../tools/extractor/tests/fixtures/world/worlds.json");

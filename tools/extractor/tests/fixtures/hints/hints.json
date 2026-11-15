@@ -1,0 +1,4 @@
+[
+{"id":2733,"categoryId":4,"gfx":401,"name":{"fr":"Banque","en":"Bank","de":"Bank","es":"Banco","pt":"Banco"},"mapId":191104002,"x":4,"y":-18,"outdoor":true,"subAreaId":95,"worldMapId":1,"level":0},
+{"id":2800,"categoryId":6,"gfx":422,"name":{"fr":"Banque","en":"Bank","de":"Bank","es":"Banco","pt":"Banco"},"mapId":7,"x":-2,"y":3,"outdoor":false,"subAreaId":96,"worldMapId":2,"level":50}
+]

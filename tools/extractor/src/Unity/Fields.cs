@@ -115,6 +115,10 @@ internal sealed class Fields
                 return reader.ReadSingleArray(node);
             case "int" or "SInt32" or "unsigned int" or "UInt32":
                 return reader.ReadInt32Array(node);
+            // Bytes laid out one after the other, an array or a vector of them alone, such as a texture's texels; a struct
+            // that holds such an array among other fields is skipped below.
+            case "UInt8" when !item.Align && (array == node || tree[node].Children.Length is 1):
+                return reader.ReadByteArray(node);
         }
 
         if (item.Children.Length > 0)
@@ -122,7 +126,7 @@ internal sealed class Fields
             return ReadItems(ref reader, node, owner);
         }
 
-        // An array of another primitive, such as bytes, is not read by any table yet.
+        // An array of another primitive is not read by any table yet.
         reader.Skip(node);
 
         return null;
@@ -254,6 +258,12 @@ internal sealed class Fields
     public int[] Int32Array(string name)
     {
         return Get<int[]>(name);
+    }
+
+    /// <summary>Gets an array of bytes, such as a texture's <c>image data</c>.</summary>
+    public byte[] Bytes(string name)
+    {
+        return Get<byte[]>(name);
     }
 
     public float[] SingleArray(string name)

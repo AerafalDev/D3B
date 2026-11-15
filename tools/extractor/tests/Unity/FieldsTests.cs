@@ -66,11 +66,42 @@ public sealed class FieldsTests
     }
 
     [Fact]
-    public void FieldsNoTableReadAreSkippedWhole()
+    public void AnArrayOfBytesIsReadAndAlignedAfter()
     {
-        var record = Read([.. Vector(1, "bytes", "UInt8", 1), Node(1, "int", "id", 4)], [.. Bytes(3), 1, 2, 3, 0, .. Bytes(8)]);
+        var record = Read([.. Vector(1, "image data", "UInt8", 1), Node(1, "int", "id", 4)], [.. Bytes(3), 1, 2, 3, 0, .. Bytes(8)]);
 
-        Assert.False(record.Has("bytes"));
+        Assert.Equal([1, 2, 3], record.Bytes("image data"));
+        Assert.Equal(8, record.Int32("id"));
+    }
+
+    [Fact]
+    public void ATexturesImageDataItsOwnArrayIsRead()
+    {
+        // TypelessData: the field is the array itself, its size then its bytes.
+        var record = Read([Array(1, "image data"), Node(2, "int", "size", 4), Node(2, "UInt8", "data", 1), Node(1, "int", "id", 4)], [.. Bytes(2), 7, 9, .. Bytes(8)]);
+
+        Assert.Equal([7, 9], record.Bytes("image data"));
+        Assert.Equal(8, record.Int32("id"));
+    }
+
+    [Fact]
+    public void AnArrayOfAlignedBytesIsSkipped()
+    {
+        var record = Read([Node(1, "vector", "flags"), Array(2), Node(3, "int", "size", 4), Node(3, "UInt8", "data", 1, align: true), Node(1, "int", "id", 4)], [.. Bytes(1), 5, 0, 0, 0, .. Bytes(8)]);
+
+        Assert.False(record.Has("flags"));
+        Assert.Equal(8, record.Int32("id"));
+    }
+
+    [Fact]
+    public void AStructHoldingBytesAmongOtherFieldsIsSkippedWhole()
+    {
+        // Its array is its own child, beside a count: read as a lone array of bytes, the count would be lost.
+        var record = Read(
+            [Node(1, "Blob", "blob"), Node(2, "int", "count", 4), Array(2), Node(3, "int", "size", 4), Node(3, "UInt8", "data", 1), Node(1, "int", "id", 4)],
+            [.. Bytes(7), .. Bytes(2), 1, 2, .. Bytes(8)]);
+
+        Assert.False(record.Has("blob"));
         Assert.Equal(8, record.Int32("id"));
     }
 
