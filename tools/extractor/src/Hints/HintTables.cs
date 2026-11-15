@@ -13,17 +13,22 @@ namespace D3B.Extractor.Hints;
 /// </remarks>
 internal static class HintTables
 {
+    /// <summary>The pictures the hints name that the client lacks, as measured: 475, "Portail vers la Source" (3.7.13.17).</summary>
+    public static readonly IReadOnlySet<int> MeasuredMissing = new HashSet<int> { 475 };
+
     /// <summary>Reads the hints, their categories and their pictures from the client and writes them into the folder.</summary>
     /// <exception cref="InvalidDataException">The client's tables or pictures are not what the extractor measured.</exception>
     public static void Extract(ClientInstall client, TextFiles texts, IReadOnlyList<MapPosition> positions, DataFolder folder, TextWriter output)
     {
-        var categories = ReadCategories(DataTable.ReadById(client, "hintcategories"), texts);
-        var hints = ReadHints(DataTable.ReadById(client, "hints"), texts);
+        var categories = ReadCategories(DataTable.ReadById(client, "hintcategories"), texts.Name);
+        var hints = ReadHints(DataTable.ReadById(client, "hints"), texts.Name);
 
         Check(hints, categories, positions);
 
         var graphics = hints.Select(hint => hint.Gfx).ToHashSet();
         var pictures = HintPictures.Read(client, graphics);
+
+        CheckPictures(graphics, pictures.Keys);
 
         folder.Write("hints.json", WriteHints(hints));
         folder.Write("hint-categories.json", WriteCategories(categories));
@@ -40,7 +45,9 @@ internal static class HintTables
     }
 
     /// <exception cref="InvalidDataException">A category has no name.</exception>
-    public static IReadOnlyList<HintCategory> ReadCategories(IEnumerable<Fields> records, TextFiles texts)
+    /// <param name="records">The table's records.</param>
+    /// <param name="name">The text a record's <c>nameId</c> names, <see langword="null"/> for none: <see cref="TextFiles.Name"/>.</param>
+    public static IReadOnlyList<HintCategory> ReadCategories(IEnumerable<Fields> records, Func<long, Text?> name)
     {
         return
         [
@@ -48,14 +55,16 @@ internal static class HintTables
                 .Select(record => new HintCategory
                 {
                     Id = record.Int32("id"),
-                    Name = texts.Name(record.Int32("nameId")) ?? throw new InvalidDataException($"Hint category {record.Int32("id")} has no name."),
+                    Name = name(record.Int32("nameId")) ?? throw new InvalidDataException($"Hint category {record.Int32("id")} has no name."),
                 })
                 .OrderBy(category => category.Id),
         ];
     }
 
     /// <exception cref="InvalidDataException">A hint has no name, or is outdoor by a value other than 0 or 1.</exception>
-    public static IReadOnlyList<Hint> ReadHints(IEnumerable<Fields> records, TextFiles texts)
+    /// <param name="records">The table's records.</param>
+    /// <param name="name">The text a record's <c>nameId</c> names, <see langword="null"/> for none: <see cref="TextFiles.Name"/>.</param>
+    public static IReadOnlyList<Hint> ReadHints(IEnumerable<Fields> records, Func<long, Text?> name)
     {
         return
         [
@@ -69,7 +78,7 @@ internal static class HintTables
                         Id = id,
                         CategoryId = record.Int32("categoryId"),
                         Gfx = record.Int32("gfx"),
-                        Name = texts.Name(record.Int32("nameId")) ?? throw new InvalidDataException($"Hint {id} has no name."),
+                        Name = name(record.Int32("nameId")) ?? throw new InvalidDataException($"Hint {id} has no name."),
                         MapId = record.Int32("mapId"),
                         X = record.Int32("x"),
                         Y = record.Int32("y"),
@@ -106,6 +115,18 @@ internal static class HintTables
             {
                 throw new InvalidDataException($"Hint {hint.Id} stands on map {hint.MapId}, which has no position.");
             }
+        }
+    }
+
+    /// <summary>Checks that the client lacks only the pictures measured missing, so that a texture renamed or moved fails the extraction rather than leaving the map without pictures.</summary>
+    /// <exception cref="InvalidDataException">Another picture is missing.</exception>
+    public static void CheckPictures(IReadOnlySet<int> graphics, IEnumerable<int> found)
+    {
+        var missing = graphics.Except(found).Except(MeasuredMissing).Order().ToList();
+
+        if (missing.Count > 0)
+        {
+            throw new InvalidDataException($"The client lacks the pictures of hint graphics {string.Join(", ", missing)}, measured present.");
         }
     }
 

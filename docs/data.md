@@ -48,9 +48,9 @@ flowchart LR
   2026-11-15): one for each picture a hint of `hints.json` names, the textures of `aa/<platform>/uidarkstone_assets_all.bundle`
   named by the number, DXT5 at 64 px (streamed, but 470 held in its object) and the class places' RGBA32 at 62 px held
   in their object, drawn whole and upright (3.7.13.17, `main:docs/client.md`, "Hints"). The extraction fails on such a
-  texture of another shape or format, or named twice, and on a hint without a name, of a category the client lacks, or
-  on a map without a position; graphic 475 has no texture: its one hint keeps its `gfx`, is counted, and has no
-  picture in the app. `realMapId` is not read.
+  texture of another shape or format, or named twice, on a picture missing but 475's, and on a hint without a name,
+  outdoor by a value other than 0 or 1, of a category the client lacks, or on a map without a position; graphic 475
+  has no texture: its one hint keeps its `gfx`, is counted, and has no picture in the app. `realMapId` is not read.
 - **Flags** are the list of the names of the bits a record sets, in camelCase, as the client's enums name them, read
   from its code with Cpp2IL (ADR [0010](adr/0010-flags-by-the-names-of-the-clients-enums.md)).
 - The shape of each table is written down here when its reader lands (`src-tauri/src/data/`, `deny_unknown_fields`).
