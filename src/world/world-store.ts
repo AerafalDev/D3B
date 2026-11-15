@@ -47,11 +47,10 @@ export const useWorld = create<WorldStore>((set, get) => ({
         error: typeof failure?.kind === "string" ? failure : { kind: "noData", reason: String(error) },
       };
     }
-    const atlas = read.state === "read" ? read.atlas : null;
-    const world = get().world;
-    // The first world when the atlas has it, else its first.
-    const known = atlas === null || atlas.worlds.some((one) => one.id === world);
-    set({ read, world: known ? world : (atlas.worlds[0]?.id ?? world) });
+    // The world asked for when the atlas has it, else the atlas's first.
+    const { world } = get();
+    const worlds = read.state === "read" ? read.atlas.worlds : [];
+    set({ read, world: worlds.some((one) => one.id === world) ? world : (worlds[0]?.id ?? world) });
   },
 
   pick: (subArea) => {
