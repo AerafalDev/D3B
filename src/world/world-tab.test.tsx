@@ -2,7 +2,7 @@ import { act, cleanup, render, screen } from "@testing-library/react";
 import i18next from "i18next";
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 
-import type { Atlas_Serialize } from "@/bindings.ts";
+import type { Atlas_Serialize, AtlasWorld_Serialize as AtlasWorld } from "@/bindings.ts";
 import { initI18n } from "@/i18n/i18n.ts";
 
 // The back end, faked: the atlas the tab reads.
@@ -19,7 +19,7 @@ const { useWorld } = await import("./world-store.ts");
 
 const names = (fr: string, en = fr) => ({ fr, en });
 const BASE = { origin: [0, 0], mapSize: [10, 10], size: [100, 100], minScale: 0.2, maxScale: 1, startScale: 0.5 };
-const world = (id: number, fr: string) => ({ ...BASE, id, name: names(fr), zooms: [] }) as Atlas_Serialize["worlds"][0];
+const world = (id: number, fr: string) => ({ ...BASE, id, name: names(fr), zooms: [] }) as unknown as AtlasWorld;
 
 const ATLAS: Atlas_Serialize = {
   worlds: [world(1, "Monde des Douze"), world(2, "Monde d'Incarnam")],
@@ -70,24 +70,14 @@ describe("the World tab", () => {
   });
   afterEach(cleanup);
 
-  it("reads the atlas once, and shows the first world's map with nothing chosen", async () => {
+  it("reads the atlas once, opens on its first world when the one asked for is not in it, nothing chosen", async () => {
+    useWorld.setState({ world: 9 });
     await shown(<WorldTab />);
     await useWorld.getState().load();
     expect(backEnd.atlas).toHaveBeenCalledTimes(1);
+    expect(useWorld.getState().world).toBe(1);
     expect(screen.getByText("carte vide")).toBeTruthy();
     expect(screen.queryByRole("heading")).toBeNull();
-  });
-
-  it("opens on the atlas's first world when the one asked for is not in it", async () => {
-    useWorld.setState({ world: 9 });
-    await shown(<WorldTab />);
-    expect(useWorld.getState().world).toBe(1);
-  });
-
-  it("keeps the world shown when a sub-area chosen is on none", async () => {
-    useWorld.setState({ read: { state: "read", atlas: ATLAS }, world: 2 });
-    useWorld.getState().pick(4);
-    expect(useWorld.getState()).toMatchObject({ picked: 4, world: 2 });
   });
 
   it("goes to the world that holds a sub-area chosen, and says its name, area, level and maps", async () => {
@@ -99,8 +89,11 @@ describe("the World tab", () => {
     expect(screen.getByText("carte 1")).toBeTruthy();
   });
 
-  it("says a sub-area is not on the map, or on which world it is", async () => {
-    useWorld.setState({ read: { state: "read", atlas: ATLAS }, picked: 4, world: 1 });
+  it("keeps the world for a sub-area on none, saying it is not on the map, or on which world it is", async () => {
+    useWorld.setState({ read: { state: "read", atlas: ATLAS }, world: 2 });
+    useWorld.getState().pick(4);
+    expect(useWorld.getState()).toMatchObject({ picked: 4, world: 2 });
+    useWorld.setState({ world: 1 });
     await shown(<WorldTab />);
     expect(document.body.textContent).toContain("Astrub · niv. 30 · Pas sur la carte");
     expect(screen.getByText("carte vide")).toBeTruthy();
