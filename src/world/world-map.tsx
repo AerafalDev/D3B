@@ -126,6 +126,11 @@ export function WorldMap({ world, chosen, nameAt }: WorldMapProps) {
     }
   };
 
+  // A drag ends with its button, or when the system takes the pointer.
+  const release = () => {
+    drag.current = null;
+  };
+
   const keys = (event: KeyboardEvent) => {
     const moves: Record<string, [number, number]> = {
       ArrowLeft: [PAN, 0],
@@ -183,15 +188,9 @@ export function WorldMap({ world, chosen, nameAt }: WorldMapProps) {
           const at = point(event);
           hover(at.x, at.y);
         }}
-        onPointerUp={() => {
-          drag.current = null;
-        }}
-        onPointerCancel={() => {
-          drag.current = null;
-        }}
-        onLostPointerCapture={() => {
-          drag.current = null;
-        }}
+        onPointerUp={release}
+        onPointerCancel={release}
+        onLostPointerCapture={release}
         onPointerLeave={() => {
           if (tip.current !== null) {
             tip.current.hidden = true;

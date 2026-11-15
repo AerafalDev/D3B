@@ -8,10 +8,7 @@ export type AtlasWorld = Omit<AtlasWorld_Serialize, "mapSize" | "minScale" | "ma
   startScale: number;
 };
 
-/**
- * `world` with its numbers all there: the IPC types a float as possibly `null`, which serde writes for a NaN, and the
- * extractor writes none; a missing one reads as 1.
- */
+/** `world` with its numbers all there: the IPC types a float as nullable (a NaN), which the extractor never writes. */
 export function drawable(world: AtlasWorld_Serialize): AtlasWorld {
   return {
     ...world,

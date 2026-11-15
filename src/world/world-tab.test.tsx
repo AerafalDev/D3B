@@ -18,17 +18,8 @@ const { WorldActions } = await import("./world-actions.tsx");
 const { useWorld } = await import("./world-store.ts");
 
 const names = (fr: string, en = fr) => ({ fr, en });
-const world = (id: number, fr: string) => ({
-  id,
-  name: names(fr),
-  origin: [0, 0] as [number, number],
-  mapSize: [10, 10] as [number, number],
-  size: [100, 100] as [number, number],
-  minScale: 0.2,
-  maxScale: 1,
-  startScale: 0.5,
-  zooms: [],
-});
+const BASE = { origin: [0, 0], mapSize: [10, 10], size: [100, 100], minScale: 0.2, maxScale: 1, startScale: 0.5 };
+const world = (id: number, fr: string) => ({ ...BASE, id, name: names(fr), zooms: [] }) as Atlas_Serialize["worlds"][0];
 
 const ATLAS: Atlas_Serialize = {
   worlds: [world(1, "Monde des Douze"), world(2, "Monde d'Incarnam")],

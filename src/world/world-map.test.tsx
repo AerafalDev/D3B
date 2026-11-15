@@ -74,7 +74,7 @@ describe("the World's map", () => {
     expect(moved()).toBe("translate(-25 -25) scale(0.5)");
   });
 
-  it("fits the chosen maps once a box with no size, a tab behind another, is shown", async () => {
+  it("fits the chosen maps, drawn in teal, once a box with no size, a tab behind another, is shown", async () => {
     let resized = () => {};
     vi.stubGlobal(
       "ResizeObserver",
@@ -93,14 +93,10 @@ describe("the World's map", () => {
     Object.defineProperty(box, "clientHeight", { value: 350 });
     act(() => resized());
     expect(await zoomSaid()).toBe("100 %");
+    // The chosen map in teal, outlined.
+    const [cells, outline] = [...document.querySelectorAll("path")];
+    expect([cells?.getAttribute("d"), outline?.getAttribute("stroke")]).toEqual(["M0,0H10V10H0Z", "#39c5bb"]);
     vi.unstubAllGlobals();
-  });
-
-  it("outlines the chosen maps in teal", () => {
-    const { container } = render(<WorldMap world={world} chosen={[[0, 0]]} nameAt={() => null} />);
-    const [cells, outline] = [...container.querySelectorAll("path")];
-    expect(cells?.getAttribute("d")).toBe("M0,0H10V10H0Z");
-    expect(outline?.getAttribute("stroke")).toBe("#39c5bb");
   });
 
   it("says the sub-area and coordinates of the map under the pointer, and nothing off the maps", () => {
