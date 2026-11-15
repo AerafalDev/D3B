@@ -561,6 +561,7 @@
     "mapLabel": "Map of {{world}}: arrows to move, + and − to zoom, 0 to fit",
     "zoomIn": "Zoom in",
     "zoomOut": "Zoom out",
-    "fit": "Fit"
+    "fit": "Fit",
+    "noWorld": "The game data holds no world map."
   }
 }

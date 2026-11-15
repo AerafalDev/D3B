@@ -50,6 +50,15 @@ describe("the World's map geometry", () => {
     expect(corner.map((tile) => [tile.file, tile.left, tile.top])).toEqual([["t/100/6.jpg", 2048, 1024]]);
   });
 
+  it("places a smaller level's tiles in the image's pixels at zoom 100", () => {
+    // At 50 %, 1,250 by 550 pixels in 2 columns: a tile covers twice its size, the last one cut.
+    const half = visibleTiles(zoom(50, 1250, 550, 2, 1), { x: 0, y: 0, scale: 0.5 }, 5000, 5000);
+    expect(half.map((tile) => [tile.file, tile.left, tile.top, tile.width, tile.height])).toEqual([
+      ["t/50/1.jpg", 0, 0, 2048, 1100],
+      ["t/50/2.jpg", 2048, 0, 452, 1100],
+    ]);
+  });
+
   it("finds the map under a point, west and north of the origin too", () => {
     expect(mapAt(world, 1000, 500)).toEqual([0, 0]);
     expect(mapAt(world, 1199, 549)).toEqual([1, 0]);
@@ -71,6 +80,19 @@ describe("the World's map geometry", () => {
     // 70 % of the box over one map: 4.9, held to the bound 1, the map's centre in the box's.
     expect(view).toEqual({ scale: 1, x: 350 - 1050, y: 175 - 525 });
     expect(fitView(world, [], 1250, 550)).toEqual({ scale: 0.5, x: 0, y: 0 });
+    // Four maps in a row, 400 by 50, in a square box: the width limits, 70 % of it, inside the bounds.
+    const row = fitView(
+      world,
+      [
+        [0, 0],
+        [3, 0],
+      ],
+      400,
+      400,
+    );
+    expect(row.scale).toBeCloseTo(0.7);
+    expect(row.x).toBeCloseTo(200 - 1200 * 0.7);
+    expect(row.y).toBeCloseTo(200 - 525 * 0.7);
   });
 
   it("zooms about a point that stays put, within the bounds", () => {

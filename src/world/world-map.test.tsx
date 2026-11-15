@@ -25,7 +25,8 @@ const world: AtlasWorld = {
 /** The zoom the map says, once its next frame is drawn. */
 async function zoomSaid(): Promise<string> {
   await act(() => new Promise((done) => requestAnimationFrame(() => done(undefined))));
-  return document.querySelector("span.tabular-nums")?.textContent ?? "";
+  // French writes a narrow space before %.
+  return (document.querySelector("span.tabular-nums")?.textContent ?? "").replace(/\s/g, " ");
 }
 
 describe("the World's map", () => {
@@ -51,6 +52,48 @@ describe("the World's map", () => {
     expect(await zoomSaid()).toBe("20 %");
     fireEvent.keyDown(map, { key: "0" });
     expect(await zoomSaid()).toBe("50 %");
+  });
+
+  it("moves by its arrows, zooms not on a sideways scroll, and fits again by the 0 key's place", async () => {
+    render(<WorldMap world={world} chosen={null} nameAt={() => null} />);
+    const map = screen.getByRole("application");
+    await zoomSaid();
+    const moved = () => document.querySelector("g")?.getAttribute("transform");
+    // The whole image centred in an empty box at 50 %.
+    expect(moved()).toBe("translate(-25 -25) scale(0.5)");
+    fireEvent.keyDown(map, { key: "ArrowRight" });
+    await zoomSaid();
+    expect(moved()).toBe("translate(-105 -25) scale(0.5)");
+    fireEvent.wheel(map, { deltaX: 120, deltaY: 0 });
+    expect(await zoomSaid()).toBe("50 %");
+    fireEvent.wheel(map, { deltaY: -100 });
+    expect(await zoomSaid()).toBe("60 %");
+    // AZERTY's 0 key, unshifted.
+    fireEvent.keyDown(map, { key: "à", code: "Digit0" });
+    await zoomSaid();
+    expect(moved()).toBe("translate(-25 -25) scale(0.5)");
+  });
+
+  it("fits the chosen maps once a box with no size, a tab behind another, is shown", async () => {
+    let resized = () => {};
+    vi.stubGlobal(
+      "ResizeObserver",
+      class {
+        constructor(callback: () => void) {
+          resized = callback;
+        }
+        observe() {}
+        disconnect() {}
+      },
+    );
+    render(<WorldMap world={world} chosen={[[0, 0]]} nameAt={() => null} />);
+    expect(await zoomSaid()).toBe("20 %");
+    const box = screen.getByRole("application");
+    Object.defineProperty(box, "clientWidth", { value: 700 });
+    Object.defineProperty(box, "clientHeight", { value: 350 });
+    act(() => resized());
+    expect(await zoomSaid()).toBe("100 %");
+    vi.unstubAllGlobals();
   });
 
   it("outlines the chosen maps in teal", () => {

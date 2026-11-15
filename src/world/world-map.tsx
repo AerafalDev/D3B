@@ -46,6 +46,7 @@ export function WorldMap({ world, chosen, nameAt }: WorldMapProps) {
   const view = useRef<View>({ x: 0, y: 0, scale: world.startScale });
   const frame = useRef(0);
   const drag = useRef<{ x: number; y: number } | null>(null);
+  const unfitted = useRef(false);
   const [tiles, setTiles] = useState<PlacedTile[]>([]);
   const paths = useMemo(() => (chosen === null ? null : mapsPaths(world, chosen)), [world, chosen]);
 
@@ -57,14 +58,15 @@ export function WorldMap({ world, chosen, nameAt }: WorldMapProps) {
     const now = view.current;
     moved.current?.setAttribute("transform", `translate(${now.x} ${now.y}) scale(${now.scale})`);
     if (zoom.current !== null) {
-      zoom.current.textContent = `${Math.round(now.scale * 100)} %`;
+      zoom.current.textContent = new Intl.NumberFormat(i18n.language, { style: "percent" }).format(now.scale);
     }
-    const level = levelFor(world.zooms, now.scale);
+    // The screen's own pixels: a HiDPI screen needs a level as many times finer.
+    const level = levelFor(world.zooms, now.scale * (globalThis.devicePixelRatio || 1));
     const next = level === undefined ? [] : visibleTiles(level, now, element.clientWidth, element.clientHeight);
     setTiles((shown) =>
       shown.length === next.length && shown.every((tile, index) => tile.file === next[index]?.file) ? shown : next,
     );
-  }, [world]);
+  }, [world, i18n.language]);
 
   const redraw = useCallback(() => {
     cancelAnimationFrame(frame.current);
@@ -72,19 +74,23 @@ export function WorldMap({ world, chosen, nameAt }: WorldMapProps) {
   }, [draw]);
 
   const recentre = useCallback(() => {
-    const element = box.current;
-    view.current = fitView(world, chosen ?? [], element?.clientWidth ?? 0, element?.clientHeight ?? 0);
+    const width = box.current?.clientWidth ?? 0;
+    const height = box.current?.clientHeight ?? 0;
+    // A tab behind another has no size: the fit waits until it is shown.
+    unfitted.current = width === 0 || height === 0;
+    view.current = fitView(world, chosen ?? [], width, height);
     redraw();
   }, [world, chosen, redraw]);
 
-  // A new world or a new choice fits the view to it; a resized box draws what it now shows.
+  // A new world or a new choice fits the view to it; a resized box draws what it now shows, and fits it if it could
+  // not before.
   useEffect(() => {
     recentre();
     const element = box.current;
     if (element === null || typeof ResizeObserver === "undefined") {
       return;
     }
-    const watch = new ResizeObserver(redraw);
+    const watch = new ResizeObserver(() => (unfitted.current ? recentre() : redraw()));
     watch.observe(element);
     return () => {
       watch.disconnect();
@@ -135,7 +141,8 @@ export function WorldMap({ world, chosen, nameAt }: WorldMapProps) {
       zoomBy(STEP);
     } else if (event.key === "-") {
       zoomBy(1 / STEP);
-    } else if (event.key === "0") {
+    } else if (event.key === "0" || event.code === "Digit0" || event.code === "Numpad0") {
+      // By its place too: AZERTY's 0 key gives "à" unshifted.
       recentre();
     } else {
       return;
@@ -155,8 +162,13 @@ export function WorldMap({ world, chosen, nameAt }: WorldMapProps) {
         className="focus-visible:outline-focus absolute inset-0 cursor-grab touch-none select-none focus-visible:outline-1 focus-visible:-outline-offset-1 active:cursor-grabbing"
         onKeyDown={keys}
         onWheel={(event) => {
+          if (event.deltaY === 0) {
+            return;
+          }
+          // A notch is 100 pixels, or 3 lines: a step; a trackpad's small deltas make small steps.
+          const pixels = event.deltaMode === 1 ? event.deltaY * 33 : event.deltaY;
           const at = point(event);
-          zoomBy(event.deltaY < 0 ? STEP : 1 / STEP, at.x, at.y);
+          zoomBy(STEP ** Math.max(-1, Math.min(1, -pixels / 100)), at.x, at.y);
         }}
         onPointerDown={(event) => {
           drag.current = { x: event.clientX - view.current.x, y: event.clientY - view.current.y };
@@ -172,6 +184,12 @@ export function WorldMap({ world, chosen, nameAt }: WorldMapProps) {
           hover(at.x, at.y);
         }}
         onPointerUp={() => {
+          drag.current = null;
+        }}
+        onPointerCancel={() => {
+          drag.current = null;
+        }}
+        onLostPointerCapture={() => {
           drag.current = null;
         }}
         onPointerLeave={() => {

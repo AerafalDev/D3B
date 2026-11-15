@@ -45,10 +45,9 @@ export function WorldTab() {
     return <p className="text-text-muted flex h-full items-center justify-center text-xs">{t("world.loading")}</p>;
   }
   if (read.state === "failed" || world === undefined) {
-    const reason = read.state === "failed" ? read.error.reason : "";
     return (
       <p className="text-text-muted flex h-full items-center justify-center p-6 text-xs">
-        {t("world.noData", { reason })}
+        {read.state === "failed" ? t("world.noData", { reason: read.error.reason }) : t("world.noWorld")}
       </p>
     );
   }

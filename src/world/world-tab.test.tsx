@@ -31,7 +31,7 @@ const world = (id: number, fr: string) => ({
 });
 
 const ATLAS: Atlas_Serialize = {
-  worlds: [world(1, "Monde des Douze"), world(2, "Incarnam")],
+  worlds: [world(1, "Monde des Douze"), world(2, "Monde d'Incarnam")],
   areas: [
     {
       id: 0,
@@ -87,6 +87,18 @@ describe("the World tab", () => {
     expect(screen.queryByRole("heading")).toBeNull();
   });
 
+  it("opens on the atlas's first world when the one asked for is not in it", async () => {
+    useWorld.setState({ world: 9 });
+    await shown(<WorldTab />);
+    expect(useWorld.getState().world).toBe(1);
+  });
+
+  it("keeps the world shown when a sub-area chosen is on none", async () => {
+    useWorld.setState({ read: { state: "read", atlas: ATLAS }, world: 2 });
+    useWorld.getState().pick(4);
+    expect(useWorld.getState()).toMatchObject({ picked: 4, world: 2 });
+  });
+
   it("goes to the world that holds a sub-area chosen, and says its name, area, level and maps", async () => {
     await shown(<WorldTab />);
     act(() => useWorld.getState().pick(5));
@@ -102,7 +114,7 @@ describe("the World tab", () => {
     expect(document.body.textContent).toContain("Astrub · niv. 30 · Pas sur la carte");
     expect(screen.getByText("carte vide")).toBeTruthy();
     act(() => useWorld.setState({ picked: 5 }));
-    expect(document.body.textContent).toContain("Incarnam · niv. 1 · Sur Incarnam");
+    expect(document.body.textContent).toContain("Incarnam · niv. 1 · Sur Monde d'Incarnam");
   });
 
   it("says why there is no map without game data, and offers no worlds", async () => {
@@ -120,6 +132,6 @@ describe("the World tab", () => {
   it("offers the worlds by name once the tab read them, the one shown chosen", async () => {
     useWorld.setState({ read: { state: "read", atlas: ATLAS }, world: 2 });
     await shown(<WorldActions />);
-    expect(screen.getByRole("combobox", { name: "Monde affiché" }).textContent).toContain("Incarnam");
+    expect(screen.getByRole("combobox", { name: "Monde affiché" }).textContent).toContain("Monde d'Incarnam");
   });
 });

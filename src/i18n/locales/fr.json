@@ -561,6 +561,7 @@
     "mapLabel": "Carte de {{world}} : flèches pour se déplacer, + et − pour zoomer, 0 pour recadrer",
     "zoomIn": "Zoom avant",
     "zoomOut": "Zoom arrière",
-    "fit": "Recadrer"
+    "fit": "Recadrer",
+    "noWorld": "Les données du jeu n'ont aucune carte du monde."
   }
 }
