@@ -111,6 +111,13 @@ The shell's parts (`docs/shell.md`); no information is shown twice:
   2026-11-13): zaaps, dungeons, auction houses, workshops, banks, class places and transports, each with the client's
   picture, at the zooms that have room for them, one switch per kind, the name on hover. Its tools: select, brush,
   eraser, whole sub-area, route; Details on the right. A Zone setting is chosen in a searchable list or by its target, which opens the map.
+  The owner's choices of 2026-11-15 (mock-up 10): the map drawn by hand, its tiles as images moved and scaled, the
+  level of tiles the zoom needs; one world at a time, the list of worlds being the tab's editor action, and a sub-area
+  of another world switches to it; the view's sub-areas grouped by area in a folded tree, the search unfolding what it
+  finds; the sub-area chosen in translucent teal with a sharp outline, the map around it untouched. The IPC's
+  `world_atlas` gives the worlds the client shows (origin, a map's size, the image's size, the client's zoom bounds,
+  each zoom with its tiles' files) and the named areas' named sub-areas that hold a map, each with its level and its
+  maps' coordinates on each world shown.
 - The panel's **History** (step 4) follows the active character's tab. The **Protocol** view will show only with an
   "Advanced tools" setting, off by default (a change to `docs/shell.md`; step 2's checklist items that read the
   inspector then begin by turning it on).
