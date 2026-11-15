@@ -580,6 +580,19 @@
       "transport": "Autres transports",
       "place": "Autres lieux",
       "passage": "Passages"
+    },
+    "details": {
+      "title": "Détails",
+      "none": "Choisis une sous-zone dans la vue ou sur la carte.",
+      "subArea": "Sous-zone du jeu · {{area}}",
+      "level": "Niveau",
+      "maps": "Cartes",
+      "monsters": "Monstres",
+      "noMonster": "Aucun",
+      "kinds_one": "{{count}} sorte",
+      "kinds_other": "{{count}} sortes",
+      "resources": "Ressources",
+      "noResource": "Aucune ressource."
     }
   }
 }

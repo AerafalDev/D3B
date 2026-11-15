@@ -1,4 +1,4 @@
-import { act, cleanup, render, screen } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
 import i18next from "i18next";
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -10,9 +10,29 @@ const backEnd = vi.hoisted(() => ({ atlas: vi.fn() }));
 vi.mock("@/bindings.ts", () => ({ commands: { worldAtlas: backEnd.atlas } }));
 // The map, faked: happy-dom draws no SVG images, and the tab's text is what is checked here.
 vi.mock("./world-map.tsx", () => ({
-  WorldMap: ({ chosen, hints }: { chosen: unknown[] | null; hints: { id: number }[] }) => (
-    <p data-hints={hints.map((one) => one.id).join(",")}>carte {chosen?.length ?? "vide"}</p>
+  WorldMap: ({
+    chosen,
+    hints,
+    onPick,
+  }: {
+    chosen: unknown[] | null;
+    hints: { id: number }[];
+    onPick: (x: number, y: number) => boolean;
+  }) => (
+    <>
+      <p data-hints={hints.map((one) => one.id).join(",")}>carte {chosen?.length ?? "vide"}</p>
+      <button type="button" onClick={(event) => (event.currentTarget.dataset["picked"] = String(onPick(1, 0)))}>
+        clic 1, 0
+      </button>
+      <button type="button" onClick={(event) => (event.currentTarget.dataset["picked"] = String(onPick(5, 5)))}>
+        clic 5, 5
+      </button>
+    </>
   ),
+}));
+// Details, faked: its own tests say what it shows.
+vi.mock("./world-details.tsx", () => ({
+  WorldDetails: ({ subArea }: { subArea: number | null }) => <aside>détails {subArea ?? "aucun"}</aside>,
 }));
 
 const { WorldTab } = await import("./world-tab.tsx");
@@ -108,6 +128,23 @@ describe("the World tab", () => {
     expect(screen.getByText("carte vide")).toBeTruthy();
     act(() => useWorld.setState({ picked: 5 }));
     expect(document.body.textContent).toContain("Incarnam · niv. 1 · Sur Monde d'Incarnam");
+  });
+
+  it("chooses the sub-area of a map clicked and shows it in Details, but not for a map of none or the one chosen", async () => {
+    await shown(<WorldTab />);
+    expect(document.body.textContent).toContain("détails aucun");
+    const click = (name: string) => {
+      const button = screen.getByRole("button", { name });
+      fireEvent.click(button);
+      return button.dataset["picked"];
+    };
+    // Map 1, 0 of the Twelve is Forêt d'Astrub's.
+    expect(click("clic 1, 0")).toBe("true");
+    expect(useWorld.getState()).toMatchObject({ picked: 3, world: 1 });
+    expect(document.body.textContent).toContain("détails 3");
+    expect(click("clic 1, 0")).toBe("false");
+    expect(click("clic 5, 5")).toBe("false");
+    expect(useWorld.getState().picked).toBe(3);
   });
 
   it("says why there is no map without game data, and offers no worlds", async () => {

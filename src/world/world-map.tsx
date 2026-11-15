@@ -25,6 +25,8 @@ const TEAL = "#39c5bb";
 const STEP = 1.2;
 /** An arrow key's move, in screen pixels. */
 const PAN = 80;
+/** How far a press may move, in screen pixels, and still be a click rather than a drag. */
+const CLICK = 4;
 
 interface WorldMapProps {
   world: AtlasWorld;
@@ -34,6 +36,8 @@ interface WorldMapProps {
   nameAt: (x: number, y: number) => string | null;
   /** The hints to draw, by kind (the atlas's order). */
   hints: readonly AtlasHint_Serialize[];
+  /** A click on the map at `x, y`; `true` when it chose something new, which leaves the view where it is. */
+  onPick?: (x: number, y: number) => boolean;
 }
 
 /**
@@ -42,7 +46,7 @@ interface WorldMapProps {
  * map's sub-area, on hover; the wheel, the arrows, + / − and 0 move, zoom and fit it. The view lives in a ref, reaching
  * the page each frame; React draws only when the tiles in view or the zoom change.
  */
-export function WorldMap({ world, chosen, nameAt, hints }: WorldMapProps) {
+export function WorldMap({ world, chosen, nameAt, hints, onPick }: WorldMapProps) {
   const { t, i18n } = useTranslation();
   const box = useRef<HTMLDivElement>(null);
   const moved = useRef<SVGGElement>(null);
@@ -51,6 +55,10 @@ export function WorldMap({ world, chosen, nameAt, hints }: WorldMapProps) {
   const view = useRef<View>({ x: 0, y: 0, scale: world.startScale });
   const frame = useRef(0);
   const drag = useRef<{ x: number; y: number } | null>(null);
+  // Where a press began on the screen, to tell a click from a drag.
+  const press = useRef<{ x: number; y: number } | null>(null);
+  // A choice made by a click here: the view stays where the player clicked rather than fitting it.
+  const stay = useRef(false);
   const unfitted = useRef(false);
   const [tiles, setTiles] = useState<PlacedTile[]>([]);
   // The hints placed for a zoom, which a new zoom or new hints place again.
@@ -105,7 +113,11 @@ export function WorldMap({ world, chosen, nameAt, hints }: WorldMapProps) {
   // A new world or a new choice fits the view to it; a resized box draws what it now shows, and fits it if it could
   // not before.
   useEffect(() => {
-    recentre();
+    if (stay.current) {
+      stay.current = false;
+    } else {
+      recentre();
+    }
     const element = box.current;
     if (element === null || typeof ResizeObserver === "undefined") {
       return;
@@ -158,6 +170,24 @@ export function WorldMap({ world, chosen, nameAt, hints }: WorldMapProps) {
   // A drag ends with its button, or when the system takes the pointer.
   const release = () => {
     drag.current = null;
+    press.current = null;
+  };
+
+  // A press released where it began is a click on the map under it.
+  const click = (event: PointerEvent) => {
+    const start = press.current;
+    release();
+    if (
+      start === null ||
+      onPick === undefined ||
+      Math.hypot(event.clientX - start.x, event.clientY - start.y) > CLICK
+    ) {
+      return;
+    }
+    const at = point(event);
+    const now = view.current;
+    const [x, y] = mapAt(world, (at.x - now.x) / now.scale, (at.y - now.y) / now.scale);
+    stay.current = onPick(x, y);
   };
 
   const keys = (event: KeyboardEvent) => {
@@ -206,6 +236,7 @@ export function WorldMap({ world, chosen, nameAt, hints }: WorldMapProps) {
         }}
         onPointerDown={(event) => {
           drag.current = { x: event.clientX - view.current.x, y: event.clientY - view.current.y };
+          press.current = { x: event.clientX, y: event.clientY };
           event.currentTarget.setPointerCapture?.(event.pointerId);
         }}
         onPointerMove={(event) => {
@@ -217,7 +248,7 @@ export function WorldMap({ world, chosen, nameAt, hints }: WorldMapProps) {
           const at = point(event);
           hover(at.x, at.y);
         }}
-        onPointerUp={release}
+        onPointerUp={click}
         onPointerCancel={release}
         onLostPointerCapture={release}
         onPointerLeave={() => {
