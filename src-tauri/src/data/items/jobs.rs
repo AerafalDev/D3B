@@ -1,9 +1,10 @@
-use std::collections::HashSet;
+use std::collections::{BTreeSet, HashMap, HashSet};
 
 use serde::Deserialize;
 
 use super::super::DataError;
 use super::super::text::Text;
+use super::{Item, ItemTables};
 
 /// A job, such as the lumberjack. Those whose skills gather what a sub-area's `harvestables` lists are the harvesting
 /// professions: 2, 24, 26, 28 and 36 on 3.7.13.17 (verified, `artifacts/studies/items.md`).
@@ -34,6 +35,53 @@ pub struct Skill {
     /// Whether the client shows it: five level-1 harvest skills repeat another with `false`, such as 299 beside 6
     /// (verified on 3.7.13.17, `artifacts/studies/items.md`); which one the server offers is not in the data.
     pub client_display: bool,
+}
+
+/// A resource: an item a job's skill gathers.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct Resource<'a> {
+    pub item: &'a Item,
+    pub job: &'a Job,
+}
+
+impl ItemTables {
+    /// The resources among a sub-area's `harvestables`, once each, in order of job, then level, then id. The list also
+    /// holds items no skill gathers, which are not resources: Forêt d'Astrub (97) lists 45 items, 30 of them loot boxes,
+    /// and 15 resources of the lumberjack and the alchemist (verified on 3.7.13.17's data).
+    pub fn resources(&self, harvestables: &[i32]) -> Vec<Resource<'_>> {
+        // The job of the first skill, by id, that gathers each item.
+        let mut gatherers: HashMap<i32, i32> = HashMap::new();
+        for skill in &self.skills {
+            if let Some(item) = skill.gathered_item_id {
+                gatherers.entry(item).or_insert(skill.parent_job_id);
+            }
+        }
+        let item = |id: i32| {
+            self.items
+                .binary_search_by_key(&id, |item| item.id)
+                .ok()
+                .map(|at| &self.items[at])
+        };
+        let job = |id: i32| {
+            self.jobs
+                .binary_search_by_key(&id, |job| job.id)
+                .ok()
+                .map(|at| &self.jobs[at])
+        };
+        let mut found: Vec<Resource<'_>> = harvestables
+            .iter()
+            .collect::<BTreeSet<_>>()
+            .into_iter()
+            .filter_map(|&id| {
+                Some(Resource {
+                    item: item(id)?,
+                    job: job(*gatherers.get(&id)?)?,
+                })
+            })
+            .collect();
+        found.sort_by_key(|resource| (resource.job.id, resource.item.level, resource.item.id));
+        found
+    }
 }
 
 /// Refuses the skills when one is of a job that `jobs` lacks, or gathers an item that `items` lacks.
@@ -71,6 +119,55 @@ mod tests {
         assert_eq!(tables.skills[1].name.en, "Gather");
         assert_eq!(tables.skills[1].gathered_item_id, None);
         assert_eq!(tables.skills[1].range, 10);
+    }
+
+    #[test]
+    fn gives_the_resources_a_job_gathers_among_harvestables_by_job_then_level_then_id() {
+        let mut tables = fixtures();
+        let farmer = Job {
+            id: 28,
+            ..tables.jobs[1].clone()
+        };
+        tables.jobs.push(farmer);
+        tables.skills.push(Skill {
+            id: 45,
+            parent_job_id: 28,
+            gathered_item_id: Some(289),
+            ..tables.skills[0].clone()
+        });
+        let found = |tables: &ItemTables, harvestables: &[i32]| -> Vec<(i32, i32)> {
+            tables
+                .resources(harvestables)
+                .iter()
+                .map(|resource| (resource.item.id, resource.job.id))
+                .collect()
+        };
+        // The lumberjack's wood before the farmer's wheat, though listed after it; once each.
+        assert_eq!(found(&tables, &[289, 303, 303]), [(303, 2), (289, 28)]);
+        // Two more woods: one of a higher level and a lower id, after; one of the same level and a lower id, before.
+        let wood = |id: i32, level: u8| Item {
+            id,
+            level,
+            ..tables.items[1].clone()
+        };
+        tables.items.extend([wood(100, 20), wood(200, 1)]);
+        tables.items.sort_by_key(|item| item.id);
+        for (id, item) in [(46, 100), (47, 200)] {
+            tables.skills.push(Skill {
+                id,
+                gathered_item_id: Some(item),
+                ..tables.skills[0].clone()
+            });
+        }
+        assert_eq!(
+            found(&tables, &[289, 303, 100, 200]),
+            [(200, 2), (303, 2), (100, 2), (289, 28)]
+        );
+        tables.skills.truncate(3);
+        // An item no skill gathers, as the loot boxes, and one the folder lacks are not resources.
+        tables.skills.pop();
+        assert_eq!(found(&tables, &[289, 303, 999]), [(303, 2)]);
+        assert_eq!(found(&tables, &[]), []);
     }
 
     #[test]

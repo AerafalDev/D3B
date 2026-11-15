@@ -144,6 +144,53 @@ export type AtlasHint_Serialize = {
 	picture: string | null,
 };
 
+/**  A harvesting profession, and its icon's file. */
+export type AtlasJob = AtlasJob_Serialize | AtlasJob_Deserialize;
+
+/**  A harvesting profession, and its icon's file. */
+export type AtlasJob_Deserialize = {
+	id: number,
+	name: Names,
+	icon?: string | null,
+};
+
+/**  A harvesting profession, and its icon's file. */
+export type AtlasJob_Serialize = {
+	id: number,
+	name: Names,
+	icon: string | null,
+};
+
+/**
+ *  A resource: an item a profession gathers, its level, and its icon's file, none for an item whose icon the client
+ *  lacks.
+ */
+export type AtlasResource = AtlasResource_Serialize | AtlasResource_Deserialize;
+
+/**
+ *  A resource: an item a profession gathers, its level, and its icon's file, none for an item whose icon the client
+ *  lacks.
+ */
+export type AtlasResource_Deserialize = {
+	id: number,
+	name: Names,
+	level: number,
+	job: number,
+	icon?: string | null,
+};
+
+/**
+ *  A resource: an item a profession gathers, its level, and its icon's file, none for an item whose icon the client
+ *  lacks.
+ */
+export type AtlasResource_Serialize = {
+	id: number,
+	name: Names,
+	level: number,
+	job: number,
+	icon: string | null,
+};
+
 /**
  *  A sub-area, a ready-made zone, and the maps it covers on each world shown; none when no world shows it (112 on
  *  3.7.13.17, dungeons and hidden worlds' among them), and never more than one world there, so its maps say its world.
@@ -153,6 +200,10 @@ export type AtlasSubArea = {
 	name: Names,
 	level: number,
 	maps: WorldMaps[],
+	/**  The resources it holds, ids of the atlas's, in their order. */
+	resources: number[],
+	/**  How many kinds of monsters live there; the data names none of them yet. */
+	monsters: number,
 };
 
 /**
@@ -224,12 +275,20 @@ export type AtlasZoom = {
 export type Atlas_Deserialize = {
 	worlds: AtlasWorld_Deserialize[],
 	areas: AtlasArea[],
+	/**  The professions whose resources a sub-area holds, in order of id. */
+	jobs: AtlasJob_Deserialize[],
+	/**  The resources a sub-area holds, in order of profession, then level, then id. */
+	resources: AtlasResource_Deserialize[],
 };
 
 /**  The worlds and the sub-areas the World view lists, in order of id. */
 export type Atlas_Serialize = {
 	worlds: AtlasWorld_Serialize[],
 	areas: AtlasArea[],
+	/**  The professions whose resources a sub-area holds, in order of id. */
+	jobs: AtlasJob_Serialize[],
+	/**  The resources a sub-area holds, in order of profession, then level, then id. */
+	resources: AtlasResource_Serialize[],
 };
 
 /**  What a copy is based on. */

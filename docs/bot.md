@@ -129,6 +129,17 @@ The shell's parts (`docs/shell.md`); no information is shown twice:
   off by default; their switches, with each kind's picture and count, behind "Hints" in the tab's editor action, for
   the session; a hint's name, and a dungeon's level, on hover in place of its map's. `world_atlas` gives each world its
   hints by kind, each with its name, coordinates, level and picture's file, the one the client lacks drawn as a dot.
+  The game's sub-areas as zones (the owner's mock-up 12, 2026-11-15): a Zone's value is a sub-area's id or a zone of
+  mine's (the blueprint's file, `bot::variable`). A Zone setting is a field saying the zone chosen, its area and level;
+  a click unfolds a list under it, searched as the World view, "My zones" first (empty until mine are painted), then
+  the sub-areas by area and level, the arrows and Enter choosing; its target opens the World tab in a choosing mode, a
+  banner saying for what, a map hovered outlining its whole sub-area, one click choosing it and going back to the tab
+  it came from, Escape cancelling. A click on the map otherwise chooses its sub-area as the view does, and **Details**,
+  a column on the World tab's right, says what it is as a zone: its area, level and maps, its resources by profession
+  with their icons and levels, how many kinds of monsters live there (their names need a data format the hunt, step 6,
+  can bring), and, from step 3's PR 11, whose Zone it is. `world_atlas` gives each sub-area its resources, the items
+  of its `harvestables` that a profession's skill gathers, the loot boxes left out, by profession then level, and how
+  many kinds of monsters it lists, with the professions and resources named and their icons' files.
 - The panel's **History** (step 4) follows the active character's tab. The **Protocol** view will show only with an
   "Advanced tools" setting, off by default (a change to `docs/shell.md`; step 2's checklist items that read the
   inspector then begin by turning it on).

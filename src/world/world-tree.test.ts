@@ -9,10 +9,14 @@ const subArea = (id: number, fr: string, en: string, drawn = true) => ({
   name: names(fr, en),
   level: id,
   maps: drawn ? [{ world: 1, at: [[0, 0]] as [number, number][] }] : [],
+  resources: [],
+  monsters: 0,
 });
 
 const atlas: Atlas_Serialize = {
   worlds: [],
+  jobs: [],
+  resources: [],
   areas: [
     {
       id: 1,
