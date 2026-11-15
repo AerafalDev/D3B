@@ -140,7 +140,10 @@ The shell's parts (`docs/shell.md`); no information is shown twice:
   with their icons and levels, how many kinds of monsters live there (their names need a data format the hunt, step 6,
   can bring), and, from step 3's PR 11, whose Zone it is. `world_atlas` gives each sub-area its resources, the items
   of its `harvestables` that a profession's skill gathers, the loot boxes left out, by profession then level, and how
-  many kinds of monsters it lists, with the professions and resources named and their icons' files.
+  many kinds of monsters it lists, with the professions and resources named and their icons' files. The field is
+  `ZoneField` (`src/zone/`), which step 3's PR 11 puts in a character's tab; the World store holds the choice on the
+  map under way, for whom and what takes the sub-area, and the tab active when it began, brought back when it ends;
+  choosing on the map also shows the sub-area chosen there, and a map's hover outlines its sub-area dashed in white.
 - The panel's **History** (step 4) follows the active character's tab. The **Protocol** view will show only with an
   "Advanced tools" setting, off by default (a change to `docs/shell.md`; step 2's checklist items that read the
   inspector then begin by turning it on).

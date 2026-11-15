@@ -38,6 +38,8 @@ interface WorldMapProps {
   hints: readonly AtlasHint_Serialize[];
   /** A click on the map at `x, y`; `true` when it chose something new, which leaves the view where it is. */
   onPick?: (x: number, y: number) => boolean;
+  /** The maps to outline, dashed, while the one at `x, y` is hovered, the same array for all of them; none without. */
+  outlineAt?: (x: number, y: number) => readonly (readonly [number, number])[] | null;
 }
 
 /**
@@ -46,7 +48,7 @@ interface WorldMapProps {
  * map's sub-area, on hover; the wheel, the arrows, + / − and 0 move, zoom and fit it. The view lives in a ref, reaching
  * the page each frame; React draws only when the tiles in view or the zoom change.
  */
-export function WorldMap({ world, chosen, nameAt, hints, onPick }: WorldMapProps) {
+export function WorldMap({ world, chosen, nameAt, hints, onPick, outlineAt }: WorldMapProps) {
   const { t, i18n } = useTranslation();
   const box = useRef<HTMLDivElement>(null);
   const moved = useRef<SVGGElement>(null);
@@ -66,6 +68,16 @@ export function WorldMap({ world, chosen, nameAt, hints, onPick }: WorldMapProps
   const placed = useRef<{ scale: number; list: PlacedHint[] }>({ scale: Number.NaN, list: [] });
   const [pins, setPins] = useState(placed.current);
   const paths = useMemo(() => (chosen === null ? null : mapsPaths(world, chosen)), [world, chosen]);
+  // The maps outlined under the pointer: React draws only when the pointer reaches another group of them.
+  const [hovered, setHovered] = useState<readonly (readonly [number, number])[] | null>(null);
+  const hoveredPaths = useMemo(() => (hovered === null ? null : mapsPaths(world, hovered)), [world, hovered]);
+  // Outlines no longer asked for, as a choice ends, leave none behind, nor one to show when they are asked for again.
+  const outlining = outlineAt !== undefined;
+  useEffect(() => {
+    if (!outlining) {
+      setHovered(null);
+    }
+  }, [outlining]);
 
   const draw = useCallback(() => {
     const element = box.current;
@@ -152,6 +164,8 @@ export function WorldMap({ world, chosen, nameAt, hints, onPick }: WorldMapProps
     const px = (x - now.x) / now.scale;
     const py = (y - now.y) / now.scale;
     const [mapX, mapY] = mapAt(world, px, py);
+    const group = outlineAt?.(mapX, mapY) ?? null;
+    setHovered((shown) => (shown === group ? shown : group));
     const half = HINT_SIZE / now.scale / 2;
     const pin = placed.current.list.find((one) => Math.abs(one.x - px) < half && Math.abs(one.y - py) < half)?.hint;
     const said =
@@ -259,6 +273,7 @@ export function WorldMap({ world, chosen, nameAt, hints, onPick }: WorldMapProps
           if (tip.current !== null) {
             tip.current.hidden = true;
           }
+          setHovered(null);
         }}
       >
         <svg className="absolute inset-0 size-full" aria-hidden="true">
@@ -284,6 +299,20 @@ export function WorldMap({ world, chosen, nameAt, hints, onPick }: WorldMapProps
                   stroke={TEAL}
                   strokeWidth={2}
                   strokeLinecap="square"
+                  vectorEffect="non-scaling-stroke"
+                />
+              </>
+            )}
+            {hoveredPaths !== null && (
+              <>
+                <path d={hoveredPaths.cells} fill="#ffffff" fillOpacity={0.08} />
+                <path
+                  d={hoveredPaths.outline}
+                  fill="none"
+                  stroke="#ffffff"
+                  strokeOpacity={0.85}
+                  strokeWidth={1.5}
+                  strokeDasharray="4 3"
                   vectorEffect="non-scaling-stroke"
                 />
               </>

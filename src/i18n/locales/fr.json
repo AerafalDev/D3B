@@ -593,6 +593,22 @@
       "kinds_other": "{{count}} sortes",
       "resources": "Ressources",
       "noResource": "Aucune ressource."
+    },
+    "choosing": {
+      "banner": "{{who}} : clique une sous-zone pour en faire sa Zone.",
+      "cancel": "Annuler",
+      "escape": "Échap"
     }
+  },
+  "zone": {
+    "label": "Zone",
+    "toChoose": "À choisir",
+    "missing": "Sous-zone {{id}} absente des données",
+    "search": "Chercher une zone",
+    "mine": "Mes zones",
+    "mineLater": "Tes zones peintes viendront ici.",
+    "onMap": "Choisir sur la carte",
+    "keys": "↑ ↓ Entrée",
+    "subArea": "Sous-zone {{id}}"
   }
 }
