@@ -1,9 +1,12 @@
 import { convertFileSrc } from "@tauri-apps/api/core";
 import { Maximize, Minus, Plus } from "lucide-react";
 import { type KeyboardEvent, type PointerEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { flushSync } from "react-dom";
 import { useTranslation } from "react-i18next";
 
+import type { AtlasHint_Serialize } from "@/bindings.ts";
 import { named } from "@/characters/names.ts";
+import { HINT_SIZE, type PlacedHint, placeHints } from "./hint-layout.ts";
 import {
   type AtlasWorld,
   fitView,
@@ -29,14 +32,17 @@ interface WorldMapProps {
   chosen: readonly (readonly [number, number])[] | null;
   /** The name said on hover of the map at `x, y`, if any. */
   nameAt: (x: number, y: number) => string | null;
+  /** The hints to draw, by kind (the atlas's order). */
+  hints: readonly AtlasHint_Serialize[];
 }
 
 /**
  * The world's map drawn by hand from its tiles (the owner, 2026-11-15): the level the zoom needs, the tiles in view; the
- * chosen maps in teal, outlined; a map's sub-area on hover; the wheel, the arrows, + / − and 0 move, zoom and fit it.
- * The view lives in a ref, reaching the page each frame; React draws only when the tiles in view change.
+ * chosen maps in teal, outlined; the hints' pictures, those that would overlap thinned out by kind; a hint's name, or a
+ * map's sub-area, on hover; the wheel, the arrows, + / − and 0 move, zoom and fit it. The view lives in a ref, reaching
+ * the page each frame; React draws only when the tiles in view or the zoom change.
  */
-export function WorldMap({ world, chosen, nameAt }: WorldMapProps) {
+export function WorldMap({ world, chosen, nameAt, hints }: WorldMapProps) {
   const { t, i18n } = useTranslation();
   const box = useRef<HTMLDivElement>(null);
   const moved = useRef<SVGGElement>(null);
@@ -47,6 +53,10 @@ export function WorldMap({ world, chosen, nameAt }: WorldMapProps) {
   const drag = useRef<{ x: number; y: number } | null>(null);
   const unfitted = useRef(false);
   const [tiles, setTiles] = useState<PlacedTile[]>([]);
+  // The hints placed for a zoom, which a new zoom or new hints place again.
+  const given = useRef(hints);
+  const placed = useRef<{ scale: number; list: PlacedHint[] }>({ scale: Number.NaN, list: [] });
+  const [pins, setPins] = useState(placed.current);
   const paths = useMemo(() => (chosen === null ? null : mapsPaths(world, chosen)), [world, chosen]);
 
   const draw = useCallback(() => {
@@ -65,6 +75,11 @@ export function WorldMap({ world, chosen, nameAt }: WorldMapProps) {
     setTiles((shown) =>
       shown.length === next.length && shown.every((tile, index) => tile.file === next[index]?.file) ? shown : next,
     );
+    if (placed.current.scale !== now.scale) {
+      placed.current = { scale: now.scale, list: placeHints(world, given.current, now.scale) };
+      // At once, so the pictures never show for a frame at the zoom before.
+      flushSync(() => setPins(placed.current));
+    }
   }, [world, i18n.language]);
 
   const redraw = useCallback(() => {
@@ -80,6 +95,12 @@ export function WorldMap({ world, chosen, nameAt }: WorldMapProps) {
     view.current = fitView(world, chosen ?? [], width, height);
     redraw();
   }, [world, chosen, redraw]);
+
+  useEffect(() => {
+    given.current = hints;
+    placed.current = { scale: Number.NaN, list: [] };
+    redraw();
+  }, [hints, redraw]);
 
   // A new world or a new choice fits the view to it; a resized box draws what it now shows, and fits it if it could
   // not before.
@@ -116,11 +137,20 @@ export function WorldMap({ world, chosen, nameAt }: WorldMapProps) {
       return;
     }
     const now = view.current;
-    const [mapX, mapY] = mapAt(world, (x - now.x) / now.scale, (y - now.y) / now.scale);
-    const name = drag.current === null ? nameAt(mapX, mapY) : null;
+    const px = (x - now.x) / now.scale;
+    const py = (y - now.y) / now.scale;
+    const [mapX, mapY] = mapAt(world, px, py);
+    const half = HINT_SIZE / now.scale / 2;
+    const pin = placed.current.list.find((one) => Math.abs(one.x - px) < half && Math.abs(one.y - py) < half)?.hint;
+    const said =
+      pin === undefined
+        ? [nameAt(mapX, mapY)]
+        : [named(pin.name, i18n.language), pin.level > 0 ? t("world.level", { level: pin.level }) : null];
+    const name = drag.current === null && said[0] !== null ? said.filter((part) => part !== null).join(" · ") : null;
     label.hidden = name === null;
     if (name !== null) {
-      label.textContent = `${name} · ${mapX}, ${mapY}`;
+      const at = pin?.at ?? [mapX, mapY];
+      label.textContent = `${name} · ${at[0]}, ${at[1]}`;
       label.style.transform = `translate(${x + 14}px, ${y + 14}px)`;
     }
   };
@@ -223,6 +253,30 @@ export function WorldMap({ world, chosen, nameAt }: WorldMapProps) {
                 />
               </>
             )}
+            {pins.list.map(({ hint, x, y }) => {
+              const side = HINT_SIZE / pins.scale;
+              // The one picture the client lacks is a plain dot.
+              return hint.picture === null ? (
+                <circle
+                  key={hint.id}
+                  cx={x}
+                  cy={y}
+                  r={side / 5}
+                  fill="#e6e6e6"
+                  stroke="#0d1416"
+                  strokeWidth={side / 14}
+                />
+              ) : (
+                <image
+                  key={hint.id}
+                  href={convertFileSrc(hint.picture)}
+                  x={x - side / 2}
+                  y={y - side / 2}
+                  width={side}
+                  height={side}
+                />
+              );
+            })}
           </g>
         </svg>
       </div>

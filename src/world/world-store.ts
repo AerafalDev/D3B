@@ -1,6 +1,7 @@
 import { create } from "zustand";
 
-import { type Atlas_Serialize, type AtlasError, commands } from "@/bindings.ts";
+import { type Atlas_Serialize, type AtlasError, commands, type HintKind } from "@/bindings.ts";
+import { HIDDEN_KINDS } from "./hint-layout.ts";
 
 /** The atlas as read: loading, read, or why not. */
 export type AtlasRead =
@@ -18,18 +19,23 @@ interface WorldStore {
   picked: number | null;
   /** The world the tab shows. */
   world: number;
+  /** The kinds of hints the map leaves out, for the session. */
+  hidden: ReadonlySet<HintKind>;
   /** Reads the atlas, once. */
   load: () => Promise<void>;
   /** Chooses a sub-area, and shows the world that holds its maps. */
   pick: (subArea: number) => void;
   /** Shows a world. */
   show: (world: number) => void;
+  /** Sets the kinds of hints the map leaves out. */
+  hide: (kinds: ReadonlySet<HintKind>) => void;
 }
 
 export const useWorld = create<WorldStore>((set, get) => ({
   read: null,
   picked: null,
   world: FIRST_WORLD,
+  hidden: HIDDEN_KINDS,
 
   load: async () => {
     if (get().read !== null) {
@@ -62,6 +68,8 @@ export const useWorld = create<WorldStore>((set, get) => ({
   },
 
   show: (world) => set({ world }),
+
+  hide: (hidden) => set({ hidden }),
 }));
 
 /** A sub-area of `atlas` and its area, by id. */

@@ -565,6 +565,21 @@
     "noWorld": "The game data holds no world map.",
     "search": "Search a sub-area",
     "subAreas": "Game sub-areas",
-    "nothingFound": "No sub-area matches."
+    "nothingFound": "No sub-area matches.",
+    "hints": "Hints",
+    "hintsShown": "Hints on the map",
+    "hintsAll": "Show all",
+    "hintsNone": "Hide all",
+    "kind": {
+      "zaap": "Zaaps",
+      "bank": "Banks",
+      "dungeon": "Dungeons",
+      "workshop": "Workshops",
+      "auctionHouse": "Auction houses",
+      "classPlace": "Class places",
+      "transport": "Other transports",
+      "place": "Other places",
+      "passage": "Passages"
+    }
   }
 }

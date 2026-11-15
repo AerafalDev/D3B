@@ -9,7 +9,8 @@ import { findSubArea, useWorld } from "./world-store.ts";
 /**
  * The World tab (the owner's mock-up 10 of 2026-11-15): the map of the world its editor action shows, the sub-area
  * chosen in the World view on it with its name, area, level and maps on top; one no world shows said "not on the
- * map", one of another world said where it is. The view, the zones' tools and the hints come with later PRs.
+ * map", one of another world said where it is; the hints of the kinds its editor action shows. The zones' tools come
+ * with later PRs.
  */
 export function WorldTab() {
   const { t, i18n } = useTranslation();
@@ -17,6 +18,7 @@ export function WorldTab() {
   const load = useWorld((store) => store.load);
   const worldId = useWorld((store) => store.world);
   const picked = useWorld((store) => store.picked);
+  const hidden = useWorld((store) => store.hidden);
   const atlas = read?.state === "read" ? read.atlas : null;
   const shown = atlas?.worlds.find((one) => one.id === worldId) ?? atlas?.worlds[0];
   // Memoised so the map refits only when the world changes.
@@ -39,6 +41,8 @@ export function WorldTab() {
     }
     return byMap;
   }, [atlas, world, i18n.language]);
+
+  const hints = useMemo(() => world?.hints.filter((hint) => !hidden.has(hint.kind)) ?? [], [world, hidden]);
 
   if (read === null || read.state === "loading") {
     return <p className="text-text-muted flex h-full items-center justify-center text-xs">{t("world.loading")}</p>;
@@ -64,7 +68,7 @@ export function WorldTab() {
 
   return (
     <div className="relative h-full min-h-0">
-      <WorldMap world={world} chosen={here} nameAt={(x, y) => names.get(`${x},${y}`) ?? null} />
+      <WorldMap world={world} chosen={here} nameAt={(x, y) => names.get(`${x},${y}`) ?? null} hints={hints} />
       {subArea !== undefined && (
         <section
           aria-live="polite"

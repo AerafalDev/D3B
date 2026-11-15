@@ -59,6 +59,42 @@ pub struct Hint {
     pub level: u32,
 }
 
+/// What a hint is, for the switches of the World's map: the client's categories mix what a bot tells apart, the zaaps
+/// among the boats in Transports and the banks among the taverns in Divers, so the picture is read before the category
+/// (`main:docs/client.md`, "Hints"). In order of use to a bot, which keeps the more useful of two crowded pictures (the
+/// owner, 2026-11-15): the zaaps it travels by, the banks it ends at, dungeons, workshops, auction houses, class
+/// places, the other transports, the other places, and last the passages between areas, which only a close view needs.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub enum HintKind {
+    Zaap,
+    Bank,
+    Dungeon,
+    Workshop,
+    AuctionHouse,
+    ClassPlace,
+    Transport,
+    Place,
+    Passage,
+}
+
+impl Hint {
+    /// What the hint is; a category that holds none on 3.7.13.17 (conquest territories, quests…) is a place.
+    #[must_use]
+    pub fn kind(&self) -> HintKind {
+        match (self.gfx, self.category_id) {
+            (410, _) => HintKind::Zaap,
+            (401, _) => HintKind::Bank,
+            (900..=903, _) => HintKind::Passage,
+            (_, 1) => HintKind::ClassPlace,
+            (_, 2) => HintKind::AuctionHouse,
+            (_, 3) => HintKind::Workshop,
+            (_, 6) => HintKind::Dungeon,
+            (_, 9) => HintKind::Transport,
+            _ => HintKind::Place,
+        }
+    }
+}
+
 /// A category of the hints (`HintCategoryData`, 3.7.13.17), such as Transports; 6 of the 12 hold hints.
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
@@ -90,6 +126,37 @@ mod tests {
         );
         assert_eq!((hints[1].level, hints[1].outdoor), (50, false));
         assert_eq!((categories[0].id, categories[0].name.en.as_str()), (4, "Miscellaneous"));
+    }
+
+    #[test]
+    fn tells_a_hint_s_kind_by_its_picture_before_its_category() {
+        let hints: Vec<Hint> = serde_json::from_str(HINTS).unwrap_or_else(|error| panic!("{error}"));
+        let kind = |gfx: i32, category_id: i32| {
+            Hint {
+                gfx,
+                category_id,
+                ..hints[0].clone()
+            }
+            .kind()
+        };
+        // A zaap is a transport, a bank and a passage are in Divers, by the client's categories.
+        assert_eq!(kind(410, 9), HintKind::Zaap);
+        assert_eq!(kind(401, 4), HintKind::Bank);
+        assert_eq!(kind(902, 4), HintKind::Passage);
+        assert_eq!(kind(413, 9), HintKind::Transport);
+        assert_eq!(kind(408, 4), HintKind::Place);
+        assert_eq!(
+            [(80, 1), (226, 2), (311, 3), (422, 6)].map(|(gfx, category)| kind(gfx, category)),
+            [
+                HintKind::ClassPlace,
+                HintKind::AuctionHouse,
+                HintKind::Workshop,
+                HintKind::Dungeon
+            ]
+        );
+        // A category that holds no hint yet, such as Quests.
+        assert_eq!(kind(500, 11), HintKind::Place);
+        assert!(HintKind::Zaap < HintKind::Bank && HintKind::Place < HintKind::Passage);
     }
 
     #[test]

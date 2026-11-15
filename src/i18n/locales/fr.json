@@ -565,6 +565,21 @@
     "noWorld": "Les données du jeu n'ont aucune carte du monde.",
     "search": "Chercher une sous-zone",
     "subAreas": "Sous-zones du jeu",
-    "nothingFound": "Aucune sous-zone ne correspond."
+    "nothingFound": "Aucune sous-zone ne correspond.",
+    "hints": "Indices",
+    "hintsShown": "Indices sur la carte",
+    "hintsAll": "Tout montrer",
+    "hintsNone": "Tout cacher",
+    "kind": {
+      "zaap": "Zaaps",
+      "bank": "Banques",
+      "dungeon": "Donjons",
+      "workshop": "Ateliers",
+      "auctionHouse": "Hôtels de vente",
+      "classPlace": "Lieux de classe",
+      "transport": "Autres transports",
+      "place": "Autres lieux",
+      "passage": "Passages"
+    }
   }
 }

@@ -20,6 +20,7 @@ const world: AtlasWorld = {
   maxScale: 1,
   startScale: 0.5,
   zooms: [],
+  hints: [],
 };
 
 /** The zoom the map says, once its next frame is drawn. */
@@ -37,7 +38,7 @@ describe("the World's map", () => {
   afterEach(cleanup);
 
   it("opens at the world's starting zoom, and zooms by its keys and buttons within the client's bounds", async () => {
-    render(<WorldMap world={world} chosen={null} nameAt={() => null} />);
+    render(<WorldMap world={world} chosen={null} nameAt={() => null} hints={[]} />);
     expect(await zoomSaid()).toBe("50 %");
     const map = screen.getByRole("application", { name: /Carte de Monde des Douze/ });
     fireEvent.keyDown(map, { key: "+" });
@@ -55,7 +56,7 @@ describe("the World's map", () => {
   });
 
   it("moves by its arrows, zooms not on a sideways scroll, and fits again by the 0 key's place", async () => {
-    render(<WorldMap world={world} chosen={null} nameAt={() => null} />);
+    render(<WorldMap world={world} chosen={null} nameAt={() => null} hints={[]} />);
     const map = screen.getByRole("application");
     await zoomSaid();
     const moved = () => document.querySelector("g")?.getAttribute("transform");
@@ -86,7 +87,7 @@ describe("the World's map", () => {
         disconnect() {}
       },
     );
-    render(<WorldMap world={world} chosen={[[0, 0]]} nameAt={() => null} />);
+    render(<WorldMap world={world} chosen={[[0, 0]]} nameAt={() => null} hints={[]} />);
     expect(await zoomSaid()).toBe("20 %");
     const box = screen.getByRole("application");
     Object.defineProperty(box, "clientWidth", { value: 700 });
@@ -100,7 +101,9 @@ describe("the World's map", () => {
   });
 
   it("says the sub-area and coordinates of the map under the pointer, and nothing off the maps", () => {
-    render(<WorldMap world={world} chosen={null} nameAt={(x, y) => (x === 7 && y === 7 ? "Forêt" : null)} />);
+    render(
+      <WorldMap world={world} chosen={null} nameAt={(x, y) => (x === 7 && y === 7 ? "Forêt" : null)} hints={[]} />,
+    );
     const map = screen.getByRole("application");
     const tip = document.querySelector("div[hidden]") as HTMLElement;
     // The view is the whole image centred in an empty box at 50 %: the box's 10, 10 is the image's 70, 70.
@@ -108,5 +111,47 @@ describe("the World's map", () => {
     expect([tip.hidden, tip.textContent]).toEqual([false, "Forêt · 7, 7"]);
     fireEvent.pointerMove(map, { clientX: 0, clientY: 0 });
     expect(tip.hidden).toBe(true);
+  });
+
+  it("draws the hints' pictures, a dot for one without, and says a hint's name over its map's", async () => {
+    const hint = { name: { fr: "Zaap", en: "Zaap" }, level: 0 };
+    render(
+      <WorldMap
+        world={world}
+        chosen={null}
+        nameAt={() => "Forêt"}
+        hints={[
+          { ...hint, id: 1, kind: "zaap", at: [7, 7], picture: "data/icons/hints/410.png" },
+          {
+            ...hint,
+            id: 2,
+            kind: "dungeon",
+            name: { fr: "Donjon", en: "Dungeon" },
+            at: [1, 1],
+            level: 50,
+            picture: null,
+          },
+        ]}
+      />,
+    );
+    await zoomSaid();
+    // At 50 %, a picture of 28 pixels on the screen is 56 of the image, centred on its map.
+    const image = document.querySelector("image");
+    expect(["href", "x", "width"].map((name) => image?.getAttribute(name))).toEqual([
+      "asset://data/icons/hints/410.png",
+      "47",
+      "56",
+    ]);
+    expect(document.querySelector("circle")?.getAttribute("cx")).toBe("15");
+    const map = screen.getByRole("application");
+    const tip = document.querySelector("div[hidden]") as HTMLElement;
+    // The image's 75, 75, the zaap's centre, is the box's 12.5, 12.5; its 15, 15 is -17.5, -17.5.
+    fireEvent.pointerMove(map, { clientX: 12, clientY: 12 });
+    expect(tip.textContent).toBe("Zaap · 7, 7");
+    fireEvent.pointerMove(map, { clientX: -17, clientY: -17 });
+    expect(tip.textContent).toBe("Donjon · niv. 50 · 1, 1");
+    // Off the pictures, the map's own name.
+    fireEvent.pointerMove(map, { clientX: 2, clientY: 40 });
+    expect(tip.textContent).toBe("Forêt · 5, 13");
   });
 });

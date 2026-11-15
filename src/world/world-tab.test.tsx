@@ -10,7 +10,9 @@ const backEnd = vi.hoisted(() => ({ atlas: vi.fn() }));
 vi.mock("@/bindings.ts", () => ({ commands: { worldAtlas: backEnd.atlas } }));
 // The map, faked: happy-dom draws no SVG images, and the tab's text is what is checked here.
 vi.mock("./world-map.tsx", () => ({
-  WorldMap: ({ chosen }: { chosen: unknown[] | null }) => <p>carte {chosen?.length ?? "vide"}</p>,
+  WorldMap: ({ chosen, hints }: { chosen: unknown[] | null; hints: { id: number }[] }) => (
+    <p data-hints={hints.map((one) => one.id).join(",")}>carte {chosen?.length ?? "vide"}</p>
+  ),
 }));
 
 const { WorldTab } = await import("./world-tab.tsx");
@@ -19,7 +21,8 @@ const { useWorld } = await import("./world-store.ts");
 
 const names = (fr: string, en = fr) => ({ fr, en });
 const BASE = { origin: [0, 0], mapSize: [10, 10], size: [100, 100], minScale: 0.2, maxScale: 1, startScale: 0.5 };
-const world = (id: number, fr: string) => ({ ...BASE, id, name: names(fr), zooms: [] }) as unknown as AtlasWorld;
+const world = (id: number, fr: string) =>
+  ({ ...BASE, id, name: names(fr), zooms: [], hints: [] }) as unknown as AtlasWorld;
 
 const ATLAS: Atlas_Serialize = {
   worlds: [world(1, "Monde des Douze"), world(2, "Monde d'Incarnam")],
@@ -117,5 +120,26 @@ describe("the World tab", () => {
     useWorld.setState({ read: { state: "read", atlas: ATLAS }, world: 2 });
     await shown(<WorldActions />);
     expect(screen.getByRole("combobox", { name: "Monde affiché" }).textContent).toContain("Monde d'Incarnam");
+  });
+
+  it("gives the map the hints of the kinds shown", async () => {
+    const hint = (id: number, kind: string) => ({
+      id,
+      kind,
+      name: names("Indice"),
+      at: [0, 0],
+      level: 0,
+      picture: null,
+    });
+    const hinted = {
+      ...ATLAS,
+      worlds: [{ ...world(1, "Monde des Douze"), hints: [hint(1, "zaap"), hint(2, "passage")] }],
+    };
+    useWorld.setState({ read: { state: "read", atlas: hinted as Atlas_Serialize }, hidden: new Set(["passage"]) });
+    await shown(<WorldTab />);
+    const map = () => screen.getByText(/carte/).getAttribute("data-hints");
+    expect(map()).toBe("1");
+    act(() => useWorld.getState().hide(new Set(["zaap"])));
+    expect(map()).toBe("2");
   });
 });

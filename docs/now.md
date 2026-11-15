@@ -172,7 +172,13 @@ _Updated 2026-11-15._
        moves it; hovering a map says its sub-area and coordinates; 0 or the fit button frames the forest again;
     5. choose Incarnam in the editor action: its map shows; click an Incarnam sub-area in the view: it shows there;
     6. a sub-area no world shows (a dungeon) is greyed with a crossed pin, its hover saying "Pas sur la carte"; clicking
-       it says so on top of the map.
+       it says so on top of the map;
+    7. (needs format 4's data) on the Twelve's map, the hints' pictures stand on their maps, the same size at every
+       zoom, more of them as it zooms in, none overlapping, and dragging never changes which are shown; hovering a zaap
+       says "Zaap" and its coordinates, a dungeon also its level;
+    8. "Indices" beside the worlds lists the kinds the world holds, each with its picture and count, all ticked but
+       "Autres lieux" and "Passages"; unticking Zaaps takes them off the map with the menu still open; "Tout cacher"
+       and "Tout montrer" do what they say; Incarnam's list has only its own kinds.
 - **Done in code, step 1**: `tools/extractor` reads the client's bundles, data tables, texts in five languages and flag
   enums, and writes the map positions, sub-areas, areas, zaaps, worlds and their tiles, maps, and the world graph,
   checked against one another, with the `client-<build>-format<n>.tar.gz` that `data:fetch` reads (ADR 0013); the app reads it all at start
@@ -270,7 +276,10 @@ _Updated 2026-11-15._
   client's 64 px (the owner, 2026-11-15), a new data format, 4 (ADR 0013; done in code: 835 hints, 12 categories, 91
   pictures of 395 KB, graphic 475's missing one counted, an archive of 105 MB in 28 s); format 3 is then never
   published: the owner's extraction and publishing of `client-3.7.13.17-format4.tar.gz` replaces it, and until then
-  `.github/game-data.json` names format 4, so `data:fetch` and a release find no data; (9c) the hints on the World's map, one switch per kind, which also give the nearest bank;
+  `.github/game-data.json` names format 4, so `data:fetch` and a release find no data; (9c) the hints on the World's map (the owner's mock-up 11, 2026-11-15): pictures 28 px on screen, those that would
+  overlap thinned out by kind over the whole world, a switch per kind behind "Indices" in the tab's editor action, nine
+  kinds told apart by picture before category, the other places and passages off by default (done in code; the nearest
+  bank waits for step 4, measured by path with going to the bank);
   (10) sub-areas as zones, a Zone chosen in a list or on the map; (11) a character's blueprint and settings in its tab;
   (12) links checked by type, and the picker; (13) delete, undo, autosave; (14) variables; (15) functions opened in
   place; (16) events: priority, re-arming, modes, the defaults; (17) comments and reroutes; (18) Align, copy and paste,
