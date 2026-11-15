@@ -224,11 +224,14 @@ fn atlas((world, worlds, hints, items): Game, folder: &Path) -> Atlas {
         .areas
         .iter()
         .filter_map(|area| {
+            // Named first, so that what a sub-area left out holds never enters the tables.
+            let name = area.name.as_ref()?;
             let sub_areas: Vec<AtlasSubArea> = world
                 .sub_areas
                 .iter()
                 .filter(|sub_area| sub_area.area_id == area.id && held.contains(&sub_area.id))
                 .filter_map(|sub_area| {
+                    let name = sub_area.name.as_ref()?;
                     let held = items.resources(&sub_area.harvestables);
                     for resource in &held {
                         jobs.entry(resource.job.id).or_insert(resource.job);
@@ -238,7 +241,7 @@ fn atlas((world, worlds, hints, items): Game, folder: &Path) -> Atlas {
                     }
                     Some(AtlasSubArea {
                         id: sub_area.id,
-                        name: names(sub_area.name.as_ref()?),
+                        name: names(name),
                         level: sub_area.level,
                         maps: maps
                             .get(&sub_area.id)
@@ -255,7 +258,6 @@ fn atlas((world, worlds, hints, items): Game, folder: &Path) -> Atlas {
                     })
                 })
                 .collect();
-            let name = area.name.as_ref()?;
             (!sub_areas.is_empty()).then(|| AtlasArea {
                 id: area.id,
                 name: names(name),
@@ -419,21 +421,34 @@ mod tests {
     }
 
     // The extractor's own tests write these files (tools/extractor/tests/Items/): wheat and wood, the lumberjack
-    // cutting the wood.
+    // cutting the wood; the wheat reaped by a farmer, two more woods, a loot box, and a fisher's fish added.
     fn items() -> ItemTables {
         let read = |text: &str| -> Vec<serde_json::Value> { parse(text) };
+        let mut items = read(include_str!("../../../tools/extractor/tests/fixtures/items/items.json"));
+        let item = |id: i32, level: i32| {
+            let mut one = items[1].clone();
+            one["id"] = id.into();
+            one["level"] = level.into();
+            one
+        };
+        let added = [item(100, 20), item(200, 1), item(500, 1), item(30562, 1)];
+        items.extend(added);
+        items.sort_by_key(|one| one["id"].as_i64());
         let mut jobs = read(include_str!("../../../tools/extractor/tests/fixtures/items/jobs.json"));
         let mut skills = read(include_str!(
             "../../../tools/extractor/tests/fixtures/items/skills.json"
         ));
-        // A farmer reaping the wheat.
         jobs.push(serde_json::json!({"id": 28, "name": jobs[1]["name"], "iconId": 28}));
-        skills.push(
-            serde_json::json!({"id": 45, "name": skills[0]["name"], "parentJobId": 28, "gatheredItemId": 289,
-            "levelMin": 1, "range": 1, "clientDisplay": true}),
-        );
+        jobs.push(serde_json::json!({"id": 36, "name": jobs[1]["name"], "iconId": -1}));
+        for (id, job, item) in [(45, 28, 289), (46, 2, 100), (47, 2, 200), (48, 36, 500)] {
+            let mut skill = skills[0].clone();
+            skill["id"] = id.into();
+            skill["parentJobId"] = job.into();
+            skill["gatheredItemId"] = item.into();
+            skills.push(skill);
+        }
         ItemTables {
-            items: parse(include_str!("../../../tools/extractor/tests/fixtures/items/items.json")),
+            items: parse(&serde_json::Value::from(items).to_string()),
             types: parse(include_str!(
                 "../../../tools/extractor/tests/fixtures/items/item-types.json"
             )),
@@ -447,9 +462,12 @@ mod tests {
     #[test]
     fn gives_each_sub_area_its_resources_and_how_many_monsters_live_there() {
         let mut world = world();
-        // A loot box (30562) among the resources, a monster listed twice.
-        world.sub_areas[0].harvestables = vec![289, 30562, 303];
+        // A loot box (30562), which no skill gathers, among the resources; a monster listed twice.
+        world.sub_areas[0].harvestables = vec![289, 30562, 303, 100, 200];
         world.sub_areas[0].monsters = vec![31, 34, 31];
+        // The fish of 96, unnamed, and of 97, in an unnamed area: neither is listed, nor is what it holds.
+        world.sub_areas[1].harvestables = vec![500];
+        world.sub_areas[2].harvestables = vec![500];
         let folder = Path::new("data");
         let atlas = atlas((&world, &worlds(), &[], &items()), folder);
         let file = |path: &str| {
@@ -477,14 +495,16 @@ mod tests {
         assert_eq!(
             resources,
             [
+                (200, "Bois", 1, 2, None),
                 (303, "Bois", 1, 2, None),
+                (100, "Bois", 20, 2, None),
                 (289, "Blé", 1, 28, file("icons/items/42011.png"))
             ]
         );
         let forest = &atlas.areas[0].sub_areas[0];
         assert_eq!(
             (forest.id, forest.resources.as_slice(), forest.monsters),
-            (95, [303, 289].as_slice(), 2)
+            (95, [200, 303, 100, 289].as_slice(), 2)
         );
         // A sub-area that lists nothing holds nothing.
         let other = &atlas.areas[0].sub_areas[1];

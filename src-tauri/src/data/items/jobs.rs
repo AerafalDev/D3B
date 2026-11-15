@@ -122,7 +122,7 @@ mod tests {
     }
 
     #[test]
-    fn gives_the_resources_a_job_gathers_among_harvestables_by_job_then_level() {
+    fn gives_the_resources_a_job_gathers_among_harvestables_by_job_then_level_then_id() {
         let mut tables = fixtures();
         let farmer = Job {
             id: 28,
@@ -144,6 +144,26 @@ mod tests {
         };
         // The lumberjack's wood before the farmer's wheat, though listed after it; once each.
         assert_eq!(found(&tables, &[289, 303, 303]), [(303, 2), (289, 28)]);
+        // Two more woods: one of a higher level and a lower id, after; one of the same level and a lower id, before.
+        let wood = |id: i32, level: u8| Item {
+            id,
+            level,
+            ..tables.items[1].clone()
+        };
+        tables.items.extend([wood(100, 20), wood(200, 1)]);
+        tables.items.sort_by_key(|item| item.id);
+        for (id, item) in [(46, 100), (47, 200)] {
+            tables.skills.push(Skill {
+                id,
+                gathered_item_id: Some(item),
+                ..tables.skills[0].clone()
+            });
+        }
+        assert_eq!(
+            found(&tables, &[289, 303, 100, 200]),
+            [(200, 2), (303, 2), (100, 2), (289, 28)]
+        );
+        tables.skills.truncate(3);
         // An item no skill gathers, as the loot boxes, and one the folder lacks are not resources.
         tables.skills.pop();
         assert_eq!(found(&tables, &[289, 303, 999]), [(303, 2)]);
