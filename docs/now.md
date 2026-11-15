@@ -252,8 +252,9 @@ _Updated 2026-11-14._
   My Blueprint and the tab (done in code); (8) its Details and Summary, in three PRs: what Details needs through the IPC (the problems where they
   are, an event's settings, a function's signature, a variable's bounds; done in code), then Details in a column on the
   tab's right (the owner, 2026-11-14; done in code), then the Summary, toggled in the tab strip's editor actions (the
-  owner, 2026-11-14; done in code); (9) the World view and tab from the tiles (the owner's mock-up 10 of 2026-11-15), in two PRs: the atlas
-  through the IPC, the worlds with their tiles and the sub-areas by area (done in code), then the view and the tab; (9b) the extractor: the client's hints
+  owner, 2026-11-14; done in code); (9) the World view and tab from the tiles (the owner's mock-up 10 of 2026-11-15), in three PRs: the atlas
+  through the IPC, the worlds with their tiles and the sub-areas by area (done in code), then the tab and its map (done
+  in code), then the view that opens it; (9b) the extractor: the client's hints
   (`World.HintsDataRoot`, 835 on 3.7.13.17 in 6 categories, measured by the C# version) and their pictures, a new data
   format (ADR 0013); (9c) the hints on the World's map, one switch per kind, which also give the nearest bank;
   (10) sub-areas as zones, a Zone chosen in a list or on the map; (11) a character's blueprint and settings in its tab;

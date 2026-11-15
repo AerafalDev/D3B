@@ -117,7 +117,10 @@ The shell's parts (`docs/shell.md`); no information is shown twice:
   finds; the sub-area chosen in translucent teal with a sharp outline, the map around it untouched. The IPC's
   `world_atlas` gives the worlds the client shows (origin, a map's size, the image's size, the client's zoom bounds,
   each zoom with its tiles' files) and the named areas' named sub-areas that hold a map, each with its level and its
-  maps' coordinates on each world shown.
+  maps' coordinates on each world shown. The World tab (`src/world/`) shows the world its editor action chose, fitted
+  to the sub-area chosen in the view, its name, area, level and number of maps on top, or, for one of the 112 no world
+  shows (dungeons, hidden worlds), "not on the map" (the owner, 2026-11-15), or the world it is on. The map takes the focus: the arrows move it, + and − zoom, 0 fits it again; its zoom
+  shows bottom left, its buttons bottom right; a map's sub-area and coordinates on hover.
 - The panel's **History** (step 4) follows the active character's tab. The **Protocol** view will show only with an
   "Advanced tools" setting, off by default (a change to `docs/shell.md`; step 2's checklist items that read the
   inspector then begin by turning it on).

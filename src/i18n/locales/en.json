@@ -546,5 +546,21 @@
       "graph": "Graph",
       "summary": "Summary"
     }
+  },
+  "world": {
+    "title": "World",
+    "level": "lvl {{level}}",
+    "notOnMap": "Not on the map",
+    "onWorld": "On {{world}}",
+    "maps_one": "{{count}} map",
+    "maps_other": "{{count}} maps",
+    "loading": "Reading the game data…",
+    "noData": "No game data: {{reason}}",
+    "worlds": "World shown",
+    "map": "map",
+    "mapLabel": "Map of {{world}}: arrows to move, + and − to zoom, 0 to fit",
+    "zoomIn": "Zoom in",
+    "zoomOut": "Zoom out",
+    "fit": "Fit"
   }
 }

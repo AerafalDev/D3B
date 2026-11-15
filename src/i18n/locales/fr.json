@@ -546,5 +546,21 @@
       "graph": "Graphe",
       "summary": "Résumé"
     }
+  },
+  "world": {
+    "title": "Monde",
+    "level": "niv. {{level}}",
+    "notOnMap": "Pas sur la carte",
+    "onWorld": "Sur {{world}}",
+    "maps_one": "{{count}} carte",
+    "maps_other": "{{count}} cartes",
+    "loading": "Lecture des données du jeu…",
+    "noData": "Pas de données du jeu : {{reason}}",
+    "worlds": "Monde affiché",
+    "map": "carte",
+    "mapLabel": "Carte de {{world}} : flèches pour se déplacer, + et − pour zoomer, 0 pour recadrer",
+    "zoomIn": "Zoom avant",
+    "zoomOut": "Zoom arrière",
+    "fit": "Recadrer"
   }
 }

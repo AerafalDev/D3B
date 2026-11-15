@@ -3,6 +3,7 @@ import { DockviewReact } from "dockview-react";
 import { CharacterTab } from "@/characters/character-tab.tsx";
 import { PlayedTab } from "@/characters/played/played-tab.tsx";
 import { BlueprintTab } from "@/library/blueprint-tab.tsx";
+import { WorldTab } from "@/world/world-tab.tsx";
 import { EditorActions } from "./editor-actions.tsx";
 import { useEditors } from "./editor-store.ts";
 import { EditorTab } from "./editor-tab.tsx";
@@ -12,7 +13,7 @@ import { EditorWatermark } from "./editor-watermark.tsx";
 const THEME = { name: "d3b", className: "dockview-theme-dark d3b-dockview", colorScheme: "dark" } as const;
 
 // The editors a tab can hold, by the name `openEditor` gives.
-const EDITORS = { character: CharacterTab, played: PlayedTab, blueprint: BlueprintTab };
+const EDITORS = { character: CharacterTab, played: PlayedTab, blueprint: BlueprintTab, world: WorldTab };
 
 /**
  * VS Code's editor area, an island: tabs and splits, by dockview. Each tab is drawn by `EditorTab`; with no editor
