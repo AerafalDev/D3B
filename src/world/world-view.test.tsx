@@ -70,15 +70,33 @@ describe("the World view", () => {
       "Antre d'AstrubPas sur la carteniv. 30",
     ]);
     expect(rows[2]?.getAttribute("title")).toBe("Pas sur la carte");
+    expect(rows.map((row) => row.querySelector("[data-icon]")?.getAttribute("data-icon"))).toEqual([
+      "mapPin",
+      "mapPin",
+      "mapPinOff",
+    ]);
     fireEvent.click(astrub);
     expect(screen.queryByText("Forêt d'Astrub")).toBeNull();
   });
 
-  it("unfolds what a search finds, and says when nothing matches", async () => {
+  it("says it reads the atlas until it has it", () => {
+    backEnd.atlas.mockReset().mockReturnValue(new Promise(() => {}));
+    render(<WorldView />);
+    expect(document.body.textContent).toContain("Lecture des données du jeu…");
+  });
+
+  it("unfolds what a search finds, folds an area clicked meanwhile, and says when nothing matches", async () => {
     await shown();
     fireEvent.change(screen.getByRole("searchbox"), { target: { value: "patur" } });
     expect(screen.getByRole("button", { name: /Pâturages/ })).toBeTruthy();
     expect(screen.queryByText("Forêt d'Astrub")).toBeNull();
+    const incarnam = screen.getByRole("button", { name: /^Incarnam/ });
+    fireEvent.click(incarnam);
+    expect(incarnam.getAttribute("aria-expanded")).toBe("false");
+    // The search over, the tree is as before it: folded.
+    fireEvent.change(screen.getByRole("searchbox"), { target: { value: "" } });
+    expect(screen.getByRole("button", { name: /^Incarnam/ }).getAttribute("aria-expanded")).toBe("false");
+    fireEvent.change(screen.getByRole("searchbox"), { target: { value: "patur" } });
     fireEvent.change(screen.getByRole("searchbox"), { target: { value: "zzz" } });
     expect(screen.getByText("Aucune sous-zone ne correspond.")).toBeTruthy();
   });

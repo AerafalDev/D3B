@@ -14,7 +14,11 @@ const subArea = (id: number, fr: string, en: string, drawn = true) => ({
 const atlas: Atlas_Serialize = {
   worlds: [],
   areas: [
-    { id: 1, name: names("Bonta"), subAreas: [subArea(10, "Cité de Bonta", "Bonta City")] },
+    {
+      id: 1,
+      name: names("Bonta"),
+      subAreas: [subArea(10, "Cité de Bonta", "Bonta City"), subArea(11, "Cité blanche", "White City")],
+    },
     {
       id: 0,
       name: names("Astrub"),
@@ -39,7 +43,14 @@ describe("the World view's tree", () => {
           { id: 4, name: "Antre d'Astrub", level: 4, drawn: false },
         ],
       },
-      { id: 1, name: "Bonta", subAreas: [{ id: 10, name: "Cité de Bonta", level: 10, drawn: true }] },
+      {
+        id: 1,
+        name: "Bonta",
+        subAreas: [
+          { id: 10, name: "Cité de Bonta", level: 10, drawn: true },
+          { id: 11, name: "Cité blanche", level: 11, drawn: true },
+        ],
+      },
     ]);
     // At one level, by name.
     const same = {
@@ -60,7 +71,8 @@ describe("the World view's tree", () => {
   });
 
   it("keeps a whole area whose name a search finds", () => {
-    expect(worldTree(atlas, "fr", "bonta")[0]?.subAreas).toHaveLength(1);
+    // "Cité blanche" does not hold "bonta": its area's name keeps it.
+    expect(worldTree(atlas, "fr", "bonta")[0]?.subAreas.map((one) => one.id)).toEqual([10, 11]);
     expect(worldTree(atlas, "fr", "astrub")[0]?.subAreas).toHaveLength(3);
     expect(worldTree(atlas, "fr", "nothing")).toEqual([]);
   });

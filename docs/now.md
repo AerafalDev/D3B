@@ -167,11 +167,12 @@ _Updated 2026-11-14._
     2. type "foret" in the search: the areas holding a matching sub-area unfold, the others go; a nonsense word says
        "Aucune sous-zone ne correspond.";
     3. click Forêt d'Astrub: the World tab opens on "Monde des Douze" (its editor action), the forest in translucent
-       teal with a sharp outline, fitted in view, "Forêt d'Astrub · Astrub · niv. 20 · N cartes" on top left;
+       teal with a sharp outline, fitted in view, "Forêt d'Astrub" then "Astrub · niv. 20 · N cartes" on top left;
     4. the map is sharp at every zoom from 20 % to 100 % (the wheel, + and − on the focused map, the buttons); dragging
        moves it; hovering a map says its sub-area and coordinates; 0 or the fit button frames the forest again;
     5. choose Incarnam in the editor action: its map shows; click an Incarnam sub-area in the view: it shows there;
-    6. a sub-area marked "Pas sur la carte" (a dungeon) is greyed; clicking it says so on top of the map.
+    6. a sub-area no world shows (a dungeon) is greyed with a crossed pin, its hover saying "Pas sur la carte"; clicking
+       it says so on top of the map.
 - **Done in code, step 1**: `tools/extractor` reads the client's bundles, data tables, texts in five languages and flag
   enums, and writes the map positions, sub-areas, areas, zaaps, worlds and their tiles, maps, and the world graph,
   checked against one another, with the `client-<build>-format<n>.tar.gz` that `data:fetch` reads (ADR 0013); the app reads it all at start

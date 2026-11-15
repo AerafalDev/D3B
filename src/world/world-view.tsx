@@ -20,6 +20,8 @@ export function WorldView() {
   const pick = useWorld((store) => store.pick);
   const [query, setQuery] = useState("");
   const [open, setOpen] = useState<ReadonlySet<number>>(new Set());
+  // A search unfolds what it finds; the areas folded during it, kept apart, so the tree before it comes back after.
+  const [foldedInSearch, setFoldedInSearch] = useState<ReadonlySet<number>>(new Set());
 
   useEffect(() => {
     void load();
@@ -28,7 +30,7 @@ export function WorldView() {
   const tree = read?.state === "read" ? worldTree(read.atlas, i18n.language, query) : [];
   const searching = query.trim() !== "";
   const toggle = (area: number) =>
-    setOpen((now) => {
+    (searching ? setFoldedInSearch : setOpen)((now) => {
       const next = new Set(now);
       if (!next.delete(area)) {
         next.add(area);
@@ -37,7 +39,7 @@ export function WorldView() {
     });
 
   const area = (one: TreeArea) => {
-    const unfolded = searching || open.has(one.id);
+    const unfolded = searching ? !foldedInSearch.has(one.id) : open.has(one.id);
     return (
       <li key={one.id}>
         <button
@@ -94,7 +96,10 @@ export function WorldView() {
         <input
           type="search"
           value={query}
-          onChange={(event) => setQuery(event.target.value)}
+          onChange={(event) => {
+            setQuery(event.target.value);
+            setFoldedInSearch(new Set());
+          }}
           placeholder={t("world.search")}
           aria-label={t("world.search")}
           className="placeholder:text-text-muted min-w-0 flex-1 bg-transparent outline-0"
@@ -109,7 +114,7 @@ export function WorldView() {
         ) : read.state === "failed" ? (
           <p className="text-text-muted px-3 text-xs">{t("world.noData", { reason: read.error.reason })}</p>
         ) : tree.length === 0 ? (
-          <p className="text-text-muted px-3 text-xs">{t("world.nothingFound")}</p>
+          <p className="text-text-muted px-3 text-xs">{t(searching ? "world.nothingFound" : "world.noWorld")}</p>
         ) : (
           <ul>{tree.map(area)}</ul>
         )}
