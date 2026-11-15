@@ -34,7 +34,9 @@ pub use breeds::{Breed, head_file};
 pub use game_data::GameData;
 pub use manifest::{DataError, Manifest};
 pub use maps::{MapData, read_map};
+pub use text::Text;
 pub use world::{MapPosition, World};
+pub use world_maps::WorldMap;
 
 /// The format of the folder this version of the code reads. The extractor writes the same number in the manifest
 /// (`DataFolder.Format`); a different one is refused rather than half read. Format 2 adds the breeds and their heads,

@@ -30,6 +30,8 @@ export const commands = {
 	 *  or no such map.
 	 */
 	mapCells: (mapId: number) => __TAURI_INVOKE<MapCells>("map_cells", { mapId }),
+	/**  The atlas of the packed game data, or why there is none. */
+	worldAtlas: () => __TAURI_INVOKE<Atlas_Serialize>("world_atlas"),
 	/**
 	 *  Watches the frames of `connection`, or none: those kept now; the next come as `InspectorFrames`. The front end
 	 *  watches none as it starts, so that a reload leaves nothing streamed to no one.
@@ -93,6 +95,99 @@ export type AppInfo_Serialize = {
 	dataError: string | null,
 	/**  `windows`, `macos` or `linux`. */
 	os: string,
+};
+
+/**  The worlds and the sub-areas the World view lists, in order of id. */
+export type Atlas = Atlas_Serialize | Atlas_Deserialize;
+
+/**  An area and its sub-areas. */
+export type AtlasArea = {
+	id: number,
+	name: Names,
+	subAreas: AtlasSubArea[],
+};
+
+/**  Why there is no atlas. */
+export type AtlasError = 
+/**  The app has no game data, or does not know its folder: why, as it came. */
+{ kind: "noData"; reason: string };
+
+/**  A sub-area, a ready-made zone, and the maps it covers on each world shown; none when no world shows it. */
+export type AtlasSubArea = {
+	id: number,
+	name: Names,
+	level: number,
+	maps: WorldMaps[],
+};
+
+/**
+ *  A world the client shows, as its map is drawn: map `x, y` covers the image from `origin + (x, y) * mapSize`, at
+ *  zoom 100.
+ */
+export type AtlasWorld = AtlasWorld_Serialize | AtlasWorld_Deserialize;
+
+/**
+ *  A world the client shows, as its map is drawn: map `x, y` covers the image from `origin + (x, y) * mapSize`, at
+ *  zoom 100.
+ */
+export type AtlasWorld_Deserialize = {
+	id: number,
+	name?: Names | null,
+	origin: [number, number],
+	mapSize: [(number | null), (number | null)],
+	/**  The image's size at zoom 100. */
+	size: [number, number],
+	/**  The client's bounds on the zoom, and the zoom it opens at, 1 being 100. */
+	minScale: number | null,
+	maxScale: number | null,
+	startScale: number | null,
+	/**  Its levels of zoom, largest first. */
+	zooms: AtlasZoom[],
+};
+
+/**
+ *  A world the client shows, as its map is drawn: map `x, y` covers the image from `origin + (x, y) * mapSize`, at
+ *  zoom 100.
+ */
+export type AtlasWorld_Serialize = {
+	id: number,
+	name: Names | null,
+	origin: [number, number],
+	mapSize: [(number | null), (number | null)],
+	/**  The image's size at zoom 100. */
+	size: [number, number],
+	/**  The client's bounds on the zoom, and the zoom it opens at, 1 being 100. */
+	minScale: number | null,
+	maxScale: number | null,
+	startScale: number | null,
+	/**  Its levels of zoom, largest first. */
+	zooms: AtlasZoom[],
+};
+
+/**
+ *  A level of a world's image: its size, and its tiles' files row by row from the top left, 1,024 pixels a side but for
+ *  the last column and row.
+ */
+export type AtlasZoom = {
+	percent: number,
+	width: number,
+	height: number,
+	columns: number,
+	rows: number,
+	/**  Each tile's file as the platform writes it, which the webview loads through the asset protocol. */
+	tiles: string[],
+};
+
+/**  The worlds and the sub-areas the World view lists, in order of id. */
+export type Atlas_Deserialize = {
+	worlds: AtlasWorld_Deserialize[],
+	areas: AtlasArea[],
+};
+
+/**  The worlds and the sub-areas the World view lists, in order of id. */
+export type Atlas_Serialize = {
+	worlds: AtlasWorld_Serialize[],
+	areas: AtlasArea[],
 };
 
 /**  What a copy is based on. */
@@ -832,6 +927,12 @@ export type VariableView_Serialize = {
 export type WireView = {
 	from: [string, string],
 	to: [string, string],
+};
+
+/**  The maps of a sub-area on one world, by their coordinates, each once. */
+export type WorldMaps = {
+	world: number,
+	at: ([number, number])[],
 };
 
 /* Tauri Specta runtime */
