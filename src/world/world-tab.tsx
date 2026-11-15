@@ -9,8 +9,7 @@ import { findSubArea, useWorld } from "./world-store.ts";
 /**
  * The World tab (the owner's mock-up 10 of 2026-11-15): the map of the world its editor action shows, the sub-area
  * chosen in the World view on it with its name, area, level and maps on top; one no world shows said "not on the
- * map", one of another world said where it is. The view comes with the World's next PR, the zones' tools with step
- * 3's PR 10, the hints after them.
+ * map", one of another world said where it is. The view, the zones' tools and the hints come with later PRs.
  */
 export function WorldTab() {
   const { t, i18n } = useTranslation();

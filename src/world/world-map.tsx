@@ -32,10 +32,9 @@ interface WorldMapProps {
 }
 
 /**
- * The world's map drawn by hand from its tiles (the owner, 2026-11-15): the level the zoom needs, only the tiles in
- * view, moved and scaled as one; the chosen maps in translucent teal with a sharp outline; a map's sub-area and
- * coordinates on hover. The wheel, the arrows and + / − move and zoom it within the client's bounds; 0 fits it again.
- * The view lives in a ref and reaches the page each frame, React drawing only when the tiles in view change.
+ * The world's map drawn by hand from its tiles (the owner, 2026-11-15): the level the zoom needs, the tiles in view; the
+ * chosen maps in teal, outlined; a map's sub-area on hover; the wheel, the arrows, + / − and 0 move, zoom and fit it.
+ * The view lives in a ref, reaching the page each frame; React draws only when the tiles in view change.
  */
 export function WorldMap({ world, chosen, nameAt }: WorldMapProps) {
   const { t, i18n } = useTranslation();
