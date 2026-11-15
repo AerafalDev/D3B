@@ -30,7 +30,7 @@ export const commands = {
 	 *  or no such map.
 	 */
 	mapCells: (mapId: number) => __TAURI_INVOKE<MapCells>("map_cells", { mapId }),
-	/**  The atlas of the packed game data, or why there is none. */
+	/**  The atlas of the packed game data, or why there is none; built off the main thread, its 15,000 positions grouped. */
 	worldAtlas: () => __TAURI_INVOKE<Atlas_Serialize>("world_atlas"),
 	/**
 	 *  Watches the frames of `connection`, or none: those kept now; the next come as `InspectorFrames`. The front end
@@ -112,7 +112,10 @@ export type AtlasError =
 /**  The app has no game data, or does not know its folder: why, as it came. */
 { kind: "noData"; reason: string };
 
-/**  A sub-area, a ready-made zone, and the maps it covers on each world shown; none when no world shows it. */
+/**
+ *  A sub-area, a ready-made zone, and the maps it covers on each world shown; none when no world shows it (112 on
+ *  3.7.13.17, dungeons and hidden worlds' among them), and never more than one world there, so its maps say its world.
+ */
 export type AtlasSubArea = {
 	id: number,
 	name: Names,
@@ -122,13 +125,15 @@ export type AtlasSubArea = {
 
 /**
  *  A world the client shows, as its map is drawn: map `x, y` covers the image from `origin + (x, y) * mapSize`, at
- *  zoom 100.
+ *  zoom 100 (3.7.13.17, inferred from `WorldMapsDataRoot` and checked by eye: Forêt d'Astrub's maps drawn so fall on
+ *  the forest of the tiles, mock-up 10 of 2026-11-15).
  */
 export type AtlasWorld = AtlasWorld_Serialize | AtlasWorld_Deserialize;
 
 /**
  *  A world the client shows, as its map is drawn: map `x, y` covers the image from `origin + (x, y) * mapSize`, at
- *  zoom 100.
+ *  zoom 100 (3.7.13.17, inferred from `WorldMapsDataRoot` and checked by eye: Forêt d'Astrub's maps drawn so fall on
+ *  the forest of the tiles, mock-up 10 of 2026-11-15).
  */
 export type AtlasWorld_Deserialize = {
 	id: number,
@@ -147,7 +152,8 @@ export type AtlasWorld_Deserialize = {
 
 /**
  *  A world the client shows, as its map is drawn: map `x, y` covers the image from `origin + (x, y) * mapSize`, at
- *  zoom 100.
+ *  zoom 100 (3.7.13.17, inferred from `WorldMapsDataRoot` and checked by eye: Forêt d'Astrub's maps drawn so fall on
+ *  the forest of the tiles, mock-up 10 of 2026-11-15).
  */
 export type AtlasWorld_Serialize = {
 	id: number,

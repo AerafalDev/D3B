@@ -7,6 +7,7 @@ use std::path::Path;
 
 use serde::Serialize;
 use specta::Type;
+use tauri::Manager;
 
 use super::LoadedData;
 use super::character::Names;
@@ -20,7 +21,8 @@ pub struct Atlas {
 }
 
 /// A world the client shows, as its map is drawn: map `x, y` covers the image from `origin + (x, y) * mapSize`, at
-/// zoom 100.
+/// zoom 100 (3.7.13.17, inferred from `WorldMapsDataRoot` and checked by eye: Forêt d'Astrub's maps drawn so fall on
+/// the forest of the tiles, mock-up 10 of 2026-11-15).
 #[derive(Debug, Clone, PartialEq, Serialize, Type)]
 #[serde(rename_all = "camelCase")]
 pub struct AtlasWorld {
@@ -60,7 +62,8 @@ pub struct AtlasArea {
     pub sub_areas: Vec<AtlasSubArea>,
 }
 
-/// A sub-area, a ready-made zone, and the maps it covers on each world shown; none when no world shows it.
+/// A sub-area, a ready-made zone, and the maps it covers on each world shown; none when no world shows it (112 on
+/// 3.7.13.17, dungeons and hidden worlds' among them), and never more than one world there, so its maps say its world.
 #[derive(Debug, Clone, PartialEq, Serialize, Type)]
 pub struct AtlasSubArea {
     pub id: i32,
@@ -84,17 +87,26 @@ pub enum AtlasError {
     NoData { reason: String },
 }
 
-/// The atlas of the packed game data, or why there is none.
+/// The atlas of the packed game data, or why there is none; built off the main thread, its 15,000 positions grouped.
 #[tauri::command]
 #[specta::specta]
-#[expect(clippy::needless_pass_by_value, reason = "Tauri hands commands their state by value")]
-pub fn world_atlas(data: tauri::State<'_, LoadedData>) -> Result<Atlas, AtlasError> {
-    read(&data)
+pub async fn world_atlas(app: tauri::AppHandle) -> Result<Atlas, AtlasError> {
+    let built = tauri::async_runtime::spawn_blocking(move || {
+        let data = app.state::<LoadedData>();
+        let game = data.0.as_ref().map(|game| (&game.world, game.worlds.as_slice()));
+        read(game, data.1.as_deref())
+    });
+    built.await.unwrap_or_else(|error| {
+        Err(AtlasError::NoData {
+            reason: error.to_string(),
+        })
+    })
 }
 
-fn read(data: &LoadedData) -> Result<Atlas, AtlasError> {
-    match (&data.0, &data.1) {
-        (Ok(game), Some(folder)) => Ok(atlas(&game.world, &game.worlds, folder)),
+/// The atlas of the game data's world and worlds, whose tiles are in `folder`, or why there is none.
+fn read(game: Result<(&World, &[WorldMap]), &String>, folder: Option<&Path>) -> Result<Atlas, AtlasError> {
+    match (game, folder) {
+        (Ok((world, worlds)), Some(folder)) => Ok(atlas(world, worlds, folder)),
         (Err(reason), _) => Err(AtlasError::NoData { reason: reason.clone() }),
         (Ok(_), None) => Err(AtlasError::NoData {
             reason: "the game data's folder is unknown".into(),
@@ -230,7 +242,7 @@ mod tests {
                 .iter()
                 .map(|(id, name, area)| {
                     format!(
-                        r#"{{"id":{id},"name":{name},"areaId":{area},"level":12,"zaapMapId":null,"basicAccountAllowed":true,
+                        r#"{{"id":{id},"name":{name},"areaId":{area},"level":{id},"zaapMapId":null,"basicAccountAllowed":true,
                           "customWorldMapId":-1,"harvestables":[],"monsters":[]}}"#
                     )
                 })
@@ -285,6 +297,7 @@ mod tests {
             (first.origin, first.map_size, first.size),
             ([6480, 4944], [69.5, 49.7], [2500, 1100])
         );
+        assert_eq!((first.min_scale, first.max_scale, first.start_scale), (0.2, 1.0, 0.6));
         let tiles = &first.zooms[0].tiles;
         assert_eq!(tiles.len(), 6);
         assert_eq!(
@@ -308,8 +321,8 @@ mod tests {
             (astrub.name.fr.as_str(), astrub.name.en.as_str()),
             ("Astrub", "Astrub (en)")
         );
-        let ids: Vec<i32> = astrub.sub_areas.iter().map(|one| one.id).collect();
-        assert_eq!(ids, [95, 99]);
+        let ids: Vec<(i32, u32)> = astrub.sub_areas.iter().map(|one| (one.id, one.level)).collect();
+        assert_eq!(ids, [(95, 95), (99, 99)]);
         // Two floors at -1, -27 are one map; world 9 is not shown.
         assert_eq!(
             astrub.sub_areas[0].maps,
@@ -331,10 +344,25 @@ mod tests {
     #[test]
     fn says_why_there_is_no_atlas() {
         assert_eq!(
-            read(&LoadedData(Err("no data".into()), None)),
+            read(Err(&"no data".to_owned()), Some(Path::new("data"))),
             Err(AtlasError::NoData {
                 reason: "no data".into()
             })
         );
+        let (world, worlds) = (world(), worlds());
+        assert_eq!(
+            read(Ok((&world, &worlds)), None),
+            Err(AtlasError::NoData {
+                reason: "the game data's folder is unknown".into()
+            })
+        );
+    }
+
+    #[test]
+    fn leaves_out_a_sub_area_whose_area_is_missing() {
+        let mut world = world();
+        world.areas.retain(|area| area.id != 0);
+        // Only area 2 is left, whose sub-area holds no map.
+        assert_eq!(atlas(&world, &worlds(), Path::new("data")).areas, []);
     }
 }
