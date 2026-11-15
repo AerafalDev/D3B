@@ -14,13 +14,17 @@ vi.mock("./world-map.tsx", () => ({
     chosen,
     hints,
     onPick,
+    outlineAt,
   }: {
     chosen: unknown[] | null;
     hints: { id: number }[];
     onPick: (x: number, y: number) => boolean;
+    outlineAt?: (x: number, y: number) => unknown[] | null;
   }) => (
     <>
-      <p data-hints={hints.map((one) => one.id).join(",")}>carte {chosen?.length ?? "vide"}</p>
+      <p data-hints={hints.map((one) => one.id).join(",")} data-outline={String(outlineAt?.(1, 0)?.length)}>
+        carte {chosen?.length ?? "vide"}
+      </p>
       <button type="button" onClick={(event) => (event.currentTarget.dataset["picked"] = String(onPick(1, 0)))}>
         clic 1, 0
       </button>
@@ -33,6 +37,17 @@ vi.mock("./world-map.tsx", () => ({
 // Details, faked: its own tests say what it shows.
 vi.mock("./world-details.tsx", () => ({
   WorldDetails: ({ subArea }: { subArea: number | null }) => <aside>détails {subArea ?? "aucun"}</aside>,
+}));
+
+// The editor area, faked: the tab active before the map was opened, brought back.
+const editors = vi.hoisted(() => ({ active: null as string | null, shown: [] as string[] }));
+vi.mock("@/shell/parts/editor-store.ts", () => ({
+  useEditors: {
+    getState: () => ({
+      active: editors.active,
+      api: { getPanel: (id: string) => ({ api: { setActive: () => editors.shown.push(id) } }) },
+    }),
+  },
 }));
 
 const { WorldTab } = await import("./world-tab.tsx");
@@ -95,7 +110,7 @@ describe("the World tab", () => {
   });
   beforeEach(() => {
     backEnd.atlas.mockReset().mockResolvedValue(ATLAS);
-    useWorld.setState({ read: null, picked: null, world: 1 });
+    useWorld.setState({ read: null, picked: null, world: 1, choosing: null });
   });
   afterEach(cleanup);
 
@@ -145,6 +160,43 @@ describe("the World tab", () => {
     expect(click("clic 1, 0")).toBe("false");
     expect(click("clic 5, 5")).toBe("false");
     expect(useWorld.getState().picked).toBe(3);
+  });
+
+  it("while choosing a Zone, says for whom, outlines a sub-area hovered, and a click chooses it and goes back", async () => {
+    const choose = vi.fn();
+    editors.active = "character:1";
+    editors.shown = [];
+    // The forest is already shown on the map: choosing it still takes it.
+    useWorld.setState({ picked: 3 });
+    useWorld.getState().startChoosing("Aerinth", choose);
+    await shown(<WorldTab />);
+    expect(screen.getByRole("status").textContent).toContain("Choisis la Zone de Aerinth : clique une sous-zone.");
+    // Map 1, 0 is Forêt d'Astrub's: its two maps are outlined.
+    expect(document.querySelector("[data-outline]")?.getAttribute("data-outline")).toBe("2");
+    fireEvent.click(screen.getByRole("button", { name: "clic 1, 0" }));
+    expect(choose.mock.calls).toEqual([[3]]);
+    expect(useWorld.getState()).toMatchObject({ choosing: null, picked: 3 });
+    expect(editors.shown).toEqual(["character:1"]);
+    expect(screen.queryByRole("status")).toBeNull();
+    expect(document.querySelector("[data-outline]")?.getAttribute("data-outline")).toBe("undefined");
+  });
+
+  it("keeps choosing after a click on the sea, and Escape or Cancel goes back without choosing", async () => {
+    const choose = vi.fn();
+    editors.active = "character:1";
+    editors.shown = [];
+    useWorld.getState().startChoosing("Aerinth", choose);
+    await shown(<WorldTab />);
+    fireEvent.click(screen.getByRole("button", { name: "clic 5, 5" }));
+    expect(useWorld.getState().choosing?.who).toBe("Aerinth");
+    fireEvent.keyDown(window, { key: "Escape" });
+    expect(useWorld.getState().choosing).toBeNull();
+    useWorld.getState().startChoosing("Aerinth", choose);
+    await act(async () => {});
+    fireEvent.click(screen.getByRole("button", { name: /Annuler/ }));
+    expect(useWorld.getState()).toMatchObject({ choosing: null, picked: null });
+    expect(choose).not.toHaveBeenCalled();
+    expect(editors.shown).toEqual(["character:1", "character:1"]);
   });
 
   it("says why there is no map without game data, and offers no worlds", async () => {

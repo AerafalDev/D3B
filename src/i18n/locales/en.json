@@ -593,6 +593,21 @@
       "kinds_other": "{{count}} kinds",
       "resources": "Resources",
       "noResource": "No resource."
+    },
+    "choosing": {
+      "banner": "Choose {{who}}'s Zone: click a sub-area.",
+      "cancel": "Cancel",
+      "escape": "Esc"
     }
+  },
+  "zone": {
+    "label": "Zone",
+    "toChoose": "To choose",
+    "missing": "Sub-area {{id}} missing from the data",
+    "search": "Search a zone",
+    "mine": "My zones",
+    "mineLater": "Your painted zones will come here.",
+    "onMap": "Choose on the map",
+    "keys": "↑ ↓ Enter"
   }
 }

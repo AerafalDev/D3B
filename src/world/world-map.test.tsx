@@ -149,6 +149,33 @@ describe("the World's map", () => {
     expect(moved()).toBe("translate(-3 -3) scale(0.2)");
   });
 
+  it("outlines, dashed, the maps the hovered one belongs with, and nothing off them or once the pointer leaves", () => {
+    const forest: [number, number][] = [
+      [7, 7],
+      [8, 7],
+    ];
+    render(
+      <WorldMap
+        world={world}
+        chosen={null}
+        nameAt={() => null}
+        hints={[]}
+        outlineAt={(x, y) => (y === 7 && (x === 7 || x === 8) ? forest : null)}
+      />,
+    );
+    const map = screen.getByRole("application");
+    const dashed = () => document.querySelector("path[stroke-dasharray]")?.getAttribute("d") ?? null;
+    expect(dashed()).toBeNull();
+    // The box's 10, 10 is map 7, 7.
+    fireEvent.pointerMove(map, { clientX: 10, clientY: 10 });
+    expect(dashed()).toBe("M70,70H80M70,80H80M70,70V80M80,70H90M80,80H90M90,70V80");
+    fireEvent.pointerMove(map, { clientX: 0, clientY: 0 });
+    expect(dashed()).toBeNull();
+    fireEvent.pointerMove(map, { clientX: 10, clientY: 10 });
+    fireEvent.pointerLeave(map);
+    expect(dashed()).toBeNull();
+  });
+
   it("fits the view again after a click that picked nothing new", async () => {
     const onPick = vi.fn(() => false);
     const shown = (chosen: [number, number][] | null) => (

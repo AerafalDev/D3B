@@ -1,6 +1,7 @@
 import { create } from "zustand";
 
 import { type Atlas_Serialize, type AtlasError, commands, type HintKind } from "@/bindings.ts";
+import { useEditors } from "@/shell/parts/editor-store.ts";
 import { HIDDEN_KINDS } from "./hint-layout.ts";
 
 /** The atlas as read: loading, read, or why not. */
@@ -8,6 +9,16 @@ export type AtlasRead =
   | { state: "loading" }
   | { state: "read"; atlas: Atlas_Serialize }
   | { state: "failed"; error: AtlasError };
+
+/** A Zone being chosen on the map (the owner's mock-up 12, 2026-11-15). */
+export interface Choosing {
+  /** Whose Zone, as the map's banner says. */
+  who: string;
+  /** Takes the sub-area chosen. */
+  choose: (subArea: number) => void;
+  /** The editor whose tab was active when the choice began, brought back when it ends. */
+  back: string | null;
+}
 
 /** The world the tab opens on: the Twelve's, the client's first. */
 const FIRST_WORLD = 1;
@@ -21,6 +32,8 @@ interface WorldStore {
   world: number;
   /** The kinds of hints the map leaves out, for the session. */
   hidden: ReadonlySet<HintKind>;
+  /** The Zone being chosen on the map, `null` when none is. */
+  choosing: Choosing | null;
   /** Reads the atlas, once. */
   load: () => Promise<void>;
   /** Chooses a sub-area, and shows the world that holds its maps. */
@@ -29,6 +42,11 @@ interface WorldStore {
   show: (world: number) => void;
   /** Sets the kinds of hints the map leaves out. */
   hide: (kinds: ReadonlySet<HintKind>) => void;
+  /** Begins choosing `who`'s Zone on the map, remembering the tab active now. */
+  startChoosing: (who: string, choose: (subArea: number) => void) => void;
+  /** Ends the choice with the sub-area chosen, also shown on the map, or `null` when cancelled; the tab it began in
+   * comes back. */
+  endChoosing: (subArea: number | null) => void;
 }
 
 export const useWorld = create<WorldStore>((set, get) => ({
@@ -36,6 +54,7 @@ export const useWorld = create<WorldStore>((set, get) => ({
   picked: null,
   world: FIRST_WORLD,
   hidden: HIDDEN_KINDS,
+  choosing: null,
 
   load: async () => {
     if (get().read !== null) {
@@ -70,6 +89,21 @@ export const useWorld = create<WorldStore>((set, get) => ({
   show: (world) => set({ world }),
 
   hide: (hidden) => set({ hidden }),
+
+  startChoosing: (who, choose) => set({ choosing: { who, choose, back: useEditors.getState().active } }),
+
+  endChoosing: (subArea) => {
+    const { choosing, pick } = get();
+    set({ choosing: null });
+    if (subArea !== null) {
+      pick(subArea);
+      choosing?.choose(subArea);
+    }
+    const back = choosing?.back;
+    if (back !== null && back !== undefined) {
+      useEditors.getState().api?.getPanel(back)?.api.setActive();
+    }
+  },
 }));
 
 /** A sub-area of `atlas` and its area, by id. */
