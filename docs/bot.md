@@ -30,7 +30,12 @@ what it does; a D3B update) need these and nothing else: no profile, activity, p
   X vN": named "<name> (copie)" in the player's language, its texts taken from the interface since a given
   blueprint's are translations, its id made from its name (accents dropped, a number when taken by a blueprint or by
   any file of the folder, in any case); a copy of mine keeps what mine was based on (the owner, 2026-11-14). A given blueprint's new version reaches the characters that run it, their values kept; my copy stays as it is
-  and says its original has a newer version.
+  and says its original has a newer version (step 3's PR 23, the owner's choices of 2026-11-16): at start, each
+  character running a given blueprint of a newer version than its file notes has its settings carried as when another
+  blueprint is chosen, a value kept when the new version's setting of the same id accepts it (the old version's types
+  are not shipped), and the values lost are said in a notice above its settings, live and offline, until the player
+  closes it; a copy whose original is newer says "its original has a newer version, vN" in its tab's line and its
+  Library hover, a blue arrow on its row, and offers nothing more yet (a compare may come later).
 - **Character**: runs one blueprint, chosen in its tab, none until the player chooses one; another blueprint keeps
   the values of its settings of the same id and type and drops the others (the owner, 2026-11-16), and those out of
   their new bounds or equal to their new default. Its **settings** are the blueprint's variables marked "set per
@@ -356,7 +361,10 @@ blueprint, or none, under the same lock, keeping the values of the settings of t
 `set_character_setting` sets one, refused when not of its type or out of its bounds, a value set back to its default
 or reset dropped, so it shows unmarked (the owner, 2026-11-16). The IPC's `delete_blueprint` sends a blueprint of mine
 to the system's trash, its undo history gone, without asking first, as Forget; the characters that run it keep naming
-it, their tab saying it is not found, so restoring its file gives it back to them (the owner, 2026-11-16). Forget sends it to the system's trash (the `trash` crate; on
+it, their tab saying it is not found, so restoring its file gives it back to them (the owner, 2026-11-16). From schema 3 (PR 23; schema 2 reads as
+running a given blueprint's version 1) it notes `blueprintVersion`, the version of D3B's blueprint its settings were
+carried to (none for one of mine), and `dropped`, the settings a new version could not keep, which
+`dismiss_dropped_settings` clears; choosing a blueprint notes its version and clears them. Forget sends it to the system's trash (the `trash` crate; on
 macOS through the file manager, without asking to control the Finder: the owner, 2026-11-14). A character's file is named by a key stable across
 servers, from its study (below).
 A zone of mine is `zones/<id>.json` (step 3's PR 20, the owner's choices of 2026-11-16): schema 1, its `id`, `name`,

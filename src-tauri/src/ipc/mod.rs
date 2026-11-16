@@ -16,6 +16,7 @@ mod zones;
 pub use blueprints::open_store;
 pub use commands::LoadedData;
 pub use played::start_writer as start_played_writer;
+pub use played::update::start as update_played;
 pub use relay::{start as start_relay, stop as stop_relay};
 
 use tauri_specta::{Builder, collect_commands, collect_events};
@@ -39,6 +40,7 @@ pub fn builder() -> Builder<tauri::Wry> {
             played::forget_character,
             played::settings::set_character_blueprint,
             played::settings::set_character_setting,
+            played::update::dismiss_dropped_settings,
             relay::relay_status,
             relay::relay_restore,
             map::map_cells,

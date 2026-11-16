@@ -43,6 +43,8 @@ export const commands = {
 	setCharacterBlueprint: (key: string, blueprint: string | null) => __TAURI_INVOKE<null>("set_character_blueprint", { key, blueprint }),
 	/**  The character `key`'s own value of its setting `variable`, as JSON; none resets it to the blueprint's default. */
 	setCharacterSetting: (key: string, variable: string, value: string | null) => __TAURI_INVOKE<null>("set_character_setting", { key, variable, value }),
+	/**  Closes the notice of the settings a new version of the character `key`'s blueprint could not keep. */
+	dismissDroppedSettings: (key: string) => __TAURI_INVOKE<null>("dismiss_dropped_settings", { key }),
 	/**  The relay's status now. */
 	relayStatus: () => __TAURI_INVOKE<RelayStatus_Serialize>("relay_status"),
 	/**
@@ -327,9 +329,28 @@ export type Atlas_Serialize = {
 };
 
 /**  What a copy is based on. */
-export type BasedOnView = {
+export type BasedOnView = BasedOnView_Serialize | BasedOnView_Deserialize;
+
+/**  What a copy is based on. */
+export type BasedOnView_Deserialize = {
 	id: string,
 	version: number,
+	/**
+	 *  The version D3B now ships of its original, when newer than the one the copy was made from: the copy stays as it
+	 *  is and says so (`docs/bot.md`, "The concepts").
+	 */
+	newer?: number | null,
+};
+
+/**  What a copy is based on. */
+export type BasedOnView_Serialize = {
+	id: string,
+	version: number,
+	/**
+	 *  The version D3B now ships of its original, when newer than the one the copy was made from: the copy stays as it
+	 *  is and says so (`docs/bot.md`, "The concepts").
+	 */
+	newer: number | null,
 };
 
 /**  A blueprint's graphs, and its problems, each where the editor marks it. */
@@ -377,7 +398,7 @@ export type BlueprintSummary_Deserialize = {
 	given: boolean,
 	version: number,
 	/**  The given blueprint a copy is based on, and its version then. */
-	basedOn?: BasedOnView | null,
+	basedOn?: BasedOnView_Deserialize | null,
 	/**  How many problems keep it from running. */
 	problems: number,
 	/**  Its variables, those set per character first shown as its settings. */
@@ -394,7 +415,7 @@ export type BlueprintSummary_Serialize = {
 	given: boolean,
 	version: number,
 	/**  The given blueprint a copy is based on, and its version then. */
-	basedOn: BasedOnView | null,
+	basedOn: BasedOnView_Serialize | null,
 	/**  How many problems keep it from running. */
 	problems: number,
 	/**  Its variables, those set per character first shown as its settings. */
@@ -970,6 +991,11 @@ export type PlayedCharacter_Deserialize = {
 	 *  left out takes the blueprint's default.
 	 */
 	settings: { [key in string]: string },
+	/**
+	 *  The settings whose values a new version of its blueprint could not keep, by variable, until the player closes
+	 *  their notice.
+	 */
+	dropped: string[],
 };
 
 /**  A character played, as the Characters view lists it. */
@@ -991,6 +1017,11 @@ export type PlayedCharacter_Serialize = {
 	 *  left out takes the blueprint's default.
 	 */
 	settings: { [key in string]: string },
+	/**
+	 *  The settings whose values a new version of its blueprint could not keep, by variable, until the player closes
+	 *  their notice.
+	 */
+	dropped: string[],
 };
 
 /**  The characters played and the files kept as they are. */

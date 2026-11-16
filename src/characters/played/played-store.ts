@@ -21,6 +21,8 @@ interface PlayedStore {
   setBlueprint: (character: PlayedCharacter, blueprint: string | null) => Promise<boolean>;
   /** The character's own value of `variable`, as JSON, or `null` to reset it to the blueprint's default. */
   setSetting: (character: PlayedCharacter, variable: string, value: string | null) => Promise<boolean>;
+  /** Closes the notice of the settings a new version of the character's blueprint could not keep. */
+  dismissDropped: (character: PlayedCharacter) => Promise<boolean>;
   /** Reads the list at each change, then once; returns what stops following. */
   follow: () => () => void;
 }
@@ -76,6 +78,8 @@ export const usePlayed = create<PlayedStore>((set) => ({
 
   setSetting: (character, variable, value) =>
     changing(character.name, () => commands.setCharacterSetting(character.key, variable, value)),
+
+  dismissDropped: (character) => changing(character.name, () => commands.dismissDroppedSettings(character.key)),
 
   follow: () => {
     if (!isTauri()) {
