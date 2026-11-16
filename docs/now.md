@@ -340,7 +340,12 @@ _Updated 2026-11-16._
   replacing the one that fed its input or left its flow output, the picker offering the catalogue and the blueprint's
   variables and functions, "Often here" from a fixed table by context), in two PRs: `edit_blueprint`, a wire, a node
   added or moved checked and saved, and each graph's choices (done in code), then the graph editable, a wire checked
-  as it is dragged, and the picker (done in code; its checklist under "Not measured"); (13) delete, undo, autosave; then **blueprints v2**
+  as it is dragged, and the picker (done in code; its checklist under "Not measured"); (13) delete and undo
+  (autosave done by (12); the owner's choices of 2026-11-16: undo and redo kept in Rust, 100 changes for the session; a
+  deletion not confirmed; a blueprint of mine deleted to the system's trash without asking, the characters that run it
+  keeping its id), in two PRs: nodes and wires deleted, a move of many one change, undo, redo and `delete_blueprint`
+  through the IPC (done in code), then Delete, Backspace and a context menu in the graph, Ctrl+Z and Ctrl+Y, and
+  Delete in the Library; then **blueprints v2**
   ([bot.md](bot.md#the-language-v2), ADR 0016; the owner, 2026-11-16, after trying (12): "much more complete", "as
   practical as a Lua script"), from a mock-up of the catalogue and the Summary and an analysis of the reference Lua
   scripts: compact value nodes and a typed Expression, wildcards, lists and level ranges, flow for a bot, "When …
