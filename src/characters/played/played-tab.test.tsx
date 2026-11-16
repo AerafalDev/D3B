@@ -24,6 +24,8 @@ const kalyx: PlayedCharacter = {
   sex: "male",
   lastSeen: new Date(2026, 10, 14, 10, 40).getTime(),
   place: { mapId: 1, at: { x: 5, y: -18 }, subArea: { fr: "Astrub", en: "Astrub" }, area: null },
+  blueprint: null,
+  settings: {},
 };
 
 const titles: string[] = [];

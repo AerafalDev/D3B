@@ -43,8 +43,8 @@ impl Variable {
 }
 
 /// A character's settings once it runs a blueprint of the variables `to` instead of one of `from` (the owner,
-/// 2026-11-16): a value is kept when `to` sets per character a variable of the same id and type that accepts it, so
-/// a Zone goes from one harvest to another, and the others are dropped. `from` is none when that blueprint is gone:
+/// 2026-11-16): a value is kept when `to` sets per character a variable of the same id and type that accepts it
+/// (within its bounds) and of another default, so a Zone goes from one harvest to another, and the others are dropped. `from` is none when that blueprint is gone:
 /// the type the value had is then unknown, and a value `to`'s variable accepts is kept.
 pub(crate) fn carried(
     settings: &BTreeMap<String, Value>,
@@ -59,6 +59,8 @@ pub(crate) fn carried(
                 variable.id.0 == **id
                     && variable.per_character
                     && variable.accepts(value)
+                    // A value that is the new default is no longer the character's own, as when set back to it.
+                    && **value != variable.default
                     && had(id).is_none_or(|had| had == Some(variable.value_type))
             })
         })
@@ -217,13 +219,17 @@ mod tests {
             ("pods".to_owned(), json!(80)),
             ("goal".to_owned(), json!(5000)),
             ("job".to_owned(), json!(24)),
+            ("keep".to_owned(), json!("all")),
         ]);
         let from = [
             variable("zone", ValueType::Zone, None),
             variable("pods", ValueType::Percentage, Some([10, 100])),
             variable("goal", ValueType::Number, None),
             variable("job", ValueType::Job, None),
+            variable("keep", ValueType::Items, None),
         ];
+        let mut keep = variable("keep", ValueType::Items, None);
+        keep.default = json!("all");
         let mut not_set = variable("job", ValueType::Job, None);
         not_set.per_character = false;
         let to = [
@@ -232,6 +238,8 @@ mod tests {
             variable("pods", ValueType::Number, None),
             variable("goal", ValueType::Number, Some([0, 1000])),
             not_set,
+            // Its new default: no longer the character's own.
+            keep,
         ];
         let kept = carried(&settings, Some(&from), &to);
         assert_eq!(kept.keys().collect::<Vec<_>>(), ["zone"]);

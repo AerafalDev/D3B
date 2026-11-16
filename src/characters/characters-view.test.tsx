@@ -135,7 +135,18 @@ describe("the characters view", () => {
 
   function played(key: string, name: string, hoursAgo: number): PlayedCharacter {
     const lastSeen = Date.now() - hoursAgo * 3_600_000;
-    return { key, name, level: 54, breedName: null, head: null, sex: null, lastSeen, place: null };
+    return {
+      key,
+      name,
+      level: 54,
+      breedName: null,
+      head: null,
+      sex: null,
+      lastSeen,
+      place: null,
+      blueprint: null,
+      settings: {},
+    };
   }
 
   it("lists the characters played whose client is closed under the connected ones, greyed", () => {

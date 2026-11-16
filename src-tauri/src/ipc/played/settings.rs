@@ -227,7 +227,7 @@ mod tests {
 
     #[test]
     fn a_value_out_of_its_type_or_bounds_and_an_unknown_setting_are_refused_and_nothing_written() {
-        let (_folder, store) = store("settings-refused");
+        let (folder, store) = store("settings-refused");
         assert_eq!(
             set(&store, KEY, "pods", Some("80")),
             Err(SettingError::NoSuchSetting),
@@ -249,6 +249,19 @@ mod tests {
             );
         }
         assert_eq!(runs(&store).1, BTreeMap::new());
+        // A blueprint of mine chosen, then its file gone.
+        let texts = bot::Texts {
+            name: "Mine".into(),
+            description: String::new(),
+            variables: BTreeMap::new(),
+        };
+        let mine = store
+            .duplicate("automatic-harvest", texts)
+            .unwrap_or_else(|error| panic!("{error}"));
+        assert_eq!(choose(&store, KEY, Some(&mine.0)), Ok(()));
+        let file = folder.path().join(format!("blueprints/{}.json", mine.0));
+        std::fs::remove_file(file).unwrap_or_else(|error| panic!("{error}"));
+        assert_eq!(set(&store, KEY, "pods", Some("80")), Err(SettingError::NoSuchBlueprint));
         assert_eq!(
             choose(&store, "294-1", Some("hunt")),
             Err(SettingError::NoSuchCharacter)

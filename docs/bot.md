@@ -31,7 +31,8 @@ what it does; a D3B update) need these and nothing else: no profile, activity, p
   any file of the folder, in any case); a copy of mine keeps what mine was based on (the owner, 2026-11-14). A given blueprint's new version reaches the characters that run it, their values kept; my copy stays as it is
   and says its original has a newer version.
 - **Character**: runs one blueprint, chosen in its tab, none until the player chooses one; another blueprint keeps
-  the values of its settings of the same id and type and drops the others (the owner, 2026-11-16). Its **settings** are the blueprint's variables marked "set per
+  the values of its settings of the same id and type and drops the others (the owner, 2026-11-16), and those out of
+  their new bounds or equal to their new default. Its **settings** are the blueprint's variables marked "set per
   character" (Unreal's Instance Editable): the blueprint holds the default, the character its own value, marked when
   it differs and reset in one click. Two characters, two zones, one blueprint.
 - **Variable**: a type (zone, route, percentage, number, items, bank, profession, yes or no…), a default, bounds, a help line, set

@@ -304,6 +304,25 @@ mod tests {
     }
 
     #[test]
+    fn a_file_of_no_schema_or_schema_0_is_no_character() {
+        let folder = Folder::new("characters-schema-0");
+        let store = Store::new(folder.path().to_path_buf());
+        std::fs::create_dir_all(folder.path().join("characters")).unwrap_or_else(|error| panic!("{error}"));
+        for (name, schema) in [("1-1", r#""schema": 0, "#), ("1-2", "")] {
+            let text = format!(r#"{{{schema}"id": 1, "name": "Kalyx", "level": 1, "breed": 8, "lastSeen": 7}}"#);
+            std::fs::write(folder.path().join(format!("characters/{name}.json")), text)
+                .unwrap_or_else(|error| panic!("{error}"));
+        }
+        let played = store.played();
+        assert_eq!(played.read, []);
+        assert!(
+            played.kept.iter().all(|kept| matches!(kept.why, Why::NotACharacter(_))) && played.kept.len() == 2,
+            "{:?}",
+            played.kept
+        );
+    }
+
+    #[test]
     fn the_blueprint_and_settings_changed_are_kept_when_the_game_shows_the_character_again() {
         let folder = Folder::new("characters-change");
         let store = Store::new(folder.path().to_path_buf());
@@ -328,7 +347,11 @@ mod tests {
     fn a_change_refused_or_of_an_unknown_character_writes_nothing() {
         let folder = Folder::new("characters-change-refused");
         let store = Store::new(folder.path().to_path_buf());
-        for key in ["294-1", "../blueprints/x", "294-1/../../x"] {
+        // A character's file out of its folder, which a key made a path would read and find not named by its id.
+        std::fs::create_dir_all(folder.path().join("blueprints")).unwrap_or_else(|error| panic!("{error}"));
+        let elsewhere = serde_json::to_string(&kalyx(1)).unwrap_or_default();
+        std::fs::write(folder.path().join("blueprints/x.json"), elsewhere).unwrap_or_else(|error| panic!("{error}"));
+        for key in ["294-1", "../blueprints/x", "294-1/../blueprints/x"] {
             let unknown = store.change_character(key, |_| Ok::<(), StorageError>(()));
             assert!(
                 matches!(unknown, Err(StorageError::NoSuchCharacter { .. })),
