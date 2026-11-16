@@ -116,6 +116,10 @@ pub enum KeptWhy {
     NotACharacter {
         detail: String,
     },
+    /// Not of a zone's shape: what serde says.
+    NotAZone {
+        detail: String,
+    },
 }
 
 impl From<&Why> for KeptWhy {
@@ -125,9 +129,11 @@ impl From<&Why> for KeptWhy {
                 reason: error.to_string(),
             },
             Why::NotText => Self::NotText,
-            Why::NotRead(ReadError::Newer { found }) | Why::NewerCharacter { found } => Self::Newer {
-                found: u32::try_from(*found).unwrap_or(u32::MAX),
-            },
+            Why::NotRead(ReadError::Newer { found }) | Why::NewerCharacter { found } | Why::NewerZone { found } => {
+                Self::Newer {
+                    found: u32::try_from(*found).unwrap_or(u32::MAX),
+                }
+            }
             Why::NotRead(ReadError::NotABlueprint(error)) => Self::NotABlueprint {
                 detail: error.to_string(),
             },
@@ -135,6 +141,7 @@ impl From<&Why> for KeptWhy {
             Why::GivenId { id } => Self::GivenId { id: id.0.clone() },
             Why::NotACharacter(detail) => Self::NotACharacter { detail: detail.clone() },
             Why::KeyIsNotId { id } => Self::NameIsNotId { id: id.to_string() },
+            Why::NotAZone(detail) => Self::NotAZone { detail: detail.clone() },
         }
     }
 }

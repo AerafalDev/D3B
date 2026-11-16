@@ -154,6 +154,7 @@ function keptWhy(file: KeptFile, t: ReturnType<typeof useTranslation>["t"]): str
       return t("library.keptWhy.newer", { found: why.found });
     case "notABlueprint":
     case "notACharacter":
+    case "notAZone":
       return t("library.keptWhy.notOfItsShape", { detail: why.detail });
     case "nameIsNotId":
       return t("library.keptWhy.nameIsNotId", { id: why.id });

@@ -308,6 +308,15 @@ blueprint, or none, under the same lock, keeping the values of the settings of t
 or reset dropped, so it shows unmarked (the owner, 2026-11-16). Forget sends it to the system's trash (the `trash` crate; on
 macOS through the file manager, without asking to control the Finder: the owner, 2026-11-14). A character's file is named by a key stable across
 servers, from its study (below).
+A zone of mine is `zones/<id>.json` (step 3's PR 20, the owner's choices of 2026-11-16): schema 1, its `id`, `name`,
+`world` (the game's world map id, the Twelve's 1) and `maps`, its maps' coordinates on that world, each once, in order,
+one a line so that a map painted changes one line; every floor of those coordinates counts, and the runtime resolves
+them into the game's maps. It is created empty on the world the World tab shows, under an id made from its name as a
+copy's is (a number when any file of the folder holds it, in any case), and keeps its id when renamed. The IPC's
+`zones` lists them with the files kept; `create_zone`, `rename_zone` (a name of nothing but spaces refused),
+`paint_zone` (a stroke: the maps added, or taken away by the eraser, saved at once) and `delete_zone` (to the system's
+trash, without asking, as Forget). A file that does not read, of a newer schema, or whose name is not its id is kept
+untouched, listed with why, never written over nor sent to the trash.
 
 A blueprint's file (`bot::json`, schema 1, the owner's choices of 2026-11-13): its `id`, `name`, `description`,
 `version` and `based_on`; its `variables` (`type`, `default`, `bounds`, `per_character`, `memory`, both allowed at once
