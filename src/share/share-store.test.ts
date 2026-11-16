@@ -126,9 +126,14 @@ describe("the .d3b file", () => {
     backEnd.exportBlueprint.mockRejectedValue({ kind: "noSuchBlueprint" });
     await useShare.getState().exportBlueprint(harvest);
     expect(backEnd.toasts[3]).toBe("Récolte automatique n'a pas été exporté : il n'est plus là.");
+    backEnd.previewShared.mockRejectedValue({ kind: "newerZone", found: 3 });
+    await useShare.getState().open("x.d3b");
+    expect(backEnd.toasts.at(-1)).toBe(
+      "Le fichier n'a pas été importé : une de ses zones est écrite par un D3B plus récent (schéma 3) : mettez D3B à jour.",
+    );
     backEnd.previewShared.mockRejectedValue({ kind: "newerSchema", found: 2 });
     await useShare.getState().open("x.d3b");
-    expect(backEnd.toasts[4]).toBe(
+    expect(backEnd.toasts[5]).toBe(
       "Le fichier n'a pas été importé : son blueprint est écrit par un D3B plus récent (schéma 2) : mettez D3B à jour.",
     );
   });

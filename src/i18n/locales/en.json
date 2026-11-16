@@ -462,8 +462,9 @@
       "notText": "it is not text.",
       "newer": "written by a newer D3B (format {{found}}): update D3B.",
       "newerSchema": "its blueprint was written by a newer D3B (schema {{found}}): update D3B.",
+      "newerZone": "one of its zones was written by a newer D3B (schema {{found}}): update D3B.",
       "notOfItsShape": "it is malformed ({{detail}}).",
-      "holdsZonesOrRoutes": "it holds zones or routes, which this version does not import yet: update D3B.",
+      "holdsRoutes": "it holds routes, which this version does not import yet: update D3B.",
       "notSaved": "{{reason}}"
     }
   },

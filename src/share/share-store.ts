@@ -35,6 +35,8 @@ function shareFailure(error: ShareFailure): string {
       return i18next.t("share.failure.newer", { found: error.found });
     case "newerSchema":
       return i18next.t("share.failure.newerSchema", { found: error.found });
+    case "newerZone":
+      return i18next.t("share.failure.newerZone", { found: error.found });
     case "notOfItsShape":
       return i18next.t("share.failure.notOfItsShape", { detail: error.detail });
     case "notSaved":
