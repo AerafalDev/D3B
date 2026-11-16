@@ -139,11 +139,19 @@ flowchart LR
   bag's chest, use an item, open the resource bags, equip the best I carry for my level, equip an item or a preset,
   set the game's own "experience received" (step 5); hunt until, attack a group (its levels), fight with the default
   AI (won is Done), leave the fight (step 6); craft N of an item, sell items at the auction house (step 7); notify,
-  and note in the History (step 4). Choosing a fight's challenges waits for step 6's design.
+  and note in the History (step 4); switch to another blueprint, the settings of the same id and type kept (the
+  owner, 2026-11-16). Choosing a fight's challenges waits for step 6's design.
+- **The fight AI's direction** (the owner, 2026-11-16, from the reference scripts' fight rules), designed at step 6
+  with the fight's state, the spells and the effects: a **fight profile** is a value edited as an ordered list of
+  rules (a spell, a target, a cell, typed conditions, how often it repeats, whether to move to cast), the first
+  that holds played and the list read again until none does; D3B ships one per class, shareable; an advanced
+  player's event "On my turn" overrides it in the graph.
 - **Routes** ((21), the owner, 2026-11-16): an anchor may hold an action (harvest, fight, nothing, or call a function
   of mine) and a forced exit (a door, a cell) where the world graph is not enough; Follow the route resumes from the
   map the character is on, as the scripts' "on map X, do Y"; a route is recorded while playing (the relay observes the
   maps crossed and makes them its anchors), and pasted or copied as text (`5,-18 left; 4,-18 …`, or maps' ids).
+  An anchor holds its map's id, shown by its coordinates, since a building's inside and its street share them; a
+  forced exit's cell is picked on the map.
 - No library of functions shared between blueprints: functions and per-character settings already cover the
   scripts' copies.
 - **Functions** gain **named exits** beside Done and Failed ("Full", "Empty"), each a flow output of their call;
@@ -172,7 +180,9 @@ flowchart LR
   unfolded when one differs from its default (the owner, 2026-11-16; the C# version reached 24 and hid half): the
   order a map's resources are taken in, the rotation, the zaaps, food, the life to wait for, what follows a lost
   fight, the monsters chosen or left out, equipping the best carried for the level (on) or a named preset, an
-  optional night pause. Every resource of the profession is taken where the character is (only the place follows
+  optional night pause, keeping N of an item on the character, taken back from the bank after a deposit, items to
+  destroy now and then to free pods (none by default; destroying cannot be undone, which the setting says, and the
+  History notes each), and from step 6 the fight profile, the class's by default. Every resource of the profession is taken where the character is (only the place follows
   its level), and Combat attacks every group its size and the monsters left out allow, no bound of level by
   default, one optional under "Advanced" (the C# version's D387: the zone chosen for the level bounds the risk).
 - **What the C# version measured**, carried into the actions of steps 5 and 6, its values starting points to measure
