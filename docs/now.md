@@ -346,7 +346,7 @@ _Updated 2026-11-16._
   scripts: compact value nodes and a typed Expression, wildcards, lists and level ranges, flow for a bot, "When …
   becomes true" and events of mine, functions with exits, locals and pure ones, durations and times, randomness, a loop guard
   at run time, the unobserved data marked and studied at its step; before (14), so that the editors of variables,
-  functions and events and the runtime are written once, on the final model, in ten PRs: (v2.1) the model in Rust, in three PRs: the new types (an NPC, ranges), lists and wildcard
+  functions and events and the runtime are written once, on the final model, in thirteen PRs: (v2.1) the model in Rust, in three PRs: the new types (an NPC, ranges), lists and wildcard
   pins in the wiring's check; then a node's `options`, the blueprint's own events, functions' exits, locals and pure;
   then the file's schema 2 and its migration from 1 (in a `bot/` subfolder, the folder holding ten files), D3B's
   blueprints in 2; each kind's problems come with the PR that brings the kind; (v2.2) the editor reads it: wildcards and
@@ -356,7 +356,10 @@ _Updated 2026-11-16._
   over `game::Live`, and those marked with their study and step; (v2.6) the events: When, Every, At, the game's new
   ones, mine and Trigger with its timers; (v2.7) the actions of steps 4 to 7, marked (the haven bag, zaaps, doors,
   NPCs and their replies, equipment, resource bags, the experience received), and the variables' nodes (Add to, Reset,
-  a list's); (v2.8) the Expression: its parser and checks in Rust, its node and completion in the editor. Each brings its sentences in French and English and its family in the picker; its checklist,
+  a list's); (v2.8) the Expression: its parser and checks in Rust, its node and completion in the editor.
+  (v2.9) the picker by intent with its synonyms, and a node's inputs folded under "Advanced"; (v2.10) D3B's eight
+  blueprints (Récolte, Combat, Mineur, Paysan, Alchimiste, Pêcheur, Bûcheron, Chasseur: the owner, 2026-11-16), with
+  the ranges computed from the data, in two PRs: the ranges, then the blueprints and their settings. Each brings its sentences in French and English and its family in the picker; its checklist,
   [bot.md](bot.md#measure)'s item 6, is taken once (16) declares variables and events of mine. Then (14) variables, with locals, lists and the new types' editors; (15)
   functions opened in place, with their exits and the pure ones; (16) events: priority, re-arming, modes, the
   defaults, and the events of mine declared; (17) comments and reroutes; (18) Align, copy and paste,

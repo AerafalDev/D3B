@@ -25,7 +25,8 @@ The six scenarios the owner chose (first launch; two characters, two zones; a go
 what it does; a D3B update) need these and nothing else: no profile, activity, place or goal field.
 
 - **Blueprint**: an event graph, functions and variables. D3B's own ship with the app, **locked**: automatic harvest,
-  profession harvest (one blueprint, its profession set per character: the owner, 2026-11-14) and hunt; **Duplicate** makes one of mine, fully editable, noting "based on
+  profession harvest (one blueprint, its profession set per character: the owner, 2026-11-14) and hunt, until v2's
+  eight replace them ("The language, v2", D3B's blueprints); **Duplicate** makes one of mine, fully editable, noting "based on
   X vN": named "<name> (copie)" in the player's language, its texts taken from the interface since a given
   blueprint's are translations, its id made from its name (accents dropped, a number when taken by a blueprint or by
   any file of the folder, in any case); a copy of mine keeps what mine was based on (the owner, 2026-11-14). A given blueprint's new version reaches the characters that run it, their values kept; my copy stays as it is
@@ -148,6 +149,24 @@ flowchart LR
 - **Functions** gain **named exits** beside Done and Failed ("Full", "Empty"), each a flow output of their call;
   **locals**; and the **pure** function, which computes values without flow, actions or waits, its call a value node.
   No macros: a function already holds actions that last.
+- **Practical, intuitive, complete** (the owner, 2026-11-16), the bar of every kind: few kinds, each well named and
+  running as it is dropped, from its defaults; a node shows its main inputs in its sentence and folds the others
+  under "Advanced" (a longest wait, a re-arm, a group's levels), unfolded as soon as one is wired or changed, as
+  Unreal's advanced pins; data editors (routes, ranges, item lists) rather than long chains of nodes. The **picker
+  groups by intent** (the owner, 2026-11-16): Move, Harvest, Bank and items, Fight, Wait and repeat, Conditions and
+  calculations, Lists, then My variables, My functions, My events; "Often here" first by context, extended to v2's
+  kinds; its search finds synonyms too ("boucle" finds While and For each). A node keeps its family's colour.
+- **D3B's blueprints** (the owner, 2026-11-16), all configurable, all running as given with no setting changed:
+  **Récolte** (every resource the character can take), **Combat** (monsters for experience and loot), one per
+  profession, **Mineur**, **Paysan**, **Alchimiste**, **Pêcheur**, **Bûcheron**, and **Chasseur**, the profession
+  (job 41: fights with a hunting weapon for meat). This reverses 2026-11-14's one profession blueprint, its
+  profession a setting. Where they go is, by default, **ranges computed from the data**: for a profession, the
+  sub-areas rich in its resources at its level; for Combat, those whose monsters are of the character's level; a
+  setting replaces them by ranges, a zone or a route of mine. Their settings, each with a default that works: the
+  pods' threshold, the bank (the nearest, a map, or the haven bag's chest) and the items kept; the resources taken
+  or left (those of its level by default); fighting on the way or not, the groups' levels and sizes accepted, the
+  life to wait for before leaving; equipping the best carried for the level (on by default) or a named preset; a
+  goal (a profession's or the character's level, a number of harvests or fights) and an optional night pause.
 - **Kept out**: anything about other players (counting them, fleeing them, answering them), and what `CLAUDE.md`'s
   "Never" lists.
 
@@ -171,7 +190,12 @@ parameter or a local holds `"list": true` for a list; a node's own pins (Sequenc
 holes, a list's inputs) and the event, variable or exit it names are its `options`; the blueprint's own `events`
 beside its `graphs`, each with its id, name and inputs; a function's signature gains `exits`, `locals` and `pure`. A
 schema 1 file reads migrated ("at least" to `≥`, Wait's minutes to a duration) and is written as 2 at its next change;
-D3B's blueprints ship as 2. New problems: wildcards of one node fed two types; a list into a pin that takes none; an
+D3B's blueprints ship as 2. A node still does one thing (`kind`, `get`, `set` or `call`), with `options` beside;
+the pins its options make are numbered from 1: Sequence's `then_1` to `then_n`, Switch's `case_1` to `case_n` (the
+cases' values in `options.cases`) and `otherwise`, Text's and a list's inputs `in_1` to `in_n`. A call has a flow
+output per exit of its function, the exit's id its pin's, beside `done`, `failed` and `reason`; a function's locals
+live in its call's frame. A pure function's call has no flow pin and is read on demand, as a query is, its value kept
+for the debugger. New problems: wildcards of one node fed two types; a list into a pin that takes none; an
 option naming an event, variable or exit the blueprint lacks; a case typed twice or of another type; Leave the loop
 outside a loop's body; a flow, action or wait in a pure function; a time not "HH:MM"; an Expression that does not
 parse, names what the blueprint lacks or is not of its pin's type; ranges whose rows overlap.
