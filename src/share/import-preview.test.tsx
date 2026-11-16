@@ -25,7 +25,7 @@ const preview: SharedPreview = {
     description: "Récolte une zone.",
     given: false,
     version: 1,
-    basedOn: { id: "automatic-harvest", version: 1 },
+    basedOn: { id: "automatic-harvest", version: 1, newer: null },
     problems: 1,
     variables: [
       variable,
