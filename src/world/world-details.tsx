@@ -1,12 +1,12 @@
-import { convertFileSrc } from "@tauri-apps/api/core";
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 
-import type { Atlas_Serialize, AtlasResource_Serialize as AtlasResource } from "@/bindings.ts";
+import type { Atlas_Serialize } from "@/bindings.ts";
 import { named } from "@/characters/names.ts";
 import { usePlayed } from "@/characters/played/played-store.ts";
 import { useLibrary } from "@/library/library-store.ts";
 import { zoneOf } from "@/settings/zone-of.ts";
+import { ResourcesByJob } from "@/zone/resources-by-job.tsx";
 import { findSubArea } from "./world-store.ts";
 
 interface WorldDetailsProps {
@@ -26,29 +26,9 @@ export function WorldDetails({ atlas, subArea }: WorldDetailsProps) {
   const played = usePlayed((store) => store.played);
   const blueprints = useLibrary((store) => store.blueprints);
   const whose = useMemo(
-    () => (subArea === null ? [] : zoneOf(subArea, played, blueprints)),
+    () => (subArea === null ? [] : zoneOf({ sub_area: subArea }, played, blueprints)),
     [subArea, played, blueprints],
   );
-  // The sub-area's resources in runs of one profession, as the atlas orders them.
-  const byJob = useMemo(() => {
-    const resources = new Map(atlas.resources.map((one) => [one.id, one]));
-    const runs: { job: number; resources: AtlasResource[] }[] = [];
-    for (const id of chosen?.resources ?? []) {
-      const resource = resources.get(id);
-      if (resource === undefined) {
-        continue;
-      }
-      const last = runs.at(-1);
-      if (last?.job === resource.job) {
-        last.resources.push(resource);
-      } else {
-        runs.push({ job: resource.job, resources: [resource] });
-      }
-    }
-    return runs;
-  }, [atlas, chosen]);
-
-  const jobs = useMemo(() => new Map(atlas.jobs.map((one) => [one.id, one])), [atlas]);
   const maps = chosen?.maps.reduce((count, one) => count + one.at.length, 0) ?? 0;
 
   return (
@@ -90,30 +70,7 @@ export function WorldDetails({ atlas, subArea }: WorldDetailsProps) {
           <h4 className="text-text-muted text-[11px] font-semibold tracking-[.04em] uppercase">
             {t("world.details.resources")}
           </h4>
-          {byJob.length === 0 && <p className="text-text-muted">{t("world.details.noResource")}</p>}
-          {byJob.map(({ job, resources }) => {
-            const profession = jobs.get(job);
-            const name = named(profession?.name, i18n.language) ?? String(job);
-            return (
-              <div key={job} className="flex flex-col gap-1">
-                <p className="text-text-muted flex items-center gap-1.5">
-                  {profession !== undefined && profession.icon !== null && (
-                    <img src={convertFileSrc(profession.icon)} alt="" className="size-[18px]" />
-                  )}
-                  {name}
-                </p>
-                <ul aria-label={name} className="flex flex-wrap gap-1">
-                  {resources.map((resource) => (
-                    <li key={resource.id} className="flex h-6 items-center gap-1 rounded bg-[#262626] pr-1.5 pl-0.5">
-                      {resource.icon !== null && <img src={convertFileSrc(resource.icon)} alt="" className="size-5" />}
-                      {named(resource.name, i18n.language)}
-                      <span className="text-text-faint text-[11px]">{resource.level}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            );
-          })}
+          <ResourcesByJob atlas={atlas} resources={chosen.resources} />
         </>
       )}
     </aside>

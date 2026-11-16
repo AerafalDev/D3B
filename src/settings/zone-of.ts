@@ -1,13 +1,14 @@
 import type { PlayedCharacter } from "@/characters/played/played-store.ts";
 import type { BlueprintSummary } from "@/library/library-store.ts";
+import type { ZoneValue } from "@/zone/zone-field.tsx";
 
 /**
- * The characters whose Zone is the sub-area `subArea` (`docs/bot.md`, the World tab's Details "from step 3's PR 11"):
+ * The characters whose Zone is `zone`, a sub-area or a zone of mine (`docs/bot.md`, the World tab's Details "from step 3's PR 11"):
  * those whose blueprint sets a Zone per character that their own value, else the blueprint's default, makes it. Their
  * names, in the order the characters are listed.
  */
 export function zoneOf(
-  subArea: number,
+  zone: ZoneValue,
   played: readonly PlayedCharacter[],
   blueprints: readonly BlueprintSummary[],
 ): string[] {
@@ -19,16 +20,21 @@ export function zoneOf(
           return false;
         }
         const json = character.settings[variable.id] ?? variable.default;
-        return json !== null && isSubArea(json, subArea);
+        return json !== null && isZone(json, zone);
       });
     })
     .map((character) => character.name);
 }
 
-function isSubArea(json: string, subArea: number): boolean {
+function isZone(json: string, zone: ZoneValue): boolean {
   try {
     const value: unknown = JSON.parse(json);
-    return typeof value === "object" && value !== null && "sub_area" in value && value.sub_area === subArea;
+    if (typeof value !== "object" || value === null) {
+      return false;
+    }
+    return "zone" in zone
+      ? "zone" in value && value.zone === zone.zone
+      : "sub_area" in value && value.sub_area === zone.sub_area;
   } catch {
     return false;
   }

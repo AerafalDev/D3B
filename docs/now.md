@@ -196,16 +196,17 @@ _Updated 2026-11-16._
   data:
     1. the World view says "Mes zones" above the sub-areas, "Aucune zone : « + » en peint une."; click "+": "Nouvelle
        zone" appears with 0 carte, the World tab opens on the world it showed, the brush pressed in the toolbar on top,
-       "Nouvelle zone" and "Zone à moi · 0 carte" on top left;
+       "Nouvelle zone" and "Zone à moi · 0 carte" on top left, Details with its name and "Aucune : peins ses cartes.";
     2. press and drag over Forêt d'Astrub: each map crossed turns amber as the pointer goes, the sea stays as it was;
        release: the row says N cartes; the right button and Space with the main one move the map without painting;
     3. E, then drag over painted maps: they go; S: hovering outlines a whole sub-area; click Champs d'Astrub: all its
        maps turn amber; click it again: they go; V, then click a sub-area: it is chosen, the zone and toolbar go;
-    4. F2 on the row, type a name, Enter: the row and the top left follow; Escape puts it back; Renommer in its
-       right-click does the same;
+    4. type a name in Details' field, Enter: the row and the top left follow; a blank name or Escape puts it back;
+       F2 on the row and Renommer in its right-click do the same in place; Details lists Forêt d'Astrub with its share
+       ("12/68") and the Bûcheron's woods;
     5. restart D3B: the zone is there with its maps, in `Documents/D3B/zones/nouvelle-zone.json`, one map a line;
     6. in a character's tab, Zone lists it first under "Mes zones" with its maps; choose it: "<name> · Zone à moi · N
-       cartes";
+       cartes"; the World tab's Details of the zone says "Zone de <the character>";
     7. right-click the row, Supprimer: it goes to the system's trash, the map closes it, the character's Zone says
        "Zone nouvelle-zone introuvable"; put it back from the trash and restart D3B: everything is back;
     8. put a stray letter in a zone's file: the Library's "Ignorés" lists it, and it is never written over.
@@ -413,8 +414,8 @@ _Updated 2026-11-16._
   [bot.md](bot.md#measure)'s items 6 and 7, is taken once (16) declares variables and events of mine. Then (14) variables, with locals, lists and the new types' editors; (15)
   functions opened in place, with their exits and the pure ones; (16) events: priority, re-arming, modes, the
   defaults, and the events of mine declared; (17) comments and reroutes; (18) Align, copy and paste,
-  search; (19) editing by keyboard; (20) my zones painted (the owner's choices of 2026-11-16: coordinates on one world, a floating toolbar of four tools, "+" in the World view and the name in Details, amber), in PRs: `zones/<id>.json` and the IPC that lists, creates, paints, renames and deletes them (done in code), then my zones in the World view and the Zone field (done in code), then the map's tools (done in code; its checklist under "Not measured"), then a zone's Details; (21) routes, with an action and a forced exit per anchor, Follow the route resuming from
-  the map the character is on, the recorder and the text import and export; (22) the `.d3b` file (the owner's choices of 2026-11-16, ADR 0017: one readable JSON, its zones and routes joining it with (20) and (21), a preview dialog, Export in the Library's menu and the tab, Import in its header and by a drop), in PRs: the file, its export, preview and import through the IPC (done in code), then the Library's Export and Import, the preview and the drop, then the zones it names joining it; (23) a given blueprint's
+  search; (19) editing by keyboard; (20) my zones painted (the owner's choices of 2026-11-16: coordinates on one world, a floating toolbar of four tools, "+" in the World view and the name in Details, amber), in PRs: `zones/<id>.json` and the IPC that lists, creates, paints, renames and deletes them (done in code), then my zones in the World view and the Zone field (done in code), then the map's tools and Details (done in code; its checklist under "Not measured"); (21) routes, with an action and a forced exit per anchor, Follow the route resuming from
+  the map the character is on, the recorder and the text import and export; (22) the `.d3b` file; (23) a given blueprint's
   update (the owner's choices of 2026-11-16: a notice in the character's tab until closed, a value kept when the new
   version accepts it, a copy saying its original is newer with a blue arrow in the Library and nothing more yet; done
   in code, its checklist under "Not measured"); (24) the "Advanced tools" setting (the owner's choices of 2026-11-16: in the palette and View, no Settings
