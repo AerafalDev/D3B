@@ -11,7 +11,7 @@ use super::behaviour::{Cx, Fault};
 use super::program::{Doing, Source};
 use crate::bot::Id;
 
-/// How deep values may read one another: deeper is a circle.
+/// How deep values may read one another (settled alone): deeper is taken for a circle, as no blueprint chains so many.
 const DEEPEST: u32 = 64;
 
 /// The value of input `pin` of the node `cx` is at.
@@ -42,16 +42,17 @@ fn given(cx: &mut Cx<'_>, node: usize, pin: &str) -> Result<Value, Fault> {
             pin: pin.to_owned(),
         });
     }
-    match &code.doing {
+    let key = (node, pin.to_owned());
+    if let Some(value) = cx.read.get(&key) {
+        return Ok(value.clone());
+    }
+    let value = match &code.doing {
         Doing::Get(variable) => cx
             .variables
             .get(variable)
             .cloned()
             .ok_or_else(|| Fault::Missing { pin: variable.clone() }),
-        Doing::Kind(behaviour) => {
-            if cx.depth >= DEEPEST {
-                return Err(Fault::Circle);
-            }
+        Doing::Kind(behaviour) if cx.depth < DEEPEST => {
             let at = std::mem::replace(&mut cx.node, node);
             cx.depth += 1;
             let value = behaviour.value(cx, pin);
@@ -59,8 +60,19 @@ fn given(cx: &mut Cx<'_>, node: usize, pin: &str) -> Result<Value, Fault> {
             cx.node = at;
             value
         }
+        Doing::Kind(_) => Err(Fault::Circle),
         Doing::Set(_) | Doing::Call(_) => Err(Fault::NoValue { pin: pin.to_owned() }),
+    };
+    match &value {
+        Ok(value) => {
+            cx.read.insert(key, value.clone());
+        }
+        // The deepest is where it failed: those above only passed it on.
+        Err(_) => {
+            cx.failed_at.get_or_insert(node);
+        }
     }
+    value
 }
 
 /// A value a node used.

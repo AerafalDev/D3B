@@ -426,7 +426,8 @@ _Updated 2026-11-16._
   step waiting for its check; memory in the character's file; the engine now on schema 1, v2's kinds each bringing
   their behaviours), in three PRs started before v2's: the fight's end pinned and the fights won and lost counted, the
   death's signal (done in code: 634 fight ends read, 613 won and 21 lost in 6 connections, as the study); the engine,
-  its stack, its trait, Get, Set, Call, If, Finish and the returns; the nodes that wait, the actions' checks, the
+  its stack, its trait, Get, Set, Call, If, Finish and the returns (done in code: Sequence, a loop and Leave the loop
+  proved by the tests' own kinds; a size exception, the owner's of 2026-11-16); the nodes that wait, the actions' checks, the
   queries, the death and the replay on the captures; (26) events at run time:
   priorities, modes, thresholds, settings at safe points, with When, Every, At, the events of mine and their timers. Step 4 then brings Play,
   what a character does now, its History and the debugger, with the first actions.

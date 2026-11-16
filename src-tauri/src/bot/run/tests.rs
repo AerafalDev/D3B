@@ -175,16 +175,46 @@ fn a_function_failed_follows_its_calls_failed_or_blocks_there() {
 }
 
 #[test]
-fn a_function_calling_itself_without_end_blocks() {
+fn a_function_calling_itself_without_end_blocks_past_the_deepest_call() {
+    // Each call counts itself, then calls again.
     let graphs = r#"[{"id": "events", "name": "Events",
   "nodes": [{"id": "start", "kind": "on_start"}, {"id": "call", "call": "again"}],
   "wires": [{"from": ["start", "then"], "to": ["call", "run"]}]},
  {"id": "again", "name": "Again", "function": {},
-  "nodes": [{"id": "in", "kind": "entry"}, {"id": "call", "call": "again"}],
-  "wires": [{"from": ["in", "then"], "to": ["call", "run"]}]}]"#;
-    let mut run = run_of(&blueprint("[]", graphs), &BTreeMap::new());
+  "nodes": [{"id": "in", "kind": "entry"}, {"id": "get", "get": "n"}, {"id": "add", "kind": "add", "inputs": {"b": 1}},
+            {"id": "count", "set": "n"}, {"id": "call", "call": "again"}],
+  "wires": [{"from": ["in", "then"], "to": ["count", "run"]}, {"from": ["get", "value"], "to": ["add", "a"]},
+            {"from": ["add", "value"], "to": ["count", "value"]}, {"from": ["count", "then"], "to": ["call", "run"]}]}]"#;
+    let mut run = run_of(&blueprint(VARIABLES, graphs), &BTreeMap::new());
     run.advance(Some(&View::default()), Instant::now());
     assert_eq!(blocked(&run), Some((Reason::TooDeep, "call")));
+    assert_eq!(
+        n(&mut run),
+        Some(json!(DEEPEST)),
+        "as many calls at work as allowed, not one more"
+    );
+}
+
+#[test]
+fn a_set_out_of_its_variables_bounds_blocks_rather_than_lose_it_from_memory() {
+    let variables = r#"[{"id": "n", "name": "N", "type": "number", "default": 0, "bounds": [0, 10], "memory": true}]"#;
+    let graphs = |value: i64| {
+        format!(
+            r#"[{{"id": "events", "name": "Events",
+  "nodes": [{{"id": "start", "kind": "on_start"}}, {{"id": "set", "set": "n", "inputs": {{"value": {value}}}}}],
+  "wires": [{{"from": ["start", "then"], "to": ["set", "run"]}}]}}]"#
+        )
+    };
+    let mut run = run_of(&blueprint(variables, &graphs(10)), &BTreeMap::new());
+    assert_eq!(run.advance(Some(&View::default()), Instant::now()), &State::Finished);
+    assert_eq!(n(&mut run), Some(json!(10)));
+    let mut run = run_of(&blueprint(variables, &graphs(11)), &BTreeMap::new());
+    run.advance(Some(&View::default()), Instant::now());
+    let refused = Fault::Refused {
+        variable: "n".to_owned(),
+    };
+    assert_eq!(blocked(&run), Some((Reason::Fault(refused), "set")));
+    assert_eq!(n(&mut run), Some(json!(0)), "nothing set");
 }
 
 #[test]
@@ -211,13 +241,17 @@ fn a_value_that_cannot_be_computed_blocks_on_its_node() {
   "wires": [{"from": ["start", "then"], "to": ["set", "run"]}, {"from": ["add", "value"], "to": ["set", "value"]}]}]"#;
     let mut run = run_of(&blueprint(VARIABLES, graphs), &BTreeMap::new());
     run.advance(Some(&View::default()), Instant::now());
-    assert_eq!(blocked(&run), Some((Reason::Fault(Fault::TooLarge), "set")));
+    assert_eq!(
+        blocked(&run),
+        Some((Reason::Fault(Fault::TooLarge), "add")),
+        "on the node that failed"
+    );
     assert_eq!(n(&mut run), Some(json!(0)), "nothing set");
 }
 
 // The tests' own kinds, as v2 will bring them.
 
-/// Sequence of two: `then_0`, then `then_1`, then `completed`.
+/// Sequence of two, numbered from 1 as v2's: `then_1`, then `then_2`, then `completed`.
 struct Sequence;
 
 impl Behaviour for Sequence {
@@ -227,7 +261,7 @@ impl Behaviour for Sequence {
             Resume::ChainEnded if slot.count == 0 => {
                 slot.count = 1;
                 Ok(Step::Chain {
-                    pin: "then_1".to_owned(),
+                    pin: "then_2".to_owned(),
                     breakable: false,
                 })
             }
@@ -235,7 +269,7 @@ impl Behaviour for Sequence {
             Resume::Enter { .. } | Resume::Tick => {
                 *slot = Slot::default();
                 Ok(Step::Chain {
-                    pin: "then_0".to_owned(),
+                    pin: "then_1".to_owned(),
                     breakable: false,
                 })
             }
@@ -369,7 +403,7 @@ fn start() -> &'static dyn Behaviour {
 
 #[test]
 fn a_sequence_runs_its_outputs_in_turn_and_a_loop_its_body_each_time() {
-    // On start → Sequence: 0 → n + 1; 1 → Repeat 3 → n + 10; completed → n + 100.
+    // On start → Sequence: 1 → n + 1; 2 → Repeat 3 → n + 10; completed → n + 100.
     let mut run = Built::default()
         .kind("start", start())
         .kind("sequence", &Sequence)
@@ -378,19 +412,31 @@ fn a_sequence_runs_its_outputs_in_turn_and_a_loop_its_body_each_time() {
         .bump(6, 10)
         .bump(9, 100)
         .flow(0, "then", 1)
-        .flow(1, "then_0", 2)
-        .flow(1, "then_1", 5)
+        .flow(1, "then_1", 2)
+        .flow(1, "then_2", 5)
         .input(5, "times", Source::Value(json!(3)))
         .flow(5, "body", 6)
         .flow(5, "completed", 9)
         .run();
     assert_eq!(run.advance(Some(&View::default()), Instant::now()), &State::Finished);
     assert_eq!(n(&mut run), Some(json!(131)));
+
+    // A body wired to nothing ends at once, each turn: the loop still reaches its completed.
+    let mut run = Built::default()
+        .kind("start", start())
+        .kind("repeat", &Repeat)
+        .bump(2, 100)
+        .flow(0, "then", 1)
+        .input(1, "times", Source::Value(json!(3)))
+        .flow(1, "completed", 2)
+        .run();
+    assert_eq!(run.advance(Some(&View::default()), Instant::now()), &State::Finished);
+    assert_eq!(n(&mut run), Some(json!(100)));
 }
 
 #[test]
 fn leave_the_loop_goes_to_its_completed_and_outside_one_blocks() {
-    // Repeat 5 → Sequence: 0 → n + 1; 1 → Leave; completed → n + 100: the Sequence inside is left too.
+    // Repeat 5 → Sequence: 1 → n + 1; 2 → Leave; completed → n + 100: the Sequence inside is left too.
     let mut run = Built::default()
         .kind("start", start())
         .kind("repeat", &Repeat)
@@ -401,8 +447,8 @@ fn leave_the_loop_goes_to_its_completed_and_outside_one_blocks() {
         .flow(0, "then", 1)
         .input(1, "times", Source::Value(json!(5)))
         .flow(1, "body", 2)
-        .flow(2, "then_0", 3)
-        .flow(2, "then_1", 6)
+        .flow(2, "then_1", 3)
+        .flow(2, "then_2", 6)
         .flow(1, "completed", 7)
         .run();
     assert_eq!(run.advance(Some(&View::default()), Instant::now()), &State::Finished);
@@ -500,6 +546,6 @@ fn a_node_that_waits_wakes_on_the_clock_and_starts_over_after_an_absence() {
     run.pause();
     assert_eq!(run.advance(Some(&view), second(1_000)), &State::Paused);
     run.resume();
-    run.advance(Some(&view), second(1_500));
-    assert_eq!(run.wake(), Some(second(2_500)));
+    run.advance(Some(&view), second(800));
+    assert_eq!(run.wake(), Some(second(1_800)), "started over, not ticked");
 }

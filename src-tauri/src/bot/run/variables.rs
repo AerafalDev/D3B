@@ -6,6 +6,7 @@ use std::collections::{BTreeMap, BTreeSet};
 
 use serde_json::Value;
 
+use super::behaviour::Fault;
 use super::program::Refused;
 use crate::bot::variable::Variable;
 
@@ -13,6 +14,8 @@ use crate::bot::variable::Variable;
 #[derive(Debug)]
 pub(super) struct Variables {
     values: BTreeMap<String, Value>,
+    /// What each variable accepts.
+    kinds: BTreeMap<String, Variable>,
     memory: BTreeSet<String>,
     changed: bool,
 }
@@ -40,8 +43,13 @@ impl Variables {
             .filter(|variable| variable.memory)
             .map(|variable| variable.id.0.clone())
             .collect();
+        let kinds = variables
+            .iter()
+            .map(|variable| (variable.id.0.clone(), variable.clone()))
+            .collect();
         Ok(Self {
             values,
+            kinds,
             memory,
             changed: false,
         })
@@ -51,9 +59,16 @@ impl Variables {
         self.values.get(id)
     }
 
-    pub(super) fn set(&mut self, id: &str, value: Value) {
+    /// Sets `id`, refused when out of its bounds: memory would lose it at the next run.
+    pub(super) fn set(&mut self, id: &str, value: Value) -> Result<(), Fault> {
+        if self.kinds.get(id).is_some_and(|variable| !variable.accepts(&value)) {
+            return Err(Fault::Refused {
+                variable: id.to_owned(),
+            });
+        }
         self.changed |= self.memory.contains(id) && self.values.get(id) != Some(&value);
         self.values.insert(id.to_owned(), value);
+        Ok(())
     }
 
     /// The memory variables' values.

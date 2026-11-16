@@ -2,7 +2,7 @@
 //! its inputs, pulled through their wires, its outputs, its own counter, the clock and the observed state. The engine
 //! knows no kind; each brings its behaviour.
 
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, HashMap};
 use std::time::Instant;
 
 use serde_json::Value;
@@ -118,6 +118,8 @@ pub(crate) enum Fault {
     Circle,
     #[error("Leave the loop outside a loop")]
     NotInALoop,
+    #[error("the variable {variable} does not take this value")]
+    Refused { variable: String },
 }
 
 /// What a node may use while it runs.
@@ -127,6 +129,10 @@ pub(crate) struct Cx<'a> {
     pub(super) node: usize,
     /// How many values deep the read is: those the node at work reads are traced.
     pub(super) depth: u32,
+    /// The values computed for the node at work, by node and pin: each once, however many inputs read it.
+    pub(super) read: HashMap<(usize, String), Value>,
+    /// The deepest node without flow whose value could not be had: what the character blocks on.
+    pub(super) failed_at: Option<usize>,
     pub(super) call: &'a mut Call,
     pub(super) variables: &'a mut Variables,
     pub(super) trace: &'a mut Trace,

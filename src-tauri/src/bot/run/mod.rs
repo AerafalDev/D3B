@@ -12,7 +12,7 @@ mod variables;
 #[cfg(test)]
 mod tests;
 
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, HashMap};
 use std::time::Instant;
 
 use serde_json::Value;
@@ -30,7 +30,7 @@ use variables::Variables;
 
 /// How many nodes may run in a row without the flow waiting: more "runs without pause" (the owner, 2026-11-16).
 pub(crate) const WITHOUT_PAUSE: usize = 10_000;
-/// How deep calls may go (settled alone): deeper is a function calling itself without end.
+/// How many calls may be at work, one inside the other (settled alone): more is a function calling itself without end.
 pub(crate) const DEEPEST: usize = 64;
 
 /// Where a run is.
@@ -178,7 +178,7 @@ impl Run {
             let then = match self.next(view, now) {
                 Ok(Next::Step(step)) => self.apply(step),
                 Ok(Next::Call { graph, inputs }) => self.call(graph, inputs),
-                Err(fault) => self.block(Reason::Fault(fault)),
+                Err((fault, failed_at)) => self.block_at(Reason::Fault(fault), failed_at),
             };
             if matches!(then, Then::Stops) {
                 return &self.state;
@@ -200,8 +200,8 @@ impl Run {
             .unwrap_or(self.program.main)
     }
 
-    /// What the node at work does now.
-    fn next(&mut self, view: &View, now: Instant) -> Result<Next, Fault> {
+    /// What the node at work does now; a fault comes with the node without flow it came from, if one.
+    fn next(&mut self, view: &View, now: Instant) -> Result<Next, (Fault, Option<usize>)> {
         let (graph, node) = self.at();
         let Some(call) = self.flows.last_mut().and_then(|flow| flow.last_mut()) else {
             return Ok(Next::Step(Step::Finish));
@@ -215,33 +215,35 @@ impl Run {
             graph,
             node,
             depth: 0,
+            read: HashMap::new(),
+            failed_at: None,
             call,
             variables: &mut self.variables,
             trace: &mut self.trace,
             view,
             now,
         };
-        match &self.program.graphs[graph].nodes[node].doing {
+        let next = match &self.program.graphs[graph].nodes[node].doing {
             Doing::Kind(behaviour) => behaviour.run(&mut cx, resume).map(Next::Step),
-            Doing::Set(variable) => {
-                let value = cx.input("value")?;
-                cx.give("value", value.clone());
-                cx.variables.set(variable, value);
-                Ok(Next::Step(Step::go("then")))
-            }
+            Doing::Set(variable) => set(&mut cx, variable).map(Next::Step),
             Doing::Call(function) => {
                 let mut inputs = BTreeMap::new();
-                for pin in cx.inputs() {
-                    let value = cx.input(&pin)?;
-                    inputs.insert(pin, value);
-                }
-                Ok(Next::Call {
+                let mut read = || {
+                    for pin in cx.inputs() {
+                        let value = cx.input(&pin)?;
+                        inputs.insert(pin, value);
+                    }
+                    Ok(())
+                };
+                read().map(|()| Next::Call {
                     graph: *function,
                     inputs,
                 })
             }
             Doing::Get(_) => Err(Fault::NoFlow),
-        }
+        };
+        let failed_at = cx.failed_at;
+        next.map_err(|fault| (fault, failed_at))
     }
 
     fn apply(&mut self, step: Step) -> Then {
@@ -338,7 +340,8 @@ impl Run {
         let Some(flow) = self.flows.last_mut() else {
             return Then::Stops;
         };
-        if flow.len() >= DEEPEST {
+        // The event graph's frame is not a call.
+        if flow.len() > DEEPEST {
             return self.block(Reason::TooDeep);
         }
         let Some(entry) = self.program.graphs[graph].entry else {
@@ -390,7 +393,13 @@ impl Run {
     }
 
     fn block(&mut self, reason: Reason) -> Then {
-        let (graph, node) = self.at();
+        self.block_at(reason, None)
+    }
+
+    /// Blocked on `node` of the graph at work, or on the node at work.
+    fn block_at(&mut self, reason: Reason, node: Option<usize>) -> Then {
+        let (graph, at) = self.at();
+        let node = node.unwrap_or(at);
         let code = &self.program.graphs[graph];
         self.state = State::Blocked(Blocked {
             reason,
@@ -399,4 +408,12 @@ impl Run {
         });
         Then::Stops
     }
+}
+
+/// Set: the variable takes its input's value, refused when out of its bounds, and gives it on.
+fn set(cx: &mut Cx<'_>, variable: &str) -> Result<Step, Fault> {
+    let value = cx.input("value")?;
+    cx.variables.set(variable, value.clone())?;
+    cx.give("value", value);
+    Ok(Step::go("then"))
 }
