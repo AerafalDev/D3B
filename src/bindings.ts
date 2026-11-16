@@ -38,6 +38,16 @@ export const commands = {
 	mapCells: (mapId: number) => __TAURI_INVOKE<MapCells>("map_cells", { mapId }),
 	/**  The atlas of the packed game data, or why there is none; built off the main thread, its 15,000 positions grouped. */
 	worldAtlas: () => __TAURI_INVOKE<Atlas_Serialize>("world_atlas"),
+	/**  My zones and the files kept. */
+	zones: () => __TAURI_INVOKE<ZoneList>("zones"),
+	/**  A new zone named `name`, without maps, on `world`. */
+	createZone: (name: string, world: number) => __TAURI_INVOKE<ZoneView>("create_zone", { name, world }),
+	/**  The zone `id` named `name`; its id stays. */
+	renameZone: (id: string, name: string) => __TAURI_INVOKE<ZoneView>("rename_zone", { id, name }),
+	/**  A stroke on the zone `id`, saved at once: the zone as it now is. */
+	paintZone: (id: string, stroke: Stroke) => __TAURI_INVOKE<ZoneView>("paint_zone", { id, stroke }),
+	/**  The file of the zone `id` to the system's trash, without asking (the owner, 2026-11-16, as Forget). */
+	deleteZone: (id: string) => __TAURI_INVOKE<null>("delete_zone", { id }),
 	/**
 	 *  Watches the frames of `connection`, or none: those kept now; the next come as `InspectorFrames`. The front end
 	 *  watches none as it starts, so that a reload leaves nothing streamed to no one.
@@ -758,7 +768,9 @@ export type KeptWhy =
 /**  It holds the id of one of D3B's blueprints. */
 { kind: "givenId"; id: string } | 
 /**  Not of a character's shape: what serde says. */
-{ kind: "notACharacter"; detail: string };
+{ kind: "notACharacter"; detail: string } | 
+/**  Not of a zone's shape: what serde says. */
+{ kind: "notAZone"; detail: string };
 
 /**  A map's coordinates in the world, as the game shows them. */
 export type MapAt = {
@@ -1079,6 +1091,12 @@ export type StatedSeen_Serialize = {
 	state: number,
 };
 
+/**  A stroke on the map: the maps the brush or the whole sub-area adds, or the eraser takes away. */
+export type Stroke = {
+	maps: ([number, number])[],
+	erase: boolean,
+};
+
 /**  A variable's name and help line. */
 export type VariableTexts = {
 	name: string,
@@ -1136,6 +1154,33 @@ export type WorldMaps = {
 	 *  and checked on the World tab).
 	 */
 	priority: ([number, number])[],
+};
+
+/**  Why a zone was not created, changed or deleted. */
+export type ZoneError = 
+/**  No zone of mine has this id. */
+{ kind: "noSuchZone" } | 
+/**  The system names no folder for the player's files. */
+{ kind: "noFolder" } | 
+/**  A name of nothing but spaces. */
+{ kind: "emptyName" } | 
+/**  The system could not read or write its file, or it is kept as it is: why, in its own words. */
+{ kind: "notSaved"; reason: string };
+
+/**  My zones, in the order of their files, and the files kept as they are. */
+export type ZoneList = {
+	zones: ZoneView[],
+	kept: KeptFile[],
+};
+
+/**  A zone of mine, as the World view, the World tab and the Zone field show it. */
+export type ZoneView = {
+	id: string,
+	name: string,
+	/**  The world its maps are on. */
+	world: number,
+	/**  Its maps' coordinates on that world, each once, in order. */
+	maps: ([number, number])[],
 };
 
 /* Tauri Specta runtime */

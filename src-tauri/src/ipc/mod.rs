@@ -11,6 +11,7 @@ mod inspector;
 mod map;
 mod played;
 mod relay;
+mod zones;
 
 pub use blueprints::open_store;
 pub use commands::LoadedData;
@@ -37,6 +38,11 @@ pub fn builder() -> Builder<tauri::Wry> {
             relay::relay_restore,
             map::map_cells,
             atlas::world_atlas,
+            zones::zones,
+            zones::create_zone,
+            zones::rename_zone,
+            zones::paint_zone,
+            zones::delete_zone,
             inspector::inspector_watch,
             inspector::inspector_frame
         ])

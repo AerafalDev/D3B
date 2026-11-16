@@ -342,7 +342,7 @@ _Updated 2026-11-16._
   added or moved checked and saved, and each graph's choices (done in code), then the graph editable, a wire checked
   as it is dragged, and the picker (done in code; its checklist under "Not measured"); (13) delete, undo, autosave; (14) variables; (15) functions opened in
   place; (16) events: priority, re-arming, modes, the defaults; (17) comments and reroutes; (18) Align, copy and paste,
-  search; (19) editing by keyboard; (20) my zones painted; (21) routes; (22) the `.d3b` file; (23) a given blueprint's
+  search; (19) editing by keyboard; (20) my zones painted (the owner's choices of 2026-11-16: coordinates on one world, a floating toolbar of four tools, "+" in the World view and the name in Details, amber), in PRs: `zones/<id>.json` and the IPC that lists, creates, paints, renames and deletes them (done in code), then the World view, the tools and Details, and the Zone field; (21) routes; (22) the `.d3b` file; (23) a given blueprint's
   update; (24) the "Advanced tools" setting; (25) the runtime: the flow, outcomes, variables, blocked, finished, on the
   captures; (26) events at run time: priorities, modes, thresholds, settings at safe points. Step 4 then brings Play,
   what a character does now, its History and the debugger, with the first actions.

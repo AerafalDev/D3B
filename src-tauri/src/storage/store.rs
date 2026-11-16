@@ -58,6 +58,12 @@ pub(crate) enum Why {
     /// A character's file named for another character than the one it holds.
     #[error("its name is not its character's key, {id}")]
     KeyIsNotId { id: i64 },
+    /// A zone's file a newer D3B wrote.
+    #[error("written by a newer D3B: schema {found}")]
+    NewerZone { found: u64 },
+    /// It reads, but not as a zone of this version.
+    #[error("not a zone: {0}")]
+    NotAZone(String),
 }
 
 /// The blueprints of the player's folder, and the files kept as they are.
@@ -85,6 +91,8 @@ pub(crate) enum StorageError {
     NoSuchBlueprint { id: Id },
     #[error("no character {key}")]
     NoSuchCharacter { key: String },
+    #[error("no zone {id}")]
+    NoSuchZone { id: String },
 }
 
 impl Store {
