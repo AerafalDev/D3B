@@ -545,7 +545,33 @@
       "label": "Vue du blueprint",
       "graph": "Graphe",
       "summary": "Résumé"
-    }
+    },
+    "picker": {
+      "title": "Ajouter un nœud",
+      "search": "Que doit faire le bot ensuite ?",
+      "after": "après « {{pin}} »",
+      "often": "Souvent ici",
+      "none": "Rien ne convient ici.",
+      "get": "La valeur de la variable.",
+      "set": "Donne une valeur à la variable, puis continue.",
+      "call": "Lance la fonction, puis continue par Fini ou Échec.",
+      "family": {
+        "event": "Événements",
+        "action": "Actions",
+        "flow": "Déroulement",
+        "query": "Valeurs",
+        "variable": "Variables",
+        "call": "Fonctions",
+        "function": "Cette fonction"
+      }
+    },
+    "refused": {
+      "sameNode": "Un lien joint deux nœuds.",
+      "wrongWay": "Un lien va d'une sortie à une entrée.",
+      "otherType": "Cette entrée ne prend pas ce que la sortie porte."
+    },
+    "notSaved": "La modification n'est pas enregistrée : {{reason}}",
+    "editRefused": "La modification n'est pas enregistrée : le blueprint est relu."
   },
   "world": {
     "title": "Monde",

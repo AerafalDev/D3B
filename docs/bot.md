@@ -82,8 +82,8 @@ The shell's parts (`docs/shell.md`); no information is shown twice:
 - **Library** view: "Given by D3B", then "Mine"; a row opens the blueprint's editor. A row is its name alone, its
   description or what a copy is based on in its hover, an amber mark with how many problems it has; a right-click
   offers Duplicate; last, folded, "Ignored": the player's files kept as they are, blueprints' and characters', each
-  with why in its hover (the owner, 2026-11-14, mock-up 9). A blueprint's tab is its editor, read-only until step 3's
-  PR 13: on top its name, whose it is, its problems, its description and Duplicate; under them My Blueprint (the event
+  with why in its hover (the owner, 2026-11-14, mock-up 9). A blueprint's tab is its editor, D3B's read-only and mine
+  edited in its graph (step 3's PR 12): on top its name, whose it is, its problems, its description and Duplicate; under them My Blueprint (the event
   graph, the functions, the variables with an eye on those set per character, a variable's help and default in its
   hover) and the graph chosen in it, and Details on the right (the owner, 2026-11-14): a node chosen says its sentence,
   its description, the step from which the bot does it, its inputs' values (or "wired"), what an unlinked Failed does,
@@ -116,8 +116,13 @@ The shell's parts (`docs/shell.md`); no information is shown twice:
   (`notify`, `notify_2`, `get_zone`), wired to the first pin of its that fits the one a wire dropped on the ground came
   from; a node moved. Each graph gives the picker its **choices** (`bot::choices`) with their pins: the catalogue's
   kinds in their place, an event held once never again and a function's entry once, then the blueprint's variables,
-  read and written, and its functions called; creating a variable comes with PR 14. The graph is drawn read-only
-  with React Flow: each node where the file puts it (a column on the left for those it does not place), its sentence's
+  read and written, and its functions called; creating a variable comes with PR 14. In a graph of mine, a wire
+  dragged from a pin is checked by type as it goes: a pin that refuses it says why beside the pointer (another type,
+  two ends of one side, a node to itself); dropped on a pin, it is made; dropped on the ground, it opens the picker
+  there, as Space (at the pointer) and a right-click do: a search, "Often here" after a Failed (Notify, Wait, Finish),
+  after another flow (If, Notify, Wait) or from a value (the first three that take or give it), then every choice by
+  family, only what the dragged pin fits, the arrows and Enter choosing. A node dragged keeps its place. A change not
+  saved says why, and the blueprint is read again. The graph is drawn with React Flow: each node where the file puts it (a column on the left for those it does not place), its sentence's
   holes filled with what feeds them (a variable's name, a query's own sentence, a source pin's label, a value typed or
   a default), a get as a pill of its type's colour, an action the bot does not do yet tagged "étape N", pins and wires
   coloured by type (the owner, 2026-11-14). From step 4, "Debug" a character lights the node at work and its wire; nothing is lit otherwise.

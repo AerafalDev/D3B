@@ -545,7 +545,33 @@
       "label": "Blueprint view",
       "graph": "Graph",
       "summary": "Summary"
-    }
+    },
+    "picker": {
+      "title": "Add a node",
+      "search": "What should the bot do next?",
+      "after": "after “{{pin}}”",
+      "often": "Often here",
+      "none": "Nothing fits here.",
+      "get": "The variable's value.",
+      "set": "Gives the variable a value, then goes on.",
+      "call": "Runs the function, then goes on by Done or Failed.",
+      "family": {
+        "event": "Events",
+        "action": "Actions",
+        "flow": "Flow",
+        "query": "Values",
+        "variable": "Variables",
+        "call": "Functions",
+        "function": "This function"
+      }
+    },
+    "refused": {
+      "sameNode": "A wire joins two nodes.",
+      "wrongWay": "A wire goes from an output to an input.",
+      "otherType": "This input does not take what the output carries."
+    },
+    "notSaved": "The change was not saved: {{reason}}",
+    "editRefused": "The change was not saved: the blueprint is read again."
   },
   "world": {
     "title": "World",
