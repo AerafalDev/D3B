@@ -398,6 +398,7 @@
     "mine": "Mine",
     "kept": "Ignored",
     "duplicate": "Duplicate",
+    "delete": "Delete",
     "copyName": "{{name}} (copy)",
     "basedOn": "Based on {{name}} v{{version}}",
     "problems_one": "{{count}} problem",
@@ -409,6 +410,12 @@
     "originalNewerLine": "its original has a newer version, v{{version}}",
     "gone": "This blueprint is gone.",
     "unread": "The Library could not be read: {{reason}}",
+    "deleteFailed": {
+      "gone": "{{name}} was not deleted: it is gone.",
+      "locked": "{{name}} was not deleted: D3B's blueprints are not deleted.",
+      "noFolder": "{{name}} was not deleted: the system names no folder for your files.",
+      "notDeleted": "{{name}} was not deleted: {{reason}}"
+    },
     "duplicateFailed": {
       "gone": "{{name}} was not duplicated: it is gone.",
       "noFolder": "{{name}} was not duplicated: the system names no folder for your files.",
@@ -608,7 +615,9 @@
       "otherType": "This input does not take what the output carries."
     },
     "notSaved": "The change was not saved: {{reason}}",
-    "editRefused": "The change was not saved: the blueprint is read again."
+    "editRefused": "The change was not saved: the blueprint is read again.",
+    "delete": "Delete",
+    "deleteKey": "Del"
   },
   "world": {
     "title": "World",
