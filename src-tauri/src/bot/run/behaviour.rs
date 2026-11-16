@@ -8,6 +8,7 @@ use std::time::Instant;
 use serde_json::Value;
 
 use super::frame::{Call, Slot};
+use super::knows::Knows;
 use super::program::Program;
 use super::values::{self, Trace};
 use super::variables::Variables;
@@ -40,6 +41,8 @@ pub(crate) enum Starts {
     Main,
     /// A function's flow, when it is called.
     Call,
+    /// Another event's flow, which (26) runs by its priority and mode; nothing starts it before.
+    Event,
 }
 
 /// Why the flow is at a node.
@@ -120,6 +123,8 @@ pub(crate) enum Fault {
     NotInALoop,
     #[error("the variable {variable} does not take this value")]
     Refused { variable: String },
+    #[error("the {what} is not seen yet")]
+    NotSeen { what: String },
 }
 
 /// What a node may use while it runs.
@@ -136,11 +141,9 @@ pub(crate) struct Cx<'a> {
     pub(super) call: &'a mut Call,
     pub(super) variables: &'a mut Variables,
     pub(super) trace: &'a mut Trace,
-    #[cfg_attr(
-        test,
-        expect(dead_code, reason = "the queries and the actions' checks read it, in (25)'s next PR")
-    )]
+    pub(super) notices: &'a mut Vec<Notice>,
     pub(super) view: &'a View,
+    pub(super) knows: &'a dyn Knows,
     pub(super) now: Instant,
 }
 
@@ -189,11 +192,34 @@ impl Cx<'_> {
         self.now
     }
 
-    #[cfg_attr(
-        test,
-        expect(dead_code, reason = "the queries and the actions' checks read it, in (25)'s next PR")
-    )]
     pub(crate) fn view(&self) -> &View {
         self.view
     }
+
+    pub(crate) fn knows(&self) -> &dyn Knows {
+        self.knows
+    }
+
+    /// Tells the player `text`: Notify's, kept until the run's notices are taken.
+    pub(crate) fn notify(&mut self, text: &str) {
+        if self.notices.len() == Notice::KEPT {
+            self.notices.remove(0);
+        }
+        self.notices.push(Notice {
+            text: text.to_owned(),
+            at: self.now,
+        });
+    }
+}
+
+/// A text Notify told the player.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub(crate) struct Notice {
+    pub(crate) text: String,
+    pub(crate) at: Instant,
+}
+
+impl Notice {
+    /// How many wait to be taken (settled alone): a Notify in a fast loop drops the oldest.
+    pub(crate) const KEPT: usize = 100;
 }

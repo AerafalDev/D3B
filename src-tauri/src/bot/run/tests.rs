@@ -8,6 +8,7 @@ use serde_json::{Value, json};
 
 use super::frame::Slot;
 use super::program::{Code, NodeCode, Source};
+use super::knows::Nothing;
 use super::*;
 use crate::bot::{Id, read};
 
@@ -54,7 +55,7 @@ fn if_follows_its_condition_read_from_the_characters_setting() {
     let view = View::default();
     let mut run = run_of(&blueprint(VARIABLES, IF), &BTreeMap::new());
     assert_eq!(run.state(), &State::Ready);
-    assert_eq!(run.advance(Some(&view), now), &State::Finished);
+    assert_eq!(run.advance(Some(&view), &Nothing, now), &State::Finished);
     assert_eq!(n(&mut run), Some(json!(1)));
     let read: Vec<_> = run
         .trace()
@@ -66,12 +67,12 @@ fn if_follows_its_condition_read_from_the_characters_setting() {
     let settings = BTreeMap::from([("flag".to_owned(), json!(false))]);
     let mut run = run_of(&blueprint(VARIABLES, IF), &settings);
     // The main flow ending on an output wired to nothing finishes the run too.
-    assert_eq!(run.advance(Some(&view), now), &State::Finished);
+    assert_eq!(run.advance(Some(&view), &Nothing, now), &State::Finished);
     let (memory, changed) = run.memory();
     assert_eq!((memory.get("n"), changed), (Some(&json!(2)), true), "memory changed");
     assert!(!run.memory().1, "and told once");
     // A finished run stays so.
-    assert_eq!(run.advance(Some(&view), now), &State::Finished);
+    assert_eq!(run.advance(Some(&view), &Nothing, now), &State::Finished);
 }
 
 #[test]
@@ -84,7 +85,7 @@ fn memory_and_settings_start_the_run_and_a_value_refused_is_left_out() {
     // Of another type, a setting is left out and the default holds.
     let settings = BTreeMap::from([("flag".to_owned(), json!(3))]);
     let mut run = run_of(&blueprint, &settings);
-    run.advance(Some(&View::default()), Instant::now());
+    run.advance(Some(&View::default()), &Nothing, Instant::now());
     assert_eq!(n(&mut run), Some(json!(1)));
 }
 
@@ -96,14 +97,7 @@ fn a_blueprint_that_cannot_run_is_refused_with_why() {
     let problem = r#"[{"id": "events", "name": "Events", "nodes": [{"id": "start", "kind": "on_start"},
       {"id": "if", "kind": "if"}], "wires": [{"from": ["start", "then"], "to": ["if", "run"]}]}]"#;
     assert!(matches!(refused("[]", problem), Some(Refused::Problems(found)) if !found.is_empty()));
-    let notify = r#"[{"id": "events", "name": "Events", "nodes": [{"id": "start", "kind": "on_start"},
-      {"id": "say", "kind": "notify", "inputs": {"text": "hi"}}], "wires": [{"from": ["start", "then"], "to": ["say", "run"]}]}]"#;
-    assert_eq!(
-        refused("[]", notify),
-        Some(Refused::NotRunnable {
-            kind: "notify".to_owned()
-        })
-    );
+    // Every kind of the catalogue runs (`kinds`): a kind without behaviour, as a v2 kind before its PR, is refused.
     let empty = r#"[{"id": "events", "name": "Events"}]"#;
     assert_eq!(refused("[]", empty), Some(Refused::NoStart));
     let unset = r#"[{"id": "zone", "name": "Zone", "type": "zone", "per_character": true}]"#;
@@ -158,7 +152,7 @@ fn a_call_gives_its_inputs_to_its_entry_and_takes_back_its_outputs() {
     let memory = BTreeMap::from([("n".to_owned(), json!(41))]);
     let run = Run::new(&blueprint(WITH_TEXT, &calls("plus", false)), &BTreeMap::new(), &memory);
     let mut run = run.unwrap_or_else(|error| panic!("{error:?}"));
-    assert_eq!(run.advance(Some(&View::default()), Instant::now()), &State::Finished);
+    assert_eq!(run.advance(Some(&View::default()), &Nothing, Instant::now()), &State::Finished);
     assert_eq!(n(&mut run), Some(json!(42)));
 }
 
@@ -166,11 +160,11 @@ fn a_call_gives_its_inputs_to_its_entry_and_takes_back_its_outputs() {
 fn a_function_failed_follows_its_calls_failed_or_blocks_there() {
     let now = Instant::now();
     let mut run = run_of(&blueprint(WITH_TEXT, &calls("fail", true)), &BTreeMap::new());
-    assert_eq!(run.advance(Some(&View::default()), now), &State::Finished);
+    assert_eq!(run.advance(Some(&View::default()), &Nothing, now), &State::Finished);
     assert_eq!(run.memory().0.get("text"), Some(&json!("no bank")));
 
     let mut run = run_of(&blueprint(WITH_TEXT, &calls("fail", false)), &BTreeMap::new());
-    run.advance(Some(&View::default()), now);
+    run.advance(Some(&View::default()), &Nothing, now);
     assert_eq!(blocked(&run), Some((Reason::Failed("no bank".to_owned()), "call")));
 }
 
@@ -186,7 +180,7 @@ fn a_function_calling_itself_without_end_blocks_past_the_deepest_call() {
   "wires": [{"from": ["in", "then"], "to": ["count", "run"]}, {"from": ["get", "value"], "to": ["add", "a"]},
             {"from": ["add", "value"], "to": ["count", "value"]}, {"from": ["count", "then"], "to": ["call", "run"]}]}]"#;
     let mut run = run_of(&blueprint(VARIABLES, graphs), &BTreeMap::new());
-    run.advance(Some(&View::default()), Instant::now());
+    run.advance(Some(&View::default()), &Nothing, Instant::now());
     assert_eq!(blocked(&run), Some((Reason::TooDeep, "call")));
     assert_eq!(
         n(&mut run),
@@ -206,10 +200,10 @@ fn a_set_out_of_its_variables_bounds_blocks_rather_than_lose_it_from_memory() {
         )
     };
     let mut run = run_of(&blueprint(variables, &graphs(10)), &BTreeMap::new());
-    assert_eq!(run.advance(Some(&View::default()), Instant::now()), &State::Finished);
+    assert_eq!(run.advance(Some(&View::default()), &Nothing, Instant::now()), &State::Finished);
     assert_eq!(n(&mut run), Some(json!(10)));
     let mut run = run_of(&blueprint(variables, &graphs(11)), &BTreeMap::new());
-    run.advance(Some(&View::default()), Instant::now());
+    run.advance(Some(&View::default()), &Nothing, Instant::now());
     let refused = Fault::Refused {
         variable: "n".to_owned(),
     };
@@ -226,7 +220,7 @@ fn a_flow_that_never_waits_blocks_runs_without_pause() {
   "wires": [{"from": ["start", "then"], "to": ["set", "run"]}, {"from": ["get", "value"], "to": ["add", "a"]},
             {"from": ["add", "value"], "to": ["set", "value"]}, {"from": ["set", "then"], "to": ["set", "run"]}]}]"#;
     let mut run = run_of(&blueprint(VARIABLES, graphs), &BTreeMap::new());
-    run.advance(Some(&View::default()), Instant::now());
+    run.advance(Some(&View::default()), &Nothing, Instant::now());
     assert_eq!(blocked(&run), Some((Reason::WithoutPause, "set")));
     // On start ran once, then the set: fewer would block too early.
     assert_eq!(n(&mut run), Some(json!(WITHOUT_PAUSE - 1)));
@@ -240,7 +234,7 @@ fn a_value_that_cannot_be_computed_blocks_on_its_node() {
             {"id": "set", "set": "n"}],
   "wires": [{"from": ["start", "then"], "to": ["set", "run"]}, {"from": ["add", "value"], "to": ["set", "value"]}]}]"#;
     let mut run = run_of(&blueprint(VARIABLES, graphs), &BTreeMap::new());
-    run.advance(Some(&View::default()), Instant::now());
+    run.advance(Some(&View::default()), &Nothing, Instant::now());
     assert_eq!(
         blocked(&run),
         Some((Reason::Fault(Fault::TooLarge), "add")),
@@ -418,7 +412,7 @@ fn a_sequence_runs_its_outputs_in_turn_and_a_loop_its_body_each_time() {
         .flow(5, "body", 6)
         .flow(5, "completed", 9)
         .run();
-    assert_eq!(run.advance(Some(&View::default()), Instant::now()), &State::Finished);
+    assert_eq!(run.advance(Some(&View::default()), &Nothing, Instant::now()), &State::Finished);
     assert_eq!(n(&mut run), Some(json!(131)));
 
     // A body wired to nothing ends at once, each turn: the loop still reaches its completed.
@@ -430,7 +424,7 @@ fn a_sequence_runs_its_outputs_in_turn_and_a_loop_its_body_each_time() {
         .input(1, "times", Source::Value(json!(3)))
         .flow(1, "completed", 2)
         .run();
-    assert_eq!(run.advance(Some(&View::default()), Instant::now()), &State::Finished);
+    assert_eq!(run.advance(Some(&View::default()), &Nothing, Instant::now()), &State::Finished);
     assert_eq!(n(&mut run), Some(json!(100)));
 }
 
@@ -451,7 +445,7 @@ fn leave_the_loop_goes_to_its_completed_and_outside_one_blocks() {
         .flow(2, "then_2", 6)
         .flow(1, "completed", 7)
         .run();
-    assert_eq!(run.advance(Some(&View::default()), Instant::now()), &State::Finished);
+    assert_eq!(run.advance(Some(&View::default()), &Nothing, Instant::now()), &State::Finished);
     assert_eq!(n(&mut run), Some(json!(101)));
 
     let mut run = Built::default()
@@ -459,7 +453,7 @@ fn leave_the_loop_goes_to_its_completed_and_outside_one_blocks() {
         .kind("leave", &Leave)
         .flow(0, "then", 1)
         .run();
-    run.advance(Some(&View::default()), Instant::now());
+    run.advance(Some(&View::default()), &Nothing, Instant::now());
     assert_eq!(blocked(&run), Some((Reason::Fault(Fault::NotInALoop), "leave")));
 }
 
@@ -474,7 +468,7 @@ fn an_actions_failed_goes_on_with_its_reason_or_blocks_and_block_says_why() {
         .flow(0, "then", 1)
         .flow(1, "failed", 2)
         .run();
-    assert_eq!(run.advance(Some(&view), Instant::now()), &State::Finished);
+    assert_eq!(run.advance(Some(&view), &Nothing, Instant::now()), &State::Finished);
     assert_eq!(n(&mut run), Some(json!(1)));
 
     let mut run = Built::default()
@@ -482,7 +476,7 @@ fn an_actions_failed_goes_on_with_its_reason_or_blocks_and_block_says_why() {
         .kind("action", &Fails(true))
         .flow(0, "then", 1)
         .run();
-    run.advance(Some(&view), Instant::now());
+    run.advance(Some(&view), &Nothing, Instant::now());
     assert_eq!(blocked(&run), Some((Reason::Failed("lost".to_owned()), "action")));
 
     let mut run = Built::default()
@@ -490,10 +484,10 @@ fn an_actions_failed_goes_on_with_its_reason_or_blocks_and_block_says_why() {
         .kind("block", &Fails(false))
         .flow(0, "then", 1)
         .run();
-    run.advance(Some(&view), Instant::now());
+    run.advance(Some(&view), &Nothing, Instant::now());
     assert_eq!(blocked(&run), Some((Reason::Said("stop here".to_owned()), "block")));
     let state = run.state().clone();
-    assert_eq!(run.advance(Some(&view), Instant::now()), &state, "blocked stays so");
+    assert_eq!(run.advance(Some(&view), &Nothing, Instant::now()), &state, "blocked stays so");
 }
 
 #[test]
@@ -515,37 +509,37 @@ fn a_node_that_waits_wakes_on_the_clock_and_starts_over_after_an_absence() {
             .run()
     };
     let mut run = built();
-    assert_eq!(run.advance(Some(&view), at), &State::Running);
+    assert_eq!(run.advance(Some(&view), &Nothing, at), &State::Running);
     assert_eq!(run.wake(), Some(second(1_000)));
     assert_eq!(
-        run.advance(Some(&view), second(999)),
+        run.advance(Some(&view), &Nothing, second(999)),
         &State::Running,
         "not one tick early"
     );
-    run.advance(Some(&view), second(1_000));
+    run.advance(Some(&view), &Nothing, second(1_000));
     assert_eq!(
         run.wake(),
         Some(second(2_000)),
         "the loop's second turn, inside its loop"
     );
-    assert_eq!(run.advance(Some(&view), second(2_000)), &State::Finished);
+    assert_eq!(run.advance(Some(&view), &Nothing, second(2_000)), &State::Finished);
     assert_eq!(n(&mut run), Some(json!(1)));
 
     // Away, nothing runs; back, the node at work starts over, its loop's count kept.
     let mut run = built();
-    run.advance(Some(&view), at);
-    run.advance(Some(&view), second(1_000));
-    assert_eq!(run.advance(None, second(2_000)), &State::Running);
-    run.advance(Some(&view), second(2_500));
+    run.advance(Some(&view), &Nothing, at);
+    run.advance(Some(&view), &Nothing, second(1_000));
+    assert_eq!(run.advance(None, &Nothing, second(2_000)), &State::Running);
+    run.advance(Some(&view), &Nothing, second(2_500));
     assert_eq!(run.wake(), Some(second(3_500)));
-    assert_eq!(run.advance(Some(&view), second(3_500)), &State::Finished);
+    assert_eq!(run.advance(Some(&view), &Nothing, second(3_500)), &State::Finished);
 
     // Paused, nothing runs either, and it starts over the same way.
     let mut run = built();
-    run.advance(Some(&view), at);
+    run.advance(Some(&view), &Nothing, at);
     run.pause();
-    assert_eq!(run.advance(Some(&view), second(1_000)), &State::Paused);
+    assert_eq!(run.advance(Some(&view), &Nothing, second(1_000)), &State::Paused);
     run.resume();
-    run.advance(Some(&view), second(800));
+    run.advance(Some(&view), &Nothing, second(800));
     assert_eq!(run.wake(), Some(second(1_800)), "started over, not ticked");
 }
