@@ -20,7 +20,7 @@ _Updated 2026-11-16._
   Ubuntu, release-please running as the project's GitHub App, the release workflow for six targets, and the app's
   signed updates through the `updater-next` channel ([docs/updates.md](updates.md)). **v0.10.0**, the first
   pre-release, is published with installers for the six targets and no game data yet. Decisions:
-  [docs/adr/](adr/README.md) 0001 to 0015.
+  [docs/adr/](adr/README.md) 0001 to 0016.
 - **Measured** by the owner, 2026-11-11, Windows x64: v0.10.0 installs per user, starts dark and in French, its status
   bar says "D3B 0.10.0" and "No game data", the close button quits, and a second launch brings the running window
   back. Then the first update: the installed version downloaded v0.12.0 at start, the bar offered to restart, and
@@ -215,6 +215,7 @@ _Updated 2026-11-16._
        <id> introuvable" and no setting shows.
 - **step 3, a blueprint's graph edited** ((12)), on Windows x64 from `bun run app` on `next` or the next release:
     1. open Récolte automatique: its nodes do not move, no wire can be drawn, a right-click or Space opens nothing;
+       the wire from "Déposer à la banque" back to "Aller dans" runs under the nodes, no line leaving the screen;
     2. duplicate it and open the copy: drag "Récolter"'s Échec onto the empty graph: the picker opens there, "après
        « Échec »", "Souvent ici" Prévenir, Attendre, Terminer, then the rest by family, only what takes the flow;
        "Aller dans …" tagged "étape 4"; type "prev": Prévenir alone; Enter: a Prévenir node where the wire was
@@ -344,11 +345,31 @@ _Updated 2026-11-16._
   deletion not confirmed; a blueprint of mine deleted to the system's trash without asking, the characters that run it
   keeping its id), in two PRs: nodes and wires deleted, a move of many one change, undo, redo and `delete_blueprint`
   through the IPC (done in code), then Delete, Backspace and a context menu in the graph, Ctrl+Z and Ctrl+Y, and
-  Delete in the Library; (14) variables; (15) functions opened in
-  place; (16) events: priority, re-arming, modes, the defaults; (17) comments and reroutes; (18) Align, copy and paste,
-  search; (19) editing by keyboard; (20) my zones painted; (21) routes; (22) the `.d3b` file; (23) a given blueprint's
+  Delete in the Library; then **blueprints v2**
+  ([bot.md](bot.md#the-language-v2), ADR 0016; the owner, 2026-11-16, after trying (12): "much more complete", "as
+  practical as a Lua script"), from a mock-up of the catalogue and the Summary and an analysis of the reference Lua
+  scripts: compact value nodes and a typed Expression, wildcards, lists and level ranges, flow for a bot, "When …
+  becomes true" and events of mine, functions with exits, locals and pure ones, durations and times, randomness, a loop guard
+  at run time, the unobserved data marked and studied at its step; before (14), so that the editors of variables,
+  functions and events and the runtime are written once, on the final model, in ten PRs: (v2.1) the model in Rust, in three PRs: the new types (an NPC, ranges), lists and wildcard
+  pins in the wiring's check; then a node's `options`, the blueprint's own events, functions' exits, locals and pure;
+  then the file's schema 2 and its migration from 1 (in a `bot/` subfolder, the folder holding ten files), D3B's
+  blueprints in 2; each kind's problems come with the PR that brings the kind; (v2.2) the editor reads it: wildcards and
+  lists (a square pin) in the drag's check, a node's options ("+" a case, an output), the new types' colours and
+  values typed (a duration, a time, a map, an item, ranges as a table pasted from text); (v2.3) the flow's kinds and how the Summary reads them; (v2.4)
+  the values: comparisons, logic, arithmetic, randomness, text, durations, lists, drawn compact; (v2.5) the queries
+  over `game::Live`, and those marked with their study and step; (v2.6) the events: When, Every, At, the game's new
+  ones, mine and Trigger with its timers; (v2.7) the actions of steps 4 to 7, marked (the haven bag, zaaps, doors,
+  NPCs and their replies, equipment, resource bags, the experience received), and the variables' nodes (Add to, Reset,
+  a list's); (v2.8) the Expression: its parser and checks in Rust, its node and completion in the editor. Each brings its sentences in French and English and its family in the picker; its checklist,
+  [bot.md](bot.md#measure)'s item 6, is taken once (16) declares variables and events of mine. Then (14) variables, with locals, lists and the new types' editors; (15)
+  functions opened in place, with their exits and the pure ones; (16) events: priority, re-arming, modes, the
+  defaults, and the events of mine declared; (17) comments and reroutes; (18) Align, copy and paste,
+  search; (19) editing by keyboard; (20) my zones painted; (21) routes, with an action and a forced exit per anchor, Follow the route resuming from
+  the map the character is on, the recorder and the text import and export; (22) the `.d3b` file; (23) a given blueprint's
   update; (24) the "Advanced tools" setting; (25) the runtime: the flow, outcomes, variables, blocked, finished, on the
-  captures; (26) events at run time: priorities, modes, thresholds, settings at safe points. Step 4 then brings Play,
+  captures, with v2's loops, Switch, lists, randomness, pure functions and the loop guard; (26) events at run time:
+  priorities, modes, thresholds, settings at safe points, with When, Every, At, the events of mine and their timers. Step 4 then brings Play,
   what a character does now, its History and the debugger, with the first actions.
 - **Waiting on testers**: Dofus 3 has a native client on macOS and on Linux (the owner, 2026-11-11); where it is
   installed, whether its data is Windows', and the relay on each are measured by the first testers there.

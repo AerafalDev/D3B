@@ -64,13 +64,13 @@ describe("a graph's elements", () => {
     expect(nodes[1]?.data).toEqual({ name: "Zone", valueType: "zone", faulty: false });
   });
 
-  it("joins each wire's ends by their pins, classed by what its source carries", () => {
+  it("joins each wire's ends by their pins, classed by what its source carries, drawn as the graph's wire", () => {
     const { edges } = graphElements(graph, new Map());
     expect(
-      edges.map((edge) => [edge.source, edge.sourceHandle, edge.target, edge.targetHandle, edge.className]),
+      edges.map((edge) => [edge.source, edge.sourceHandle, edge.target, edge.targetHandle, edge.className, edge.type]),
     ).toEqual([
-      ["start", "then", "go", "run", "blueprint-type-exec"],
-      ["zone", "value", "go", "zone", "blueprint-type-zone"],
+      ["start", "then", "go", "run", "blueprint-type-exec", "wire"],
+      ["zone", "value", "go", "zone", "blueprint-type-zone", "wire"],
     ]);
   });
 

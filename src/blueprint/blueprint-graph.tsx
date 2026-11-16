@@ -23,8 +23,10 @@ import { type LinkEnd, linkRefusal } from "./edit/link-check.ts";
 import { Picker } from "./edit/picker.tsx";
 import { chosenNode, graphElements } from "./graph-elements.ts";
 import { type PillNode, VariablePill } from "./variable-pill.tsx";
+import { WireEdge } from "./wire-edge.tsx";
 
 const TYPES = { box: BlueprintNode, pill: VariablePill };
+const WIRES = { wire: WireEdge };
 
 interface BlueprintGraphProps {
   graph: GraphView_Serialize;
@@ -138,6 +140,7 @@ function Graph({ graph, names, faulty, chosen = null, onChoose, onEdit }: Bluepr
           nodes={nodes}
           edges={drawn.edges}
           nodeTypes={TYPES}
+          edgeTypes={WIRES}
           nodesDraggable={editable}
           nodesConnectable={editable}
           // Deleting comes with step 3's PR 13: until then a key never takes a node off the view.
