@@ -88,7 +88,10 @@ fn wait_wakes_after_its_minutes_and_zero_does_not_wait() {
     assert_eq!(waits.wake(), Some(at + Duration::from_secs(120)));
     let early = at + Duration::from_millis(119_999);
     assert_eq!(waits.advance(Some(&seen), &Map1, early), &State::Running);
-    assert_eq!(waits.advance(Some(&seen), &Map1, at + Duration::from_secs(120)), &State::Finished);
+    assert_eq!(
+        waits.advance(Some(&seen), &Map1, at + Duration::from_secs(120)),
+        &State::Finished
+    );
     assert_eq!(waits.wake(), None, "nothing waits once finished");
 
     // Neither paused nor blocked does it ask to be woken.
@@ -113,10 +116,22 @@ fn wait_wakes_after_its_minutes_and_zero_does_not_wait() {
 fn wait_for_life_waits_on_the_life_seen() {
     let at = Instant::now();
     let mut waits = run(&one("wait_for_life", r#"{"life": 90}"#, "then"));
-    assert_eq!(waits.advance(Some(&view(1, 179, 0)), &Map1, at), &State::Running, "89 %");
+    assert_eq!(
+        waits.advance(Some(&view(1, 179, 0)), &Map1, at),
+        &State::Running,
+        "89 %"
+    );
     assert_eq!(waits.wake(), None, "no clock: the observed state wakes it");
-    assert_eq!(waits.advance(Some(&View::default()), &Map1, at), &State::Running, "no life seen yet");
-    assert_eq!(waits.advance(Some(&view(1, 180, 0)), &Map1, at), &State::Finished, "90 %");
+    assert_eq!(
+        waits.advance(Some(&View::default()), &Map1, at),
+        &State::Running,
+        "no life seen yet"
+    );
+    assert_eq!(
+        waits.advance(Some(&view(1, 180, 0)), &Map1, at),
+        &State::Finished,
+        "90 %"
+    );
 }
 
 #[test]
@@ -124,9 +139,17 @@ fn an_action_waits_for_its_check_and_is_done_once_it_holds() {
     let at = Instant::now();
     let mut zone = run(&one("go_to_zone", r#"{"zone": {"sub_area": 445}}"#, "done"));
     assert_eq!(zone.advance(Some(&view(2, 200, 0)), &Map1, at), &State::Running);
-    assert_eq!(zone.advance(Some(&view(1, 200, 0)), &Map1, at), &State::Finished, "the player walked there");
+    assert_eq!(
+        zone.advance(Some(&view(1, 200, 0)), &Map1, at),
+        &State::Finished,
+        "the player walked there"
+    );
 
-    let mut harvest = run(&one("harvest_until", r#"{"zone": {"sub_area": 445}, "pods": 90}"#, "done"));
+    let mut harvest = run(&one(
+        "harvest_until",
+        r#"{"zone": {"sub_area": 445}, "pods": 90}"#,
+        "done",
+    ));
     assert_eq!(harvest.advance(Some(&view(1, 200, 899)), &Map1, at), &State::Running);
     assert_eq!(harvest.advance(Some(&view(1, 200, 900)), &Map1, at), &State::Finished);
 
@@ -152,7 +175,11 @@ fn notify_tells_its_text_and_goes_on() {
     let at = Instant::now();
     let mut notify = run(&one("notify", r#"{"text": "Goal reached"}"#, "done"));
     assert_eq!(notify.advance(Some(&view(1, 200, 0)), &Map1, at), &State::Finished);
-    let told: Vec<_> = notify.notices().into_iter().map(|notice| (notice.text, notice.at)).collect();
+    let told: Vec<_> = notify
+        .notices()
+        .into_iter()
+        .map(|notice| (notice.text, notice.at))
+        .collect();
     assert_eq!(told, [("Goal reached".to_owned(), at)]);
     assert_eq!(notify.notices(), [], "told once");
 }
@@ -185,7 +212,9 @@ fn the_queries_read_the_view_when_used_and_block_on_what_is_not_seen() {
     }
     let mut unseen = run(&compared("life_percent", 50));
     unseen.advance(Some(&View::default()), &Map1, at);
-    let fault = Fault::NotSeen { what: "life".to_owned() };
+    let fault = Fault::NotSeen {
+        what: "life".to_owned(),
+    };
     assert_eq!(failed(&unseen), Some(&Reason::Fault(fault)));
 }
 
@@ -238,7 +267,12 @@ fn d3bs_blueprints_run_and_hold_at_their_first_action() {
     for blueprint in &blueprints {
         let run = Run::new(blueprint, &settings, &BTreeMap::new());
         let mut run = run.unwrap_or_else(|error| panic!("{}: {error:?}", blueprint.id.0));
-        assert_eq!(run.advance(Some(&view(2, 200, 0)), &Map1, at), &State::Running, "{}", blueprint.id.0);
+        assert_eq!(
+            run.advance(Some(&view(2, 200, 0)), &Map1, at),
+            &State::Running,
+            "{}",
+            blueprint.id.0
+        );
         let zone = run.trace().iter().any(|it| it.value == json!({"sub_area": 445}));
         assert!(zone, "{}: the Zone it goes to is traced", blueprint.id.0);
     }

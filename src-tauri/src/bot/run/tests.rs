@@ -7,8 +7,8 @@ use std::time::{Duration, Instant};
 use serde_json::{Value, json};
 
 use super::frame::Slot;
-use super::program::{Code, NodeCode, Source};
 use super::knows::Nothing;
+use super::program::{Code, NodeCode, Source};
 use super::*;
 use crate::bot::{Id, read};
 
@@ -152,7 +152,10 @@ fn a_call_gives_its_inputs_to_its_entry_and_takes_back_its_outputs() {
     let memory = BTreeMap::from([("n".to_owned(), json!(41))]);
     let run = Run::new(&blueprint(WITH_TEXT, &calls("plus", false)), &BTreeMap::new(), &memory);
     let mut run = run.unwrap_or_else(|error| panic!("{error:?}"));
-    assert_eq!(run.advance(Some(&View::default()), &Nothing, Instant::now()), &State::Finished);
+    assert_eq!(
+        run.advance(Some(&View::default()), &Nothing, Instant::now()),
+        &State::Finished
+    );
     assert_eq!(n(&mut run), Some(json!(42)));
 }
 
@@ -200,7 +203,10 @@ fn a_set_out_of_its_variables_bounds_blocks_rather_than_lose_it_from_memory() {
         )
     };
     let mut run = run_of(&blueprint(variables, &graphs(10)), &BTreeMap::new());
-    assert_eq!(run.advance(Some(&View::default()), &Nothing, Instant::now()), &State::Finished);
+    assert_eq!(
+        run.advance(Some(&View::default()), &Nothing, Instant::now()),
+        &State::Finished
+    );
     assert_eq!(n(&mut run), Some(json!(10)));
     let mut run = run_of(&blueprint(variables, &graphs(11)), &BTreeMap::new());
     run.advance(Some(&View::default()), &Nothing, Instant::now());
@@ -412,7 +418,10 @@ fn a_sequence_runs_its_outputs_in_turn_and_a_loop_its_body_each_time() {
         .flow(5, "body", 6)
         .flow(5, "completed", 9)
         .run();
-    assert_eq!(run.advance(Some(&View::default()), &Nothing, Instant::now()), &State::Finished);
+    assert_eq!(
+        run.advance(Some(&View::default()), &Nothing, Instant::now()),
+        &State::Finished
+    );
     assert_eq!(n(&mut run), Some(json!(131)));
 
     // A body wired to nothing ends at once, each turn: the loop still reaches its completed.
@@ -424,7 +433,10 @@ fn a_sequence_runs_its_outputs_in_turn_and_a_loop_its_body_each_time() {
         .input(1, "times", Source::Value(json!(3)))
         .flow(1, "completed", 2)
         .run();
-    assert_eq!(run.advance(Some(&View::default()), &Nothing, Instant::now()), &State::Finished);
+    assert_eq!(
+        run.advance(Some(&View::default()), &Nothing, Instant::now()),
+        &State::Finished
+    );
     assert_eq!(n(&mut run), Some(json!(100)));
 }
 
@@ -445,7 +457,10 @@ fn leave_the_loop_goes_to_its_completed_and_outside_one_blocks() {
         .flow(2, "then_2", 6)
         .flow(1, "completed", 7)
         .run();
-    assert_eq!(run.advance(Some(&View::default()), &Nothing, Instant::now()), &State::Finished);
+    assert_eq!(
+        run.advance(Some(&View::default()), &Nothing, Instant::now()),
+        &State::Finished
+    );
     assert_eq!(n(&mut run), Some(json!(101)));
 
     let mut run = Built::default()
@@ -487,7 +502,11 @@ fn an_actions_failed_goes_on_with_its_reason_or_blocks_and_block_says_why() {
     run.advance(Some(&view), &Nothing, Instant::now());
     assert_eq!(blocked(&run), Some((Reason::Said("stop here".to_owned()), "block")));
     let state = run.state().clone();
-    assert_eq!(run.advance(Some(&view), &Nothing, Instant::now()), &state, "blocked stays so");
+    assert_eq!(
+        run.advance(Some(&view), &Nothing, Instant::now()),
+        &state,
+        "blocked stays so"
+    );
 }
 
 #[test]

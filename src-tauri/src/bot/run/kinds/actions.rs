@@ -15,7 +15,11 @@ pub(crate) fn unseen(step: u8) -> String {
 
 /// Done once the check holds; until then the node waits on the observed state.
 fn until(done: bool) -> Step {
-    if done { Step::go("done") } else { Step::Wait { until: None } }
+    if done {
+        Step::go("done")
+    } else {
+        Step::Wait { until: None }
+    }
 }
 
 /// Go to a zone: done on a map of it.

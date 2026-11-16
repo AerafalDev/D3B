@@ -6,7 +6,6 @@
 use std::collections::BTreeMap;
 use std::time::Instant;
 
-
 use super::knows::Nothing;
 use super::{Reason, Run, State};
 use crate::bot::read;
@@ -55,7 +54,8 @@ fn the_owners_game_captures_run_a_blueprint_on_each_character() {
     let mut counts = Counts::default();
     decoded(&folder(), |messages| {
         let mut character = Character::default();
-        let mut run = Run::new(&blueprint, &BTreeMap::new(), &BTreeMap::new()).unwrap_or_else(|error| panic!("{error}"));
+        let mut run =
+            Run::new(&blueprint, &BTreeMap::new(), &BTreeMap::new()).unwrap_or_else(|error| panic!("{error}"));
         let mut chosen = false;
         for (at, message) in messages {
             let now = start + *at;
@@ -91,16 +91,30 @@ fn the_owners_game_captures_run_a_blueprint_on_each_character() {
         counts.lows += run.notices().len();
         if chosen {
             counts.runs += 1;
-            counts.loops += run.memory().0.get("n").and_then(serde_json::Value::as_u64).unwrap_or_default();
+            counts.loops += run
+                .memory()
+                .0
+                .get("n")
+                .and_then(serde_json::Value::as_u64)
+                .unwrap_or_default();
             counts.with_a_loss += u32::from(character.view(start, 0).fights.lost > 0);
         }
     });
     eprintln!("{counts:?}");
-    assert!(counts.runs > 0 && counts.loops > 0 && counts.wakes > 0, "nothing ran: {counts:?}");
+    assert!(
+        counts.runs > 0 && counts.loops > 0 && counts.wakes > 0,
+        "nothing ran: {counts:?}"
+    );
     // Each turn of the loop waits one minute on the clock, once.
     let turns = counts.loops + counts.lows as u64;
-    assert!(u64::from(counts.wakes) <= turns + u64::from(counts.runs), "woken more than once a turn: {counts:?}");
+    assert!(
+        u64::from(counts.wakes) <= turns + u64::from(counts.runs),
+        "woken more than once a turn: {counts:?}"
+    );
     assert_eq!(counts.blocked_otherwise, 0, "blocked by something else than a death");
-    assert_eq!(counts.died, counts.with_a_loss, "one death blocks each run whose character lost");
+    assert_eq!(
+        counts.died, counts.with_a_loss,
+        "one death blocks each run whose character lost"
+    );
     assert_eq!(counts.died_at_the_fights_end, counts.died, "blocked at the fight's end");
 }

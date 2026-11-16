@@ -24,7 +24,9 @@ fn percent(part: i64, whole: i64) -> Option<i64> {
 }
 
 fn seen(value: Option<i64>, what: &str) -> Result<Value, Fault> {
-    value.map(Value::from).ok_or_else(|| Fault::NotSeen { what: what.to_owned() })
+    value
+        .map(Value::from)
+        .ok_or_else(|| Fault::NotSeen { what: what.to_owned() })
 }
 
 /// Life %.

@@ -10,14 +10,14 @@ mod life;
 mod live;
 
 pub(crate) use around::{ActorKind, Monster, Seen};
+pub(crate) use character::Who;
 #[cfg(test)]
 pub(crate) use character::{Character, Fights, Pods};
-#[cfg(test)]
-pub(crate) use life::LifeNow;
-pub(crate) use character::Who;
 pub(crate) use character::{Context, Sex, View};
 #[cfg(test)]
 pub(crate) use life::Characteristics;
+#[cfg(test)]
+pub(crate) use life::LifeNow;
 pub(crate) use live::Live;
 
 #[cfg(test)]
