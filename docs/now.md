@@ -80,7 +80,9 @@ _Updated 2026-11-16._
     inspector and its items 8 and 9 pass. Not measured yet: item 7, at the next client patch.
     Since the new shell (the owner, 2026-11-13), the relay's hover no longer lists the connections: items 1, 2, 4, 5
     and 7 read the Characters view and a character's tab; the counts of items 1 and 3 read the inspector: the panel's
-    "Protocol" view under the character's tab (Ctrl+J shows the panel), its counts on its header's line.
+    "Protocol" view under the character's tab (Ctrl+J shows the panel), its counts on its header's line. Since step 3's
+    PR 24, items 1, 3, 7, 8 and 9 begin by turning on Advanced tools: Affichage > Outils avancés (or "Afficher ou
+    masquer les outils avancés" in the palette), which the next starts remember.
     1. With 3.7.13.17's data in `data/` (the extractor's item 4), start D3B, then a client; enter the game and open the
        character from the Characters view: its tab names the coordinates the game shows for its map, and the panel's
        Protocol header says "non fiables 0" and "perdus 0";
@@ -215,7 +217,8 @@ _Updated 2026-11-16._
        <id> introuvable" and no setting shows.
 - **step 3, a blueprint's graph edited** ((12)), on Windows x64 from `bun run app` on `next` or the next release:
     1. open Récolte automatique: its nodes do not move, no wire can be drawn, a right-click or Space opens nothing;
-       the wire from "Déposer à la banque" back to "Aller dans" runs under the nodes, no line leaving the screen;
+       the wire from "Déposer à la banque" back to "Aller dans" runs under the nodes, no line leaving the screen, and
+       no mini-map in the bottom right corner;
     2. duplicate it and open the copy: drag "Récolter"'s Échec onto the empty graph: the picker opens there, "après
        « Échec »", "Souvent ici" Prévenir, Attendre, Terminer, then the rest by family, only what takes the flow;
        "Aller dans …" tagged "étape 4"; type "prev": Prévenir alone; Enter: a Prévenir node where the wire was
@@ -227,6 +230,17 @@ _Updated 2026-11-16._
     5. move a node, close the tab and reopen it, then restart D3B: the nodes and wires are where they were left,
        in `Documents/D3B/blueprints/<id>.json`; the Library's count of problems follows the graph's (a Prévenir with
        no text: one).
+- **step 3, Advanced tools** ((24)), on Windows x64 from `bun run app` on `next` or the next release:
+    1. with no `Documents/D3B/settings.json`, start D3B: no panel under the editor area, no panel toggle in the title
+       bar, no Panneau in Affichage, Ctrl+J does nothing, and the palette has no "Afficher ou masquer le panneau";
+    2. Affichage > Outils avancés: the panel slides open on the Protocol view, the toggle, Panneau and Ctrl+J come
+       back, and `settings.json` says `"advancedTools": true`;
+    3. restart D3B: the panel shows the Protocol view at once;
+    4. "Afficher ou masquer les outils avancés" in the palette: the panel closes; restart: it stays hidden;
+    5. Advanced tools off, play a character for a minute, then turn them on: its tab's frames of that minute are listed;
+    6. write `{"schema": 9}` in `settings.json` and restart: a notification says the file is kept as it is and why,
+       and Advanced tools are off; turn them on: a notification says the setting holds until D3B closes and why, and
+       the file is unchanged.
 - **step 3, the `.d3b` file** ((22)), on Windows x64 from `bun run app` on `next` or the next release:
     1. right-click Récolte automatique in the Library, Exporter…: the system's save dialog offers
        `Récolte automatique.d3b`; save it: a notification names the file; it is indented JSON beginning `"d3b": 1`;
@@ -362,7 +376,7 @@ _Updated 2026-11-16._
   scripts: compact value nodes and a typed Expression, wildcards, lists and level ranges, flow for a bot, "When …
   becomes true" and events of mine, functions with exits, locals and pure ones, durations and times, randomness, a loop guard
   at run time, the unobserved data marked and studied at its step; before (14), so that the editors of variables,
-  functions and events and the runtime are written once, on the final model, in ten PRs: (v2.1) the model in Rust, in three PRs: the new types (an NPC, ranges), lists and wildcard
+  functions and events and the runtime are written once, on the final model, in fifteen PRs: (v2.1) the model in Rust, in three PRs: the new types (an NPC, ranges), lists and wildcard
   pins in the wiring's check; then a node's `options`, the blueprint's own events, functions' exits, locals and pure;
   then the file's schema 2 and its migration from 1 (in a `bot/` subfolder, the folder holding ten files), D3B's
   blueprints in 2; each kind's problems come with the PR that brings the kind; (v2.2) the editor reads it: wildcards and
@@ -372,13 +386,20 @@ _Updated 2026-11-16._
   over `game::Live`, and those marked with their study and step; (v2.6) the events: When, Every, At, the game's new
   ones, mine and Trigger with its timers; (v2.7) the actions of steps 4 to 7, marked (the haven bag, zaaps, doors,
   NPCs and their replies, equipment, resource bags, the experience received), and the variables' nodes (Add to, Reset,
-  a list's); (v2.8) the Expression: its parser and checks in Rust, its node and completion in the editor. Each brings its sentences in French and English and its family in the picker; its checklist,
-  [bot.md](bot.md#measure)'s item 6, is taken once (16) declares variables and events of mine. Then (14) variables, with locals, lists and the new types' editors; (15)
+  a list's); (v2.8) the Expression: its parser and checks in Rust, its node and completion in the editor.
+  (v2.9) the picker by intent with its synonyms, and a node's inputs folded under "Advanced"; (v2.10) D3B's eight
+  blueprints (Récolte, Combat, Mineur, Paysan, Alchimiste, Pêcheur, Bûcheron, Chasseur: the owner, 2026-11-16), with
+  the ranges computed from the data and the C# version's measured behaviours, in four PRs: the extractor's format 5,
+  the monsters' grades, levels and drops (published on the owner's go, ADR 0013); the ranges; Récolte and the five
+  harvest blueprints; Combat and Chasseur, after the hunting weapon's and the meats' study. Each brings its sentences in French and English and its family in the picker; its checklist,
+  [bot.md](bot.md#measure)'s items 6 and 7, is taken once (16) declares variables and events of mine. Then (14) variables, with locals, lists and the new types' editors; (15)
   functions opened in place, with their exits and the pure ones; (16) events: priority, re-arming, modes, the
   defaults, and the events of mine declared; (17) comments and reroutes; (18) Align, copy and paste,
-  search; (19) editing by keyboard; (20) my zones painted (the owner's choices of 2026-11-16: coordinates on one world, a floating toolbar of four tools, "+" in the World view and the name in Details, amber), in PRs: `zones/<id>.json` and the IPC that lists, creates, paints, renames and deletes them (done in code), then the World view, the tools and Details, and the Zone field; (21) routes, with an action and a forced exit per anchor, Follow the route resuming from
+  search; (19) editing by keyboard; (20) my zones painted (the owner's choices of 2026-11-16: coordinates on one world, a floating toolbar of four tools, "+" in the World view and the name in Details, amber), in PRs: `zones/<id>.json` and the IPC that lists, creates, paints, renames and deletes them (done in code), then my zones in the World view and the Zone field (done in code), then the map's tools and Details; (21) routes, with an action and a forced exit per anchor, Follow the route resuming from
   the map the character is on, the recorder and the text import and export; (22) the `.d3b` file (the owner's choices of 2026-11-16, ADR 0017: one readable JSON, its zones and routes joining it with (20) and (21), a preview dialog, Export in the Library's menu and the tab, Import in its header and by a drop), in PRs: the file, its export, preview and import through the IPC (done in code), then the Library's Export and Import, the preview and the drop (done in code; its checklist under "Not measured"), then the zones it names joining it; (23) a given blueprint's
-  update; (24) the "Advanced tools" setting; (25) the runtime: the flow, outcomes, variables, blocked, finished, on the
+  update; (24) the "Advanced tools" setting (the owner's choices of 2026-11-16: in the palette and View, no Settings
+  view yet; `settings.json` in the player's folder; the panel gone while off; the frames followed even then; done in
+  code, its checklist under "Not measured"); (25) the runtime: the flow, outcomes, variables, blocked, finished, on the
   captures, with v2's loops, Switch, lists, randomness, pure functions and the loop guard; (26) events at run time:
   priorities, modes, thresholds, settings at safe points, with When, Every, At, the events of mine and their timers. Step 4 then brings Play,
   what a character does now, its History and the debugger, with the first actions.

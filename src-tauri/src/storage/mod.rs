@@ -1,16 +1,19 @@
 //! The player's files (`docs/bot.md`, "Storage"; ADR 0015): one JSON file per object in `Documents/D3B`, written whole
 //! by a temporary file and a rename, and a file that does not read kept untouched and reported, never written over.
-//! The blueprints, the characters played and the zones of mine; routes and history join them as their PRs come.
+//! The blueprints, the characters played, the zones of mine and the app's settings; routes and history join them as
+//! their PRs come.
 
 mod atomic;
 mod character;
 mod history;
+mod settings;
 mod share;
 mod store;
 mod zone;
 
 pub(crate) use atomic::write as write_whole;
 pub(crate) use character::{Played, SCHEMA as CHARACTER_SCHEMA, key_of};
+pub(crate) use settings::AppSettings;
 pub(crate) use share::{
     EXTENSION as SHARE_EXTENSION, ShareError, file_name as shared_file_name, read_file as read_shared,
     write as write_shared,

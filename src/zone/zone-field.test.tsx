@@ -6,8 +6,8 @@ import type { Atlas_Serialize } from "@/bindings.ts";
 import { initI18n } from "@/i18n/i18n.ts";
 
 // The back end, faked: the atlas the field reads.
-const backEnd = vi.hoisted(() => ({ atlas: vi.fn() }));
-vi.mock("@/bindings.ts", () => ({ commands: { worldAtlas: backEnd.atlas } }));
+const backEnd = vi.hoisted(() => ({ atlas: vi.fn(), zones: vi.fn() }));
+vi.mock("@/bindings.ts", () => ({ commands: { worldAtlas: backEnd.atlas, zones: backEnd.zones } }));
 // The editor area, faked: the editors opened, and the tab active before the map.
 const editors = vi.hoisted(() => ({ opened: [] as string[] }));
 vi.mock("@/shell/parts/editor-store.ts", () => ({
@@ -17,6 +17,7 @@ vi.mock("@/shell/parts/editor-store.ts", () => ({
 
 const { ZoneField } = await import("./zone-field.tsx");
 const { useWorld } = await import("@/world/world-store.ts");
+const { useZones } = await import("./zones-store.ts");
 
 const names = (fr: string, en = fr) => ({ fr, en });
 const subArea = (id: number, fr: string, level: number, drawn = true) => ({
@@ -54,6 +55,21 @@ describe("the Zone field", () => {
   });
   beforeEach(() => {
     backEnd.atlas.mockReset().mockResolvedValue(ATLAS);
+    backEnd.zones.mockReset().mockResolvedValue({
+      zones: [
+        {
+          id: "my-wheat",
+          name: "Mon blé",
+          world: 1,
+          maps: [
+            [0, 0],
+            [1, 0],
+          ],
+        },
+        { id: "bois", name: "Bois sombre", world: 1, maps: [] },
+      ],
+      kept: [],
+    });
     editors.opened = [];
     useWorld.setState({ read: null, picked: null, world: 1, choosing: null });
   });
@@ -69,7 +85,12 @@ describe("the Zone field", () => {
     rerender(<ZoneField value={{ sub_area: 445 }} onChange={() => {}} who="Aerinth" />);
     expect(field().textContent).toBe("Sous-zone 445 absente des données");
     rerender(<ZoneField value={{ zone: "my-wheat" }} onChange={() => {}} who="Aerinth" />);
-    expect(field().textContent).toBe("my-wheat");
+    expect(field().textContent).toBe("Mon bléZone à moi · 2 cartes");
+    rerender(<ZoneField value={{ zone: "gone" }} onChange={() => {}} who="Aerinth" />);
+    expect(field().textContent).toBe("Zone gone introuvable");
+    // Before my zones are read, a zone of mine is not yet known: said by its id.
+    act(() => useZones.setState({ zones: [], loaded: false }));
+    expect(field().textContent).toBe("gone");
   });
 
   it("unfolds my zones, then the sub-areas by area and level, searched without accents, and a choice closes it", async () => {
@@ -79,12 +100,13 @@ describe("the Zone field", () => {
     const list = screen.getByRole("listbox");
     const headings = [...list.querySelectorAll("[cmdk-group-heading]")].map((one) => one.textContent);
     expect(headings).toEqual(["Mes zones", "Astrub", "Bonta"]);
-    expect(list.textContent).toContain("Tes zones peintes viendront ici.");
     const items = () =>
       within(screen.getByRole("listbox"))
         .getAllByRole("option")
         .map((one) => one.textContent);
     expect(items()).toEqual([
+      "Bois sombre0 carte",
+      "Mon blé2 cartes",
       "Champs d'Astrubniv. 15",
       "Forêt d'Astrubniv. 20",
       "Cité de Bontaniv. 30",
@@ -93,6 +115,12 @@ describe("the Zone field", () => {
     ]);
     fireEvent.change(screen.getByRole("combobox", { name: "Chercher une zone" }), { target: { value: "egout" } });
     expect(items()).toEqual(["Égoutsniv. 40", "Choisir sur la carte"]);
+    fireEvent.change(screen.getByRole("combobox", { name: "Chercher une zone" }), { target: { value: "ble" } });
+    expect(items()).toEqual(["Mon blé2 cartes", "Choisir sur la carte"]);
+    fireEvent.click(screen.getByRole("option", { name: /Mon blé/ }));
+    expect(onChange.mock.calls).toEqual([[{ zone: "my-wheat" }]]);
+    onChange.mockReset();
+    fireEvent.click(screen.getByRole("combobox", { name: "Zone" }));
     fireEvent.change(screen.getByRole("combobox", { name: "Chercher une zone" }), { target: { value: "zzz" } });
     expect(screen.getByRole("listbox").textContent).toContain("Aucune sous-zone ne correspond.");
     fireEvent.change(screen.getByRole("combobox", { name: "Chercher une zone" }), { target: { value: "champs" } });
@@ -119,12 +147,12 @@ describe("the Zone field", () => {
     rerender(<ZoneField value={null} onChange={latest} who="Aerinth" />);
     act(() => useWorld.getState().endChoosing(10));
     expect([first.mock.calls, latest.mock.calls]).toEqual([[], [[{ sub_area: 10 }]]]);
-    // The arrows move from the first sub-area listed, Enter chooses.
+    // The arrows move from the first zone listed, mine first, Enter chooses.
     fireEvent.click(screen.getByRole("combobox", { name: "Zone" }));
     const search = screen.getByRole("combobox", { name: "Chercher une zone" });
     fireEvent.keyDown(search, { key: "ArrowDown" });
     fireEvent.keyDown(search, { key: "Enter" });
-    expect(latest.mock.calls[1]).toEqual([{ sub_area: 97 }]);
+    expect(latest.mock.calls[1]).toEqual([{ zone: "my-wheat" }]);
     // After a search, Enter takes what it found.
     fireEvent.click(screen.getByRole("combobox", { name: "Zone" }));
     fireEvent.change(screen.getByRole("combobox", { name: "Chercher une zone" }), { target: { value: "egout" } });
