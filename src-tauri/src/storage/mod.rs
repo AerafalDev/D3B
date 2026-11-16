@@ -1,16 +1,18 @@
 //! The player's files (`docs/bot.md`, "Storage"; ADR 0015): one JSON file per object in `Documents/D3B`, written whole
 //! by a temporary file and a rename, and a file that does not read kept untouched and reported, never written over.
-//! The blueprints come first, then the characters and the app's settings; zones, routes and history join them as
+//! The blueprints, the characters played, the zones of mine and the app's settings; routes and history join them as
 //! their PRs come.
 
 mod atomic;
 mod character;
 mod settings;
 mod store;
+mod zone;
 
 pub(crate) use character::{Played, SCHEMA as CHARACTER_SCHEMA, key_of};
 pub(crate) use settings::AppSettings;
 pub(crate) use store::{StorageError, Store, Why};
+pub(crate) use zone::Zone;
 
 #[cfg(test)]
 pub(crate) mod tests {

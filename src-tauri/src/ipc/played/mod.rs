@@ -249,7 +249,7 @@ pub async fn played_characters(app: tauri::AppHandle) -> Result<PlayedList, Stri
 /// Sends `path` to the system's trash, on a thread of its own so the trash's COM set-up on Windows meets no thread
 /// that set it up otherwise. On macOS through the file manager, without asking to control the Finder, at the cost of
 /// "Put Back" on some versions (the owner, 2026-11-14).
-fn to_trash(path: &std::path::Path) -> std::io::Result<()> {
+pub(super) fn to_trash(path: &std::path::Path) -> std::io::Result<()> {
     let path = path.to_path_buf();
     let deleted = std::thread::spawn(move || {
         #[cfg(target_os = "macos")]
