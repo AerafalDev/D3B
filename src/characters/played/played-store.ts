@@ -2,7 +2,7 @@ import i18next from "i18next";
 import { toast } from "sonner";
 import { create } from "zustand";
 
-import { commands, events, type ForgetError, type PlayedCharacter_Serialize } from "@/bindings.ts";
+import { commands, events, type ForgetError, type PlayedCharacter_Serialize, type SettingError } from "@/bindings.ts";
 import { isTauri } from "@/lib/tauri.ts";
 import { useCharacters } from "../character-store.ts";
 
@@ -17,6 +17,10 @@ interface PlayedStore {
    * notification at the bottom right (the owner, 2026-11-14), the row staying.
    */
   forget: (character: PlayedCharacter) => Promise<void>;
+  /** The character runs `blueprint`, or none; the list follows, a failure said in a notification. */
+  setBlueprint: (character: PlayedCharacter, blueprint: string | null) => Promise<boolean>;
+  /** The character's own value of `variable`, as JSON, or `null` to reset it to the blueprint's default. */
+  setSetting: (character: PlayedCharacter, variable: string, value: string | null) => Promise<boolean>;
   /** Reads the list at each change, then once; returns what stops following. */
   follow: () => () => void;
 }
@@ -33,6 +37,27 @@ function forgetFailure(error: ForgetError, name: string): string {
   }
 }
 
+/** What a failed change of a character's blueprint or setting says, in the player's language. */
+function settingFailure(error: SettingError, name: string): string {
+  if (error.kind === "notSaved") {
+    return i18next.t("settings.failed.notSaved", { name, reason: error.reason });
+  }
+  return i18next.t(`settings.failed.${error.kind}`, { name });
+}
+
+/** Runs a change of a character's file, saying a failure in a notification; whether it was made. */
+async function changing(name: string, change: () => Promise<null>): Promise<boolean> {
+  try {
+    await change();
+    return true;
+  } catch (error) {
+    // The command rejects with its `SettingError`; anything else is a bug, said as it came.
+    const failure = error as SettingError;
+    toast.error(typeof failure?.kind === "string" ? settingFailure(failure, name) : String(error));
+    return false;
+  }
+}
+
 export const usePlayed = create<PlayedStore>((set) => ({
   played: [],
 
@@ -45,6 +70,12 @@ export const usePlayed = create<PlayedStore>((set) => ({
       toast.error(typeof failure?.kind === "string" ? forgetFailure(failure, character.name) : String(error));
     }
   },
+
+  setBlueprint: (character, blueprint) =>
+    changing(character.name, () => commands.setCharacterBlueprint(character.key, blueprint)),
+
+  setSetting: (character, variable, value) =>
+    changing(character.name, () => commands.setCharacterSetting(character.key, variable, value)),
 
   follow: () => {
     if (!isTauri()) {

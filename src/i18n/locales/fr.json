@@ -592,7 +592,8 @@
       "kinds_one": "{{count}} sorte",
       "kinds_other": "{{count}} sortes",
       "resources": "Ressources",
-      "noResource": "Aucune ressource."
+      "noResource": "Aucune ressource.",
+      "zoneOf": "Zone de"
     },
     "choosing": {
       "banner": "{{who}} : clique une sous-zone pour en faire sa Zone.",
@@ -610,5 +611,23 @@
     "onMap": "Choisir sur la carte",
     "keys": "↑ ↓ Entrée",
     "subArea": "Sous-zone {{id}}"
+  },
+  "settings": {
+    "title": "Blueprint et réglages",
+    "blueprint": "Blueprint",
+    "none": "Aucun blueprint",
+    "open": "Ouvrir le blueprint",
+    "missing": "Blueprint {{id}} introuvable",
+    "reset": "Revenir à la valeur du blueprint ({{value}})",
+    "bounds": "De {{smallest}} à {{largest}}",
+    "job": "Métier {{id}}",
+    "failed": {
+      "noSuchCharacter": "{{name}} n'est pas encore enregistré : rien n'a changé.",
+      "noFolder": "Rien n'a changé pour {{name}} : le système ne donne aucun dossier pour tes fichiers.",
+      "noSuchBlueprint": "Rien n'a changé pour {{name}} : ce blueprint n'existe plus.",
+      "noSuchSetting": "Rien n'a changé pour {{name}} : son blueprint n'a plus ce réglage.",
+      "refused": "Rien n'a changé pour {{name}} : cette valeur n'est pas permise.",
+      "notSaved": "Rien n'a changé pour {{name}} : {{reason}}"
+    }
   }
 }

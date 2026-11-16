@@ -3,6 +3,7 @@ import { useEffect } from "react";
 import { useTranslation } from "react-i18next";
 
 import { useRelay } from "@/relay/relay-store.ts";
+import { CharacterSettings } from "@/settings/character-settings.tsx";
 import type { EditorParams } from "@/shell/parts/editor-store.ts";
 import { Avatar } from "./avatar.tsx";
 import { CharacterMap } from "./character-map.tsx";
@@ -27,8 +28,8 @@ function around(view: CharacterView) {
 }
 
 /**
- * A character's tab, the owner's layout "A" (2026-11-12): its state in a column on the left (who and where, its
- * gauges, its points and kamas, what is around), its map on the right. The tab takes the character's name once known.
+ * A character's tab, the owner's layout "A" (2026-11-12): its state in a column on the left (who it is, its blueprint
+ * and settings, where it is, its gauges, its points and kamas, what is around), its map on the right. The tab takes the character's name once known.
  */
 export function CharacterTab({ api, params }: IDockviewPanelProps<CharacterParams>) {
   const { t, i18n } = useTranslation();
@@ -65,7 +66,10 @@ export function CharacterTab({ api, params }: IDockviewPanelProps<CharacterParam
 
   return (
     <div className="grid h-full min-h-0 grid-cols-[260px_1fr] gap-4 overflow-hidden p-4">
-      <section aria-label={t("character.state")} className="flex min-h-0 flex-col gap-4 overflow-y-auto pr-1">
+      <section
+        aria-label={t("character.state")}
+        className="-ml-2 flex min-h-0 flex-col gap-4 overflow-y-auto pr-1 pl-2"
+      >
         <header className="flex items-center gap-3">
           <Avatar name={name} head={view.head} size="tab" />
           <div className="min-w-0">
@@ -76,6 +80,8 @@ export function CharacterTab({ api, params }: IDockviewPanelProps<CharacterParam
             </p>
           </div>
         </header>
+        {view.key !== null && <CharacterSettings characterKey={view.key} />}
+        <div className="h-px bg-[#232323]" />
         <p className="text-text-muted text-xs">
           {place?.at == null
             ? t("character.noPlace")

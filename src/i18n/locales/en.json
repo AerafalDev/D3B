@@ -592,7 +592,8 @@
       "kinds_one": "{{count}} kind",
       "kinds_other": "{{count}} kinds",
       "resources": "Resources",
-      "noResource": "No resource."
+      "noResource": "No resource.",
+      "zoneOf": "Zone of"
     },
     "choosing": {
       "banner": "{{who}}: click a sub-area to make it their Zone.",
@@ -610,5 +611,23 @@
     "onMap": "Choose on the map",
     "keys": "↑ ↓ Enter",
     "subArea": "Sub-area {{id}}"
+  },
+  "settings": {
+    "title": "Blueprint and settings",
+    "blueprint": "Blueprint",
+    "none": "No blueprint",
+    "open": "Open the blueprint",
+    "missing": "Blueprint {{id}} not found",
+    "reset": "Back to the blueprint's value ({{value}})",
+    "bounds": "From {{smallest}} to {{largest}}",
+    "job": "Profession {{id}}",
+    "failed": {
+      "noSuchCharacter": "{{name}} is not saved yet: nothing changed.",
+      "noFolder": "Nothing changed for {{name}}: the system names no folder for your files.",
+      "noSuchBlueprint": "Nothing changed for {{name}}: this blueprint no longer exists.",
+      "noSuchSetting": "Nothing changed for {{name}}: its blueprint no longer has this setting.",
+      "refused": "Nothing changed for {{name}}: this value is not allowed.",
+      "notSaved": "Nothing changed for {{name}}: {{reason}}"
+    }
   }
 }

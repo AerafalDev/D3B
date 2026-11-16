@@ -9,6 +9,8 @@ import { initI18n } from "@/i18n/i18n.ts";
 vi.mock("@tauri-apps/api/core", () => ({ convertFileSrc: (path: string) => `asset://${path}` }));
 
 const { WorldDetails } = await import("./world-details.tsx");
+const { usePlayed } = await import("@/characters/played/played-store.ts");
+const { useLibrary } = await import("@/library/library-store.ts");
 
 const names = (fr: string, en = fr) => ({ fr, en });
 const ATLAS: Atlas_Serialize = {
@@ -83,6 +85,33 @@ describe("the World tab's Details", () => {
     // The nettle's icon and the alchemist's are missing: neither is drawn.
     expect(jobs[1]?.querySelector("img")).toBeNull();
     expect(details.querySelectorAll("img")).toHaveLength(3);
+  });
+
+  it("says whose Zone the sub-area is, and nothing when it is no one's", () => {
+    const zone = { id: "zone", name: "Zone", valueType: "zone", default: null, bounds: null, memory: false, help: "" };
+    const harvest = { id: "harvest", name: "Harvest", description: "", given: false, version: 1, basedOn: null };
+    useLibrary.setState({ blueprints: [{ ...harvest, problems: 0, variables: [{ ...zone, perCharacter: true }] }] });
+    const character = { level: 1, breedName: null, head: null, sex: null, lastSeen: 0, place: null };
+    const played = (name: string, subArea: number) => ({
+      ...character,
+      key: name,
+      name,
+      blueprint: "harvest",
+      settings: { zone: JSON.stringify({ sub_area: subArea }) },
+    });
+    usePlayed.setState({ played: [played("Kalyx", 97), played("Orrin", 97), played("Lyra", 4)] });
+    render(<WorldDetails atlas={ATLAS} subArea={97} />);
+    const details = screen.getByRole("complementary", { name: "Détails" });
+    const facts = [...details.querySelectorAll("dt")].map(
+      (term) => `${term.textContent}: ${term.nextSibling?.textContent}`,
+    );
+    expect(facts).toContain("Zone de: Kalyx et Orrin");
+    cleanup();
+    usePlayed.setState({ played: [played("Lyra", 4)] });
+    render(<WorldDetails atlas={ATLAS} subArea={97} />);
+    expect(screen.getByRole("complementary", { name: "Détails" }).textContent).not.toContain("Zone de");
+    usePlayed.setState({ played: [] });
+    useLibrary.setState({ blueprints: [] });
   });
 
   it("says when a sub-area is on no map, holds no resource and no monster", () => {

@@ -72,7 +72,12 @@ The shell's parts (`docs/shell.md`); no information is shown twice:
   kept (a change: step 2's view lists open game connections only). From step 4, a row's hover holds Play, Pause and
   Stop, and the view's header Play all and Pause all.
 - A **character's tab**: its blueprint (a list, and an arrow that opens it) and its settings above its observed state
-  and map (`docs/game.md`). From step 4: one line saying what it does now (its step, on what, since when), a tick on
+  and map (`docs/game.md`), as the prototype laid them out (step 3's PR 11, the owner's choices of 2026-11-16): "No
+  blueprint" at first; each setting by its name, its help on hover, the character's own value marked by a bar on its
+  left and reset by a button saying the blueprint's value; a Zone by `ZoneField`, a number or percentage in a field
+  within its bounds (one out of them marked and put back), a yes or no by a switch, a text by a line, a profession by
+  the game's harvesting professions with their icons; a bank and items say their value, tagged "étape 5", until the
+  step that uses them brings their editors. An offline character's tab holds the same, editable. From step 4: one line saying what it does now (its step, on what, since when), a tick on
   the Pods gauge at the current step's target, and Play, Pause and Stop as the tab's editor actions.
 - **Library** view: "Given by D3B", then "Mine"; a row opens the blueprint's editor. A row is its name alone, its
   description or what a copy is based on in its hover, an amber mark with how many problems it has; a right-click
@@ -143,7 +148,8 @@ The shell's parts (`docs/shell.md`); no information is shown twice:
   where it is (a drag chooses nothing, nor a click off the maps), and **Details**,
   a column on the World tab's right, says what it is as a zone: its area, level and maps, its resources by profession
   with their icons and levels, how many kinds of monsters live there (their names need a data format the hunt, step 6,
-  can bring), and, from step 3's PR 11, whose Zone it is. `world_atlas` gives each sub-area its resources, the items
+  can bring), and, from step 3's PR 11, whose Zone it is: the characters whose
+  blueprint sets a Zone per character that their own value, or its default, makes it ("Zone de Kalyx et Orrin"). `world_atlas` gives each sub-area its resources, the items
   of its `harvestables` that a profession's skill gathers, the loot boxes left out, by profession then level, and how
   many kinds of monsters it lists, with the professions and resources named and their icons' files. The field is
   `ZoneField` (`src/zone/`), which step 3's PR 11 puts in a character's tab; the World store holds the choice on the

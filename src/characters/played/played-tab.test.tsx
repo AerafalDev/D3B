@@ -59,7 +59,10 @@ describe("the tab of a character played whose client is closed", () => {
     expect(screen.getByRole("heading").textContent).toBe("Kalyx");
     expect(container.textContent).toContain("Level 54 · Iop · Offline");
     expect(container.textContent?.replace(/[  ]/g, " ")).toContain("Last seen today at 10:40 AM, in Astrub (5, -18).");
-    expect(container.querySelector("svg, [role='meter'], [role='progressbar']")).toBeNull();
+    expect(screen.queryByRole("img", { name: "The character's map" })).toBeNull();
+    expect(container.querySelector("[role='meter'], [role='progressbar']")).toBeNull();
+    // Its blueprint and settings, editable offline (the owner, 2026-11-16).
+    expect(screen.getByRole("combobox", { name: "Blueprint" }).textContent).toContain("No blueprint");
     expect(titles).toEqual(["Kalyx"]);
   });
 
