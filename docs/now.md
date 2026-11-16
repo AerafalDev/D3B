@@ -215,7 +215,8 @@ _Updated 2026-11-16._
        <id> introuvable" and no setting shows.
 - **step 3, a blueprint's graph edited** ((12)), on Windows x64 from `bun run app` on `next` or the next release:
     1. open Récolte automatique: its nodes do not move, no wire can be drawn, a right-click or Space opens nothing;
-       the wire from "Déposer à la banque" back to "Aller dans" runs under the nodes, no line leaving the screen;
+       the wire from "Déposer à la banque" back to "Aller dans" runs under the nodes, no line leaving the screen, and
+       no mini-map in the bottom right corner;
     2. duplicate it and open the copy: drag "Récolter"'s Échec onto the empty graph: the picker opens there, "après
        « Échec »", "Souvent ici" Prévenir, Attendre, Terminer, then the rest by family, only what takes the flow;
        "Aller dans …" tagged "étape 4"; type "prev": Prévenir alone; Enter: a Prévenir node where the wire was
