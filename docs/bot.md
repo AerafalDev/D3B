@@ -97,8 +97,9 @@ flowchart LR
 - **An explicit stack**, no async: a frame per call (its locals, its nodes' counters, its outputs) and per chain, which
   comes back to the node that ran it when its flow ends; Leave the loop unwinds to the nearest loop. A waiting run is
   its stack, so an interrupted flow keeps its place, its loops' counters and its calls.
-- **Values are pulled** when the node that uses them runs, through their wires; each value used goes to a bounded
-  trace (its node, pin, value and time) for the debugger.
+- **Values are pulled** when the node that uses them runs, through their wires, each computed once for that node
+  however many inputs read it; each value used goes to a bounded trace (its node, pin, value and time, the last
+  1,000) for the debugger.
 - **Variables**: a run's from their defaults, a setting from the character's own value; memory is given at the start
   and its changes handed back, to be saved in the character's file under `memory` at safe points (the owner,
   2026-11-16; from step 4's wiring, the file's schema 3), kept on another blueprint for the same id and type, as a
@@ -108,7 +109,8 @@ flowchart LR
   see this before step N".
 - **It blocks**, with the reason and the node, on an unlinked Failed, a death (the character's fights lost rising:
   the forced default; a `died` event held by the blueprint is (26)'s), 10,000 nodes in a row without waiting ("runs
-  without pause"), a call deeper than 64 (settled alone), or a value that cannot be computed. Its states are ready, running, paused,
+  without pause"), more than 64 calls at work one inside the other, a value that cannot be computed (on the node
+  that computes it), or a Set out of its variable's bounds, which memory would lose at the next run (settled alone). Its states are ready, running, paused,
   finished and blocked; without blueprint and disconnected are the character's: no view holds the run, and the node
   at work runs again once the character is back, as actions are goal-shaped. A Wait counts the clock's time (settled
   alone).
