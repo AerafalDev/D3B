@@ -1,5 +1,5 @@
 //! The blueprints, as the Library lists them (`docs/bot.md`, "In the app"): D3B's, then mine from `Documents/D3B`, and
-//! the files there that do not read; Duplicate, which saves a copy among mine; and the `.d3b` file (ADR 0017), a
+//! the files there that do not read; Duplicate, which saves a copy among mine; and the `.d3b` file (ADR 0018), a
 //! blueprint exported through the system's save dialog, then previewed and imported among mine on another D3B.
 
 use std::collections::BTreeMap;

@@ -1,4 +1,4 @@
-# 0017. The `.d3b` file is one readable JSON holding the blueprint's file
+# 0018. The `.d3b` file is one readable JSON holding the blueprint's file
 
 - Status: accepted
 - Date: 2026-11-16
