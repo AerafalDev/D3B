@@ -657,7 +657,8 @@
       "emptyName": "Une zone a besoin d'un nom.",
       "notSaved": "Rien n'a changé : {{reason}}"
     },
-    "mineMissing": "Zone {{id}} introuvable"
+    "mineMissing": "Zone {{id}} introuvable",
+    "noneField": "Aucune zone : peins-en une avec « + » dans la vue Monde."
   },
   "settings": {
     "title": "Blueprint et réglages",

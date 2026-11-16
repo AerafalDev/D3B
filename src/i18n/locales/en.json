@@ -657,7 +657,8 @@
       "emptyName": "A zone needs a name.",
       "notSaved": "Nothing changed: {{reason}}"
     },
-    "mineMissing": "Zone {{id}} not found"
+    "mineMissing": "Zone {{id}} not found",
+    "noneField": "No zone: paint one with \"+\" in the World view."
   },
   "settings": {
     "title": "Blueprint and settings",

@@ -17,6 +17,7 @@ vi.mock("@/shell/parts/editor-store.ts", () => ({
 
 const { ZoneField } = await import("./zone-field.tsx");
 const { useWorld } = await import("@/world/world-store.ts");
+const { useZones } = await import("./zones-store.ts");
 
 const names = (fr: string, en = fr) => ({ fr, en });
 const subArea = (id: number, fr: string, level: number, drawn = true) => ({
@@ -87,6 +88,9 @@ describe("the Zone field", () => {
     expect(field().textContent).toBe("Mon bléZone à moi · 2 cartes");
     rerender(<ZoneField value={{ zone: "gone" }} onChange={() => {}} who="Aerinth" />);
     expect(field().textContent).toBe("Zone gone introuvable");
+    // Before my zones are read, a zone of mine is not yet known: said by its id.
+    act(() => useZones.setState({ zones: [], loaded: false }));
+    expect(field().textContent).toBe("gone");
   });
 
   it("unfolds my zones, then the sub-areas by area and level, searched without accents, and a choice closes it", async () => {

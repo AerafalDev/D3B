@@ -47,7 +47,7 @@ describe("my zones in the World view", () => {
       command.mockReset();
     }
     backEnd.zones.mockResolvedValue({ zones: ZONES, kept: [] });
-    useZones.setState({ zones: [], kept: [] });
+    useZones.setState({ zones: [], kept: [], loaded: false });
     useWorld.setState({ zone: null, picked: 3, world: 2, tool: "select" });
     opened.editors.length = 0;
   });
@@ -91,6 +91,27 @@ describe("my zones in the World view", () => {
     await act(async () => fireEvent.keyDown(again, { key: "Enter" }));
     expect(backEnd.rename.mock.calls).toEqual([["ble", "Blé d'Astrub"]]);
     expect(rows()).toContain("Blé d'Astrub1 carte");
+    // The row takes the focus back.
+    expect(document.activeElement?.textContent).toBe("Blé d'Astrub1 carte");
+  });
+
+  it("renames by the menu too, and Escape saves nothing even when the field's removal blurs it", async () => {
+    await shown();
+    fireEvent.contextMenu(screen.getByRole("button", { name: /Mon blé/ }));
+    fireEvent.click(screen.getByRole("menuitem", { name: "Renommer" }));
+    const field = screen.getByRole("textbox", { name: "Nom de la zone" });
+    fireEvent.change(field, { target: { value: "Perdu" } });
+    fireEvent.keyDown(field, { key: "Escape" });
+    fireEvent.blur(field);
+    expect(backEnd.rename).not.toHaveBeenCalled();
+    expect(rows()).toContain("Mon blé1 carte");
+  });
+
+  it("says nothing of my zones before they are read", async () => {
+    backEnd.zones.mockReturnValue(new Promise(() => {}));
+    await shown();
+    expect(screen.queryByText("Aucune zone : « + » en peint une.")).toBeNull();
+    expect(screen.queryAllByRole("listitem")).toEqual([]);
   });
 
   it("deletes a zone by its menu, and closes it on the map when it was open", async () => {
@@ -102,5 +123,18 @@ describe("my zones in the World view", () => {
     expect(backEnd.remove.mock.calls).toEqual([["ble"]]);
     expect(rows()).toEqual(["Bois sombre0 carte"]);
     expect(useWorld.getState().zone).toBeNull();
+  });
+
+  it("leaves another zone open when one is deleted, and a zone whose deletion is refused", async () => {
+    backEnd.remove.mockResolvedValueOnce(null).mockRejectedValueOnce({ kind: "notSaved", reason: "occupé" });
+    await shown();
+    useWorld.setState({ zone: "bois" });
+    fireEvent.contextMenu(screen.getByRole("button", { name: /Mon blé/ }));
+    await act(async () => fireEvent.click(screen.getByRole("menuitem", { name: "Supprimer" })));
+    expect(useWorld.getState().zone).toBe("bois");
+    fireEvent.contextMenu(screen.getByRole("button", { name: /Bois sombre/ }));
+    await act(async () => fireEvent.click(screen.getByRole("menuitem", { name: "Supprimer" })));
+    expect(useWorld.getState().zone).toBe("bois");
+    expect(rows()).toEqual(["Bois sombre0 carte"]);
   });
 });

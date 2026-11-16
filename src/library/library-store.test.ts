@@ -8,6 +8,7 @@ const backEnd = vi.hoisted(() => ({
   duplicate: vi.fn(),
   blueprints: vi.fn(),
   played: vi.fn(),
+  zones: vi.fn(),
   toasts: [] as string[],
 }));
 vi.mock("@/bindings.ts", () => ({
@@ -15,7 +16,7 @@ vi.mock("@/bindings.ts", () => ({
     duplicateBlueprint: backEnd.duplicate,
     blueprints: backEnd.blueprints,
     playedCharacters: backEnd.played,
-    zones: async () => ({ zones: [], kept: [] }),
+    zones: backEnd.zones,
   },
   events: {},
 }));
@@ -54,6 +55,7 @@ describe("Duplicate", () => {
     backEnd.duplicate.mockReset();
     backEnd.blueprints.mockReset().mockResolvedValue({ blueprints: [], kept: [] });
     backEnd.played.mockReset().mockResolvedValue({ characters: [], kept: [] });
+    backEnd.zones.mockReset().mockResolvedValue({ zones: [], kept: [] });
     backEnd.toasts.length = 0;
   });
 
@@ -107,12 +109,18 @@ describe("the Library's list", () => {
     backEnd.toasts.length = 0;
   });
 
-  it("reads the blueprints with the files kept, the characters' among them", async () => {
+  it("reads the blueprints with the files kept, the characters' and zones' among them", async () => {
     backEnd.blueprints.mockResolvedValueOnce({ blueprints: [harvest], kept: [kept("a.json")] });
     backEnd.played.mockResolvedValueOnce({ characters: [], kept: [kept("294-1.json")] });
+    backEnd.zones.mockResolvedValueOnce({ zones: [], kept: [kept("ma-zone.json")] });
     await useLibrary.getState().refresh();
     expect(useLibrary.getState().blueprints).toEqual([harvest]);
-    expect(useLibrary.getState().kept.map((file) => file.path)).toEqual(["a.json", "294-1.json"]);
+    expect(useLibrary.getState().kept.map((file) => file.path)).toEqual(["a.json", "294-1.json", "ma-zone.json"]);
+    // Zones that do not list leave the Library whole.
+    backEnd.blueprints.mockResolvedValueOnce({ blueprints: [harvest], kept: [] });
+    backEnd.zones.mockRejectedValueOnce("join error");
+    await useLibrary.getState().refresh();
+    expect(useLibrary.getState().blueprints).toEqual([harvest]);
   });
 
   it("drops an older read that ends after a newer one", async () => {

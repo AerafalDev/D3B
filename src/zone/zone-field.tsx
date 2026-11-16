@@ -33,6 +33,7 @@ export function ZoneField({ value, onChange, who }: ZoneFieldProps) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const zones = useZones((store) => store.zones);
+  const zonesLoaded = useZones((store) => store.loaded);
   const refreshZones = useZones((store) => store.refresh);
   const mine = useMemo(() => {
     const sought = folded(query.trim());
@@ -106,7 +107,9 @@ export function ZoneField({ value, onChange, who }: ZoneFieldProps) {
           <CommandInput placeholder={t("zone.search")} value={query} onValueChange={setQuery} />
           <CommandList className="max-h-[300px]">
             <CommandGroup heading={t("zone.mine")}>
-              {zones.length === 0 && <p className="text-text-faint px-2 pb-1 text-xs">{t("zone.none")}</p>}
+              {zonesLoaded && zones.length === 0 && (
+                <p className="text-text-faint px-2 pb-1 text-xs">{t("zone.noneField")}</p>
+              )}
               {mine.map((zone) => (
                 <CommandItem
                   key={zone.id}
@@ -169,13 +172,19 @@ function ZoneText({ value }: { value: ZoneValue | null }) {
   const { t, i18n } = useTranslation();
   const read = useWorld((store) => store.read);
   const zones = useZones((store) => store.zones);
+  const loaded = useZones((store) => store.loaded);
   if (value === null) {
     return <span className="text-text-faint truncate">{t("zone.toChoose")}</span>;
   }
   if ("zone" in value) {
     const zone = zones.find((one) => one.id === value.zone);
     if (zone === undefined) {
-      return <span className="truncate text-[#f2c55c]">{t("zone.mineMissing", { id: value.zone })}</span>;
+      // Before my zones are read, the zone by its id: it is not yet known, rather than gone.
+      return loaded ? (
+        <span className="truncate text-[#f2c55c]">{t("zone.mineMissing", { id: value.zone })}</span>
+      ) : (
+        <span className="truncate text-white">{value.zone}</span>
+      );
     }
     return (
       <>

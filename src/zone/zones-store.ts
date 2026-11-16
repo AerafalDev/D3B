@@ -12,6 +12,8 @@ interface ZonesStore {
   zones: MyZone[];
   /** The zones' files kept as they are. */
   kept: KeptFile[];
+  /** Whether my zones were read once: before, a zone not listed is not yet known rather than gone. */
+  loaded: boolean;
   /** Reads my zones again; a failure is said in a notification. */
   refresh: () => Promise<void>;
   /** A new zone, "Nouvelle zone" in the player's language, on `world`; its id, or `null` when it was not made. */
@@ -20,14 +22,25 @@ interface ZonesStore {
   rename: (id: string, name: string) => Promise<void>;
   /** Adds `maps` to the zone `id`, or takes them away, shown at once and saved; a failure reads the zones again. */
   paint: (id: string, maps: readonly (readonly [number, number])[], erase: boolean) => Promise<void>;
-  /** Sends the zone `id` to the system's trash. */
+  /** Sends the zone `id` to the system's trash; whether it went. */
   remove: (id: string) => Promise<boolean>;
+}
+
+/** The words of a rejection that is no `ZoneError`, a bug said as it came. */
+function said(error: unknown): string {
+  return error instanceof Error ? error.message : typeof error === "string" ? error : JSON.stringify(error);
+}
+
+/** A rejection as a `ZoneError`, when it is one. */
+function zoneError(error: unknown): ZoneError | null {
+  const failed = error as ZoneError | null;
+  return typeof failed?.kind === "string" ? failed : null;
 }
 
 /** What a failed change of a zone says, in the player's language. */
 function failure(error: unknown): string {
-  const failed = error as ZoneError;
-  switch (typeof failed?.kind === "string" ? failed.kind : null) {
+  const failed = zoneError(error);
+  switch (failed?.kind) {
     case "noSuchZone":
       return i18next.t("zone.failed.noSuchZone");
     case "noFolder":
@@ -35,9 +48,9 @@ function failure(error: unknown): string {
     case "emptyName":
       return i18next.t("zone.failed.emptyName");
     case "notSaved":
-      return i18next.t("zone.failed.notSaved", { reason: (failed as { reason: string }).reason });
-    default:
-      return String(error);
+      return i18next.t("zone.failed.notSaved", { reason: failed.reason });
+    case undefined:
+      return said(error);
   }
 }
 
@@ -55,34 +68,43 @@ export function stroked(zone: MyZone, maps: readonly (readonly [number, number])
   return { ...zone, maps: ordered };
 }
 
-// Each read and each zone's strokes are numbered: an answer older than one already asked for is dropped.
+// Each read and each zone's strokes are numbered: an answer older than one already asked for is dropped, and so is a
+// read asked before a change, which would bring back what the change replaced.
 let reads = 0;
 const strokes = new Map<string, number>();
 
 export const useZones = create<ZonesStore>((set, get) => {
-  const replace = (zone: MyZone) => set({ zones: get().zones.map((one) => (one.id === zone.id ? zone : one)) });
+  // A change shown here at once: the reads under way are older than it.
+  const changed = (zones: MyZone[]) => {
+    reads += 1;
+    set({ zones });
+  };
+  const replace = (zone: MyZone) => changed(get().zones.map((one) => (one.id === zone.id ? zone : one)));
   return {
     zones: [],
     kept: [],
+    loaded: false,
 
     refresh: async () => {
       const number = ++reads;
       try {
         const list = await commands.zones();
         if (number === reads) {
-          set({ zones: list.zones, kept: list.kept });
+          set({ zones: list.zones, kept: list.kept, loaded: true });
         }
       } catch (error) {
-        toast.error(i18next.t("zone.unread", { reason: failure(error) }));
+        const failed = zoneError(error);
+        const reason = failed?.kind === "notSaved" ? failed.reason : failed === null ? said(error) : failure(error);
+        toast.error(i18next.t("zone.unread", { reason }));
       }
     },
 
     create: async (world) => {
       try {
         const zone = await commands.createZone(i18next.t("zone.newName"), world);
-        // A read asked before the zone was made would list it without the zone: dropped.
-        reads += 1;
-        set({ zones: [...get().zones, zone].sort((a, b) => a.id.localeCompare(b.id)) });
+        changed([...get().zones, zone].sort((a, b) => a.id.localeCompare(b.id)));
+        // The zones a read dropped by it lists come back.
+        void get().refresh();
         return zone.id;
       } catch (error) {
         toast.error(failure(error));
@@ -124,7 +146,7 @@ export const useZones = create<ZonesStore>((set, get) => {
     remove: async (id) => {
       try {
         await commands.deleteZone(id);
-        set({ zones: get().zones.filter((one) => one.id !== id) });
+        changed(get().zones.filter((one) => one.id !== id));
         return true;
       } catch (error) {
         toast.error(failure(error));

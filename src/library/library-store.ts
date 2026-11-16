@@ -77,7 +77,8 @@ export const useLibrary = create<LibraryStore>((set, get) => ({
       const [library, played, zones] = await Promise.all([
         commands.blueprints(),
         commands.playedCharacters(),
-        commands.zones(),
+        // My zones' files kept join the others; a failure to list them leaves the Library whole.
+        commands.zones().catch(() => ({ kept: [] })),
       ]);
       if (number === asked) {
         set({ blueprints: library.blueprints, kept: [...library.kept, ...played.kept, ...zones.kept] });

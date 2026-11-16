@@ -37,7 +37,52 @@ describe("my zones", () => {
       command.mockReset();
     }
     backEnd.toasts.length = 0;
-    useZones.setState({ zones: [], kept: [] });
+    useZones.setState({ zones: [], kept: [], loaded: false });
+  });
+
+  it("reads my zones, dropping an older read that ends after a newer one, and says a read that fails", async () => {
+    let first: (value: unknown) => void = () => {};
+    backEnd.zones.mockReturnValueOnce(new Promise((resolve) => (first = resolve)));
+    const older = useZones.getState().refresh();
+    backEnd.zones.mockResolvedValueOnce({ zones: [zone("new")], kept: [] });
+    await useZones.getState().refresh();
+    first({ zones: [zone("old")], kept: [] });
+    await older;
+    expect(useZones.getState()).toMatchObject({ zones: [zone("new")], loaded: true });
+    backEnd.zones.mockRejectedValueOnce({ kind: "notSaved", reason: "accès refusé" });
+    await useZones.getState().refresh();
+    expect(backEnd.toasts).toEqual(["Tes zones n'ont pas pu être lues : accès refusé"]);
+    expect(useZones.getState().zones).toEqual([zone("new")]);
+  });
+
+  it("keeps every zone when a zone made answers before a read asked earlier, which it reads again", async () => {
+    let read: (value: unknown) => void = () => {};
+    backEnd.zones.mockReturnValueOnce(new Promise((resolve) => (read = resolve)));
+    const reading = useZones.getState().refresh();
+    backEnd.create.mockResolvedValue(zone("c"));
+    backEnd.zones.mockResolvedValueOnce({ zones: [zone("a"), zone("c")], kept: [] });
+    await useZones.getState().create(1);
+    // The read asked before the zone was made, which lacks it, comes last: dropped.
+    read({ zones: [zone("a")], kept: [] });
+    await reading;
+    await Promise.resolve();
+    expect(useZones.getState().zones.map((one) => one.id)).toEqual(["a", "c"]);
+  });
+
+  it("says a zone not made, and opens none", async () => {
+    backEnd.create.mockRejectedValue({ kind: "noFolder" });
+    expect(await useZones.getState().create(1)).toBeNull();
+    expect(backEnd.toasts).toEqual(["Rien n'a changé : le système ne donne aucun dossier pour tes fichiers."]);
+    expect(useZones.getState().zones).toEqual([]);
+  });
+
+  it("says a name refused, and reads the zones again", async () => {
+    useZones.setState({ zones: [zone("a")] });
+    backEnd.rename.mockRejectedValue({ kind: "emptyName" });
+    backEnd.zones.mockResolvedValue({ zones: [zone("a")], kept: [] });
+    await useZones.getState().rename("a", "x");
+    expect(backEnd.toasts).toEqual(["Une zone a besoin d'un nom."]);
+    expect(backEnd.zones).toHaveBeenCalledTimes(1);
   });
 
   it("adds a stroke's maps once, in order, and takes the eraser's away", () => {
@@ -72,6 +117,7 @@ describe("my zones", () => {
 
   it("creates a zone named in the player's language on the world given", async () => {
     backEnd.create.mockResolvedValue(zone("nouvelle-zone"));
+    backEnd.zones.mockResolvedValue({ zones: [zone("nouvelle-zone")], kept: [] });
     expect(await useZones.getState().create(2)).toBe("nouvelle-zone");
     expect(backEnd.create.mock.calls).toEqual([["Nouvelle zone", 2]]);
     expect(useZones.getState().zones.map((one) => one.id)).toEqual(["nouvelle-zone"]);

@@ -1,5 +1,5 @@
 import { Plus } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import { ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuTrigger } from "@/components/ui/context-menu.tsx";
@@ -22,13 +22,24 @@ interface MyZonesProps {
 export function MyZones({ query }: MyZonesProps) {
   const { t } = useTranslation();
   const zones = useZones((store) => store.zones);
+  const loaded = useZones((store) => store.loaded);
   const refresh = useZones((store) => store.refresh);
   const open = useWorld((store) => store.zone);
   const [renaming, setRenaming] = useState<string | null>(null);
+  const list = useRef<HTMLUListElement>(null);
+  // The row renamed, which takes the focus back once its name is no longer edited.
+  const [renamed, setRenamed] = useState<string | null>(null);
 
   useEffect(() => {
     void refresh();
   }, [refresh]);
+
+  useEffect(() => {
+    if (renamed !== null) {
+      list.current?.querySelector<HTMLElement>(`[data-zone="${CSS.escape(renamed)}"]`)?.focus();
+      setRenamed(null);
+    }
+  }, [renamed]);
 
   const create = async () => {
     const world = useWorld.getState().world;
@@ -66,14 +77,20 @@ export function MyZones({ query }: MyZonesProps) {
           <Plus aria-hidden="true" size={14} strokeWidth={1.5} />
         </button>
       </h3>
-      {zones.length === 0 ? (
+      {!loaded ? null : zones.length === 0 ? (
         <p className="text-text-faint px-3 pb-1 text-xs">{t("zone.none")}</p>
       ) : (
-        <ul>
+        <ul ref={list}>
           {listed.map((zone) =>
             renaming === zone.id ? (
               <li key={zone.id}>
-                <Renaming zone={zone} done={() => setRenaming(null)} />
+                <Renaming
+                  zone={zone}
+                  done={() => {
+                    setRenaming(null);
+                    setRenamed(zone.id);
+                  }}
+                />
               </li>
             ) : (
               <li key={zone.id}>
@@ -81,6 +98,7 @@ export function MyZones({ query }: MyZonesProps) {
                   <ContextMenuTrigger asChild>
                     <button
                       type="button"
+                      data-zone={zone.id}
                       aria-current={open === zone.id ? "true" : undefined}
                       onClick={() => show(zone)}
                       onKeyDown={(event) => {
@@ -116,7 +134,12 @@ export function MyZones({ query }: MyZonesProps) {
 function Renaming({ zone, done }: { zone: MyZone; done: () => void }) {
   const { t } = useTranslation();
   const [name, setName] = useState(zone.name);
+  // Escape ends it without saving, even when the field's removal blurs it after.
+  const cancelled = useRef(false);
   const save = () => {
+    if (cancelled.current) {
+      return;
+    }
     done();
     if (name.trim() !== "" && name !== zone.name) {
       void useZones.getState().rename(zone.id, name);
@@ -136,7 +159,7 @@ function Renaming({ zone, done }: { zone: MyZone; done: () => void }) {
           event.currentTarget.blur();
         } else if (event.key === "Escape") {
           event.preventDefault();
-          setName(zone.name);
+          cancelled.current = true;
           done();
         }
       }}
