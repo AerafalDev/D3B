@@ -4,6 +4,7 @@
 
 mod atomic;
 mod character;
+mod history;
 mod store;
 mod zone;
 

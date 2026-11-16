@@ -188,12 +188,13 @@ function Graph({ graph, names, faulty, chosen = null, onChoose, onEdit }: Bluepr
               onChoose?.(node);
             }
           }}
-          // Every node dragged together keeps its place, one change each.
+          // Every node dragged together keeps its place, in one change, undone at once.
           onNodeDragStop={(_, _node, dragged) => {
-            for (const node of dragged) {
-              const position: [number, number] = [Math.round(node.position.x), Math.round(node.position.y)];
-              onEdit?.({ edit: "move", node: node.id, position });
-            }
+            const nodes = dragged.map((node) => ({
+              node: node.id,
+              position: [Math.round(node.position.x), Math.round(node.position.y)] as [number, number],
+            }));
+            onEdit?.({ edit: "move", nodes });
           }}
           onPaneClick={() => {
             close();

@@ -12,10 +12,22 @@ export const commands = {
 	blueprints: () => __TAURI_INVOKE<BlueprintList_Serialize>("blueprints"),
 	/**  Duplicate: a copy of the blueprint `id` among mine, named and worded by `texts`; its id. */
 	duplicateBlueprint: (id: string, texts: CopyTexts) => __TAURI_INVOKE<string>("duplicate_blueprint", { id, texts }),
+	/**
+	 *  Delete: the file of my blueprint `id` goes to the system's trash, as Forget sends a character's; the characters
+	 *  that run it keep naming it (the owner, 2026-11-16).
+	 */
+	deleteBlueprint: (id: string) => __TAURI_INVOKE<null>("delete_blueprint", { id }),
 	/**  The graphs of the blueprint `id`, or why not. */
 	blueprintGraphs: (id: string) => __TAURI_INVOKE<BlueprintGraphs_Serialize>("blueprint_graphs", { id }),
 	/**  Makes `edit` in the graph `graph` of my blueprint `id`, saved at once; the blueprint's graphs and problems then. */
 	editBlueprint: (id: string, graph: string, edit: GraphEdit_Deserialize) => __TAURI_INVOKE<BlueprintGraphs_Serialize>("edit_blueprint", { id, graph, edit }),
+	/**
+	 *  Undo: my blueprint `id` as it was before its last change, in any of its graphs, saved at once (the owner,
+	 *  2026-11-16); its graphs and problems then, as they are when nothing is left to undo.
+	 */
+	undoBlueprint: (id: string) => __TAURI_INVOKE<BlueprintGraphs_Serialize>("undo_blueprint", { id }),
+	/**  Redo: my blueprint `id` as it was before its last undo, saved at once; its graphs and problems then. */
+	redoBlueprint: (id: string) => __TAURI_INVOKE<BlueprintGraphs_Serialize>("redo_blueprint", { id }),
 	/**  The characters played, the most recently seen first, and their files kept. */
 	playedCharacters: () => __TAURI_INVOKE<PlayedList_Serialize>("played_characters"),
 	/**  Forget: the file of the character `key` goes to the system's trash. */
@@ -497,6 +509,17 @@ export type CopyTexts = {
 	variables: { [key in string]: VariableTexts },
 };
 
+/**  Why a blueprint was not deleted. */
+export type DeleteError = 
+/**  None of mine has this id: its file is gone. */
+{ kind: "noSuchBlueprint" } | 
+/**  One of D3B's, which ship with the app. */
+{ kind: "locked" } | 
+/**  The system names no folder for the player's files. */
+{ kind: "noFolder" } | 
+/**  The system could not read the file or send it to the trash: its own words. */
+{ kind: "notDeleted"; reason: string };
+
 /**
  *  A line of a frame's detail (`protocol::detail`). A 64-bit value is written out, as JavaScript's numbers would round
  *  it.
@@ -530,7 +553,7 @@ export type EditError = { kind: "noFolder" } |
 /**  None of mine has this id: its file is gone. */
 { kind: "noSuchBlueprint" } | 
 /**  One of D3B's, which only Duplicate changes. */
-{ kind: "locked" } | { kind: "noSuchGraph" } | { kind: "noSuchNode" } | { kind: "noSuchPin" } | { kind: "wrongWay" } | { kind: "otherType" } | { kind: "sameNode" } | { kind: "notAChoice" } | 
+{ kind: "locked" } | { kind: "noSuchGraph" } | { kind: "noSuchNode" } | { kind: "noSuchWire" } | { kind: "noSuchPin" } | { kind: "wrongWay" } | { kind: "otherType" } | { kind: "sameNode" } | { kind: "notAChoice" } | 
 /**  The system could not read or write its file, or it no longer reads and is kept as it is: the reason, in words. */
 { kind: "notSaved"; reason: string };
 
@@ -666,8 +689,10 @@ export type GraphEdit_Deserialize =
 { edit: "wire"; from: [string, string]; to: [string, string] } | 
 /**  A node the picker offers, at `position`, wired to the pin a wire dropped on the ground came from. */
 { edit: "add"; node: NodeDoes; position: [number, number]; wiredTo?: DraggedPin | null } | 
-/**  A node put at `position`. */
-{ edit: "move"; node: string; position: [number, number] };
+/**  Nodes put elsewhere, dragged together: one change, undone at once. */
+{ edit: "move"; nodes: MovedNode[] } | 
+/**  Nodes, with every wire to or from them, and wires, chosen together. */
+{ edit: "delete"; nodes: string[]; wires: WireEnds[] };
 
 /**  One change to a graph. */
 export type GraphEdit_Serialize = 
@@ -678,8 +703,10 @@ export type GraphEdit_Serialize =
 { edit: "wire"; from: [string, string]; to: [string, string] } | 
 /**  A node the picker offers, at `position`, wired to the pin a wire dropped on the ground came from. */
 { edit: "add"; node: NodeDoes; position: [number, number]; wiredTo: DraggedPin | null } | 
-/**  A node put at `position`. */
-{ edit: "move"; node: string; position: [number, number] };
+/**  Nodes put elsewhere, dragged together: one change, undone at once. */
+{ edit: "move"; nodes: MovedNode[] } | 
+/**  Nodes, with every wire to or from them, and wires, chosen together. */
+{ edit: "delete"; nodes: string[]; wires: WireEnds[] };
 
 /**  An event graph, or a function when it has a signature. */
 export type GraphView = GraphView_Serialize | GraphView_Deserialize;
@@ -793,6 +820,12 @@ export type MonsterSeen = {
 	id: number,
 	grade: number,
 	level: number,
+};
+
+/**  A node and where it was put. */
+export type MovedNode = {
+	node: string,
+	position: [number, number],
 };
 
 /**  A name in the app's two languages. */
@@ -1136,6 +1169,12 @@ export type VariableView_Serialize = {
 	perCharacter: boolean,
 	memory: boolean,
 	help: string,
+};
+
+/**  A wire by its ends, `[node, pin]` each. */
+export type WireEnds = {
+	from: [string, string],
+	to: [string, string],
 };
 
 /**  A wire from a node's output to another's input: `[node, pin]` each. */

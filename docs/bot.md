@@ -226,7 +226,11 @@ The shell's parts (`docs/shell.md`); no information is shown twice:
   carry, in place of the one that fed its input (and of the value typed there) or left its flow output, since an input
   has one value and a flow one way on; a node the picker offers, where it opened, under an id read from what it does
   (`notify`, `notify_2`, `get_zone`), wired to the first pin of its that fits the one a wire dropped on the ground came
-  from; a node moved. Each graph gives the picker its **choices** (`bot::choices`) with their pins: the catalogue's
+  from; nodes moved together, one change; nodes and wires deleted together, a node's wires with it (step 3's PR 13).
+Undo and redo (the owner, 2026-11-16) are Rust's: `storage` keeps a blueprint of mine as it was before each change
+that changed it, 100 at most, for the session and across its graphs, and the IPC's `undo_blueprint` and
+`redo_blueprint` write it back whole under the lock every save takes, so the file and the editor never disagree; a
+deletion is not confirmed, undo brings it back. Each graph gives the picker its **choices** (`bot::choices`) with their pins: the catalogue's
   kinds in their place, an event held once never again and a function's entry once, then the blueprint's variables,
   read and written, and its functions called; creating a variable comes with PR 14. In a graph of mine, a wire
   dragged from a pin is checked by type as it goes: a pin that refuses it says why beside the pointer (another type,
@@ -310,7 +314,9 @@ without either) it also holds the blueprint the character runs and its own value
 are the player's: a sight in game rewrites the rest and keeps them. The IPC's `set_character_blueprint` chooses a
 blueprint, or none, under the same lock, keeping the values of the settings of the same id and type, and
 `set_character_setting` sets one, refused when not of its type or out of its bounds, a value set back to its default
-or reset dropped, so it shows unmarked (the owner, 2026-11-16). Forget sends it to the system's trash (the `trash` crate; on
+or reset dropped, so it shows unmarked (the owner, 2026-11-16). The IPC's `delete_blueprint` sends a blueprint of mine
+to the system's trash, its undo history gone, without asking first, as Forget; the characters that run it keep naming
+it, their tab saying it is not found, so restoring its file gives it back to them (the owner, 2026-11-16). Forget sends it to the system's trash (the `trash` crate; on
 macOS through the file manager, without asking to control the Finder: the owner, 2026-11-14). A character's file is named by a key stable across
 servers, from its study (below).
 A zone of mine is `zones/<id>.json` (step 3's PR 20, the owner's choices of 2026-11-16): schema 1, its `id`, `name`,
