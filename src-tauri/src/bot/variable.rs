@@ -3,6 +3,8 @@
 //! and kept for one run or as memory across sessions. The owner allowed both at once on 2026-11-13, as Unreal does: a
 //! value the player sets that the bot then carries on.
 
+use std::collections::BTreeMap;
+
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
@@ -29,6 +31,41 @@ pub(crate) struct Variable {
     pub(crate) memory: bool,
     #[serde(default, skip_serializing_if = "String::is_empty")]
     pub(crate) help: String,
+}
+
+impl Variable {
+    /// Whether a character may hold `value` as its own: a value of its type, within its bounds.
+    pub(crate) fn accepts(&self, value: &Value) -> bool {
+        let within =
+            |[smallest, largest]: [i64; 2]| value.as_i64().is_none_or(|whole| (smallest..=largest).contains(&whole));
+        !value.is_null() && self.value_type.holds(value) && self.bounds.is_none_or(within)
+    }
+}
+
+/// A character's settings once it runs a blueprint of the variables `to` instead of one of `from` (the owner,
+/// 2026-11-16): a value is kept when `to` sets per character a variable of the same id and type that accepts it
+/// (within its bounds) and of another default, so a Zone goes from one harvest to another, and the others are dropped. `from` is none when that blueprint is gone:
+/// the type the value had is then unknown, and a value `to`'s variable accepts is kept.
+pub(crate) fn carried(
+    settings: &BTreeMap<String, Value>,
+    from: Option<&[Variable]>,
+    to: &[Variable],
+) -> BTreeMap<String, Value> {
+    let had = |id: &str| from.map(|from| from.iter().find(|variable| variable.id.0 == id).map(|it| it.value_type));
+    settings
+        .iter()
+        .filter(|(id, value)| {
+            to.iter().any(|variable| {
+                variable.id.0 == **id
+                    && variable.per_character
+                    && variable.accepts(value)
+                    // A value that is the new default is no longer the character's own, as when set back to it.
+                    && **value != variable.default
+                    && had(id).is_none_or(|had| had == Some(variable.value_type))
+            })
+        })
+        .map(|(id, value)| (id.clone(), value.clone()))
+        .collect()
 }
 
 #[expect(
@@ -150,6 +187,68 @@ mod tests {
         for (value_type, value) in refused {
             assert!(!value_type.holds(&value), "{value_type:?} {value}");
         }
+    }
+
+    fn variable(id: &str, value_type: ValueType, bounds: Option<[i64; 2]>) -> Variable {
+        Variable {
+            id: Id(id.into()),
+            name: id.into(),
+            value_type,
+            default: Value::Null,
+            bounds,
+            per_character: true,
+            memory: false,
+            help: String::new(),
+        }
+    }
+
+    #[test]
+    fn a_setting_accepts_a_value_of_its_type_within_its_bounds_and_never_none() {
+        let pods = variable("pods", ValueType::Percentage, Some([10, 100]));
+        assert!(pods.accepts(&json!(10)) && pods.accepts(&json!(100)), "both ends");
+        for refused in [json!(9), json!(101), json!("90"), Value::Null] {
+            assert!(!pods.accepts(&refused), "{refused}");
+        }
+        assert!(variable("zone", ValueType::Zone, None).accepts(&json!({"sub_area": 445})));
+    }
+
+    #[test]
+    fn another_blueprint_keeps_the_values_of_its_variables_of_the_same_id_and_type() {
+        let settings = BTreeMap::from([
+            ("zone".to_owned(), json!({"sub_area": 445})),
+            ("pods".to_owned(), json!(80)),
+            ("goal".to_owned(), json!(5000)),
+            ("job".to_owned(), json!(24)),
+            ("keep".to_owned(), json!("all")),
+        ]);
+        let from = [
+            variable("zone", ValueType::Zone, None),
+            variable("pods", ValueType::Percentage, Some([10, 100])),
+            variable("goal", ValueType::Number, None),
+            variable("job", ValueType::Job, None),
+            variable("keep", ValueType::Items, None),
+        ];
+        let mut keep = variable("keep", ValueType::Items, None);
+        keep.default = json!("all");
+        let mut not_set = variable("job", ValueType::Job, None);
+        not_set.per_character = false;
+        let to = [
+            variable("zone", ValueType::Zone, None),
+            // A number now: the same id, another type.
+            variable("pods", ValueType::Number, None),
+            variable("goal", ValueType::Number, Some([0, 1000])),
+            not_set,
+            // Its new default: no longer the character's own.
+            keep,
+        ];
+        let kept = carried(&settings, Some(&from), &to);
+        assert_eq!(kept.keys().collect::<Vec<_>>(), ["zone"]);
+        let gone = carried(&settings, None, &to);
+        assert_eq!(
+            gone.keys().collect::<Vec<_>>(),
+            ["pods", "zone"],
+            "its type unknown, what holds is kept"
+        );
     }
 
     #[test]

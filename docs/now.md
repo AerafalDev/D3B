@@ -298,7 +298,7 @@ _Updated 2026-11-16._
   unfolding under it and its target, one click on the map choosing and going back, Details on the World tab's right),
   in three PRs: each sub-area's resources by profession and its monsters counted through the atlas (done in code), then
   the World tab's Details and a click on its map (done in code), then the Zone field and the map's choosing mode, which (11) puts in
-  the character's tab and is measured with it (done in code: `ZoneField`, `src/zone/`, its checklist with (11)'s); (11) a character's blueprint and settings in its tab;
+  the character's tab and is measured with it (done in code: `ZoneField`, `src/zone/`, its checklist with (11)'s); (11) a character's blueprint and settings in its tab (the owner's choices of 2026-11-16: none at first; another blueprint keeping the values of the same id and type; editors for all but a bank and items, which wait for step 5; the offline tab editable too), in two PRs: the character's file, schema 2, and the IPC that chooses its blueprint and sets its settings (done in code), then the block in the character's tabs, live and offline, with the Zone field and "Zone de" in the World's Details;
   (12) links checked by type, and the picker; (13) delete, undo, autosave; (14) variables; (15) functions opened in
   place; (16) events: priority, re-arming, modes, the defaults; (17) comments and reroutes; (18) Align, copy and paste,
   search; (19) editing by keyboard; (20) my zones painted; (21) routes; (22) the `.d3b` file; (23) a given blueprint's

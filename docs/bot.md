@@ -30,7 +30,9 @@ what it does; a D3B update) need these and nothing else: no profile, activity, p
   blueprint's are translations, its id made from its name (accents dropped, a number when taken by a blueprint or by
   any file of the folder, in any case); a copy of mine keeps what mine was based on (the owner, 2026-11-14). A given blueprint's new version reaches the characters that run it, their values kept; my copy stays as it is
   and says its original has a newer version.
-- **Character**: runs one blueprint, chosen in its tab. Its **settings** are the blueprint's variables marked "set per
+- **Character**: runs one blueprint, chosen in its tab, none until the player chooses one; another blueprint keeps
+  the values of its settings of the same id and type and drops the others (the owner, 2026-11-16), and those out of
+  their new bounds or equal to their new default. Its **settings** are the blueprint's variables marked "set per
   character" (Unreal's Instance Editable): the blueprint holds the default, the character its own value, marked when
   it differs and reset in one click. Two characters, two zones, one blueprint.
 - **Variable**: a type (zone, route, percentage, number, items, bank, profession, yes or no…), a default, bounds, a help line, set
@@ -167,7 +169,12 @@ A character played is `characters/<server>-<id>.json` (its id carries its server
 `artifacts/studies/character-key.md`): its id, name, level, breed, sex, when and on which map it was last seen,
 written when it is first known, when who it is changes, on another map a minute after its last write, when
 another character takes its connection and when the connection closes, by one writer thread so the protocol never
-waits; a file that does not read is kept and listed. Forget sends it to the system's trash (the `trash` crate; on
+waits; a file that does not read is kept and listed. From schema 2 (step 3's PR 11; schema 1 reads as a character
+without either) it also holds the blueprint the character runs and its own values of its settings, by variable, which
+are the player's: a sight in game rewrites the rest and keeps them. The IPC's `set_character_blueprint` chooses a
+blueprint, or none, under the same lock, keeping the values of the settings of the same id and type, and
+`set_character_setting` sets one, refused when not of its type or out of its bounds, a value set back to its default
+or reset dropped, so it shows unmarked (the owner, 2026-11-16). Forget sends it to the system's trash (the `trash` crate; on
 macOS through the file manager, without asking to control the Finder: the owner, 2026-11-14). A character's file is named by a key stable across
 servers, from its study (below).
 

@@ -29,6 +29,8 @@ pub fn builder() -> Builder<tauri::Wry> {
             graph::blueprint_graphs,
             played::played_characters,
             played::forget_character,
+            played::settings::set_character_blueprint,
+            played::settings::set_character_setting,
             relay::relay_status,
             relay::relay_restore,
             map::map_cells,
