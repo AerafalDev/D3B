@@ -405,6 +405,8 @@
     "givenLine": "Donné par D3B · v{{version}} · verrouillé",
     "mineLine": "À moi",
     "mineBasedOn": "À moi · basé sur {{name}} v{{version}}",
+    "originalNewer": "Son original a une version plus récente, v{{version}}",
+    "originalNewerLine": "son original a une version plus récente, v{{version}}",
     "gone": "Ce blueprint n'est plus là.",
     "unread": "La Bibliothèque n'a pas pu être lue : {{reason}}",
     "duplicateFailed": {
@@ -692,7 +694,13 @@
       "notSaved": "Rien n'a changé : {{reason}}"
     },
     "mineMissing": "Zone {{id}} introuvable",
-    "noneField": "Aucune zone : peins-en une avec « + » dans la vue Monde."
+    "noneField": "Aucune zone : peins-en une avec « + » dans la vue Monde.",
+    "details": {
+      "of": "Zone à moi · {{world}}",
+      "subAreas": "Sous-zones",
+      "empty": "Aucune : peins ses cartes.",
+      "share": "{{inZone}}/{{all}}"
+    }
   },
   "settings": {
     "title": "Blueprint et réglages",
@@ -700,6 +708,9 @@
     "none": "Aucun blueprint",
     "open": "Ouvrir le blueprint",
     "missing": "Blueprint {{id}} introuvable",
+    "dropped_one": "{{blueprint}} v{{version}} : ta valeur de {{settings}} ne s'applique plus.",
+    "dropped_other": "{{blueprint}} v{{version}} : tes valeurs de {{settings}} ne s'appliquent plus.",
+    "droppedClose": "Fermer",
     "reset": "Revenir à la valeur du blueprint ({{value}})",
     "bounds": "De {{smallest}} à {{largest}}",
     "job": "Métier {{id}}",

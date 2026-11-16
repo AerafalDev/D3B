@@ -98,6 +98,7 @@ describe("the World tab's Details", () => {
       name,
       blueprint: "harvest",
       settings: { zone: JSON.stringify({ sub_area: subArea }) },
+      dropped: [],
     });
     usePlayed.setState({ played: [played("Kalyx", 97), played("Orrin", 97), played("Lyra", 4)] });
     render(<WorldDetails atlas={ATLAS} subArea={97} />);

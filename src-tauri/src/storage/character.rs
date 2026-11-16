@@ -17,8 +17,9 @@ use super::store::{Kept, StorageError, Store, Why};
 const CHARACTERS: &str = "characters";
 
 /// The `schema` of a character's file this version writes. Schema 1, before step 3's PR 11, had no blueprint and
-/// no settings, and reads as a character without either.
-pub(crate) const SCHEMA: u32 = 2;
+/// no settings, and reads as a character without either; schema 2, before PR 23, had no version of the blueprint run,
+/// and reads as running its first.
+pub(crate) const SCHEMA: u32 = 3;
 
 /// A character played, as its file holds it.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -44,6 +45,13 @@ pub(crate) struct Played {
     /// Its own values of the blueprint's variables set per character, by variable; one left out takes the default.
     #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
     pub(crate) settings: BTreeMap<String, Value>,
+    /// The version of D3B's blueprint it runs that its settings were last carried to; none for one of mine.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub(crate) blueprint_version: Option<u32>,
+    /// The settings whose values a new version of its blueprint could not keep, which its tab says until the player
+    /// closes the notice (the owner, 2026-11-16).
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub(crate) dropped: Vec<String>,
 }
 
 impl Played {
@@ -113,6 +121,8 @@ impl Store {
             Ok(before) => {
                 character.blueprint = before.blueprint;
                 character.settings = before.settings;
+                character.blueprint_version = before.blueprint_version;
+                character.dropped = before.dropped;
             }
             Err(Why::Unreadable(error)) if error.kind() == io::ErrorKind::NotFound => {}
             Err(Why::Unreadable(source)) => return Err(StorageError::Unreadable { path, source }),
@@ -221,6 +231,8 @@ mod tests {
             map_id: Some(191_104_002),
             blueprint: None,
             settings: BTreeMap::new(),
+            blueprint_version: None,
+            dropped: Vec::new(),
         }
     }
 
@@ -276,8 +288,8 @@ mod tests {
         assert!(
             matches!(
                 kept.as_slice(),
-                [Why::KeyIsNotId { .. }, Why::NewerCharacter { found: 3 }]
-                    | [Why::NewerCharacter { found: 3 }, Why::KeyIsNotId { .. }]
+                [Why::KeyIsNotId { .. }, Why::NewerCharacter { found: 4 }]
+                    | [Why::NewerCharacter { found: 4 }, Why::KeyIsNotId { .. }]
             ),
             "{kept:?}"
         );
@@ -286,7 +298,7 @@ mod tests {
     }
 
     #[test]
-    fn a_file_of_schema_1_reads_without_a_blueprint_and_is_written_back_of_schema_2() {
+    fn a_file_of_schema_1_reads_without_a_blueprint_and_is_written_back_of_this_schema() {
         let folder = Folder::new("characters-schema-1");
         let store = Store::new(folder.path().to_path_buf());
         std::fs::create_dir_all(folder.path().join("characters")).unwrap_or_else(|error| panic!("{error}"));
@@ -300,7 +312,7 @@ mod tests {
         );
         store.remember(&kalyx(8)).unwrap_or_else(|error| panic!("{error}"));
         let written = std::fs::read_to_string(&path).unwrap_or_default();
-        assert!(written.contains(r#""schema": 2"#), "{written}");
+        assert!(written.contains(r#""schema": 3"#), "{written}");
     }
 
     #[test]
@@ -330,6 +342,8 @@ mod tests {
         let changed = store.change_character(&kalyx(1).key(), |character| {
             character.blueprint = Some("automatic-harvest".into());
             character.settings.insert("pods".into(), serde_json::json!(80));
+            character.blueprint_version = Some(2);
+            character.dropped = vec!["keep".into()];
             Ok::<(), StorageError>(())
         });
         assert!(changed.is_ok(), "{changed:?}");
@@ -341,6 +355,11 @@ mod tests {
             (2, Some("automatic-harvest"))
         );
         assert_eq!(character.settings.get("pods"), Some(&serde_json::json!(80)));
+        assert_eq!(
+            (character.blueprint_version, character.dropped.as_slice()),
+            (Some(2), ["keep".to_owned()].as_slice()),
+            "the version run and the notice are the player's too"
+        );
     }
 
     #[test]

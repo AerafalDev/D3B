@@ -70,6 +70,9 @@ fn choose(store: &Store, key: &str, blueprint: Option<&str>) -> Result<(), Setti
             bot::carried(&character.settings, from, &to.variables)
         });
         character.blueprint = to.map(|to| to.id.0.clone());
+        // Of D3B's, the version its settings are carried to (`update`); a notice of the blueprint left goes with it.
+        character.blueprint_version = to.filter(|to| bot::is_given(&to.id.0)).map(|to| to.version.get());
+        character.dropped.clear();
         Ok(())
     })
 }
@@ -105,7 +108,7 @@ fn set(store: &Store, key: &str, variable: &str, value: Option<&str>) -> Result<
 }
 
 /// Runs `change` on the player's folder away from the webview's thread, and says the characters changed when it did.
-async fn changed(
+pub(super) async fn changed(
     app: tauri::AppHandle,
     change: impl FnOnce(&Store) -> Result<(), SettingError> + Send + 'static,
 ) -> Result<(), SettingError> {
@@ -181,6 +184,8 @@ mod tests {
             map_id: None,
             blueprint: None,
             settings: BTreeMap::new(),
+            blueprint_version: None,
+            dropped: Vec::new(),
         };
         store.remember(&character).unwrap_or_else(|error| panic!("{error}"));
         (folder, store)
@@ -211,6 +216,32 @@ mod tests {
         assert_eq!(settings.get("pods"), Some(&json!(80)));
         assert_eq!(choose(&store, KEY, None), Ok(()));
         assert_eq!(runs(&store), (None, BTreeMap::new()), "none, and so no settings");
+    }
+
+    #[test]
+    fn choosing_notes_the_version_of_a_given_blueprint_and_closes_the_notice_of_the_one_left() {
+        let (_folder, store) = store("settings-version");
+        let version = || {
+            store
+                .played()
+                .read
+                .first()
+                .map(|it| (it.blueprint_version, it.dropped.len()))
+        };
+        let noticed = store.change_character(KEY, |character| {
+            character.dropped.push("keep".into());
+            Ok::<(), SettingError>(())
+        });
+        assert_eq!(noticed, Ok(()));
+        assert_eq!(choose(&store, KEY, Some("hunt")), Ok(()));
+        assert_eq!(version(), Some((Some(1), 0)));
+        let texts = bot::Texts {
+            name: "Mine".into(),
+            ..bot::Texts::default()
+        };
+        let mine = store.duplicate("hunt", texts).unwrap_or_else(|error| panic!("{error}"));
+        assert_eq!(choose(&store, KEY, Some(&mine.0)), Ok(()));
+        assert_eq!(version(), Some((None, 0)), "one of mine has no version to follow");
     }
 
     #[test]

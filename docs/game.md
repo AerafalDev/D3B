@@ -56,6 +56,12 @@ tick, sends its view when it changed.
 - **Also shown**, the owner's choice (2026-11-12): action points (characteristic 1), movement points (23), energy (29
   of 47), and experience, fields 8, 11 and 2 of the characteristics read as the level's floor, the experience and the
   next floor (the order is measured, its meaning inferred until the owner checks it in game).
+- **Fights ended** (verified, 634 of 634, `artifacts/studies/death.md`): `FightEndEvent` (`jwp`) field 4 lists the
+  results, the character's being the one whose fighter (field 2) has its id in field 5; its outcome (field 1) is 2 when
+  won and 0 when lost, a death or an abandon. The view counts the fights won and lost since the selection, so a death
+  read between two views is never missed: on the captures, 613 won and 21 lost in 6 connections. An outcome never seen
+  (1, 3, 4), another fighter's result or a fight's end before a selection counts nothing. A death in a group fight
+  whose side wins is not captured yet (the study's item 1).
 - **Fights**: a fight's `ContextCreationEvent` sets the context to fight and ends any regeneration; its
   `MapCurrentEvent` names the fight's map (634 of 634) and no map information follows. What is around is cleared.
   Life changes in a fight are not read (they need messages not pinned yet: step 6): it shows the last
