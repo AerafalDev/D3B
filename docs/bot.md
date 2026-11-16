@@ -64,6 +64,91 @@ As decided on 2026-11-12, on Unreal's event graph (ADR 0014):
   blueprint, ready, running, paused, finished, blocked (with its reason), disconnected (listed greyed, its blueprint
   and values kept). A blueprint with a problem cannot run.
 
+## The language, v2
+
+After measuring the editable graph, the owner asked on 2026-11-16 for blueprints "much more complete", able to do
+much more. v2, designed that day from a mock-up of the catalogue and of the Summary (ADR 0016), keeps the model above
+and gives the player a real language: loops, many-way branches, conditions and arithmetic, lists, timers, events of
+their own and of any condition, more of the game read, the actions of steps 4 to 7, and richer functions. It goes
+from 25 kinds to about 110.
+
+```mermaid
+flowchart LR
+    ev["events: game, timers, 'when … becomes true', mine"] --> flow["flow: if, switch, sequence, loops, waits"]
+    flow --> act["actions, Done or Failed (steps 4 to 7)"]
+    val["values: compare, logic, math, random, text, lists"] --> flow
+    q["queries over game::Live"] --> val
+    var["variables: run, memory, setting, local"] <--> flow
+    fn["functions: exits, pure, locals"] --- flow
+```
+
+- **Values are compact nodes**, as Unreal's (no formula language: one language to learn): `=`, `≠`, `<`, `≤`,
+  `>`, `≥`, between; AND, OR, NOT, Choose (a value if true, another if not); `+`, `−`, `×`, `÷` (whole), remainder,
+  min, max, clamp, "… % of …"; a random number between two bounds, "true N % of the time" and a random element of a
+  list (the owner, 2026-11-16: randomness is the player's to use); Text, a template whose `{holes}` are inputs of any
+  type, and Join; N minutes and N seconds; a list made of its inputs, its length, contains, element n° (from 1),
+  first, position of. They have no flow and are read when the node that uses them runs, the value kept for the
+  debugger; v1's "at least" becomes `≥`.
+- **Types**: v1's (yes or no, number, percentage, text, zone, route, bank, items, profession) and a **map** (a map's
+  id, picked on the World), one **item**, a **duration** (whole seconds, typed "1 min 30") and a **time** of day
+  ("23:00"). Any type has its **list** (a list of zones, of maps, of numbers…), its pin a square. A generic pin, a
+  **wildcard**, takes the type of its first wire or value, and every wildcard of a node the same one: one `=`, one
+  Switch, one For each for every type. A percentage feeds a number, any value a Text's hole; numbers, percentages,
+  durations and times are compared.
+- **Flow**: v1's If, Wait (now a duration), Wait for life and Finish; Sequence (its outputs one after another, "+" adds
+  one); Switch on a value (an output per case, typed in the node, and Otherwise); Repeat N times (its index), While,
+  For each element of a list (the element, its index), each with its body and Completed, and Leave the loop; Do once
+  and Do N times (each re-armed by its Reset input); Alternate (A, then B, then A); Wait until a condition, with an
+  optional longest wait (Then, or Too long); Trigger an event of mine, now or after a duration, and Cancel its timer;
+  Block with a reason; Pause and notify (the player resumes it, from step 4). Gate, MultiGate and Unreal's rarer
+  nodes stay out: a bot hardly uses them (the owner, 2026-11-16).
+- **Variables**: a duration of one run, or **memory** per character; set per character or not; and **local** to a
+  function, gone at its return. Beside Get and Set: Add N to, Reset to its default, and a list's Add, Remove and Empty.
+- **Events**: v1's six; **When … becomes true**, on any condition built of values and queries, with a priority and a
+  mode, firing as it turns true and re-armed when it turns false or, through its optional "Re-arm when" input, when
+  that turns true (hysteresis, as Life below); **Every** a duration; **At** a time of day; the map changed (its map and
+  sub-area); a fight ended (won or not); a level gained; reconnected (step 4); an item obtained (after the inventory's
+  study, step 5). **Events of mine**, declared in My Blueprint with their inputs, each a node of the event graph with
+  its priority and mode, are fired by Trigger, at once or by a timer; a timer lasts for the run. Life below and Pods
+  above stay, ready-made.
+- **Queries over `game::Live`**: v1's life %, pods %, level and a profession's resources; life, its maximum, pods and
+  their maximum, kamas, energy, the level's experience %, the current map, its sub-area, whether in a zone, its X and
+  Y, whether in a fight, the monster groups on the map (up to a level), the resources harvestable here, the time and
+  how long the run has lasted. What D3B does not observe yet is listed and marked, studied and pinned at the step
+  that reads it (the owner, 2026-11-16): an item's quantity in the inventory and a profession's level at step 5 (with
+  the bank's content), the quests at step 7.
+- **Actions**, each Done or Failed with its reason, marked with their step: go to a zone, to a map, follow a route N
+  laps (step 4); harvest until, harvest this map, go to the bank, deposit all but, withdraw, use an item (step 5);
+  hunt until, attack a group (its levels), fight with the default AI (won is Done), leave the fight (step 6); craft N
+  of an item, sell items at the auction house (step 7); notify, and note in the History (step 4).
+- **Functions** gain **named exits** beside Done and Failed ("Full", "Empty"), each a flow output of their call;
+  **locals**; and the **pure** function, which computes values without flow, actions or waits, its call a value node.
+  No macros: a function already holds actions that last.
+- **Kept out**: anything about other players (counting them, fleeing them, answering them), and what `CLAUDE.md`'s
+  "Never" lists.
+
+At run time ((25) and (26)): a loop's body ends where its flow does (an output wired to nothing) and the loop goes on;
+Leave the loop goes to its Completed; Sequence runs its next output when the previous one ends. **10,000 nodes in a
+row without one that lasts** (an action, a wait) block the character, "runs without pause", on the node (the owner,
+2026-11-16). A When's condition and a Wait until's are read again at each change of the observed state and each
+second; Every and At follow the clock, At once a day. An interrupted flow keeps its place, its loops' counters and its
+calls, so "interrupt then resume" runs the action cut again inside its loop. A random value is drawn when its node is
+read and shown by the debugger. Memory variables, lists too, are saved in the character's file at safe points.
+
+The **Summary** reads a loop's or a Sequence's body as sub-steps ("1.1", "1.1.1") with Completed after them, a Switch
+as one line per case ("Bûcheron → 2.1", "Sinon → 2.4"), Trigger as "Déclencher « Zone vide »" or "Dans 10 min, …"; a
+section per event of mine by priority beside the game's; values are read in place in the sentence that uses them
+("Tant que récoltes < objectif"), never as steps.
+
+In the file (`bot::json`, **schema 2**, its shape settled alone, open to change until (v2.1) merges): a variable, a
+parameter or a local holds `"list": true` for a list; a node's own pins (Sequence's outputs, Switch's cases, Text's
+holes, a list's inputs) and the event, variable or exit it names are its `options`; the blueprint's own `events`
+beside its `graphs`, each with its id, name and inputs; a function's signature gains `exits`, `locals` and `pure`. A
+schema 1 file reads migrated ("at least" to `≥`, Wait's minutes to a duration) and is written as 2 at its next change;
+D3B's blueprints ship as 2. New problems: wildcards of one node fed two types; a list into a pin that takes none; an
+option naming an event, variable or exit the blueprint lacks; a case typed twice or of another type; Leave the loop
+outside a loop's body; a flow, action or wait in a pure function; a time not "HH:MM".
+
 ## In the app
 
 The shell's parts (`docs/shell.md`); no information is shown twice:
@@ -218,7 +303,8 @@ and `failed` with its `reason`; a get has `value`, a set and a call their variab
 only: sentences, descriptions and icons are the interface's. A wire carries one type, but a percentage feeds a number.
 The catalogue adds its problems: a kind unknown or out of place (an event in a function), a priority on a node that
 takes none, a value on no input or not of its type, a wire to no pin, the wrong way or of another type, a flow
-output wired twice, an input fed twice or by nothing, an event held once (on start, a forced one) held again.
+output wired twice, an input fed twice or by nothing, an event held once (on start, a forced one) held again. v2
+(above, "The language, v2") extends this catalogue and the file to schema 2.
 
 ## Measure
 
@@ -233,3 +319,7 @@ On Windows x64 by the owner, on what step 3 shows; running a blueprint is measur
 4. The World's map is sharp at every zoom; a sub-area is chosen as a Zone from the list and on the map; a zone painted
    and a route of four anchors are still there after a restart.
 5. A `.d3b` exported, then imported on another D3B, shows its preview, then the same blueprint.
+6. v2: in a blueprint of mine, a While on a goal holding a For each over a list of zones, a Switch on a profession, a
+   When on "time ≥ 23:00 AND not in a fight" and an event of mine fired by a timer are drawn without a refused wire
+   and read in the Summary as on the owner's mock-up of 2026-11-16; a file of schema 1 opens migrated, its
+   "at least" a `≥`.
