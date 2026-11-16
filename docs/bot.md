@@ -106,7 +106,14 @@ flowchart LR
   setting.
 - **An action before its step** waits for its check on the observed state (the owner, 2026-11-16): the player doing it
   by hand completes it, and step 4 only adds the doing; a check on what D3B does not observe yet fails "D3B does not
-  see this before step N".
+  see this before step N", its reason the id `unseen_before_step_<N>` the interface words (settled alone). Go to a zone
+  is done on a map of the zone; Harvest until and Hunt until once the pods reach their share, their harvests' count
+  not given before step 5 (a node reading it blocks); Go to the bank on the bank's map, the nearest one failing until
+  step 4's paths; Deposit all but failing until step 5. Wait counts its minutes from when the flow came in, Wait for
+  life waits for the life's share, read each second since it rises with no message; Notify's texts wait in the run, the last 100, for step 4's History. The queries
+  read the view when used, one not seen yet (no life read since the connection opened) blocking with what is missing.
+- **What it knows beyond the view** (whether a map is in a zone, a profession's resources) it asks of a `Knows` that
+  step 4's actor answers from the game data and `storage`'s zones; unknown, an action waits and a query blocks.
 - **It blocks**, with the reason and the node, on an unlinked Failed, a death (the character's fights lost rising:
   the forced default; a `died` event held by the blueprint is (26)'s), 10,000 nodes in a row without waiting ("runs
   without pause"), more than 64 calls at work one inside the other, a value that cannot be computed (on the node
@@ -115,7 +122,13 @@ flowchart LR
   at work runs again once the character is back, as actions are goal-shaped. A Wait counts the clock's time (settled
   alone).
 - **(26)'s seam**: a stack of flows, one today; an event pushes its own, and when it ends the flow under it enters its
-  node at work again; Restart empties the main flow; a safe point is the moment between two nodes.
+  node at work again; Restart empties the main flow; a safe point is the moment between two nodes. The other events
+  compile as starts nothing runs before (26), so D3B's blueprints run now; a death is a fight lost since the run first
+  saw the character, those lost before it not counting, and counted again from 0 after a new connection or
+  selection. Away, a run waits on nothing; finished, paused or blocked, it asks to be woken by nothing.
+- **On the owner's captures** (2026-11-16, the 54 game connections of 3.7.13.17): a blueprint waiting for full life,
+  then a minute, then reading its life and looping ran on each of the 49 characters chosen, 6,900 turns, blocked
+  only by the 6 deaths, each at its fight's end, and never "runs without pause".
 
 ## The language, v2
 

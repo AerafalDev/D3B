@@ -463,7 +463,9 @@ _Updated 2026-11-16._
   death's signal (done in code: 634 fight ends read, 613 won and 21 lost in 6 connections, as the study); the engine,
   its stack, its trait, Get, Set, Call, If, Finish and the returns (done in code: Sequence, a loop and Leave the loop
   proved by the tests' own kinds; a size exception, the owner's of 2026-11-16); the nodes that wait, the actions' checks, the
-  queries, the death and the replay on the captures; (26) events at run time:
+  queries, the death and the replay on the captures (done in code: 49 runs on the 54 game connections, 6,900 turns,
+  blocked only by the 6 deaths, at their fights' end; D3B's three blueprints run and hold at their first action).
+  (25) is measured with step 4's Play; (26) events at run time:
   priorities, modes, thresholds, settings at safe points, with When, Every, At, the events of mine and their timers. Step 4 then brings Play,
   what a character does now, its History and the debugger, with the first actions.
 - **Waiting on testers**: Dofus 3 has a native client on macOS and on Linux (the owner, 2026-11-11); where it is

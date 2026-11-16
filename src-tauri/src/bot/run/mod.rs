@@ -5,10 +5,13 @@
 mod behaviour;
 mod frame;
 mod kinds;
+mod knows;
 mod program;
 mod values;
 mod variables;
 
+#[cfg(test)]
+mod replay;
 #[cfg(test)]
 mod tests;
 
@@ -17,7 +20,8 @@ use std::time::Instant;
 
 use serde_json::Value;
 
-pub(crate) use behaviour::{Behaviour, Cx, Exit, Fault, Resume, Step};
+pub(crate) use behaviour::{Behaviour, Cx, Exit, Fault, Notice, Resume, Step};
+pub(crate) use knows::Knows;
 pub(crate) use program::Refused;
 pub(crate) use values::Trace;
 
@@ -64,6 +68,8 @@ pub(crate) enum Reason {
     TooDeep,
     /// A value that cannot be had.
     Fault(Fault),
+    /// The character died: the game forces it, and the blueprint does not handle it before (26).
+    Died,
 }
 
 /// A blueprint run for one character.
@@ -73,6 +79,9 @@ pub(crate) struct Run {
     flows: Vec<Vec<Call>>,
     variables: Variables,
     trace: Trace,
+    notices: Vec<Notice>,
+    /// The fights the character had lost when the run first saw it: one more is a death.
+    lost: Option<u32>,
     state: State,
     /// When a node waiting on the clock wants to be advanced again.
     wake: Option<Instant>,
@@ -115,6 +124,8 @@ impl Run {
             flows: vec![vec![Call::new(graph, None, node)]],
             variables,
             trace: Trace::default(),
+            notices: Vec::new(),
+            lost: None,
             state: State::Ready,
             wake: None,
             again: false,
@@ -134,6 +145,11 @@ impl Run {
         &self.trace
     }
 
+    /// What Notify told since this was last asked, oldest first.
+    pub(crate) fn notices(&mut self) -> Vec<Notice> {
+        std::mem::take(&mut self.notices)
+    }
+
     /// The memory variables' values, and whether they changed since this was last asked.
     pub(crate) fn memory(&mut self) -> (BTreeMap<String, Value>, bool) {
         let changed = self.variables.take_changed();
@@ -145,6 +161,7 @@ impl Run {
         if matches!(self.state, State::Ready | State::Running) {
             self.state = State::Paused;
             self.again = true;
+            self.wake = None;
         }
     }
 
@@ -154,18 +171,28 @@ impl Run {
         }
     }
 
-    /// Runs nodes at `now` until the flow waits, ends or blocks. Without a `view`, the character is away: nothing
-    /// runs, and the node at work starts over once it is back.
-    pub(crate) fn advance(&mut self, view: Option<&View>, now: Instant) -> &State {
+    /// Runs nodes at `now` until the flow waits, ends or blocks, with what `knows` answers. Without a `view`, the
+    /// character is away: nothing runs, and the node at work starts over once it is back. A fight lost since the run
+    /// first saw the character (or last saw it, after a count started again) is its death, which blocks it.
+    pub(crate) fn advance(&mut self, view: Option<&View>, knows: &dyn Knows, now: Instant) -> &State {
         match self.state {
             State::Ready => self.state = State::Running,
             State::Running => {}
             State::Paused | State::Finished | State::Blocked(_) => return &self.state,
         }
         let Some(view) = view else {
+            // The node at work starts over once the character is back: it waits on nothing meanwhile.
             self.again = true;
+            self.wake = None;
             return &self.state;
         };
+        // The view counts since the character was chosen: a new connection or selection starts it again from 0.
+        let lost = self.lost.get_or_insert(view.fights.lost);
+        if view.fights.lost > *lost {
+            self.block(Reason::Died);
+            return &self.state;
+        }
+        *lost = view.fights.lost;
         if std::mem::take(&mut self.again)
             && let Some(chain) = self.chain()
         {
@@ -175,7 +202,7 @@ impl Run {
         }
         self.wake = None;
         for _ in 0..WITHOUT_PAUSE {
-            let then = match self.next(view, now) {
+            let then = match self.next(view, knows, now) {
                 Ok(Next::Step(step)) => self.apply(step),
                 Ok(Next::Call { graph, inputs }) => self.call(graph, inputs),
                 Err((fault, failed_at)) => self.block_at(Reason::Fault(fault), failed_at),
@@ -201,7 +228,7 @@ impl Run {
     }
 
     /// What the node at work does now; a fault comes with the node without flow it came from, if one.
-    fn next(&mut self, view: &View, now: Instant) -> Result<Next, (Fault, Option<usize>)> {
+    fn next(&mut self, view: &View, knows: &dyn Knows, now: Instant) -> Result<Next, (Fault, Option<usize>)> {
         let (graph, node) = self.at();
         let Some(call) = self.flows.last_mut().and_then(|flow| flow.last_mut()) else {
             return Ok(Next::Step(Step::Finish));
@@ -220,7 +247,9 @@ impl Run {
             call,
             variables: &mut self.variables,
             trace: &mut self.trace,
+            notices: &mut self.notices,
             view,
+            knows,
             now,
         };
         let next = match &self.program.graphs[graph].nodes[node].doing {
@@ -276,10 +305,7 @@ impl Run {
             }
             Step::Return { exit, outputs } => self.returned(exit, outputs),
             Step::Leave => self.leave(),
-            Step::Finish => {
-                self.state = State::Finished;
-                Then::Stops
-            }
+            Step::Finish => self.finish(),
             Step::Block(reason) => self.block(Reason::Said(reason)),
         }
     }
@@ -330,8 +356,7 @@ impl Run {
         if call.caller.is_some() {
             return self.returned(Exit::Done, BTreeMap::new());
         }
-        self.state = State::Finished;
-        Then::Stops
+        self.finish()
     }
 
     /// The node at work calls `graph` with `inputs`, its entry's outputs.
@@ -362,8 +387,7 @@ impl Run {
         let caller = flow.last().and_then(|call| call.caller);
         let Some(caller) = caller.filter(|_| flow.len() > 1) else {
             // A return in an event graph is a problem; the flow ends there.
-            self.state = State::Finished;
-            return Then::Stops;
+            return self.finish();
         };
         flow.pop();
         if let Some(call) = flow.last_mut() {
@@ -392,6 +416,13 @@ impl Run {
         Then::Runs
     }
 
+    /// Finished: nothing waits any more.
+    fn finish(&mut self) -> Then {
+        self.state = State::Finished;
+        self.wake = None;
+        Then::Stops
+    }
+
     fn block(&mut self, reason: Reason) -> Then {
         self.block_at(reason, None)
     }
@@ -400,6 +431,7 @@ impl Run {
     fn block_at(&mut self, reason: Reason, node: Option<usize>) -> Then {
         let (graph, at) = self.at();
         let node = node.unwrap_or(at);
+        self.wake = None;
         let code = &self.program.graphs[graph];
         self.state = State::Blocked(Blocked {
             reason,
