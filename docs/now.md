@@ -195,11 +195,12 @@ _Updated 2026-11-16._
 - **Published**: `client-3.7.13.17.tar.gz`, from `next` f3104e9 (SHA-256 `74cfd3c3…`), added to the C# version's
   `client-3.7.13.17` release on the owner's go. v0.11.0 shipped without data, named before. Format 2 (the breeds):
   `client-3.7.13.17-format2.tar.gz`, from `next` 2b0577c (SHA-256 `2e3ac196…`, 84,146,484 bytes), added to the same
-  release on the owner's go on 2026-11-13; `.github/game-data.json` named it until format 3 (step 3's (3b)), which
-  a release needs published first. Format 4 (the items, the jobs, the icons and the hints; format 3 never published):
+  release on the owner's go on 2026-11-13; `.github/game-data.json` named it until format 3 (step 3's (3b)), then
+  format 4 (9b). Format 4 (the items, the jobs, the icons and the hints; format 3 never published):
   `client-3.7.13.17-format4.tar.gz`, from `next` 55e4be8 (SHA-256 `3c4f5060…`, 105,345,462 bytes), added to the same
-  release on the owner's go on 2026-11-16; `bun run data:fetch 3.7.13.17` then fills `data/` with it, and the Rust
-  test reading `data/` passes on it. **v0.12.0**, published on the owner's go on 2026-11-11, packs that data
+  release on the owner's go on 2026-11-16, so `data:fetch` and the next release find it; that day, before the
+  owner's measures, `bun run data:fetch 3.7.13.17` filled `data/` with it and the Rust test reading `data/` passed on
+  it (the status bar not looked at). **v0.12.0**, published on the owner's go on 2026-11-11, packs format 1's data
   and the relay, with installers for the six targets and its `latest.json` on `updater-next`; **v0.13.0**, on
   2026-11-11, adds the game connection split into frames; **v0.14.0**, on the owner's go on 2026-11-13, packs the
   data's format 2 and the new shell (status bar, inspector, Lucide icons, the breed's head), its six targets carrying
