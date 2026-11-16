@@ -1,4 +1,4 @@
-import { ChevronDown, ChevronRight } from "lucide-react";
+import { ArrowUp, ChevronDown, ChevronRight } from "lucide-react";
 import { type ReactNode, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 
@@ -14,7 +14,8 @@ import { BLUEPRINT_EDITOR, blueprintName, openBlueprint } from "./open-blueprint
 /**
  * The Library view of the primary side bar (the owner's mock-up 9, variant A): "Given by D3B", then "Mine", one row
  * per blueprint, its name alone, its description or what a copy is based on in its hover, an amber mark with how
- * many problems it has; a right-click offers Duplicate. Last, folded, the player's files kept as they are, each
+ * many problems it has; a copy whose original has a newer version a blue arrow, said in its hover too (the owner,
+ * 2026-11-16); a right-click offers Duplicate. Last, folded, the player's files kept as they are, each
  * with why in its hover. The list is read again each time the view is shown, so a file the player put in the folder
  * appears without a restart.
  */
@@ -42,6 +43,7 @@ export function LibraryView() {
       basedOn === null
         ? null
         : t("library.basedOn", { name: byName.get(basedOn.id) ?? basedOn.id, version: basedOn.version }),
+      basedOn?.newer == null ? null : t("library.originalNewer", { version: basedOn.newer }),
     ]
       .filter(Boolean)
       .join("\n");
@@ -58,6 +60,12 @@ export function LibraryView() {
             >
               <Icon name="blueprint" />
               <span className="min-w-0 flex-1 truncate">{name}</span>
+              {basedOn?.newer != null && (
+                <span className="text-focus flex items-center">
+                  <ArrowUp aria-hidden="true" size={14} strokeWidth={1.75} />
+                  <span className="sr-only">{t("library.originalNewer", { version: basedOn.newer })}</span>
+                </span>
+              )}
               {blueprint.problems > 0 && (
                 <span className="flex items-center gap-0.5 text-[11px] text-[#d29922]">
                   <Icon name="warning" className="size-3.5" />

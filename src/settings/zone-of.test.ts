@@ -38,6 +38,7 @@ const character = (
   place: null,
   blueprint: runs,
   settings,
+  dropped: [],
 });
 
 const BLUEPRINTS = [

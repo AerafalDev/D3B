@@ -38,6 +38,8 @@ interface WorldStore {
   zone: string | null;
   /** The map's tool while a zone of mine is open. */
   tool: Tool;
+  /** Space held while a zone of mine is open: the main button moves the map rather than painting it. */
+  panning: boolean;
   /** The world the tab shows. */
   world: number;
   /** The kinds of hints the map leaves out, for the session. */
@@ -68,6 +70,7 @@ export const useWorld = create<WorldStore>((set, get) => ({
   picked: null,
   zone: null,
   tool: "brush",
+  panning: false,
   world: FIRST_WORLD,
   hidden: HIDDEN_KINDS,
   choosing: null,

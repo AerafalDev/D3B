@@ -26,6 +26,7 @@ const kalyx: PlayedCharacter = {
   place: { mapId: 1, at: { x: 5, y: -18 }, subArea: { fr: "Astrub", en: "Astrub" }, area: null },
   blueprint: null,
   settings: {},
+  dropped: [],
 };
 
 const titles: string[] = [];

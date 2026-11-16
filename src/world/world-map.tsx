@@ -6,6 +6,7 @@ import { useTranslation } from "react-i18next";
 
 import type { AtlasHint_Serialize } from "@/bindings.ts";
 import { named } from "@/characters/names.ts";
+import { cn } from "@/lib/utils.ts";
 import { HINT_SIZE, type PlacedHint, placeHints } from "./hint-layout.ts";
 import {
   type AtlasWorld,
@@ -21,6 +22,8 @@ import {
 
 /** The sub-area chosen's colour, mock-up 10's teal (the owner, 2026-11-15). */
 const TEAL = "#39c5bb";
+/** A zone of mine's colour, told apart from the game's sub-areas (the owner, 2026-11-16). */
+const AMBER = "#e2a33a";
 /** A notch of the wheel, a press of + or −. */
 const STEP = 1.2;
 /** An arrow key's move, in screen pixels. */
@@ -40,6 +43,23 @@ interface WorldMapProps {
   onPick?: (x: number, y: number) => boolean;
   /** The maps to outline, dashed, while the one at `x, y` is hovered, the same array for all of them; none without. */
   outlineAt?: (x: number, y: number) => readonly (readonly [number, number])[] | null;
+  /** The maps to fit the view to when none is chosen, the zone of mine opened; a new array fits again. */
+  fitTo?: readonly (readonly [number, number])[] | null;
+  /** The maps of the zone of mine open, in amber; `null` for none. */
+  mine?: readonly (readonly [number, number])[] | null;
+  /** The brush or the eraser in hand: the main button paints, the others and Space with it move the map. */
+  paint?: Painting;
+  /** Space held wherever the focus is: the main button moves the map rather than painting it. */
+  panning?: boolean;
+}
+
+/** A stroke of the brush or the eraser on the map. */
+export interface Painting {
+  erase: boolean;
+  /** Whether the map at `x, y` can be painted: a map of the world. */
+  paints: (x: number, y: number) => boolean;
+  /** The maps a stroke went over, once its button is released. */
+  onStroke: (maps: [number, number][]) => void;
 }
 
 /**
@@ -48,7 +68,18 @@ interface WorldMapProps {
  * map's sub-area, on hover; the wheel, the arrows, + / − and 0 move, zoom and fit it. The view lives in a ref, reaching
  * the page each frame; React draws only when the tiles in view or the zoom change.
  */
-export function WorldMap({ world, chosen, nameAt, hints, onPick, outlineAt }: WorldMapProps) {
+export function WorldMap({
+  world,
+  chosen,
+  nameAt,
+  hints,
+  onPick,
+  outlineAt,
+  fitTo = null,
+  mine = null,
+  paint,
+  panning = false,
+}: WorldMapProps) {
   const { t, i18n } = useTranslation();
   const box = useRef<HTMLDivElement>(null);
   const moved = useRef<SVGGElement>(null);
@@ -59,6 +90,30 @@ export function WorldMap({ world, chosen, nameAt, hints, onPick, outlineAt }: Wo
   const drag = useRef<{ x: number; y: number } | null>(null);
   // Where a press of the main button began on the screen, until it moves further than a click would.
   const press = useRef<{ x: number; y: number } | null>(null);
+  // The maps a stroke of the brush or the eraser went over, by their coordinates, and where it last was on the image.
+  const [stroke, setStroke] = useState<{ maps: ReadonlyMap<string, [number, number]>; erase: boolean } | null>(null);
+  const last = useRef<{ x: number; y: number } | null>(null);
+  // The stroke under way, which `stroke` copies for drawing, and the tool it began with, kept until it ends.
+  const going = useRef(new Map<string, [number, number]>());
+  const tool = useRef<Painting | null>(null);
+  // Space held on the map: the main button moves the map rather than painting it.
+  const space = useRef(false);
+  // The zone as the stroke under way leaves it.
+  const shownMine = useMemo(() => {
+    if (mine === null || stroke === null) {
+      return mine;
+    }
+    const held = new Map(mine.map((map) => [`${map[0]},${map[1]}`, map]));
+    for (const [key, map] of stroke.maps) {
+      if (stroke.erase) {
+        held.delete(key);
+      } else {
+        held.set(key, map);
+      }
+    }
+    return [...held.values()];
+  }, [mine, stroke]);
+  const minePaths = useMemo(() => (shownMine === null ? null : mapsPaths(world, shownMine)), [world, shownMine]);
   // A choice made by a click here: the view stays where the player clicked rather than fitting it.
   const stay = useRef(false);
   const unfitted = useRef(false);
@@ -112,9 +167,9 @@ export function WorldMap({ world, chosen, nameAt, hints, onPick, outlineAt }: Wo
     const height = box.current?.clientHeight ?? 0;
     // A tab behind another has no size: the fit waits until it is shown.
     unfitted.current = width === 0 || height === 0;
-    view.current = fitView(world, chosen ?? [], width, height);
+    view.current = fitView(world, chosen ?? fitTo ?? [], width, height);
     redraw();
-  }, [world, chosen, redraw]);
+  }, [world, chosen, fitTo, redraw]);
 
   useEffect(() => {
     given.current = hints;
@@ -187,8 +242,62 @@ export function WorldMap({ world, chosen, nameAt, hints, onPick, outlineAt }: Wo
     press.current = null;
   };
 
+  // The maps under the image's segment from where the stroke last was to `px, py`, a quarter of a map at a time so that
+  // a fast move skips none.
+  const strokeTo = (px: number, py: number) => {
+    const painting = tool.current;
+    if (painting === null) {
+      return;
+    }
+    const from = last.current ?? { x: px, y: py };
+    last.current = { x: px, y: py };
+    const step = Math.min(world.mapSize[0], world.mapSize[1]) / 4;
+    const steps = Math.max(1, Math.ceil(Math.hypot(px - from.x, py - from.y) / step));
+    const held = going.current;
+    let grown = false;
+    for (let index = 0; index <= steps; index += 1) {
+      const [x, y] = mapAt(world, from.x + ((px - from.x) * index) / steps, from.y + ((py - from.y) * index) / steps);
+      const key = `${x},${y}`;
+      if (!held.has(key) && painting.paints(x, y)) {
+        held.set(key, [x, y]);
+        grown = true;
+      }
+    }
+    if (grown) {
+      setStroke({ maps: new Map(held), erase: painting.erase });
+    }
+  };
+
+  // A stroke ends with its button, what it went over painted with the tool it began with; one the system cancels, or
+  // whose pointer it takes, is dropped (the owner, 2026-11-16: saved once the button is released).
+  const strokeEnd = (saved: boolean) => {
+    const painting = tool.current;
+    if (last.current === null || painting === null) {
+      return;
+    }
+    last.current = null;
+    tool.current = null;
+    const maps = [...going.current.values()];
+    going.current = new Map();
+    setStroke(null);
+    if (saved && maps.length > 0) {
+      painting.onStroke(maps);
+    }
+  };
+
+  // The image's point under the box's point `x, y`.
+  const onImage = (at: { x: number; y: number }) => {
+    const now = view.current;
+    return { x: (at.x - now.x) / now.scale, y: (at.y - now.y) / now.scale };
+  };
+
   // A press of the main button released without having moved further than a click would is a click on the map.
   const click = (event: PointerEvent) => {
+    if (last.current !== null) {
+      release();
+      strokeEnd(true);
+      return;
+    }
     const start = press.current;
     release();
     if (
@@ -205,6 +314,11 @@ export function WorldMap({ world, chosen, nameAt, hints, onPick, outlineAt }: Wo
   };
 
   const keys = (event: KeyboardEvent) => {
+    if (event.key === " ") {
+      space.current = true;
+      event.preventDefault();
+      return;
+    }
     const moves: Record<string, [number, number]> = {
       ArrowLeft: [PAN, 0],
       ArrowRight: [-PAN, 0],
@@ -237,8 +351,21 @@ export function WorldMap({ world, chosen, nameAt, hints, onPick, outlineAt }: Wo
         aria-roledescription={t("world.map")}
         // biome-ignore lint/a11y/noNoninteractiveTabindex: the map takes the focus so its keys move it
         tabIndex={0}
-        className="focus-visible:outline-focus absolute inset-0 cursor-grab touch-none select-none focus-visible:outline-1 focus-visible:-outline-offset-1 active:cursor-grabbing"
+        className={cn(
+          "focus-visible:outline-focus absolute inset-0 touch-none select-none focus-visible:outline-1 focus-visible:-outline-offset-1",
+          paint === undefined ? "cursor-grab active:cursor-grabbing" : "cursor-crosshair",
+        )}
         onKeyDown={keys}
+        onKeyUp={(event) => {
+          if (event.key === " ") {
+            space.current = false;
+          }
+        }}
+        onBlur={() => {
+          space.current = false;
+        }}
+        // The right button moves the map, and opens no menu on it.
+        onContextMenu={(event) => event.preventDefault()}
         onWheel={(event) => {
           if (event.deltaY === 0) {
             return;
@@ -249,9 +376,16 @@ export function WorldMap({ world, chosen, nameAt, hints, onPick, outlineAt }: Wo
           zoomBy(STEP ** Math.max(-1, Math.min(1, -pixels / 100)), at.x, at.y);
         }}
         onPointerDown={(event) => {
-          drag.current = { x: event.clientX - view.current.x, y: event.clientY - view.current.y };
-          press.current = event.button === 0 ? { x: event.clientX, y: event.clientY } : null;
           event.currentTarget.setPointerCapture?.(event.pointerId);
+          const moving = space.current || panning;
+          if (paint !== undefined && event.button === 0 && !moving) {
+            tool.current = paint;
+            const at = onImage(point(event));
+            strokeTo(at.x, at.y);
+            return;
+          }
+          drag.current = { x: event.clientX - view.current.x, y: event.clientY - view.current.y };
+          press.current = event.button === 0 && !moving ? { x: event.clientX, y: event.clientY } : null;
         }}
         onPointerMove={(event) => {
           const pressed = press.current;
@@ -264,11 +398,21 @@ export function WorldMap({ world, chosen, nameAt, hints, onPick, outlineAt }: Wo
             redraw();
           }
           const at = point(event);
+          if (last.current !== null) {
+            const image = onImage(at);
+            strokeTo(image.x, image.y);
+          }
           hover(at.x, at.y);
         }}
         onPointerUp={click}
-        onPointerCancel={release}
-        onLostPointerCapture={release}
+        onPointerCancel={() => {
+          release();
+          strokeEnd(false);
+        }}
+        onLostPointerCapture={() => {
+          release();
+          strokeEnd(false);
+        }}
         onPointerLeave={() => {
           if (tip.current !== null) {
             tip.current.hidden = true;
@@ -297,6 +441,19 @@ export function WorldMap({ world, chosen, nameAt, hints, onPick, outlineAt }: Wo
                   d={paths.outline}
                   fill="none"
                   stroke={TEAL}
+                  strokeWidth={2}
+                  strokeLinecap="square"
+                  vectorEffect="non-scaling-stroke"
+                />
+              </>
+            )}
+            {minePaths !== null && (
+              <>
+                <path d={minePaths.cells} fill={AMBER} fillOpacity={0.32} />
+                <path
+                  d={minePaths.outline}
+                  fill="none"
+                  stroke={AMBER}
                   strokeWidth={2}
                   strokeLinecap="square"
                   vectorEffect="non-scaling-stroke"
