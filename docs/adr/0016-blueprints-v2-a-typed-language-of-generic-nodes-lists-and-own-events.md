@@ -6,41 +6,35 @@
 
 ## Context
 
-v1's catalogue (25 kinds) covered D3B's three blueprints and the six scenarios. Measuring the editable graph, the owner
-found it far too poor ("much more complete, so that we can do much more"): no loops, no many-way branch, one
-comparison, one sum, no lists, no timer, no event but the six fixed ones. ADR 0014's model (an Unreal-like event
-graph, one flow per character, goal-shaped actions) holds; what it lacks is a language.
+v1's 25 kinds held D3B's three blueprints. Trying the editable graph, the owner wanted blueprints "much more complete"
+and "as practical as a Lua script" (the reference bots' scripts): no loops, one comparison, no lists, no timers, no
+event but six. ADR 0014's model (an event graph, one flow per character, goal-shaped actions) holds.
 
 ## Decision
 
-- **Values are compact operator nodes** as in Unreal (`≥`, AND, `+`…), without flow, wired by type; no formula node.
-- **Generic pins and lists**: a wildcard pin takes the type of its first wire, every wildcard of a node the same;
-  every type has its list. Map, item, duration and time of day join the types; Wait's minutes become a duration.
-- **Flow** as a bot needs it: Sequence, Switch, Repeat, While, For each, Leave the loop, Do once, Do N, Alternate,
-  Wait until (with a longest wait), Trigger and timers, Block, Pause; not Unreal's whole list.
-- **Events of any condition and of the player's own**: "When … becomes true", re-armed when false or by its own
-  "Re-arm when"; Every, At; events declared by the blueprint, fired by Trigger or a timer, each with a priority and a
-  mode as the game's.
-- **Functions** gain named exits, locals and the pure function; **no macros**, since functions already hold actions
-  that last.
-- **Randomness** is in the catalogue (a number, a chance, a list's element): the player's to use. Nothing about
-  other players is.
-- **A loop that never lasts** is caught at run time (10,000 nodes in a row without a lasting one block the character),
-  not refused in the editor.
-- **What D3B does not observe yet** (the inventory's content, professions' levels, quests) is listed, marked, and
-  studied at the step that reads it.
+- **Values**: compact operator nodes as Unreal's, and a read-only **Expression** node, a typed formula checked by Rust
+  with completion, for Lua's one line. **Randomness** (a number, a chance, a list's element) is the player's to use.
+- **Types**: wildcard pins take their first wire's type; every type has its list; map, item, NPC, duration, time of
+  day and **ranges** ("from level N: a value", edited as a table) join them; Wait's minutes become a duration.
+- **Flow** as a bot needs it (Sequence, Switch, loops, Do once, Alternate, Wait until, Retry, Pick from a list,
+  Trigger and timers, Block, Pause), not Unreal's whole list.
+- **Events** of any condition ("When … becomes true", re-armed when false or by its "Re-arm when") and of the
+  player's own, fired by Trigger or a timer, with a priority and a mode as the game's.
+- **Functions** gain named exits, locals and the pure function; no macros, no library shared between blueprints.
+- **Routes**: an action and a forced exit per anchor, resumed from the current map, recorded while playing, as text.
+- A loop that never waits is caught at run time (10,000 nodes); unobserved data is marked and studied at its step.
 
 ## Rejected
 
-- A formula node, alone or beside the nodes: a second language with its syntax and typos.
-- One node per type (`=` of numbers, `=` of zones…): the picker floods, as Unity Visual Scripting's.
+- Nodes only, or a formula only: five boxes for one line, or a second language for everything.
+- One node per type: the picker floods, as Unity Visual Scripting's.
 - Only fixed game events: every new threshold would wait for a version of D3B.
-- Macros: they overlap functions almost entirely here.
-- A problem in the editor for a cycle without a lasting node: it would refuse loops that end by their condition.
+- Macros and a shared library: they overlap functions and per-character settings here.
+- An editor problem for a cycle that never waits: it would refuse loops that end by their condition.
 
 ## Consequences
 
-The blueprint file goes to schema 2, with a migration from 1 and a test reading 1 (ADR 0015). The catalogue, the
-links' check (Rust and the editor's drag), the Summary and the runtime ((25), (26)) all know wildcards and lists.
-Review checks that a value node never has a flow pin, that no kind duplicates a generic one per type, and that a
-query reads only what `game::Live` observes or is marked with its study and step.
+The file goes to schema 2, migrated from 1 (ADR 0015). The check of links, the Summary and the runtime know wildcards,
+lists and expressions. `CLAUDE.md`'s "Never" still holds: D3B's own blueprints and docs never use randomness to pass
+for a player. Review checks that a value node has no flow pin, that no kind repeats a generic one per type, and that a
+query reads what `game::Live` observes or names its study and step.

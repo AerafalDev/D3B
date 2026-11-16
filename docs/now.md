@@ -340,23 +340,27 @@ _Updated 2026-11-16._
   variables and functions, "Often here" from a fixed table by context), in two PRs: `edit_blueprint`, a wire, a node
   added or moved checked and saved, and each graph's choices (done in code), then the graph editable, a wire checked
   as it is dragged, and the picker (done in code; its checklist under "Not measured"); (13) delete, undo, autosave; then **blueprints v2**
-  ([bot.md](bot.md#the-language-v2), ADR 0016; the owner, 2026-11-16, after measuring (12): "much more complete"), from
-  a mock-up of the catalogue and the Summary: compact value nodes, wildcards and lists, flow for a bot, "When … becomes
-  true" and events of mine, functions with exits, locals and pure ones, durations and times, randomness, a loop guard
+  ([bot.md](bot.md#the-language-v2), ADR 0016; the owner, 2026-11-16, after trying (12): "much more complete", "as
+  practical as a Lua script"), from a mock-up of the catalogue and the Summary and an analysis of the reference Lua
+  scripts: compact value nodes and a typed Expression, wildcards, lists and level ranges, flow for a bot, "When …
+  becomes true" and events of mine, functions with exits, locals and pure ones, durations and times, randomness, a loop guard
   at run time, the unobserved data marked and studied at its step; before (14), so that the editors of variables,
-  functions and events and the runtime are written once, on the final model, in seven PRs: (v2.1) the model in Rust:
-  the new types and lists, wildcard pins, a node's `options`, the blueprint's own events, functions' exits, locals and
-  pure, the file's schema 2 and its migration from 1, D3B's blueprints in 2; (v2.2) the editor reads it: wildcards and
+  functions and events and the runtime are written once, on the final model, in ten PRs: (v2.1) the model in Rust, in three PRs: the new types (an NPC, ranges), lists and wildcard
+  pins in the wiring's check; then a node's `options`, the blueprint's own events, functions' exits, locals and pure;
+  then the file's schema 2 and its migration from 1 (in a `bot/` subfolder, the folder holding ten files), D3B's
+  blueprints in 2; each kind's problems come with the PR that brings the kind; (v2.2) the editor reads it: wildcards and
   lists (a square pin) in the drag's check, a node's options ("+" a case, an output), the new types' colours and
-  values typed (a duration, a time, a map, an item); (v2.3) the flow's kinds and how the Summary reads them; (v2.4)
+  values typed (a duration, a time, a map, an item, ranges as a table pasted from text); (v2.3) the flow's kinds and how the Summary reads them; (v2.4)
   the values: comparisons, logic, arithmetic, randomness, text, durations, lists, drawn compact; (v2.5) the queries
   over `game::Live`, and those marked with their study and step; (v2.6) the events: When, Every, At, the game's new
-  ones, mine and Trigger with its timers; (v2.7) the actions of steps 4 to 7, marked, and the variables' nodes (Add
-  to, Reset, a list's). Each brings its sentences in French and English and its family in the picker; its checklist
-  is [bot.md](bot.md#measure)'s item 6. Then (14) variables, with locals, lists and the new types' editors; (15)
+  ones, mine and Trigger with its timers; (v2.7) the actions of steps 4 to 7, marked (the haven bag, zaaps, doors,
+  NPCs and their replies, equipment, resource bags, the experience received), and the variables' nodes (Add to, Reset,
+  a list's); (v2.8) the Expression: its parser and checks in Rust, its node and completion in the editor. Each brings its sentences in French and English and its family in the picker; its checklist,
+  [bot.md](bot.md#measure)'s item 6, is taken once (16) declares variables and events of mine. Then (14) variables, with locals, lists and the new types' editors; (15)
   functions opened in place, with their exits and the pure ones; (16) events: priority, re-arming, modes, the
   defaults, and the events of mine declared; (17) comments and reroutes; (18) Align, copy and paste,
-  search; (19) editing by keyboard; (20) my zones painted; (21) routes; (22) the `.d3b` file; (23) a given blueprint's
+  search; (19) editing by keyboard; (20) my zones painted; (21) routes, with an action and a forced exit per anchor, Follow the route resuming from
+  the map the character is on, the recorder and the text import and export; (22) the `.d3b` file; (23) a given blueprint's
   update; (24) the "Advanced tools" setting; (25) the runtime: the flow, outcomes, variables, blocked, finished, on the
   captures, with v2's loops, Switch, lists, randomness, pure functions and the loop guard; (26) events at run time:
   priorities, modes, thresholds, settings at safe points, with When, Every, At, the events of mine and their timers. Step 4 then brings Play,
