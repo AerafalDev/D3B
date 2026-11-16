@@ -144,29 +144,44 @@ flowchart LR
   of mine) and a forced exit (a door, a cell) where the world graph is not enough; Follow the route resumes from the
   map the character is on, as the scripts' "on map X, do Y"; a route is recorded while playing (the relay observes the
   maps crossed and makes them its anchors), and pasted or copied as text (`5,-18 left; 4,-18 …`, or maps' ids).
-- No library of functions shared between blueprints: one blueprint per need, its profession a setting, already
-  covers the scripts' copies.
+- No library of functions shared between blueprints: functions and per-character settings already cover the
+  scripts' copies.
 - **Functions** gain **named exits** beside Done and Failed ("Full", "Empty"), each a flow output of their call;
   **locals**; and the **pure** function, which computes values without flow, actions or waits, its call a value node.
   No macros: a function already holds actions that last.
 - **Practical, intuitive, complete** (the owner, 2026-11-16), the bar of every kind: few kinds, each well named and
-  running as it is dropped, from its defaults; a node shows its main inputs in its sentence and folds the others
+  running as it is dropped, from its defaults (an input no default can fill, a zone, a map, an NPC, an item, stays
+  required, its problem saying what to choose); a node shows its main inputs in its sentence and folds the others
   under "Advanced" (a longest wait, a re-arm, a group's levels), unfolded as soon as one is wired or changed, as
   Unreal's advanced pins; data editors (routes, ranges, item lists) rather than long chains of nodes. The **picker
   groups by intent** (the owner, 2026-11-16): Move, Harvest, Bank and items, Fight, Wait and repeat, Conditions and
   calculations, Lists, then My variables, My functions, My events; "Often here" first by context, extended to v2's
   kinds; its search finds synonyms too ("boucle" finds While and For each). A node keeps its family's colour.
 - **D3B's blueprints** (the owner, 2026-11-16), all configurable, all running as given with no setting changed:
-  **Récolte** (every resource the character can take), **Combat** (monsters for experience and loot), one per
-  profession, **Mineur**, **Paysan**, **Alchimiste**, **Pêcheur**, **Bûcheron**, and **Chasseur**, the profession
-  (job 41: fights with a hunting weapon for meat). This reverses 2026-11-14's one profession blueprint, its
-  profession a setting. Where they go is, by default, **ranges computed from the data**: for a profession, the
-  sub-areas rich in its resources at its level; for Combat, those whose monsters are of the character's level; a
-  setting replaces them by ranges, a zone or a route of mine. Their settings, each with a default that works: the
-  pods' threshold, the bank (the nearest, a map, or the haven bag's chest) and the items kept; the resources taken
-  or left (those of its level by default); fighting on the way or not, the groups' levels and sizes accepted, the
-  life to wait for before leaving; equipping the best carried for the level (on by default) or a named preset; a
-  goal (a profession's or the character's level, a number of harvests or fights) and an optional night pause.
+  **Récolte** (every profession's resources the character can take, the Base ones such as wells left out as in the
+  C# version), **Combat** (monsters for experience and loot), one per profession, **Mineur**, **Paysan**,
+  **Alchimiste**, **Pêcheur**, **Bûcheron**, and **Chasseur**, the profession (job 41: fights with a hunting weapon
+  for meat, after its study). This reverses 2026-11-14's one profession blueprint, its profession a setting. Where
+  they go is, by default, **ranges computed from the data** as the app runs, never written in the blueprints'
+  committed files: a resource's or a monster's worth halved every 20 levels below the character's and nothing above
+  it, Combat's sub-areas holding at least 10 maps of the world map (no dungeon), reckoned again each tour; the
+  monsters' levels and drops come from the extractor's **format 5** (the owner, 2026-11-16). A setting replaces them
+  by ranges, a zone or a route of mine. Five or six settings show, those changed often: where, the pods' threshold,
+  the bank (the nearest, a map, or the haven bag's chest) and the items kept, fighting on the way, the goal (a
+  profession's or the character's level, a number of harvests or fights); the others fold under "Advanced",
+  unfolded when one differs from its default (the owner, 2026-11-16; the C# version reached 24 and hid half): the
+  order a map's resources are taken in, the rotation, the zaaps, food, the life to wait for, what follows a lost
+  fight, the monsters chosen or left out, equipping the best carried for the level (on) or a named preset, an
+  optional night pause. Every resource of the profession is taken where the character is (only the place follows
+  its level), and Combat attacks every group its size and the monsters left out allow, no bound of level by
+  default, one optional under "Advanced" (the C# version's D387: the zone chosen for the level bounds the risk).
+- **What the C# version measured**, carried into the actions of steps 5 and 6, its values starting points to measure
+  again (the owner, 2026-11-16): the **rotation** over the N richest sub-areas of the level, the one left longest ago
+  first (D391, D392); **regrowth learned** by skill while playing, a tour waiting on the longest seen and stopping on
+  the way at a resource offered (D145); **losses and banks made safe**: after a loss, wait for the life to resume
+  at, three losses in a row stop, a bank tried three times and still full stops with the reason (D198, D405);
+  **interiors**: a house entered only when known to hold what the level can take, mines kept reachable, Combat out
+  of interiors but dungeons (D388, D416, D417). Its notes: `csharp-settings-for-v2.md` in the sessions' notes.
 - **Kept out**: anything about other players (counting them, fleeing them, answering them), and what `CLAUDE.md`'s
   "Never" lists.
 
@@ -192,10 +207,11 @@ beside its `graphs`, each with its id, name and inputs; a function's signature g
 schema 1 file reads migrated ("at least" to `≥`, Wait's minutes to a duration) and is written as 2 at its next change;
 D3B's blueprints ship as 2. A node still does one thing (`kind`, `get`, `set` or `call`), with `options` beside;
 the pins its options make are numbered from 1: Sequence's `then_1` to `then_n`, Switch's `case_1` to `case_n` (the
-cases' values in `options.cases`) and `otherwise`, Text's and a list's inputs `in_1` to `in_n`. A call has a flow
+cases' values in `options.cases`) and `otherwise`, a list's inputs `in_1` to `in_n`; Text's inputs are its holes'
+names (`{count}` is the pin `count`), a hole renamed or removed dropping its wire. A call has a flow
 output per exit of its function, the exit's id its pin's, beside `done`, `failed` and `reason`; a function's locals
 live in its call's frame. A pure function's call has no flow pin and is read on demand, as a query is, its value kept
-for the debugger. New problems: wildcards of one node fed two types; a list into a pin that takes none; an
+for the debugger. New problems: an exit named as a built-in pin (`run`, `done`, `failed`, `reason`); wildcards of one node fed two types; a list into a pin that takes none; an
 option naming an event, variable or exit the blueprint lacks; a case typed twice or of another type; Leave the loop
 outside a loop's body; a flow, action or wait in a pure function; a time not "HH:MM"; an Expression that does not
 parse, names what the blueprint lacks or is not of its pin's type; ranges whose rows overlap.
@@ -374,3 +390,7 @@ On Windows x64 by the owner, on what step 3 shows; running a blueprint is measur
    When on "time ≥ 23:00 AND not in a fight" and an event of mine fired by a timer are drawn without a refused wire
    and read in the Summary as on the owner's mock-up of 2026-11-16; a file of schema 1 opens migrated, its
    "at least" a `≥`.
+7. v2: Space opens the picker grouped by intent, "boucle" finds Tant que and Pour chaque; a Wait until dropped shows
+   its condition and folds its longest wait under "Avancé", unfolded once set; the Library lists D3B's eight
+   blueprints, each without problems and its settings at defaults that work (running them is measured at steps 5
+   and 6).
