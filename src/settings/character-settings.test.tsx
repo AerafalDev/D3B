@@ -6,11 +6,12 @@ import type { BlueprintSummary_Serialize, VariableView_Serialize } from "@/bindi
 import { initI18n } from "@/i18n/i18n.ts";
 
 // The back end, faked: what the settings send, and the atlas the Zone and profession fields read.
-const backEnd = vi.hoisted(() => ({ blueprint: vi.fn(), setting: vi.fn(), atlas: vi.fn() }));
+const backEnd = vi.hoisted(() => ({ blueprint: vi.fn(), setting: vi.fn(), atlas: vi.fn(), dismiss: vi.fn() }));
 vi.mock("@/bindings.ts", () => ({
   commands: {
     setCharacterBlueprint: backEnd.blueprint,
     setCharacterSetting: backEnd.setting,
+    dismissDroppedSettings: backEnd.dismiss,
     worldAtlas: backEnd.atlas,
     zones: async () => ({ zones: [], kept: [] }),
   },
@@ -87,7 +88,7 @@ const ATLAS = {
   ],
 };
 
-function kalyx(blueprint: string | null, settings: Record<string, string> = {}) {
+function kalyx(blueprint: string | null, settings: Record<string, string> = {}, dropped: string[] = []) {
   return {
     key: "294-2",
     name: "Kalyx",
@@ -99,11 +100,12 @@ function kalyx(blueprint: string | null, settings: Record<string, string> = {}) 
     place: null,
     blueprint,
     settings,
+    dropped,
   };
 }
 
-async function shown(blueprint: string | null, settings: Record<string, string> = {}) {
-  usePlayed.setState({ played: [kalyx(blueprint, settings)] });
+async function shown(blueprint: string | null, settings: Record<string, string> = {}, dropped: string[] = []) {
+  usePlayed.setState({ played: [kalyx(blueprint, settings, dropped)] });
   render(<CharacterSettings characterKey="294-2" />);
   // The atlas is read when a Zone field mounts.
   await act(async () => {});
@@ -123,12 +125,31 @@ describe("a character's blueprint and settings", () => {
     backEnd.blueprint.mockReset().mockResolvedValue(null);
     backEnd.setting.mockReset().mockResolvedValue(null);
     backEnd.atlas.mockReset().mockResolvedValue(ATLAS);
+    backEnd.dismiss.mockReset().mockResolvedValue(null);
     useWorld.setState({ read: null, picked: null, world: 1, choosing: null });
     editors.opened = [];
     toasts.errors = [];
     useLibrary.setState({ blueprints: [HARVEST, MINE, JOBS] });
   });
   afterEach(cleanup);
+
+  it("says the values a new version of its blueprint could not keep, until the notice is closed", async () => {
+    useLibrary.setState({ blueprints: [{ ...HARVEST, version: 2 }, MINE, JOBS] });
+    await shown("automatic-harvest", {}, ["keep", "gone"]);
+    expect(screen.getByRole("status").textContent).toBe(
+      "Récolte automatique v2 : tes valeurs de Garder et gone ne s'appliquent plus.",
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Fermer" }));
+    expect(backEnd.dismiss).toHaveBeenCalledWith("294-2");
+    cleanup();
+    await shown("automatic-harvest", {}, ["pods"]);
+    expect(screen.getByRole("status").textContent).toBe(
+      "Récolte automatique v2 : ta valeur de Banque à ne s'applique plus.",
+    );
+    cleanup();
+    await shown("automatic-harvest");
+    expect(screen.queryByRole("status")).toBeNull();
+  });
 
   it("runs no blueprint at first, without settings, and its arrow opens nothing", async () => {
     await shown(null);

@@ -1,9 +1,10 @@
 //! The characters played (`docs/bot.md`, "In the app"; the owner's choices of 2026-11-14): each remembered in the
 //! player's folder as it is seen in game, listed with when it was last seen so the Characters view keeps it greyed
 //! once its client is closed, and forgotten into the system's trash; with the blueprint each runs and its settings,
-//! which `settings` changes.
+//! which `settings` changes and `update` brings to a given blueprint's new version.
 
 pub(super) mod settings;
+pub(super) mod update;
 
 use std::collections::BTreeMap;
 
@@ -61,6 +62,8 @@ impl Remembering {
             // The player's, which the file keeps (`Store::remember`).
             blueprint: None,
             settings: BTreeMap::new(),
+            blueprint_version: None,
+            dropped: Vec::new(),
         };
         if let Some(mut other) = self.last.take_if(|last| last.id != character.id) {
             other.last_seen = now;
@@ -154,6 +157,9 @@ pub struct PlayedCharacter {
     /// Its own values of its blueprint's settings as JSON, by variable, which the interface reads by their type; one
     /// left out takes the blueprint's default.
     pub settings: BTreeMap<String, String>,
+    /// The settings whose values a new version of its blueprint could not keep, by variable, until the player closes
+    /// their notice.
+    pub dropped: Vec<String>,
 }
 
 /// Why a character was not forgotten.
@@ -226,6 +232,7 @@ fn listed(files: &PlayersFiles, data: Option<&LoadedData>) -> PlayedList {
                 .into_iter()
                 .map(|(variable, value)| (variable, value.to_string()))
                 .collect(),
+            dropped: character.dropped,
         }
     });
     PlayedList {
@@ -445,6 +452,8 @@ mod tests {
             map_id: None,
             blueprint: None,
             settings: BTreeMap::new(),
+            blueprint_version: None,
+            dropped: Vec::new(),
         };
         store.remember(&character).unwrap_or_else(|error| panic!("{error}"));
         let list = listed(&PlayersFiles::new(Some(store)), None);

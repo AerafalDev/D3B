@@ -24,6 +24,7 @@ const kalyx = {
   place: null,
   blueprint: null,
   settings: {},
+  dropped: [],
 };
 
 describe("Forget", () => {
