@@ -52,15 +52,25 @@ export function WorldTab() {
     return () => window.removeEventListener("keydown", cancel);
   }, [choosing, endChoosing]);
 
-  // Each map of the world shown, by its coordinates, with its sub-area, that one's name and all its maps there.
+  // Each map of the world shown, by its coordinates, with its sub-area, that one's name and all its maps there; on a
+  // map two share, the one with the client's priority there.
   const names = useMemo(() => {
     const byMap = new Map<string, { id: number; name: string; maps: readonly (readonly [number, number])[] }>();
+    const first = new Set<string>();
     for (const area of atlas?.areas ?? []) {
       for (const subArea of area.subAreas) {
         const name = named(subArea.name, i18n.language) ?? "";
-        const maps = subArea.maps.find((one) => one.world === world?.id)?.at ?? [];
+        const here = subArea.maps.find((one) => one.world === world?.id);
+        const maps = here?.at ?? [];
+        const priority = new Set(here?.priority.map(([x, y]) => `${x},${y}`));
         for (const [x, y] of maps) {
-          byMap.set(`${x},${y}`, { id: subArea.id, name, maps });
+          const key = `${x},${y}`;
+          if (priority.has(key) || !first.has(key)) {
+            byMap.set(key, { id: subArea.id, name, maps });
+          }
+          if (priority.has(key)) {
+            first.add(key);
+          }
         }
       }
     }

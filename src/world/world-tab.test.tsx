@@ -13,16 +13,22 @@ vi.mock("./world-map.tsx", () => ({
   WorldMap: ({
     chosen,
     hints,
+    nameAt,
     onPick,
     outlineAt,
   }: {
     chosen: unknown[] | null;
     hints: { id: number }[];
+    nameAt: (x: number, y: number) => string | null;
     onPick: (x: number, y: number) => boolean;
     outlineAt?: (x: number, y: number) => unknown[] | null;
   }) => (
     <>
-      <p data-hints={hints.map((one) => one.id).join(",")} data-outline={String(outlineAt?.(1, 0)?.length)}>
+      <p
+        data-hints={hints.map((one) => one.id).join(",")}
+        data-outline={String(outlineAt?.(1, 0)?.length)}
+        data-name={nameAt(1, 0) ?? ""}
+      >
         carte {chosen?.length ?? "vide"}
       </p>
       <button type="button" onClick={(event) => (event.currentTarget.dataset["picked"] = String(onPick(1, 0)))}>
@@ -90,6 +96,7 @@ const ATLAS: Atlas_Serialize = {
                 [0, 0],
                 [1, 0],
               ],
+              priority: [],
             },
           ],
           resources: [],
@@ -102,7 +109,14 @@ const ATLAS: Atlas_Serialize = {
       id: 1,
       name: names("Incarnam"),
       subAreas: [
-        { id: 5, name: names("Pâturages"), level: 1, maps: [{ world: 2, at: [[2, 2]] }], resources: [], monsters: 0 },
+        {
+          id: 5,
+          name: names("Pâturages"),
+          level: 1,
+          maps: [{ world: 2, at: [[2, 2]], priority: [] }],
+          resources: [],
+          monsters: 0,
+        },
       ],
     },
   ],
@@ -170,6 +184,25 @@ describe("the World tab", () => {
     expect(document.body.textContent).toContain("détails 3");
     expect(click("clic 1, 0")).toBe("false");
     expect(click("clic 5, 5")).toBe("false");
+    expect(useWorld.getState().picked).toBe(3);
+  });
+
+  it("names and chooses on a map two sub-areas share the one with the client's priority there, whichever comes last", async () => {
+    const [astrub, incarnam] = ATLAS.areas;
+    const [forest, ...others] = astrub?.subAreas ?? [];
+    if (astrub === undefined || incarnam === undefined || forest === undefined) {
+      throw new Error("the atlas fixture changed");
+    }
+    // A house listed after the forest, on its map 1, 0, without the priority the forest has there.
+    const house = { ...forest, id: 6, name: names("Maison"), maps: [{ world: 1, at: [[1, 0]], priority: [] }] };
+    const prioritised = { ...forest, maps: [{ world: 1, at: forest.maps[0]?.at ?? [], priority: [[1, 0]] }] };
+    backEnd.atlas.mockResolvedValue({
+      ...ATLAS,
+      areas: [{ ...astrub, subAreas: [prioritised, ...others, house] }, incarnam],
+    } as Atlas_Serialize);
+    await shown(<WorldTab />);
+    expect(document.querySelector("[data-name]")?.getAttribute("data-name")).toBe("Forêt d'Astrub");
+    fireEvent.click(screen.getByRole("button", { name: "clic 1, 0" }));
     expect(useWorld.getState().picked).toBe(3);
   });
 

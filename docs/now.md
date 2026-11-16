@@ -185,7 +185,11 @@ _Updated 2026-11-16._
        each with its icon, and Alchimiste, five plants from Ortie 1 to Orchidée Freyesque 80;
     10. click a map of another sub-area: it turns teal, the forest no longer, the card and Details follow it, and the map
        stays where it was; dragging the map chooses nothing; a click on the sea changes nothing; a dungeon chosen in the
-       view says "Pas sur la carte" beside Cartes.
+       view says "Pas sur la carte" beside Cartes;
+    11. (the owner's report of 2026-11-16, fixed) choose Route des âmes in Incarnam: only its row of 7 maps turns teal,
+       and hovering 0, 0 no longer says Dofus Games, which is greyed "Pas sur la carte" with the Taverne and Beta; a
+       dungeon of the Twelve (Donjon des Bworks) is greyed too, and no longer frames Village d'Amakna; "Indices" and the
+       worlds' menu are the same height.
 - **Done in code, step 1**: `tools/extractor` reads the client's bundles, data tables, texts in five languages and flag
   enums, and writes the map positions, sub-areas, areas, zaaps, worlds and their tiles, maps, and the world graph,
   checked against one another, with the `client-<build>-format<n>.tar.gz` that `data:fetch` reads (ADR 0013); the app reads it all at start

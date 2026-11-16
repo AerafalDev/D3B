@@ -34,6 +34,7 @@ pub use breeds::{Breed, head_file};
 pub use game_data::GameData;
 pub use items::ItemTables;
 pub use manifest::{DataError, Manifest};
+pub use map_flag::MapFlag;
 pub use maps::{MapData, read_map};
 pub use text::Text;
 pub use world::{MapPosition, World};

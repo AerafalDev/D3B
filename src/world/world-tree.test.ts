@@ -8,7 +8,7 @@ const subArea = (id: number, fr: string, en: string, drawn = true) => ({
   id,
   name: names(fr, en),
   level: id,
-  maps: drawn ? [{ world: 1, at: [[0, 0]] as [number, number][] }] : [],
+  maps: drawn ? [{ world: 1, at: [[0, 0]] as [number, number][], priority: [] }] : [],
   resources: [],
   monsters: 0,
 });

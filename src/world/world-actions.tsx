@@ -38,7 +38,11 @@ export function WorldActions() {
     <div className="flex items-center gap-1.5">
       {hints.length > 0 && <HintSwitches hints={hints} />}
       <Select value={String(world)} onValueChange={(value) => show(Number(value))}>
-        <SelectTrigger size="sm" aria-label={t("world.worlds")} className="h-6 gap-1.5 rounded-[5px] px-2 text-xs">
+        <SelectTrigger
+          size="sm"
+          aria-label={t("world.worlds")}
+          className="h-6 gap-1.5 rounded-[5px] px-2 text-xs data-[size=sm]:h-6 data-[size=sm]:rounded-[5px]"
+        >
           <Icon name="globe" className="size-3.5" />
           <SelectValue />
         </SelectTrigger>

@@ -23,7 +23,7 @@ const subArea = (id: number, fr: string, level: number, drawn = true) => ({
   id,
   name: names(fr),
   level,
-  maps: drawn ? [{ world: 1, at: [[0, 0]] as [number, number][] }] : [],
+  maps: drawn ? [{ world: 1, at: [[0, 0]] as [number, number][], priority: [] }] : [],
   resources: [],
   monsters: 0,
 });
