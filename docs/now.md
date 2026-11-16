@@ -192,6 +192,23 @@ _Updated 2026-11-16._
        and hovering 0, 0 no longer says Dofus Games, which is greyed "Pas sur la carte" with the Taverne and Beta; a
        dungeon of the Twelve (Donjon des Bworks) is greyed too, and no longer frames Village d'Amakna; "Indices" and the
        worlds' menu are the same height.
+- **step 3, my zones painted** ((20)), on Windows x64 from `bun run app` on `next` or the next release, with format 4's
+  data:
+    1. the World view says "Mes zones" above the sub-areas, "Aucune zone : « + » en peint une."; click "+": "Nouvelle
+       zone" appears with 0 carte, the World tab opens on the world it showed, the brush pressed in the toolbar on top,
+       "Nouvelle zone" and "Zone à moi · 0 carte" on top left;
+    2. press and drag over Forêt d'Astrub: each map crossed turns amber as the pointer goes, the sea stays as it was;
+       release: the row says N cartes; the right button and Space with the main one move the map without painting;
+    3. E, then drag over painted maps: they go; S: hovering outlines a whole sub-area; click Champs d'Astrub: all its
+       maps turn amber; click it again: they go; V, then click a sub-area: it is chosen, the zone and toolbar go;
+    4. F2 on the row, type a name, Enter: the row and the top left follow; Escape puts it back; Renommer in its
+       right-click does the same;
+    5. restart D3B: the zone is there with its maps, in `Documents/D3B/zones/nouvelle-zone.json`, one map a line;
+    6. in a character's tab, Zone lists it first under "Mes zones" with its maps; choose it: "<name> · Zone à moi · N
+       cartes";
+    7. right-click the row, Supprimer: it goes to the system's trash, the map closes it, the character's Zone says
+       "Zone nouvelle-zone introuvable"; put it back from the trash and restart D3B: everything is back;
+    8. put a stray letter in a zone's file: the Library's "Ignorés" lists it, and it is never written over.
 - **step 3, a character's blueprint and settings** ((10)'s Zone field and (11)), on Windows x64 from `bun run app` on
   `next` or the next release, with format 4's data:
     1. play a character: its tab says "Blueprint", "Aucun blueprint" in the list, its arrow greyed, no setting; then
@@ -210,7 +227,7 @@ _Updated 2026-11-16._
        professions with their icons, by name; choose Bûcheron: marked; choose "Aucun blueprint", then Récolte
        automatique again: back to its defaults;
     7. a second character keeps its own values; restart D3B: both kept, in `Documents/D3B/characters/<server>-<id>.json`
-       (`"blueprint"` and `"settings"`, `"schema": 2`); a file written before keeps reading;
+       (`"blueprint"` and `"settings"`, `"schema": 3` since (23)); a file written before keeps reading;
     8. close a character's client: its offline tab shows the same block, and a setting changed there is kept when it
        plays again;
     9. duplicate Récolte automatique, give it to a character, then delete its file by hand and restart D3B: the list says "Blueprint
@@ -261,6 +278,18 @@ _Updated 2026-11-16._
     6. write `{"schema": 9}` in `settings.json` and restart: a notification says the file is kept as it is and why,
        and Advanced tools are off; turn them on: a notification says the setting holds until D3B closes and why, and
        the file is unchanged.
+- **step 3, a given blueprint's update** ((23)), on Windows x64 from `bun run app` on `next` or the next release:
+    1. give a character Récolte automatique and set Banque à to 80; quit D3B; in its file
+       `Documents/D3B/characters/<server>-<id>.json`, set `"blueprintVersion": 0` and add `"gone": 1` to `"settings"`;
+       start D3B: its tab says above its settings "Récolte automatique v1 : ta valeur de gone ne s'applique plus.",
+       Banque à still 80, and the file says `"schema": 3`, `"blueprintVersion": 1`, `"dropped": ["gone"]`, no `gone`;
+    2. close a client: its offline tab shows the same notice; click its ×: the notice goes, and stays gone after a
+       restart (`dropped` gone from the file); restart again: nothing changes;
+    3. choose Chasse, then Récolte automatique: no notice; the file's `blueprintVersion` follows (1), and none for a
+       copy of mine;
+    4. when a release first ships a given blueprint at version 2: a copy made before shows a blue arrow on its
+       Library row, its hover and its tab's line saying "son original a une version plus récente, v2"; a character
+       running it keeps its values, a notice naming any lost.
 - **Done in code, step 1**: `tools/extractor` reads the client's bundles, data tables, texts in five languages and flag
   enums, and writes the map positions, sub-areas, areas, zaaps, worlds and their tiles, maps, and the world graph,
   checked against one another, with the `client-<build>-format<n>.tar.gz` that `data:fetch` reads (ADR 0013); the app reads it all at start
@@ -404,9 +433,11 @@ _Updated 2026-11-16._
   [bot.md](bot.md#measure)'s items 6 and 7, is taken once (16) declares variables and events of mine. Then (14) variables, with locals, lists and the new types' editors; (15)
   functions opened in place, with their exits and the pure ones; (16) events: priority, re-arming, modes, the
   defaults, and the events of mine declared; (17) comments and reroutes; (18) Align, copy and paste,
-  search; (19) editing by keyboard; (20) my zones painted (the owner's choices of 2026-11-16: coordinates on one world, a floating toolbar of four tools, "+" in the World view and the name in Details, amber), in PRs: `zones/<id>.json` and the IPC that lists, creates, paints, renames and deletes them (done in code), then my zones in the World view and the Zone field (done in code), then the map's tools and Details; (21) routes, with an action and a forced exit per anchor, Follow the route resuming from
+  search; (19) editing by keyboard; (20) my zones painted (the owner's choices of 2026-11-16: coordinates on one world, a floating toolbar of four tools, "+" in the World view and the name in Details, amber), in PRs: `zones/<id>.json` and the IPC that lists, creates, paints, renames and deletes them (done in code), then my zones in the World view and the Zone field (done in code), then the map's tools (done in code; its checklist under "Not measured"), then a zone's Details; (21) routes, with an action and a forced exit per anchor, Follow the route resuming from
   the map the character is on, the recorder and the text import and export; (22) the `.d3b` file; (23) a given blueprint's
-  update; (24) the "Advanced tools" setting (the owner's choices of 2026-11-16: in the palette and View, no Settings
+  update (the owner's choices of 2026-11-16: a notice in the character's tab until closed, a value kept when the new
+  version accepts it, a copy saying its original is newer with a blue arrow in the Library and nothing more yet; done
+  in code, its checklist under "Not measured"); (24) the "Advanced tools" setting (the owner's choices of 2026-11-16: in the palette and View, no Settings
   view yet; `settings.json` in the player's folder; the panel gone while off; the frames followed even then; done in
   code, its checklist under "Not measured"); (25) the runtime: the flow, outcomes, variables, blocked, finished, on the
   captures, with v2's loops, Switch, lists, randomness, pure functions and the loop guard; (26) events at run time:

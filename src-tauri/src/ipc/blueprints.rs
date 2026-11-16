@@ -78,6 +78,9 @@ pub struct VariableView {
 pub struct BasedOnView {
     pub id: String,
     pub version: u32,
+    /// The version D3B now ships of its original, when newer than the one the copy was made from: the copy stays as it
+    /// is and says so (`docs/bot.md`, "The concepts").
+    pub newer: Option<u32>,
 }
 
 /// A file of the player's folder kept as it is, and why.
@@ -190,6 +193,7 @@ fn summary(blueprint: &Blueprint, given: bool) -> BlueprintSummary {
         based_on: blueprint.based_on.as_ref().map(|based| BasedOnView {
             id: based.id.0.clone(),
             version: based.version.get(),
+            newer: None,
         }),
         problems: u32::try_from(bot::problems(blueprint).len()).unwrap_or(u32::MAX),
         variables: blueprint
@@ -219,11 +223,25 @@ fn summary(blueprint: &Blueprint, given: bool) -> BlueprintSummary {
 /// version, D3B's own not reading.
 fn list(store: Option<&Store>) -> Result<BlueprintList, String> {
     let given = bot::given().map_err(|error| format!("D3B's blueprints do not read: {error}"))?;
+    Ok(listed(&given, store))
+}
+
+/// The Library's content with `given` as D3B's blueprints.
+fn listed(given: &[Blueprint], store: Option<&Store>) -> BlueprintList {
     let mut blueprints: Vec<_> = given.iter().map(|blueprint| summary(blueprint, true)).collect();
     let mut kept = Vec::new();
     if let Some(store) = store {
         let mine = store.blueprints();
-        blueprints.extend(mine.read.iter().map(|blueprint| summary(blueprint, false)));
+        blueprints.extend(mine.read.iter().map(|blueprint| {
+            let mut summary = summary(blueprint, false);
+            if let Some(based) = summary.based_on.as_mut() {
+                let original = given.iter().find(|given| given.id.0 == based.id);
+                based.newer = original
+                    .map(|original| original.version.get())
+                    .filter(|version| *version > based.version);
+            }
+            summary
+        }));
         kept = mine
             .kept
             .iter()
@@ -233,7 +251,7 @@ fn list(store: Option<&Store>) -> Result<BlueprintList, String> {
             })
             .collect();
     }
-    Ok(BlueprintList { blueprints, kept })
+    BlueprintList { blueprints, kept }
 }
 
 fn duplicate(store: Option<&Store>, id: &str, texts: CopyTexts) -> Result<String, DuplicateError> {
@@ -413,9 +431,38 @@ mod tests {
             (first.name.as_str(), first.description.as_str(), first.problems),
             ("Récolte automatique (copie)", "À moi.", 0)
         );
-        let based = first.based_on.as_ref().map(|based| (based.id.as_str(), based.version));
-        assert_eq!(based, Some(("automatic-harvest", 1)));
+        let based = first
+            .based_on
+            .as_ref()
+            .map(|based| (based.id.as_str(), based.version, based.newer));
+        assert_eq!(based, Some(("automatic-harvest", 1, None)), "its original as it was");
         assert!(folder.path().join("blueprints/recolte-automatique-copie.json").exists());
+    }
+
+    #[test]
+    fn a_copy_whose_original_has_a_newer_version_says_so_and_stays_as_it_is() {
+        let folder = Folder::new("ipc-newer-original");
+        let store = Store::new(folder.path().to_path_buf());
+        assert_eq!(
+            duplicate(Some(&store), "hunt", texts("Ma chasse")),
+            Ok("ma-chasse".to_owned())
+        );
+        let copy = |given: &[Blueprint]| {
+            let list = listed(given, Some(&store));
+            let mine = list.blueprints.into_iter().find(|it| it.id == "ma-chasse");
+            mine.and_then(|it| it.based_on)
+                .map(|based| (based.version, based.newer))
+        };
+        let mut given = bot::given().unwrap_or_else(|error| panic!("{error}"));
+        assert_eq!(copy(&given), Some((1, None)), "its original as it was");
+        // The fixture of hunt's version 2, as a later D3B ships it.
+        for blueprint in given.iter_mut().filter(|blueprint| blueprint.id.0 == "hunt") {
+            blueprint.version = blueprint.version.saturating_add(1);
+        }
+        assert_eq!(copy(&given), Some((1, Some(2))));
+        let file = std::fs::read_to_string(folder.path().join("blueprints/ma-chasse.json")).unwrap_or_default();
+        let file: serde_json::Value = serde_json::from_str(&file).unwrap_or_default();
+        assert_eq!(file["based_on"]["version"], 1, "the copy is not rewritten");
     }
 
     #[test]

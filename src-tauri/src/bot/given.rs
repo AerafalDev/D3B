@@ -22,6 +22,11 @@ pub(crate) fn given() -> Result<Vec<Blueprint>, ReadError> {
     GIVEN.iter().map(|(_, text)| json::read(text)).collect()
 }
 
+/// Whether `id` names one of D3B's blueprints, which no blueprint of mine may hold.
+pub(crate) fn is_given(id: &str) -> bool {
+    GIVEN.iter().any(|(given, _)| *given == id)
+}
+
 #[cfg(test)]
 mod tests {
     use std::collections::HashSet;
@@ -78,6 +83,7 @@ mod tests {
         let blueprints = given().unwrap_or_else(|error| panic!("{error}"));
         let ids: HashSet<_> = blueprints.iter().map(|blueprint| blueprint.id.0.as_str()).collect();
         assert_eq!(ids, HashSet::from(["automatic-harvest", "job-harvest", "hunt"]));
+        assert!(ids.iter().all(|id| is_given(id)) && !is_given("my-harvest"));
     }
 
     #[test]

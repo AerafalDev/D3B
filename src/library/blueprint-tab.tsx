@@ -112,10 +112,15 @@ export function BlueprintTab({ api, params }: IDockviewPanelProps<BlueprintParam
     ? t("library.givenLine", { version: blueprint.version })
     : blueprint.basedOn === null
       ? t("library.mineLine")
-      : t("library.mineBasedOn", {
-          name: givenText(blueprint.basedOn.id, "name", blueprint.basedOn.id),
-          version: blueprint.basedOn.version,
-        });
+      : [
+          t("library.mineBasedOn", {
+            name: givenText(blueprint.basedOn.id, "name", blueprint.basedOn.id),
+            version: blueprint.basedOn.version,
+          }),
+          blueprint.basedOn.newer == null ? null : t("library.originalNewerLine", { version: blueprint.basedOn.newer }),
+        ]
+          .filter(Boolean)
+          .join(" · ");
 
   return (
     <div ref={editor} tabIndex={-1} className="flex h-full min-h-0 flex-col outline-none">

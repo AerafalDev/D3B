@@ -34,7 +34,11 @@ describe("the Library view", () => {
       blueprints: [
         blueprint("automatic-harvest", true),
         blueprint("hunt", true),
-        blueprint("ma-chasse", false, { name: "Ma chasse", basedOn: { id: "hunt", version: 1 }, problems: 2 }),
+        blueprint("ma-chasse", false, {
+          name: "Ma chasse",
+          basedOn: { id: "hunt", version: 1, newer: null },
+          problems: 2,
+        }),
       ],
       kept: [{ path: "C:\\Users\\me\\Documents\\D3B\\blueprints\\vieille.json", why: { kind: "newer", found: 2 } }],
     });
@@ -59,6 +63,21 @@ describe("the Library view", () => {
     );
     expect(screen.getByRole("button", { name: /^Ma chasse/ }).getAttribute("title")).toBe(
       "ma-chasse's description\nBasé sur Chasse v1",
+    );
+  });
+
+  it("marks a copy whose original has a newer version, and says it in its hover", () => {
+    useLibrary.setState({
+      blueprints: [
+        blueprint("hunt", true, { version: 2 }),
+        blueprint("ma-chasse", false, { name: "Ma chasse", basedOn: { id: "hunt", version: 1, newer: 2 } }),
+      ],
+    });
+    render(<LibraryView />);
+    const row = screen.getByRole("button", { name: /^Ma chasse/ });
+    expect(row.textContent).toBe("Ma chasseSon original a une version plus récente, v2");
+    expect(row.getAttribute("title")).toBe(
+      "ma-chasse's description\nBasé sur Chasse v1\nSon original a une version plus récente, v2",
     );
   });
 

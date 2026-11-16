@@ -1,4 +1,4 @@
-import { ArrowUpRight, RotateCcw } from "lucide-react";
+import { ArrowUpRight, RotateCcw, X } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 import type { VariableView_Serialize as VariableView } from "@/bindings.ts";
@@ -21,13 +21,16 @@ interface CharacterSettingsProps {
 /**
  * A character's blueprint and its settings, at the top of its tab, live or offline (`docs/bot.md`, "In the app"; the
  * prototype's layout, the owner's choices of 2026-11-16): the blueprint in a list, none at first, an arrow opening it;
- * then each variable it sets per character, the character's own value marked by a bar and reset in one click.
+ * then each variable it sets per character, the character's own value marked by a bar and reset in one click. Above
+ * them, until the player closes it, a notice of the values a new version of D3B's blueprint could not keep (the
+ * owner, 2026-11-16).
  */
 export function CharacterSettings({ characterKey }: CharacterSettingsProps) {
   const { t } = useTranslation();
   const character = usePlayed((store) => store.played.find((one) => one.key === characterKey));
   const blueprints = useLibrary((store) => store.blueprints);
   const setBlueprint = usePlayed((store) => store.setBlueprint);
+  const dismissDropped = usePlayed((store) => store.dismissDropped);
   if (character === undefined) {
     // Not remembered yet: its file is written as soon as the game says who it is.
     return null;
@@ -77,12 +80,57 @@ export function CharacterSettings({ characterKey }: CharacterSettingsProps) {
           </button>
         </div>
       </div>
+      {blueprint !== undefined && character.dropped.length > 0 && (
+        <Dropped blueprint={blueprint} dropped={character.dropped} onClose={() => void dismissDropped(character)} />
+      )}
       {blueprint?.variables
         .filter((variable) => variable.perCharacter)
         .map((variable) => (
           <SettingRow key={variable.id} character={character} blueprint={blueprint} variable={variable} />
         ))}
     </section>
+  );
+}
+
+interface DroppedProps {
+  blueprint: BlueprintSummary;
+  dropped: string[];
+  onClose: () => void;
+}
+
+/** The settings whose values the blueprint's new version could not keep, named as the player reads them. */
+function Dropped({ blueprint, dropped, onClose }: DroppedProps) {
+  const { t, i18n } = useTranslation();
+  // A setting gone keeps its name while the translations still hold it, else its id.
+  const names = dropped.map((id) =>
+    blueprint.given
+      ? givenText(blueprint.id, `variables.${id}.name`, id)
+      : (blueprint.variables.find((variable) => variable.id === id)?.name ?? id),
+  );
+  const settings = new Intl.ListFormat(i18n.language, { type: "conjunction" }).format(names);
+  return (
+    <div
+      role="status"
+      className="flex items-start gap-2 rounded border border-[#3c3c3c] bg-[#1f2a37] px-2 py-1.5 text-xs"
+    >
+      <p className="min-w-0 flex-1">
+        {t("settings.dropped", {
+          count: dropped.length,
+          blueprint: blueprintName(blueprint),
+          version: blueprint.version,
+          settings,
+        })}
+      </p>
+      <button
+        type="button"
+        aria-label={t("settings.droppedClose")}
+        title={t("settings.droppedClose")}
+        onClick={onClose}
+        className="text-text-muted hover:bg-hover focus-visible:outline-focus flex size-5 shrink-0 items-center justify-center rounded hover:text-white focus-visible:outline-1"
+      >
+        <X aria-hidden="true" size={14} strokeWidth={1.5} />
+      </button>
+    </div>
   );
 }
 

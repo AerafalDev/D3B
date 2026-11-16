@@ -406,6 +406,8 @@
     "givenLine": "Given by D3B · v{{version}} · locked",
     "mineLine": "Mine",
     "mineBasedOn": "Mine · based on {{name}} v{{version}}",
+    "originalNewer": "Its original has a newer version, v{{version}}",
+    "originalNewerLine": "its original has a newer version, v{{version}}",
     "gone": "This blueprint is gone.",
     "unread": "The Library could not be read: {{reason}}",
     "deleteFailed": {
@@ -676,6 +678,9 @@
     "none": "No blueprint",
     "open": "Open the blueprint",
     "missing": "Blueprint {{id}} not found",
+    "dropped_one": "{{blueprint}} v{{version}}: your value of {{settings}} no longer applies.",
+    "dropped_other": "{{blueprint}} v{{version}}: your values of {{settings}} no longer apply.",
+    "droppedClose": "Close",
     "reset": "Back to the blueprint's value ({{value}})",
     "bounds": "From {{smallest}} to {{largest}}",
     "job": "Profession {{id}}",

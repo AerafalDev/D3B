@@ -143,13 +143,27 @@ describe("a blueprint's tab, its editor read-only", () => {
       id: "mine",
       name: "Ma récolte",
       given: false,
-      basedOn: { id: "hunt", version: 1 },
+      basedOn: { id: "hunt", version: 1, newer: null },
       problems: 1,
     };
     useLibrary.setState({ blueprints: [mine] });
     const { container } = tab("mine");
     expect(container.textContent).toContain("À moi · basé sur Chasse v1");
     expect(container.textContent).toContain("1 problème");
+    expect(container.textContent).not.toContain("plus récente");
+  });
+
+  it("says a copy's original has a newer version", () => {
+    const mine = {
+      ...harvest,
+      id: "mine",
+      name: "Ma récolte",
+      given: false,
+      basedOn: { id: "hunt", version: 1, newer: 3 },
+    };
+    useLibrary.setState({ blueprints: [mine] });
+    const { container } = tab("mine");
+    expect(container.textContent).toContain("À moi · basé sur Chasse v1 · son original a une version plus récente, v3");
   });
 
   it("opens the copy Duplicate made, and makes one copy for two clicks", async () => {
