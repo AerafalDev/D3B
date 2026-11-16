@@ -778,6 +778,9 @@ mod tests {
             import(Some(&store), &newer_zone),
             Err(ShareFailure::NewerZone { found: 4 })
         );
+        let wheat = r#""zones": [{"schema": 1, "id": "wheat", "name": "Blé", "world": 1, "maps": [[0, 0]]}]"#;
+        let one_zone = put("one-zone.d3b", &text.replacen("\"zones\": []", wheat, 1));
+        assert_eq!(preview(&one_zone).map(|shown| shown.zones), Ok(1), "what it holds");
         let routes = put("routes.d3b", &text.replacen("\"routes\": []", "\"routes\": [1]", 1));
         assert_eq!(preview(&routes), Err(ShareFailure::HoldsRoutes));
         assert_eq!(import(None, &newer), Err(ShareFailure::NoFolder));

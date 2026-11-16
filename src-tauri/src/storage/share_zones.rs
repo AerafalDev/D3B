@@ -60,15 +60,19 @@ pub(super) fn rename(blueprint: &mut Blueprint, renamed: &BTreeMap<Id, Id>) {
 
 impl Store {
     /// Adds `zones` among mine, the lock held: one with the name, world and maps of the zone of mine of its id is that
-    /// zone; one whose id a zone or a file of the folder holds, in any case, takes a free one; the others keep theirs.
-    /// The new ids, by the ids they had.
-    pub(super) fn add_zones_while_locked(&self, zones: Vec<Zone>) -> Result<BTreeMap<Id, Id>, StorageError> {
+    /// zone; one whose id a zone or a file of the folder holds, in any case, or one of `reserved`, takes a free one; the
+    /// others keep theirs. The new ids, by the ids they had.
+    pub(super) fn add_zones_while_locked(
+        &self,
+        zones: Vec<Zone>,
+        reserved: BTreeSet<Id>,
+    ) -> Result<BTreeMap<Id, Id>, StorageError> {
         let mut renamed = BTreeMap::new();
         if zones.is_empty() {
             return Ok(renamed);
         }
         let folder = self.zones_folder();
-        let mut taken = HashSet::new();
+        let mut taken: HashSet<Id> = reserved.into_iter().collect();
         match std::fs::read_dir(&folder) {
             Ok(entries) => {
                 for path in entries.flatten().map(|entry| entry.path()) {
@@ -89,7 +93,8 @@ impl Store {
             if mine.iter().any(|other| same(&other)) {
                 continue;
             }
-            if taken.contains(&zone.id) || !zone.id.is_well_formed() {
+            // `zone::parse` refused an id no file can be named by.
+            if taken.contains(&zone.id) {
                 let id = bot::id_for(&zone.id.0, "zone", &taken);
                 renamed.insert(std::mem::replace(&mut zone.id, id.clone()), id);
             }
@@ -200,5 +205,32 @@ mod tests {
                 .as_deref(),
             Some("{")
         );
+    }
+
+    #[test]
+    fn only_the_zones_it_names_are_imported_and_a_new_id_is_never_one_it_names() {
+        let folder = Folder::new("share-zones-named");
+        let store = Store::new(folder.path().to_path_buf());
+        let zones = folder.path().join("zones");
+        let other = zone("wheat", &[[9, 9]]);
+        zone::write(&zones, &zones.join("wheat.json"), &other).unwrap_or_else(|error| panic!("{error}"));
+        // It names `wheat` and `wheat-2`, carries only `wheat`, and carries `stray`, which it does not name.
+        let mut blueprint = harvest();
+        blueprint.variables[0].default = serde_json::json!({"zone": "wheat-2"});
+        let shared = Shared {
+            blueprint,
+            zones: vec![zone("wheat", &[[0, 0]]), zone("stray", &[[5, 5]])],
+        };
+        let id = store.import(shared).unwrap_or_else(|error| panic!("{error}"));
+        let imported = store.blueprints().read.into_iter().find(|it| it.id == id);
+        let imported = imported.unwrap_or_else(|| panic!("{id:?}"));
+        let ids: Vec<_> = named(&imported).into_iter().map(|id| id.0).collect();
+        assert_eq!(
+            ids,
+            ["bank", "wheat-2", "wheat-3"],
+            "wheat-2 still names the zone it did"
+        );
+        let ids: Vec<_> = store.zones().read.into_iter().map(|zone| zone.id.0).collect();
+        assert_eq!(ids, ["wheat-3", "wheat"], "no stray");
     }
 }

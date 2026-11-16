@@ -99,7 +99,13 @@ pub(crate) fn read(text: &str) -> Result<Shared, ShareError> {
     }
     let blueprint = bot::read(file.blueprint.get()).map_err(ShareError::Blueprint)?;
     let zones = file.zones.iter().map(|zone| zone::parse(zone.get()));
-    let zones = zones.collect::<Result<_, _>>().map_err(ShareError::Zone)?;
+    let zones: Vec<Zone> = zones.collect::<Result<_, _>>().map_err(ShareError::Zone)?;
+    // Two zones under one id would leave the blueprint naming one and the other lost, as a key given twice.
+    let mut ids = HashSet::new();
+    if let Some(twice) = zones.iter().find(|zone| !ids.insert(&zone.id)) {
+        let why = format!("the zone {} is given twice", twice.id.0);
+        return Err(ShareError::NotOfItsShape(serde::de::Error::custom(why)));
+    }
     Ok(Shared { blueprint, zones })
 }
 
@@ -167,10 +173,20 @@ impl Store {
     /// id it took. Chosen and written under one lock.
     pub(crate) fn import(&self, shared: Shared) -> Result<Id, StorageError> {
         let mut writing = self.lock();
-        let Shared { mut blueprint, zones } = shared;
-        let renamed = self.add_zones_while_locked(zones)?;
-        super::share_zones::rename(&mut blueprint, &renamed);
+        let Shared {
+            mut blueprint,
+            mut zones,
+        } = shared;
+        // Checked before a zone is written, so that a folder that does not list leaves nothing half imported.
         let taken = self.taken()?;
+        // Only the zones it names come, and a new id is never one it names without carrying it.
+        let mut named = super::share_zones::named(&blueprint);
+        zones.retain(|zone| named.contains(&zone.id));
+        for zone in &zones {
+            named.remove(&zone.id);
+        }
+        let renamed = self.add_zones_while_locked(zones, named)?;
+        super::share_zones::rename(&mut blueprint, &renamed);
         if taken.contains(&blueprint.id) || !blueprint.id.is_well_formed() {
             blueprint.id = bot::id_for(&blueprint.id.0, "blueprint", &taken);
         }
@@ -212,6 +228,28 @@ mod tests {
         assert!(text.starts_with("{\n  \"d3b\": 1,\n  \"blueprint\": {"), "{text}");
         assert!(text.ends_with("\"zones\": [],\n  \"routes\": []\n}\n"), "{text}");
         assert_eq!(read(&text).ok(), Some(shared));
+    }
+
+    #[test]
+    fn the_zones_it_shares_read_back_the_same_and_one_id_twice_is_refused() {
+        let zone = |id: &str, maps: &[[i16; 2]]| Zone {
+            schema: zone::SCHEMA,
+            id: Id(id.into()),
+            name: id.into(),
+            world: 1,
+            maps: maps.iter().copied().collect(),
+        };
+        let shared = Shared {
+            blueprint: mine("my-harvest"),
+            zones: vec![zone("wheat", &[[0, 0], [1, -2]]), zone("bank", &[])],
+        };
+        let text = write(&shared);
+        assert_eq!(read(&text).ok(), Some(shared.clone()));
+        let mut twice = shared;
+        twice.zones[1].id = Id("wheat".into());
+        assert!(
+            matches!(read(&write(&twice)), Err(ShareError::NotOfItsShape(error)) if error.to_string().contains("twice"))
+        );
     }
 
     #[test]
