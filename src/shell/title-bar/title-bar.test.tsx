@@ -15,6 +15,16 @@ const window = vi.hoisted(() => ({
 }));
 
 vi.mock("@/lib/tauri.ts", () => ({ isTauri: () => true }));
+// The settings' save, faked: Advanced tools are turned on or off from View.
+const saved = vi.hoisted(() => ({ settings: [] as unknown[] }));
+vi.mock("@/bindings.ts", () => ({
+  commands: {
+    setAppSettings: async (settings: unknown) => {
+      saved.settings.push(settings);
+      return null;
+    },
+  },
+}));
 vi.mock("@/lib/platform.ts", () => ({ platform: () => window.platform }));
 vi.mock("@tauri-apps/api/window", () => ({
   getCurrentWindow: () => ({
@@ -31,6 +41,7 @@ vi.mock("@tauri-apps/api/window", () => ({
 
 const { TitleBar } = await import("./title-bar.tsx");
 const { useLayout } = await import("../layout-store.ts");
+const { useAppSettings } = await import("@/settings/app-settings.ts");
 
 const shown = { primarySideBar: true, panel: true, secondarySideBar: true };
 
@@ -57,6 +68,8 @@ describe("the title bar", () => {
     window.maximized = false;
     vi.clearAllMocks();
     useLayout.setState({ visible: { ...shown }, paletteOpen: false });
+    useAppSettings.setState({ advancedTools: true });
+    saved.settings.length = 0;
   });
   afterEach(cleanup);
 
@@ -134,5 +147,36 @@ describe("the title bar", () => {
     expect(panel.getAttribute("aria-checked")).toBe("true");
     fireEvent.click(panel);
     expect(useLayout.getState().visible).toEqual({ ...shown, panel: false });
+  });
+
+  it("offers neither the panel's toggle nor View's Panel without Advanced tools", () => {
+    useAppSettings.setState({ advancedTools: false });
+    renderBar();
+    expect(screen.queryByRole("button", { name: "Toggle the panel" })).toBeNull();
+    openMenu("View");
+    expect(screen.queryByRole("menuitemcheckbox", { name: /^Panel/ })).toBeNull();
+    expect(screen.getByRole("menuitemcheckbox", { name: "Advanced tools" }).getAttribute("aria-checked")).toBe("false");
+  });
+
+  it("turns Advanced tools on from View, which shows and saves them", async () => {
+    useAppSettings.setState({ advancedTools: false });
+    useLayout.setState({ visible: { ...shown, panel: false } });
+    renderBar();
+    openMenu("View");
+    fireEvent.click(screen.getByRole("menuitemcheckbox", { name: "Advanced tools" }));
+    expect(useAppSettings.getState().advancedTools).toBe(true);
+    expect(useLayout.getState().visible.panel).toBe(true);
+    await vi.waitFor(() => expect(saved.settings).toEqual([{ advancedTools: true }]));
+    expect(screen.getByRole("button", { name: "Toggle the panel" })).toBeTruthy();
+  });
+
+  it("turns Advanced tools off from View, which hides the panel", async () => {
+    renderBar();
+    openMenu("View");
+    const advanced = screen.getByRole("menuitemcheckbox", { name: "Advanced tools" });
+    expect(advanced.getAttribute("aria-checked")).toBe("true");
+    fireEvent.click(advanced);
+    expect(useLayout.getState().visible.panel).toBe(false);
+    await vi.waitFor(() => expect(saved.settings).toEqual([{ advancedTools: false }]));
   });
 });

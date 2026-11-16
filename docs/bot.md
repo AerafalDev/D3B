@@ -329,9 +329,9 @@ deletion is not confirmed, undo brings it back. Each graph gives the picker its 
   `ZoneField` (`src/zone/`), which step 3's PR 11 puts in a character's tab; the World store holds the choice on the
   map under way, for whom and what takes the sub-area, and the tab active when it began, brought back when it ends;
   choosing on the map also shows the sub-area chosen there, and a map's hover outlines its sub-area dashed in white.
-- The panel's **History** (step 4) follows the active character's tab. The **Protocol** view will show only with an
-  "Advanced tools" setting, off by default (a change to `docs/shell.md`; step 2's checklist items that read the
-  inspector then begin by turning it on).
+- The panel's **History** (step 4) follows the active character's tab. The **Protocol** view shows only with the
+  "Advanced tools" setting, off by default (step 3's PR 24, [shell.md](shell.md#settings)); step 2's checklist items
+  that read the inspector begin by turning it on.
 
 The prototype fixed the model and the layout; each PR polishes its look, the World more beautiful and modern (the
 owner, 2026-11-13).
@@ -368,6 +368,9 @@ copy's is (a number when any file of the folder holds it, in any case), and keep
 `paint_zone` (a stroke: the maps added, or taken away by the eraser, saved at once) and `delete_zone` (to the system's
 trash, without asking, as Forget). A file that does not read, of a newer schema, or whose name is not its id is kept
 untouched, listed with why, never written over nor sent to the trash.
+The app's own settings are `settings.json` at the folder's root (schema 1, step 3's PR 24,
+[shell.md](shell.md#settings)), written whole under the same lock; one that does not read gives the defaults, is
+reported at start and is never written over.
 
 A blueprint's file (`bot::json`, schema 1, the owner's choices of 2026-11-13): its `id`, `name`, `description`,
 `version` and `based_on`; its `variables` (`type`, `default`, `bounds`, `per_character`, `memory`, both allowed at once
