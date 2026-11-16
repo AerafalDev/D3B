@@ -4,9 +4,15 @@
 
 mod atomic;
 mod character;
+mod share;
 mod store;
 
+pub(crate) use atomic::write as write_whole;
 pub(crate) use character::{Played, SCHEMA as CHARACTER_SCHEMA, key_of};
+pub(crate) use share::{
+    EXTENSION as SHARE_EXTENSION, ShareError, file_name as shared_file_name, read_file as read_shared,
+    write as write_shared,
+};
 pub(crate) use store::{StorageError, Store, Why};
 
 #[cfg(test)]

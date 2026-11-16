@@ -193,9 +193,9 @@ The shell's parts (`docs/shell.md`); no information is shown twice:
   the Pods gauge at the current step's target, and Play, Pause and Stop as the tab's editor actions.
 - **Library** view: "Given by D3B", then "Mine"; a row opens the blueprint's editor. A row is its name alone, its
   description or what a copy is based on in its hover, an amber mark with how many problems it has; a right-click
-  offers Duplicate; last, folded, "Ignored": the player's files kept as they are, blueprints' and characters', each
+  offers Duplicate and Export…; Import… in the view's header (step 3's PR 22); last, folded, "Ignored": the player's files kept as they are, blueprints' and characters', each
   with why in its hover (the owner, 2026-11-14, mock-up 9). A blueprint's tab is its editor, D3B's read-only and mine
-  edited in its graph (step 3's PR 12): on top its name, whose it is, its problems, its description and Duplicate; under them My Blueprint (the event
+  edited in its graph (step 3's PR 12): on top its name, whose it is, its problems, its description, Duplicate and Export; under them My Blueprint (the event
   graph, the functions, the variables with an eye on those set per character, a variable's help and default in its
   hover) and the graph chosen in it, and Details on the right (the owner, 2026-11-14): a node chosen says its sentence,
   its description, the step from which the bot does it, its inputs' values (or "wired"), what an unlinked Failed does,
@@ -296,6 +296,19 @@ name is not its id, in any case (a copy made by hand: the owner, 2026-11-14), is
 and never written over, as is one of mine holding the id of one of D3B's. The temporary file is flushed to the disk
 before the rename, one save at a time. The folder is the system's documents folder's `D3B`, else the app's data
 folder; the IPC lists D3B's blueprints, then mine, and the files kept with a typed reason the interface words.
+The **`.d3b` file** (step 3's PR 22, the owner's choices of 2026-11-16, ADR 0017) is one indented JSON, `{"d3b": 1,
+"blueprint": {…}, "zones": [], "routes": []}`: its format read first, then the blueprint's own file, read and checked
+as one of the folder; zones and routes empty until PRs 20 and 21 fill them with those the blueprint names (at import,
+one identical to mine reused, another under a taken id given a free one, the blueprint rewritten to name it), and a file
+that holds some refused by a version that cannot import them. Export… (a row's right-click in the Library, or beside
+Duplicate in its tab) writes it where the player chooses in the system's save dialog, named by the blueprint; one of
+D3B's goes as mine based on it, in the player's words, under an id made from its name. Import… (the Library's header),
+or a file dropped anywhere on the window, opens a **preview** first, a dialog: the name, description, what it is based
+on, the settings per character then the other variables with their type and default, its problems in words, and what
+it holds (graphs, nodes, zones, routes); Import puts it among mine under its own id when no blueprint and no file of the
+folder holds it, in any case, else a free one, never over a file, and opens its tab; Cancel leaves all as it was. A file
+not named `.d3b`, that does not read, not of its shape, or of a newer format or schema is refused with why in a
+notification. The dialogs are `tauri-plugin-dialog`'s, called from Rust only: the webview has no permission for them.
 A character played is `characters/<server>-<id>.json` (its id carries its server in its low 16 bits,
 `artifacts/studies/character-key.md`): its id, name, level, breed, sex, when and on which map it was last seen,
 written when it is first known, when who it is changes, on another map a minute after its last write, when
