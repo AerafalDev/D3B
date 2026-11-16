@@ -11,7 +11,7 @@ vi.mock("sonner", () => ({ toast: { error: (text: string) => backEnd.toasts.push
 
 const { useGraphs } = await import("./graph-store.ts");
 
-const MOVE: GraphEdit_Deserialize = { edit: "move", node: "n1", position: [0, 0] };
+const MOVE: GraphEdit_Deserialize = { edit: "move", nodes: [{ node: "n1", position: [0, 0] }] };
 const SAVED = { id: "mine", graphs: [], problems: [] };
 const READ_AGAIN = { id: "mine", graphs: [], problems: [{ kind: "eventTwice" }] };
 

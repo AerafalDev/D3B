@@ -24,8 +24,24 @@ pub enum GraphEdit {
         position: [i32; 2],
         wired_to: Option<DraggedPin>,
     },
-    /// A node put at `position`.
-    Move { node: String, position: [i32; 2] },
+    /// Nodes put elsewhere, dragged together: one change, undone at once.
+    Move { nodes: Vec<MovedNode> },
+    /// Nodes, with every wire to or from them, and wires, chosen together.
+    Delete { nodes: Vec<String>, wires: Vec<WireEnds> },
+}
+
+/// A node and where it was put.
+#[derive(Debug, Clone, PartialEq, Eq, Deserialize, Type)]
+pub struct MovedNode {
+    pub node: String,
+    pub position: [i32; 2],
+}
+
+/// A wire by its ends, `[node, pin]` each.
+#[derive(Debug, Clone, PartialEq, Eq, Deserialize, Type)]
+pub struct WireEnds {
+    pub from: [String; 2],
+    pub to: [String; 2],
 }
 
 /// The pin a wire was dragged from: an input's, or an output's.
@@ -47,6 +63,7 @@ pub enum EditError {
     Locked,
     NoSuchGraph,
     NoSuchNode,
+    NoSuchWire,
     NoSuchPin,
     WrongWay,
     OtherType,
@@ -75,6 +92,7 @@ impl From<Refusal> for EditError {
         match refusal {
             Refusal::NoSuchGraph => Self::NoSuchGraph,
             Refusal::NoSuchNode => Self::NoSuchNode,
+            Refusal::NoSuchWire => Self::NoSuchWire,
             Refusal::NoSuchPin => Self::NoSuchPin,
             Refusal::WrongWay => Self::WrongWay,
             Refusal::OtherType => Self::OtherType,
@@ -107,9 +125,18 @@ impl From<GraphEdit> for bot::Edit {
                     (End(Id(pin.node), Id(pin.pin)), side)
                 }),
             },
-            GraphEdit::Move { node, position } => Self::Move {
-                node: Id(node),
-                position,
+            GraphEdit::Move { nodes } => Self::Move {
+                nodes: nodes.into_iter().map(|it| (Id(it.node), it.position)).collect(),
+            },
+            GraphEdit::Delete { nodes, wires } => Self::Delete {
+                nodes: nodes.into_iter().map(Id).collect(),
+                wires: wires
+                    .into_iter()
+                    .map(|it| bot::Wire {
+                        from: end(it.from),
+                        to: end(it.to),
+                    })
+                    .collect(),
             },
         }
     }
@@ -142,6 +169,43 @@ pub async fn edit_blueprint(
             reason: error.to_string(),
         })
     })
+}
+
+/// Undo, or redo, of the last change to my blueprint `id`, written at once; its graphs then.
+fn step(store: &Store, id: &str, back: bool) -> Result<BlueprintGraphs, EditError> {
+    let blueprint = if back {
+        store.undo_blueprint(id)
+    } else {
+        store.redo_blueprint(id)
+    };
+    Ok(graphs(&blueprint?))
+}
+
+async fn stepped(app: tauri::AppHandle, id: String, back: bool) -> Result<BlueprintGraphs, EditError> {
+    let done = tauri::async_runtime::spawn_blocking(move || {
+        let files = app.state::<PlayersFiles>();
+        step(files.store().ok_or(EditError::NoFolder)?, &id, back)
+    });
+    done.await.unwrap_or_else(|error| {
+        Err(EditError::NotSaved {
+            reason: error.to_string(),
+        })
+    })
+}
+
+/// Undo: my blueprint `id` as it was before its last change, in any of its graphs, saved at once (the owner,
+/// 2026-11-16); its graphs and problems then, as they are when nothing is left to undo.
+#[tauri::command]
+#[specta::specta]
+pub async fn undo_blueprint(app: tauri::AppHandle, id: String) -> Result<BlueprintGraphs, EditError> {
+    stepped(app, id, true).await
+}
+
+/// Redo: my blueprint `id` as it was before its last undo, saved at once; its graphs and problems then.
+#[tauri::command]
+#[specta::specta]
+pub async fn redo_blueprint(app: tauri::AppHandle, id: String) -> Result<BlueprintGraphs, EditError> {
+    stepped(app, id, false).await
 }
 
 #[cfg(test)]
@@ -180,13 +244,17 @@ mod tests {
         assert_eq!(store.blueprints().read[0].graphs[0].nodes.len(), 6, "written at once");
         let wire = parsed(r#"{"edit": "wire", "from": ["n3", "done"], "to": ["n4", "run"]}"#);
         assert!(change(&store, "my-harvest", "events", wire).is_ok());
-        let moved = parsed(r#"{"edit": "move", "node": "n4", "position": [-5, 9]}"#);
+        let moved = parsed(r#"{"edit": "move", "nodes": [{"node": "n4", "position": [-5, 9]}]}"#);
         let drawn = change(&store, "my-harvest", "events", moved).unwrap_or_else(|error| panic!("{error:?}"));
         let n4 = drawn.graphs[0].nodes.iter().find(|node| node.id == "n4");
         assert_eq!(
             (n4.and_then(|node| node.position), drawn.graphs[0].wires.len()),
             (Some([-5, 9]), 4)
         );
+        let delete =
+            parsed(r#"{"edit": "delete", "nodes": ["n4"], "wires": [{"from": ["n1", "then"], "to": ["n3", "run"]}]}"#);
+        let drawn = change(&store, "my-harvest", "events", delete).unwrap_or_else(|error| panic!("{error:?}"));
+        assert_eq!((drawn.graphs[0].nodes.len(), drawn.graphs[0].wires.len()), (5, 2));
     }
 
     #[test]
@@ -203,5 +271,23 @@ mod tests {
             assert_eq!(change(&store, id, "events", wrong()), Err(error), "{id}");
         }
         assert_eq!(std::fs::read_to_string(&path).ok(), before);
+    }
+
+    #[test]
+    fn undo_and_redo_give_the_graphs_back_as_they_were_and_refuse_d3bs() {
+        let (_folder, store) = mine("ipc-edit-undo");
+        let delete = parsed(r#"{"edit": "delete", "nodes": ["n3"], "wires": []}"#);
+        assert!(change(&store, "my-harvest", "events", delete).is_ok());
+        let counted = |drawn: Result<BlueprintGraphs, EditError>| {
+            let drawn = drawn.unwrap_or_else(|error| panic!("{error:?}"));
+            (drawn.graphs[0].nodes.len(), drawn.graphs[0].wires.len())
+        };
+        assert_eq!(
+            counted(step(&store, "my-harvest", true)),
+            (5, 2),
+            "the node and its wires back"
+        );
+        assert_eq!(counted(step(&store, "my-harvest", false)), (4, 0));
+        assert_eq!(step(&store, "automatic-harvest", true).err(), Some(EditError::Locked));
     }
 }
