@@ -41,7 +41,8 @@ struct Counts {
     blocked_otherwise: u32,
     /// Connections where the character lost a fight.
     with_a_loss: u32,
-    /// Times the run asked to be woken by the clock and was, and the notices of a life below half after its wait.
+    /// Times the run asked to be woken by the clock and was (each minute's end, and each second while waiting for its
+    /// life), and the notices of a life below half after its wait.
     wakes: u32,
     lows: usize,
 }
@@ -78,15 +79,19 @@ fn the_owners_game_captures_run_a_blueprint_on_each_character() {
             let after = run.advance(Some(&view), &Nothing, now).clone();
             if before != after
                 && let State::Blocked(blocked) = &after
+                && blocked.reason == Reason::Died
             {
-                if blocked.reason == Reason::Died {
-                    counts.died += 1;
-                    counts.died_at_the_fights_end += u32::from(matches!(message, Message::FightEndEvent(_)));
-                } else {
-                    counts.blocked_otherwise += 1;
-                    eprintln!("blocked: {:?}", blocked.reason);
-                }
+                counts.died_at_the_fights_end += u32::from(matches!(message, Message::FightEndEvent(_)));
             }
+        }
+        // How each run ended, wherever it stopped: at a message or woken by the clock.
+        match run.state() {
+            State::Blocked(blocked) if blocked.reason == Reason::Died => counts.died += 1,
+            State::Blocked(blocked) => {
+                counts.blocked_otherwise += 1;
+                eprintln!("blocked: {:?}", blocked.reason);
+            }
+            _ => {}
         }
         counts.lows += run.notices().len();
         if chosen {
@@ -104,12 +109,6 @@ fn the_owners_game_captures_run_a_blueprint_on_each_character() {
     assert!(
         counts.runs > 0 && counts.loops > 0 && counts.wakes > 0,
         "nothing ran: {counts:?}"
-    );
-    // Each turn of the loop waits one minute on the clock, once.
-    let turns = counts.loops + counts.lows as u64;
-    assert!(
-        u64::from(counts.wakes) <= turns + u64::from(counts.runs),
-        "woken more than once a turn: {counts:?}"
     );
     assert_eq!(counts.blocked_otherwise, 0, "blocked by something else than a death");
     assert_eq!(

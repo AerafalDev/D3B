@@ -549,6 +549,7 @@ fn a_node_that_waits_wakes_on_the_clock_and_starts_over_after_an_absence() {
     run.advance(Some(&view), &Nothing, at);
     run.advance(Some(&view), &Nothing, second(1_000));
     assert_eq!(run.advance(None, &Nothing, second(2_000)), &State::Running);
+    assert_eq!(run.wake(), None, "away, it waits on nothing");
     run.advance(Some(&view), &Nothing, second(2_500));
     assert_eq!(run.wake(), Some(second(3_500)));
     assert_eq!(run.advance(Some(&view), &Nothing, second(3_500)), &State::Finished);

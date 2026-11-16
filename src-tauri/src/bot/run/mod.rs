@@ -173,7 +173,7 @@ impl Run {
 
     /// Runs nodes at `now` until the flow waits, ends or blocks, with what `knows` answers. Without a `view`, the
     /// character is away: nothing runs, and the node at work starts over once it is back. A fight lost since the run
-    /// first saw the character is its death, which blocks it.
+    /// first saw the character (or last saw it, after a count started again) is its death, which blocks it.
     pub(crate) fn advance(&mut self, view: Option<&View>, knows: &dyn Knows, now: Instant) -> &State {
         match self.state {
             State::Ready => self.state = State::Running,
@@ -181,13 +181,18 @@ impl Run {
             State::Paused | State::Finished | State::Blocked(_) => return &self.state,
         }
         let Some(view) = view else {
+            // The node at work starts over once the character is back: it waits on nothing meanwhile.
             self.again = true;
+            self.wake = None;
             return &self.state;
         };
-        if *self.lost.get_or_insert(view.fights.lost) < view.fights.lost {
+        // The view counts since the character was chosen: a new connection or selection starts it again from 0.
+        let lost = self.lost.get_or_insert(view.fights.lost);
+        if view.fights.lost > *lost {
             self.block(Reason::Died);
             return &self.state;
         }
+        *lost = view.fights.lost;
         if std::mem::take(&mut self.again)
             && let Some(chain) = self.chain()
         {

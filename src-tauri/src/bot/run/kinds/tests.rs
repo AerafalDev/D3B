@@ -121,7 +121,11 @@ fn wait_for_life_waits_on_the_life_seen() {
         &State::Running,
         "89 %"
     );
-    assert_eq!(waits.wake(), None, "no clock: the observed state wakes it");
+    assert_eq!(
+        waits.wake(),
+        Some(at + Duration::from_secs(1)),
+        "read again each second: it rises with no message"
+    );
     assert_eq!(
         waits.advance(Some(&View::default()), &Map1, at),
         &State::Running,
@@ -145,13 +149,19 @@ fn an_action_waits_for_its_check_and_is_done_once_it_holds() {
         "the player walked there"
     );
 
-    let mut harvest = run(&one(
-        "harvest_until",
-        r#"{"zone": {"sub_area": 445}, "pods": 90}"#,
-        "done",
-    ));
-    assert_eq!(harvest.advance(Some(&view(1, 200, 899)), &Map1, at), &State::Running);
-    assert_eq!(harvest.advance(Some(&view(1, 200, 900)), &Map1, at), &State::Finished);
+    for kind in ["harvest_until", "hunt_until"] {
+        let mut until = run(&one(kind, r#"{"zone": {"sub_area": 445}, "pods": 90}"#, "done"));
+        assert_eq!(
+            until.advance(Some(&view(1, 200, 899)), &Map1, at),
+            &State::Running,
+            "{kind}"
+        );
+        assert_eq!(
+            until.advance(Some(&view(1, 200, 900)), &Map1, at),
+            &State::Finished,
+            "{kind}"
+        );
+    }
 
     let mut bank = run(&one("go_to_bank", r#"{"bank": {"map": 3}}"#, "done"));
     assert_eq!(bank.advance(Some(&view(1, 200, 0)), &Map1, at), &State::Running);
@@ -182,6 +192,18 @@ fn notify_tells_its_text_and_goes_on() {
         .collect();
     assert_eq!(told, [("Goal reached".to_owned(), at)]);
     assert_eq!(notify.notices(), [], "told once");
+
+    // A Notify wired back to itself: it runs without pause, and only the last notices wait.
+    let looped = read(
+        r#"{"schema": 1, "id": "l", "name": "L", "version": 1, "graphs": [{"id": "events", "name": "Events",
+  "nodes": [{"id": "start", "kind": "on_start"}, {"id": "say", "kind": "notify", "inputs": {"text": "again"}}],
+  "wires": [{"from": ["start", "then"], "to": ["say", "run"]}, {"from": ["say", "done"], "to": ["say", "run"]}]}]}"#,
+    )
+    .unwrap_or_else(|error| panic!("{error}"));
+    let mut looped = run(&looped);
+    looped.advance(Some(&view(1, 200, 0)), &Map1, at);
+    assert_eq!(failed(&looped), Some(&Reason::WithoutPause));
+    assert_eq!(looped.notices().len(), crate::bot::run::Notice::KEPT);
 }
 
 /// On start → If [`query` ≥ `b`] → True: Finish; False wired to nothing.
@@ -253,6 +275,14 @@ fn a_fight_lost_after_the_run_first_saw_the_character_blocks_it_dead() {
     assert_eq!(waiting.advance(Some(&lost(2)), &Map1, at), &State::Running);
     waiting.advance(Some(&lost(3)), &Map1, at);
     assert_eq!(failed(&waiting), Some(&Reason::Died));
+
+    // Back from a new connection, or chosen again, the count starts from 0: the next fight lost is a death too.
+    let mut back = run(&one("go_to_zone", r#"{"zone": {"sub_area": 445}}"#, "done"));
+    back.advance(Some(&lost(1)), &Map1, at);
+    assert_eq!(back.advance(None, &Map1, at), &State::Running);
+    assert_eq!(back.advance(Some(&lost(0)), &Map1, at), &State::Running);
+    back.advance(Some(&lost(1)), &Map1, at);
+    assert_eq!(failed(&back), Some(&Reason::Died));
 }
 
 #[test]
