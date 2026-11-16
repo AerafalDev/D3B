@@ -18,9 +18,9 @@ interface PlayedStore {
    */
   forget: (character: PlayedCharacter) => Promise<void>;
   /** The character runs `blueprint`, or none; the list follows, a failure said in a notification. */
-  setBlueprint: (character: PlayedCharacter, blueprint: string | null) => Promise<void>;
+  setBlueprint: (character: PlayedCharacter, blueprint: string | null) => Promise<boolean>;
   /** The character's own value of `variable`, as JSON, or `null` to reset it to the blueprint's default. */
-  setSetting: (character: PlayedCharacter, variable: string, value: string | null) => Promise<void>;
+  setSetting: (character: PlayedCharacter, variable: string, value: string | null) => Promise<boolean>;
   /** Reads the list at each change, then once; returns what stops following. */
   follow: () => () => void;
 }
@@ -45,14 +45,16 @@ function settingFailure(error: SettingError, name: string): string {
   return i18next.t(`settings.failed.${error.kind}`, { name });
 }
 
-/** Runs a change of a character's file, saying a failure in a notification. */
-async function changing(name: string, change: () => Promise<null>): Promise<void> {
+/** Runs a change of a character's file, saying a failure in a notification; whether it was made. */
+async function changing(name: string, change: () => Promise<null>): Promise<boolean> {
   try {
     await change();
+    return true;
   } catch (error) {
     // The command rejects with its `SettingError`; anything else is a bug, said as it came.
     const failure = error as SettingError;
     toast.error(typeof failure?.kind === "string" ? settingFailure(failure, name) : String(error));
+    return false;
   }
 }
 

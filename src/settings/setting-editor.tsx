@@ -14,8 +14,8 @@ interface SettingEditorProps {
   variable: VariableView;
   /** The value shown as JSON: the character's own, else the default; `null` when neither is set. */
   value: string | null;
-  /** A new value as JSON, which the back end checks against the setting's type and bounds. */
-  onChange: (value: string) => void;
+  /** A new value as JSON, which the back end checks against the setting's type and bounds; whether it was kept. */
+  onChange: (value: string) => Promise<boolean>;
   /** Whose setting it is, as the map's banner says while choosing a Zone. */
   who: string;
   /** What the editor is named by, for assistive technology. */
@@ -30,7 +30,7 @@ export function SettingEditor({ variable, value, onChange, who, label }: Setting
   const { t, i18n } = useTranslation();
   switch (variable.valueType) {
     case "zone":
-      return <ZoneField value={zoneValue(value)} onChange={(zone) => onChange(JSON.stringify(zone))} who={who} />;
+      return <ZoneField value={zoneValue(value)} onChange={(zone) => void onChange(JSON.stringify(zone))} who={who} />;
     case "percentage":
     case "number":
       return <NumberEditor variable={variable} value={value} onChange={onChange} label={label} />;
@@ -39,13 +39,13 @@ export function SettingEditor({ variable, value, onChange, who, label }: Setting
         <Switch
           aria-label={label}
           checked={value === "true"}
-          onCheckedChange={(checked) => onChange(JSON.stringify(checked))}
+          onCheckedChange={(checked) => void onChange(JSON.stringify(checked))}
         />
       );
     case "text":
       return <TextEditor value={value} onChange={onChange} label={label} />;
     case "job":
-      return <JobSelect value={jobValue(value)} onChange={(job) => onChange(JSON.stringify(job))} label={label} />;
+      return <JobSelect value={jobValue(value)} onChange={(job) => void onChange(JSON.stringify(job))} label={label} />;
     default:
       return (
         <p className="flex h-[26px] items-center gap-2 text-xs">
@@ -92,23 +92,26 @@ const FIELD =
   "h-[26px] min-w-0 rounded border border-[#3c3c3c] bg-[#181818] px-2 text-xs text-white outline-0 focus:border-focus aria-invalid:border-[#f48771]";
 
 /**
- * A whole number within the setting's bounds, sent when the field is left or Enter is pressed; one out of them or not
- * whole is marked and sent nowhere, and Escape or leaving puts the value back.
+ * A whole number within the setting's bounds (a percentage's 0 to 100 without them), sent when the field is left or
+ * Enter is pressed; one out of them or not whole is marked and sent nowhere, and Escape, leaving, or the back end's
+ * refusal puts the value back. An empty field is marked only when a value was there.
  */
 function NumberEditor({ variable, value, onChange, label }: Omit<SettingEditorProps, "who">) {
   const { t } = useTranslation();
   const [draft, setDraft] = useState(value ?? "");
   useEffect(() => setDraft(value ?? ""), [value]);
-  const [smallest, largest] = variable.bounds ?? [variable.valueType === "percentage" ? 0 : null, null];
+  const percentage = variable.valueType === "percentage";
+  const [smallest, largest] = variable.bounds ?? (percentage ? [0, 100] : [null, null]);
+  const empty = draft.trim() === "";
   const number = Number(draft);
   const valid =
-    draft.trim() !== "" &&
+    !empty &&
     Number.isInteger(number) &&
     (smallest === null || number >= smallest) &&
     (largest === null || number <= largest);
   const commit = () => {
     if (valid && String(number) !== value) {
-      onChange(String(number));
+      void onChange(String(number)).then((kept) => kept || setDraft(value ?? ""));
     } else if (!valid) {
       setDraft(value ?? "");
     }
@@ -120,7 +123,7 @@ function NumberEditor({ variable, value, onChange, label }: Omit<SettingEditorPr
         type="text"
         inputMode="numeric"
         aria-label={label}
-        aria-invalid={!valid}
+        aria-invalid={!valid && !(empty && value === null)}
         title={bounds}
         value={draft}
         onChange={(event) => setDraft(event.target.value)}
@@ -134,7 +137,7 @@ function NumberEditor({ variable, value, onChange, label }: Omit<SettingEditorPr
         }}
         className={`${FIELD} w-[72px] text-right tabular-nums`}
       />
-      {variable.valueType === "percentage" && <span className="text-text-muted">%</span>}
+      {percentage && <span className="text-text-muted">%</span>}
     </span>
   );
 }
@@ -146,7 +149,7 @@ function TextEditor({ value, onChange, label }: Omit<SettingEditorProps, "who" |
   useEffect(() => setDraft(current), [current]);
   const commit = () => {
     if (draft !== current) {
-      onChange(JSON.stringify(draft));
+      void onChange(JSON.stringify(draft)).then((kept) => kept || setDraft(current));
     }
   };
   return (

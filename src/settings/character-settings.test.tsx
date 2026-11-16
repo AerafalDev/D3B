@@ -19,12 +19,14 @@ vi.mock("@/shell/parts/editor-store.ts", () => ({
   openEditor: (editor: { id: string }) => editors.opened.push(editor.id),
   useEditors: { getState: () => ({ active: null, api: null }) },
 }));
+vi.mock("@tauri-apps/api/core", () => ({ convertFileSrc: (path: string) => `asset://${path}` }));
 const toasts = vi.hoisted(() => ({ errors: [] as string[] }));
 vi.mock("sonner", () => ({ toast: { error: (text: string) => toasts.errors.push(text) } }));
 
 const { CharacterSettings } = await import("./character-settings.tsx");
 const { usePlayed } = await import("@/characters/played/played-store.ts");
 const { useLibrary } = await import("@/library/library-store.ts");
+const { useWorld } = await import("@/world/world-store.ts");
 
 const variable = (id: string, valueType: string, value: string | null, bounds: [number, number] | null = null) =>
   ({
@@ -60,6 +62,28 @@ const MINE: BlueprintSummary_Serialize = {
   name: "Mine",
   given: false,
   variables: [variable("night", "bool", "false"), variable("note", "text", '"hi"')],
+};
+const JOBS: BlueprintSummary_Serialize = {
+  ...MINE,
+  id: "jobs",
+  name: "Jobs",
+  variables: [variable("job", "job", null)],
+};
+const names = (fr: string) => ({ fr, en: fr });
+const ATLAS = {
+  worlds: [],
+  jobs: [
+    { id: 24, name: names("Mineur"), icon: "icons/jobs/24.png" },
+    { id: 2, name: names("Bûcheron"), icon: null },
+  ],
+  resources: [],
+  areas: [
+    {
+      id: 0,
+      name: names("Astrub"),
+      subAreas: [{ id: 97, name: names("Forêt d'Astrub"), level: 20, maps: [], resources: [], monsters: 0 }],
+    },
+  ],
 };
 
 function kalyx(blueprint: string | null, settings: Record<string, string> = {}) {
@@ -97,10 +121,11 @@ describe("a character's blueprint and settings", () => {
   beforeEach(() => {
     backEnd.blueprint.mockReset().mockResolvedValue(null);
     backEnd.setting.mockReset().mockResolvedValue(null);
-    backEnd.atlas.mockReset().mockResolvedValue({ worlds: [], jobs: [], resources: [], areas: [] });
+    backEnd.atlas.mockReset().mockResolvedValue(ATLAS);
+    useWorld.setState({ read: null, picked: null, world: 1, choosing: null });
     editors.opened = [];
     toasts.errors = [];
-    useLibrary.setState({ blueprints: [HARVEST, MINE] });
+    useLibrary.setState({ blueprints: [HARVEST, MINE, JOBS] });
   });
   afterEach(cleanup);
 
@@ -115,7 +140,7 @@ describe("a character's blueprint and settings", () => {
     await shown(null);
     open("Blueprint");
     const options = screen.getAllByRole("option").map((option) => option.textContent);
-    expect(options).toEqual(["Aucun blueprint", "Récolte automatique", "Mine"]);
+    expect(options).toEqual(["Aucun blueprint", "Récolte automatique", "Mine", "Jobs"]);
     fireEvent.click(screen.getByRole("option", { name: "Récolte automatique" }));
     expect(backEnd.blueprint).toHaveBeenCalledWith("294-2", "automatic-harvest");
     cleanup();
@@ -157,9 +182,60 @@ describe("a character's blueprint and settings", () => {
     expect(pods.value).toBe("90");
     fireEvent.change(pods, { target: { value: "12.5" } });
     fireEvent.keyDown(pods, { key: "Enter" });
+    fireEvent.change(pods, { target: { value: "101" } });
+    fireEvent.keyDown(pods, { key: "Enter" });
+    expect(pods.value).toBe("90");
+    fireEvent.change(pods, { target: { value: "70" } });
+    fireEvent.keyDown(pods, { key: "Escape" });
+    expect(pods.value).toBe("90");
+    fireEvent.blur(pods);
+    expect(backEnd.setting).not.toHaveBeenCalled();
     fireEvent.change(pods, { target: { value: "10" } });
     fireEvent.keyDown(pods, { key: "Enter" });
     expect(backEnd.setting.mock.calls).toEqual([["294-2", "pods", "10"]]);
+  });
+
+  it("puts a number back when the back end refuses it", async () => {
+    backEnd.setting.mockRejectedValue({ kind: "notSaved", reason: "disk full" });
+    await shown("automatic-harvest");
+    const pods = screen.getByRole("textbox", { name: "Banque à" }) as HTMLInputElement;
+    fireEvent.change(pods, { target: { value: "50" } });
+    await act(async () => {
+      fireEvent.keyDown(pods, { key: "Enter" });
+    });
+    expect(pods.value).toBe("90");
+    expect(toasts.errors).toEqual(["Rien n'a changé pour Kalyx : disk full"]);
+  });
+
+  it("says the character's Zone, and sends the one chosen in its list", async () => {
+    await shown("automatic-harvest", { zone: '{"sub_area":97}' });
+    const zone = screen.getByRole("combobox", { name: "Zone" });
+    expect(zone.textContent).toContain("Forêt d'Astrub");
+    expect(zone.textContent).toContain("Astrub · niv. 20");
+    cleanup();
+    await shown("automatic-harvest");
+    fireEvent.click(screen.getByRole("combobox", { name: "Zone" }));
+    fireEvent.click(screen.getByRole("option", { name: /Forêt d'Astrub/ }));
+    expect(backEnd.setting).toHaveBeenCalledWith("294-2", "zone", '{"sub_area":97}');
+  });
+
+  it("lists the harvesting professions by name with their icons, and sends the one chosen", async () => {
+    await shown("jobs");
+    expect(screen.getByRole("combobox", { name: "job" }).textContent).toContain("À choisir");
+    open("job");
+    const options = screen.getAllByRole("option");
+    expect(options.map((option) => option.textContent)).toEqual(["Bûcheron", "Mineur"]);
+    expect(options[1]?.querySelector("img")?.getAttribute("src")).toBe("asset://icons/jobs/24.png");
+    fireEvent.click(screen.getByRole("option", { name: "Mineur" }));
+    expect(backEnd.setting).toHaveBeenCalledWith("294-2", "job", "24");
+  });
+
+  it("names a profession the data lacks by its number, and one not a number as none", async () => {
+    await shown("jobs", { job: "99" });
+    expect(screen.getByRole("combobox", { name: "job" }).textContent).toContain("Métier 99");
+    cleanup();
+    await shown("jobs", { job: '"farmer"' });
+    expect(screen.getByRole("combobox", { name: "job" }).textContent).toContain("À choisir");
   });
 
   it("switches a yes or no and sends a line of text as JSON", async () => {

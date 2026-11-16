@@ -111,6 +111,7 @@ describe("the World tab's Details", () => {
     render(<WorldDetails atlas={ATLAS} subArea={97} />);
     expect(screen.getByRole("complementary", { name: "Détails" }).textContent).not.toContain("Zone de");
     usePlayed.setState({ played: [] });
+    useLibrary.setState({ blueprints: [] });
   });
 
   it("says when a sub-area is on no map, holds no resource and no monster", () => {

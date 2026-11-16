@@ -127,7 +127,7 @@ function SettingRow({ character, blueprint, variable }: SettingRowProps) {
       <SettingEditor
         variable={variable}
         value={own ?? variable.default}
-        onChange={(value) => void setSetting(character, variable.id, value)}
+        onChange={(value) => setSetting(character, variable.id, value)}
         who={character.name}
         label={name}
       />

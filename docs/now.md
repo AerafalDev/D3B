@@ -204,7 +204,7 @@ _Updated 2026-11-16._
        chooses it and the character's tab comes back with it; Escape on the map cancels and comes back too;
     5. in the World tab, choose Forêt d'Astrub in the view: Details says "Zone de <the character>"; a second character
        given the same Zone: "Zone de A et B"; another sub-area: no "Zone de";
-    6. choose Récolte d'un métier: the Zone and Banque à are kept, marked; Métier "À choisir" lists the harvesting
+    6. set Banque à to 80, then choose Récolte d'un métier: the Zone and Banque à 80 are kept, marked; Métier "À choisir" lists the harvesting
        professions with their icons, by name; choose Bûcheron: marked; choose "Aucun blueprint", then Récolte
        automatique again: back to its defaults;
     7. a second character keeps its own values; restart D3B: both kept, in `Documents/D3B/characters/<server>-<id>.json`
