@@ -39,9 +39,9 @@ pub(crate) fn copy(source: &Blueprint, given: bool, id: Id, texts: Texts) -> Blu
     copy
 }
 
-/// An id made from `name`: lowercase letters and digits, accents dropped, anything else a dash, and a number after it
-/// when `taken` holds it already.
-pub(crate) fn id_for(name: &str, taken: &HashSet<Id>) -> Id {
+/// An id made from `name`: lowercase letters and digits, accents dropped, anything else a dash, `fallback` when nothing
+/// is left, and a number after it when `taken` holds it already.
+pub(crate) fn id_for(name: &str, fallback: &str, taken: &HashSet<Id>) -> Id {
     let mut slug = String::new();
     for character in name.to_lowercase().chars() {
         match unaccented(character) {
@@ -54,7 +54,7 @@ pub(crate) fn id_for(name: &str, taken: &HashSet<Id>) -> Id {
     let mut slug: String = slug.trim_end_matches('-').chars().take(Id::LIMIT - 8).collect();
     slug.truncate(slug.trim_end_matches('-').len());
     if slug.is_empty() {
-        slug.push_str("blueprint");
+        slug.push_str(fallback);
     }
     let mut candidate = Id(slug.clone());
     let mut number = 2;
@@ -142,20 +142,21 @@ mod tests {
     fn an_id_is_made_from_the_name_without_accents() {
         let none = HashSet::new();
         assert_eq!(
-            id_for("Récolte automatique (copie)", &none),
+            id_for("Récolte automatique (copie)", "blueprint", &none),
             id("recolte-automatique-copie")
         );
-        assert_eq!(id_for("  Ma chasse : 2  ", &none), id("ma-chasse-2"));
+        assert_eq!(id_for("  Ma chasse : 2  ", "blueprint", &none), id("ma-chasse-2"));
     }
 
     #[test]
     fn an_id_taken_gets_a_number_and_a_name_with_no_letter_gets_one() {
         let taken = HashSet::from([id("chasse-copie"), id("chasse-copie-2")]);
-        assert_eq!(id_for("Chasse (copie)", &taken), id("chasse-copie-3"));
-        assert_eq!(id_for("★ ★", &HashSet::new()), id("blueprint"));
+        assert_eq!(id_for("Chasse (copie)", "blueprint", &taken), id("chasse-copie-3"));
+        assert_eq!(id_for("★ ★", "blueprint", &HashSet::new()), id("blueprint"));
+        assert_eq!(id_for("Лес", "zone", &HashSet::new()), id("zone"));
         // A name Windows keeps for a device is no id: it gets a number.
-        assert_eq!(id_for("Con", &HashSet::new()), id("con-2"));
-        let long = id_for(&"a".repeat(200), &HashSet::new());
+        assert_eq!(id_for("Con", "blueprint", &HashSet::new()), id("con-2"));
+        let long = id_for(&"a".repeat(200), "blueprint", &HashSet::new());
         assert!(long.is_well_formed() && long.0.len() <= Id::LIMIT - 8);
     }
 }

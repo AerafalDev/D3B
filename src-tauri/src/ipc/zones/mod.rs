@@ -119,7 +119,8 @@ fn renamed(files: &PlayersFiles, id: &str, name: &str) -> Result<ZoneView, ZoneE
 fn painted(files: &PlayersFiles, id: &str, stroke: &Stroke) -> Result<ZoneView, ZoneError> {
     let zone = store(files)?.change_zone(id, |zone| {
         if stroke.erase {
-            zone.maps.retain(|map| !stroke.maps.contains(map));
+            let erased: std::collections::BTreeSet<_> = stroke.maps.iter().collect();
+            zone.maps.retain(|map| !erased.contains(map));
         } else {
             zone.maps.extend(&stroke.maps);
         }

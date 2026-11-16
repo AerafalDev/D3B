@@ -222,7 +222,7 @@ impl Store {
                 taken.insert(Id(stem.to_lowercase()));
             }
         }
-        let copy = bot::copy(source, is_given, bot::id_for(&texts.name, &taken), texts);
+        let copy = bot::copy(source, is_given, bot::id_for(&texts.name, "blueprint", &taken), texts);
         self.save_while_locked(&copy)?;
         Ok(copy.id)
     }

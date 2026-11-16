@@ -99,7 +99,7 @@ impl Store {
         }
         let zone = Zone {
             schema: SCHEMA,
-            id: bot::id_for(name, &taken),
+            id: bot::id_for(name, "zone", &taken),
             name: name.to_owned(),
             world,
             maps: BTreeSet::new(),
@@ -118,6 +118,7 @@ impl Store {
     ) -> Result<Zone, E> {
         let path = self.zone_path(id)?;
         let _writing = self.lock();
+        self.no_other_case(id)?;
         let mut zone = match read(&path) {
             Ok(zone) => zone,
             Err(Why::Unreadable(error)) if error.kind() == io::ErrorKind::NotFound => {
@@ -142,6 +143,7 @@ impl Store {
         {
             // Checked under the lock; the trash, which may take its time, is not waited on there.
             let _writing = self.lock();
+            self.no_other_case(id)?;
             match read(&path) {
                 Ok(_) => {}
                 Err(Why::Unreadable(error)) if error.kind() == io::ErrorKind::NotFound => {
@@ -152,6 +154,26 @@ impl Store {
             }
         }
         discard(&path).map_err(|source| StorageError::Write { path, source })
+    }
+
+    /// Refuses the zone `id` when a file whose name differs from its only by case is there: on a system that ignores
+    /// case, that is the file its path opens, kept as it is.
+    fn no_other_case(&self, id: &str) -> Result<(), StorageError> {
+        let name = format!("{id}.json");
+        for entry in std::fs::read_dir(self.zones_folder()).into_iter().flatten().flatten() {
+            let other = entry.file_name();
+            if other
+                .to_str()
+                .is_some_and(|other| other != name && other.eq_ignore_ascii_case(&name))
+            {
+                let why = Why::NameIsNotId { id: Id(id.to_owned()) };
+                return Err(StorageError::Kept {
+                    path: entry.path(),
+                    why,
+                });
+            }
+        }
+        Ok(())
     }
 
     /// The file of the zone `id`; an id from the webview names a file only when well formed, never a path elsewhere.
@@ -298,6 +320,11 @@ mod tests {
             "none.json",
             r#"{"id": "none", "name": "O", "world": 1, "maps": []}"#,
         );
+        put(
+            &folder,
+            "upper.json",
+            r#"{"schema": 1, "id": "Upper", "name": "U", "world": 1, "maps": []}"#,
+        );
         put(&folder, "ok.json.d3b-tmp", "half");
         let kept: Vec<_> = store.zones().kept.into_iter().map(|kept| kept.why).collect();
         assert!(
@@ -307,6 +334,7 @@ mod tests {
                     Why::NotAZone(_),
                     Why::NameIsNotId { .. },
                     Why::NewerZone { found: 2 },
+                    Why::NotAZone(_),
                     Why::NotAZone(_),
                     Why::NotAZone(_),
                 ]
@@ -321,6 +349,27 @@ mod tests {
         let deleted = store.delete_zone("newer", |_| panic!("a kept file is never discarded"));
         assert!(matches!(deleted, Err(StorageError::Kept { .. })), "{deleted:?}");
         assert_eq!(std::fs::read_to_string(&newer_path).ok().as_deref(), Some(newer));
+    }
+
+    #[test]
+    fn a_file_named_for_the_id_in_another_case_is_kept_never_written_over_nor_discarded() {
+        // On a system that ignores case, `Ma-Zone.json` is the file `ma-zone.json` opens.
+        let folder = Folder::new("zones-case");
+        let store = Store::new(folder.path().to_path_buf());
+        let text = r#"{"schema": 1, "id": "ma-zone", "name": "M", "world": 1, "maps": []}"#;
+        let path = put(&folder, "Ma-Zone.json", text);
+        assert!(matches!(
+            store.zones().kept.as_slice(),
+            [Kept {
+                why: Why::NameIsNotId { .. },
+                ..
+            }]
+        ));
+        let changed = store.change_zone("ma-zone", |_| Ok::<_, StorageError>(()));
+        assert!(matches!(changed, Err(StorageError::Kept { .. })), "{changed:?}");
+        let deleted = store.delete_zone("ma-zone", |_| panic!("a kept file is never discarded"));
+        assert!(matches!(deleted, Err(StorageError::Kept { .. })), "{deleted:?}");
+        assert_eq!(std::fs::read_to_string(&path).ok().as_deref(), Some(text));
     }
 
     #[test]
