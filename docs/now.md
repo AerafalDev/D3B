@@ -192,6 +192,23 @@ _Updated 2026-11-16._
        and hovering 0, 0 no longer says Dofus Games, which is greyed "Pas sur la carte" with the Taverne and Beta; a
        dungeon of the Twelve (Donjon des Bworks) is greyed too, and no longer frames Village d'Amakna; "Indices" and the
        worlds' menu are the same height.
+- **step 3, my zones painted** ((20)), on Windows x64 from `bun run app` on `next` or the next release, with format 4's
+  data:
+    1. the World view says "Mes zones" above the sub-areas, "Aucune zone : « + » en peint une."; click "+": "Nouvelle
+       zone" appears with 0 carte, the World tab opens on the world it showed, the brush pressed in the toolbar on top,
+       "Nouvelle zone" and "Zone à moi · 0 carte" on top left;
+    2. press and drag over Forêt d'Astrub: each map crossed turns amber as the pointer goes, the sea stays as it was;
+       release: the row says N cartes; the right button and Space with the main one move the map without painting;
+    3. E, then drag over painted maps: they go; S: hovering outlines a whole sub-area; click Champs d'Astrub: all its
+       maps turn amber; click it again: they go; V, then click a sub-area: it is chosen, the zone and toolbar go;
+    4. F2 on the row, type a name, Enter: the row and the top left follow; Escape puts it back; Renommer in its
+       right-click does the same;
+    5. restart D3B: the zone is there with its maps, in `Documents/D3B/zones/nouvelle-zone.json`, one map a line;
+    6. in a character's tab, Zone lists it first under "Mes zones" with its maps; choose it: "<name> · Zone à moi · N
+       cartes";
+    7. right-click the row, Supprimer: it goes to the system's trash, the map closes it, the character's Zone says
+       "Zone nouvelle-zone introuvable"; put it back from the trash and restart D3B: everything is back;
+    8. put a stray letter in a zone's file: the Library's "Ignorés" lists it, and it is never written over.
 - **step 3, a character's blueprint and settings** ((10)'s Zone field and (11)), on Windows x64 from `bun run app` on
   `next` or the next release, with format 4's data:
     1. play a character: its tab says "Blueprint", "Aucun blueprint" in the list, its arrow greyed, no setting; then
@@ -384,7 +401,7 @@ _Updated 2026-11-16._
   [bot.md](bot.md#measure)'s items 6 and 7, is taken once (16) declares variables and events of mine. Then (14) variables, with locals, lists and the new types' editors; (15)
   functions opened in place, with their exits and the pure ones; (16) events: priority, re-arming, modes, the
   defaults, and the events of mine declared; (17) comments and reroutes; (18) Align, copy and paste,
-  search; (19) editing by keyboard; (20) my zones painted (the owner's choices of 2026-11-16: coordinates on one world, a floating toolbar of four tools, "+" in the World view and the name in Details, amber), in PRs: `zones/<id>.json` and the IPC that lists, creates, paints, renames and deletes them (done in code), then my zones in the World view and the Zone field (done in code), then the map's tools and Details; (21) routes, with an action and a forced exit per anchor, Follow the route resuming from
+  search; (19) editing by keyboard; (20) my zones painted (the owner's choices of 2026-11-16: coordinates on one world, a floating toolbar of four tools, "+" in the World view and the name in Details, amber), in PRs: `zones/<id>.json` and the IPC that lists, creates, paints, renames and deletes them (done in code), then my zones in the World view and the Zone field (done in code), then the map's tools (done in code; its checklist under "Not measured"), then a zone's Details; (21) routes, with an action and a forced exit per anchor, Follow the route resuming from
   the map the character is on, the recorder and the text import and export; (22) the `.d3b` file; (23) a given blueprint's
   update; (24) the "Advanced tools" setting (the owner's choices of 2026-11-16: in the palette and View, no Settings
   view yet; `settings.json` in the player's folder; the panel gone while off; the frames followed even then; done in

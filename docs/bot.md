@@ -299,7 +299,17 @@ deletion is not confirmed, undo brings it back. Each graph gives the picker its 
   choices of 2026-11-16) lists mine by name with their maps, matched by the search too; "+" on its header makes
   "Nouvelle zone" on the world the tab shows and opens it there with the brush; a row opens its zone on its world, F2
   or a right-click renames it in its row (Enter or leaving saves, Escape leaves it), and the right-click deletes it to
-  the system's trash, closing it on the map; a zone's file kept is listed in the Library's "Ignored". The **World tab** shows the world map
+  the system's trash, closing it on the map; a zone's file kept is listed in the Library's "Ignored". A zone of mine
+  open shows on the World tab in translucent amber with a sharp outline, its name, "Zone of mine" and its maps on top
+  left, the view fitted to it, and a floating toolbar on top of the map: Select (V), Brush (B), Eraser (E) and Whole
+  sub-area (S), their keys taken wherever the focus is while the World tab is the active one, unless a field holds it.
+  The brush and the eraser paint by a press and a drag, every map the pointer crosses (those of the world only), with
+  the tool the stroke began with, shown as it goes and saved once the button is released (a stroke the system cancels
+  is dropped); the right or middle button, or Space held with the main one, moves the map; the hovered map is outlined
+  alone. The whole sub-area tool
+  outlines the hovered map's sub-area and a click adds it, or takes it away when the zone holds all its maps there;
+  Select chooses a sub-area as without a zone, which closes it, as another world does. A zone's Details come with
+  step 3's PR 20d. The **World tab** shows the world map
   from the data's tiles, at the level the zoom needs, with the client's **hints** as on the C# version (the owner,
   2026-11-13): zaaps, dungeons, auction houses, workshops, banks, class places and transports, each with the client's
   picture, at the zooms that have room for them, one switch per kind, the name on hover. Its tools: select, brush,
