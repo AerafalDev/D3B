@@ -60,7 +60,7 @@ export function ZoneDetails({ atlas, zone }: ZoneDetailsProps) {
         {t("world.details.title")}
       </h3>
       <div className="flex flex-col gap-1">
-        <ZoneName zone={zone} />
+        <ZoneName key={zone.id} zone={zone} />
         <p className="text-text-muted">{t("zone.details.of", { world })}</p>
       </div>
       <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1">
@@ -112,14 +112,16 @@ function ZoneName({ zone }: { zone: MyZone }) {
       value={name}
       onChange={(event) => setName(event.target.value)}
       onBlur={() => {
-        if (name.trim() === "") {
+        // The back end keeps a name without the spaces around it.
+        const trimmed = name.trim();
+        if (trimmed === "" || trimmed === zone.name) {
           setName(zone.name);
-        } else if (name !== zone.name) {
+        } else {
           // A name refused is put back.
           void useZones
             .getState()
-            .rename(zone.id, name)
-            .then((named) => named || setName(zone.name));
+            .rename(zone.id, trimmed)
+            .then((named) => setName(named ? trimmed : zone.name));
         }
       }}
       onKeyDown={(event) => {

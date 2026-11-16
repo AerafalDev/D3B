@@ -258,6 +258,18 @@ describe("the World tab", () => {
       expect(backEnd.paint).toHaveBeenCalledTimes(2);
     });
 
+    it("shows the zone's Details while it is open on the world shown, and the sub-area's otherwise", async () => {
+      useWorld.getState().openZone("ble", 1, "brush");
+      await shown(<WorldTab />);
+      expect(document.body.textContent).toContain("Zone à moi · Monde des Douze");
+      expect(document.body.textContent).not.toContain("détails");
+      act(() => useWorld.setState({ zone: null }));
+      expect(document.body.textContent).toContain("détails aucun");
+      // A zone of another world than the one shown is not open here.
+      act(() => useWorld.setState({ zone: "ble", world: 2 }));
+      expect(document.body.textContent).toContain("détails aucun");
+    });
+
     it("chooses a sub-area with Select as without a zone, which closes it, and another world closes it too", async () => {
       useWorld.getState().openZone("ble", 1, "select");
       await shown(<WorldTab />);

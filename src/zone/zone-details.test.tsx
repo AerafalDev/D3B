@@ -72,6 +72,7 @@ const ZONE = {
     [0, 0],
     [0, 1],
     [1, 0],
+    [9, 9],
   ] as [number, number][],
 };
 
@@ -94,9 +95,11 @@ describe("a zone of mine's Details", () => {
     render(<ZoneDetails atlas={ATLAS} zone={ZONE} />);
     const text = document.body.textContent ?? "";
     expect(text).toContain("Zone à moi · Monde des Douze");
-    expect(text).toContain("Cartes3");
+    expect(text).toContain("Cartes4");
+    // By their share of the zone, then by name; the resources of each once.
     expect(screen.getAllByRole("listitem").map((one) => one.textContent)).toEqual([
       "Forêt d'Astrub2/3",
+      "Ailleurs1/1",
       "Champs d'Astrub1/1",
       "Frêne1",
       "Blé1",
@@ -129,12 +132,15 @@ describe("a zone of mine's Details", () => {
     fireEvent.keyDown(field, { key: "Escape" });
     fireEvent.blur(field);
     expect(backEnd.rename).not.toHaveBeenCalled();
-    fireEvent.change(field, { target: { value: "Blé d'Astrub" } });
-    await act(async () => {
-      fireEvent.keyDown(field, { key: "Enter" });
-      fireEvent.blur(field);
-    });
+    // The spaces around a name are no change.
+    fireEvent.change(field, { target: { value: "Mon blé " } });
+    fireEvent.blur(field);
+    expect([backEnd.rename.mock.calls.length, field.value]).toEqual([0, "Mon blé"]);
+    field.focus();
+    fireEvent.change(field, { target: { value: " Blé d'Astrub " } });
+    await act(async () => fireEvent.keyDown(field, { key: "Enter" }));
     expect(backEnd.rename.mock.calls).toEqual([["ble", "Blé d'Astrub"]]);
+    expect(field.value).toBe("Blé d'Astrub");
   });
 
   it("puts back a name the back end refuses", async () => {
