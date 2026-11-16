@@ -6,6 +6,7 @@ mod atomic;
 mod character;
 mod history;
 mod share;
+mod share_zones;
 mod store;
 mod zone;
 

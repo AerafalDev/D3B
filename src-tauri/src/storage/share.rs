@@ -1,6 +1,6 @@
 //! The `.d3b` file (ADR 0017): one blueprint shared with the zones and routes it names, as one readable JSON, imported
-//! on another D3B after a preview. Its blueprint is its file as `bot` writes it; its zones and routes are empty until
-//! zones and routes of mine exist (step 3's PRs 20 and 21), which fill them.
+//! on another D3B after a preview. Its blueprint is its file as `bot` writes it, its zones their files as `zone` writes
+//! them; its routes are empty until routes of mine exist (step 3's PR 21), which fill them.
 
 use std::collections::HashSet;
 use std::io;
@@ -9,7 +9,8 @@ use std::path::Path;
 use serde::{Deserialize, Serialize};
 use serde_json::value::RawValue;
 
-use super::store::{StorageError, Store};
+use super::store::{StorageError, Store, Why};
+use super::zone::{self, Zone};
 use crate::bot::{self, Blueprint, Id, ReadError};
 
 /// The format this version writes and the newest it reads; a change to the file's shape raises it.
@@ -37,39 +38,48 @@ pub(crate) enum ShareError {
     /// Its blueprint does not read: a newer schema, or not a blueprint's shape.
     #[error("its blueprint does not read: {0}")]
     Blueprint(ReadError),
-    /// It holds zones or routes, which this version cannot import yet: a newer D3B wrote it.
-    #[error("it holds zones or routes, which this version does not import")]
-    HoldsZonesOrRoutes,
+    /// One of its zones does not read: a newer schema, or not a zone's shape.
+    #[error("one of its zones does not read: {0}")]
+    Zone(Why),
+    /// It holds routes, which this version cannot import yet: a newer D3B wrote it.
+    #[error("it holds routes, which this version does not import")]
+    HoldsRoutes,
 }
 
-/// A `.d3b` file as this version writes it; the blueprint is kept as its own text, so that `bot::read` checks it as it
-/// checks a file of the folder.
+/// What a `.d3b` shares: a blueprint, and the zones of mine it names.
+#[derive(Debug, Clone, PartialEq)]
+pub(crate) struct Shared {
+    pub(crate) blueprint: Blueprint,
+    pub(crate) zones: Vec<Zone>,
+}
+
+/// A `.d3b` file as this version writes it; the blueprint and the zones are kept as their own texts when read, so that
+/// each is checked as a file of the folder is.
 #[derive(Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
-struct File<B> {
+struct File<B, Z> {
     d3b: u32,
     blueprint: B,
-    zones: Vec<serde_json::Value>,
+    zones: Vec<Z>,
     routes: Vec<serde_json::Value>,
 }
 
-/// The text of the `.d3b` file sharing `blueprint`: indented, ending with a new line.
-pub(crate) fn write(blueprint: &Blueprint) -> String {
+/// The text of the `.d3b` file sharing `shared`: indented, ending with a new line.
+pub(crate) fn write(shared: &Shared) -> String {
     let file = File {
         d3b: FORMAT,
-        blueprint,
-        zones: Vec::new(),
+        blueprint: &shared.blueprint,
+        zones: shared.zones.iter().collect(),
         routes: Vec::new(),
     };
-    // Only what `bot::write` writes, and two empty lists: nothing serde_json can refuse.
+    // Only what `bot::write` and a zone's file write, and an empty list: nothing serde_json can refuse.
     let mut text = serde_json::to_string_pretty(&file).unwrap_or_else(|error| unreachable!("{error}"));
     text.push('\n');
     text
 }
 
-/// The blueprint `text` shares. The format is read first, so that a newer D3B's file is said to be one rather than
-/// half read.
-pub(crate) fn read(text: &str) -> Result<Blueprint, ShareError> {
+/// What `text` shares. The format is read first, so that a newer D3B's file is said to be one rather than half read.
+pub(crate) fn read(text: &str) -> Result<Shared, ShareError> {
     #[derive(Deserialize)]
     struct Head {
         d3b: Option<serde_json::Value>,
@@ -83,15 +93,18 @@ pub(crate) fn read(text: &str) -> Result<Blueprint, ShareError> {
             return Err(ShareError::NotOfItsShape(serde::de::Error::custom(why)));
         }
     }
-    let file: File<Box<RawValue>> = serde_json::from_str(text).map_err(ShareError::NotOfItsShape)?;
-    if !file.zones.is_empty() || !file.routes.is_empty() {
-        return Err(ShareError::HoldsZonesOrRoutes);
+    let file: File<Box<RawValue>, Box<RawValue>> = serde_json::from_str(text).map_err(ShareError::NotOfItsShape)?;
+    if !file.routes.is_empty() {
+        return Err(ShareError::HoldsRoutes);
     }
-    bot::read(file.blueprint.get()).map_err(ShareError::Blueprint)
+    let blueprint = bot::read(file.blueprint.get()).map_err(ShareError::Blueprint)?;
+    let zones = file.zones.iter().map(|zone| zone::parse(zone.get()));
+    let zones = zones.collect::<Result<_, _>>().map_err(ShareError::Zone)?;
+    Ok(Shared { blueprint, zones })
 }
 
-/// The blueprint the `.d3b` file at `path` shares.
-pub(crate) fn read_file(path: &Path) -> Result<Blueprint, ShareError> {
+/// What the `.d3b` file at `path` shares.
+pub(crate) fn read_file(path: &Path) -> Result<Shared, ShareError> {
     let extension = path.extension().and_then(|extension| extension.to_str());
     if !extension.is_some_and(|extension| extension.eq_ignore_ascii_case(EXTENSION)) {
         return Err(ShareError::NotD3b);
@@ -118,11 +131,12 @@ pub(crate) fn file_name(name: &str) -> String {
 }
 
 impl Store {
-    /// The blueprint `id`, D3B's or mine, as a `.d3b` shares it. One of D3B's is shared as mine based on it, with
-    /// `texts`, the player's words for its translations, under an id made from its name.
-    pub(crate) fn shared(&self, id: &str, texts: Option<bot::Texts>) -> Result<Blueprint, StorageError> {
+    /// The blueprint `id`, D3B's or mine, as a `.d3b` shares it, with the zones of mine it names. One of D3B's is
+    /// shared as mine based on it, with `texts`, the player's words for its translations, under an id made from its
+    /// name.
+    pub(crate) fn shared(&self, id: &str, texts: Option<bot::Texts>) -> Result<Shared, StorageError> {
         let given = bot::given().unwrap_or_default();
-        if let Some(source) = given.iter().find(|blueprint| blueprint.id.0 == id) {
+        let blueprint = if let Some(source) = given.iter().find(|blueprint| blueprint.id.0 == id) {
             let given_ids: HashSet<Id> = given.iter().map(|blueprint| blueprint.id.clone()).collect();
             let texts = texts.unwrap_or_else(|| bot::Texts {
                 name: source.name.clone(),
@@ -130,18 +144,32 @@ impl Store {
                 ..bot::Texts::default()
             });
             let id = bot::id_for(&texts.name, "blueprint", &given_ids);
-            return Ok(bot::copy(source, true, id, texts));
-        }
-        let mine = self.blueprints().read;
-        mine.into_iter()
-            .find(|blueprint| blueprint.id.0 == id)
-            .ok_or_else(|| StorageError::NoSuchBlueprint { id: Id(id.to_owned()) })
+            bot::copy(source, true, id, texts)
+        } else {
+            let mine = self.blueprints().read;
+            mine.into_iter()
+                .find(|blueprint| blueprint.id.0 == id)
+                .ok_or_else(|| StorageError::NoSuchBlueprint { id: Id(id.to_owned()) })?
+        };
+        let named = super::share_zones::named(&blueprint);
+        let zones = self
+            .zones()
+            .read
+            .into_iter()
+            .filter(|zone| named.contains(&zone.id))
+            .collect();
+        Ok(Shared { blueprint, zones })
     }
 
-    /// Saves `blueprint` among mine, never over a file: under its own id when no blueprint and no file of the folder
-    /// holds it, in any case, else under one made from it; the id it took. Chosen and written under one lock.
-    pub(crate) fn import(&self, mut blueprint: Blueprint) -> Result<Id, StorageError> {
+    /// Saves what `shared` shares among mine, never over a file: its zones first (one identical to a zone of mine is
+    /// that zone, one whose id is taken takes a free one, the blueprint rewritten to name it), then its blueprint under
+    /// its own id when no blueprint and no file of the folder holds it, in any case, else under one made from it; the
+    /// id it took. Chosen and written under one lock.
+    pub(crate) fn import(&self, shared: Shared) -> Result<Id, StorageError> {
         let mut writing = self.lock();
+        let Shared { mut blueprint, zones } = shared;
+        let renamed = self.add_zones_while_locked(zones)?;
+        super::share_zones::rename(&mut blueprint, &renamed);
         let taken = self.taken()?;
         if taken.contains(&blueprint.id) || !blueprint.id.is_well_formed() {
             blueprint.id = bot::id_for(&blueprint.id.0, "blueprint", &taken);
@@ -164,6 +192,13 @@ mod tests {
         bot::read(&text).unwrap_or_else(|error| panic!("{error}"))
     }
 
+    fn alone(blueprint: Blueprint) -> Shared {
+        Shared {
+            blueprint,
+            zones: Vec::new(),
+        }
+    }
+
     fn put(folder: &Folder, name: &str, text: &str) -> std::path::PathBuf {
         let path = folder.path().join(name);
         std::fs::write(&path, text).unwrap_or_else(|error| panic!("{error}"));
@@ -172,16 +207,16 @@ mod tests {
 
     #[test]
     fn a_blueprint_shared_reads_back_the_same_from_its_d3b() {
-        let blueprint = mine("my-harvest");
-        let text = write(&blueprint);
+        let shared = alone(mine("my-harvest"));
+        let text = write(&shared);
         assert!(text.starts_with("{\n  \"d3b\": 1,\n  \"blueprint\": {"), "{text}");
         assert!(text.ends_with("\"zones\": [],\n  \"routes\": []\n}\n"), "{text}");
-        assert_eq!(read(&text).ok(), Some(blueprint));
+        assert_eq!(read(&text).ok(), Some(shared));
     }
 
     #[test]
     fn a_d3b_that_is_not_of_this_format_is_refused_with_why() {
-        let text = write(&mine("my-harvest"));
+        let text = write(&alone(mine("my-harvest")));
         let newer = text.replacen("\"d3b\": 1", "\"d3b\": 2", 1);
         assert!(matches!(read(&newer), Err(ShareError::Newer { found: 2 })));
         for broken in [
@@ -194,8 +229,15 @@ mod tests {
         ] {
             assert!(matches!(read(broken), Err(ShareError::NotOfItsShape(_))), "{broken}");
         }
-        let zones = text.replacen("\"zones\": []", "\"zones\": [{\"id\": \"wheat\"}]", 1);
-        assert!(matches!(read(&zones), Err(ShareError::HoldsZonesOrRoutes)));
+        let routes = text.replacen("\"routes\": []", "\"routes\": [{\"id\": \"loop\"}]", 1);
+        assert!(matches!(read(&routes), Err(ShareError::HoldsRoutes)));
+        let zone = text.replacen("\"zones\": []", "\"zones\": [{\"schema\": 1, \"id\": \"wheat\"}]", 1);
+        assert!(matches!(read(&zone), Err(ShareError::Zone(Why::NotAZone(_)))));
+        let newer_zone = text.replacen("\"zones\": []", "\"zones\": [{\"schema\": 9}]", 1);
+        assert!(matches!(
+            read(&newer_zone),
+            Err(ShareError::Zone(Why::NewerZone { found: 9 }))
+        ));
         let schema = text.replacen("\"schema\": 1", "\"schema\": 2", 1);
         assert!(matches!(
             read(&schema),
@@ -211,9 +253,9 @@ mod tests {
     #[test]
     fn only_a_d3b_file_that_reads_as_text_is_taken() {
         let folder = Folder::new("share-file");
-        let text = write(&mine("my-harvest"));
+        let text = write(&alone(mine("my-harvest")));
         let file = put(&folder, "Ma récolte.D3B", &text);
-        assert_eq!(read_file(&file).ok(), Some(mine("my-harvest")), "in any case");
+        assert_eq!(read_file(&file).ok(), Some(alone(mine("my-harvest"))), "in any case");
         let json = put(&folder, "my-harvest.json", &text);
         assert!(matches!(read_file(&json), Err(ShareError::NotD3b)));
         assert!(matches!(
@@ -236,26 +278,22 @@ mod tests {
     fn an_import_takes_its_own_id_when_free_else_a_free_one_never_over_a_file() {
         let folder = Folder::new("share-import");
         let store = Store::new(folder.path().to_path_buf());
-        assert_eq!(store.import(mine("ma-recolte")).ok(), Some(Id("ma-recolte".into())));
+        let import = |blueprint| store.import(alone(blueprint)).ok();
+        assert_eq!(import(mine("ma-recolte")), Some(Id("ma-recolte".into())));
         assert_eq!(
-            store.import(mine("ma-recolte")).ok(),
+            import(mine("ma-recolte")),
             Some(Id("ma-recolte-2".into())),
             "its id is taken"
         );
         // A file kept as it is, in another case, under the id the next would take.
         let kept = folder.path().join("blueprints/Ma-Recolte-3.json");
         std::fs::write(&kept, "{").unwrap_or_else(|error| panic!("{error}"));
-        assert_eq!(store.import(mine("ma-recolte")).ok(), Some(Id("ma-recolte-4".into())));
+        assert_eq!(import(mine("ma-recolte")), Some(Id("ma-recolte-4".into())));
         assert_eq!(std::fs::read_to_string(&kept).ok().as_deref(), Some("{"));
         let mut odd = mine("x");
         odd.id = Id("../Escape".into());
-        assert_eq!(
-            store.import(odd).ok(),
-            Some(Id("escape".into())),
-            "an id no file can be named by"
-        );
-        let given = mine("hunt");
-        assert_eq!(store.import(given).ok(), Some(Id("hunt-2".into())), "one of D3B's ids");
+        assert_eq!(import(odd), Some(Id("escape".into())), "an id no file can be named by");
+        assert_eq!(import(mine("hunt")), Some(Id("hunt-2".into())), "one of D3B's ids");
         let ids: Vec<_> = store.blueprints().read.into_iter().map(|it| it.id.0).collect();
         assert_eq!(ids, ["escape", "hunt-2", "ma-recolte-2", "ma-recolte-4", "ma-recolte"]);
     }
@@ -272,14 +310,18 @@ mod tests {
         let hunt = store
             .shared("hunt", Some(texts))
             .unwrap_or_else(|error| panic!("{error}"));
-        assert_eq!((hunt.id.0.as_str(), hunt.name.as_str()), ("chasse", "Chasse"));
-        assert_eq!(hunt.based_on.map(|based| based.id.0).as_deref(), Some("hunt"));
+        assert_eq!(
+            (hunt.blueprint.id.0.as_str(), hunt.blueprint.name.as_str()),
+            ("chasse", "Chasse")
+        );
+        assert_eq!(hunt.blueprint.based_on.map(|based| based.id.0).as_deref(), Some("hunt"));
+        assert_eq!(hunt.zones, [], "D3B's name no zone of mine");
         let untranslated = store.shared("hunt", None).unwrap_or_else(|error| panic!("{error}"));
-        assert_eq!(untranslated.id.0, "hunt-2", "its name's id is one of D3B's");
+        assert_eq!(untranslated.blueprint.id.0, "hunt-2", "its name's id is one of D3B's");
         store
-            .import(mine("ma-recolte"))
+            .import(alone(mine("ma-recolte")))
             .unwrap_or_else(|error| panic!("{error}"));
-        assert_eq!(store.shared("ma-recolte", None).ok(), Some(mine("ma-recolte")));
+        assert_eq!(store.shared("ma-recolte", None).ok(), Some(alone(mine("ma-recolte"))));
         assert!(matches!(
             store.shared("teleport", None),
             Err(StorageError::NoSuchBlueprint { .. })
