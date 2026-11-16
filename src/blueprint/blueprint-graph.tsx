@@ -6,7 +6,6 @@ import {
   Background,
   BackgroundVariant,
   Controls,
-  MiniMap,
   ReactFlow,
   ReactFlowProvider,
   useReactFlow,
@@ -64,10 +63,10 @@ type Opened = { client: { x: number; y: number }; at: { x: number; y: number }; 
 
 /**
  * A blueprint's graph (`docs/bot.md`, "In the app"): its nodes where the file puts them, its wires coloured by what
- * they carry, pan and zoom, a mini-map. A blueprint of mine is edited in place (step 3's PR 12, the owner's choices
- * of 2026-11-16): a wire dragged between pins is checked by type, refused with why; dropped on the ground, Space or a
- * right-click opens the picker; a node moved keeps its place. Loaded on demand by the blueprint's tab, React Flow being
- * heavy.
+ * they carry, pan and zoom, no mini-map (of no use: the owner, 2026-11-16). A blueprint of mine is edited in place
+ * (step 3's PR 12, the owner's choices of 2026-11-16): a wire dragged between pins is checked by type, refused with
+ * why; dropped on the ground, Space or a right-click opens the picker; a node moved keeps its place. Loaded on demand
+ * by the blueprint's tab, React Flow being heavy.
  */
 export function BlueprintGraph(props: BlueprintGraphProps) {
   return (
@@ -115,7 +114,6 @@ function Graph({ graph, names, faulty, chosen = null, onChoose, onEdit }: Bluepr
     "controls.zoomIn.ariaLabel": t("blueprint.zoomIn"),
     "controls.zoomOut.ariaLabel": t("blueprint.zoomOut"),
     "controls.fitView.ariaLabel": t("blueprint.fitView"),
-    "minimap.ariaLabel": t("blueprint.minimap"),
   };
   const corner = box.current?.getBoundingClientRect();
 
@@ -206,7 +204,6 @@ function Graph({ graph, names, faulty, chosen = null, onChoose, onEdit }: Bluepr
           proOptions={{ hideAttribution: true }}
         >
           <Background variant={BackgroundVariant.Dots} gap={16} size={1} />
-          <MiniMap pannable zoomable nodeColor="#3a3a3a" maskColor="rgb(17 17 17 / 60%)" />
           <Controls showInteractive={false} />
         </ReactFlow>
         {opened !== null && (
