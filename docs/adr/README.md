@@ -20,3 +20,4 @@ Smaller choices are in their pull requests. An ADR is never rewritten: a later o
 | [0013](0013-a-new-data-format-is-a-second-asset-named-by-its-format.md) | A new data format is a second asset of the build's release, named by its format | accepted |
 | [0014](0014-the-bot-runs-unreal-like-blueprints-set-per-character.md) | The bot runs Unreal-like blueprints, set per character | accepted |
 | [0015](0015-the-players-files-are-json-in-documents-d3b.md) | The player's files are one JSON per object in Documents/D3B | accepted |
+| [0016](0016-blueprints-v2-a-typed-language-of-generic-nodes-lists-and-own-events.md) | Blueprints v2 are a typed language of compact values, generic nodes, lists and events of the player's own | accepted |
