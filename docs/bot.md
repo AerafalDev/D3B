@@ -64,6 +64,51 @@ As decided on 2026-11-12, on Unreal's event graph (ADR 0014):
   blueprint, ready, running, paused, finished, blocked (with its reason), disconnected (listed greyed, its blueprint
   and values kept). A blueprint with a problem cannot run.
 
+### The runtime
+
+`bot::run` (step 3's (25), designed with the owner on 2026-11-16, ADR 0017) runs a blueprint for one character, a
+node at a time, against the observed state, on a clock it is given. It knows no kind of node: each brings its own
+behaviour, so v2's plug in without touching it. Nothing acts in the game before step 4, whose Play drives it.
+
+```mermaid
+flowchart LR
+    file["a blueprint without problems"] -->|compiled| program["program: each output to its node, each input to its source"]
+    program --> run["Run.advance(view, now)"]
+    view["game::View, a snapshot"] --> run
+    kinds["one Behaviour per kind"] --- run
+    run --> out["state, trace of values, memory changed"]
+```
+
+- **Compiled**: a blueprint is compiled into a program, each flow output to the node it leads to and each value input
+  to its wire, its typed value or its pin's default, so the file's schema stays out of the engine (v2.1's schema 2
+  changes the compilation only). One with a problem is refused.
+- **Advanced**: `Run::advance(view, now)` runs nodes until the flow waits on the clock or the observed state, ends or
+  blocks; the clock is injected, so tests drive it. Step 4 drives it from one actor per character fed the view's
+  snapshots (the owner, 2026-11-16: the engine alone in (25), the C# version's actor per character kept).
+- **One behaviour per kind**, behind one trait in a registry by kind id: when the flow reaches its node it goes out of
+  a pin, runs a chain and comes back (Sequence's outputs, a loop's body), waits, returns an exit, leaves the loop,
+  finishes, pauses or blocks; a value node gives its output when read. Get, Set and Call are the engine's own.
+- **An explicit stack**, no async: a frame per call (its locals, its nodes' counters, its outputs) and per chain, which
+  comes back to the node that ran it when its flow ends; Leave the loop unwinds to the nearest loop. A waiting run is
+  its stack, so an interrupted flow keeps its place, its loops' counters and its calls.
+- **Values are pulled** when the node that uses them runs, through their wires; each value used goes to a bounded
+  trace (its node, pin, value and time) for the debugger.
+- **Variables**: a run's from their defaults, a setting from the character's own value; memory is given at the start
+  and its changes handed back, to be saved in the character's file under `memory` at safe points (the owner,
+  2026-11-16; from step 4's wiring, the file's schema 3), kept on another blueprint for the same id and type, as a
+  setting.
+- **An action before its step** waits for its check on the observed state (the owner, 2026-11-16): the player doing it
+  by hand completes it, and step 4 only adds the doing; a check on what D3B does not observe yet fails "D3B does not
+  see this before step N".
+- **It blocks**, with the reason and the node, on an unlinked Failed, a death (the character's fights lost rising:
+  the forced default; a `died` event held by the blueprint is (26)'s), 10,000 nodes in a row without waiting ("runs
+  without pause"), a call deeper than 64, or a value that cannot be computed. Its states are ready, running, paused,
+  finished and blocked; without blueprint and disconnected are the character's: no view holds the run, and the node
+  at work runs again once the character is back, as actions are goal-shaped. A Wait counts the clock's time (settled
+  alone).
+- **(26)'s seam**: a stack of flows, one today; an event pushes its own, and when it ends the flow under it enters its
+  node at work again; Restart empties the main flow; a safe point is the moment between two nodes.
+
 ## The language, v2
 
 After measuring the editable graph, the owner asked on 2026-11-16 for blueprints "much more complete", able to do

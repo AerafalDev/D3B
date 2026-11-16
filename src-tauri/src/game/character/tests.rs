@@ -194,6 +194,39 @@ fn a_failed_selection_changes_nothing() {
     assert_eq!(character.view(now, 0).who.map(|who| who.id), Some(ME));
 }
 
+fn fight_end(results: &[(i32, i64)]) -> Message {
+    Message::FightEndEvent(game::FightEndEvent {
+        results: results
+            .iter()
+            .map(|&(outcome, id)| game::FightResult {
+                outcome,
+                fighter: Some(game::FightResultFighter { id }),
+            })
+            .collect(),
+    })
+}
+
+#[test]
+fn counts_the_fights_it_won_and_lost_by_its_own_result() {
+    let now = Instant::now();
+    let fights = |messages: &[Message]| fed(messages, now).view(now, 0).fights;
+    let (lost, won) = (fight_end(&[(0, ME)]), fight_end(&[(2, ME)]));
+    assert_eq!(
+        fights(&[chosen(ME, "Lyra", 87), won.clone(), lost.clone(), won.clone()]),
+        Fights { won: 2, lost: 1 }
+    );
+    // Another fighter's result, an outcome never seen and a fight's end before any selection are not the character's.
+    assert_eq!(
+        fights(&[lost.clone(), chosen(ME, "Lyra", 87), fight_end(&[(0, -42), (3, ME)])]),
+        Fights::default()
+    );
+    // Another character chosen on the connection starts its own count.
+    assert_eq!(
+        fights(&[chosen(ME, "Lyra", 87), lost, chosen(ME + 1, "Kael", 12)]),
+        Fights::default()
+    );
+}
+
 #[test]
 fn a_level_gained_changes_the_level() {
     let now = Instant::now();

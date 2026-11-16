@@ -20,7 +20,7 @@ _Updated 2026-11-16._
   Ubuntu, release-please running as the project's GitHub App, the release workflow for six targets, and the app's
   signed updates through the `updater-next` channel ([docs/updates.md](updates.md)). **v0.10.0**, the first
   pre-release, is published with installers for the six targets and no game data yet. Decisions:
-  [docs/adr/](adr/README.md) 0001 to 0016.
+  [docs/adr/](adr/README.md) 0001 to 0017.
 - **Measured** by the owner, 2026-11-11, Windows x64: v0.10.0 installs per user, starts dark and in French, its status
   bar says "D3B 0.10.0" and "No game data", the close button quits, and a second launch brings the running window
   back. Then the first update: the installed version downloaded v0.12.0 at start, the bar offered to restart, and
@@ -363,7 +363,13 @@ _Updated 2026-11-16._
   search; (19) editing by keyboard; (20) my zones painted; (21) routes, with an action and a forced exit per anchor, Follow the route resuming from
   the map the character is on, the recorder and the text import and export; (22) the `.d3b` file; (23) a given blueprint's
   update; (24) the "Advanced tools" setting; (25) the runtime: the flow, outcomes, variables, blocked, finished, on the
-  captures, with v2's loops, Switch, lists, randomness, pure functions and the loop guard; (26) events at run time:
+  captures, with v2's loops, Switch, lists, randomness, pure functions and the loop guard (designed with the owner on
+  2026-11-16, [bot.md](bot.md#the-runtime), ADR 0017: the engine alone, wired by step 4's Play; an action before its
+  step waiting for its check; memory in the character's file; the engine now on schema 1, v2's kinds each bringing
+  their behaviours), in three PRs started before v2's: the fight's end pinned and the fights won and lost counted, the
+  death's signal (done in code: 634 fight ends read, 613 won and 21 lost in 6 connections, as the study); the engine,
+  its stack, its trait, Get, Set, Call, If, Finish and the returns; the nodes that wait, the actions' checks, the
+  queries, the death and the replay on the captures; (26) events at run time:
   priorities, modes, thresholds, settings at safe points, with When, Every, At, the events of mine and their timers. Step 4 then brings Play,
   what a character does now, its History and the debugger, with the first actions.
 - **Waiting on testers**: Dofus 3 has a native client on macOS and on Linux (the owner, 2026-11-11); where it is
