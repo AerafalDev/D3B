@@ -47,3 +47,8 @@ export function openEditor({ id, component, title, params }: OpenEditor): void {
     open.api.setActive();
   }
 }
+
+/** Closes an editor's tab, when it is open: the blueprint it shows was deleted. */
+export function closeEditor(id: string): void {
+  useEditors.getState().api?.getPanel(id)?.api.close();
+}

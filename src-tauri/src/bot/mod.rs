@@ -11,6 +11,15 @@ mod given;
 mod json;
 mod pins;
 mod problems;
+#[cfg_attr(
+    not(test),
+    expect(
+        dead_code,
+        unused_imports,
+        reason = "step 4's Play runs it, from one actor per character (ADR 0017)"
+    )
+)]
+pub(crate) mod run;
 mod variable;
 mod wiring;
 
