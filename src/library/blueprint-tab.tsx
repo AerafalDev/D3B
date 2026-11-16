@@ -8,6 +8,7 @@ import { useGraphs } from "@/blueprint/graph-store.ts";
 import { MyBlueprint } from "@/blueprint/my-blueprint.tsx";
 import { Summary } from "@/blueprint/summary/summary.tsx";
 import { Icon } from "@/icons/icon.tsx";
+import { useShare } from "@/share/share-store.ts";
 import type { EditorParams } from "@/shell/parts/editor-store.ts";
 import { useBlueprintView } from "./blueprint-view.ts";
 import { givenText } from "./given-text.ts";
@@ -27,7 +28,7 @@ interface BlueprintParams extends EditorParams {
 
 /**
  * A blueprint's tab, its editor (`docs/bot.md`, "In the app"): on top its name, whose it is, its problems,
- * its description and Duplicate; under them Unreal's "My Blueprint" on the left, the graph it shows, loaded on demand,
+ * its description, Duplicate and Export; under them Unreal's "My Blueprint" on the left, the graph it shows, loaded on demand,
  * or its Summary, as the tab strip's toggle says, and Details on the right (the owner, 2026-11-14). One of D3B's is
  * read-only; mine is edited in its graph (step 3's PR 12).
  */
@@ -35,6 +36,7 @@ export function BlueprintTab({ api, params }: IDockviewPanelProps<BlueprintParam
   const { t } = useTranslation();
   const blueprint = useLibrary((store) => store.blueprints.find((one) => one.id === params.id));
   const duplicate = useLibrary((store) => store.duplicate);
+  const exportBlueprint = useShare((store) => store.exportBlueprint);
   const name = blueprint === undefined ? null : blueprintName(blueprint);
   // One copy at a time: a second click while the first is made does nothing.
   const [duplicating, setDuplicating] = useState(false);
@@ -116,6 +118,14 @@ export function BlueprintTab({ api, params }: IDockviewPanelProps<BlueprintParam
           >
             <Icon name="copy" className="size-3.5 text-white" />
             {t("library.duplicate")}
+          </button>
+          <button
+            type="button"
+            onClick={() => void exportBlueprint(blueprint)}
+            className="hover:bg-hover focus-visible:outline-focus flex items-center gap-1.5 rounded border border-[#3c3c3c] px-3 py-1 text-xs focus-visible:outline-1 focus-visible:outline-offset-2"
+          >
+            <Icon name="fileExport" className="size-3.5" />
+            {t("share.export")}
           </button>
         </header>
         <p className="text-text-muted truncate text-xs" title={read("description", blueprint.description)}>

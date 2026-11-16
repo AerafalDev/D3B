@@ -4,6 +4,7 @@ import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/componen
 import { Inspector } from "@/inspector/inspector.tsx";
 import { InspectorHeader } from "@/inspector/inspector-header.tsx";
 import { cn } from "@/lib/utils.ts";
+import { ImportPreview } from "@/share/import-preview.tsx";
 import { CommandPalette } from "./command-palette.tsx";
 import { useLayout } from "./layout-store.ts";
 import { ActivityBar } from "./parts/activity-bar.tsx";
@@ -31,6 +32,7 @@ export function Shell() {
   const shownView = useLayout((store) => store.view);
   const active = SIDE_VIEWS.find((entry) => entry.id === shownView);
   const ActiveView = active?.component;
+  const ActiveHeader = active?.header;
 
   return (
     <div className="bg-frame text-text relative flex h-svh flex-col overflow-hidden">
@@ -39,7 +41,11 @@ export function Shell() {
         <ActivityBar />
         <ResizablePanelGroup orientation="horizontal" className="min-w-0 flex-1">
           <ResizablePart part="primarySideBar" defaultSize={300} minSize={170}>
-            <PartFrame part="primarySideBar" title={active === undefined ? undefined : t(active.title)}>
+            <PartFrame
+              part="primarySideBar"
+              title={active === undefined ? undefined : t(active.title)}
+              header={ActiveHeader === undefined ? undefined : <ActiveHeader />}
+            >
               {ActiveView === undefined ? undefined : <ActiveView />}
             </PartFrame>
           </ResizablePart>
@@ -65,6 +71,7 @@ export function Shell() {
       </div>
       <StatusBar />
       <CommandPalette />
+      <ImportPreview />
     </div>
   );
 }

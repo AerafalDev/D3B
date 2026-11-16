@@ -432,6 +432,38 @@
       "zone": "A chosen zone"
     }
   },
+  "share": {
+    "export": "Export…",
+    "import": "Import…",
+    "exported": "{{name}} exported to {{file}}.",
+    "exportFailed": "{{name}} was not exported: {{reason}}",
+    "importFailed": "The file was not imported: {{reason}}",
+    "noDescription": "No description.",
+    "settings": "Settings per character",
+    "otherVariables": "Other variables",
+    "holds": "Holds: {{what}}",
+    "graphs_one": "{{count}} graph",
+    "graphs_other": "{{count}} graphs",
+    "nodes_one": "{{count}} node",
+    "nodes_other": "{{count}} nodes",
+    "zones_one": "{{count}} zone",
+    "zones_other": "{{count}} zones",
+    "routes_one": "{{count}} route",
+    "routes_other": "{{count}} routes",
+    "cancel": "Cancel",
+    "confirm": "Import",
+    "failure": {
+      "noFolder": "the system names no folder for your files.",
+      "noSuchBlueprint": "it is no longer there.",
+      "notD3b": "it is not a .d3b file.",
+      "unreadable": "it could not be read ({{reason}}).",
+      "notText": "it is not text.",
+      "newer": "written by a newer D3B (format {{found}}): update D3B.",
+      "notOfItsShape": "it is malformed ({{detail}}).",
+      "holdsZonesOrRoutes": "it holds zones or routes, which this version does not import yet: update D3B.",
+      "notSaved": "{{reason}}"
+    }
+  },
   "blueprint": {
     "set": "Set {{name}}",
     "unknownKind": "A node this version does not know: {{kind}}",
