@@ -17,7 +17,7 @@ export interface TreeArea {
 }
 
 /** Lowercase and without accents, so "foret" finds "Forêt". */
-function folded(text: string): string {
+export function folded(text: string): string {
   return text
     .normalize("NFD")
     .replace(/\p{Diacritic}/gu, "")

@@ -148,7 +148,8 @@ inspector, below. No new command.
 ## The inspector
 
 The owner's choices of 2026-11-12, on the mockup, then of 2026-11-13 in the new shell ([shell.md](shell.md)), from
-mock-ups: the panel's **Protocol** view (the panel under the editor area, Ctrl+J; its name "Protocol" in both languages)
+mock-ups: the panel's **Protocol** view (the panel under the editor area, Ctrl+J; its name "Protocol" in both languages;
+shown only with Advanced tools on, [shell.md](shell.md#settings), since step 3's PR 24)
 lists the frames of the character whose tab is active, live, newest last, and shows the one clicked in a column on its
 right. Its header holds, on one line, the connection's counts (understood, read, unknown, not trusted, dropped, from
 `RelayStatus.connections`), then the side, the name filter and the pause.

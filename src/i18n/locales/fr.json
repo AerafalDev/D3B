@@ -20,7 +20,8 @@
       "palette": "Afficher toutes les commandes",
       "primarySideBar": "Afficher ou masquer la barre latérale principale",
       "panel": "Afficher ou masquer le panneau",
-      "secondarySideBar": "Afficher ou masquer la barre latérale secondaire"
+      "secondarySideBar": "Afficher ou masquer la barre latérale secondaire",
+      "advancedTools": "Afficher ou masquer les outils avancés"
     },
     "keys": {
       "ctrl": "Ctrl",
@@ -31,7 +32,8 @@
       "file": "Fichier",
       "exit": "Quitter",
       "view": "Affichage",
-      "commandPalette": "Palette de commandes…"
+      "commandPalette": "Palette de commandes…",
+      "advancedTools": "Outils avancés"
     },
     "palette": {
       "placeholder": "Tapez le nom d'une commande",
@@ -473,7 +475,6 @@
     "zoomIn": "Zoom avant",
     "zoomOut": "Zoom arrière",
     "fitView": "Tout afficher",
-    "minimap": "Vue d'ensemble",
     "myBlueprint": "Mon blueprint",
     "graphs": "Graphes",
     "functions": "Fonctions",
@@ -666,10 +667,32 @@
     "missing": "Sous-zone {{id}} absente des données",
     "search": "Chercher une zone",
     "mine": "Mes zones",
-    "mineLater": "Tes zones peintes viendront ici.",
     "onMap": "Choisir sur la carte",
     "keys": "↑ ↓ Entrée",
-    "subArea": "Sous-zone {{id}}"
+    "subArea": "Sous-zone {{id}}",
+    "mineOne": "Zone à moi",
+    "none": "Aucune zone : « + » en peint une.",
+    "create": "Nouvelle zone",
+    "newName": "Nouvelle zone",
+    "name": "Nom de la zone",
+    "rename": "Renommer",
+    "delete": "Supprimer",
+    "unread": "Tes zones n'ont pas pu être lues : {{reason}}",
+    "tools": {
+      "label": "Outils de la zone",
+      "select": "Sélection ({{key}})",
+      "brush": "Pinceau ({{key}})",
+      "eraser": "Gomme ({{key}})",
+      "subArea": "Sous-zone entière ({{key}})"
+    },
+    "failed": {
+      "noSuchZone": "Cette zone n'existe plus : rien n'a changé.",
+      "noFolder": "Rien n'a changé : le système ne donne aucun dossier pour tes fichiers.",
+      "emptyName": "Une zone a besoin d'un nom.",
+      "notSaved": "Rien n'a changé : {{reason}}"
+    },
+    "mineMissing": "Zone {{id}} introuvable",
+    "noneField": "Aucune zone : peins-en une avec « + » dans la vue Monde."
   },
   "settings": {
     "title": "Blueprint et réglages",
@@ -688,5 +711,10 @@
       "refused": "Rien n'a changé pour {{name}} : cette valeur n'est pas permise.",
       "notSaved": "Rien n'a changé pour {{name}} : {{reason}}"
     }
+  },
+  "appSettings": {
+    "notSaved": "Le réglage tient jusqu'à la fermeture de D3B : {{reason}}",
+    "noFolder": "ce système ne nomme aucun dossier pour D3B",
+    "kept": "settings.json est gardé tel quel, les valeurs par défaut s'appliquent : {{reason}}"
   }
 }
