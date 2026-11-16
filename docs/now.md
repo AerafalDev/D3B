@@ -1,6 +1,6 @@
 # Now
 
-_Updated 2026-11-15._
+_Updated 2026-11-16._
 
 - **Step**: 2, Observe ([ROADMAP.md](../ROADMAP.md)); its first feature, the relay and the client's redirection, is
   designed with the owner ([docs/relay.md](relay.md), ADR 0011); its second, the protocol and its per-build mapping,
@@ -113,8 +113,8 @@ _Updated 2026-11-15._
        no game data and fails the Rust test that reads `data/`. On a later `next`, the same with format 4's archive,
        `client-3.7.13.17-format4.tar.gz`, whose run also prints the breeds' and the hints' lines;
     2. on the same commit, `bun run data:fetch 3.7.13.17` fills `data/` with format 2 (published on 2026-11-13, from
-       `next` 2b0577c), and `bun run app`'s status bar says "Client 3.7.13.17"; on a later `next`, once format 4 is
-       published, the same with format 4;
+       `next` 2b0577c), and `bun run app`'s status bar says "Client 3.7.13.17"; on `next` at 55e4be8 or later, the
+       same with format 4 (published on 2026-11-16);
     3. with that data, start D3B, then a client, and open a character from the Characters view: its tab shows its
        breed's head, 40 px in a rounded square, in place of its initials, the head of its sex, and "Niveau <n> ·
        <breed> · <state>" with the breed's French name (in English after switching the language: "Level <n> ·
@@ -173,7 +173,7 @@ _Updated 2026-11-15._
     5. choose Incarnam in the editor action: its map shows; click an Incarnam sub-area in the view: it shows there;
     6. a sub-area no world shows (a dungeon) is greyed with a crossed pin, its hover saying "Pas sur la carte"; clicking
        it says so on top of the map;
-    7. (needs format 4's data) on the Twelve's map, the hints' pictures stand on their maps, the same size at every
+    7. (with format 4's data, `bun run data:fetch 3.7.13.17`) on the Twelve's map, the hints' pictures stand on their maps, the same size at every
        zoom, more of them as it zooms in, none overlapping, and dragging never changes which are shown; hovering a zaap
        says "Zaap" and its coordinates, a dungeon also its level;
     8. "Indices" beside the worlds lists the kinds the world holds, each with its picture and count, all ticked but
@@ -195,8 +195,12 @@ _Updated 2026-11-15._
 - **Published**: `client-3.7.13.17.tar.gz`, from `next` f3104e9 (SHA-256 `74cfd3c3…`), added to the C# version's
   `client-3.7.13.17` release on the owner's go. v0.11.0 shipped without data, named before. Format 2 (the breeds):
   `client-3.7.13.17-format2.tar.gz`, from `next` 2b0577c (SHA-256 `2e3ac196…`, 84,146,484 bytes), added to the same
-  release on the owner's go on 2026-11-13; `.github/game-data.json` named it until format 3 (step 3's (3b)), which
-  a release needs published first. **v0.12.0**, published on the owner's go on 2026-11-11, packs that data
+  release on the owner's go on 2026-11-13; `.github/game-data.json` named it until format 3 (step 3's (3b)), then
+  format 4 (9b). Format 4 (the items, the jobs, the icons and the hints; format 3 never published):
+  `client-3.7.13.17-format4.tar.gz`, from `next` 55e4be8 (SHA-256 `3c4f5060…`, 105,345,462 bytes), added to the same
+  release on the owner's go on 2026-11-16, so `data:fetch` and the next release find it; that day, before the
+  owner's measures, `bun run data:fetch 3.7.13.17` filled `data/` with it and the Rust test reading `data/` passed on
+  it (the status bar not looked at). **v0.12.0**, published on the owner's go on 2026-11-11, packs format 1's data
   and the relay, with installers for the six targets and its `latest.json` on `updater-next`; **v0.13.0**, on
   2026-11-11, adds the game connection split into frames; **v0.14.0**, on the owner's go on 2026-11-13, packs the
   data's format 2 and the new shell (status bar, inspector, Lucide icons, the breed's head), its six targets carrying
@@ -282,8 +286,7 @@ _Updated 2026-11-15._
   (`World.HintsDataRoot`, 835 on 3.7.13.17 in 6 categories, measured by the C# version) and their pictures at the
   client's 64 px (the owner, 2026-11-15), a new data format, 4 (ADR 0013; done in code: 835 hints, 12 categories, 91
   pictures of 395 KB, graphic 475's missing one counted, an archive of 105 MB in 28 s); format 3 is then never
-  published: the owner's extraction and publishing of `client-3.7.13.17-format4.tar.gz` replaces it, and until then
-  `.github/game-data.json` names format 4, so `data:fetch` and a release find no data; (9c) the hints on the World's map (the owner's mock-up 11, 2026-11-15): pictures 28 px on screen, those that would
+  published: `client-3.7.13.17-format4.tar.gz` replaces it, published on 2026-11-16 (under "Published"); (9c) the hints on the World's map (the owner's mock-up 11, 2026-11-15): pictures 28 px on screen, those that would
   overlap thinned out by kind over the whole world, a switch per kind behind "Indices" in the tab's editor action, nine
   kinds told apart by picture before category, the other places and passages off by default (done in code; the nearest
   bank waits for step 4, measured by path with going to the bank);
