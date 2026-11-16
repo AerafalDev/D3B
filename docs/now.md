@@ -366,7 +366,7 @@ _Updated 2026-11-16._
   functions opened in place, with their exits and the pure ones; (16) events: priority, re-arming, modes, the
   defaults, and the events of mine declared; (17) comments and reroutes; (18) Align, copy and paste,
   search; (19) editing by keyboard; (20) my zones painted (the owner's choices of 2026-11-16: coordinates on one world, a floating toolbar of four tools, "+" in the World view and the name in Details, amber), in PRs: `zones/<id>.json` and the IPC that lists, creates, paints, renames and deletes them (done in code), then the World view, the tools and Details, and the Zone field; (21) routes, with an action and a forced exit per anchor, Follow the route resuming from
-  the map the character is on, the recorder and the text import and export; (22) the `.d3b` file; (23) a given blueprint's
+  the map the character is on, the recorder and the text import and export; (22) the `.d3b` file (the owner's choices of 2026-11-16, ADR 0017: one readable JSON, its zones and routes joining it with (20) and (21), a preview dialog, Export in the Library's menu and the tab, Import in its header and by a drop), in PRs: the file, its export, preview and import through the IPC (done in code), then the Library's Export and Import, the preview and the drop, then the zones it names joining it; (23) a given blueprint's
   update; (24) the "Advanced tools" setting; (25) the runtime: the flow, outcomes, variables, blocked, finished, on the
   captures, with v2's loops, Switch, lists, randomness, pure functions and the loop guard; (26) events at run time:
   priorities, modes, thresholds, settings at safe points, with When, Every, At, the events of mine and their timers. Step 4 then brings Play,

@@ -37,6 +37,7 @@ pub fn run() {
     }
 
     app.plugin(tauri_plugin_log::Builder::new().level(log_level()).build())
+        .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_process::init())
         .invoke_handler(ipc.invoke_handler())

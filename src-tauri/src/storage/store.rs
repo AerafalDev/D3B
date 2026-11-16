@@ -236,6 +236,25 @@ impl Store {
         let mut writing = self.lock();
         let given = bot::given().unwrap_or_default();
         let mine = self.blueprints();
+        let taken = self.taken()?;
+        let mut sources = given
+            .iter()
+            .map(|it| (it, true))
+            .chain(mine.read.iter().map(|it| (it, false)));
+        let found = sources.find(|(it, _)| it.id.0 == id);
+        let (source, is_given) = found.ok_or_else(|| StorageError::NoSuchBlueprint { id: Id(id.to_owned()) })?;
+        let copy = bot::copy(source, is_given, bot::id_for(&texts.name, "blueprint", &taken), texts);
+        self.save_while_locked(&copy)?;
+        // A blueprint deleted by hand may have left its id free, never its undo history to the copy.
+        writing.remove(&copy.id);
+        Ok(copy.id)
+    }
+
+    /// The ids a new blueprint of mine may not take: D3B's, mine, and every file name of the folder, in lowercase, so
+    /// that no file is written over on a system that ignores case. Called under the lock; a folder that could not be
+    /// listed is refused, since a file in it might be written over.
+    pub(super) fn taken(&self) -> Result<HashSet<Id>, StorageError> {
+        let mine = self.blueprints();
         let folder = self.root.join(BLUEPRINTS);
         if let Some(Kept {
             why: Why::Unreadable(error),
@@ -245,24 +264,15 @@ impl Store {
             let source = io::Error::new(error.kind(), error.to_string());
             return Err(StorageError::Unreadable { path: folder, source });
         }
-        let sources = given
-            .iter()
-            .map(|it| (it, true))
-            .chain(mine.read.iter().map(|it| (it, false)));
-        let found = sources.clone().find(|(it, _)| it.id.0 == id);
-        let (source, is_given) = found.ok_or_else(|| StorageError::NoSuchBlueprint { id: Id(id.to_owned()) })?;
-        let mut taken: HashSet<Id> = sources.map(|(it, _)| it.id.clone()).collect();
+        let mut taken: HashSet<Id> = given_ids();
+        taken.extend(mine.read.into_iter().map(|it| it.id));
         for entry in std::fs::read_dir(&folder).into_iter().flatten().flatten() {
             let path = entry.path();
             if let Some(stem) = path.file_stem().and_then(|stem| stem.to_str()) {
                 taken.insert(Id(stem.to_lowercase()));
             }
         }
-        let copy = bot::copy(source, is_given, bot::id_for(&texts.name, "blueprint", &taken), texts);
-        self.save_while_locked(&copy)?;
-        // A blueprint deleted by hand may have left its id free, never its undo history to the copy.
-        writing.remove(&copy.id);
-        Ok(copy.id)
+        Ok(taken)
     }
 
     /// The player's folder.
