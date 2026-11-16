@@ -377,12 +377,16 @@ pub enum ShareFailure {
     NewerSchema {
         found: u32,
     },
-    /// Not of a `.d3b`'s shape, or its blueprint not of a blueprint's: what serde says, with its line and column.
+    /// One of its zones written by a newer D3B, of this schema.
+    NewerZone {
+        found: u32,
+    },
+    /// Not of a `.d3b`'s shape, or its blueprint or one of its zones not of theirs: what serde says.
     NotOfItsShape {
         detail: String,
     },
-    /// It holds zones or routes, which this version does not import.
-    HoldsZonesOrRoutes,
+    /// It holds routes, which this version does not import.
+    HoldsRoutes,
     /// The system could not write the file or the blueprint: its own words.
     NotSaved {
         reason: String,
@@ -408,7 +412,13 @@ impl From<ShareError> for ShareFailure {
                     detail: error.to_string(),
                 }
             }
-            ShareError::HoldsZonesOrRoutes => Self::HoldsZonesOrRoutes,
+            ShareError::Zone(Why::NewerZone { found }) => Self::NewerZone {
+                found: u32::try_from(found).unwrap_or(u32::MAX),
+            },
+            ShareError::Zone(why) => Self::NotOfItsShape {
+                detail: why.to_string(),
+            },
+            ShareError::HoldsRoutes => Self::HoldsRoutes,
         }
     }
 }
@@ -440,10 +450,10 @@ fn texts_of(texts: CopyTexts) -> bot::Texts {
 /// The `.d3b` sharing the blueprint `id`: the name its file is offered under, and its text.
 fn exported(store: Option<&Store>, id: &str, texts: Option<CopyTexts>) -> Result<(String, String), ShareFailure> {
     let store = store.ok_or(ShareFailure::NoFolder)?;
-    let blueprint = store.shared(id, texts.map(texts_of))?;
+    let shared = store.shared(id, texts.map(texts_of))?;
     Ok((
-        storage::shared_file_name(&blueprint.name),
-        storage::write_shared(&blueprint),
+        storage::shared_file_name(&shared.blueprint.name),
+        storage::write_shared(&shared),
     ))
 }
 
@@ -452,22 +462,22 @@ fn count(n: usize) -> u32 {
 }
 
 fn preview(path: &Path) -> Result<SharedPreview, ShareFailure> {
-    let blueprint = storage::read_shared(path)?;
+    let shared = storage::read_shared(path)?;
+    let blueprint = &shared.blueprint;
     Ok(SharedPreview {
         path: path.display().to_string(),
-        blueprint: summary(&blueprint, false),
-        problems: bot::problems(&blueprint).iter().map(ProblemView::from).collect(),
+        blueprint: summary(blueprint, false),
+        problems: bot::problems(blueprint).iter().map(ProblemView::from).collect(),
         graphs: count(blueprint.graphs.len()),
         nodes: count(blueprint.graphs.iter().map(|graph| graph.nodes.len()).sum()),
-        zones: 0,
+        zones: count(shared.zones.len()),
         routes: 0,
     })
 }
 
 fn import(store: Option<&Store>, path: &Path) -> Result<String, ShareFailure> {
     let store = store.ok_or(ShareFailure::NoFolder)?;
-    let blueprint = storage::read_shared(path)?;
-    Ok(store.import(blueprint)?.0)
+    Ok(store.import(storage::read_shared(path)?)?.0)
 }
 
 /// Runs `job` off the async runtime: the dialogs and the files block.
@@ -808,7 +818,18 @@ mod tests {
             Err(ShareFailure::Unreadable { .. })
         ));
         let zones = put("zones.d3b", &text.replacen("\"zones\": []", "\"zones\": [1]", 1));
-        assert_eq!(preview(&zones), Err(ShareFailure::HoldsZonesOrRoutes));
+        assert!(matches!(preview(&zones), Err(ShareFailure::NotOfItsShape { .. })));
+        let newer_zone = text.replacen("\"zones\": []", "\"zones\": [{\"schema\": 4}]", 1);
+        let newer_zone = put("newer-zone.d3b", &newer_zone);
+        assert_eq!(
+            import(Some(&store), &newer_zone),
+            Err(ShareFailure::NewerZone { found: 4 })
+        );
+        let wheat = r#""zones": [{"schema": 1, "id": "wheat", "name": "Blé", "world": 1, "maps": [[0, 0]]}]"#;
+        let one_zone = put("one-zone.d3b", &text.replacen("\"zones\": []", wheat, 1));
+        assert_eq!(preview(&one_zone).map(|shown| shown.zones), Ok(1), "what it holds");
+        let routes = put("routes.d3b", &text.replacen("\"routes\": []", "\"routes\": [1]", 1));
+        assert_eq!(preview(&routes), Err(ShareFailure::HoldsRoutes));
         assert_eq!(import(None, &newer), Err(ShareFailure::NoFolder));
         assert_eq!(
             exported(Some(&store), "teleport", None),

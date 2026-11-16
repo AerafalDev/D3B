@@ -1192,10 +1192,12 @@ export type ShareFailure =
 { kind: "newer"; found: number } | 
 /**  Its blueprint written by a newer D3B, of this schema. */
 { kind: "newerSchema"; found: number } | 
-/**  Not of a `.d3b`'s shape, or its blueprint not of a blueprint's: what serde says, with its line and column. */
+/**  One of its zones written by a newer D3B, of this schema. */
+{ kind: "newerZone"; found: number } | 
+/**  Not of a `.d3b`'s shape, or its blueprint or one of its zones not of theirs: what serde says. */
 { kind: "notOfItsShape"; detail: string } | 
-/**  It holds zones or routes, which this version does not import. */
-{ kind: "holdsZonesOrRoutes" } | 
+/**  It holds routes, which this version does not import. */
+{ kind: "holdsRoutes" } | 
 /**  The system could not write the file or the blueprint: its own words. */
 { kind: "notSaved"; reason: string };
 

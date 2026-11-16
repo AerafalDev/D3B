@@ -41,7 +41,7 @@ pub(crate) struct Zones {
 }
 
 impl Store {
-    fn zones_folder(&self) -> PathBuf {
+    pub(super) fn zones_folder(&self) -> PathBuf {
         self.root().join(ZONES)
     }
 
@@ -205,7 +205,7 @@ fn text(zone: &Zone) -> String {
 }
 
 /// Writes `zone` at `path` in `folder`, whole.
-fn write(folder: &Path, path: &Path, zone: &Zone) -> Result<(), StorageError> {
+pub(super) fn write(folder: &Path, path: &Path, zone: &Zone) -> Result<(), StorageError> {
     let written = std::fs::create_dir_all(folder).and_then(|()| atomic::write(path, text(zone).as_bytes()));
     written.map_err(|source| StorageError::Write {
         path: path.to_path_buf(),
@@ -216,22 +216,28 @@ fn write(folder: &Path, path: &Path, zone: &Zone) -> Result<(), StorageError> {
 fn read(path: &Path) -> Result<Zone, Why> {
     let bytes = std::fs::read(path).map_err(Why::Unreadable)?;
     let text = String::from_utf8(bytes).map_err(|_| Why::NotText)?;
-    let value: serde_json::Value = serde_json::from_str(&text).map_err(|error| Why::NotAZone(error.to_string()))?;
-    match value.get("schema").and_then(serde_json::Value::as_u64) {
-        Some(found) if found > u64::from(SCHEMA) => return Err(Why::NewerZone { found }),
-        Some(found) if found >= 1 => {}
-        _ => return Err(Why::NotAZone(format!("its schema must be 1 to {SCHEMA}"))),
-    }
-    let zone: Zone = serde_json::from_str(&text).map_err(|error| Why::NotAZone(error.to_string()))?;
-    if !zone.id.is_well_formed() {
-        return Err(Why::NotAZone(format!("{} is no id a file can be named by", zone.id.0)));
-    }
+    let zone = parse(&text)?;
     let name = path.file_name().and_then(|name| name.to_str());
     if name == Some(format!("{}.json", zone.id.0).as_str()) {
         Ok(zone)
     } else {
         Err(Why::NameIsNotId { id: zone.id })
     }
+}
+
+/// The zone `text` holds, its schema read first, as its file or a `.d3b` (`storage::share`) writes it.
+pub(super) fn parse(text: &str) -> Result<Zone, Why> {
+    let value: serde_json::Value = serde_json::from_str(text).map_err(|error| Why::NotAZone(error.to_string()))?;
+    match value.get("schema").and_then(serde_json::Value::as_u64) {
+        Some(found) if found > u64::from(SCHEMA) => return Err(Why::NewerZone { found }),
+        Some(found) if found >= 1 => {}
+        _ => return Err(Why::NotAZone(format!("its schema must be 1 to {SCHEMA}"))),
+    }
+    let zone: Zone = serde_json::from_str(text).map_err(|error| Why::NotAZone(error.to_string()))?;
+    if !zone.id.is_well_formed() {
+        return Err(Why::NotAZone(format!("{} is no id a file can be named by", zone.id.0)));
+    }
+    Ok(zone)
 }
 
 #[cfg(test)]

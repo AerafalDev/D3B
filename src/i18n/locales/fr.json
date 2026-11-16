@@ -471,8 +471,9 @@
       "notText": "ce n'est pas du texte.",
       "newer": "écrit par un D3B plus récent (format {{found}}) : mettez D3B à jour.",
       "newerSchema": "son blueprint est écrit par un D3B plus récent (schéma {{found}}) : mettez D3B à jour.",
+      "newerZone": "une de ses zones est écrite par un D3B plus récent (schéma {{found}}) : mettez D3B à jour.",
       "notOfItsShape": "il est mal formé ({{detail}}).",
-      "holdsZonesOrRoutes": "il contient des zones ou des routes, que cette version n'importe pas encore : mettez D3B à jour.",
+      "holdsRoutes": "il contient des routes, que cette version n'importe pas encore : mettez D3B à jour.",
       "notSaved": "{{reason}}"
     }
   },

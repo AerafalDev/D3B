@@ -8,6 +8,7 @@ mod character;
 mod history;
 mod settings;
 mod share;
+mod share_zones;
 mod store;
 mod zone;
 

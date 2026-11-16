@@ -301,7 +301,11 @@ _Updated 2026-11-16._
        the same as the given one's; import it again: `recolte-automatique-2`, the first untouched;
     4. export one of mine with the Exporter button of its tab, import it: the same nodes, wires, values and layout;
     5. drop a `.json`, a `.d3b` cut in half, and one whose `"d3b"` is 2: each is refused with why (not a .d3b, its line
-       and column, a newer D3B), and nothing is added.
+       and column, a newer D3B), and nothing is added;
+    6. paint a zone `Blé` of three maps, set it as the Zone default of a blueprint of mine, export it, delete the zone,
+       import the file: `Blé` comes back with its three maps and the blueprint names it; import it again: the same zone
+       is reused, no `ble-2`; paint a fourth map on `Blé`, import once more: a zone `ble-2` holds the three maps and
+       the new blueprint names it, `Blé` keeps its four.
 - **Done in code, step 1**: `tools/extractor` reads the client's bundles, data tables, texts in five languages and flag
   enums, and writes the map positions, sub-areas, areas, zaaps, worlds and their tiles, maps, and the world graph,
   checked against one another, with the `client-<build>-format<n>.tar.gz` that `data:fetch` reads (ADR 0013); the app reads it all at start
@@ -446,7 +450,7 @@ _Updated 2026-11-16._
   functions opened in place, with their exits and the pure ones; (16) events: priority, re-arming, modes, the
   defaults, and the events of mine declared; (17) comments and reroutes; (18) Align, copy and paste,
   search; (19) editing by keyboard; (20) my zones painted (the owner's choices of 2026-11-16: coordinates on one world, a floating toolbar of four tools, "+" in the World view and the name in Details, amber), in PRs: `zones/<id>.json` and the IPC that lists, creates, paints, renames and deletes them (done in code), then my zones in the World view and the Zone field (done in code), then the map's tools and Details (done in code; its checklist under "Not measured"); (21) routes, with an action and a forced exit per anchor, Follow the route resuming from
-  the map the character is on, the recorder and the text import and export; (22) the `.d3b` file (the owner's choices of 2026-11-16, ADR 0018: one readable JSON, its zones and routes joining it with (20) and (21), a preview dialog, Export in the Library's menu and the tab, Import in its header and by a drop), in PRs: the file, its export, preview and import through the IPC (done in code), then the Library's Export and Import, the preview and the drop (done in code; its checklist under "Not measured"), then the zones it names joining it; (23) a given blueprint's
+  the map the character is on, the recorder and the text import and export; (22) the `.d3b` file (the owner's choices of 2026-11-16, ADR 0018: one readable JSON, its zones and routes joining it with (20) and (21), a preview dialog, Export in the Library's menu and the tab, Import in its header and by a drop), in PRs: the file, its export, preview and import through the IPC (done in code), then the Library's Export and Import, the preview and the drop (done in code; its checklist under "Not measured"), then the zones it names joining it (done in code, item 6 of its checklist); (23) a given blueprint's
   update (the owner's choices of 2026-11-16: a notice in the character's tab until closed, a value kept when the new
   version accepts it, a copy saying its original is newer with a blue arrow in the Library and nothing more yet; done
   in code, its checklist under "Not measured"); (24) the "Advanced tools" setting (the owner's choices of 2026-11-16: in the palette and View, no Settings

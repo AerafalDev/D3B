@@ -430,9 +430,12 @@ before the rename, one save at a time. The folder is the system's documents fold
 folder; the IPC lists D3B's blueprints, then mine, and the files kept with a typed reason the interface words.
 The **`.d3b` file** (step 3's PR 22, the owner's choices of 2026-11-16, ADR 0018) is one indented JSON, `{"d3b": 1,
 "blueprint": {…}, "zones": [], "routes": []}`: its format read first, then the blueprint's own file, read and checked
-as one of the folder; zones and routes empty until PRs 20 and 21 fill them with those the blueprint names (at import,
-one identical to mine reused, another under a taken id given a free one, the blueprint rewritten to name it), and a file
-that holds some refused by a version that cannot import them. Export… (a row's right-click in the Library, or beside
+as one of the folder; then the zones of mine it names (`{"zone": "<id>"}` in a variable's default or a value typed on
+a node, in a list too), each its zone's file, read and checked as one of `zones/`; at import a zone with the name,
+world and maps of mine under its id is that zone, one whose id a zone or a file of `zones/` holds, in any case, takes a
+free one and the blueprint is rewritten to name it, the others keep theirs, never over a file; the zones are written
+before the blueprint. Routes stay empty until PR 21 fills them, and a file that holds some is refused by a version
+that cannot import them. Export… (a row's right-click in the Library, or beside
 Duplicate in its tab) writes it where the player chooses in the system's save dialog, named by the blueprint; one of
 D3B's goes as mine based on it, in the player's words, under an id made from its name. Import… (the Library's header),
 or a file dropped anywhere on the window, opens a **preview** first, a dialog: the name, description, what it is based
