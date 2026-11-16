@@ -224,7 +224,13 @@ fn reads_a_level_gained() {
 fn reads_each_fighters_result_at_a_fights_end() {
     let result = |outcome, id| message(&[varint(1, outcome), bytes(2, &message(&[varint(1, 7), varint(5, id)]))]);
     let (lost, won) = (result(0, -42), result(2, 1_234_567));
-    let end = message(&[varint(1, 60), bytes(4, &lost), bytes(4, &won), varint(5, -1), varint(8, 49_114)]);
+    let end = message(&[
+        varint(1, 60),
+        bytes(4, &lost),
+        bytes(4, &won),
+        varint(5, -1),
+        varint(8, 49_114),
+    ]);
     let fighter = |id| Some(game::FightResultFighter { id });
     assert_eq!(
         decoded("FightEndEvent", &end),

@@ -8,8 +8,8 @@ package d3b.game;
 
 // A fight ended. Partial: its fields 1, 2, 3 and 5 to 8 are not read.
 message FightEndEvent {
-  // One per fighter of the character's side the server reports: the played character's alone in all 634 fight ends of
-  // the owner's captures (verified).
+  // One per fighter, the monsters' too: the character's is found by its id, exactly one in each of the 634 fight ends
+  // of the owner's captures (verified).
   repeated FightResult results = 4;
 }
 

@@ -102,7 +102,7 @@ flowchart LR
   see this before step N".
 - **It blocks**, with the reason and the node, on an unlinked Failed, a death (the character's fights lost rising:
   the forced default; a `died` event held by the blueprint is (26)'s), 10,000 nodes in a row without waiting ("runs
-  without pause"), a call deeper than 64, or a value that cannot be computed. Its states are ready, running, paused,
+  without pause"), a call deeper than 64 (settled alone), or a value that cannot be computed. Its states are ready, running, paused,
   finished and blocked; without blueprint and disconnected are the character's: no view holds the run, and the node
   at work runs again once the character is back, as actions are goal-shaped. A Wait counts the clock's time (settled
   alone).

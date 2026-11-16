@@ -94,10 +94,19 @@ fn the_owners_game_captures_read_through_the_games_state() {
         counts.regenerations > 0 && counts.maps > 0 && counts.walks > 0 && counts.updates > 0,
         "nothing read: {counts:?}"
     );
-    // The death's study (`artifacts/studies/death.md`): 634 fight ends, each the character's, 613 won and 21 lost in
-    // 6 connections. A second selection on a connection would start its count over: none came after a fight.
-    assert_eq!(counts.won + counts.lost, counts.fight_ends, "a fight's end not counted: {counts:?}");
+    // The death's study (`artifacts/studies/death.md`): 634 fight ends, each holding one result of the character's, 613
+    // won and 21 lost in 6 connections, as measured here on 2026-11-16. A second selection on a connection would start
+    // its count over: none came after a fight.
+    assert_eq!(
+        counts.won + counts.lost,
+        counts.fight_ends,
+        "a fight's end not counted: {counts:?}"
+    );
     assert!(counts.lost > 0 && counts.won > counts.lost, "fights: {counts:?}");
+    assert!(
+        (1..=counts.lost).contains(&counts.connections_with_a_loss),
+        "losses by connection: {counts:?}"
+    );
     assert_eq!(counts.missed_lives, 0, "lives counted more than a point off");
     assert_eq!(counts.maps_without_it, 0, "maps without the character");
     // The study: 93,822 of 94,602 walks start on the known cell; the server does not say when one is cut short.

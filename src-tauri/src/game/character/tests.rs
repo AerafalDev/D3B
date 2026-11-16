@@ -215,11 +215,16 @@ fn counts_the_fights_it_won_and_lost_by_its_own_result() {
         fights(&[chosen(ME, "Lyra", 87), won.clone(), lost.clone(), won.clone()]),
         Fights { won: 2, lost: 1 }
     );
-    // Another fighter's result, an outcome never seen and a fight's end before any selection are not the character's.
+    // Another fighter's result and an outcome never seen are not the character's.
     assert_eq!(
-        fights(&[lost.clone(), chosen(ME, "Lyra", 87), fight_end(&[(0, -42), (3, ME)])]),
+        fights(&[chosen(ME, "Lyra", 87), fight_end(&[(0, -42), (3, ME)])]),
         Fights::default()
     );
+    // A fight's end before any selection has no one to count it for.
+    let mut before = fed(std::slice::from_ref(&lost), now);
+    assert_eq!(before.fights, Fights::default());
+    before.apply(&chosen(ME, "Lyra", 87), now, 0);
+    assert_eq!(before.view(now, 0).fights, Fights::default());
     // Another character chosen on the connection starts its own count.
     assert_eq!(
         fights(&[chosen(ME, "Lyra", 87), lost, chosen(ME + 1, "Kael", 12)]),
