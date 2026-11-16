@@ -221,6 +221,40 @@ fn reads_a_level_gained() {
 }
 
 #[test]
+fn reads_each_fighters_result_at_a_fights_end() {
+    let result = |outcome, id| message(&[varint(1, outcome), bytes(2, &message(&[varint(1, 7), varint(5, id)]))]);
+    let (lost, won) = (result(0, -42), result(2, 1_234_567));
+    let end = message(&[
+        varint(1, 60),
+        bytes(4, &lost),
+        bytes(4, &won),
+        varint(5, -1),
+        varint(8, 49_114),
+    ]);
+    let fighter = |id| Some(game::FightResultFighter { id });
+    assert_eq!(
+        decoded("FightEndEvent", &end),
+        Message::FightEndEvent(game::FightEndEvent {
+            results: vec![
+                game::FightResult {
+                    outcome: 0,
+                    fighter: fighter(-42),
+                },
+                game::FightResult {
+                    outcome: 2,
+                    fighter: fighter(1_234_567),
+                },
+            ],
+        })
+    );
+    // An outcome never seen is kept as its number, not read as a loss.
+    let Message::FightEndEvent(unseen) = decoded("FightEndEvent", &message(&[bytes(4, &result(3, 5))])) else {
+        panic!("not a fight's end")
+    };
+    assert_eq!(unseen.results[0].outcome, 3);
+}
+
+#[test]
 fn reads_the_kamas() {
     assert_eq!(
         decoded("KamasUpdateEvent", &message(&[varint(2, 145_320)])),

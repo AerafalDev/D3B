@@ -81,6 +81,7 @@ messages! {
     InventoryWeightEvent,
     CharacterLevelUpEvent,
     KamasUpdateEvent,
+    FightEndEvent,
 }
 
 #[cfg(test)]

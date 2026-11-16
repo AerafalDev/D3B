@@ -18,7 +18,7 @@ pub(crate) use blueprint::{Blueprint, Does, End, Graph, Id, Mode, Node, Paramete
 pub(crate) use catalogue::{Carries, Family, Side, kind};
 pub(crate) use copy::{Texts, copy, id_for};
 pub(crate) use edit::{Edit, Refusal, choices, edit};
-pub(crate) use given::given;
+pub(crate) use given::{given, is_given};
 #[cfg(test)]
 pub(crate) use json::tests::HARVEST;
 pub(crate) use json::{ReadError, read, write};

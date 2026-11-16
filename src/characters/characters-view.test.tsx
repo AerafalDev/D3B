@@ -146,6 +146,7 @@ describe("the characters view", () => {
       place: null,
       blueprint: null,
       settings: {},
+      dropped: [],
     };
   }
 

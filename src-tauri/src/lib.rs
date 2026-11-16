@@ -47,6 +47,8 @@ pub fn run() {
             app.manage(ipc::open_store(app.handle()));
             app.manage(ipc::start_played_writer(app.handle()));
             ipc.mount_events(app);
+            // After the events are mounted: it says the characters changed.
+            ipc::update_played(app.handle());
             ipc::start_relay(app);
             Ok(())
         })

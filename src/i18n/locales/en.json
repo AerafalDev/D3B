@@ -405,6 +405,8 @@
     "givenLine": "Given by D3B · v{{version}} · locked",
     "mineLine": "Mine",
     "mineBasedOn": "Mine · based on {{name}} v{{version}}",
+    "originalNewer": "Its original has a newer version, v{{version}}",
+    "originalNewerLine": "its original has a newer version, v{{version}}",
     "gone": "This blueprint is gone.",
     "unread": "The Library could not be read: {{reason}}",
     "duplicateFailed": {
@@ -693,7 +695,13 @@
       "notSaved": "Nothing changed: {{reason}}"
     },
     "mineMissing": "Zone {{id}} not found",
-    "noneField": "No zone: paint one with \"+\" in the World view."
+    "noneField": "No zone: paint one with \"+\" in the World view.",
+    "details": {
+      "of": "Zone of mine · {{world}}",
+      "subAreas": "Sub-areas",
+      "empty": "None: paint its maps.",
+      "share": "{{inZone}}/{{all}}"
+    }
   },
   "settings": {
     "title": "Blueprint and settings",
@@ -701,6 +709,9 @@
     "none": "No blueprint",
     "open": "Open the blueprint",
     "missing": "Blueprint {{id}} not found",
+    "dropped_one": "{{blueprint}} v{{version}}: your value of {{settings}} no longer applies.",
+    "dropped_other": "{{blueprint}} v{{version}}: your values of {{settings}} no longer apply.",
+    "droppedClose": "Close",
     "reset": "Back to the blueprint's value ({{value}})",
     "bounds": "From {{smallest}} to {{largest}}",
     "job": "Profession {{id}}",

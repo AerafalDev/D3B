@@ -7,8 +7,8 @@ use super::around::{Around, on_the_map};
 use super::life::{Characteristics, Life, LifeNow};
 use crate::protocol::Message;
 use crate::protocol::game::{
-    CharacterLook, CharacterSelectionEvent, character_appearance::Sex as WireSex,
-    character_selection_event::Result as Selection, context_creation_event::GameContext,
+    CharacterLook, CharacterSelectionEvent, FightEndEvent, character_appearance::Sex as WireSex,
+    character_selection_event::Result as Selection, context_creation_event::GameContext, fight_result::Outcome,
 };
 
 /// The character chosen (verified: its actor on each map bears its id, 66,171 of 66,171).
@@ -53,6 +53,15 @@ pub(crate) struct Pods {
     pub max_weight: i32,
 }
 
+/// The fights the character ended since it was chosen, by its own result: a loss is its death, an abandon too
+/// (verified, 21 of 21 losses, `artifacts/studies/death.md`). Counted, so that a view read later still shows one that
+/// came between two reads.
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
+pub(crate) struct Fights {
+    pub won: u32,
+    pub lost: u32,
+}
+
 /// Which parts may be out of date: the protocol dropped frames since they were last refreshed.
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
 #[expect(
@@ -79,6 +88,7 @@ pub(crate) struct View {
     pub pods: Option<Pods>,
     pub kamas: Option<i64>,
     pub around: Around,
+    pub fights: Fights,
     pub stale: Stale,
 }
 
@@ -105,6 +115,7 @@ pub(crate) struct Character {
     pods: Option<Pods>,
     kamas: Option<i64>,
     around: Around,
+    fights: Fights,
     refreshed: Refreshed,
 }
 
@@ -201,6 +212,7 @@ impl Character {
                 self.around.shown(&shown.actors, self.who.as_ref().map(|who| who.id));
             }
             Message::MapActorRemovedEvent(removed) => self.around.removed(removed.actor_id),
+            Message::FightEndEvent(end) => self.ended(end),
             Message::InteractiveElementUpdatedEvent(updated) if self.context != Some(Context::Fight) => {
                 if let Some(element) = &updated.element {
                     self.around.interactive(element);
@@ -242,6 +254,22 @@ impl Character {
         });
     }
 
+    /// A fight's end, counted by the character's own result; another fighter's, or an outcome never seen, is not.
+    fn ended(&mut self, end: &FightEndEvent) {
+        let Some(me) = self.who.as_ref().map(|who| who.id) else {
+            return;
+        };
+        let mine = end
+            .results
+            .iter()
+            .find(|result| result.fighter.as_ref().is_some_and(|fighter| fighter.id == me));
+        match mine.map(|result| Outcome::try_from(result.outcome)) {
+            Some(Ok(Outcome::Won)) => self.fights.won += 1,
+            Some(Ok(Outcome::Lost)) => self.fights.lost += 1,
+            Some(Err(_)) | None => {}
+        }
+    }
+
     /// The view at `now`, while the connection has dropped `dropped` frames.
     pub(crate) fn view(&self, now: Instant, dropped: u64) -> View {
         let refreshed = self.refreshed;
@@ -255,6 +283,7 @@ impl Character {
             pods: self.pods,
             kamas: self.kamas,
             around: self.around.clone(),
+            fights: self.fights,
             stale: Stale {
                 map: dropped > refreshed.map,
                 life: dropped > refreshed.life,

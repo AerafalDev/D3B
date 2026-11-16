@@ -30,7 +30,12 @@ what it does; a D3B update) need these and nothing else: no profile, activity, p
   X vN": named "<name> (copie)" in the player's language, its texts taken from the interface since a given
   blueprint's are translations, its id made from its name (accents dropped, a number when taken by a blueprint or by
   any file of the folder, in any case); a copy of mine keeps what mine was based on (the owner, 2026-11-14). A given blueprint's new version reaches the characters that run it, their values kept; my copy stays as it is
-  and says its original has a newer version.
+  and says its original has a newer version (step 3's PR 23, the owner's choices of 2026-11-16): at start, each
+  character running a given blueprint of a newer version than its file notes has its settings carried as when another
+  blueprint is chosen, a value kept when the new version's setting of the same id accepts it (the old version's types
+  are not shipped), and the values lost are said in a notice above its settings, live and offline, until the player
+  closes it; a copy whose original is newer says "its original has a newer version, vN" in its tab's line and its
+  Library hover, a blue arrow on its row, and offers nothing more yet (a compare may come later).
 - **Character**: runs one blueprint, chosen in its tab, none until the player chooses one; another blueprint keeps
   the values of its settings of the same id and type and drops the others (the owner, 2026-11-16), and those out of
   their new bounds or equal to their new default. Its **settings** are the blueprint's variables marked "set per
@@ -64,6 +69,51 @@ As decided on 2026-11-12, on Unreal's event graph (ADR 0014):
 - A setting changed while running applies at the next safe point, between actions, and says so. The states: without
   blueprint, ready, running, paused, finished, blocked (with its reason), disconnected (listed greyed, its blueprint
   and values kept). A blueprint with a problem cannot run.
+
+### The runtime
+
+`bot::run` (step 3's (25), designed with the owner on 2026-11-16, ADR 0017) runs a blueprint for one character, a
+node at a time, against the observed state, on a clock it is given. It knows no kind of node: each brings its own
+behaviour, so v2's plug in without touching it. Nothing acts in the game before step 4, whose Play drives it.
+
+```mermaid
+flowchart LR
+    file["a blueprint without problems"] -->|compiled| program["program: each output to its node, each input to its source"]
+    program --> run["Run.advance(view, now)"]
+    view["game::View, a snapshot"] --> run
+    kinds["one Behaviour per kind"] --- run
+    run --> out["state, trace of values, memory changed"]
+```
+
+- **Compiled**: a blueprint is compiled into a program, each flow output to the node it leads to and each value input
+  to its wire, its typed value or its pin's default, so the file's schema stays out of the engine (v2.1's schema 2
+  changes the compilation only). One with a problem is refused.
+- **Advanced**: `Run::advance(view, now)` runs nodes until the flow waits on the clock or the observed state, ends or
+  blocks; the clock is injected, so tests drive it. Step 4 drives it from one actor per character fed the view's
+  snapshots (the owner, 2026-11-16: the engine alone in (25), the C# version's actor per character kept).
+- **One behaviour per kind**, behind one trait in a registry by kind id: when the flow reaches its node it goes out of
+  a pin, runs a chain and comes back (Sequence's outputs, a loop's body), waits, returns an exit, leaves the loop,
+  finishes, pauses or blocks; a value node gives its output when read. Get, Set and Call are the engine's own.
+- **An explicit stack**, no async: a frame per call (its locals, its nodes' counters, its outputs) and per chain, which
+  comes back to the node that ran it when its flow ends; Leave the loop unwinds to the nearest loop. A waiting run is
+  its stack, so an interrupted flow keeps its place, its loops' counters and its calls.
+- **Values are pulled** when the node that uses them runs, through their wires; each value used goes to a bounded
+  trace (its node, pin, value and time) for the debugger.
+- **Variables**: a run's from their defaults, a setting from the character's own value; memory is given at the start
+  and its changes handed back, to be saved in the character's file under `memory` at safe points (the owner,
+  2026-11-16; from step 4's wiring, the file's schema 3), kept on another blueprint for the same id and type, as a
+  setting.
+- **An action before its step** waits for its check on the observed state (the owner, 2026-11-16): the player doing it
+  by hand completes it, and step 4 only adds the doing; a check on what D3B does not observe yet fails "D3B does not
+  see this before step N".
+- **It blocks**, with the reason and the node, on an unlinked Failed, a death (the character's fights lost rising:
+  the forced default; a `died` event held by the blueprint is (26)'s), 10,000 nodes in a row without waiting ("runs
+  without pause"), a call deeper than 64 (settled alone), or a value that cannot be computed. Its states are ready, running, paused,
+  finished and blocked; without blueprint and disconnected are the character's: no view holds the run, and the node
+  at work runs again once the character is back, as actions are goal-shaped. A Wait counts the clock's time (settled
+  alone).
+- **(26)'s seam**: a stack of flows, one today; an event pushes its own, and when it ends the flow under it enters its
+  node at work again; Restart empties the main flow; a safe point is the moment between two nodes.
 
 ## The language, v2
 
@@ -139,11 +189,22 @@ flowchart LR
   bag's chest, use an item, open the resource bags, equip the best I carry for my level, equip an item or a preset,
   set the game's own "experience received" (step 5); hunt until, attack a group (its levels), fight with the default
   AI (won is Done), leave the fight (step 6); craft N of an item, sell items at the auction house (step 7); notify,
-  and note in the History (step 4). Choosing a fight's challenges waits for step 6's design.
+  and note in the History (step 4); destroy items (step 5); switch to another blueprint (step 4, the owner,
+  2026-11-16): the character's file then names it, its settings carried as when the tab chooses one, and it starts
+  from its On start. Choosing a fight's challenges waits for step 6's design.
+- **The fight AI's direction** (the owner, 2026-11-16, from the reference scripts' fight rules), designed at step 6
+  with the fight's state, the spells and the effects: a **fight profile** is a value edited as an ordered list of
+  rules (a spell, a target, a cell, typed conditions, how often it repeats, whether to move to cast), the first
+  that holds is played and the list read again until none does; D3B ships one per class, shareable, and **the
+  default AI is the character's class profile**; for advanced players, an event "On my turn" overrides it in the
+  graph. The fight profile (a type) and "On my turn" (an event) are marked step 6 until then.
 - **Routes** ((21), the owner, 2026-11-16): an anchor may hold an action (harvest, fight, nothing, or call a function
   of mine) and a forced exit (a door, a cell) where the world graph is not enough; Follow the route resumes from the
   map the character is on, as the scripts' "on map X, do Y"; a route is recorded while playing (the relay observes the
   maps crossed and makes them its anchors), and pasted or copied as text (`5,-18 left; 4,-18 …`, or maps' ids).
+  An anchor holds its map's id, shown by its coordinates, since a building's inside and its street share them (pasted
+  coordinates that two maps share take the one the world map draws, and say so); a
+  forced exit's cell is picked on the map.
 - No library of functions shared between blueprints: functions and per-character settings already cover the
   scripts' copies.
 - **Functions** gain **named exits** beside Done and Failed ("Full", "Empty"), each a flow output of their call;
@@ -172,8 +233,10 @@ flowchart LR
   unfolded when one differs from its default (the owner, 2026-11-16; the C# version reached 24 and hid half): the
   order a map's resources are taken in, the rotation, the zaaps, food, the life to wait for, what follows a lost
   fight, the monsters chosen or left out, equipping the best carried for the level (on) or a named preset, an
-  optional night pause. Every resource of the profession is taken where the character is (only the place follows
-  its level), and Combat attacks every group its size and the monsters left out allow, no bound of level by
+  optional night pause, restocking (N of an item kept on the character, taken back from the bank after a deposit,
+  step 5), items to destroy now and then to free pods (step 5, none by default; destroying cannot be undone, which
+  the setting says, and the History notes each), and from step 6 the fight profile, the class's by default. Every
+  resource of the profession is taken where the character is (only the place follows its level), and Combat attacks every group its size and the monsters left out allow, no bound of level by
   default, one optional under "Advanced" (the C# version's D387: the zone chosen for the level bounds the risk).
 - **What the C# version measured**, carried into the actions of steps 5 and 6, its values starting points to measure
   again (the owner, 2026-11-16): the **rotation** over the N richest sub-areas of the level, the one left longest ago
@@ -286,7 +349,21 @@ deletion is not confirmed, undo brings it back. Each graph gives the picker its 
   choices of 2026-11-16) lists mine by name with their maps, matched by the search too; "+" on its header makes
   "Nouvelle zone" on the world the tab shows and opens it there with the brush; a row opens its zone on its world, F2
   or a right-click renames it in its row (Enter or leaving saves, Escape leaves it), and the right-click deletes it to
-  the system's trash, closing it on the map; a zone's file kept is listed in the Library's "Ignored". The **World tab** shows the world map
+  the system's trash, closing it on the map; a zone's file kept is listed in the Library's "Ignored". A zone of mine
+  open shows on the World tab in translucent amber with a sharp outline, its name, "Zone of mine" and its maps on top
+  left, the view fitted to it, and a floating toolbar on top of the map: Select (V), Brush (B), Eraser (E) and Whole
+  sub-area (S), their keys taken wherever the focus is while the World tab is the active one, unless a field holds it.
+  The brush and the eraser paint by a press and a drag, every map the pointer crosses (those of the world only), with
+  the tool the stroke began with, shown as it goes and saved once the button is released (a stroke the system cancels
+  is dropped); the right or middle button, or Space held with the main one, moves the map; the hovered map is outlined
+  alone. The whole sub-area tool
+  outlines the hovered map's sub-area and a click adds it, or takes it away when the zone holds all its maps there;
+  Select chooses a sub-area as without a zone, which closes it, as another world does. Details then holds the zone's
+  name, edited in place (Enter or leaving saves, a blank one or Escape puts it back), "Zone of mine · <world>", its
+  maps, the sub-areas it touches with how many of their maps are its, by that share then by name (the floors of one
+  map's coordinates may belong to two sub-areas, and the zone holds them all, so such a map counts in both), whose
+  Zone it is, those sub-areas' resources
+  together by profession, and Delete, to the system's trash. The **World tab** shows the world map
   from the data's tiles, at the level the zoom needs, with the client's **hints** as on the C# version (the owner,
   2026-11-13): zaaps, dungeons, auction houses, workshops, banks, class places and transports, each with the client's
   picture, at the zooms that have room for them, one switch per kind, the name on hover. Its tools: select, brush,
@@ -345,7 +422,7 @@ name is not its id, in any case (a copy made by hand: the owner, 2026-11-14), is
 and never written over, as is one of mine holding the id of one of D3B's. The temporary file is flushed to the disk
 before the rename, one save at a time. The folder is the system's documents folder's `D3B`, else the app's data
 folder; the IPC lists D3B's blueprints, then mine, and the files kept with a typed reason the interface words.
-The **`.d3b` file** (step 3's PR 22, the owner's choices of 2026-11-16, ADR 0017) is one indented JSON, `{"d3b": 1,
+The **`.d3b` file** (step 3's PR 22, the owner's choices of 2026-11-16, ADR 0018) is one indented JSON, `{"d3b": 1,
 "blueprint": {…}, "zones": [], "routes": []}`: its format read first, then the blueprint's own file, read and checked
 as one of the folder; then the zones of mine it names (`{"zone": "<id>"}` in a variable's default or a value typed on
 a node, in a list too), each its zone's file, read and checked as one of `zones/`; at import a zone with the name,
@@ -372,7 +449,10 @@ blueprint, or none, under the same lock, keeping the values of the settings of t
 `set_character_setting` sets one, refused when not of its type or out of its bounds, a value set back to its default
 or reset dropped, so it shows unmarked (the owner, 2026-11-16). The IPC's `delete_blueprint` sends a blueprint of mine
 to the system's trash, its undo history gone, without asking first, as Forget; the characters that run it keep naming
-it, their tab saying it is not found, so restoring its file gives it back to them (the owner, 2026-11-16). Forget sends it to the system's trash (the `trash` crate; on
+it, their tab saying it is not found, so restoring its file gives it back to them (the owner, 2026-11-16). From schema 3 (PR 23; schema 2 reads as
+running a given blueprint's version 1) it notes `blueprintVersion`, the version of D3B's blueprint its settings were
+carried to (none for one of mine), and `dropped`, the settings a new version could not keep, which
+`dismiss_dropped_settings` clears; choosing a blueprint notes its version and clears them. Forget sends it to the system's trash (the `trash` crate; on
 macOS through the file manager, without asking to control the Finder: the owner, 2026-11-14). A character's file is named by a key stable across
 servers, from its study (below).
 A zone of mine is `zones/<id>.json` (step 3's PR 20, the owner's choices of 2026-11-16): schema 1, its `id`, `name`,
