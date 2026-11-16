@@ -1,0 +1,32 @@
+// A fight's end, read for the character's death (docs/bot.md, "How a blueprint runs"; 3.7.13.17,
+// `artifacts/studies/death.md`). Readable names are the C# version's (inferred, `main:src/D3B.Protocol/Game/fights.proto`);
+// field numbers and kinds were checked by hand against 3.7.13.17's schema, which the pins' audit test checks. A message
+// marked partial declares only the fields D3B reads.
+syntax = "proto3";
+
+package d3b.game;
+
+// A fight ended. Partial: its fields 1, 2, 3 and 5 to 8 are not read.
+message FightEndEvent {
+  // One per fighter, the monsters' too: the character's is found by its id, exactly one in each of the 634 fight ends
+  // of the owner's captures (verified).
+  repeated FightResult results = 4;
+}
+
+// How the fight ended for one fighter. Partial: its fields 3 and 4 are not read.
+message FightResult {
+  Outcome outcome = 1;
+  FightResultFighter fighter = 2;
+
+  // Values 1, 3 and 4 of the schema's enum were never seen (verified, 634 fight ends): read as their number.
+  enum Outcome {
+    OUTCOME_LOST = 0;
+    OUTCOME_WON = 2;
+  }
+}
+
+// The fighter a result is about. Partial: its fields 1 to 4, among them a oneof of the schema, are not read.
+message FightResultFighter {
+  // The character's id for its own result (verified, 634 of 634).
+  int64 id = 5;
+}
