@@ -102,17 +102,34 @@ pub enum SettingsError {
     NotSaved { reason: String },
 }
 
-/// The settings of the player's folder; the defaults when it has none, or when its file does not read, which is logged
-/// and kept as it is.
-fn read_settings(files: &PlayersFiles) -> Settings {
-    let Some(store) = files.store() else {
-        return Settings::default();
-    };
-    match store.settings() {
-        Ok(settings) => settings.into(),
-        Err(why) => {
+/// The app's settings as read at start, and why their file is kept as it is when it does not read.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Type)]
+#[serde(rename_all = "camelCase")]
+pub struct SettingsRead {
+    pub settings: Settings,
+    /// Why `settings.json` does not read: the settings are then the defaults, and the file is never written over.
+    pub kept: Option<String>,
+}
+
+/// The settings of the player's folder; the defaults when it has none, or when its file does not read, which is
+/// reported and kept as it is (ADR 0015).
+fn read_settings(files: &PlayersFiles) -> SettingsRead {
+    let read = files.store().map(crate::storage::Store::settings);
+    match read {
+        None => SettingsRead {
+            settings: Settings::default(),
+            kept: None,
+        },
+        Some(Ok(settings)) => SettingsRead {
+            settings: settings.into(),
+            kept: None,
+        },
+        Some(Err(why)) => {
             tauri_plugin_log::log::warn!("the app's settings are kept as they are: {why}");
-            Settings::default()
+            SettingsRead {
+                settings: Settings::default(),
+                kept: Some(why.to_string()),
+            }
         }
     }
 }
@@ -126,22 +143,28 @@ fn save_settings(files: &PlayersFiles, settings: &Settings) -> Result<(), Settin
         })
 }
 
+/// Reads the app's settings away from the webview's thread: a sync client may hold the file.
 #[tauri::command]
 #[specta::specta]
-#[expect(clippy::needless_pass_by_value, reason = "Tauri hands commands their state by value")]
-pub fn app_settings(files: tauri::State<'_, PlayersFiles>) -> Settings {
-    read_settings(&files)
+pub async fn app_settings(app: tauri::AppHandle) -> SettingsRead {
+    let read = tauri::async_runtime::spawn_blocking(move || read_settings(&app.state::<PlayersFiles>()));
+    read.await.unwrap_or_else(|error| SettingsRead {
+        settings: Settings::default(),
+        kept: Some(error.to_string()),
+    })
 }
 
-/// Saves the app's settings whole.
+/// Saves the app's settings whole, away from the webview's thread, behind any blueprint being saved. The front end
+/// sends one save at a time, so that two quick changes are written in their order.
 #[tauri::command]
 #[specta::specta]
-#[expect(
-    clippy::needless_pass_by_value,
-    reason = "Tauri hands commands their state and arguments by value"
-)]
-pub fn set_app_settings(files: tauri::State<'_, PlayersFiles>, settings: Settings) -> Result<(), SettingsError> {
-    save_settings(&files, &settings)
+pub async fn set_app_settings(app: tauri::AppHandle, settings: Settings) -> Result<(), SettingsError> {
+    let saved = tauri::async_runtime::spawn_blocking(move || save_settings(&app.state::<PlayersFiles>(), &settings));
+    saved.await.unwrap_or_else(|error| {
+        Err(SettingsError::NotSaved {
+            reason: error.to_string(),
+        })
+    })
 }
 
 #[cfg(test)]
@@ -156,15 +179,21 @@ mod tests {
     fn settings_set_are_read_back_and_default_to_advanced_tools_off() {
         let folder = Folder::new("ipc-settings");
         let files = PlayersFiles::new(Some(Store::new(folder.path().to_path_buf())));
-        assert_eq!(read_settings(&files), Settings { advanced_tools: false });
+        assert_eq!(read_settings(&files).settings, Settings { advanced_tools: false });
         assert_eq!(save_settings(&files, &ON), Ok(()));
-        assert_eq!(read_settings(&files), ON);
+        assert_eq!(read_settings(&files).settings, ON);
     }
 
     #[test]
     fn without_a_folder_the_settings_are_the_defaults_and_not_saved() {
         let files = PlayersFiles::new(None);
-        assert_eq!(read_settings(&files), Settings::default());
+        assert_eq!(
+            read_settings(&files),
+            SettingsRead {
+                settings: Settings::default(),
+                kept: None
+            }
+        );
         assert_eq!(save_settings(&files, &ON), Err(SettingsError::NoFolder));
     }
 
@@ -174,7 +203,14 @@ mod tests {
         std::fs::write(folder.path().join("settings.json"), "{\"schema\": 9}")
             .unwrap_or_else(|error| panic!("{error}"));
         let files = PlayersFiles::new(Some(Store::new(folder.path().to_path_buf())));
-        assert_eq!(read_settings(&files), Settings::default());
+        let read = read_settings(&files);
+        assert_eq!(read.settings, Settings::default());
+        assert!(
+            read.kept.is_some_and(
+                |why| why.ends_with("is kept as it is, not written over: written by a newer D3B: schema 9")
+            ),
+            "the file kept is reported at start"
+        );
         let Err(SettingsError::NotSaved { reason }) = save_settings(&files, &ON) else {
             panic!("the save was not refused");
         };

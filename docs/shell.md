@@ -59,8 +59,9 @@ The app's own settings, apart from a character's (the owner, 2026-11-16, for ste
 which comes when there are several; each setting is a command of the palette and an entry of the menus.
 `settings.json`, at the root of the player's folder (`Documents/D3B`, [bot.md](bot.md#storage)), holds them all, with
 its schema (1), written whole by `storage` as every file there; a setting missing from it takes its default, and a
-file that does not read gives the defaults, is logged and is never written over. A setting is saved the moment it
-changes (`set_app_settings`); one that cannot be saved holds for the session, and a notification says why. The front
+file that does not read gives the defaults, is never written over, and a notification at start says why. A setting is saved the moment it
+changes (`set_app_settings`, off the webview's thread, one save after another so the last change is the one kept); one
+that cannot be saved holds for the session, and a notification says why. The front
 end reads them once at start (`app_settings`, `src/settings/app-settings.ts`); the browser preview keeps the defaults.
 
 - **Advanced tools** ("Outils avancés"), off by default: the Protocol view and its panel (above). Turned on, the panel
@@ -104,7 +105,8 @@ restore once maximised, no menus on macOS, each toggle pressed while its part sh
 through the close request, View's checked parts, no panel toggle nor View's Panel without Advanced tools, View's
 Advanced tools turning them on and off and saved), the app's settings (off and the panel hidden at start, read at
 start showing the panel, the browser preview asking nothing, a save failed holding for the session and saying why,
-no folder, a read ending after a change dropped, a read failed), `settings.json` (no file, read back with its schema,
+no folder, saves sent one after another, a file kept said at start, a read ending after a change dropped, a read
+failed), `settings.json` (no file, read back with its schema,
 a missing setting's default, a newer or malformed file kept and never written over), the Windows window's config against the main one, the palette (its
 commands, filtering, running one, the panel's left out without Advanced tools), the shortcuts (Ctrl+J doing nothing
 without Advanced tools but still taken from the webview), the activity bar (its pressed entry, hiding and showing the side bar), an

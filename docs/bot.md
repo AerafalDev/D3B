@@ -307,7 +307,9 @@ blueprint, or none, under the same lock, keeping the values of the settings of t
 `set_character_setting` sets one, refused when not of its type or out of its bounds, a value set back to its default
 or reset dropped, so it shows unmarked (the owner, 2026-11-16). Forget sends it to the system's trash (the `trash` crate; on
 macOS through the file manager, without asking to control the Finder: the owner, 2026-11-14). A character's file is named by a key stable across
-servers, from its study (below).
+servers, from its study (below). The app's own settings are `settings.json` at the folder's root (schema 1, step 3's
+PR 24, [shell.md](shell.md#settings)), written whole under the same lock; one that does not read gives the defaults,
+is reported at start and is never written over.
 
 A blueprint's file (`bot::json`, schema 1, the owner's choices of 2026-11-13): its `id`, `name`, `description`,
 `version` and `based_on`; its `variables` (`type`, `default`, `bounds`, `per_character`, `memory`, both allowed at once

@@ -35,14 +35,14 @@ describe("the app's settings", () => {
   });
 
   it("read Advanced tools from the player's folder at start, which shows the panel", async () => {
-    backEnd.read.mockResolvedValue({ advancedTools: true });
+    backEnd.read.mockResolvedValue({ settings: { advancedTools: true }, kept: null });
     await useAppSettings.getState().load();
     expect(useAppSettings.getState().advancedTools).toBe(true);
     expect(useLayout.getState().visible.panel).toBe(true);
   });
 
   it("keep the panel hidden when the file says off", async () => {
-    backEnd.read.mockResolvedValue({ advancedTools: false });
+    backEnd.read.mockResolvedValue({ settings: { advancedTools: false }, kept: null });
     await useAppSettings.getState().load();
     expect(useLayout.getState().visible.panel).toBe(false);
   });
@@ -56,13 +56,38 @@ describe("the app's settings", () => {
     expect(useAppSettings.getState().advancedTools).toBe(true);
   });
 
-  it("save Advanced tools turned on or off, showing or hiding the panel with them", () => {
+  it("save Advanced tools turned on or off, showing or hiding the panel with them", async () => {
     backEnd.save.mockResolvedValue(null);
     useAppSettings.getState().setAdvancedTools(true);
     expect(useLayout.getState().visible.panel).toBe(true);
     useAppSettings.getState().setAdvancedTools(false);
     expect(useLayout.getState().visible.panel).toBe(false);
-    expect(backEnd.save.mock.calls).toEqual([[{ advancedTools: true }], [{ advancedTools: false }]]);
+    await vi.waitFor(() =>
+      expect(backEnd.save.mock.calls).toEqual([[{ advancedTools: true }], [{ advancedTools: false }]]),
+    );
+  });
+
+  it("send a save only once the one before is done, so the last change is the one kept", async () => {
+    let done: (value: null) => void = () => {};
+    backEnd.save.mockReturnValueOnce(new Promise((resolve) => (done = resolve))).mockResolvedValue(null);
+    useAppSettings.getState().setAdvancedTools(true);
+    useAppSettings.getState().setAdvancedTools(false);
+    await vi.waitFor(() => expect(backEnd.save).toHaveBeenCalledTimes(1));
+    await Promise.resolve();
+    expect(backEnd.save).toHaveBeenCalledTimes(1);
+    done(null);
+    await vi.waitFor(() =>
+      expect(backEnd.save.mock.calls).toEqual([[{ advancedTools: true }], [{ advancedTools: false }]]),
+    );
+  });
+
+  it("say at start when settings.json does not read, keeping the defaults", async () => {
+    backEnd.read.mockResolvedValue({ settings: { advancedTools: false }, kept: "written by a newer D3B: schema 9" });
+    await useAppSettings.getState().load();
+    expect(backEnd.toasts).toEqual([
+      "settings.json is kept as it is, and the defaults hold: written by a newer D3B: schema 9",
+    ]);
+    expect(useAppSettings.getState().advancedTools).toBe(false);
   });
 
   it("keep a setting not saved for the session, and say why", async () => {
@@ -81,12 +106,12 @@ describe("the app's settings", () => {
   });
 
   it("drop a read that ends after the player changed the setting", async () => {
-    let answer: (settings: { advancedTools: boolean }) => void = () => {};
+    let answer: (read: { settings: { advancedTools: boolean }; kept: null }) => void = () => {};
     backEnd.read.mockReturnValue(new Promise((resolve) => (answer = resolve)));
     backEnd.save.mockResolvedValue(null);
     const loading = useAppSettings.getState().load();
     useAppSettings.getState().setAdvancedTools(true);
-    answer({ advancedTools: false });
+    answer({ settings: { advancedTools: false }, kept: null });
     await loading;
     expect(useAppSettings.getState().advancedTools).toBe(true);
     expect(useLayout.getState().visible.panel).toBe(true);

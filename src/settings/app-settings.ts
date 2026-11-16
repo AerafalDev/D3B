@@ -31,6 +31,10 @@ function failure(error: unknown): string {
   return String(error);
 }
 
+// The saves, one after another: the back end writes them off the webview's thread, so two sent at once could land in
+// either order and leave the older value in the file.
+let saving: Promise<unknown> = Promise.resolve();
+
 /** The app's settings (`docs/shell.md`, "Settings"): `settings.json` in the player's folder. */
 export const useAppSettings = create<AppSettingsStore>((set, get) => ({
   advancedTools: false,
@@ -41,7 +45,10 @@ export const useAppSettings = create<AppSettingsStore>((set, get) => ({
       return;
     }
     try {
-      const settings = await commands.appSettings();
+      const { settings, kept } = await commands.appSettings();
+      if (kept !== null) {
+        toast.error(i18next.t("appSettings.kept", { reason: kept }));
+      }
       if (!get().changed) {
         set(settings);
         useLayout.getState().setVisible("panel", settings.advancedTools);
@@ -56,7 +63,9 @@ export const useAppSettings = create<AppSettingsStore>((set, get) => ({
     useLayout.getState().setVisible("panel", advancedTools);
     if (isTauri()) {
       // The file is written whole: every setting, today this one.
-      commands.setAppSettings({ advancedTools }).catch((error: unknown) => toast.error(failure(error)));
+      saving = saving.then(() =>
+        commands.setAppSettings({ advancedTools }).catch((error: unknown) => toast.error(failure(error))),
+      );
     }
   },
 }));

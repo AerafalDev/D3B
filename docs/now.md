@@ -234,11 +234,12 @@ _Updated 2026-11-16._
        bar, no Panneau in Affichage, Ctrl+J does nothing, and the palette has no "Afficher ou masquer le panneau";
     2. Affichage > Outils avancés: the panel slides open on the Protocol view, the toggle, Panneau and Ctrl+J come
        back, and `settings.json` says `"advancedTools": true`;
-    3. restart D3B: the panel shows the Protocol view at once; open a character played for a minute: its frames from
-       before are listed;
+    3. restart D3B: the panel shows the Protocol view at once;
     4. "Afficher ou masquer les outils avancés" in the palette: the panel closes; restart: it stays hidden;
-    5. write `{"schema": 9}` in `settings.json` and restart: the defaults, off; turn Advanced tools on: a notification
-       says the setting holds until D3B closes and why, and the file is unchanged.
+    5. Advanced tools off, play a character for a minute, then turn them on: its tab's frames of that minute are listed;
+    6. write `{"schema": 9}` in `settings.json` and restart: a notification says the file is kept as it is and why,
+       and Advanced tools are off; turn them on: a notification says the setting holds until D3B closes and why, and
+       the file is unchanged.
 - **Done in code, step 1**: `tools/extractor` reads the client's bundles, data tables, texts in five languages and flag
   enums, and writes the map positions, sub-areas, areas, zaaps, worlds and their tiles, maps, and the world graph,
   checked against one another, with the `client-<build>-format<n>.tar.gz` that `data:fetch` reads (ADR 0013); the app reads it all at start

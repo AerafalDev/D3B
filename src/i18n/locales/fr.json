@@ -660,6 +660,7 @@
   },
   "appSettings": {
     "notSaved": "Le réglage tient jusqu'à la fermeture de D3B : {{reason}}",
-    "noFolder": "ce système ne nomme aucun dossier pour D3B"
+    "noFolder": "ce système ne nomme aucun dossier pour D3B",
+    "kept": "settings.json est gardé tel quel, les valeurs par défaut s'appliquent : {{reason}}"
   }
 }

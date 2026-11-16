@@ -158,7 +158,7 @@ describe("the title bar", () => {
     expect(screen.getByRole("menuitemcheckbox", { name: "Advanced tools" }).getAttribute("aria-checked")).toBe("false");
   });
 
-  it("turns Advanced tools on from View, which shows and saves them", () => {
+  it("turns Advanced tools on from View, which shows and saves them", async () => {
     useAppSettings.setState({ advancedTools: false });
     useLayout.setState({ visible: { ...shown, panel: false } });
     renderBar();
@@ -166,17 +166,17 @@ describe("the title bar", () => {
     fireEvent.click(screen.getByRole("menuitemcheckbox", { name: "Advanced tools" }));
     expect(useAppSettings.getState().advancedTools).toBe(true);
     expect(useLayout.getState().visible.panel).toBe(true);
-    expect(saved.settings).toEqual([{ advancedTools: true }]);
+    await vi.waitFor(() => expect(saved.settings).toEqual([{ advancedTools: true }]));
     expect(screen.getByRole("button", { name: "Toggle the panel" })).toBeTruthy();
   });
 
-  it("turns Advanced tools off from View, which hides the panel", () => {
+  it("turns Advanced tools off from View, which hides the panel", async () => {
     renderBar();
     openMenu("View");
     const advanced = screen.getByRole("menuitemcheckbox", { name: "Advanced tools" });
     expect(advanced.getAttribute("aria-checked")).toBe("true");
     fireEvent.click(advanced);
     expect(useLayout.getState().visible.panel).toBe(false);
-    expect(saved.settings).toEqual([{ advancedTools: false }]);
+    await vi.waitFor(() => expect(saved.settings).toEqual([{ advancedTools: false }]));
   });
 });
