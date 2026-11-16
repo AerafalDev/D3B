@@ -1,4 +1,4 @@
-//! The zones a `.d3b` carries (ADR 0017): those of mine its blueprint names, as `{"zone": "<id>"}` in a variable's
+//! The zones a `.d3b` carries (ADR 0018): those of mine its blueprint names, as `{"zone": "<id>"}` in a variable's
 //! default or a value typed on a node, and their import beside mine, never over a file (the owner, 2026-11-16): one
 //! identical to a zone of mine is that zone, one whose id is taken takes a free one and the blueprint names it.
 
