@@ -1,6 +1,11 @@
 //! The characters played (`docs/bot.md`, "In the app"; the owner's choices of 2026-11-14): each remembered in the
 //! player's folder as it is seen in game, listed with when it was last seen so the Characters view keeps it greyed
-//! once its client is closed, and forgotten into the system's trash.
+//! once its client is closed, and forgotten into the system's trash; with the blueprint each runs and its settings,
+//! which `settings` changes.
+
+pub(super) mod settings;
+
+use std::collections::BTreeMap;
 
 use serde::{Deserialize, Serialize};
 use specta::Type;
@@ -53,6 +58,9 @@ impl Remembering {
                 .map(|sex| if sex == Sex::Female { "female" } else { "male" }.to_owned()),
             last_seen: now,
             map_id: view.map_id,
+            // The player's, which the file keeps (`Store::remember`).
+            blueprint: None,
+            settings: BTreeMap::new(),
         };
         if let Some(mut other) = self.last.take_if(|last| last.id != character.id) {
             other.last_seen = now;
@@ -141,6 +149,11 @@ pub struct PlayedCharacter {
     /// When it was last seen in game, in milliseconds since 1970.
     pub last_seen: f64,
     pub place: Option<Place>,
+    /// The id of the blueprint it runs, none until the player chooses one.
+    pub blueprint: Option<String>,
+    /// Its own values of its blueprint's settings as JSON, by variable, which the interface reads by their type; one
+    /// left out takes the blueprint's default.
+    pub settings: BTreeMap<String, String>,
 }
 
 /// Why a character was not forgotten.
@@ -207,6 +220,12 @@ fn listed(files: &PlayersFiles, data: Option<&LoadedData>) -> PlayedList {
             place: character
                 .map_id
                 .map(|map_id| place(map_id, named.map(|named| named.world))),
+            blueprint: character.blueprint,
+            settings: character
+                .settings
+                .into_iter()
+                .map(|(variable, value)| (variable, value.to_string()))
+                .collect(),
         }
     });
     PlayedList {
@@ -401,7 +420,7 @@ mod tests {
             matches!(
                 list.kept.as_slice(),
                 [KeptFile {
-                    why: super::super::blueprints::KeptWhy::NotACharacter { .. },
+                    why: crate::ipc::blueprints::KeptWhy::NotACharacter { .. },
                     ..
                 }]
             ),
@@ -424,6 +443,8 @@ mod tests {
             sex: Some("Female".into()),
             last_seen: 1,
             map_id: None,
+            blueprint: None,
+            settings: BTreeMap::new(),
         };
         store.remember(&character).unwrap_or_else(|error| panic!("{error}"));
         let list = listed(&PlayersFiles::new(Some(store)), None);

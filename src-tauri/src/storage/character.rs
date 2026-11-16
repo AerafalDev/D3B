@@ -1,12 +1,14 @@
 //! The characters the player has played (`docs/bot.md`, "In the app"; ADR 0015): one file each in
 //! `characters/<server>-<id>.json`, so the Characters view keeps a character whose client is closed, greyed, and
-//! later its blueprint and settings. Its key is stable across servers: a character's id carries its server in its low
+//! its blueprint and settings, which are the player's: what the game shows never writes over them. Its key is stable across servers: a character's id carries its server in its low
 //! 16 bits (3.7.13.17, `artifacts/studies/character-key.md`, verified on two servers).
 
+use std::collections::BTreeMap;
 use std::io;
 use std::path::PathBuf;
 
 use serde::{Deserialize, Serialize};
+use serde_json::Value;
 
 use super::atomic;
 use super::store::{Kept, StorageError, Store, Why};
@@ -14,8 +16,9 @@ use super::store::{Kept, StorageError, Store, Why};
 /// The folder of the characters' files, in the player's folder.
 const CHARACTERS: &str = "characters";
 
-/// The `schema` of a character's file this version writes and reads.
-pub(crate) const SCHEMA: u32 = 1;
+/// The `schema` of a character's file this version writes. Schema 1, before step 3's PR 11, had no blueprint and
+/// no settings, and reads as a character without either.
+pub(crate) const SCHEMA: u32 = 2;
 
 /// A character played, as its file holds it.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -35,6 +38,12 @@ pub(crate) struct Played {
     /// The map it was last seen on.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub(crate) map_id: Option<i64>,
+    /// The id of the blueprint it runs, none until the player chooses one (the owner, 2026-11-16).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub(crate) blueprint: Option<String>,
+    /// Its own values of the blueprint's variables set per character, by variable; one left out takes the default.
+    #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
+    pub(crate) settings: BTreeMap<String, Value>,
 }
 
 impl Played {
@@ -94,20 +103,51 @@ impl Store {
         played
     }
 
-    /// Writes `character` to its file, whole, unless a file there does not read as a character of this version.
+    /// Writes what the game shows of `character` to its file, whole, keeping the blueprint and settings the file
+    /// holds, unless a file there does not read as a character of this version.
     pub(crate) fn remember(&self, character: &Played) -> Result<(), StorageError> {
         let _writing = self.lock();
         let path = self.characters().join(format!("{}.json", character.key()));
+        let mut character = character.clone();
         match read(&path) {
-            Ok(_) => {}
+            Ok(before) => {
+                character.blueprint = before.blueprint;
+                character.settings = before.settings;
+            }
             Err(Why::Unreadable(error)) if error.kind() == io::ErrorKind::NotFound => {}
             Err(Why::Unreadable(source)) => return Err(StorageError::Unreadable { path, source }),
             Err(why) => return Err(StorageError::Kept { path, why }),
         }
-        let mut text = serde_json::to_string_pretty(character).unwrap_or_else(|error| unreachable!("{error}"));
-        text.push('\n');
-        let written = std::fs::create_dir_all(self.characters()).and_then(|()| atomic::write(&path, text.as_bytes()));
-        written.map_err(|source| StorageError::Write { path, source })
+        write(&self.characters(), &path, &mut character)
+    }
+
+    /// Changes the file of the character `key` by `change`, under the lock so that no sight of it in game comes
+    /// between, and writes it whole; a key that names no character's file is refused, and nothing is written when
+    /// `change` refuses.
+    pub(crate) fn change_character<E: From<StorageError>>(
+        &self,
+        key: &str,
+        change: impl FnOnce(&mut Played) -> Result<(), E>,
+    ) -> Result<(), E> {
+        // The key comes from the webview: only a character's key names a file, never a path elsewhere.
+        let shaped = key
+            .split_once('-')
+            .is_some_and(|(server, id)| [server, id].iter().all(|part| part.parse::<u64>().is_ok()));
+        if !shaped {
+            return Err(StorageError::NoSuchCharacter { key: key.to_owned() }.into());
+        }
+        let _writing = self.lock();
+        let path = self.characters().join(format!("{key}.json"));
+        let mut character = match read(&path) {
+            Ok(character) => character,
+            Err(Why::Unreadable(error)) if error.kind() == io::ErrorKind::NotFound => {
+                return Err(StorageError::NoSuchCharacter { key: key.to_owned() }.into());
+            }
+            Err(Why::Unreadable(source)) => return Err(StorageError::Unreadable { path, source }.into()),
+            Err(why) => return Err(StorageError::Kept { path, why }.into()),
+        };
+        change(&mut character)?;
+        Ok(write(&self.characters(), &path, &mut character)?)
     }
 
     /// Sends the file of the character `key` to `discard` (the system's trash in the app), so that it can be brought
@@ -129,6 +169,18 @@ impl Store {
     }
 }
 
+/// Writes `character` at `path` in `folder`, whole, of this version's schema.
+fn write(folder: &std::path::Path, path: &std::path::Path, character: &mut Played) -> Result<(), StorageError> {
+    character.schema = SCHEMA;
+    let mut text = serde_json::to_string_pretty(character).unwrap_or_else(|error| unreachable!("{error}"));
+    text.push('\n');
+    let written = std::fs::create_dir_all(folder).and_then(|()| atomic::write(path, text.as_bytes()));
+    written.map_err(|source| StorageError::Write {
+        path: path.to_path_buf(),
+        source,
+    })
+}
+
 fn read(path: &std::path::Path) -> Result<Played, Why> {
     let bytes = std::fs::read(path).map_err(Why::Unreadable)?;
     let text = String::from_utf8(bytes).map_err(|_| Why::NotText)?;
@@ -136,8 +188,8 @@ fn read(path: &std::path::Path) -> Result<Played, Why> {
         serde_json::from_str(&text).map_err(|error| Why::NotACharacter(error.to_string()))?;
     match value.get("schema").and_then(serde_json::Value::as_u64) {
         Some(found) if found > u64::from(SCHEMA) => return Err(Why::NewerCharacter { found }),
-        Some(found) if found == u64::from(SCHEMA) => {}
-        _ => return Err(Why::NotACharacter(format!("its schema must be {SCHEMA}"))),
+        Some(found) if found >= 1 => {}
+        _ => return Err(Why::NotACharacter(format!("its schema must be 1 to {SCHEMA}"))),
     }
     let character: Played = serde_json::from_str(&text).map_err(|error| Why::NotACharacter(error.to_string()))?;
     let name = path.file_name().and_then(|name| name.to_str());
@@ -167,6 +219,8 @@ mod tests {
             sex,
             last_seen,
             map_id: Some(191_104_002),
+            blueprint: None,
+            settings: BTreeMap::new(),
         }
     }
 
@@ -207,7 +261,11 @@ mod tests {
         let store = Store::new(folder.path().to_path_buf());
         std::fs::create_dir_all(folder.path().join("characters")).unwrap_or_else(|error| panic!("{error}"));
         let path = folder.path().join(format!("characters/294-{ID}.json"));
-        let newer = serde_json::to_string(&Played { schema: 2, ..kalyx(1) }).unwrap_or_default();
+        let newer = serde_json::to_string(&Played {
+            schema: SCHEMA + 1,
+            ..kalyx(1)
+        })
+        .unwrap_or_default();
         std::fs::write(&path, &newer).unwrap_or_else(|error| panic!("{error}"));
         std::fs::write(
             folder.path().join("characters/1-2.json"),
@@ -218,13 +276,72 @@ mod tests {
         assert!(
             matches!(
                 kept.as_slice(),
-                [Why::KeyIsNotId { .. }, Why::NewerCharacter { found: 2 }]
-                    | [Why::NewerCharacter { found: 2 }, Why::KeyIsNotId { .. }]
+                [Why::KeyIsNotId { .. }, Why::NewerCharacter { found: 3 }]
+                    | [Why::NewerCharacter { found: 3 }, Why::KeyIsNotId { .. }]
             ),
             "{kept:?}"
         );
         assert!(matches!(store.remember(&kalyx(5)), Err(StorageError::Kept { .. })));
         assert_eq!(std::fs::read_to_string(&path).ok(), Some(newer));
+    }
+
+    #[test]
+    fn a_file_of_schema_1_reads_without_a_blueprint_and_is_written_back_of_schema_2() {
+        let folder = Folder::new("characters-schema-1");
+        let store = Store::new(folder.path().to_path_buf());
+        std::fs::create_dir_all(folder.path().join("characters")).unwrap_or_else(|error| panic!("{error}"));
+        let path = folder.path().join(format!("characters/294-{ID}.json"));
+        let former = format!(r#"{{"schema": 1, "id": {ID}, "name": "Kalyx", "level": 54, "breed": 8, "lastSeen": 7}}"#);
+        std::fs::write(&path, former).unwrap_or_else(|error| panic!("{error}"));
+        let read = store.played().read;
+        assert_eq!(
+            read.first().map(|it| (it.blueprint.clone(), it.settings.len())),
+            Some((None, 0))
+        );
+        store.remember(&kalyx(8)).unwrap_or_else(|error| panic!("{error}"));
+        let written = std::fs::read_to_string(&path).unwrap_or_default();
+        assert!(written.contains(r#""schema": 2"#), "{written}");
+    }
+
+    #[test]
+    fn the_blueprint_and_settings_changed_are_kept_when_the_game_shows_the_character_again() {
+        let folder = Folder::new("characters-change");
+        let store = Store::new(folder.path().to_path_buf());
+        store.remember(&kalyx(1)).unwrap_or_else(|error| panic!("{error}"));
+        let changed = store.change_character(&kalyx(1).key(), |character| {
+            character.blueprint = Some("automatic-harvest".into());
+            character.settings.insert("pods".into(), serde_json::json!(80));
+            Ok::<(), StorageError>(())
+        });
+        assert!(changed.is_ok(), "{changed:?}");
+        store.remember(&kalyx(2)).unwrap_or_else(|error| panic!("{error}"));
+        let read = store.played().read;
+        let character = read.first().unwrap_or_else(|| panic!("no character"));
+        assert_eq!(
+            (character.last_seen, character.blueprint.as_deref()),
+            (2, Some("automatic-harvest"))
+        );
+        assert_eq!(character.settings.get("pods"), Some(&serde_json::json!(80)));
+    }
+
+    #[test]
+    fn a_change_refused_or_of_an_unknown_character_writes_nothing() {
+        let folder = Folder::new("characters-change-refused");
+        let store = Store::new(folder.path().to_path_buf());
+        for key in ["294-1", "../blueprints/x", "294-1/../../x"] {
+            let unknown = store.change_character(key, |_| Ok::<(), StorageError>(()));
+            assert!(
+                matches!(unknown, Err(StorageError::NoSuchCharacter { .. })),
+                "{key}: {unknown:?}"
+            );
+        }
+        store.remember(&kalyx(1)).unwrap_or_else(|error| panic!("{error}"));
+        let refused = store.change_character(&kalyx(1).key(), |character| {
+            character.blueprint = Some("hunt".into());
+            Err(StorageError::NoSuchCharacter { key: "refused".into() })
+        });
+        assert!(refused.is_err());
+        assert_eq!(store.played().read.first().map(|it| it.blueprint.clone()), Some(None));
     }
 
     #[test]

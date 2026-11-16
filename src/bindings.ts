@@ -18,6 +18,10 @@ export const commands = {
 	playedCharacters: () => __TAURI_INVOKE<PlayedList_Serialize>("played_characters"),
 	/**  Forget: the file of the character `key` goes to the system's trash. */
 	forgetCharacter: (key: string) => __TAURI_INVOKE<null>("forget_character", { key }),
+	/**  The character `key` runs the blueprint `blueprint`, or none. */
+	setCharacterBlueprint: (key: string, blueprint: string | null) => __TAURI_INVOKE<null>("set_character_blueprint", { key, blueprint }),
+	/**  The character `key`'s own value of its setting `variable`, as JSON; none resets it to the blueprint's default. */
+	setCharacterSetting: (key: string, variable: string, value: string | null) => __TAURI_INVOKE<null>("set_character_setting", { key, variable, value }),
 	/**  The relay's status now. */
 	relayStatus: () => __TAURI_INVOKE<RelayStatus_Serialize>("relay_status"),
 	/**
@@ -841,6 +845,13 @@ export type PlayedCharacter_Deserialize = {
 	/**  When it was last seen in game, in milliseconds since 1970. */
 	lastSeen: number | null,
 	place?: Place_Deserialize | null,
+	/**  The id of the blueprint it runs, none until the player chooses one. */
+	blueprint?: string | null,
+	/**
+	 *  Its own values of its blueprint's settings as JSON, by variable, which the interface reads by their type; one
+	 *  left out takes the blueprint's default.
+	 */
+	settings: { [key in string]: string },
 };
 
 /**  A character played, as the Characters view lists it. */
@@ -855,6 +866,13 @@ export type PlayedCharacter_Serialize = {
 	/**  When it was last seen in game, in milliseconds since 1970. */
 	lastSeen: number | null,
 	place: Place_Serialize | null,
+	/**  The id of the blueprint it runs, none until the player chooses one. */
+	blueprint: string | null,
+	/**
+	 *  Its own values of its blueprint's settings as JSON, by variable, which the interface reads by their type; one
+	 *  left out takes the blueprint's default.
+	 */
+	settings: { [key in string]: string },
 };
 
 /**  The characters played and the files kept as they are. */
@@ -960,6 +978,15 @@ export type RelayStatus_Serialize = {
 	/**  What the protocol read of each game connection, in the order they opened. */
 	connections: GameConnectionStatus_Serialize[],
 };
+
+/**  Why a character's blueprint or setting was not changed. */
+export type SettingError = { kind: "noSuchCharacter" } | { kind: "noFolder" } | { kind: "noSuchBlueprint" } | 
+/**  The character's blueprint sets no such variable per character, or it runs none. */
+{ kind: "noSuchSetting" } | 
+/**  Not a value of the setting's type, or out of its bounds. */
+{ kind: "refused" } | 
+/**  The system could not read or write its file: its own words. */
+{ kind: "notSaved"; reason: string };
 
 /**  Which parts may be out of date: the protocol dropped frames since they were last refreshed. */
 export type StaleParts = {
