@@ -124,7 +124,7 @@ The shell's parts (`docs/shell.md`); no information is shown twice:
   family, only what the dragged pin fits, the arrows and Enter choosing. A node dragged keeps its place. A change not
   saved says why, and the blueprint is read again. The graph is drawn with React Flow: each node where the file puts it (a column on the left for those it does not place), its sentence's
   holes filled with what feeds them (a variable's name, a query's own sentence, a source pin's label, a value typed or
-  a default), a get as a pill of its type's colour, an action the bot does not do yet tagged "étape N", pins and wires
+  a default), a get as a pill of its type's colour, a wire going back (a loop) out to the right, under its two nodes and into its input from the left (the owner, 2026-11-16), an action the bot does not do yet tagged "étape N", pins and wires
   coloured by type (the owner, 2026-11-14). From step 4, "Debug" a character lights the node at work and its wire; nothing is lit otherwise.
 - **World** view: my zones, my routes, then the game's sub-areas, searchable. The **World tab** shows the world map
   from the data's tiles, at the level the zoom needs, with the client's **hints** as on the C# version (the owner,
