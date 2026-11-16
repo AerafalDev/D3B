@@ -108,7 +108,15 @@ The shell's parts (`docs/shell.md`); no information is shown twice:
   blueprint as sentences. The IPC's `blueprint_graphs` gives the editor each graph's nodes (what each does, its family,
   the step from which it runs, its pins, the values typed and its place) and wires, typed; a blueprint's variables come
   with the Library's list; its problems, each with its kind, graph, node, pin and what it names, an event's priority and mode, a function's
-  inputs and outputs, and a variable's bounds, for the Details (PR 8). The graph is drawn read-only
+  inputs and outputs, and a variable's bounds, for the Details (PR 8). The editor's changes (step 3's PR 12, the owner's
+  choices of 2026-11-16) go through the IPC's `edit_blueprint`, one at a time, each saved at once into a blueprint of
+  mine (D3B's are refused, locked), which gives back the graphs and their problems: a wire, checked by what its pins
+  carry, in place of the one that fed its input (and of the value typed there) or left its flow output, since an input
+  has one value and a flow one way on; a node the picker offers, where it opened, under an id read from what it does
+  (`notify`, `notify_2`, `get_zone`), wired to the first pin of its that fits the one a wire dropped on the ground came
+  from; a node moved. Each graph gives the picker its **choices** (`bot::choices`) with their pins: the catalogue's
+  kinds in their place, an event held once never again and a function's entry once, then the blueprint's variables,
+  read and written, and its functions called; creating a variable comes with PR 14. The graph is drawn read-only
   with React Flow: each node where the file puts it (a column on the left for those it does not place), its sentence's
   holes filled with what feeds them (a variable's name, a query's own sentence, a source pin's label, a value typed or
   a default), a get as a pill of its type's colour, an action the bot does not do yet tagged "étape N", pins and wires

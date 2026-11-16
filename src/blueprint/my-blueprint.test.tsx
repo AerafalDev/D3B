@@ -29,8 +29,17 @@ const harvest: BlueprintSummary = {
 };
 
 const graphs = [
-  { id: "events", name: "Event graph", function: false, inputs: [], outputs: [], nodes: [], wires: [] },
-  { id: "empty_at_bank", name: "Vider à la banque", function: true, inputs: [], outputs: [], nodes: [], wires: [] },
+  { id: "events", name: "Event graph", function: false, inputs: [], outputs: [], nodes: [], wires: [], choices: [] },
+  {
+    id: "empty_at_bank",
+    name: "Vider à la banque",
+    function: true,
+    inputs: [],
+    outputs: [],
+    nodes: [],
+    wires: [],
+    choices: [],
+  },
 ];
 
 describe("My Blueprint", () => {
@@ -73,7 +82,7 @@ describe("My Blueprint", () => {
   it("names several event graphs by their names, to tell them apart", () => {
     const two = [
       ...graphs,
-      { id: "second", name: "Combats", function: false, inputs: [], outputs: [], nodes: [], wires: [] },
+      { id: "second", name: "Combats", function: false, inputs: [], outputs: [], nodes: [], wires: [], choices: [] },
     ];
     render(<MyBlueprint blueprint={harvest} graphs={two} shown="events" onShow={() => {}} />);
     const [graphList, functionList] = screen.getAllByRole("list");

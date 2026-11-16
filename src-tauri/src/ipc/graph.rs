@@ -1,10 +1,10 @@
 //! A blueprint's graphs as the editor draws them (`docs/bot.md`, "In the app"): each node with what it does, its family
 //! and the step that makes it run, its pins from the catalogue, the values typed on them and where it sits; and the
-//! wires. Read-only for now: the editor's changes come with step 3's PR 13.
+//! wires, and what the picker may add to each graph. The editor's changes go through `edit_blueprint` (`ipc::edit`).
 
 use std::collections::BTreeMap;
 
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use specta::Type;
 use tauri::Manager;
 
@@ -173,10 +173,23 @@ pub struct GraphView {
     pub outputs: Vec<ParameterView>,
     pub nodes: Vec<NodeView>,
     pub wires: Vec<WireView>,
+    /// What the picker may add to it (`bot::choices`), with the pins a wire dragged is checked against.
+    pub choices: Vec<ChoiceView>,
+}
+
+/// A node the picker may add: what it does, its family, the step from which it runs, and its pins.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Type)]
+#[serde(rename_all = "camelCase")]
+pub struct ChoiceView {
+    #[serde(flatten)]
+    pub does: NodeDoes,
+    pub family: Option<NodeFamily>,
+    pub from_step: Option<u8>,
+    pub pins: Vec<PinView>,
 }
 
 /// What a node does.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Type)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Type)]
 #[serde(tag = "does", rename_all = "camelCase")]
 pub enum NodeDoes {
     /// One of the catalogue's kinds, by id; its sentence is the interface's `node.kinds.<kind>`.
@@ -240,7 +253,7 @@ pub enum NodeFamily {
 }
 
 /// Which way a pin goes.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Type)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Type)]
 #[serde(rename_all = "camelCase")]
 pub enum PinSide {
     In,
@@ -320,6 +333,68 @@ fn family(node: &bot::Node) -> (Option<NodeFamily>, Option<u8>) {
     }
 }
 
+impl From<&Does> for NodeDoes {
+    fn from(does: &Does) -> Self {
+        match does {
+            Does::Kind(kind) => Self::Kind { kind: kind.0.clone() },
+            Does::Get(variable) => Self::Get {
+                variable: variable.0.clone(),
+            },
+            Does::Set(variable) => Self::Set {
+                variable: variable.0.clone(),
+            },
+            Does::Call(function) => Self::Call {
+                function: function.0.clone(),
+            },
+        }
+    }
+}
+
+impl From<NodeDoes> for Does {
+    fn from(does: NodeDoes) -> Self {
+        match does {
+            NodeDoes::Kind { kind } => Self::Kind(bot::Id(kind)),
+            NodeDoes::Get { variable } => Self::Get(bot::Id(variable)),
+            NodeDoes::Set { variable } => Self::Set(bot::Id(variable)),
+            NodeDoes::Call { function } => Self::Call(bot::Id(function)),
+        }
+    }
+}
+
+fn pin_views(pins: Vec<bot::NodePin>) -> Vec<PinView> {
+    let views = pins.into_iter().map(|pin| PinView {
+        id: pin.id,
+        side: if pin.side == Side::In {
+            PinSide::In
+        } else {
+            PinSide::Out
+        },
+        carries: pin.carries.into(),
+        default: pin.default.map(|value| value.to_string()),
+    });
+    views.collect()
+}
+
+/// What the picker may add to `graph`, each as a node not placed yet.
+fn choices(blueprint: &Blueprint, graph: &bot::Graph) -> Vec<ChoiceView> {
+    let choices = bot::choices(blueprint, graph).into_iter().map(|does| {
+        let node = bot::Node {
+            id: bot::Id(String::new()),
+            does,
+            inputs: BTreeMap::new(),
+            event: None,
+        };
+        let (family, from_step) = family(&node);
+        ChoiceView {
+            does: (&node.does).into(),
+            family,
+            from_step,
+            pins: pin_views(bot::pins(blueprint, graph, &node).unwrap_or_default()),
+        }
+    });
+    choices.collect()
+}
+
 fn parameters(parameters: Option<&Vec<bot::Parameter>>) -> Vec<ParameterView> {
     let views = parameters.into_iter().flatten().map(|parameter| ParameterView {
         id: parameter.id.0.clone(),
@@ -338,33 +413,10 @@ pub(crate) fn graphs(blueprint: &Blueprint) -> BlueprintGraphs {
             let pins = bot::pins(blueprint, graph, node).unwrap_or_default();
             NodeView {
                 id: node.id.0.clone(),
-                does: match &node.does {
-                    Does::Kind(kind) => NodeDoes::Kind { kind: kind.0.clone() },
-                    Does::Get(variable) => NodeDoes::Get {
-                        variable: variable.0.clone(),
-                    },
-                    Does::Set(variable) => NodeDoes::Set {
-                        variable: variable.0.clone(),
-                    },
-                    Does::Call(function) => NodeDoes::Call {
-                        function: function.0.clone(),
-                    },
-                },
+                does: (&node.does).into(),
                 family,
                 from_step,
-                pins: pins
-                    .into_iter()
-                    .map(|pin| PinView {
-                        id: pin.id,
-                        side: if pin.side == Side::In {
-                            PinSide::In
-                        } else {
-                            PinSide::Out
-                        },
-                        carries: pin.carries.into(),
-                        default: pin.default.map(|value| value.to_string()),
-                    })
-                    .collect(),
+                pins: pin_views(pins),
                 inputs: node
                     .inputs
                     .iter()
@@ -384,6 +436,7 @@ pub(crate) fn graphs(blueprint: &Blueprint) -> BlueprintGraphs {
             inputs: parameters(graph.function.as_ref().map(|signature| &signature.inputs)),
             outputs: parameters(graph.function.as_ref().map(|signature| &signature.outputs)),
             nodes: nodes.collect(),
+            choices: choices(blueprint, graph),
             wires: graph
                 .wires
                 .iter()
@@ -824,6 +877,54 @@ mod tests {
                 EventMode::Restart,
                 EventMode::Parallel
             ]
+        );
+    }
+
+    #[test]
+    fn each_graph_gives_the_picker_its_choices_with_their_family_step_and_pins() {
+        let blueprint = bot::read(bot::HARVEST).unwrap_or_else(|error| panic!("{error}"));
+        let drawn = graphs(&blueprint);
+        let choice = |graph: usize, does: &NodeDoes| drawn.graphs[graph].choices.iter().find(|it| &it.does == does);
+        let harvest = choice(
+            0,
+            &NodeDoes::Kind {
+                kind: "harvest_until".into(),
+            },
+        );
+        assert_eq!(
+            harvest.map(|it| (it.family, it.from_step, it.pins.len())),
+            Some((Some(NodeFamily::Action), Some(5), 8))
+        );
+        let set = choice(
+            0,
+            &NodeDoes::Set {
+                variable: "pods".into(),
+            },
+        );
+        assert_eq!(
+            set.map(|it| it.pins.iter().map(|pin| (pin.side, pin.carries)).collect::<Vec<_>>()),
+            Some(vec![
+                (PinSide::Out, PinCarries::Percentage),
+                (PinSide::In, PinCarries::Exec),
+                (PinSide::Out, PinCarries::Exec),
+                (PinSide::In, PinCarries::Percentage)
+            ])
+        );
+        assert!(
+            choice(
+                0,
+                &NodeDoes::Kind {
+                    kind: "on_start".into()
+                }
+            )
+            .is_none(),
+            "held once"
+        );
+        let entry = choice(1, &NodeDoes::Kind { kind: "entry".into() });
+        assert_eq!(
+            entry.map(|it| it.pins.len()),
+            Some(2),
+            "its flow and the function's input"
         );
     }
 }

@@ -14,6 +14,8 @@ export const commands = {
 	duplicateBlueprint: (id: string, texts: CopyTexts) => __TAURI_INVOKE<string>("duplicate_blueprint", { id, texts }),
 	/**  The graphs of the blueprint `id`, or why not. */
 	blueprintGraphs: (id: string) => __TAURI_INVOKE<BlueprintGraphs_Serialize>("blueprint_graphs", { id }),
+	/**  Makes `edit` in the graph `graph` of my blueprint `id`, saved at once; the blueprint's graphs and problems then. */
+	editBlueprint: (id: string, graph: string, edit: GraphEdit_Deserialize) => __TAURI_INVOKE<BlueprintGraphs_Serialize>("edit_blueprint", { id, graph, edit }),
 	/**  The characters played, the most recently seen first, and their files kept. */
 	playedCharacters: () => __TAURI_INVOKE<PlayedList_Serialize>("played_characters"),
 	/**  Forget: the file of the character `key` goes to the system's trash. */
@@ -461,6 +463,23 @@ export type CharacterView_Serialize = {
 	stale: StaleParts,
 };
 
+/**  A node the picker may add: what it does, its family, the step from which it runs, and its pins. */
+export type ChoiceView = ChoiceView_Serialize | ChoiceView_Deserialize;
+
+/**  A node the picker may add: what it does, its family, the step from which it runs, and its pins. */
+export type ChoiceView_Deserialize = {
+	family?: NodeFamily | null,
+	fromStep?: number | null,
+	pins: PinView_Deserialize[],
+} & NodeDoes;
+
+/**  A node the picker may add: what it does, its family, the step from which it runs, and its pins. */
+export type ChoiceView_Serialize = {
+	family: NodeFamily | null,
+	fromStep: number | null,
+	pins: PinView_Serialize[],
+} & NodeDoes;
+
 /**  A copy's texts in the player's language: its name, description, and each variable's name and help by id. */
 export type CopyTexts = {
 	name: string,
@@ -480,6 +499,13 @@ export type DetailLine =
 /**  What the wire walker could not read further. */
 { kind: "unreadable" };
 
+/**  The pin a wire was dragged from: an input's, or an output's. */
+export type DraggedPin = {
+	node: string,
+	pin: string,
+	side: PinSide,
+};
+
 /**  Why Duplicate made nothing. */
 export type DuplicateError = 
 /**  No blueprint has this id. */
@@ -487,6 +513,15 @@ export type DuplicateError =
 /**  The system names no folder for the player's files. */
 { kind: "noFolder" } | 
 /**  The system could not read the folder or write the copy: its own words. */
+{ kind: "notSaved"; reason: string };
+
+/**  Why a blueprint was not changed. The editor offers no refused edit: one says the file changed under it. */
+export type EditError = { kind: "noFolder" } | 
+/**  None of mine has this id: its file is gone. */
+{ kind: "noSuchBlueprint" } | 
+/**  One of D3B's, which only Duplicate changes. */
+{ kind: "locked" } | { kind: "noSuchGraph" } | { kind: "noSuchNode" } | { kind: "noSuchPin" } | { kind: "wrongWay" } | { kind: "otherType" } | { kind: "sameNode" } | { kind: "notAChoice" } | 
+/**  The system could not read or write its file, or it no longer reads and is kept as it is: the reason, in words. */
 { kind: "notSaved"; reason: string };
 
 /**  An interactive element of the map and its cell. */
@@ -609,6 +644,33 @@ export type Gauge = {
 	max: number | null,
 };
 
+/**  One change to a graph. */
+export type GraphEdit = GraphEdit_Serialize | GraphEdit_Deserialize;
+
+/**  One change to a graph. */
+export type GraphEdit_Deserialize = 
+/**
+ *  A wire from an output to an input, `[node, pin]` each, in place of the one that fed the input or left the flow
+ *  output.
+ */
+{ edit: "wire"; from: [string, string]; to: [string, string] } | 
+/**  A node the picker offers, at `position`, wired to the pin a wire dropped on the ground came from. */
+{ edit: "add"; node: NodeDoes; position: [number, number]; wiredTo?: DraggedPin | null } | 
+/**  A node put at `position`. */
+{ edit: "move"; node: string; position: [number, number] };
+
+/**  One change to a graph. */
+export type GraphEdit_Serialize = 
+/**
+ *  A wire from an output to an input, `[node, pin]` each, in place of the one that fed the input or left the flow
+ *  output.
+ */
+{ edit: "wire"; from: [string, string]; to: [string, string] } | 
+/**  A node the picker offers, at `position`, wired to the pin a wire dropped on the ground came from. */
+{ edit: "add"; node: NodeDoes; position: [number, number]; wiredTo: DraggedPin | null } | 
+/**  A node put at `position`. */
+{ edit: "move"; node: string; position: [number, number] };
+
 /**  An event graph, or a function when it has a signature. */
 export type GraphView = GraphView_Serialize | GraphView_Deserialize;
 
@@ -623,6 +685,8 @@ export type GraphView_Deserialize = {
 	outputs: ParameterView[],
 	nodes: NodeView_Deserialize[],
 	wires: WireView[],
+	/**  What the picker may add to it (`bot::choices`), with the pins a wire dragged is checked against. */
+	choices: ChoiceView_Deserialize[],
 };
 
 /**  An event graph, or a function when it has a signature. */
@@ -636,6 +700,8 @@ export type GraphView_Serialize = {
 	outputs: ParameterView[],
 	nodes: NodeView_Serialize[],
 	wires: WireView[],
+	/**  What the picker may add to it (`bot::choices`), with the pins a wire dragged is checked against. */
+	choices: ChoiceView_Serialize[],
 };
 
 /**  Why a blueprint's graphs are not given. */

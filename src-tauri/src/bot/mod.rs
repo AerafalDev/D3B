@@ -6,6 +6,7 @@
 mod blueprint;
 mod catalogue;
 mod copy;
+mod edit;
 mod given;
 mod json;
 mod pins;
@@ -13,15 +14,14 @@ mod problems;
 mod variable;
 mod wiring;
 
-#[cfg(test)]
-pub(crate) use blueprint::End;
-pub(crate) use blueprint::{Blueprint, Does, Id, Mode, Node, Parameter};
+pub(crate) use blueprint::{Blueprint, Does, End, Graph, Id, Mode, Node, Parameter};
 pub(crate) use catalogue::{Carries, Family, Side, kind};
 pub(crate) use copy::{Texts, copy, id_for};
+pub(crate) use edit::{Edit, Refusal, choices, edit};
 pub(crate) use given::given;
 #[cfg(test)]
 pub(crate) use json::tests::HARVEST;
 pub(crate) use json::{ReadError, read, write};
-pub(crate) use pins::pins;
+pub(crate) use pins::{NodePin, pins};
 pub(crate) use problems::{Problem, problems};
 pub(crate) use variable::{ValueType, carried};
