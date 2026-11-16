@@ -25,7 +25,8 @@ The six scenarios the owner chose (first launch; two characters, two zones; a go
 what it does; a D3B update) need these and nothing else: no profile, activity, place or goal field.
 
 - **Blueprint**: an event graph, functions and variables. D3B's own ship with the app, **locked**: automatic harvest,
-  profession harvest (one blueprint, its profession set per character: the owner, 2026-11-14) and hunt; **Duplicate** makes one of mine, fully editable, noting "based on
+  profession harvest (one blueprint, its profession set per character: the owner, 2026-11-14) and hunt, until v2's
+  eight replace them ("The language, v2", D3B's blueprints); **Duplicate** makes one of mine, fully editable, noting "based on
   X vN": named "<name> (copie)" in the player's language, its texts taken from the interface since a given
   blueprint's are translations, its id made from its name (accents dropped, a number when taken by a blueprint or by
   any file of the folder, in any case); a copy of mine keeps what mine was based on (the owner, 2026-11-14). A given blueprint's new version reaches the characters that run it, their values kept; my copy stays as it is
@@ -188,11 +189,44 @@ flowchart LR
   of mine) and a forced exit (a door, a cell) where the world graph is not enough; Follow the route resumes from the
   map the character is on, as the scripts' "on map X, do Y"; a route is recorded while playing (the relay observes the
   maps crossed and makes them its anchors), and pasted or copied as text (`5,-18 left; 4,-18 …`, or maps' ids).
-- No library of functions shared between blueprints: one blueprint per need, its profession a setting, already
-  covers the scripts' copies.
+- No library of functions shared between blueprints: functions and per-character settings already cover the
+  scripts' copies.
 - **Functions** gain **named exits** beside Done and Failed ("Full", "Empty"), each a flow output of their call;
   **locals**; and the **pure** function, which computes values without flow, actions or waits, its call a value node.
   No macros: a function already holds actions that last.
+- **Practical, intuitive, complete** (the owner, 2026-11-16), the bar of every kind: few kinds, each well named and
+  running as it is dropped, from its defaults (an input no default can fill, a zone, a map, an NPC, an item, stays
+  required, its problem saying what to choose); a node shows its main inputs in its sentence and folds the others
+  under "Advanced" (a longest wait, a re-arm, a group's levels), unfolded as soon as one is wired or changed, as
+  Unreal's advanced pins; data editors (routes, ranges, item lists) rather than long chains of nodes. The **picker
+  groups by intent** (the owner, 2026-11-16): Move, Harvest, Bank and items, Fight, Wait and repeat, Conditions and
+  calculations, Lists, then My variables, My functions, My events; "Often here" first by context, extended to v2's
+  kinds; its search finds synonyms too ("boucle" finds While and For each). A node keeps its family's colour.
+- **D3B's blueprints** (the owner, 2026-11-16), all configurable, all running as given with no setting changed:
+  **Récolte** (every profession's resources the character can take, the Base ones such as wells left out as in the
+  C# version), **Combat** (monsters for experience and loot), one per profession, **Mineur**, **Paysan**,
+  **Alchimiste**, **Pêcheur**, **Bûcheron**, and **Chasseur**, the profession (job 41: fights with a hunting weapon
+  for meat, after its study). This reverses 2026-11-14's one profession blueprint, its profession a setting. Where
+  they go is, by default, **ranges computed from the data** as the app runs, never written in the blueprints'
+  committed files: a resource's or a monster's worth halved every 20 levels below the character's and nothing above
+  it, Combat's sub-areas holding at least 10 maps of the world map (no dungeon), reckoned again each tour; the
+  monsters' levels and drops come from the extractor's **format 5** (the owner, 2026-11-16). A setting replaces them
+  by ranges, a zone or a route of mine. Five or six settings show, those changed often: where, the pods' threshold,
+  the bank (the nearest, a map, or the haven bag's chest) and the items kept, fighting on the way, the goal (a
+  profession's or the character's level, a number of harvests or fights); the others fold under "Advanced",
+  unfolded when one differs from its default (the owner, 2026-11-16; the C# version reached 24 and hid half): the
+  order a map's resources are taken in, the rotation, the zaaps, food, the life to wait for, what follows a lost
+  fight, the monsters chosen or left out, equipping the best carried for the level (on) or a named preset, an
+  optional night pause. Every resource of the profession is taken where the character is (only the place follows
+  its level), and Combat attacks every group its size and the monsters left out allow, no bound of level by
+  default, one optional under "Advanced" (the C# version's D387: the zone chosen for the level bounds the risk).
+- **What the C# version measured**, carried into the actions of steps 5 and 6, its values starting points to measure
+  again (the owner, 2026-11-16): the **rotation** over the N richest sub-areas of the level, the one left longest ago
+  first (D391, D392); **regrowth learned** by skill while playing, a tour waiting on the longest seen and stopping on
+  the way at a resource offered (D145); **losses and banks made safe**: after a loss, wait for the life to resume
+  at, three losses in a row stop, a bank tried three times and still full stops with the reason (D198, D405);
+  **interiors**: a house entered only when known to hold what the level can take, mines kept reachable, Combat out
+  of interiors but dungeons (D388, D416, D417). Its notes: `csharp-settings-for-v2.md` in the sessions' notes.
 - **Kept out**: anything about other players (counting them, fleeing them, answering them), and what `CLAUDE.md`'s
   "Never" lists.
 
@@ -216,7 +250,13 @@ parameter or a local holds `"list": true` for a list; a node's own pins (Sequenc
 holes, a list's inputs) and the event, variable or exit it names are its `options`; the blueprint's own `events`
 beside its `graphs`, each with its id, name and inputs; a function's signature gains `exits`, `locals` and `pure`. A
 schema 1 file reads migrated ("at least" to `≥`, Wait's minutes to a duration) and is written as 2 at its next change;
-D3B's blueprints ship as 2. New problems: wildcards of one node fed two types; a list into a pin that takes none; an
+D3B's blueprints ship as 2. A node still does one thing (`kind`, `get`, `set` or `call`), with `options` beside;
+the pins its options make are numbered from 1: Sequence's `then_1` to `then_n`, Switch's `case_1` to `case_n` (the
+cases' values in `options.cases`) and `otherwise`, a list's inputs `in_1` to `in_n`; Text's inputs are its holes'
+names (`{count}` is the pin `count`), a hole renamed or removed dropping its wire. A call has a flow
+output per exit of its function, the exit's id its pin's, beside `done`, `failed` and `reason`; a function's locals
+live in its call's frame. A pure function's call has no flow pin and is read on demand, as a query is, its value kept
+for the debugger. New problems: an exit named as a built-in pin (`run`, `done`, `failed`, `reason`); wildcards of one node fed two types; a list into a pin that takes none; an
 option naming an event, variable or exit the blueprint lacks; a case typed twice or of another type; Leave the loop
 outside a loop's body; a flow, action or wait in a pure function; a time not "HH:MM"; an Expression that does not
 parse, names what the blueprint lacks or is not of its pin's type; ranges whose rows overlap.
@@ -271,7 +311,11 @@ The shell's parts (`docs/shell.md`); no information is shown twice:
   carry, in place of the one that fed its input (and of the value typed there) or left its flow output, since an input
   has one value and a flow one way on; a node the picker offers, where it opened, under an id read from what it does
   (`notify`, `notify_2`, `get_zone`), wired to the first pin of its that fits the one a wire dropped on the ground came
-  from; a node moved. Each graph gives the picker its **choices** (`bot::choices`) with their pins: the catalogue's
+  from; nodes moved together, one change; nodes and wires deleted together, a node's wires with it (step 3's PR 13).
+Undo and redo (the owner, 2026-11-16) are Rust's: `storage` keeps a blueprint of mine as it was before each change
+that changed it, 100 at most, for the session and across its graphs, and the IPC's `undo_blueprint` and
+`redo_blueprint` write it back whole under the lock every save takes, so the file and the editor never disagree; a
+deletion is not confirmed, undo brings it back. Each graph gives the picker its **choices** (`bot::choices`) with their pins: the catalogue's
   kinds in their place, an event held once never again and a function's entry once, then the blueprint's variables,
   read and written, and its functions called; creating a variable comes with PR 14. In a graph of mine, a wire
   dragged from a pin is checked by type as it goes: a pin that refuses it says why beside the pointer (another type,
@@ -283,7 +327,11 @@ The shell's parts (`docs/shell.md`); no information is shown twice:
   holes filled with what feeds them (a variable's name, a query's own sentence, a source pin's label, a value typed or
   a default), a get as a pill of its type's colour, a wire going back (a loop) out to the right, under its two nodes and into its input from the left (the owner, 2026-11-16), an action the bot does not do yet tagged "étape N", pins and wires
   coloured by type (the owner, 2026-11-14). From step 4, "Debug" a character lights the node at work and its wire; nothing is lit otherwise.
-- **World** view: my zones, my routes, then the game's sub-areas, searchable. The **World tab** shows the world map
+- **World** view: my zones, my routes, then the game's sub-areas, searchable. "My zones" (step 3's PR 20, the owner's
+  choices of 2026-11-16) lists mine by name with their maps, matched by the search too; "+" on its header makes
+  "Nouvelle zone" on the world the tab shows and opens it there with the brush; a row opens its zone on its world, F2
+  or a right-click renames it in its row (Enter or leaving saves, Escape leaves it), and the right-click deletes it to
+  the system's trash, closing it on the map; a zone's file kept is listed in the Library's "Ignored". The **World tab** shows the world map
   from the data's tiles, at the level the zoom needs, with the client's **hints** as on the C# version (the owner,
   2026-11-13): zaaps, dungeons, auction houses, workshops, banks, class places and transports, each with the client's
   picture, at the zooms that have room for them, one switch per kind, the name on hover. Its tools: select, brush,
@@ -311,8 +359,9 @@ The shell's parts (`docs/shell.md`); no information is shown twice:
   hints by kind, each with its name, coordinates, level and picture's file, the one the client lacks drawn as a dot.
   The game's sub-areas as zones (the owner's mock-up 12, 2026-11-15): a Zone's value is a sub-area's id or a zone of
   mine's (the blueprint's file, `bot::variable`). A Zone setting is a field saying the zone chosen, its area and level;
-  a click unfolds a list under it, searched as the World view, "My zones" first (empty until mine are painted), then
-  the sub-areas by area and level, the arrows and Enter choosing; its target opens the World tab in a choosing mode, a
+  a click unfolds a list under it, searched as the World view, "My zones" first by name, with their maps, then
+  the sub-areas by area and level, the arrows and Enter choosing (a zone of mine gives `{"zone": id}`, said by its
+  name, "Zone of mine" and its maps, or "Zone <id> not found" once gone); its target opens the World tab in a choosing mode, a
   banner saying for what, a map hovered outlining its whole sub-area, one click choosing it and going back to the tab
   it came from, Escape cancelling. A click on the map otherwise chooses its sub-area as the view does, the map staying
   where it is (a drag chooses nothing, nor a click off the maps), and **Details**,
@@ -325,9 +374,9 @@ The shell's parts (`docs/shell.md`); no information is shown twice:
   `ZoneField` (`src/zone/`), which step 3's PR 11 puts in a character's tab; the World store holds the choice on the
   map under way, for whom and what takes the sub-area, and the tab active when it began, brought back when it ends;
   choosing on the map also shows the sub-area chosen there, and a map's hover outlines its sub-area dashed in white.
-- The panel's **History** (step 4) follows the active character's tab. The **Protocol** view will show only with an
-  "Advanced tools" setting, off by default (a change to `docs/shell.md`; step 2's checklist items that read the
-  inspector then begin by turning it on).
+- The panel's **History** (step 4) follows the active character's tab. The **Protocol** view shows only with the
+  "Advanced tools" setting, off by default (step 3's PR 24, [shell.md](shell.md#settings)); step 2's checklist items
+  that read the inspector begin by turning it on.
 
 The prototype fixed the model and the layout; each PR polishes its look, the World more beautiful and modern (the
 owner, 2026-11-13).
@@ -350,9 +399,23 @@ without either) it also holds the blueprint the character runs and its own value
 are the player's: a sight in game rewrites the rest and keeps them. The IPC's `set_character_blueprint` chooses a
 blueprint, or none, under the same lock, keeping the values of the settings of the same id and type, and
 `set_character_setting` sets one, refused when not of its type or out of its bounds, a value set back to its default
-or reset dropped, so it shows unmarked (the owner, 2026-11-16). Forget sends it to the system's trash (the `trash` crate; on
+or reset dropped, so it shows unmarked (the owner, 2026-11-16). The IPC's `delete_blueprint` sends a blueprint of mine
+to the system's trash, its undo history gone, without asking first, as Forget; the characters that run it keep naming
+it, their tab saying it is not found, so restoring its file gives it back to them (the owner, 2026-11-16). Forget sends it to the system's trash (the `trash` crate; on
 macOS through the file manager, without asking to control the Finder: the owner, 2026-11-14). A character's file is named by a key stable across
 servers, from its study (below).
+A zone of mine is `zones/<id>.json` (step 3's PR 20, the owner's choices of 2026-11-16): schema 1, its `id`, `name`,
+`world` (the game's world map id, the Twelve's 1) and `maps`, its maps' coordinates on that world, each once, in order,
+one a line so that a map painted changes one line; every floor of those coordinates counts, and the runtime resolves
+them into the game's maps. It is created empty on the world the World tab shows, under an id made from its name as a
+copy's is (a number when any file of the folder holds it, in any case), and keeps its id when renamed. The IPC's
+`zones` lists them with the files kept; `create_zone`, `rename_zone` (a name of nothing but spaces refused),
+`paint_zone` (a stroke: the maps added, or taken away by the eraser, saved at once) and `delete_zone` (to the system's
+trash, without asking, as Forget). A file that does not read, of a newer schema, or whose name is not its id is kept
+untouched, listed with why, never written over nor sent to the trash.
+The app's own settings are `settings.json` at the folder's root (schema 1, step 3's PR 24,
+[shell.md](shell.md#settings)), written whole under the same lock; one that does not read gives the defaults, is
+reported at start and is never written over.
 
 A blueprint's file (`bot::json`, schema 1, the owner's choices of 2026-11-13): its `id`, `name`, `description`,
 `version` and `based_on`; its `variables` (`type`, `default`, `bounds`, `per_character`, `memory`, both allowed at once
@@ -395,3 +458,7 @@ On Windows x64 by the owner, on what step 3 shows; running a blueprint is measur
    When on "time ≥ 23:00 AND not in a fight" and an event of mine fired by a timer are drawn without a refused wire
    and read in the Summary as on the owner's mock-up of 2026-11-16; a file of schema 1 opens migrated, its
    "at least" a `≥`.
+7. v2: Space opens the picker grouped by intent, "boucle" finds Tant que and Pour chaque; a Wait until dropped shows
+   its condition and folds its longest wait under "Avancé", unfolded once set; the Library lists D3B's eight
+   blueprints, each without problems and its settings at defaults that work (running them is measured at steps 5
+   and 6).

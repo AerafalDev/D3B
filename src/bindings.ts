@@ -8,14 +8,33 @@ import * as __TAURI_EVENT from "@tauri-apps/api/event";
 /** Commands */
 export const commands = {
 	appInfo: () => __TAURI_INVOKE<AppInfo_Serialize>("app_info"),
+	/**  Reads the app's settings away from the webview's thread: a sync client may hold the file. */
+	appSettings: () => __TAURI_INVOKE<SettingsRead_Serialize>("app_settings"),
+	/**
+	 *  Saves the app's settings whole, away from the webview's thread, behind any blueprint being saved. The front end
+	 *  sends one save at a time, so that two quick changes are written in their order.
+	 */
+	setAppSettings: (settings: Settings) => __TAURI_INVOKE<null>("set_app_settings", { settings }),
 	/**  The Library's blueprints and the files kept. */
 	blueprints: () => __TAURI_INVOKE<BlueprintList_Serialize>("blueprints"),
 	/**  Duplicate: a copy of the blueprint `id` among mine, named and worded by `texts`; its id. */
 	duplicateBlueprint: (id: string, texts: CopyTexts) => __TAURI_INVOKE<string>("duplicate_blueprint", { id, texts }),
+	/**
+	 *  Delete: the file of my blueprint `id` goes to the system's trash, as Forget sends a character's; the characters
+	 *  that run it keep naming it (the owner, 2026-11-16).
+	 */
+	deleteBlueprint: (id: string) => __TAURI_INVOKE<null>("delete_blueprint", { id }),
 	/**  The graphs of the blueprint `id`, or why not. */
 	blueprintGraphs: (id: string) => __TAURI_INVOKE<BlueprintGraphs_Serialize>("blueprint_graphs", { id }),
 	/**  Makes `edit` in the graph `graph` of my blueprint `id`, saved at once; the blueprint's graphs and problems then. */
 	editBlueprint: (id: string, graph: string, edit: GraphEdit_Deserialize) => __TAURI_INVOKE<BlueprintGraphs_Serialize>("edit_blueprint", { id, graph, edit }),
+	/**
+	 *  Undo: my blueprint `id` as it was before its last change, in any of its graphs, saved at once (the owner,
+	 *  2026-11-16); its graphs and problems then, as they are when nothing is left to undo.
+	 */
+	undoBlueprint: (id: string) => __TAURI_INVOKE<BlueprintGraphs_Serialize>("undo_blueprint", { id }),
+	/**  Redo: my blueprint `id` as it was before its last undo, saved at once; its graphs and problems then. */
+	redoBlueprint: (id: string) => __TAURI_INVOKE<BlueprintGraphs_Serialize>("redo_blueprint", { id }),
 	/**  The characters played, the most recently seen first, and their files kept. */
 	playedCharacters: () => __TAURI_INVOKE<PlayedList_Serialize>("played_characters"),
 	/**  Forget: the file of the character `key` goes to the system's trash. */
@@ -38,6 +57,16 @@ export const commands = {
 	mapCells: (mapId: number) => __TAURI_INVOKE<MapCells>("map_cells", { mapId }),
 	/**  The atlas of the packed game data, or why there is none; built off the main thread, its 15,000 positions grouped. */
 	worldAtlas: () => __TAURI_INVOKE<Atlas_Serialize>("world_atlas"),
+	/**  My zones and the files kept. */
+	zones: () => __TAURI_INVOKE<ZoneList>("zones"),
+	/**  A new zone named `name`, without maps, on `world`. */
+	createZone: (name: string, world: number) => __TAURI_INVOKE<ZoneView>("create_zone", { name, world }),
+	/**  The zone `id` named `name`; its id stays. */
+	renameZone: (id: string, name: string) => __TAURI_INVOKE<ZoneView>("rename_zone", { id, name }),
+	/**  A stroke on the zone `id`, saved at once: the zone as it now is. */
+	paintZone: (id: string, stroke: Stroke) => __TAURI_INVOKE<ZoneView>("paint_zone", { id, stroke }),
+	/**  The file of the zone `id` to the system's trash, without asking (the owner, 2026-11-16, as Forget). */
+	deleteZone: (id: string) => __TAURI_INVOKE<null>("delete_zone", { id }),
 	/**
 	 *  Watches the frames of `connection`, or none: those kept now; the next come as `InspectorFrames`. The front end
 	 *  watches none as it starts, so that a reload leaves nothing streamed to no one.
@@ -487,6 +516,17 @@ export type CopyTexts = {
 	variables: { [key in string]: VariableTexts },
 };
 
+/**  Why a blueprint was not deleted. */
+export type DeleteError = 
+/**  None of mine has this id: its file is gone. */
+{ kind: "noSuchBlueprint" } | 
+/**  One of D3B's, which ship with the app. */
+{ kind: "locked" } | 
+/**  The system names no folder for the player's files. */
+{ kind: "noFolder" } | 
+/**  The system could not read the file or send it to the trash: its own words. */
+{ kind: "notDeleted"; reason: string };
+
 /**
  *  A line of a frame's detail (`protocol::detail`). A 64-bit value is written out, as JavaScript's numbers would round
  *  it.
@@ -520,7 +560,7 @@ export type EditError = { kind: "noFolder" } |
 /**  None of mine has this id: its file is gone. */
 { kind: "noSuchBlueprint" } | 
 /**  One of D3B's, which only Duplicate changes. */
-{ kind: "locked" } | { kind: "noSuchGraph" } | { kind: "noSuchNode" } | { kind: "noSuchPin" } | { kind: "wrongWay" } | { kind: "otherType" } | { kind: "sameNode" } | { kind: "notAChoice" } | 
+{ kind: "locked" } | { kind: "noSuchGraph" } | { kind: "noSuchNode" } | { kind: "noSuchWire" } | { kind: "noSuchPin" } | { kind: "wrongWay" } | { kind: "otherType" } | { kind: "sameNode" } | { kind: "notAChoice" } | 
 /**  The system could not read or write its file, or it no longer reads and is kept as it is: the reason, in words. */
 { kind: "notSaved"; reason: string };
 
@@ -656,8 +696,10 @@ export type GraphEdit_Deserialize =
 { edit: "wire"; from: [string, string]; to: [string, string] } | 
 /**  A node the picker offers, at `position`, wired to the pin a wire dropped on the ground came from. */
 { edit: "add"; node: NodeDoes; position: [number, number]; wiredTo?: DraggedPin | null } | 
-/**  A node put at `position`. */
-{ edit: "move"; node: string; position: [number, number] };
+/**  Nodes put elsewhere, dragged together: one change, undone at once. */
+{ edit: "move"; nodes: MovedNode[] } | 
+/**  Nodes, with every wire to or from them, and wires, chosen together. */
+{ edit: "delete"; nodes: string[]; wires: WireEnds[] };
 
 /**  One change to a graph. */
 export type GraphEdit_Serialize = 
@@ -668,8 +710,10 @@ export type GraphEdit_Serialize =
 { edit: "wire"; from: [string, string]; to: [string, string] } | 
 /**  A node the picker offers, at `position`, wired to the pin a wire dropped on the ground came from. */
 { edit: "add"; node: NodeDoes; position: [number, number]; wiredTo: DraggedPin | null } | 
-/**  A node put at `position`. */
-{ edit: "move"; node: string; position: [number, number] };
+/**  Nodes put elsewhere, dragged together: one change, undone at once. */
+{ edit: "move"; nodes: MovedNode[] } | 
+/**  Nodes, with every wire to or from them, and wires, chosen together. */
+{ edit: "delete"; nodes: string[]; wires: WireEnds[] };
 
 /**  An event graph, or a function when it has a signature. */
 export type GraphView = GraphView_Serialize | GraphView_Deserialize;
@@ -758,7 +802,9 @@ export type KeptWhy =
 /**  It holds the id of one of D3B's blueprints. */
 { kind: "givenId"; id: string } | 
 /**  Not of a character's shape: what serde says. */
-{ kind: "notACharacter"; detail: string };
+{ kind: "notACharacter"; detail: string } | 
+/**  Not of a zone's shape: what serde says. */
+{ kind: "notAZone"; detail: string };
 
 /**  A map's coordinates in the world, as the game shows them. */
 export type MapAt = {
@@ -781,6 +827,12 @@ export type MonsterSeen = {
 	id: number,
 	grade: number,
 	level: number,
+};
+
+/**  A node and where it was put. */
+export type MovedNode = {
+	node: string,
+	position: [number, number],
 };
 
 /**  A name in the app's two languages. */
@@ -1054,6 +1106,36 @@ export type SettingError = { kind: "noSuchCharacter" } | { kind: "noFolder" } | 
 /**  The system could not read or write its file: its own words. */
 { kind: "notSaved"; reason: string };
 
+/**  The app's settings (`docs/shell.md`, "Settings"), each with its default. */
+export type Settings = {
+	/**  Shows the Protocol view and its panel; off by default. */
+	advancedTools: boolean,
+};
+
+/**  Why the settings were not saved; they still hold for the session. */
+export type SettingsError = 
+/**  The system names no folder for the player's files. */
+{ kind: "noFolder" } | 
+/**  The system could not write the file, or the file there does not read and is kept: its own words. */
+{ kind: "notSaved"; reason: string };
+
+/**  The app's settings as read at start, and why their file is kept as it is when it does not read. */
+export type SettingsRead = SettingsRead_Serialize | SettingsRead_Deserialize;
+
+/**  The app's settings as read at start, and why their file is kept as it is when it does not read. */
+export type SettingsRead_Deserialize = {
+	settings: Settings,
+	/**  Why `settings.json` does not read: the settings are then the defaults, and the file is never written over. */
+	kept?: string | null,
+};
+
+/**  The app's settings as read at start, and why their file is kept as it is when it does not read. */
+export type SettingsRead_Serialize = {
+	settings: Settings,
+	/**  Why `settings.json` does not read: the settings are then the defaults, and the file is never written over. */
+	kept: string | null,
+};
+
 /**  Which parts may be out of date: the protocol dropped frames since they were last refreshed. */
 export type StaleParts = {
 	map: boolean,
@@ -1077,6 +1159,12 @@ export type StatedSeen_Serialize = {
 	elementId: number,
 	cell: number | null,
 	state: number,
+};
+
+/**  A stroke on the map: the maps the brush or the whole sub-area adds, or the eraser takes away. */
+export type Stroke = {
+	maps: ([number, number])[],
+	erase: boolean,
 };
 
 /**  A variable's name and help line. */
@@ -1120,6 +1208,12 @@ export type VariableView_Serialize = {
 	help: string,
 };
 
+/**  A wire by its ends, `[node, pin]` each. */
+export type WireEnds = {
+	from: [string, string],
+	to: [string, string],
+};
+
 /**  A wire from a node's output to another's input: `[node, pin]` each. */
 export type WireView = {
 	from: [string, string],
@@ -1136,6 +1230,33 @@ export type WorldMaps = {
 	 *  and checked on the World tab).
 	 */
 	priority: ([number, number])[],
+};
+
+/**  Why a zone was not created, changed or deleted. */
+export type ZoneError = 
+/**  No zone of mine has this id. */
+{ kind: "noSuchZone" } | 
+/**  The system names no folder for the player's files. */
+{ kind: "noFolder" } | 
+/**  A name of nothing but spaces. */
+{ kind: "emptyName" } | 
+/**  The system could not read or write its file, or it is kept as it is: why, in its own words. */
+{ kind: "notSaved"; reason: string };
+
+/**  My zones, in the order of their files, and the files kept as they are. */
+export type ZoneList = {
+	zones: ZoneView[],
+	kept: KeptFile[],
+};
+
+/**  A zone of mine, as the World view, the World tab and the Zone field show it. */
+export type ZoneView = {
+	id: string,
+	name: string,
+	/**  The world its maps are on. */
+	world: number,
+	/**  Its maps' coordinates on that world, each once, in order. */
+	maps: ([number, number])[],
 };
 
 /* Tauri Specta runtime */

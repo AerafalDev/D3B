@@ -9,7 +9,8 @@ import {
   CommandList,
   CommandShortcut,
 } from "@/components/ui/command.tsx";
-import { shellCommands } from "./commands.ts";
+import { useAppSettings } from "@/settings/app-settings.ts";
+import { offered, shellCommands } from "./commands.ts";
 import { useLayout } from "./layout-store.ts";
 import { useShortcut } from "./use-shortcut.ts";
 
@@ -24,6 +25,7 @@ export function CommandPalette() {
   const shortcut = useShortcut();
   const offline = useOffline();
   const forget = usePlayed((store) => store.forget);
+  const advancedTools = useAppSettings((store) => store.advancedTools);
 
   return (
     <CommandDialog
@@ -37,20 +39,22 @@ export function CommandPalette() {
         <CommandInput placeholder={t("shell.palette.placeholder")} />
         <CommandList>
           <CommandEmpty>{t("shell.palette.empty")}</CommandEmpty>
-          {shellCommands.map((command) => (
-            <CommandItem
-              key={command.id}
-              value={t(`shell.commands.${command.id}`)}
-              onSelect={() => {
-                setOpen(false);
-                command.run();
-              }}
-              className="h-[26px] rounded-[4px] text-[13px] data-selected:bg-[#04395e]"
-            >
-              {t(`shell.commands.${command.id}`)}
-              <CommandShortcut className="text-text-muted tracking-normal">{shortcut(command.id)}</CommandShortcut>
-            </CommandItem>
-          ))}
+          {shellCommands
+            .filter((command) => offered(command, advancedTools))
+            .map((command) => (
+              <CommandItem
+                key={command.id}
+                value={t(`shell.commands.${command.id}`)}
+                onSelect={() => {
+                  setOpen(false);
+                  command.run();
+                }}
+                className="h-[26px] rounded-[4px] text-[13px] data-selected:bg-[#04395e]"
+              >
+                {t(`shell.commands.${command.id}`)}
+                <CommandShortcut className="text-text-muted tracking-normal">{shortcut(command.id)}</CommandShortcut>
+              </CommandItem>
+            ))}
           {offline.map((character) => (
             <CommandItem
               key={character.key}

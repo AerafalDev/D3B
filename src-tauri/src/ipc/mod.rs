@@ -11,6 +11,7 @@ mod inspector;
 mod map;
 mod played;
 mod relay;
+mod zones;
 
 pub use blueprints::open_store;
 pub use commands::LoadedData;
@@ -25,10 +26,15 @@ pub fn builder() -> Builder<tauri::Wry> {
     Builder::<tauri::Wry>::new()
         .commands(collect_commands![
             commands::app_info,
+            commands::app_settings,
+            commands::set_app_settings,
             blueprints::blueprints,
             blueprints::duplicate_blueprint,
+            blueprints::delete_blueprint,
             graph::blueprint_graphs,
             edit::edit_blueprint,
+            edit::undo_blueprint,
+            edit::redo_blueprint,
             played::played_characters,
             played::forget_character,
             played::settings::set_character_blueprint,
@@ -37,6 +43,11 @@ pub fn builder() -> Builder<tauri::Wry> {
             relay::relay_restore,
             map::map_cells,
             atlas::world_atlas,
+            zones::zones,
+            zones::create_zone,
+            zones::rename_zone,
+            zones::paint_zone,
+            zones::delete_zone,
             inspector::inspector_watch,
             inspector::inspector_frame
         ])

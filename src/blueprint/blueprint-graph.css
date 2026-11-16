@@ -132,11 +132,6 @@
 .blueprint-pill .react-flow__handle-right {
   right: -5px;
 }
-.blueprint-flow .react-flow__minimap {
-  background: #181818;
-  border: 1px solid #2b2b2b;
-  border-radius: 6px;
-}
 .blueprint-flow .react-flow__controls {
   box-shadow: none;
 }

@@ -14,7 +14,7 @@ mod problems;
 mod variable;
 mod wiring;
 
-pub(crate) use blueprint::{Blueprint, Does, End, Graph, Id, Mode, Node, Parameter};
+pub(crate) use blueprint::{Blueprint, Does, End, Graph, Id, Mode, Node, Parameter, Wire};
 pub(crate) use catalogue::{Carries, Family, Side, kind};
 pub(crate) use copy::{Texts, copy, id_for};
 pub(crate) use edit::{Edit, Refusal, choices, edit};

@@ -13,7 +13,8 @@ VS Code's, part for part (`src/shell/`):
   which rounds its corners on Windows 11, and the window-state plugin restores everything but its frame, which former
   versions saved. Everything in the bar but its controls drags the window, and double-clicked maximises it. On macOS
   and Linux the system keeps its frame and buttons; on macOS its menu bar holds the menus, so none is drawn. The menus
-  hold only what works: File, Exit; View, the palette and the three parts. Measured by the owner on Windows 11
+  hold only what works: File, Exit; View, the palette, the three parts (the panel only with Advanced tools) and
+  Advanced tools, checked while on. Measured by the owner on Windows 11
   (2026-11-12): our frame only, rounded corners, drag, double-click, the window's buttons.
 - **Activity bar** (48 px, left): one entry per view of the primary side bar (`src/shell/side-views.ts`), a 20 px
   Lucide icon (Characters: a person, the owner's pick of 2026-11-13); the view showing is a rounded pill, and choosing it again hides the side bar, as in VS Code. Today:
@@ -26,7 +27,10 @@ VS Code's, part for part (`src/shell/`):
   the pointer. Parts keep their pixel size when the window is resized; the editor area takes the rest. As in VS Code,
   the secondary side bar starts hidden. The primary side bar's header names its view, and the view may add to it after
   its name; a part without a view says its views come with the features. The panel's view is the protocol inspector,
-  "Protocol" ([protocol.md](protocol.md#the-inspector)): its counts and tools share the header's one line.
+  "Protocol" ([protocol.md](protocol.md#the-inspector)): its counts and tools share the header's one line. It shows
+  only with **Advanced tools** on (below); off, the panel has no view until step 4's History, so the panel itself, its
+  toggle in the title bar, View's Panel, Ctrl+J and its command in the palette are gone (Ctrl+J is still taken from
+  the webview, whose own opens its downloads), and the panel starts hidden.
 - **Editor area**: tabs and splits by `dockview-react`. An editor opens by `openEditor` (one tab per id; opening it
   again brings its tab forward). With no editor open it shows the app's mark in relief and the main shortcuts, these
   only when it is at least 480 px wide. At the right of a group's tabs, VS Code's **editor actions**: those of the
@@ -45,8 +49,24 @@ VS Code's, part for part (`src/shell/`):
   rich ones: sections of lines set apart by a rule, the first brighter, the others grey. A hover never repeats what
   the bar already says (the owner, 2026-11-13), not even as a title: the data's build has none; no data has its reason.
 - **Command palette** (Ctrl+Shift+P, or the command centre): every command with its shortcut, itself included,
-  filtered as one types, under the title bar, dimming nothing behind it.
+  filtered as one types, under the title bar, dimming nothing behind it; "Toggle advanced tools" ("Afficher ou masquer
+  les outils avancés") has no shortcut.
 - **Shortcuts** are written as the platform and the language do (`Ctrl+Maj+P` in French, `⌘⇧P` on macOS).
+
+## Settings
+
+The app's own settings, apart from a character's (the owner, 2026-11-16, for step 3's PR 24): no Settings view yet,
+which comes when there are several; each setting is a command of the palette and an entry of the menus.
+`settings.json`, at the root of the player's folder (`Documents/D3B`, [bot.md](bot.md#storage)), holds them all, with
+its schema (1), written whole by `storage` as every file there; a setting missing from it takes its default, and a
+file that does not read gives the defaults, is never written over, and a notification at start says why. A setting is saved the moment it
+changes (`set_app_settings`, off the webview's thread, one save after another so the last change is the one kept); one
+that cannot be saved holds for the session, and a notification says why. The front
+end reads them once at start (`app_settings`, `src/settings/app-settings.ts`); the browser preview keeps the defaults.
+
+- **Advanced tools** ("Outils avancés"), off by default: the Protocol view and its panel (above). Turned on, the panel
+  slides open; off, it closes. The inspector follows the frames even while off, so turning them on shows the
+  session's frames (the owner, 2026-11-16).
 
 ## Look
 
@@ -82,8 +102,14 @@ are followed again by the first feature that shows them.
 Vitest and Testing Library: the shortcuts (each part, a field focused, the palette, the key taken from the webview),
 their labels per platform and language, a part's hide button, the title bar (the window's buttons on Windows only,
 restore once maximised, no menus on macOS, each toggle pressed while its part shows, the command centre, File > Exit
-through the close request, View's checked parts), the Windows window's config against the main one, the palette (its
-commands, filtering, running one), the activity bar (its pressed entry, hiding and showing the side bar), an
+through the close request, View's checked parts, no panel toggle nor View's Panel without Advanced tools, View's
+Advanced tools turning them on and off and saved), the app's settings (off and the panel hidden at start, read at
+start showing the panel, the browser preview asking nothing, a save failed holding for the session and saying why,
+no folder, saves sent one after another, a file kept said at start, a read ending after a change dropped, a read
+failed), `settings.json` (no file, read back with its schema,
+a missing setting's default, a newer or malformed file kept and never written over), the Windows window's config against the main one, the palette (its
+commands, filtering, running one, the panel's left out without Advanced tools), the shortcuts (Ctrl+J doing nothing
+without Advanced tools but still taken from the webview), the activity bar (its pressed entry, hiding and showing the side bar), an
 editor's tab (its title followed, its close), the status bar (the name alone before the back end answers, the
 version and the data's build without a hover, no data and its reason in the hover, the relay after the version), the
 relay's item (nothing before its status, grey arrows, red once off, its hover from the keyboard) and its hover's lines, the
