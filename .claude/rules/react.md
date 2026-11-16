@@ -14,9 +14,9 @@ paths:
   smallest fix the typecheck needs. React Flow UI's components are in `src/components/flow/`.
 - **Styling**: Tailwind classes through `cn()`; no inline style objects, no CSS-in-JS. Dark only (the owner,
   2026-11-12): `index.html` sets the `dark` class and nothing switches it; colours are defined for it alone.
-- **State**: `zustand` stores per domain (with `zundo` where undo exists), read through selectors; server state from
-  the back end arrives by typed events into a store. No React state for what changes per frame: use a ref and
-  `requestAnimationFrame`.
+- **State**: `zustand` stores per domain, read through selectors; a blueprint's undo is Rust's, which writes each step
+  (the owner, 2026-11-16). Server state from the back end arrives by typed events into a store. No React state for
+  what changes per frame: use a ref and `requestAnimationFrame`.
 - **Editor pieces**: `dockview-react` for the docked layout, `@xyflow/react` (+ `elkjs` for layout) for node graphs,
   `react-arborist` for trees, Monaco for text, xterm for logs, `@dnd-kit` for drag and drop, `react-hotkeys-hook` for
   shortcuts, `react-hook-form` + `zod` for forms. Load the heavy ones (Monaco, xterm, React Flow) with `React.lazy`.

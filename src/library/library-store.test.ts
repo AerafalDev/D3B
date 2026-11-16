@@ -6,6 +6,7 @@ import { initI18n } from "@/i18n/i18n.ts";
 // The back end and the notifications, faked: what Duplicate asks, and what it says.
 const backEnd = vi.hoisted(() => ({
   duplicate: vi.fn(),
+  delete: vi.fn(),
   blueprints: vi.fn(),
   played: vi.fn(),
   zones: vi.fn(),
@@ -14,6 +15,7 @@ const backEnd = vi.hoisted(() => ({
 vi.mock("@/bindings.ts", () => ({
   commands: {
     duplicateBlueprint: backEnd.duplicate,
+    deleteBlueprint: backEnd.delete,
     blueprints: backEnd.blueprints,
     playedCharacters: backEnd.played,
     zones: backEnd.zones,
@@ -98,6 +100,43 @@ describe("Duplicate", () => {
       "Récolte automatique n'a pas été dupliqué : disque plein",
       "Récolte automatique n'a pas été dupliqué : il n'est plus là.",
       "Récolte automatique n'a pas été dupliqué : le système ne donne pas de dossier pour vos fichiers.",
+    ]);
+  });
+});
+
+describe("Delete", () => {
+  const mine = { ...harvest, id: "ma-chasse", name: "Ma chasse", given: false };
+
+  beforeEach(() => {
+    backEnd.delete.mockReset();
+    backEnd.blueprints.mockReset().mockResolvedValue({ blueprints: [], kept: [] });
+    backEnd.played.mockReset().mockResolvedValue({ characters: [], kept: [] });
+    backEnd.toasts.length = 0;
+  });
+
+  it("sends one of mine to the trash and reads the list again", async () => {
+    backEnd.delete.mockResolvedValue(null);
+    useLibrary.setState({ blueprints: [harvest, mine] });
+    expect(await useLibrary.getState().remove(mine)).toBe(true);
+    expect(backEnd.delete).toHaveBeenCalledWith("ma-chasse");
+    expect(useLibrary.getState().blueprints).toEqual([]);
+  });
+
+  it("says why in a notification when it was not deleted", async () => {
+    for (const failure of [
+      { kind: "notDeleted", reason: "corbeille pleine" },
+      { kind: "noSuchBlueprint" },
+      { kind: "noFolder" },
+      { kind: "locked" },
+    ]) {
+      backEnd.delete.mockRejectedValueOnce(failure);
+      expect(await useLibrary.getState().remove(mine)).toBe(false);
+    }
+    expect(backEnd.toasts).toEqual([
+      "Ma chasse n'a pas été supprimé : corbeille pleine",
+      "Ma chasse n'a pas été supprimé : il n'est plus là.",
+      "Ma chasse n'a pas été supprimé : le système ne donne pas de dossier pour vos fichiers.",
+      "Ma chasse n'a pas été supprimé : les blueprints de D3B ne se suppriment pas.",
     ]);
   });
 });

@@ -6,6 +6,7 @@ import {
   type BlueprintSummary_Serialize,
   type CopyTexts,
   commands,
+  type DeleteError,
   type DuplicateError,
   events,
   type KeptFile,
@@ -29,6 +30,11 @@ interface LibraryStore {
    * when it was not made, said in a notification.
    */
   duplicate: (source: BlueprintSummary) => Promise<string | null>;
+  /**
+   * Delete: one of mine to the system's trash, without asking first, as Forget (the owner, 2026-11-16); whether it
+   * went, a failure said in a notification.
+   */
+  remove: (blueprint: BlueprintSummary) => Promise<boolean>;
   /** Reads the list now and when a character's file changes; returns what stops following. */
   follow: () => () => void;
 }
@@ -61,6 +67,20 @@ function duplicateFailure(error: DuplicateError, name: string): string {
       return i18next.t("library.duplicateFailed.noFolder", { name });
     case "notSaved":
       return i18next.t("library.duplicateFailed.notSaved", { name, reason: error.reason });
+  }
+}
+
+/** What a failed Delete says, in the player's language. */
+function deleteFailure(error: DeleteError, name: string): string {
+  switch (error.kind) {
+    case "noSuchBlueprint":
+      return i18next.t("library.deleteFailed.gone", { name });
+    case "noFolder":
+      return i18next.t("library.deleteFailed.noFolder", { name });
+    case "locked":
+      return i18next.t("library.deleteFailed.locked", { name });
+    case "notDeleted":
+      return i18next.t("library.deleteFailed.notDeleted", { name, reason: error.reason });
   }
 }
 
@@ -98,6 +118,18 @@ export const useLibrary = create<LibraryStore>((set, get) => ({
       const name = source.given ? givenText(source.id, "name", source.name) : source.name;
       toast.error(typeof failure?.kind === "string" ? duplicateFailure(failure, name) : String(error));
       return null;
+    }
+  },
+
+  remove: async (blueprint) => {
+    try {
+      await commands.deleteBlueprint(blueprint.id);
+      await get().refresh();
+      return true;
+    } catch (error) {
+      const failure = error as DeleteError;
+      toast.error(typeof failure?.kind === "string" ? deleteFailure(failure, blueprint.name) : String(error));
+      return false;
     }
   },
 

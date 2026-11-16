@@ -1,5 +1,6 @@
 import type { IDockviewPanelProps } from "dockview-react";
-import { lazy, Suspense, useEffect, useState } from "react";
+import { lazy, Suspense, useEffect, useMemo, useState } from "react";
+import { useHotkeys } from "react-hotkeys-hook";
 import { useTranslation } from "react-i18next";
 
 import type { ProblemView } from "@/bindings.ts";
@@ -29,10 +30,11 @@ interface BlueprintParams extends EditorParams {
  * A blueprint's tab, its editor (`docs/bot.md`, "In the app"): on top its name, whose it is, its problems,
  * its description and Duplicate; under them Unreal's "My Blueprint" on the left, the graph it shows, loaded on demand,
  * or its Summary, as the tab strip's toggle says, and Details on the right (the owner, 2026-11-14). One of D3B's is
- * read-only; mine is edited in its graph (step 3's PR 12).
+ * read-only; mine is edited in its graph (step 3's PR 12), Ctrl+Z undoing and Ctrl+Y or Ctrl+Shift+Z redoing its
+ * changes, in any of its graphs, while the keyboard is in the tab but not in a field (step 3's PR 13).
  */
 export function BlueprintTab({ api, params }: IDockviewPanelProps<BlueprintParams>) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const blueprint = useLibrary((store) => store.blueprints.find((one) => one.id === params.id));
   const duplicate = useLibrary((store) => store.duplicate);
   const name = blueprint === undefined ? null : blueprintName(blueprint);
@@ -41,10 +43,48 @@ export function BlueprintTab({ api, params }: IDockviewPanelProps<BlueprintParam
   const read_ = useGraphs((store) => store.read[params.id]);
   const load = useGraphs((store) => store.load);
   const edit = useGraphs((store) => store.edit);
+  const undo = useGraphs((store) => store.undo);
+  const redo = useGraphs((store) => store.redo);
   const refresh = useLibrary((store) => store.refresh);
   const [shown, setShown] = useState<string | null>(null);
   const [selection, setSelection] = useState<Selection>(null);
   const view = useBlueprintView((store) => store.view[api.id] ?? "graph");
+
+  // Rust undoes and writes (the owner, 2026-11-16); the Library's count of problems follows.
+  const editor = useHotkeys<HTMLDivElement>(
+    "mod+z, mod+y, mod+shift+z",
+    (_event, handler) => {
+      const step = handler.hotkey === "mod+z" ? undo : redo;
+      void step(params.id).then((saved) => {
+        if (saved) {
+          void refresh();
+        }
+      });
+    },
+    // By the letter typed, not the key's place: Ctrl+Z is on another key in AZERTY and QWERTZ.
+    { enabled: blueprint?.given === false, preventDefault: true, useKey: true },
+    [params.id, undo, redo, refresh],
+  );
+
+  // The variables' and functions' names, as the player reads them, for the nodes that say them; kept between renders,
+  // so the graph is drawn again only when they change and keeps the nodes chosen.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: the language changes the names, read through i18next
+  const names = useMemo(() => {
+    if (blueprint === undefined) {
+      return new Map<string, string>();
+    }
+    const read = (path: string, fallback: string) =>
+      blueprint.given ? givenText(blueprint.id, path, fallback) : fallback;
+    const graphs = read_?.state === "read" ? read_.graphs.graphs : [];
+    return new Map<string, string>([
+      ...blueprint.variables.map(
+        (variable) => [variable.id, read(`variables.${variable.id}.name`, variable.name)] as const,
+      ),
+      ...graphs
+        .filter((graph) => graph.function)
+        .map((graph) => [graph.id, read(`graphs.${graph.id}`, graph.name)] as const),
+    ]);
+  }, [blueprint, read_, i18n.language]);
 
   useEffect(() => {
     void load(params.id);
@@ -63,15 +103,6 @@ export function BlueprintTab({ api, params }: IDockviewPanelProps<BlueprintParam
     blueprint.given ? givenText(blueprint.id, path, fallback) : fallback;
   const graphs = read_?.state === "read" ? read_.graphs.graphs : [];
   const shownGraph = graphs.find((graph) => graph.id === shown) ?? graphs[0];
-  // The variables' and functions' names, as the player reads them, for the nodes that say them.
-  const names = new Map<string, string>([
-    ...blueprint.variables.map(
-      (variable) => [variable.id, read(`variables.${variable.id}.name`, variable.name)] as const,
-    ),
-    ...graphs
-      .filter((graph) => graph.function)
-      .map((graph) => [graph.id, read(`graphs.${graph.id}`, graph.name)] as const),
-  ]);
   // The nodes of the graph shown that a problem names, marked in the graph.
   const problems = read_?.state === "read" ? read_.graphs.problems : NO_PROBLEMS;
   const faulty = problems
@@ -92,7 +123,7 @@ export function BlueprintTab({ api, params }: IDockviewPanelProps<BlueprintParam
           .join(" · ");
 
   return (
-    <div className="flex h-full min-h-0 flex-col">
+    <div ref={editor} tabIndex={-1} className="flex h-full min-h-0 flex-col outline-none">
       <div className="border-line flex flex-col gap-1 border-b px-5 py-3">
         <header className="flex items-center gap-2.5">
           <Icon name="blueprint" className="size-[22px]" />

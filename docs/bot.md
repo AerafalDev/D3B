@@ -333,7 +333,11 @@ The shell's parts (`docs/shell.md`); no information is shown twice:
 Undo and redo (the owner, 2026-11-16) are Rust's: `storage` keeps a blueprint of mine as it was before each change
 that changed it, 100 at most, for the session and across its graphs, and the IPC's `undo_blueprint` and
 `redo_blueprint` write it back whole under the lock every save takes, so the file and the editor never disagree; a
-deletion is not confirmed, undo brings it back. Each graph gives the picker its **choices** (`bot::choices`) with their pins: the catalogue's
+deletion is not confirmed, undo brings it back. In the graph, Delete and Backspace delete the nodes and wires chosen,
+and a right-click on a node or a wire offers Delete, which takes the whole selection when the node is in it, as
+Unreal's; the keys act with the keyboard in that graph only. Ctrl+Z undoes and Ctrl+Y or Ctrl+Shift+Z redo, read by
+the letter typed whatever the keyboard's layout, while the keyboard is in the blueprint's tab, a text field keeping
+its own undo; the editor sends one change at a time, so Rust takes them in their order. The Library's right-click offers Delete on mine, which closes its tab. Each graph gives the picker its **choices** (`bot::choices`) with their pins: the catalogue's
   kinds in their place, an event held once never again and a function's entry once, then the blueprint's variables,
   read and written, and its functions called; creating a variable comes with PR 14. In a graph of mine, a wire
   dragged from a pin is checked by type as it goes: a pin that refuses it says why beside the pointer (another type,
