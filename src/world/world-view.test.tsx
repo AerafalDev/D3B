@@ -7,7 +7,9 @@ import { initI18n } from "@/i18n/i18n.ts";
 
 // The back end, faked: the atlas the view reads.
 const backEnd = vi.hoisted(() => ({ atlas: vi.fn() }));
-vi.mock("@/bindings.ts", () => ({ commands: { worldAtlas: backEnd.atlas } }));
+vi.mock("@/bindings.ts", () => ({
+  commands: { worldAtlas: backEnd.atlas, zones: async () => ({ zones: [], kept: [] }) },
+}));
 // The editor area, faked: the editors opened.
 const opened = vi.hoisted(() => ({ editors: [] as { id: string }[] }));
 vi.mock("@/shell/parts/editor-store.ts", () => ({
@@ -63,7 +65,8 @@ describe("the World view", () => {
     expect(screen.queryByText("Forêt d'Astrub")).toBeNull();
     fireEvent.click(astrub);
     expect(astrub.getAttribute("aria-expanded")).toBe("true");
-    const rows = screen.getAllByRole("button").slice(1, 4);
+    // After "+" of my zones and the area.
+    const rows = screen.getAllByRole("button").slice(2, 5);
     expect(rows.map((row) => row.textContent)).toEqual([
       "Cité d'Astrubniv. 10",
       "Forêt d'Astrubniv. 20",

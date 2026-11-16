@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import { Icon } from "@/icons/icon.tsx";
+import { MyZones } from "@/zone/my-zones.tsx";
 import { openWorld } from "./open-world.ts";
 import { useWorld } from "./world-store.ts";
 import { type TreeArea, worldTree } from "./world-tree.ts";
@@ -10,7 +11,7 @@ import { type TreeArea, worldTree } from "./world-tree.ts";
 /**
  * The World view of the primary side bar (the owner's mock-up 10 of 2026-11-15): a search, then the game's sub-areas
  * grouped by area in a folded tree, which the search unfolds; a sub-area no world shows greyed, said "not on the map".
- * A sub-area chosen shows on the World tab. My zones and my routes come with step 3's PR 10.
+ * A sub-area chosen shows on the World tab. My zones come first (step 3's PR 20); my routes come with PR 21.
  */
 export function WorldView() {
   const { t, i18n } = useTranslation();
@@ -106,6 +107,7 @@ export function WorldView() {
         />
       </label>
       <div className="min-h-0 flex-1 overflow-y-auto pb-2 text-[13px]">
+        <MyZones query={query} />
         <h3 className="text-text-muted mt-1 flex h-[22px] items-center px-3 text-[11px] font-semibold tracking-[.04em] uppercase">
           {t("world.subAreas")}
         </h3>

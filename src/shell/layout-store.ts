@@ -7,7 +7,10 @@ export type Part = "primarySideBar" | "panel" | "secondarySideBar";
 export type ViewId = "characters" | "library" | "world";
 
 interface LayoutStore {
-  /** Which parts are shown. As in VS Code, the secondary side bar starts hidden (the owner, 2026-11-12). */
+  /**
+   * Which parts are shown. As in VS Code, the secondary side bar starts hidden (the owner, 2026-11-12); the panel too,
+   * until the app's settings say Advanced tools are on (`src/settings/app-settings.ts`).
+   */
   visible: Record<Part, boolean>;
   /** The view the primary side bar shows. */
   view: ViewId;
@@ -21,7 +24,7 @@ interface LayoutStore {
 }
 
 export const useLayout = create<LayoutStore>((set) => ({
-  visible: { primarySideBar: true, panel: true, secondarySideBar: false },
+  visible: { primarySideBar: true, panel: false, secondarySideBar: false },
   view: "characters",
   paletteOpen: false,
   toggle: (part) => set((store) => ({ visible: { ...store.visible, [part]: !store.visible[part] } })),
