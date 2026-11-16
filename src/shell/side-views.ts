@@ -2,6 +2,7 @@ import type { ComponentType } from "react";
 
 import { CharactersView } from "@/characters/characters-view.tsx";
 import type { IconName } from "@/icons/icons.ts";
+import { LibraryHeader } from "@/library/library-header.tsx";
 import { LibraryView } from "@/library/library-view.tsx";
 import { WorldView } from "@/world/world-view.tsx";
 import type { ViewId } from "./layout-store.ts";
@@ -14,11 +15,13 @@ export interface SideView {
   /** Its name, in the activity bar's hover and the side bar's header. */
   title: "characters.title" | "library.title" | "world.title";
   component: ComponentType;
+  /** What it adds to the side bar's header after its name, such as the Library's Import. */
+  header?: ComponentType;
 }
 
 /** The side bar's views, in the activity bar's order; each feature with a view adds its own. */
 export const SIDE_VIEWS: readonly SideView[] = [
   { id: "characters", icon: "user", title: "characters.title", component: CharactersView },
-  { id: "library", icon: "libraryView", title: "library.title", component: LibraryView },
+  { id: "library", icon: "libraryView", title: "library.title", component: LibraryView, header: LibraryHeader },
   { id: "world", icon: "worldView", title: "world.title", component: WorldView },
 ];

@@ -39,8 +39,8 @@ interface LibraryStore {
   follow: () => () => void;
 }
 
-/** A copy's texts: the source's as the player reads them, its name marked as a copy. */
-function copyTexts(source: BlueprintSummary): CopyTexts {
+/** A blueprint's texts as the player reads them: a given one's in their language, since its file's are English. */
+export function playerTexts(source: BlueprintSummary): CopyTexts {
   const read = (path: string, fallback: string) => (source.given ? givenText(source.id, path, fallback) : fallback);
   const variables = Object.fromEntries(
     source.variables.map((variable) => [
@@ -51,11 +51,13 @@ function copyTexts(source: BlueprintSummary): CopyTexts {
       },
     ]),
   );
-  return {
-    name: i18next.t("library.copyName", { name: read("name", source.name) }),
-    description: read("description", source.description),
-    variables,
-  };
+  return { name: read("name", source.name), description: read("description", source.description), variables };
+}
+
+/** A copy's texts: the source's as the player reads them, its name marked as a copy. */
+function copyTexts(source: BlueprintSummary): CopyTexts {
+  const texts = playerTexts(source);
+  return { ...texts, name: i18next.t("library.copyName", { name: texts.name }) };
 }
 
 /** What a failed Duplicate says, in the player's language. */

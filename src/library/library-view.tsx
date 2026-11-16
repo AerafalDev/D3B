@@ -7,6 +7,7 @@ import { useGraphs } from "@/blueprint/graph-store.ts";
 import { ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuTrigger } from "@/components/ui/context-menu.tsx";
 import { Icon } from "@/icons/icon.tsx";
 import { cn } from "@/lib/utils.ts";
+import { useShare } from "@/share/share-store.ts";
 import { closeEditor, useEditors } from "@/shell/parts/editor-store.ts";
 import { givenText } from "./given-text.ts";
 import { type BlueprintSummary, useLibrary } from "./library-store.ts";
@@ -16,7 +17,7 @@ import { BLUEPRINT_EDITOR, blueprintName, openBlueprint } from "./open-blueprint
  * The Library view of the primary side bar (the owner's mock-up 9, variant A): "Given by D3B", then "Mine", one row
  * per blueprint, its name alone, its description or what a copy is based on in its hover, an amber mark with how
  * many problems it has; a copy whose original has a newer version a blue arrow, said in its hover too (the owner,
- * 2026-11-16); a right-click offers Duplicate, and Delete on mine, to the system's trash without asking (the owner,
+ * 2026-11-16); a right-click offers Duplicate, Export, and Delete on mine, to the system's trash without asking (the owner,
  * 2026-11-16), its tab closed. Last, folded, the player's files kept as they are, each
  * with why in its hover. The list is read again each time the view is shown, so a file the player put in the folder
  * appears without a restart.
@@ -26,6 +27,7 @@ export function LibraryView() {
   const blueprints = useLibrary((store) => store.blueprints);
   const kept = useLibrary((store) => store.kept);
   const duplicate = useLibrary((store) => store.duplicate);
+  const exportBlueprint = useShare((store) => store.exportBlueprint);
   const remove = useLibrary((store) => store.remove);
   const forgetGraphs = useGraphs((store) => store.forget);
   const active = useEditors((store) => store.active);
@@ -91,6 +93,7 @@ export function LibraryView() {
             >
               {t("library.duplicate")}
             </ContextMenuItem>
+            <ContextMenuItem onSelect={() => void exportBlueprint(blueprint)}>{t("share.export")}</ContextMenuItem>
             {!blueprint.given && (
               <ContextMenuItem
                 onSelect={() =>

@@ -16,6 +16,7 @@ vi.mock("@/shell/parts/editor-store.ts", () => ({
 const { useLibrary } = await import("./library-store.ts");
 const { LibraryView } = await import("./library-view.tsx");
 const { useGraphs } = await import("@/blueprint/graph-store.ts");
+const { useShare } = await import("@/share/share-store.ts");
 
 function blueprint(id: string, given: boolean, more: Partial<BlueprintSummary> = {}): BlueprintSummary {
   const base = { id, name: id, description: `${id}'s description`, given, version: 1, basedOn: null, problems: 0 };
@@ -93,6 +94,15 @@ describe("the Library view", () => {
         params: { icon: "blueprint", id: "automatic-harvest" },
       },
     ]);
+  });
+
+  it("offers Export in a row's right-click menu", async () => {
+    const exportBlueprint = vi.fn().mockResolvedValue(undefined);
+    useShare.setState({ exportBlueprint });
+    render(<LibraryView />);
+    fireEvent.contextMenu(screen.getByRole("button", { name: /^Chasse/ }));
+    fireEvent.click(await screen.findByRole("menuitem", { name: "Exporter…" }));
+    expect(exportBlueprint.mock.calls.map(([blueprint]) => blueprint.id)).toEqual(["hunt"]);
   });
 
   it("folds the files kept, each saying why in its hover, and shows none when every file reads", () => {

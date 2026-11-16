@@ -443,6 +443,39 @@
       "zone": "Une zone choisie"
     }
   },
+  "share": {
+    "export": "Exporter…",
+    "import": "Importer…",
+    "exported": "{{name}} exporté dans {{file}}.",
+    "exportFailed": "{{name}} n'a pas été exporté : {{reason}}",
+    "importFailed": "Le fichier n'a pas été importé : {{reason}}",
+    "noDescription": "Sans description.",
+    "settings": "Réglages par personnage",
+    "otherVariables": "Autres variables",
+    "holds": "Contient : {{what}}",
+    "graphs_one": "{{count}} graphe",
+    "graphs_other": "{{count}} graphes",
+    "nodes_one": "{{count}} nœud",
+    "nodes_other": "{{count}} nœuds",
+    "zones_one": "{{count}} zone",
+    "zones_other": "{{count}} zones",
+    "routes_one": "{{count}} route",
+    "routes_other": "{{count}} routes",
+    "cancel": "Annuler",
+    "confirm": "Importer",
+    "failure": {
+      "noFolder": "le système ne donne pas de dossier pour vos fichiers.",
+      "noSuchBlueprint": "il n'est plus là.",
+      "notD3b": "ce n'est pas un fichier .d3b.",
+      "unreadable": "il n'a pas pu être lu ({{reason}}).",
+      "notText": "ce n'est pas du texte.",
+      "newer": "écrit par un D3B plus récent (format {{found}}) : mettez D3B à jour.",
+      "newerSchema": "son blueprint est écrit par un D3B plus récent (schéma {{found}}) : mettez D3B à jour.",
+      "notOfItsShape": "il est mal formé ({{detail}}).",
+      "holdsZonesOrRoutes": "il contient des zones ou des routes, que cette version n'importe pas encore : mettez D3B à jour.",
+      "notSaved": "{{reason}}"
+    }
+  },
   "blueprint": {
     "set": "Écrire {{name}}",
     "unknownKind": "Nœud inconnu de cette version : {{kind}}",
