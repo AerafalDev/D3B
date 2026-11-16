@@ -166,4 +166,57 @@ mod tests {
         assert!(matches!(gone, Err(StorageError::NoSuchBlueprint { .. })), "{gone:?}");
         assert!(store.blueprints().read.is_empty(), "nothing written");
     }
+
+    #[test]
+    fn a_change_that_changes_nothing_writes_nothing() {
+        let (folder, store) = mine("history-unwritten");
+        let path = folder.path().join("blueprints/my-harvest.json");
+        // The fixture as the player's hand wrote it, which a save would write in D3B's own layout.
+        let by_hand = bot::HARVEST.replacen("automatic-harvest", "my-harvest", 1);
+        std::fs::write(&path, &by_hand).unwrap_or_else(|error| panic!("{error}"));
+        let same = store.change_blueprint("my-harvest", |_| Ok::<_, StorageError>(()));
+        assert!(same.is_ok(), "{same:?}");
+        assert_eq!(std::fs::read_to_string(&path).ok(), Some(by_hand));
+    }
+
+    #[test]
+    fn undo_over_a_file_changed_by_hand_keeps_the_hand_for_redo() {
+        let (folder, store) = mine("history-hand");
+        rename(&store, "A");
+        let mut by_hand = store.blueprints().read.remove(0);
+        by_hand.name = "Hand".into();
+        let path = folder.path().join("blueprints/my-harvest.json");
+        std::fs::write(&path, bot::write(&by_hand)).unwrap_or_else(|error| panic!("{error}"));
+        assert_eq!(name(store.undo_blueprint("my-harvest")), "Automatic harvest");
+        assert_eq!(name(store.redo_blueprint("my-harvest")), "Hand");
+    }
+
+    #[test]
+    fn an_undo_not_written_keeps_its_step() {
+        let (folder, store) = mine("history-unsaved");
+        rename(&store, "A");
+        let path = folder.path().join("blueprints/my-harvest.json");
+        let written = std::fs::read_to_string(&path).unwrap_or_else(|error| panic!("{error}"));
+        std::fs::write(&path, "not json").unwrap_or_else(|error| panic!("{error}"));
+        let kept = store.undo_blueprint("my-harvest");
+        assert!(matches!(kept, Err(StorageError::Kept { .. })), "{kept:?}");
+        assert_eq!(
+            std::fs::read_to_string(&path).ok().as_deref(),
+            Some("not json"),
+            "never written over"
+        );
+        std::fs::write(&path, written).unwrap_or_else(|error| panic!("{error}"));
+        // A step whose state cannot be written: its id is malformed, so no file is named by it.
+        let mut unwritable = store.blueprints().read.remove(0);
+        unwritable.id = crate::bot::Id("Not An Id".into());
+        store
+            .lock()
+            .entry(crate::bot::Id("my-harvest".into()))
+            .or_default()
+            .record(unwritable);
+        let refused = store.undo_blueprint("my-harvest");
+        assert!(matches!(refused, Err(StorageError::MalformedId { .. })), "{refused:?}");
+        assert_eq!(name(store.redo_blueprint("my-harvest")), "A", "nothing went to redo");
+        assert!(store.undo_blueprint("my-harvest").is_err(), "the step is still there");
+    }
 }

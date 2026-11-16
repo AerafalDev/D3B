@@ -178,7 +178,7 @@ impl Store {
     }
 
     /// Sends the file of my blueprint `id` to `discard` (the system's trash in the app), so that it can be brought
-    /// back, with its undo history gone; one of D3B's, or an id that names none of mine, is refused. The characters
+    /// back, with its undo history gone once it went; one of D3B's, or an id that names none of mine, is refused. The characters
     /// that run it keep naming it, so it comes back to them with its file (the owner, 2026-11-16).
     pub(crate) fn delete_blueprint(
         &self,
@@ -187,13 +187,12 @@ impl Store {
     ) -> Result<(), StorageError> {
         let id = Self::mine(id)?;
         let path = self.root.join(BLUEPRINTS).join(format!("{}.json", id.0));
-        {
-            // As Forget: the file is checked under the lock; the trash, which may take its time, is not waited on there.
-            let mut histories = self.lock();
-            self.read_mine(&id)?;
-            histories.remove(&id);
-        }
-        discard(&path).map_err(|source| StorageError::Write { path, source })
+        // Under the lock, unlike Forget: no edit may come between and write the file again, or give its history a step.
+        let mut histories = self.lock();
+        self.read_mine(&id)?;
+        discard(&path).map_err(|source| StorageError::Write { path, source })?;
+        histories.remove(&id);
+        Ok(())
     }
 
     /// `id` as one of mine may hold it: an id from the webview names a file only when well-formed, never a path
@@ -226,7 +225,7 @@ impl Store {
     /// name that no blueprint and no file of the folder holds, in any case; the copy's id. The id is chosen and the
     /// file written under one lock, so two copies at once never share a file.
     pub(crate) fn duplicate(&self, id: &str, texts: bot::Texts) -> Result<Id, StorageError> {
-        let _writing = self.lock();
+        let mut writing = self.lock();
         let given = bot::given().unwrap_or_default();
         let mine = self.blueprints();
         let folder = self.root.join(BLUEPRINTS);
@@ -253,6 +252,8 @@ impl Store {
         }
         let copy = bot::copy(source, is_given, bot::id_for(&texts.name, &taken), texts);
         self.save_while_locked(&copy)?;
+        // A blueprint deleted by hand may have left its id free, never its undo history to the copy.
+        writing.remove(&copy.id);
         Ok(copy.id)
     }
 
@@ -646,5 +647,33 @@ mod tests {
             };
             assert_eq!(why, refused, "{id}");
         }
+    }
+
+    #[test]
+    fn a_failed_trash_keeps_the_history_and_a_copy_never_takes_one_of_a_file_gone() {
+        let folder = Folder::new("store-delete-kept");
+        let store = Store::new(folder.path().to_path_buf());
+        store
+            .save_blueprint(&harvest())
+            .unwrap_or_else(|error| panic!("{error}"));
+        let renamed = store.change_blueprint("my-harvest", |blueprint| {
+            blueprint.name = "My harvest".into();
+            Ok::<_, StorageError>(())
+        });
+        assert!(renamed.is_ok());
+        let failed = store.delete_blueprint("my-harvest", |_| Err(io::Error::other("no trash here")));
+        assert!(matches!(failed, Err(StorageError::Write { .. })), "{failed:?}");
+        assert_eq!(
+            store.undo_blueprint("my-harvest").map(|it| it.name).ok().as_deref(),
+            Some("Automatic harvest"),
+            "the history stays with the file"
+        );
+        assert!(store.redo_blueprint("my-harvest").is_ok());
+        std::fs::remove_file(folder.path().join("blueprints/my-harvest.json"))
+            .unwrap_or_else(|error| panic!("{error}"));
+        let copy = store.duplicate("automatic-harvest", copy_texts("My harvest"));
+        assert_eq!(copy.ok().map(|id| id.0).as_deref(), Some("my-harvest"));
+        let undone = store.undo_blueprint("my-harvest").map(|it| it.name);
+        assert_eq!(undone.ok().as_deref(), Some("My harvest"), "nothing to undo");
     }
 }

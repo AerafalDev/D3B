@@ -96,7 +96,10 @@ pub(crate) fn edit(blueprint: &mut Blueprint, graph: &Id, edit: Edit) -> Result<
             {
                 return Err(Refusal::NoSuchNode);
             }
-            blueprint.layout.entry(graph.clone()).or_default().extend(nodes);
+            // None moved is no change, and leaves no empty layout behind.
+            if !nodes.is_empty() {
+                blueprint.layout.entry(graph.clone()).or_default().extend(nodes);
+            }
         }
         Edit::Delete { nodes, wires } => {
             if !nodes.iter().all(|node| shown.nodes.iter().any(|it| &it.id == node)) {
@@ -440,6 +443,12 @@ mod tests {
             &mut blueprint,
             vec![(moved(&[("n2", [0, 0]), ("n9", [0, 0])]), Refusal::NoSuchNode)],
         );
+        let mut bare = harvest();
+        bare.layout.clear();
+        let before = bare.clone();
+        done(&mut bare, moved(&[]));
+        done(&mut bare, deleted(&[], &[]));
+        assert_eq!(bare, before, "none moved or deleted changes nothing");
     }
 
     #[test]
