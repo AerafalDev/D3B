@@ -632,10 +632,32 @@
     "missing": "Sub-area {{id}} missing from the data",
     "search": "Search a zone",
     "mine": "My zones",
-    "mineLater": "Your painted zones will come here.",
     "onMap": "Choose on the map",
     "keys": "↑ ↓ Enter",
-    "subArea": "Sub-area {{id}}"
+    "subArea": "Sub-area {{id}}",
+    "mineOne": "Zone of mine",
+    "none": "No zone: \"+\" paints one.",
+    "create": "New zone",
+    "newName": "New zone",
+    "name": "Zone name",
+    "rename": "Rename",
+    "delete": "Delete",
+    "unread": "Your zones could not be read: {{reason}}",
+    "tools": {
+      "label": "Zone tools",
+      "select": "Select ({{key}})",
+      "brush": "Brush ({{key}})",
+      "eraser": "Eraser ({{key}})",
+      "subArea": "Whole sub-area ({{key}})"
+    },
+    "failed": {
+      "noSuchZone": "This zone is gone: nothing changed.",
+      "noFolder": "Nothing changed: the system names no folder for your files.",
+      "emptyName": "A zone needs a name.",
+      "notSaved": "Nothing changed: {{reason}}"
+    },
+    "mineMissing": "Zone {{id}} not found",
+    "noneField": "No zone: paint one with \"+\" in the World view."
   },
   "settings": {
     "title": "Blueprint and settings",
