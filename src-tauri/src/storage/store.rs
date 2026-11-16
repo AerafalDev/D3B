@@ -144,11 +144,45 @@ impl Store {
     /// does not read as this blueprint.
     #[cfg_attr(
         not(test),
-        expect(dead_code, reason = "the editor saves as the player edits, step 3's PR 13")
+        expect(
+            dead_code,
+            reason = "the editor saves through `change_blueprint`; the tests write fixtures with it"
+        )
     )]
     pub(crate) fn save_blueprint(&self, blueprint: &Blueprint) -> Result<(), StorageError> {
         let _writing = self.lock();
         self.save_while_locked(blueprint)
+    }
+
+    /// Changes my blueprint `id` by `change` and writes it whole, under the lock so that no other save comes between;
+    /// the blueprint written. An id that names none of mine is refused, one of D3B's too, and nothing is written when
+    /// `change` refuses.
+    pub(crate) fn change_blueprint<E: From<StorageError>>(
+        &self,
+        id: &str,
+        change: impl FnOnce(&mut Blueprint) -> Result<(), E>,
+    ) -> Result<Blueprint, E> {
+        let id = Id(id.to_owned());
+        // The id comes from the webview: only a well-formed one names a file, never a path elsewhere.
+        if !id.is_well_formed() {
+            return Err(StorageError::NoSuchBlueprint { id }.into());
+        }
+        if given_ids().contains(&id) {
+            return Err(StorageError::GivenId { id }.into());
+        }
+        let _writing = self.lock();
+        let path = self.root.join(BLUEPRINTS).join(format!("{}.json", id.0));
+        let mut blueprint = match read_blueprint(&path) {
+            Ok(blueprint) => blueprint,
+            Err(Why::Unreadable(error)) if error.kind() == io::ErrorKind::NotFound => {
+                return Err(StorageError::NoSuchBlueprint { id }.into());
+            }
+            Err(Why::Unreadable(source)) => return Err(StorageError::Unreadable { path, source }.into()),
+            Err(why) => return Err(StorageError::Kept { path, why }.into()),
+        };
+        change(&mut blueprint)?;
+        self.save_while_locked(&blueprint)?;
+        Ok(blueprint)
     }
 
     /// Duplicate: a copy of the blueprint `id`, D3B's or mine, saved among mine with `texts`, under an id made from its
@@ -486,5 +520,43 @@ mod tests {
                 .as_deref(),
             Some(FIXTURE)
         );
+    }
+
+    #[test]
+    fn a_blueprint_of_mine_is_changed_and_written_under_one_lock_and_a_refusal_writes_nothing() {
+        let folder = Folder::new("store-change");
+        let store = Store::new(folder.path().to_path_buf());
+        store
+            .save_blueprint(&harvest())
+            .unwrap_or_else(|error| panic!("{error}"));
+        let renamed = store.change_blueprint("my-harvest", |blueprint| {
+            blueprint.name = "Renamed".into();
+            Ok::<_, StorageError>(())
+        });
+        assert_eq!(renamed.map(|it| it.name).ok().as_deref(), Some("Renamed"));
+        assert_eq!(store.blueprints().read[0].name, "Renamed", "written");
+        let refused = store.change_blueprint("my-harvest", |blueprint| {
+            blueprint.name = "Lost".into();
+            Err(StorageError::NoSuchBlueprint {
+                id: blueprint.id.clone(),
+            })
+        });
+        assert!(refused.is_err());
+        assert_eq!(store.blueprints().read[0].name, "Renamed", "nothing written");
+        let newer = text().replacen("\"schema\": 1", "\"schema\": 2", 1);
+        let path = put(&folder, "my-harvest.json", &newer);
+        let kept = store.change_blueprint("my-harvest", |_| Ok::<_, StorageError>(()));
+        assert!(matches!(kept, Err(StorageError::Kept { .. })), "{kept:?}");
+        assert_eq!(std::fs::read_to_string(&path).ok(), Some(newer), "never written over");
+        for (id, given) in [("automatic-harvest", true), ("gone", false), ("../my-harvest", false)] {
+            let changed = store.change_blueprint(id, |_| Ok::<_, StorageError>(()));
+            assert!(
+                matches!(
+                    (&changed, given),
+                    (Err(StorageError::GivenId { .. }), true) | (Err(StorageError::NoSuchBlueprint { .. }), false)
+                ),
+                "{id}: {changed:?}"
+            );
+        }
     }
 }

@@ -5,6 +5,7 @@ mod atlas;
 mod blueprints;
 mod character;
 mod commands;
+mod edit;
 mod graph;
 mod inspector;
 mod map;
@@ -27,6 +28,7 @@ pub fn builder() -> Builder<tauri::Wry> {
             blueprints::blueprints,
             blueprints::duplicate_blueprint,
             graph::blueprint_graphs,
+            edit::edit_blueprint,
             played::played_characters,
             played::forget_character,
             played::settings::set_character_blueprint,
