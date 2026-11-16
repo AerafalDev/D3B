@@ -308,8 +308,10 @@ deletion is not confirmed, undo brings it back. Each graph gives the picker its 
   is dropped); the right or middle button, or Space held with the main one, moves the map; the hovered map is outlined
   alone. The whole sub-area tool
   outlines the hovered map's sub-area and a click adds it, or takes it away when the zone holds all its maps there;
-  Select chooses a sub-area as without a zone, which closes it, as another world does. A zone's Details come with
-  step 3's PR 20d. The **World tab** shows the world map
+  Select chooses a sub-area as without a zone, which closes it, as another world does. Details then holds the zone's
+  name, edited in place (Enter or leaving saves, a blank one or Escape puts it back), "Zone of mine · <world>", its
+  maps, the sub-areas it touches with how many of their maps are its, whose Zone it is, those sub-areas' resources
+  together by profession, and Delete, to the system's trash. The **World tab** shows the world map
   from the data's tiles, at the level the zoom needs, with the client's **hints** as on the C# version (the owner,
   2026-11-13): zaaps, dungeons, auction houses, workshops, banks, class places and transports, each with the client's
   picture, at the zooms that have room for them, one switch per kind, the name on hover. Its tools: select, brush,

@@ -659,7 +659,13 @@
       "notSaved": "Nothing changed: {{reason}}"
     },
     "mineMissing": "Zone {{id}} not found",
-    "noneField": "No zone: paint one with \"+\" in the World view."
+    "noneField": "No zone: paint one with \"+\" in the World view.",
+    "details": {
+      "of": "Zone of mine · {{world}}",
+      "subAreas": "Sub-areas",
+      "empty": "None: paint its maps.",
+      "share": "{{inZone}}/{{all}}"
+    }
   },
   "settings": {
     "title": "Blueprint and settings",

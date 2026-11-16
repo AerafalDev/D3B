@@ -53,8 +53,8 @@ describe("whose Zone a sub-area is", () => {
       character("Orrin", "astrub"),
       character("Lyra", "astrub", { zone: '{"sub_area":98}' }),
     ];
-    expect(zoneOf(97, played, BLUEPRINTS)).toEqual(["Kalyx", "Orrin"]);
-    expect(zoneOf(98, played, BLUEPRINTS)).toEqual(["Lyra"]);
+    expect(zoneOf({ sub_area: 97 }, played, BLUEPRINTS)).toEqual(["Kalyx", "Orrin"]);
+    expect(zoneOf({ sub_area: 98 }, played, BLUEPRINTS)).toEqual(["Lyra"]);
   });
 
   it("names none without a blueprint, with one gone, with a Zone not set per character or not a sub-area", () => {
@@ -65,6 +65,16 @@ describe("whose Zone a sub-area is", () => {
       character("Mine", "harvest", { zone: '{"zone":"wheat"}' }),
       character("Broken", "harvest", { zone: "{" }),
     ];
-    expect(zoneOf(97, played, BLUEPRINTS)).toEqual([]);
+    expect(zoneOf({ sub_area: 97 }, played, BLUEPRINTS)).toEqual([]);
+  });
+
+  it("names the characters whose Zone is a zone of mine, and none for another zone or a sub-area", () => {
+    const played = [
+      character("Kalyx", "harvest", { zone: '{"zone":"wheat"}' }),
+      character("Orrin", "harvest", { zone: '{"zone":"wood"}' }),
+      character("Lyra", "astrub"),
+    ];
+    expect(zoneOf({ zone: "wheat" }, played, BLUEPRINTS)).toEqual(["Kalyx"]);
+    expect(zoneOf({ zone: "97" }, played, BLUEPRINTS)).toEqual([]);
   });
 });

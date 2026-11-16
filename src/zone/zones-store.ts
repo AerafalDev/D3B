@@ -18,8 +18,8 @@ interface ZonesStore {
   refresh: () => Promise<void>;
   /** A new zone, "Nouvelle zone" in the player's language, on `world`; its id, or `null` when it was not made. */
   create: (world: number) => Promise<string | null>;
-  /** Names the zone `id` `name`; a blank name is left as it was. */
-  rename: (id: string, name: string) => Promise<void>;
+  /** Names the zone `id` `name`; a blank name is left as it was; whether it was named. */
+  rename: (id: string, name: string) => Promise<boolean>;
   /** Adds `maps` to the zone `id`, or takes them away, shown at once and saved; a failure reads the zones again. */
   paint: (id: string, maps: readonly (readonly [number, number])[], erase: boolean) => Promise<void>;
   /** Sends the zone `id` to the system's trash; whether it went. */
@@ -114,13 +114,15 @@ export const useZones = create<ZonesStore>((set, get) => {
 
     rename: async (id, name) => {
       if (name.trim() === "") {
-        return;
+        return false;
       }
       try {
         replace(await commands.renameZone(id, name));
+        return true;
       } catch (error) {
         toast.error(failure(error));
         await get().refresh();
+        return false;
       }
     },
 

@@ -659,7 +659,13 @@
       "notSaved": "Rien n'a changé : {{reason}}"
     },
     "mineMissing": "Zone {{id}} introuvable",
-    "noneField": "Aucune zone : peins-en une avec « + » dans la vue Monde."
+    "noneField": "Aucune zone : peins-en une avec « + » dans la vue Monde.",
+    "details": {
+      "of": "Zone à moi · {{world}}",
+      "subAreas": "Sous-zones",
+      "empty": "Aucune : peins ses cartes.",
+      "share": "{{inZone}}/{{all}}"
+    }
   },
   "settings": {
     "title": "Blueprint et réglages",

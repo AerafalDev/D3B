@@ -5,6 +5,7 @@ import { useTranslation } from "react-i18next";
 import { named } from "@/characters/names.ts";
 import { Button } from "@/components/ui/button.tsx";
 import { Kbd } from "@/components/ui/kbd.tsx";
+import { ZoneDetails } from "@/zone/zone-details.tsx";
 import { ZoneTools } from "@/zone/zone-tools.tsx";
 import { type MyZone, useZones } from "@/zone/zones-store.ts";
 import { drawable } from "./map-geometry.ts";
@@ -233,7 +234,7 @@ export function WorldTab() {
           </section>
         )}
       </div>
-      <WorldDetails atlas={atlas} subArea={picked} />
+      {open === undefined ? <WorldDetails atlas={atlas} subArea={picked} /> : <ZoneDetails atlas={atlas} zone={open} />}
     </div>
   );
 }
