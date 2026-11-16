@@ -8,6 +8,9 @@ import * as __TAURI_EVENT from "@tauri-apps/api/event";
 /** Commands */
 export const commands = {
 	appInfo: () => __TAURI_INVOKE<AppInfo_Serialize>("app_info"),
+	appSettings: () => __TAURI_INVOKE<Settings>("app_settings"),
+	/**  Saves the app's settings whole. */
+	setAppSettings: (settings: Settings) => __TAURI_INVOKE<null>("set_app_settings", { settings }),
 	/**  The Library's blueprints and the files kept. */
 	blueprints: () => __TAURI_INVOKE<BlueprintList_Serialize>("blueprints"),
 	/**  Duplicate: a copy of the blueprint `id` among mine, named and worded by `texts`; its id. */
@@ -1052,6 +1055,19 @@ export type SettingError = { kind: "noSuchCharacter" } | { kind: "noFolder" } | 
 /**  Not a value of the setting's type, or out of its bounds. */
 { kind: "refused" } | 
 /**  The system could not read or write its file: its own words. */
+{ kind: "notSaved"; reason: string };
+
+/**  The app's settings (`docs/shell.md`, "Settings"), each with its default. */
+export type Settings = {
+	/**  Shows the Protocol view and its panel; off by default. */
+	advancedTools: boolean,
+};
+
+/**  Why the settings were not saved; they still hold for the session. */
+export type SettingsError = 
+/**  The system names no folder for the player's files. */
+{ kind: "noFolder" } | 
+/**  The system could not write the file, or the file there does not read and is kept: its own words. */
 { kind: "notSaved"; reason: string };
 
 /**  Which parts may be out of date: the protocol dropped frames since they were last refreshed. */

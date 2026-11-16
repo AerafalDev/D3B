@@ -12,6 +12,7 @@ import {
   MenubarTrigger,
 } from "@/components/ui/menubar.tsx";
 import { isTauri } from "@/lib/tauri.ts";
+import { useAppSettings } from "@/settings/app-settings.ts";
 import { type Part, useLayout } from "../layout-store.ts";
 import { useShortcut } from "../use-shortcut.ts";
 
@@ -30,6 +31,10 @@ export function MenuBar() {
   const toggle = useLayout((store) => store.toggle);
   const openPalette = useLayout((store) => store.setPaletteOpen);
   const shortcut = useShortcut();
+  const advancedTools = useAppSettings((store) => store.advancedTools);
+  const setAdvancedTools = useAppSettings((store) => store.setAdvancedTools);
+  // The panel's one view is the Protocol view until step 4's History: without Advanced tools, it is not offered.
+  const parts = advancedTools ? PARTS : PARTS.filter((part) => part !== "panel");
 
   return (
     <Menubar className="h-auto gap-0 border-none bg-transparent p-0 shadow-none">
@@ -49,7 +54,7 @@ export function MenuBar() {
             <MenubarShortcut className={SHORTCUT}>{shortcut("palette")}</MenubarShortcut>
           </MenubarItem>
           <MenubarSeparator className="mx-0 my-1 bg-[#454545]" />
-          {PARTS.map((part) => (
+          {parts.map((part) => (
             <MenubarCheckboxItem
               key={part}
               className={ITEM}
@@ -60,6 +65,14 @@ export function MenuBar() {
               <MenubarShortcut className={SHORTCUT}>{shortcut(part)}</MenubarShortcut>
             </MenubarCheckboxItem>
           ))}
+          <MenubarSeparator className="mx-0 my-1 bg-[#454545]" />
+          <MenubarCheckboxItem
+            className={ITEM}
+            checked={advancedTools}
+            onCheckedChange={() => setAdvancedTools(!advancedTools)}
+          >
+            {t("shell.menu.advancedTools")}
+          </MenubarCheckboxItem>
         </MenubarContent>
       </MenubarMenu>
     </Menubar>

@@ -25,6 +25,8 @@ pub fn builder() -> Builder<tauri::Wry> {
     Builder::<tauri::Wry>::new()
         .commands(collect_commands![
             commands::app_info,
+            commands::app_settings,
+            commands::set_app_settings,
             blueprints::blueprints,
             blueprints::duplicate_blueprint,
             graph::blueprint_graphs,

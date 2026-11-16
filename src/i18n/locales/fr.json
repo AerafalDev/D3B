@@ -20,7 +20,8 @@
       "palette": "Afficher toutes les commandes",
       "primarySideBar": "Afficher ou masquer la barre latérale principale",
       "panel": "Afficher ou masquer le panneau",
-      "secondarySideBar": "Afficher ou masquer la barre latérale secondaire"
+      "secondarySideBar": "Afficher ou masquer la barre latérale secondaire",
+      "advancedTools": "Afficher ou masquer les outils avancés"
     },
     "keys": {
       "ctrl": "Ctrl",
@@ -31,7 +32,8 @@
       "file": "Fichier",
       "exit": "Quitter",
       "view": "Affichage",
-      "commandPalette": "Palette de commandes…"
+      "commandPalette": "Palette de commandes…",
+      "advancedTools": "Outils avancés"
     },
     "palette": {
       "placeholder": "Tapez le nom d'une commande",
@@ -655,5 +657,9 @@
       "refused": "Rien n'a changé pour {{name}} : cette valeur n'est pas permise.",
       "notSaved": "Rien n'a changé pour {{name}} : {{reason}}"
     }
+  },
+  "appSettings": {
+    "notSaved": "Le réglage tient jusqu'à la fermeture de D3B : {{reason}}",
+    "noFolder": "ce système ne nomme aucun dossier pour D3B"
   }
 }

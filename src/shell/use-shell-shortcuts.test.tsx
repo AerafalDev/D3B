@@ -1,6 +1,7 @@
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
+import { useAppSettings } from "@/settings/app-settings.ts";
 import { useLayout } from "./layout-store.ts";
 import { useShellShortcuts } from "./use-shell-shortcuts.ts";
 
@@ -12,7 +13,10 @@ function Shortcuts() {
 const start = { primarySideBar: true, panel: true, secondarySideBar: false };
 
 describe("the shell's shortcuts", () => {
-  beforeEach(() => useLayout.setState({ visible: { ...start }, paletteOpen: false }));
+  beforeEach(() => {
+    useLayout.setState({ visible: { ...start }, paletteOpen: false });
+    useAppSettings.setState({ advancedTools: true });
+  });
   afterEach(cleanup);
 
   it("toggle each part with VS Code's keys", () => {
@@ -45,6 +49,14 @@ describe("the shell's shortcuts", () => {
     render(<Shortcuts />);
     const delivered = fireEvent.keyDown(document, { key: "b", code: "KeyB" });
     expect(delivered).toBe(true);
+    expect(useLayout.getState().visible).toEqual(start);
+  });
+
+  it("leave the panel alone without Advanced tools, still taking Ctrl+J from the webview", () => {
+    useAppSettings.setState({ advancedTools: false });
+    render(<Shortcuts />);
+    const delivered = fireEvent.keyDown(document, { key: "j", code: "KeyJ", ctrlKey: true });
+    expect(delivered).toBe(false);
     expect(useLayout.getState().visible).toEqual(start);
   });
 });

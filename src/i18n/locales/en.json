@@ -20,7 +20,8 @@
       "palette": "Show all commands",
       "primarySideBar": "Toggle the primary side bar",
       "panel": "Toggle the panel",
-      "secondarySideBar": "Toggle the secondary side bar"
+      "secondarySideBar": "Toggle the secondary side bar",
+      "advancedTools": "Toggle advanced tools"
     },
     "keys": {
       "ctrl": "Ctrl",
@@ -31,7 +32,8 @@
       "file": "File",
       "exit": "Exit",
       "view": "View",
-      "commandPalette": "Command palette…"
+      "commandPalette": "Command palette…",
+      "advancedTools": "Advanced tools"
     },
     "palette": {
       "placeholder": "Type the name of a command",
@@ -655,5 +657,9 @@
       "refused": "Nothing changed for {{name}}: this value is not allowed.",
       "notSaved": "Nothing changed for {{name}}: {{reason}}"
     }
+  },
+  "appSettings": {
+    "notSaved": "The setting holds until D3B closes: {{reason}}",
+    "noFolder": "this system names no folder for D3B"
   }
 }
