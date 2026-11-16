@@ -190,6 +190,29 @@ _Updated 2026-11-16._
        and hovering 0, 0 no longer says Dofus Games, which is greyed "Pas sur la carte" with the Taverne and Beta; a
        dungeon of the Twelve (Donjon des Bworks) is greyed too, and no longer frames Village d'Amakna; "Indices" and the
        worlds' menu are the same height.
+- **step 3, a character's blueprint and settings** ((10)'s Zone field and (11)), on Windows x64 from `bun run app` on
+  `next` or the next release, with format 4's data:
+    1. play a character: its tab says "Blueprint", "Aucun blueprint" in the list, its arrow greyed, no setting; then
+       its state and map as before;
+    2. choose Récolte automatique: Zone "À choisir", Banque à 90 %, Banque "La plus proche" and Garder "Rien", both
+       tagged "étape 5"; the arrow opens the blueprint's tab; the help of each setting shows on hover;
+    3. Banque à: type 5, leave the field: it turns red, then 90 again; type 80, Enter: a blue bar on its left and a
+       reset button "Revenir à la valeur du blueprint (90 %)"; click it: 90, the bar gone; type 90 again: no bar;
+    4. click Zone: the list unfolds under it, "Mes zones" first, then the sub-areas by area and level; type "foret",
+       arrows and Enter choose Forêt d'Astrub: the field says "Forêt d'Astrub · Astrub · niv. 20", marked; its target
+       opens the World tab with a banner for the character, a hovered map outlines its whole sub-area, one click
+       chooses it and the character's tab comes back with it; Escape on the map cancels and comes back too;
+    5. in the World tab, choose Forêt d'Astrub in the view: Details says "Zone de <the character>"; a second character
+       given the same Zone: "Zone de A et B"; another sub-area: no "Zone de";
+    6. choose Récolte d'un métier: the Zone and Banque à are kept, marked; Métier "À choisir" lists the harvesting
+       professions with their icons, by name; choose Bûcheron: marked; choose "Aucun blueprint", then Récolte
+       automatique again: back to its defaults;
+    7. a second character keeps its own values; restart D3B: both kept, in `Documents/D3B/characters/<server>-<id>.json`
+       (`"blueprint"` and `"settings"`, `"schema": 2`); a file written before keeps reading;
+    8. close a character's client: its offline tab shows the same block, and a setting changed there is kept when it
+       plays again;
+    9. duplicate Récolte automatique, give it to a character, then delete its file by hand and restart D3B: the list says "Blueprint
+       <id> introuvable" and no setting shows.
 - **Done in code, step 1**: `tools/extractor` reads the client's bundles, data tables, texts in five languages and flag
   enums, and writes the map positions, sub-areas, areas, zaaps, worlds and their tiles, maps, and the world graph,
   checked against one another, with the `client-<build>-format<n>.tar.gz` that `data:fetch` reads (ADR 0013); the app reads it all at start
@@ -298,7 +321,7 @@ _Updated 2026-11-16._
   unfolding under it and its target, one click on the map choosing and going back, Details on the World tab's right),
   in three PRs: each sub-area's resources by profession and its monsters counted through the atlas (done in code), then
   the World tab's Details and a click on its map (done in code), then the Zone field and the map's choosing mode, which (11) puts in
-  the character's tab and is measured with it (done in code: `ZoneField`, `src/zone/`, its checklist with (11)'s); (11) a character's blueprint and settings in its tab (the owner's choices of 2026-11-16: none at first; another blueprint keeping the values of the same id and type; editors for all but a bank and items, which wait for step 5; the offline tab editable too), in two PRs: the character's file, schema 2, and the IPC that chooses its blueprint and sets its settings (done in code), then the block in the character's tabs, live and offline, with the Zone field and "Zone de" in the World's Details;
+  the character's tab and is measured with it (done in code: `ZoneField`, `src/zone/`, its checklist with (11)'s); (11) a character's blueprint and settings in its tab (the owner's choices of 2026-11-16: none at first; another blueprint keeping the values of the same id and type; editors for all but a bank and items, which wait for step 5; the offline tab editable too), in two PRs: the character's file, schema 2, and the IPC that chooses its blueprint and sets its settings (done in code), then the block in the character's tabs, live and offline, with the Zone field and "Zone de" in the World's Details (done in code; its checklist under "Not measured");
   (12) links checked by type, and the picker; (13) delete, undo, autosave; (14) variables; (15) functions opened in
   place; (16) events: priority, re-arming, modes, the defaults; (17) comments and reroutes; (18) Align, copy and paste,
   search; (19) editing by keyboard; (20) my zones painted; (21) routes; (22) the `.d3b` file; (23) a given blueprint's

@@ -4,6 +4,9 @@ import { useTranslation } from "react-i18next";
 
 import type { Atlas_Serialize, AtlasResource_Serialize as AtlasResource } from "@/bindings.ts";
 import { named } from "@/characters/names.ts";
+import { usePlayed } from "@/characters/played/played-store.ts";
+import { useLibrary } from "@/library/library-store.ts";
+import { zoneOf } from "@/settings/zone-of.ts";
 import { findSubArea } from "./world-store.ts";
 
 interface WorldDetailsProps {
@@ -14,11 +17,18 @@ interface WorldDetailsProps {
 
 /**
  * The World tab's Details, a column on its right (the owner's mock-up 12, 2026-11-15): the sub-area chosen as a
- * ready-made zone, its area, level, maps and monsters, and its resources by profession with their icons and levels.
+ * ready-made zone, its area, level, maps and monsters, whose Zone it is, and its resources by profession with their
+ * icons and levels.
  */
 export function WorldDetails({ atlas, subArea }: WorldDetailsProps) {
   const { t, i18n } = useTranslation();
   const chosen = subArea === null ? undefined : findSubArea(atlas, subArea);
+  const played = usePlayed((store) => store.played);
+  const blueprints = useLibrary((store) => store.blueprints);
+  const whose = useMemo(
+    () => (subArea === null ? [] : zoneOf(subArea, played, blueprints)),
+    [subArea, played, blueprints],
+  );
   // The sub-area's resources in runs of one profession, as the atlas orders them.
   const byJob = useMemo(() => {
     const resources = new Map(atlas.resources.map((one) => [one.id, one]));
@@ -70,6 +80,12 @@ export function WorldDetails({ atlas, subArea }: WorldDetailsProps) {
                 ? t("world.details.noMonster")
                 : t("world.details.kinds", { count: chosen.monsters })}
             </dd>
+            {whose.length > 0 && (
+              <>
+                <dt className="text-text-muted">{t("world.details.zoneOf")}</dt>
+                <dd>{new Intl.ListFormat(i18n.language).format(whose)}</dd>
+              </>
+            )}
           </dl>
           <h4 className="text-text-muted text-[11px] font-semibold tracking-[.04em] uppercase">
             {t("world.details.resources")}

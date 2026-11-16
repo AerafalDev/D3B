@@ -1,7 +1,7 @@
 import type { IDockviewPanelProps } from "dockview-react";
 import { useEffect } from "react";
 import { useTranslation } from "react-i18next";
-
+import { CharacterSettings } from "@/settings/character-settings.tsx";
 import type { EditorParams } from "@/shell/parts/editor-store.ts";
 import { Avatar } from "../avatar.tsx";
 import { useCharacters } from "../character-store.ts";
@@ -16,8 +16,9 @@ interface PlayedParams extends EditorParams {
 
 /**
  * The tab of a character whose client is closed (the owner's mock-up 8, variant D): its header, "Offline", and when
- * and where it was last seen; no map and no gauges, so nothing out of date reads as true. Once the character plays
- * again, the tab becomes its live one (the owner, 2026-11-14).
+ * and where it was last seen; no map and no gauges, so nothing out of date reads as true; and its blueprint and
+ * settings, editable as in game (the owner, 2026-11-16). Once the character plays again, the tab becomes its live one
+ * (the owner, 2026-11-14).
  */
 export function PlayedTab(props: IDockviewPanelProps<PlayedParams>) {
   const { params } = props;
@@ -57,7 +58,7 @@ function Offline({ api, params }: IDockviewPanelProps<PlayedParams>) {
   const when = character.lastSeen === null ? null : seenOn(character.lastSeen, now, i18n.language);
 
   return (
-    <div className="flex max-w-[420px] flex-col gap-3 p-4">
+    <div className="flex max-w-[420px] flex-col gap-3 overflow-y-auto p-4 pl-6">
       <header className="flex items-center gap-3">
         <Avatar name={character.name} head={character.head} size="tab" />
         <div className="min-w-0">
@@ -68,6 +69,7 @@ function Offline({ api, params }: IDockviewPanelProps<PlayedParams>) {
           </p>
         </div>
       </header>
+      <CharacterSettings characterKey={character.key} />
       {when !== null && (
         <p className="text-text-muted text-xs">
           {where === null
