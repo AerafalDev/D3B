@@ -1,13 +1,15 @@
 import { Crosshair } from "lucide-react";
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import { named } from "@/characters/names.ts";
 import { Button } from "@/components/ui/button.tsx";
 import { Kbd } from "@/components/ui/kbd.tsx";
+import { ZoneTools } from "@/zone/zone-tools.tsx";
+import { type MyZone, useZones } from "@/zone/zones-store.ts";
 import { drawable } from "./map-geometry.ts";
 import { WorldDetails } from "./world-details.tsx";
-import { WorldMap } from "./world-map.tsx";
+import { type Painting, WorldMap } from "./world-map.tsx";
 import { findSubArea, useWorld } from "./world-store.ts";
 
 /**
@@ -16,7 +18,9 @@ import { findSubArea, useWorld } from "./world-store.ts";
  * map", one of another world said where it is; the hints of the kinds its editor action shows. A click on the map
  * chooses its sub-area as the view does, and Details on the right says what it is as a zone (the owner's mock-up 12,
  * 2026-11-15). While a Zone is chosen on the map, a banner says for whom, a map hovered outlines its sub-area, and a
- * click chooses it and brings back the tab the choice began in; Escape cancels. The zones' tools come with later PRs.
+ * click chooses it and brings back the tab the choice began in; Escape cancels. A zone of mine open shows in amber
+ * with its tools (the owner's choices of 2026-11-16): the brush and the eraser paint it map by map, the whole sub-area
+ * tool adds a sub-area, or takes it away when the zone holds it all, and Select chooses a sub-area as without a zone.
  */
 export function WorldTab() {
   const { t, i18n } = useTranslation();
@@ -28,6 +32,12 @@ export function WorldTab() {
   const choosing = useWorld((store) => store.choosing);
   const endChoosing = useWorld((store) => store.endChoosing);
   const hidden = useWorld((store) => store.hidden);
+  const zoneId = useWorld((store) => store.zone);
+  const tool = useWorld((store) => store.tool);
+  const panning = useWorld((store) => store.panning);
+  const zones = useZones((store) => store.zones);
+  const refreshZones = useZones((store) => store.refresh);
+  const paintZone = useZones((store) => store.paint);
   const atlas = read?.state === "read" ? read.atlas : null;
   const shown = atlas?.worlds.find((one) => one.id === worldId) ?? atlas?.worlds[0];
   // Memoised so the map refits only when the world changes.
@@ -35,7 +45,8 @@ export function WorldTab() {
 
   useEffect(() => {
     void load();
-  }, [load]);
+    void refreshZones();
+  }, [load, refreshZones]);
 
   // Escape cancels a choice on the map, wherever the focus is.
   useEffect(() => {
@@ -77,6 +88,38 @@ export function WorldTab() {
     return byMap;
   }, [atlas, world, i18n.language]);
 
+  // The zone of mine open, when it is on the world shown.
+  const open = zones.find((one) => one.id === zoneId && one.world === world?.id);
+  // The maps a zone of mine had when it was opened, which the view fits; painting it never moves the view.
+  const [frame, setFrame] = useState<MyZone["maps"] | null>(null);
+  const shownId = world?.id;
+  useEffect(() => {
+    const opened = useZones.getState().zones.find((one) => one.id === zoneId && one.world === shownId);
+    setFrame(opened?.maps ?? null);
+  }, [zoneId, shownId]);
+  const painting = useMemo<Painting | undefined>(
+    () =>
+      open === undefined || (tool !== "brush" && tool !== "eraser")
+        ? undefined
+        : {
+            erase: tool === "eraser",
+            paints: (x, y) => names.has(`${x},${y}`),
+            onStroke: (maps) => void paintZone(open.id, maps, tool === "eraser"),
+          },
+    [open, tool, names, paintZone],
+  );
+  // One array per map hovered, so the map draws its outline again only when the pointer reaches another.
+  const cells = useMemo(() => new Map<string, readonly (readonly [number, number])[]>(), []);
+  const cellAt = (x: number, y: number) => {
+    const key = `${x},${y}`;
+    if (!names.has(key)) {
+      return null;
+    }
+    const held = cells.get(key) ?? [[x, y] as const];
+    cells.set(key, held);
+    return held;
+  };
+
   const hints = useMemo(() => world?.hints.filter((hint) => !hidden.has(hint.kind)) ?? [], [world, hidden]);
 
   if (read === null || read.state === "loading") {
@@ -102,8 +145,20 @@ export function WorldTab() {
           });
 
   // A click on a map of a sub-area not chosen yet chooses it; while choosing a Zone, it takes it, chosen or not;
-  // elsewhere, nothing.
+  // with the whole sub-area tool, it is added to the zone open, or taken away when the zone holds it all; elsewhere,
+  // nothing.
   const pickAt = (x: number, y: number) => {
+    if (open !== undefined && tool === "subArea" && choosing === null) {
+      const maps = names.get(`${x},${y}`)?.maps ?? [];
+      const held = new Set(open.maps.map(([mapX, mapY]) => `${mapX},${mapY}`));
+      void paintZone(
+        open.id,
+        maps,
+        maps.every(([mapX, mapY]) => held.has(`${mapX},${mapY}`)),
+      );
+      // Nothing chosen: the view stays, and fits again for the next choice.
+      return false;
+    }
     const under = names.get(`${x},${y}`)?.id;
     if (under === undefined || (choosing === null && under === picked)) {
       return false;
@@ -125,8 +180,19 @@ export function WorldTab() {
           nameAt={(x, y) => names.get(`${x},${y}`)?.name ?? null}
           hints={hints}
           onPick={pickAt}
-          outlineAt={choosing === null ? undefined : (x, y) => names.get(`${x},${y}`)?.maps ?? null}
+          outlineAt={
+            choosing !== null || (open !== undefined && tool === "subArea")
+              ? (x, y) => names.get(`${x},${y}`)?.maps ?? null
+              : painting === undefined
+                ? undefined
+                : cellAt
+          }
+          fitTo={frame}
+          mine={open?.maps ?? null}
+          paint={choosing === null ? painting : undefined}
+          panning={panning}
         />
+        {open !== undefined && choosing === null && <ZoneTools />}
         {choosing !== null && (
           <div
             role="status"
@@ -139,6 +205,17 @@ export function WorldTab() {
               <Kbd>{t("world.choosing.escape")}</Kbd>
             </Button>
           </div>
+        )}
+        {open !== undefined && (
+          <section
+            aria-live="polite"
+            className="pointer-events-none absolute top-3 left-3 flex max-w-[min(280px,calc(50%-4.5rem))] flex-col gap-0.5 rounded-md border border-[#2b2b2b] bg-[#181818d9] px-2.5 py-1.5 text-xs"
+          >
+            <h2 className="truncate font-medium text-white">{open.name}</h2>
+            <p className="text-text-muted text-[11px]">
+              {[t("zone.mineOne"), t("world.maps", { count: open.maps.length })].join(" · ")}
+            </p>
+          </section>
         )}
         {subArea !== undefined && (
           <section

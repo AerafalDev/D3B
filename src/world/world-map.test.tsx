@@ -149,6 +149,135 @@ describe("the World's map", () => {
     expect(moved()).toBe("translate(-3 -3) scale(0.2)");
   });
 
+  it("paints a stroke over every map it crosses, shown in amber as it goes, those that do not paint left out", async () => {
+    const onStroke = vi.fn();
+    const paint = { erase: false, paints: (x: number) => x !== 8, onStroke };
+    render(<WorldMap world={world} chosen={null} nameAt={() => null} hints={[]} mine={[[0, 0]]} paint={paint} />);
+    await zoomSaid();
+    const map = screen.getByRole("application");
+    const amber = () => document.querySelector('path[fill="#e2a33a"]')?.getAttribute("d")?.split("M").length;
+    expect(amber()).toBe(2);
+    // The box's 10, 10 is map 7, 7, its 30, 10 map 11, 7: one move crosses 8, 9 and 10 between.
+    fireEvent.pointerDown(map, { clientX: 10, clientY: 10 });
+    fireEvent.pointerMove(map, { clientX: 30, clientY: 10 });
+    expect(amber()).toBe(6);
+    expect(onStroke).not.toHaveBeenCalled();
+    fireEvent.pointerUp(map, { clientX: 30, clientY: 10 });
+    expect(onStroke.mock.calls).toEqual([
+      [
+        [
+          [7, 7],
+          [9, 7],
+          [10, 7],
+          [11, 7],
+        ],
+      ],
+    ]);
+    expect(amber()).toBe(2);
+  });
+
+  it("fits the zone opened when nothing is chosen, and not again as it is painted", async () => {
+    const paint = { erase: false, paints: () => true, onStroke: () => {} };
+    const fitTo: [number, number][] = [[1, 1]];
+    const shown = (mine: [number, number][]) => (
+      <WorldMap world={world} chosen={null} nameAt={() => null} hints={[]} fitTo={fitTo} mine={mine} paint={paint} />
+    );
+    const { rerender } = render(shown([[1, 1]]));
+    await zoomSaid();
+    const moved = () => document.querySelector("g")?.getAttribute("transform");
+    // Map 1, 1 in an empty box, at the least zoom.
+    expect(moved()).toBe("translate(-3 -3) scale(0.2)");
+    fireEvent.keyDown(screen.getByRole("application"), { key: "+" });
+    await zoomSaid();
+    const zoomed = moved();
+    rerender(
+      shown([
+        [1, 1],
+        [5, 5],
+      ]),
+    );
+    await zoomSaid();
+    expect(moved()).toBe(zoomed);
+  });
+
+  it("paints a stroke with the tool it began with, and drops one the system cancels", async () => {
+    const [brush, eraser] = [vi.fn(), vi.fn()];
+    const shown = (erase: boolean) => (
+      <WorldMap
+        world={world}
+        chosen={null}
+        nameAt={() => null}
+        hints={[]}
+        mine={[]}
+        paint={{ erase, paints: () => true, onStroke: erase ? eraser : brush }}
+      />
+    );
+    const { rerender } = render(shown(false));
+    await zoomSaid();
+    const map = screen.getByRole("application");
+    fireEvent.pointerDown(map, { clientX: 10, clientY: 10 });
+    // E pressed during the drag: the stroke stays the brush's.
+    rerender(shown(true));
+    fireEvent.pointerMove(map, { clientX: 20, clientY: 10 });
+    fireEvent.pointerUp(map, { clientX: 20, clientY: 10 });
+    expect([brush.mock.calls.length, eraser.mock.calls.length]).toEqual([1, 0]);
+    fireEvent.pointerDown(map, { clientX: 10, clientY: 10 });
+    fireEvent.pointerCancel(map, { clientX: 10, clientY: 10 });
+    fireEvent.pointerUp(map, { clientX: 10, clientY: 10 });
+    expect(eraser).not.toHaveBeenCalled();
+    expect(document.querySelector('path[fill="#e2a33a"]')?.getAttribute("d")).toBe("");
+  });
+
+  it("moves the map, painting nothing, by the middle button and Space held elsewhere", async () => {
+    const onStroke = vi.fn();
+    const paint = { erase: false, paints: () => true, onStroke };
+    const shown = (panning: boolean) => (
+      <WorldMap world={world} chosen={null} nameAt={() => null} hints={[]} mine={[]} paint={paint} panning={panning} />
+    );
+    const { rerender } = render(shown(false));
+    await zoomSaid();
+    const map = screen.getByRole("application");
+    const moved = () => document.querySelector("g")?.getAttribute("transform");
+    fireEvent.pointerDown(map, { button: 1, clientX: 10, clientY: 10 });
+    fireEvent.pointerMove(map, { button: 1, clientX: 30, clientY: 10 });
+    fireEvent.pointerUp(map, { button: 1, clientX: 30, clientY: 10 });
+    await zoomSaid();
+    expect(moved()).toBe("translate(-5 -25) scale(0.5)");
+    rerender(shown(true));
+    fireEvent.pointerDown(map, { clientX: 10, clientY: 10 });
+    fireEvent.pointerMove(map, { clientX: 10, clientY: 30 });
+    fireEvent.pointerUp(map, { clientX: 10, clientY: 30 });
+    await zoomSaid();
+    expect(moved()).toBe("translate(-5 -5) scale(0.5)");
+    expect(onStroke).not.toHaveBeenCalled();
+  });
+
+  it("moves the map, painting nothing, by the right button and by Space with the main one", async () => {
+    const onStroke = vi.fn();
+    const paint = { erase: true, paints: () => true, onStroke };
+    render(<WorldMap world={world} chosen={null} nameAt={() => null} hints={[]} mine={[]} paint={paint} />);
+    await zoomSaid();
+    const map = screen.getByRole("application");
+    const moved = () => document.querySelector("g")?.getAttribute("transform");
+    fireEvent.pointerDown(map, { button: 2, clientX: 10, clientY: 10 });
+    fireEvent.pointerMove(map, { button: 2, clientX: 30, clientY: 10 });
+    fireEvent.pointerUp(map, { button: 2, clientX: 30, clientY: 10 });
+    await zoomSaid();
+    expect(moved()).toBe("translate(-5 -25) scale(0.5)");
+    fireEvent.keyDown(map, { key: " " });
+    fireEvent.pointerDown(map, { clientX: 10, clientY: 10 });
+    fireEvent.pointerMove(map, { clientX: 10, clientY: 30 });
+    fireEvent.pointerUp(map, { clientX: 10, clientY: 30 });
+    fireEvent.keyUp(map, { key: " " });
+    await zoomSaid();
+    expect(moved()).toBe("translate(-5 -5) scale(0.5)");
+    expect(onStroke).not.toHaveBeenCalled();
+    // Space released, the main button erases again.
+    fireEvent.pointerDown(map, { clientX: 10, clientY: 10 });
+    fireEvent.pointerUp(map, { clientX: 10, clientY: 10 });
+    expect(onStroke).toHaveBeenCalledTimes(1);
+  });
+
   it("outlines, dashed, the maps the hovered one belongs with, and nothing off them or once the pointer leaves", () => {
     const forest: [number, number][] = [
       [7, 7],
