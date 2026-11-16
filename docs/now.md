@@ -213,6 +213,19 @@ _Updated 2026-11-16._
        plays again;
     9. duplicate Récolte automatique, give it to a character, then delete its file by hand and restart D3B: the list says "Blueprint
        <id> introuvable" and no setting shows.
+- **step 3, a blueprint's graph edited** ((12)), on Windows x64 from `bun run app` on `next` or the next release:
+    1. open Récolte automatique: its nodes do not move, no wire can be drawn, a right-click or Space opens nothing;
+    2. duplicate it and open the copy: drag "Récolter"'s Échec onto the empty graph: the picker opens there, "après
+       « Échec »", "Souvent ici" Prévenir, Attendre, Terminer, then the rest by family, only what takes the flow;
+       "Aller dans …" tagged "étape 4"; type "prev": Prévenir alone; Enter: a Prévenir node where the wire was
+       dropped, wired from Échec;
+    3. drag the Zone pill onto "Pods": the pin refuses it and says "Cette entrée ne prend pas ce que la sortie porte."
+       beside the pointer; release: nothing changes; drag it onto "Zone": the old wire is replaced;
+    4. drag "Au lancement"'s output onto Prévenir: its wire to Récolter goes; a right-click, then a click on the graph
+       and Space with the pointer on it, open the picker with every node, "Lire" and "Mettre" the variables and the functions;
+    5. move a node, close the tab and reopen it, then restart D3B: the nodes and wires are where they were left,
+       in `Documents/D3B/blueprints/<id>.json`; the Library's count of problems follows the graph's (a Prévenir with
+       no text: one).
 - **Done in code, step 1**: `tools/extractor` reads the client's bundles, data tables, texts in five languages and flag
   enums, and writes the map positions, sub-areas, areas, zaaps, worlds and their tiles, maps, and the world graph,
   checked against one another, with the `client-<build>-format<n>.tar.gz` that `data:fetch` reads (ADR 0013); the app reads it all at start
@@ -326,7 +339,7 @@ _Updated 2026-11-16._
   replacing the one that fed its input or left its flow output, the picker offering the catalogue and the blueprint's
   variables and functions, "Often here" from a fixed table by context), in two PRs: `edit_blueprint`, a wire, a node
   added or moved checked and saved, and each graph's choices (done in code), then the graph editable, a wire checked
-  as it is dragged, and the picker; (13) delete, undo, autosave; (14) variables; (15) functions opened in
+  as it is dragged, and the picker (done in code; its checklist under "Not measured"); (13) delete, undo, autosave; (14) variables; (15) functions opened in
   place; (16) events: priority, re-arming, modes, the defaults; (17) comments and reroutes; (18) Align, copy and paste,
   search; (19) editing by keyboard; (20) my zones painted; (21) routes; (22) the `.d3b` file; (23) a given blueprint's
   update; (24) the "Advanced tools" setting; (25) the runtime: the flow, outcomes, variables, blocked, finished, on the

@@ -26,10 +26,10 @@ interface BlueprintParams extends EditorParams {
 }
 
 /**
- * A blueprint's tab, its editor read-only (`docs/bot.md`, "In the app"): on top its name, whose it is, its problems,
+ * A blueprint's tab, its editor (`docs/bot.md`, "In the app"): on top its name, whose it is, its problems,
  * its description and Duplicate; under them Unreal's "My Blueprint" on the left, the graph it shows, loaded on demand,
- * or its Summary, as the tab strip's toggle says, and Details on the right (the owner, 2026-11-14). Editing comes with
- * step 3's PR 13.
+ * or its Summary, as the tab strip's toggle says, and Details on the right (the owner, 2026-11-14). One of D3B's is
+ * read-only; mine is edited in its graph (step 3's PR 12).
  */
 export function BlueprintTab({ api, params }: IDockviewPanelProps<BlueprintParams>) {
   const { t } = useTranslation();
@@ -40,6 +40,8 @@ export function BlueprintTab({ api, params }: IDockviewPanelProps<BlueprintParam
   const [duplicating, setDuplicating] = useState(false);
   const read_ = useGraphs((store) => store.read[params.id]);
   const load = useGraphs((store) => store.load);
+  const edit = useGraphs((store) => store.edit);
+  const refresh = useLibrary((store) => store.refresh);
   const [shown, setShown] = useState<string | null>(null);
   const [selection, setSelection] = useState<Selection>(null);
   const view = useBlueprintView((store) => store.view[api.id] ?? "graph");
@@ -161,11 +163,24 @@ export function BlueprintTab({ api, params }: IDockviewPanelProps<BlueprintParam
             ) : (
               <Suspense fallback={<p className="text-text-muted p-6 text-xs">{t("blueprint.loading")}</p>}>
                 <BlueprintGraph
+                  // One graph per mount: a picker open on one never adds to another.
+                  key={shownGraph.id}
                   graph={shownGraph}
                   names={names}
                   faulty={faulty}
                   chosen={selection?.kind === "node" ? selection.id : null}
                   onChoose={(node) => setSelection(node === null ? null : { kind: "node", id: node })}
+                  // D3B's blueprints are locked; mine are edited in place, the Library's count of problems after.
+                  onEdit={
+                    blueprint.given
+                      ? undefined
+                      : (change) =>
+                          void edit(blueprint.id, shownGraph.id, change).then((saved) => {
+                            if (saved) {
+                              void refresh();
+                            }
+                          })
+                  }
                 />
               </Suspense>
             )}

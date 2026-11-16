@@ -197,3 +197,22 @@
 .blueprint-pill.is-faulty {
   border-color: #d29922;
 }
+/* The wire being dragged, coloured by its pin's type; refused over a pin that does not take it, with why. */
+.blueprint-dragged path {
+  stroke: var(--type, #cfcfcf);
+  stroke-width: 1.8;
+}
+.blueprint-dragged path.is-refused {
+  stroke: var(--error);
+  stroke-dasharray: 5 4;
+}
+.blueprint-refusal {
+  fill: var(--error);
+  font-size: 12px;
+  paint-order: stroke;
+  stroke: var(--editor);
+  stroke-width: 3px;
+}
+.blueprint-flow .react-flow__handle.connectingto:not(.valid) {
+  outline: 2px solid var(--error);
+}
