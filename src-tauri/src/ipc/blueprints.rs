@@ -1,14 +1,18 @@
 //! The blueprints, as the Library lists them (`docs/bot.md`, "In the app"): D3B's, then mine from `Documents/D3B`, and
-//! the files there that do not read; and Duplicate, which saves a copy among mine.
+//! the files there that do not read; Duplicate, which saves a copy among mine; and the `.d3b` file (ADR 0018), a
+//! blueprint exported through the system's save dialog, then previewed and imported among mine on another D3B.
 
 use std::collections::BTreeMap;
+use std::path::{Path, PathBuf};
 
 use serde::{Deserialize, Serialize};
 use specta::Type;
 use tauri::Manager;
+use tauri_plugin_dialog::DialogExt;
 
+use super::graph::ProblemView;
 use crate::bot::{self, Blueprint, Id, ReadError};
-use crate::storage::{StorageError, Store, Why};
+use crate::storage::{self, ShareError, StorageError, Store, Why};
 
 /// The player's folder: `Documents/D3B`, or the app's data folder on a system without a documents folder (ADR 0015).
 pub fn open_store(app: &tauri::AppHandle) -> PlayersFiles {
@@ -256,17 +260,7 @@ fn listed(given: &[Blueprint], store: Option<&Store>) -> BlueprintList {
 
 fn duplicate(store: Option<&Store>, id: &str, texts: CopyTexts) -> Result<String, DuplicateError> {
     let store = store.ok_or(DuplicateError::NoFolder)?;
-    let variables = texts
-        .variables
-        .into_iter()
-        .map(|(id, it)| (Id(id), (it.name, it.help)))
-        .collect();
-    let texts = bot::Texts {
-        name: texts.name,
-        description: texts.description,
-        variables,
-    };
-    match store.duplicate(id, texts) {
+    match store.duplicate(id, texts_of(texts)) {
         Ok(id) => Ok(id.0),
         Err(StorageError::NoSuchBlueprint { .. }) => Err(DuplicateError::NoSuchBlueprint),
         Err(error) => Err(DuplicateError::NotSaved {
@@ -342,6 +336,221 @@ pub async fn delete_blueprint(id: String, files: tauri::State<'_, PlayersFiles>)
             reason: error.to_string(),
         })
     })
+}
+
+/// A `.d3b` file read, as the import's preview shows it before anything is saved.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Type)]
+pub struct SharedPreview {
+    /// The file, which the import reads again.
+    pub path: String,
+    /// Its blueprint as the Library would list it, as one of mine.
+    pub blueprint: BlueprintSummary,
+    /// Its problems, which it keeps once imported.
+    pub problems: Vec<ProblemView>,
+    /// What it holds: its graphs, their nodes, and the zones and routes that come with it.
+    pub graphs: u32,
+    pub nodes: u32,
+    pub zones: u32,
+    pub routes: u32,
+}
+
+/// Why a blueprint was not exported, or a `.d3b` not previewed or imported.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Type)]
+#[serde(tag = "kind", rename_all = "camelCase")]
+pub enum ShareFailure {
+    /// The system names no folder for the player's files.
+    NoFolder,
+    /// No blueprint has this id.
+    NoSuchBlueprint,
+    /// The file's name does not end in `.d3b`.
+    NotD3b,
+    /// The system could not read it: its own words.
+    Unreadable {
+        reason: String,
+    },
+    NotText,
+    /// Written by a newer D3B, of this format.
+    Newer {
+        found: u32,
+    },
+    /// Its blueprint written by a newer D3B, of this schema.
+    NewerSchema {
+        found: u32,
+    },
+    /// Not of a `.d3b`'s shape, or its blueprint not of a blueprint's: what serde says, with its line and column.
+    NotOfItsShape {
+        detail: String,
+    },
+    /// It holds zones or routes, which this version does not import.
+    HoldsZonesOrRoutes,
+    /// The system could not write the file or the blueprint: its own words.
+    NotSaved {
+        reason: String,
+    },
+}
+
+impl From<ShareError> for ShareFailure {
+    fn from(error: ShareError) -> Self {
+        match error {
+            ShareError::NotD3b => Self::NotD3b,
+            ShareError::Unreadable(error) => Self::Unreadable {
+                reason: error.to_string(),
+            },
+            ShareError::NotText => Self::NotText,
+            ShareError::Newer { found } => Self::Newer {
+                found: u32::try_from(found).unwrap_or(u32::MAX),
+            },
+            ShareError::Blueprint(ReadError::Newer { found }) => Self::NewerSchema {
+                found: u32::try_from(found).unwrap_or(u32::MAX),
+            },
+            ShareError::NotOfItsShape(error) | ShareError::Blueprint(ReadError::NotABlueprint(error)) => {
+                Self::NotOfItsShape {
+                    detail: error.to_string(),
+                }
+            }
+            ShareError::HoldsZonesOrRoutes => Self::HoldsZonesOrRoutes,
+        }
+    }
+}
+
+impl From<StorageError> for ShareFailure {
+    fn from(error: StorageError) -> Self {
+        match error {
+            StorageError::NoSuchBlueprint { .. } => Self::NoSuchBlueprint,
+            error => Self::NotSaved {
+                reason: error.to_string(),
+            },
+        }
+    }
+}
+
+fn texts_of(texts: CopyTexts) -> bot::Texts {
+    let variables = texts
+        .variables
+        .into_iter()
+        .map(|(id, it)| (Id(id), (it.name, it.help)))
+        .collect();
+    bot::Texts {
+        name: texts.name,
+        description: texts.description,
+        variables,
+    }
+}
+
+/// The `.d3b` sharing the blueprint `id`: the name its file is offered under, and its text.
+fn exported(store: Option<&Store>, id: &str, texts: Option<CopyTexts>) -> Result<(String, String), ShareFailure> {
+    let store = store.ok_or(ShareFailure::NoFolder)?;
+    let blueprint = store.shared(id, texts.map(texts_of))?;
+    Ok((
+        storage::shared_file_name(&blueprint.name),
+        storage::write_shared(&blueprint),
+    ))
+}
+
+fn count(n: usize) -> u32 {
+    u32::try_from(n).unwrap_or(u32::MAX)
+}
+
+fn preview(path: &Path) -> Result<SharedPreview, ShareFailure> {
+    let blueprint = storage::read_shared(path)?;
+    Ok(SharedPreview {
+        path: path.display().to_string(),
+        blueprint: summary(&blueprint, false),
+        problems: bot::problems(&blueprint).iter().map(ProblemView::from).collect(),
+        graphs: count(blueprint.graphs.len()),
+        nodes: count(blueprint.graphs.iter().map(|graph| graph.nodes.len()).sum()),
+        zones: 0,
+        routes: 0,
+    })
+}
+
+fn import(store: Option<&Store>, path: &Path) -> Result<String, ShareFailure> {
+    let store = store.ok_or(ShareFailure::NoFolder)?;
+    let blueprint = storage::read_shared(path)?;
+    Ok(store.import(blueprint)?.0)
+}
+
+/// Runs `job` off the async runtime: the dialogs and the files block.
+async fn blocking<T: Send + 'static>(
+    job: impl FnOnce() -> Result<T, ShareFailure> + Send + 'static,
+) -> Result<T, ShareFailure> {
+    tauri::async_runtime::spawn_blocking(job).await.unwrap_or_else(|error| {
+        Err(ShareFailure::NotSaved {
+            reason: error.to_string(),
+        })
+    })
+}
+
+/// Export: the blueprint `id`, D3B's (worded by `texts`, the player's words for its translations) or mine, written
+/// where the player chooses in the system's save dialog; the file's path, or none when the dialog was cancelled.
+#[tauri::command]
+#[specta::specta]
+pub async fn export_blueprint(
+    window: tauri::Window,
+    id: String,
+    texts: Option<CopyTexts>,
+    files: tauri::State<'_, PlayersFiles>,
+) -> Result<Option<String>, ShareFailure> {
+    let store = files.0.clone();
+    blocking(move || {
+        let (name, text) = exported(store.as_ref(), &id, texts)?;
+        let chosen = window
+            .dialog()
+            .file()
+            .set_parent(&window)
+            .set_file_name(name)
+            .add_filter("D3B", &[storage::SHARE_EXTENSION])
+            .blocking_save_file();
+        let Some(mut path) = chosen.and_then(|chosen| chosen.into_path().ok()) else {
+            return Ok(None);
+        };
+        // A name the player typed without its extension (GTK's dialog keeps it so) still imports as a `.d3b`.
+        if !path
+            .extension()
+            .is_some_and(|extension| extension.eq_ignore_ascii_case(storage::SHARE_EXTENSION))
+        {
+            path.as_mut_os_string().push(format!(".{}", storage::SHARE_EXTENSION));
+        }
+        storage::write_whole(&path, text.as_bytes()).map_err(|error| ShareFailure::NotSaved {
+            reason: error.to_string(),
+        })?;
+        Ok(Some(path.display().to_string()))
+    })
+    .await
+}
+
+/// Import, first step: a `.d3b` chosen in the system's open dialog, previewed; none when the dialog was cancelled.
+#[tauri::command]
+#[specta::specta]
+pub async fn pick_shared(window: tauri::Window) -> Result<Option<SharedPreview>, ShareFailure> {
+    blocking(move || {
+        let chosen = window
+            .dialog()
+            .file()
+            .set_parent(&window)
+            .add_filter("D3B", &[storage::SHARE_EXTENSION])
+            .blocking_pick_file();
+        chosen
+            .and_then(|chosen| chosen.into_path().ok())
+            .map(|path| preview(&path))
+            .transpose()
+    })
+    .await
+}
+
+/// The preview of the `.d3b` at `path`, dropped on the window.
+#[tauri::command]
+#[specta::specta]
+pub async fn preview_shared(path: String) -> Result<SharedPreview, ShareFailure> {
+    blocking(move || preview(&PathBuf::from(path))).await
+}
+
+/// Import: the blueprint of the `.d3b` at `path`, read again, saved among mine under a free id; that id.
+#[tauri::command]
+#[specta::specta]
+pub async fn import_shared(path: String, files: tauri::State<'_, PlayersFiles>) -> Result<String, ShareFailure> {
+    let store = files.0.clone();
+    blocking(move || import(store.as_ref(), &PathBuf::from(path))).await
 }
 
 #[cfg(test)]
@@ -517,5 +726,94 @@ mod tests {
             |_| Err(std::io::Error::other("the trash is full")),
         );
         assert!(matches!(failed, Err(DeleteError::NotDeleted { reason }) if reason.contains("the trash is full")));
+    }
+
+    #[test]
+    fn a_blueprint_exported_is_previewed_then_imported_the_same_among_mine() {
+        let folder = Folder::new("ipc-share");
+        let store = Store::new(folder.path().join("D3B"));
+        let mut words = texts("Récolte automatique");
+        words.description = "Récolte une zone.".into();
+        let exported_ = exported(Some(&store), "automatic-harvest", Some(words));
+        let (name, text) = exported_.unwrap_or_else(|error| panic!("{error:?}"));
+        assert_eq!(name, "Récolte automatique.d3b");
+        let path = folder.path().join(&name);
+        std::fs::write(&path, &text).unwrap_or_else(|error| panic!("{error}"));
+        let shown = preview(&path).unwrap_or_else(|error| panic!("{error:?}"));
+        let blueprint = &shown.blueprint;
+        assert_eq!(
+            (
+                blueprint.id.as_str(),
+                blueprint.name.as_str(),
+                blueprint.given,
+                blueprint.problems
+            ),
+            ("recolte-automatique", "Récolte automatique", false, 0)
+        );
+        let based = blueprint
+            .based_on
+            .as_ref()
+            .map(|based| (based.id.as_str(), based.version));
+        assert_eq!(based, Some(("automatic-harvest", 1)));
+        assert_eq!(blueprint.variables[0].name, "Zone", "the player's words");
+        let given = &bot::given().unwrap_or_default()[0];
+        let nodes: usize = given.graphs.iter().map(|graph| graph.nodes.len()).sum();
+        assert_eq!((shown.graphs, shown.nodes), (count(given.graphs.len()), count(nodes)));
+        assert!(shown.nodes > shown.graphs, "nodes, not graphs");
+        assert_eq!((shown.problems.len(), shown.zones, shown.routes), (0, 0, 0));
+        assert_eq!(import(Some(&store), &path), Ok("recolte-automatique".into()));
+        assert_eq!(
+            import(Some(&store), &path),
+            Ok("recolte-automatique-2".into()),
+            "never over a file"
+        );
+        let list = list(Some(&store)).unwrap_or_else(|error| panic!("{error}"));
+        let mine: Vec<_> = list.blueprints.iter().filter(|it| !it.given).collect();
+        assert_eq!(mine.len(), 2);
+        assert_eq!(
+            (mine[0].name.as_str(), &mine[0].variables, &mine[0].based_on),
+            (blueprint.name.as_str(), &blueprint.variables, &blueprint.based_on),
+            "the same blueprint"
+        );
+        let again = exported(Some(&store), "recolte-automatique", None);
+        assert_eq!(again.map(|(_, text)| text), Ok(text), "mine exported as it is");
+    }
+
+    #[test]
+    fn a_file_that_does_not_read_is_refused_with_why_and_nothing_saved() {
+        let folder = Folder::new("ipc-share-refused");
+        let store = Store::new(folder.path().join("D3B"));
+        let put = |name: &str, text: &str| {
+            let path = folder.path().join(name);
+            std::fs::write(&path, text).unwrap_or_else(|error| panic!("{error}"));
+            path
+        };
+        let (_, text) = exported(Some(&store), "hunt", None).unwrap_or_else(|error| panic!("{error:?}"));
+        let newer = put("newer.d3b", &text.replacen("\"d3b\": 1", "\"d3b\": 3", 1));
+        assert_eq!(preview(&newer), Err(ShareFailure::Newer { found: 3 }));
+        let schema = put("schema.d3b", &text.replacen("\"schema\": 1", "\"schema\": 2", 1));
+        assert_eq!(
+            import(Some(&store), &schema),
+            Err(ShareFailure::NewerSchema { found: 2 })
+        );
+        let broken = put("broken.d3b", "{\"d3b\": 1,");
+        assert!(
+            matches!(preview(&broken), Err(ShareFailure::NotOfItsShape { detail }) if detail.contains("line 1")),
+            "with its line"
+        );
+        let json = put("hunt.json", &text);
+        assert_eq!(import(Some(&store), &json), Err(ShareFailure::NotD3b));
+        assert!(matches!(
+            preview(&folder.path().join("gone.d3b")),
+            Err(ShareFailure::Unreadable { .. })
+        ));
+        let zones = put("zones.d3b", &text.replacen("\"zones\": []", "\"zones\": [1]", 1));
+        assert_eq!(preview(&zones), Err(ShareFailure::HoldsZonesOrRoutes));
+        assert_eq!(import(None, &newer), Err(ShareFailure::NoFolder));
+        assert_eq!(
+            exported(Some(&store), "teleport", None),
+            Err(ShareFailure::NoSuchBlueprint)
+        );
+        assert!(!folder.path().join("D3B").exists(), "nothing saved");
     }
 }

@@ -24,6 +24,17 @@ export const commands = {
 	 *  that run it keep naming it (the owner, 2026-11-16).
 	 */
 	deleteBlueprint: (id: string) => __TAURI_INVOKE<null>("delete_blueprint", { id }),
+	/**
+	 *  Export: the blueprint `id`, D3B's (worded by `texts`, the player's words for its translations) or mine, written
+	 *  where the player chooses in the system's save dialog; the file's path, or none when the dialog was cancelled.
+	 */
+	exportBlueprint: (id: string, texts: CopyTexts | null) => __TAURI_INVOKE<string | null>("export_blueprint", { id, texts }),
+	/**  Import, first step: a `.d3b` chosen in the system's open dialog, previewed; none when the dialog was cancelled. */
+	pickShared: () => __TAURI_INVOKE<SharedPreview_Serialize | null>("pick_shared"),
+	/**  The preview of the `.d3b` at `path`, dropped on the window. */
+	previewShared: (path: string) => __TAURI_INVOKE<SharedPreview_Serialize>("preview_shared", { path }),
+	/**  Import: the blueprint of the `.d3b` at `path`, read again, saved among mine under a free id; that id. */
+	importShared: (path: string) => __TAURI_INVOKE<string>("import_shared", { path }),
 	/**  The graphs of the blueprint `id`, or why not. */
 	blueprintGraphs: (id: string) => __TAURI_INVOKE<BlueprintGraphs_Serialize>("blueprint_graphs", { id }),
 	/**  Makes `edit` in the graph `graph` of my blueprint `id`, saved at once; the blueprint's graphs and problems then. */
@@ -1165,6 +1176,60 @@ export type SettingsRead_Serialize = {
 	settings: Settings,
 	/**  Why `settings.json` does not read: the settings are then the defaults, and the file is never written over. */
 	kept: string | null,
+};
+
+/**  Why a blueprint was not exported, or a `.d3b` not previewed or imported. */
+export type ShareFailure = 
+/**  The system names no folder for the player's files. */
+{ kind: "noFolder" } | 
+/**  No blueprint has this id. */
+{ kind: "noSuchBlueprint" } | 
+/**  The file's name does not end in `.d3b`. */
+{ kind: "notD3b" } | 
+/**  The system could not read it: its own words. */
+{ kind: "unreadable"; reason: string } | { kind: "notText" } | 
+/**  Written by a newer D3B, of this format. */
+{ kind: "newer"; found: number } | 
+/**  Its blueprint written by a newer D3B, of this schema. */
+{ kind: "newerSchema"; found: number } | 
+/**  Not of a `.d3b`'s shape, or its blueprint not of a blueprint's: what serde says, with its line and column. */
+{ kind: "notOfItsShape"; detail: string } | 
+/**  It holds zones or routes, which this version does not import. */
+{ kind: "holdsZonesOrRoutes" } | 
+/**  The system could not write the file or the blueprint: its own words. */
+{ kind: "notSaved"; reason: string };
+
+/**  A `.d3b` file read, as the import's preview shows it before anything is saved. */
+export type SharedPreview = SharedPreview_Serialize | SharedPreview_Deserialize;
+
+/**  A `.d3b` file read, as the import's preview shows it before anything is saved. */
+export type SharedPreview_Deserialize = {
+	/**  The file, which the import reads again. */
+	path: string,
+	/**  Its blueprint as the Library would list it, as one of mine. */
+	blueprint: BlueprintSummary_Deserialize,
+	/**  Its problems, which it keeps once imported. */
+	problems: ProblemView_Deserialize[],
+	/**  What it holds: its graphs, their nodes, and the zones and routes that come with it. */
+	graphs: number,
+	nodes: number,
+	zones: number,
+	routes: number,
+};
+
+/**  A `.d3b` file read, as the import's preview shows it before anything is saved. */
+export type SharedPreview_Serialize = {
+	/**  The file, which the import reads again. */
+	path: string,
+	/**  Its blueprint as the Library would list it, as one of mine. */
+	blueprint: BlueprintSummary_Serialize,
+	/**  Its problems, which it keeps once imported. */
+	problems: ProblemView_Serialize[],
+	/**  What it holds: its graphs, their nodes, and the zones and routes that come with it. */
+	graphs: number,
+	nodes: number,
+	zones: number,
+	routes: number,
 };
 
 /**  Which parts may be out of date: the protocol dropped frames since they were last refreshed. */
