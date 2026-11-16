@@ -19,7 +19,8 @@ export type BlueprintSummary = BlueprintSummary_Serialize;
 interface LibraryStore {
   /** D3B's blueprints, then mine. */
   blueprints: BlueprintSummary[];
-  /** The player's files kept as they are, blueprints' and characters' (the owner, 2026-11-14: one "Ignored" group). */
+  /** The player's files kept as they are, blueprints', characters' and zones' (the owner, 2026-11-14: one "Ignored"
+   * group). */
   kept: KeptFile[];
   /** Reads the list again; a failure is said in a notification. */
   refresh: () => Promise<void>;
@@ -73,9 +74,13 @@ export const useLibrary = create<LibraryStore>((set, get) => ({
   refresh: async () => {
     const number = ++asked;
     try {
-      const [library, played] = await Promise.all([commands.blueprints(), commands.playedCharacters()]);
+      const [library, played, zones] = await Promise.all([
+        commands.blueprints(),
+        commands.playedCharacters(),
+        commands.zones(),
+      ]);
       if (number === asked) {
-        set({ blueprints: library.blueprints, kept: [...library.kept, ...played.kept] });
+        set({ blueprints: library.blueprints, kept: [...library.kept, ...played.kept, ...zones.kept] });
       }
     } catch (error) {
       toast.error(i18next.t("library.unread", { reason: String(error) }));

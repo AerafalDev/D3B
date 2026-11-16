@@ -238,7 +238,11 @@ The shell's parts (`docs/shell.md`); no information is shown twice:
   holes filled with what feeds them (a variable's name, a query's own sentence, a source pin's label, a value typed or
   a default), a get as a pill of its type's colour, a wire going back (a loop) out to the right, under its two nodes and into its input from the left (the owner, 2026-11-16), an action the bot does not do yet tagged "étape N", pins and wires
   coloured by type (the owner, 2026-11-14). From step 4, "Debug" a character lights the node at work and its wire; nothing is lit otherwise.
-- **World** view: my zones, my routes, then the game's sub-areas, searchable. The **World tab** shows the world map
+- **World** view: my zones, my routes, then the game's sub-areas, searchable. "My zones" (step 3's PR 20, the owner's
+  choices of 2026-11-16) lists mine by name with their maps, matched by the search too; "+" on its header makes
+  "Nouvelle zone" on the world the tab shows and opens it there with the brush; a row opens its zone on its world, F2
+  or a right-click renames it in its row (Enter or leaving saves, Escape leaves it), and the right-click deletes it to
+  the system's trash, closing it on the map; a zone's file kept is listed in the Library's "Ignored". The **World tab** shows the world map
   from the data's tiles, at the level the zoom needs, with the client's **hints** as on the C# version (the owner,
   2026-11-13): zaaps, dungeons, auction houses, workshops, banks, class places and transports, each with the client's
   picture, at the zooms that have room for them, one switch per kind, the name on hover. Its tools: select, brush,
@@ -266,8 +270,9 @@ The shell's parts (`docs/shell.md`); no information is shown twice:
   hints by kind, each with its name, coordinates, level and picture's file, the one the client lacks drawn as a dot.
   The game's sub-areas as zones (the owner's mock-up 12, 2026-11-15): a Zone's value is a sub-area's id or a zone of
   mine's (the blueprint's file, `bot::variable`). A Zone setting is a field saying the zone chosen, its area and level;
-  a click unfolds a list under it, searched as the World view, "My zones" first (empty until mine are painted), then
-  the sub-areas by area and level, the arrows and Enter choosing; its target opens the World tab in a choosing mode, a
+  a click unfolds a list under it, searched as the World view, "My zones" first by name, with their maps, then
+  the sub-areas by area and level, the arrows and Enter choosing (a zone of mine gives `{"zone": id}`, said by its
+  name, "Zone of mine" and its maps, or "Zone <id> not found" once gone); its target opens the World tab in a choosing mode, a
   banner saying for what, a map hovered outlining its whole sub-area, one click choosing it and going back to the tab
   it came from, Escape cancelling. A click on the map otherwise chooses its sub-area as the view does, the map staying
   where it is (a drag chooses nothing, nor a click off the maps), and **Details**,

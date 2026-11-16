@@ -15,6 +15,7 @@ vi.mock("@/bindings.ts", () => ({
     duplicateBlueprint: backEnd.duplicate,
     blueprints: backEnd.blueprints,
     playedCharacters: backEnd.played,
+    zones: async () => ({ zones: [], kept: [] }),
   },
   events: {},
 }));
