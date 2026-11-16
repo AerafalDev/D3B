@@ -1,7 +1,8 @@
 //! The editor's changes to a blueprint (`docs/bot.md`, "In the app"), the owner's choices of 2026-11-16: a wire checked
 //! by what its pins carry, which replaces the wire that fed its input or left its flow output, an input having one
-//! value and a flow one way on; a node the picker offers, under an id of its own, wired to the pin it came from; a node
-//! moved. Each is done whole or refused with nothing changed; `storage` saves it at once.
+//! value and a flow one way on; a node the picker offers, under an id of its own, wired to the pin it came from; nodes
+//! moved; nodes and wires deleted, a node's wires with it (step 3's PR 13). Each is done whole or refused with nothing
+//! changed; `storage` saves it at once and keeps what it replaced, for undo.
 
 mod choices;
 
@@ -24,8 +25,10 @@ pub(crate) enum Edit {
         position: [i32; 2],
         wired_to: Option<(End, Side)>,
     },
-    /// A node put elsewhere.
-    Move { node: Id, position: [i32; 2] },
+    /// Nodes put elsewhere, dragged together: one change, undone at once.
+    Move { nodes: Vec<(Id, [i32; 2])> },
+    /// Nodes, with every wire to or from them, and wires, chosen together.
+    Delete { nodes: Vec<Id>, wires: Vec<Wire> },
 }
 
 /// Why an edit is refused. The editor offers none of these; a refusal says the webview and the file disagree.
@@ -35,6 +38,8 @@ pub(crate) enum Refusal {
     NoSuchGraph,
     #[error("the graph has no such node")]
     NoSuchNode,
+    #[error("the graph has no such wire")]
+    NoSuchWire,
     #[error("the node has no such pin")]
     NoSuchPin,
     #[error("a wire goes from an output to an input")]
@@ -84,15 +89,34 @@ pub(crate) fn edit(blueprint: &mut Blueprint, graph: &Id, edit: Edit) -> Result<
             }
             blueprint.layout.entry(graph.clone()).or_default().insert(id, position);
         }
-        Edit::Move { node, position } => {
-            if !shown.nodes.iter().any(|it| it.id == node) {
+        Edit::Move { nodes } => {
+            if !nodes
+                .iter()
+                .all(|(node, _)| shown.nodes.iter().any(|it| &it.id == node))
+            {
                 return Err(Refusal::NoSuchNode);
             }
-            blueprint
-                .layout
-                .entry(graph.clone())
-                .or_default()
-                .insert(node, position);
+            blueprint.layout.entry(graph.clone()).or_default().extend(nodes);
+        }
+        Edit::Delete { nodes, wires } => {
+            if !nodes.iter().all(|node| shown.nodes.iter().any(|it| &it.id == node)) {
+                return Err(Refusal::NoSuchNode);
+            }
+            if !wires.iter().all(|wire| shown.wires.contains(wire)) {
+                return Err(Refusal::NoSuchWire);
+            }
+            let gone = |end: &End| nodes.contains(&end.0);
+            let shown = &mut blueprint.graphs[at];
+            shown.nodes.retain(|it| !nodes.contains(&it.id));
+            shown
+                .wires
+                .retain(|it| !wires.contains(it) && !gone(&it.from) && !gone(&it.to));
+            if let Some(places) = blueprint.layout.get_mut(graph) {
+                places.retain(|node, _| !nodes.contains(node));
+                if places.is_empty() {
+                    blueprint.layout.remove(graph);
+                }
+            }
         }
     }
     Ok(())
@@ -379,29 +403,86 @@ mod tests {
         refused(&mut harvest(), wrong);
     }
 
+    fn moved(nodes: &[(&str, [i32; 2])]) -> Edit {
+        Edit::Move {
+            nodes: nodes.iter().map(|(node, at)| (id(node), *at)).collect(),
+        }
+    }
+
+    /// A wire by its ends, `(node, pin)` each.
+    type Ends<'a> = ((&'a str, &'a str), (&'a str, &'a str));
+
+    fn deleted(nodes: &[&str], wires: &[Ends<'_>]) -> Edit {
+        Edit::Delete {
+            nodes: nodes.iter().map(|node| id(node)).collect(),
+            wires: wires
+                .iter()
+                .map(|(from, to)| Wire {
+                    from: end(from.0, from.1),
+                    to: end(to.0, to.1),
+                })
+                .collect(),
+        }
+    }
+
     #[test]
-    fn a_node_moved_changes_its_place_and_nothing_else() {
+    fn nodes_moved_together_change_their_places_and_nothing_else() {
         let mut blueprint = harvest();
         let graphs = blueprint.graphs.clone();
-        done(
-            &mut blueprint,
-            Edit::Move {
-                node: id("n2"),
-                position: [-40, 300],
-            },
+        done(&mut blueprint, moved(&[("n2", [-40, 300]), ("n3", [5, 6])]));
+        let layout = &blueprint.layout[&id("events")];
+        assert_eq!(
+            (layout.get(&id("n2")), layout.get(&id("n3"))),
+            (Some(&[-40, 300]), Some(&[5, 6]))
         );
-        assert_eq!(blueprint.layout[&id("events")].get(&id("n2")), Some(&[-40, 300]));
         assert_eq!(blueprint.graphs, graphs);
         refused(
             &mut blueprint,
-            vec![(
-                Edit::Move {
-                    node: id("n9"),
-                    position: [0, 0],
-                },
-                Refusal::NoSuchNode,
-            )],
+            vec![(moved(&[("n2", [0, 0]), ("n9", [0, 0])]), Refusal::NoSuchNode)],
         );
+    }
+
+    #[test]
+    fn a_node_deleted_takes_its_wires_and_its_place_with_it() {
+        let mut blueprint = harvest();
+        done(&mut blueprint, deleted(&["n3"], &[]));
+        let ids: Vec<&str> = blueprint.graphs[0]
+            .nodes
+            .iter()
+            .map(|node| node.id.0.as_str())
+            .collect();
+        assert_eq!(ids, ["n1", "n2", "n4", "n5"]);
+        assert_eq!(wires(&blueprint), [], "both wires of n3 go with it");
+        assert_eq!(blueprint.layout[&id("events")].get(&id("n3")), None);
+        done(&mut blueprint, deleted(&["n1"], &[]));
+        assert!(
+            blueprint.layout.is_empty(),
+            "a graph's layout left empty goes: {:?}",
+            blueprint.layout
+        );
+    }
+
+    #[test]
+    fn a_wire_deleted_goes_alone_and_with_nodes_in_one_change() {
+        let mut blueprint = harvest();
+        let nodes = blueprint.graphs[0].nodes.clone();
+        done(&mut blueprint, deleted(&[], &[(("n1", "then"), ("n3", "run"))]));
+        assert_eq!(wires(&blueprint), [("n2.value".to_owned(), "n3.zone".to_owned())]);
+        assert_eq!(blueprint.graphs[0].nodes, nodes);
+        done(&mut blueprint, deleted(&["n3"], &[(("n2", "value"), ("n3", "zone"))]));
+        assert_eq!((wires(&blueprint).len(), blueprint.graphs[0].nodes.len()), (0, 4));
+    }
+
+    #[test]
+    fn a_deletion_naming_a_node_or_a_wire_the_graph_lacks_is_refused_whole() {
+        let wrong = vec![
+            (deleted(&["n3", "n9"], &[]), Refusal::NoSuchNode),
+            (
+                deleted(&["n3"], &[(("n1", "then"), ("n4", "run"))]),
+                Refusal::NoSuchWire,
+            ),
+        ];
+        refused(&mut harvest(), wrong);
     }
 
     #[test]

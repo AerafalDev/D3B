@@ -4,6 +4,7 @@
 
 mod atomic;
 mod character;
+mod history;
 mod store;
 
 pub(crate) use character::{Played, SCHEMA as CHARACTER_SCHEMA, key_of};

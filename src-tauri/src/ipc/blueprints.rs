@@ -250,6 +250,35 @@ fn duplicate(store: Option<&Store>, id: &str, texts: CopyTexts) -> Result<String
     }
 }
 
+/// Why a blueprint was not deleted.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Type)]
+#[serde(tag = "kind", rename_all = "camelCase")]
+pub enum DeleteError {
+    /// None of mine has this id: its file is gone.
+    NoSuchBlueprint,
+    /// One of D3B's, which ship with the app.
+    Locked,
+    /// The system names no folder for the player's files.
+    NoFolder,
+    /// The system could not read the file or send it to the trash: its own words.
+    NotDeleted { reason: String },
+}
+
+fn delete(
+    store: Option<&Store>,
+    id: &str,
+    discard: impl FnOnce(&std::path::Path) -> std::io::Result<()>,
+) -> Result<(), DeleteError> {
+    match store.ok_or(DeleteError::NoFolder)?.delete_blueprint(id, discard) {
+        Ok(()) => Ok(()),
+        Err(StorageError::NoSuchBlueprint { .. }) => Err(DeleteError::NoSuchBlueprint),
+        Err(StorageError::GivenId { .. }) => Err(DeleteError::Locked),
+        Err(error) => Err(DeleteError::NotDeleted {
+            reason: error.to_string(),
+        }),
+    }
+}
+
 /// The Library's blueprints and the files kept.
 #[tauri::command]
 #[specta::specta]
@@ -271,6 +300,20 @@ pub async fn duplicate_blueprint(
     let saved = tauri::async_runtime::spawn_blocking(move || duplicate(store.as_ref(), &id, texts)).await;
     saved.unwrap_or_else(|error| {
         Err(DuplicateError::NotSaved {
+            reason: error.to_string(),
+        })
+    })
+}
+
+/// Delete: the file of my blueprint `id` goes to the system's trash, as Forget sends a character's; the characters
+/// that run it keep naming it (the owner, 2026-11-16).
+#[tauri::command]
+#[specta::specta]
+pub async fn delete_blueprint(id: String, files: tauri::State<'_, PlayersFiles>) -> Result<(), DeleteError> {
+    let store = files.0.clone();
+    let deleted = tauri::async_runtime::spawn_blocking(move || delete(store.as_ref(), &id, super::played::to_trash));
+    deleted.await.unwrap_or_else(|error| {
+        Err(DeleteError::NotDeleted {
             reason: error.to_string(),
         })
     })
@@ -392,5 +435,33 @@ mod tests {
             "{:?}",
             list.kept
         );
+    }
+
+    #[test]
+    fn delete_sends_mine_to_the_trash_and_refuses_d3bs_one_gone_and_a_missing_folder() {
+        let folder = Folder::new("ipc-delete");
+        let store = Store::new(folder.path().to_path_buf());
+        let copy = duplicate(Some(&store), "automatic-harvest", texts("Mine"));
+        let copy = copy.unwrap_or_else(|error| panic!("{error:?}"));
+        let mut trashed = Vec::new();
+        let deleted = delete(Some(&store), &copy, |path| {
+            trashed.push(path.to_path_buf());
+            std::fs::remove_file(path)
+        });
+        assert_eq!(deleted, Ok(()));
+        assert_eq!(trashed, [folder.path().join(format!("blueprints/{copy}.json"))]);
+        let never = |path: &std::path::Path| panic!("{} sent", path.display());
+        assert_eq!(delete(Some(&store), &copy, never), Err(DeleteError::NoSuchBlueprint));
+        assert_eq!(
+            delete(Some(&store), "automatic-harvest", never),
+            Err(DeleteError::Locked)
+        );
+        assert_eq!(delete(None, &copy, never), Err(DeleteError::NoFolder));
+        let failed = delete(
+            Some(&store),
+            &duplicate(Some(&store), "automatic-harvest", texts("Again")).unwrap_or_default(),
+            |_| Err(std::io::Error::other("the trash is full")),
+        );
+        assert!(matches!(failed, Err(DeleteError::NotDeleted { reason }) if reason.contains("the trash is full")));
     }
 }

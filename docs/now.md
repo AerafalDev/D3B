@@ -339,7 +339,12 @@ _Updated 2026-11-16._
   replacing the one that fed its input or left its flow output, the picker offering the catalogue and the blueprint's
   variables and functions, "Often here" from a fixed table by context), in two PRs: `edit_blueprint`, a wire, a node
   added or moved checked and saved, and each graph's choices (done in code), then the graph editable, a wire checked
-  as it is dragged, and the picker (done in code; its checklist under "Not measured"); (13) delete, undo, autosave; (14) variables; (15) functions opened in
+  as it is dragged, and the picker (done in code; its checklist under "Not measured"); (13) delete and undo
+  (autosave done by (12); the owner's choices of 2026-11-16: undo and redo kept in Rust, 100 changes for the session; a
+  deletion not confirmed; a blueprint of mine deleted to the system's trash without asking, the characters that run it
+  keeping its id), in two PRs: nodes and wires deleted, a move of many one change, undo, redo and `delete_blueprint`
+  through the IPC (done in code), then Delete, Backspace and a context menu in the graph, Ctrl+Z and Ctrl+Y, and
+  Delete in the Library; (14) variables; (15) functions opened in
   place; (16) events: priority, re-arming, modes, the defaults; (17) comments and reroutes; (18) Align, copy and paste,
   search; (19) editing by keyboard; (20) my zones painted; (21) routes; (22) the `.d3b` file; (23) a given blueprint's
   update; (24) the "Advanced tools" setting; (25) the runtime: the flow, outcomes, variables, blocked, finished, on the
