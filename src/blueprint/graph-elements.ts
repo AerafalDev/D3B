@@ -42,6 +42,7 @@ export function graphElements(
       sourceHandle: from[1],
       target: to[0],
       targetHandle: to[1],
+      type: "wire",
       className: `blueprint-type-${carries}`,
     };
   });

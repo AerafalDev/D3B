@@ -76,3 +76,34 @@ export function nodeIcon(family: string | null, kind: string | null): LucideIcon
   }
   return (kind !== null && KIND_ICON[kind]) || Play;
 }
+
+// How far a wire going back leaves its output and comes into its input, how far under the nodes it runs, and the
+// radius of its corners.
+const OUT = 24;
+const UNDER = 40;
+const CORNER = 10;
+
+/**
+ * A wire's path, from its output to its input; `bottom` is the lowest edge of the two nodes it joins. Forward, a
+ * curve; going back (a loop, its input left of its output), out to the right, under both nodes and into its input from
+ * the left, so the loop shows whole instead of a curve that leaves the screen (the owner, 2026-11-16).
+ */
+export function wirePath(from: { x: number; y: number }, to: { x: number; y: number }, bottom: number): string {
+  // Forward only with room for a curve; nearer, the loop reads better than a curve folded on itself.
+  if (to.x >= from.x + 2 * OUT) {
+    const pull = Math.max(40, (to.x - from.x) / 2);
+    return `M${from.x},${from.y} C${from.x + pull},${from.y} ${to.x - pull},${to.y} ${to.x},${to.y}`;
+  }
+  // An input just right of its output (under 2 * OUT) still comes in from the left of the way out, never back over it.
+  const out = from.x + OUT;
+  const back = Math.min(to.x - OUT, out - 2 * CORNER);
+  const low = Math.max(bottom, from.y, to.y) + UNDER;
+  return [
+    `M${from.x},${from.y}`,
+    `L${out - CORNER},${from.y} Q${out},${from.y} ${out},${from.y + CORNER}`,
+    `L${out},${low - CORNER} Q${out},${low} ${out - CORNER},${low}`,
+    `L${back + CORNER},${low} Q${back},${low} ${back},${low - CORNER}`,
+    `L${back},${to.y + CORNER} Q${back},${to.y} ${back + CORNER},${to.y}`,
+    `L${to.x},${to.y}`,
+  ].join(" ");
+}
