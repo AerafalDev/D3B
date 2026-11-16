@@ -6,14 +6,16 @@ import { initI18n } from "@/i18n/i18n.ts";
 import type { BlueprintSummary } from "./library-store.ts";
 
 // The editor area, faked: the editors opened.
-const opened = vi.hoisted(() => ({ editors: [] as unknown[] }));
+const opened = vi.hoisted(() => ({ editors: [] as unknown[], closed: [] as string[] }));
 vi.mock("@/shell/parts/editor-store.ts", () => ({
   openEditor: (editor: unknown) => opened.editors.push(editor),
+  closeEditor: (id: string) => opened.closed.push(id),
   useEditors: (select: (store: { active: string | null }) => unknown) => select({ active: "blueprint:hunt" }),
 }));
 
 const { useLibrary } = await import("./library-store.ts");
 const { LibraryView } = await import("./library-view.tsx");
+const { useGraphs } = await import("@/blueprint/graph-store.ts");
 
 function blueprint(id: string, given: boolean, more: Partial<BlueprintSummary> = {}): BlueprintSummary {
   const base = { id, name: id, description: `${id}'s description`, given, version: 1, basedOn: null, problems: 0 };
@@ -27,6 +29,7 @@ describe("the Library view", () => {
   });
   beforeEach(() => {
     opened.editors = [];
+    opened.closed = [];
     useLibrary.setState({
       blueprints: [
         blueprint("automatic-harvest", true),
@@ -84,5 +87,34 @@ describe("the Library view", () => {
     useLibrary.setState({ kept: [] });
     render(<LibraryView />);
     expect(screen.queryByRole("button", { name: /Ignorés/ })).toBeNull();
+  });
+
+  it("offers Delete on mine only, which closes its tab and drops its graphs once it went to the trash", async () => {
+    const remove = vi.fn().mockResolvedValue(true);
+    useLibrary.setState({ remove });
+    useGraphs.setState({ read: { "ma-chasse": { state: "loading" } } });
+    render(<LibraryView />);
+    fireEvent.contextMenu(screen.getByRole("button", { name: /^Chasse/ }));
+    expect(await screen.findByRole("menuitem", { name: "Dupliquer" })).toBeTruthy();
+    expect(screen.queryByRole("menuitem", { name: "Supprimer" })).toBeNull();
+    fireEvent.keyDown(document.activeElement ?? document.body, { key: "Escape" });
+    fireEvent.contextMenu(screen.getByRole("button", { name: /^Ma chasse/ }));
+    fireEvent.click(await screen.findByRole("menuitem", { name: "Supprimer" }));
+    await vi.waitFor(() => expect(opened.closed).toEqual(["blueprint:ma-chasse"]));
+    expect(remove).toHaveBeenCalledWith(expect.objectContaining({ id: "ma-chasse" }));
+    expect(useGraphs.getState().read["ma-chasse"]).toBeUndefined();
+  });
+
+  it("keeps the tab and its graphs when Delete failed", async () => {
+    const remove = vi.fn().mockResolvedValue(false);
+    useLibrary.setState({ remove });
+    useGraphs.setState({ read: { "ma-chasse": { state: "loading" } } });
+    render(<LibraryView />);
+    fireEvent.contextMenu(screen.getByRole("button", { name: /^Ma chasse/ }));
+    fireEvent.click(await screen.findByRole("menuitem", { name: "Supprimer" }));
+    await vi.waitFor(() => expect(remove).toHaveBeenCalled());
+    await Promise.resolve();
+    expect(opened.closed).toEqual([]);
+    expect(useGraphs.getState().read["ma-chasse"]).toEqual({ state: "loading" });
   });
 });

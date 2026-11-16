@@ -29,38 +29,24 @@ interface GraphStore {
    * graphs it gives back; refused, says why and reads it again, so the editor shows the file. Whether it was saved.
    */
   edit: (id: string, graph: string, edit: GraphEdit_Deserialize) => Promise<boolean>;
+  /** Undoes the last change to the blueprint `id`, in any of its graphs, written by Rust (the owner, 2026-11-16). */
+  undo: (id: string) => Promise<boolean>;
+  /** Redoes the last change undone, written by Rust. */
+  redo: (id: string) => Promise<boolean>;
+  /** Drops a blueprint deleted. */
+  forget: (id: string) => void;
 }
 
-// Each edit is numbered by blueprint: an older one that ends after a newer one is dropped.
-const edits: Record<string, number> = {};
+// Each blueprint's changes (an edit, an undo, a redo) one after another: Rust runs each command on a thread of its own,
+// so two in flight could be applied in either order, and the editor would show another state than the file's.
+const queues: Record<string, Promise<unknown>> = {};
 
-export const useGraphs = create<GraphStore>((set, get) => ({
-  read: {},
-
-  load: async (id) => {
-    set((store) => ({ read: { ...store.read, [id]: store.read[id] ?? { state: "loading" } } }));
-    let read: GraphsRead;
+export const useGraphs = create<GraphStore>((set, get) => {
+  /** Makes a change Rust writes and takes the graphs it gives back; refused, says why and reads them again. */
+  const apply = async (id: string, made: () => Promise<BlueprintGraphs>) => {
     try {
-      read = { state: "read", graphs: await commands.blueprintGraphs(id) };
-    } catch (error) {
-      // The command rejects with its `GraphsError`; anything else is a bug, said as it came.
-      const failure = error as GraphsError;
-      read = {
-        state: "failed",
-        error: typeof failure?.kind === "string" ? failure : { kind: "bug", reason: String(error) },
-      };
-    }
-    set((store) => ({ read: { ...store.read, [id]: read } }));
-  },
-
-  edit: async (id, graph, edit) => {
-    const number = (edits[id] ?? 0) + 1;
-    edits[id] = number;
-    try {
-      const graphs = await commands.editBlueprint(id, graph, edit);
-      if (number === edits[id]) {
-        set((store) => ({ read: { ...store.read, [id]: { state: "read", graphs } } }));
-      }
+      const graphs = await made();
+      set((store) => ({ read: { ...store.read, [id]: { state: "read", graphs } } }));
       return true;
     } catch (error) {
       // The editor offers no refused edit: one says the file changed under it, or could not be written.
@@ -73,5 +59,41 @@ export const useGraphs = create<GraphStore>((set, get) => ({
       await get().load(id);
       return false;
     }
-  },
-}));
+  };
+  const change = (id: string, made: () => Promise<BlueprintGraphs>) => {
+    const done = (queues[id] ?? Promise.resolve()).then(() => apply(id, made));
+    queues[id] = done;
+    return done;
+  };
+
+  return {
+    read: {},
+
+    load: async (id) => {
+      set((store) => ({ read: { ...store.read, [id]: store.read[id] ?? { state: "loading" } } }));
+      let read: GraphsRead;
+      try {
+        read = { state: "read", graphs: await commands.blueprintGraphs(id) };
+      } catch (error) {
+        // The command rejects with its `GraphsError`; anything else is a bug, said as it came.
+        const failure = error as GraphsError;
+        read = {
+          state: "failed",
+          error: typeof failure?.kind === "string" ? failure : { kind: "bug", reason: String(error) },
+        };
+      }
+      set((store) => ({ read: { ...store.read, [id]: read } }));
+    },
+
+    edit: (id, graph, edit) => change(id, () => commands.editBlueprint(id, graph, edit)),
+    undo: (id) => change(id, () => commands.undoBlueprint(id)),
+    redo: (id) => change(id, () => commands.redoBlueprint(id)),
+
+    forget: (id) => {
+      set((store) => {
+        const { [id]: _gone, ...read } = store.read;
+        return { read };
+      });
+    },
+  };
+});

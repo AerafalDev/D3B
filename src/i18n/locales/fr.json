@@ -396,6 +396,7 @@
     "mine": "Les miens",
     "kept": "Ignorés",
     "duplicate": "Dupliquer",
+    "delete": "Supprimer",
     "copyName": "{{name}} (copie)",
     "basedOn": "Basé sur {{name}} v{{version}}",
     "problems_one": "{{count}} problème",
@@ -405,6 +406,12 @@
     "mineBasedOn": "À moi · basé sur {{name}} v{{version}}",
     "gone": "Ce blueprint n'est plus là.",
     "unread": "La Bibliothèque n'a pas pu être lue : {{reason}}",
+    "deleteFailed": {
+      "gone": "{{name}} n'a pas été supprimé : il n'est plus là.",
+      "locked": "{{name}} n'a pas été supprimé : les blueprints de D3B ne se suppriment pas.",
+      "noFolder": "{{name}} n'a pas été supprimé : le système ne donne pas de dossier pour vos fichiers.",
+      "notDeleted": "{{name}} n'a pas été supprimé : {{reason}}"
+    },
     "duplicateFailed": {
       "gone": "{{name}} n'a pas été dupliqué : il n'est plus là.",
       "noFolder": "{{name}} n'a pas été dupliqué : le système ne donne pas de dossier pour vos fichiers.",
@@ -570,7 +577,9 @@
       "otherType": "Cette entrée ne prend pas ce que la sortie porte."
     },
     "notSaved": "La modification n'est pas enregistrée : {{reason}}",
-    "editRefused": "La modification n'est pas enregistrée : le blueprint est relu."
+    "editRefused": "La modification n'est pas enregistrée : le blueprint est relu.",
+    "delete": "Supprimer",
+    "deleteKey": "Suppr"
   },
   "world": {
     "title": "Monde",

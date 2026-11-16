@@ -18,8 +18,10 @@ vi.mock("@/blueprint/blueprint-graph.tsx", () => ({
   ),
 }));
 // The back end, faked: the graphs the tab reads.
-const backEnd = vi.hoisted(() => ({ graphs: vi.fn() }));
-vi.mock("@/bindings.ts", () => ({ commands: { blueprintGraphs: backEnd.graphs } }));
+const backEnd = vi.hoisted(() => ({ graphs: vi.fn(), undo: vi.fn(), redo: vi.fn() }));
+vi.mock("@/bindings.ts", () => ({
+  commands: { blueprintGraphs: backEnd.graphs, undoBlueprint: backEnd.undo, redoBlueprint: backEnd.redo },
+}));
 
 const { BlueprintTab } = await import("./blueprint-tab.tsx");
 const { useGraphs } = await import("@/blueprint/graph-store.ts");
@@ -177,6 +179,42 @@ describe("a blueprint's tab, its editor read-only", () => {
     tab("automatic-harvest");
     await act(async () => fireEvent.click(screen.getByRole("button", { name: "Dupliquer" })));
     expect(opened.editors).toEqual([]);
+  });
+
+  it("undoes on Ctrl+Z and redoes on Ctrl+Y or Ctrl+Shift+Z in a blueprint of mine, not in a field or one of D3B's", async () => {
+    const mine = { ...harvest, id: "mine", name: "Ma récolte", given: false };
+    useLibrary.setState({ blueprints: [harvest, mine] });
+    backEnd.undo.mockReset().mockResolvedValue(GRAPHS);
+    backEnd.redo.mockReset().mockResolvedValue(GRAPHS);
+    const { container } = tab("mine");
+    await screen.findByText(/graphe events/);
+    const editor = container.firstElementChild as HTMLElement;
+    // The letter typed, on the key AZERTY puts it: Z where QWERTY has W.
+    const press = (target: Element, key: string, shiftKey = false) =>
+      act(() => {
+        const code = key === "z" ? "KeyW" : `Key${key.toUpperCase()}`;
+        fireEvent.keyDown(target, { key: shiftKey ? key.toUpperCase() : key, code, ctrlKey: true, shiftKey });
+        fireEvent.keyUp(target, { key: shiftKey ? key.toUpperCase() : key, code, ctrlKey: true, shiftKey });
+      });
+    editor.focus();
+    await act(() => fireEvent.keyDown(editor, { key: "w", code: "KeyZ", ctrlKey: true }));
+    expect(backEnd.undo, "the key where QWERTY has Z, typing W").not.toHaveBeenCalled();
+    await press(editor, "z");
+    expect(backEnd.undo).toHaveBeenCalledWith("mine");
+    await press(editor, "y");
+    await press(editor, "z", true);
+    expect(backEnd.redo).toHaveBeenCalledTimes(2);
+    expect(backEnd.undo).toHaveBeenCalledTimes(1);
+    const field = document.createElement("input");
+    editor.appendChild(field);
+    field.focus();
+    await press(field, "z");
+    expect(backEnd.undo).toHaveBeenCalledTimes(1);
+    cleanup();
+    const given = tab("automatic-harvest").container.firstElementChild as HTMLElement;
+    given.focus();
+    await press(given, "z");
+    expect(backEnd.undo).toHaveBeenCalledTimes(1);
   });
 
   it("says the blueprint is gone once its file is", () => {

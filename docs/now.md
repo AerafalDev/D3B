@@ -228,6 +228,26 @@ _Updated 2026-11-16._
     5. move a node, close the tab and reopen it, then restart D3B: the nodes and wires are where they were left,
        in `Documents/D3B/blueprints/<id>.json`; the Library's count of problems follows the graph's (a Prévenir with
        no text: one).
+- **step 3, deleting and undoing in a blueprint's graph** ((13)), on Windows x64 from `bun run app` on `next` or the
+  next release:
+    1. open Récolte automatique: a click on a node then Delete or Backspace removes nothing, a right-click on a node
+       offers no "Supprimer", Ctrl+Z changes nothing;
+    2. duplicate it and open the copy: click "Récolter", press Delete: it goes with its four wires, at once, without
+       a question; Ctrl+Z (the key Z of the keyboard's layout, AZERTY's too): it comes back where it was, with its
+       wires; Ctrl+Y: it goes again; Ctrl+Shift+Z after a Ctrl+Z does the same; choose a node, click the Library's
+       list, press Delete: nothing goes;
+    3. Shift and drag a box around two nodes (or Ctrl and click the second), then Backspace: both go with their wires;
+       one Ctrl+Z brings both back; right-click inside the box: "Supprimer" deletes both; move two nodes dragged
+       together, then Ctrl+Z: both go back in one step;
+    4. right-click a node: "Supprimer · Suppr" deletes it; right-click a wire: "Supprimer" deletes that wire alone;
+       right-click the empty graph: the picker opens, no menu; type in the picker's search and press Ctrl+Z: the text
+       is undone, not the graph;
+    5. make three changes, close the tab and reopen it: Ctrl+Z still undoes them, one at a time, and the file in
+       `Documents/D3B/blueprints/<id>.json` follows each; restart D3B: Ctrl+Z undoes nothing;
+    6. give the copy to a character, then right-click it in the Library: "Supprimer" (absent on D3B's) sends it to
+       the system's trash without asking and closes its tab; the character's tab says "Blueprint <id> introuvable";
+       restore the file from the trash and reopen the Library: it is back, and the character runs it again with its
+       values.
 - **Done in code, step 1**: `tools/extractor` reads the client's bundles, data tables, texts in five languages and flag
   enums, and writes the map positions, sub-areas, areas, zaaps, worlds and their tiles, maps, and the world graph,
   checked against one another, with the `client-<build>-format<n>.tar.gz` that `data:fetch` reads (ADR 0013); the app reads it all at start
@@ -346,7 +366,7 @@ _Updated 2026-11-16._
   deletion not confirmed; a blueprint of mine deleted to the system's trash without asking, the characters that run it
   keeping its id), in two PRs: nodes and wires deleted, a move of many one change, undo, redo and `delete_blueprint`
   through the IPC (done in code), then Delete, Backspace and a context menu in the graph, Ctrl+Z and Ctrl+Y, and
-  Delete in the Library; then **blueprints v2**
+  Delete in the Library (done in code; its checklist under "Not measured"); then **blueprints v2**
   ([bot.md](bot.md#the-language-v2), ADR 0016; the owner, 2026-11-16, after trying (12): "much more complete", "as
   practical as a Lua script"), from a mock-up of the catalogue and the Summary and an analysis of the reference Lua
   scripts: compact value nodes and a typed Expression, wildcards, lists and level ranges, flow for a bot, "When …
