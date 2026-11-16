@@ -1120,8 +1120,10 @@ export type ShareFailure =
 { kind: "notD3b" } | 
 /**  The system could not read it: its own words. */
 { kind: "unreadable"; reason: string } | { kind: "notText" } | 
-/**  Written by a newer D3B: the file of this format, or its blueprint of this schema. */
+/**  Written by a newer D3B, of this format. */
 { kind: "newer"; found: number } | 
+/**  Its blueprint written by a newer D3B, of this schema. */
+{ kind: "newerSchema"; found: number } | 
 /**  Not of a `.d3b`'s shape, or its blueprint not of a blueprint's: what serde says, with its line and column. */
 { kind: "notOfItsShape"; detail: string } | 
 /**  It holds zones or routes, which this version does not import. */

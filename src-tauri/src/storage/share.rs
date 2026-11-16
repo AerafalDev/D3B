@@ -1,4 +1,4 @@
-//! The `.d3b` file (ADR 0016): one blueprint shared with the zones and routes it names, as one readable JSON, imported
+//! The `.d3b` file (ADR 0017): one blueprint shared with the zones and routes it names, as one readable JSON, imported
 //! on another D3B after a preview. Its blueprint is its file as `bot` writes it; its zones and routes are empty until
 //! zones and routes of mine exist (step 3's PRs 20 and 21), which fill them.
 

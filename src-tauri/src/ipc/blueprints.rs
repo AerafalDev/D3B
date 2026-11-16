@@ -1,5 +1,5 @@
 //! The blueprints, as the Library lists them (`docs/bot.md`, "In the app"): D3B's, then mine from `Documents/D3B`, and
-//! the files there that do not read; Duplicate, which saves a copy among mine; and the `.d3b` file (ADR 0016), a
+//! the files there that do not read; Duplicate, which saves a copy among mine; and the `.d3b` file (ADR 0017), a
 //! blueprint exported through the system's save dialog, then previewed and imported among mine on another D3B.
 
 use std::collections::BTreeMap;
@@ -351,8 +351,12 @@ pub enum ShareFailure {
         reason: String,
     },
     NotText,
-    /// Written by a newer D3B: the file of this format, or its blueprint of this schema.
+    /// Written by a newer D3B, of this format.
     Newer {
+        found: u32,
+    },
+    /// Its blueprint written by a newer D3B, of this schema.
+    NewerSchema {
         found: u32,
     },
     /// Not of a `.d3b`'s shape, or its blueprint not of a blueprint's: what serde says, with its line and column.
@@ -375,7 +379,10 @@ impl From<ShareError> for ShareFailure {
                 reason: error.to_string(),
             },
             ShareError::NotText => Self::NotText,
-            ShareError::Newer { found } | ShareError::Blueprint(ReadError::Newer { found }) => Self::Newer {
+            ShareError::Newer { found } => Self::Newer {
+                found: u32::try_from(found).unwrap_or(u32::MAX),
+            },
+            ShareError::Blueprint(ReadError::Newer { found }) => Self::NewerSchema {
                 found: u32::try_from(found).unwrap_or(u32::MAX),
             },
             ShareError::NotOfItsShape(error) | ShareError::Blueprint(ReadError::NotABlueprint(error)) => {
@@ -476,9 +483,16 @@ pub async fn export_blueprint(
             .set_file_name(name)
             .add_filter("D3B", &[storage::SHARE_EXTENSION])
             .blocking_save_file();
-        let Some(path) = chosen.and_then(|chosen| chosen.into_path().ok()) else {
+        let Some(mut path) = chosen.and_then(|chosen| chosen.into_path().ok()) else {
             return Ok(None);
         };
+        // A name the player typed without its extension (GTK's dialog keeps it so) still imports as a `.d3b`.
+        if !path
+            .extension()
+            .is_some_and(|extension| extension.eq_ignore_ascii_case(storage::SHARE_EXTENSION))
+        {
+            path.as_mut_os_string().push(format!(".{}", storage::SHARE_EXTENSION));
+        }
         storage::write_whole(&path, text.as_bytes()).map_err(|error| ShareFailure::NotSaved {
             reason: error.to_string(),
         })?;
@@ -695,7 +709,10 @@ mod tests {
             .map(|based| (based.id.as_str(), based.version));
         assert_eq!(based, Some(("automatic-harvest", 1)));
         assert_eq!(blueprint.variables[0].name, "Zone", "the player's words");
-        assert!(shown.graphs >= 1 && shown.nodes >= shown.graphs, "{shown:?}");
+        let given = &bot::given().unwrap_or_default()[0];
+        let nodes: usize = given.graphs.iter().map(|graph| graph.nodes.len()).sum();
+        assert_eq!((shown.graphs, shown.nodes), (count(given.graphs.len()), count(nodes)));
+        assert!(shown.nodes > shown.graphs, "nodes, not graphs");
         assert_eq!((shown.problems.len(), shown.zones, shown.routes), (0, 0, 0));
         assert_eq!(import(Some(&store), &path), Ok("recolte-automatique".into()));
         assert_eq!(
@@ -728,7 +745,10 @@ mod tests {
         let newer = put("newer.d3b", &text.replacen("\"d3b\": 1", "\"d3b\": 3", 1));
         assert_eq!(preview(&newer), Err(ShareFailure::Newer { found: 3 }));
         let schema = put("schema.d3b", &text.replacen("\"schema\": 1", "\"schema\": 2", 1));
-        assert_eq!(import(Some(&store), &schema), Err(ShareFailure::Newer { found: 2 }));
+        assert_eq!(
+            import(Some(&store), &schema),
+            Err(ShareFailure::NewerSchema { found: 2 })
+        );
         let broken = put("broken.d3b", "{\"d3b\": 1,");
         assert!(
             matches!(preview(&broken), Err(ShareFailure::NotOfItsShape { detail }) if detail.contains("line 1")),
