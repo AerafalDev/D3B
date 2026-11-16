@@ -286,7 +286,11 @@ its own undo; the editor sends one change at a time, so Rust takes them in their
   holes filled with what feeds them (a variable's name, a query's own sentence, a source pin's label, a value typed or
   a default), a get as a pill of its type's colour, a wire going back (a loop) out to the right, under its two nodes and into its input from the left (the owner, 2026-11-16), an action the bot does not do yet tagged "étape N", pins and wires
   coloured by type (the owner, 2026-11-14). From step 4, "Debug" a character lights the node at work and its wire; nothing is lit otherwise.
-- **World** view: my zones, my routes, then the game's sub-areas, searchable. The **World tab** shows the world map
+- **World** view: my zones, my routes, then the game's sub-areas, searchable. "My zones" (step 3's PR 20, the owner's
+  choices of 2026-11-16) lists mine by name with their maps, matched by the search too; "+" on its header makes
+  "Nouvelle zone" on the world the tab shows and opens it there with the brush; a row opens its zone on its world, F2
+  or a right-click renames it in its row (Enter or leaving saves, Escape leaves it), and the right-click deletes it to
+  the system's trash, closing it on the map; a zone's file kept is listed in the Library's "Ignored". The **World tab** shows the world map
   from the data's tiles, at the level the zoom needs, with the client's **hints** as on the C# version (the owner,
   2026-11-13): zaaps, dungeons, auction houses, workshops, banks, class places and transports, each with the client's
   picture, at the zooms that have room for them, one switch per kind, the name on hover. Its tools: select, brush,
@@ -314,8 +318,9 @@ its own undo; the editor sends one change at a time, so Rust takes them in their
   hints by kind, each with its name, coordinates, level and picture's file, the one the client lacks drawn as a dot.
   The game's sub-areas as zones (the owner's mock-up 12, 2026-11-15): a Zone's value is a sub-area's id or a zone of
   mine's (the blueprint's file, `bot::variable`). A Zone setting is a field saying the zone chosen, its area and level;
-  a click unfolds a list under it, searched as the World view, "My zones" first (empty until mine are painted), then
-  the sub-areas by area and level, the arrows and Enter choosing; its target opens the World tab in a choosing mode, a
+  a click unfolds a list under it, searched as the World view, "My zones" first by name, with their maps, then
+  the sub-areas by area and level, the arrows and Enter choosing (a zone of mine gives `{"zone": id}`, said by its
+  name, "Zone of mine" and its maps, or "Zone <id> not found" once gone); its target opens the World tab in a choosing mode, a
   banner saying for what, a map hovered outlining its whole sub-area, one click choosing it and going back to the tab
   it came from, Escape cancelling. A click on the map otherwise chooses its sub-area as the view does, the map staying
   where it is (a drag chooses nothing, nor a click off the maps), and **Details**,
@@ -328,9 +333,9 @@ its own undo; the editor sends one change at a time, so Rust takes them in their
   `ZoneField` (`src/zone/`), which step 3's PR 11 puts in a character's tab; the World store holds the choice on the
   map under way, for whom and what takes the sub-area, and the tab active when it began, brought back when it ends;
   choosing on the map also shows the sub-area chosen there, and a map's hover outlines its sub-area dashed in white.
-- The panel's **History** (step 4) follows the active character's tab. The **Protocol** view will show only with an
-  "Advanced tools" setting, off by default (a change to `docs/shell.md`; step 2's checklist items that read the
-  inspector then begin by turning it on).
+- The panel's **History** (step 4) follows the active character's tab. The **Protocol** view shows only with the
+  "Advanced tools" setting, off by default (step 3's PR 24, [shell.md](shell.md#settings)); step 2's checklist items
+  that read the inspector begin by turning it on.
 
 The prototype fixed the model and the layout; each PR polishes its look, the World more beautiful and modern (the
 owner, 2026-11-13).
@@ -367,6 +372,9 @@ copy's is (a number when any file of the folder holds it, in any case), and keep
 `paint_zone` (a stroke: the maps added, or taken away by the eraser, saved at once) and `delete_zone` (to the system's
 trash, without asking, as Forget). A file that does not read, of a newer schema, or whose name is not its id is kept
 untouched, listed with why, never written over nor sent to the trash.
+The app's own settings are `settings.json` at the folder's root (schema 1, step 3's PR 24,
+[shell.md](shell.md#settings)), written whole under the same lock; one that does not read gives the defaults, is
+reported at start and is never written over.
 
 A blueprint's file (`bot::json`, schema 1, the owner's choices of 2026-11-13): its `id`, `name`, `description`,
 `version` and `based_on`; its `variables` (`type`, `default`, `bounds`, `per_character`, `memory`, both allowed at once

@@ -20,7 +20,8 @@
       "palette": "Show all commands",
       "primarySideBar": "Toggle the primary side bar",
       "panel": "Toggle the panel",
-      "secondarySideBar": "Toggle the secondary side bar"
+      "secondarySideBar": "Toggle the secondary side bar",
+      "advancedTools": "Toggle advanced tools"
     },
     "keys": {
       "ctrl": "Ctrl",
@@ -31,7 +32,8 @@
       "file": "File",
       "exit": "Exit",
       "view": "View",
-      "commandPalette": "Command palette…"
+      "commandPalette": "Command palette…",
+      "advancedTools": "Advanced tools"
     },
     "palette": {
       "placeholder": "Type the name of a command",
@@ -641,10 +643,32 @@
     "missing": "Sub-area {{id}} missing from the data",
     "search": "Search a zone",
     "mine": "My zones",
-    "mineLater": "Your painted zones will come here.",
     "onMap": "Choose on the map",
     "keys": "↑ ↓ Enter",
-    "subArea": "Sub-area {{id}}"
+    "subArea": "Sub-area {{id}}",
+    "mineOne": "Zone of mine",
+    "none": "No zone: \"+\" paints one.",
+    "create": "New zone",
+    "newName": "New zone",
+    "name": "Zone name",
+    "rename": "Rename",
+    "delete": "Delete",
+    "unread": "Your zones could not be read: {{reason}}",
+    "tools": {
+      "label": "Zone tools",
+      "select": "Select ({{key}})",
+      "brush": "Brush ({{key}})",
+      "eraser": "Eraser ({{key}})",
+      "subArea": "Whole sub-area ({{key}})"
+    },
+    "failed": {
+      "noSuchZone": "This zone is gone: nothing changed.",
+      "noFolder": "Nothing changed: the system names no folder for your files.",
+      "emptyName": "A zone needs a name.",
+      "notSaved": "Nothing changed: {{reason}}"
+    },
+    "mineMissing": "Zone {{id}} not found",
+    "noneField": "No zone: paint one with \"+\" in the World view."
   },
   "settings": {
     "title": "Blueprint and settings",
@@ -663,5 +687,10 @@
       "refused": "Nothing changed for {{name}}: this value is not allowed.",
       "notSaved": "Nothing changed for {{name}}: {{reason}}"
     }
+  },
+  "appSettings": {
+    "notSaved": "The setting holds until D3B closes: {{reason}}",
+    "noFolder": "this system names no folder for D3B",
+    "kept": "settings.json is kept as it is, and the defaults hold: {{reason}}"
   }
 }

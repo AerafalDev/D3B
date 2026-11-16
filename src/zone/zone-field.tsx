@@ -7,7 +7,8 @@ import { Command, CommandGroup, CommandInput, CommandItem, CommandList } from "@
 import { Popover, PopoverAnchor, PopoverContent, PopoverTrigger } from "@/components/ui/popover.tsx";
 import { openWorld } from "@/world/open-world.ts";
 import { findSubArea, useWorld } from "@/world/world-store.ts";
-import { worldTree } from "@/world/world-tree.ts";
+import { folded, worldTree } from "@/world/world-tree.ts";
+import { useZones } from "./zones-store.ts";
 
 /** A Zone's value as a blueprint's file holds it (`bot::variable`): a game's sub-area, or a zone of mine. */
 export type ZoneValue = { sub_area: number } | { zone: string };
@@ -22,7 +23,7 @@ interface ZoneFieldProps {
 
 /**
  * A Zone setting (the owner's mock-up 12, 2026-11-15): the zone chosen with its area and level; a click unfolds a list
- * under it, searched as the World view, my zones first (none until they are painted), then the game's sub-areas by
+ * under it, searched as the World view, my zones first by name, then the game's sub-areas by
  * area and level, the arrows and Enter choosing; its target, or the list's last line, chooses on the World tab's map.
  */
 export function ZoneField({ value, onChange, who }: ZoneFieldProps) {
@@ -31,6 +32,15 @@ export function ZoneField({ value, onChange, who }: ZoneFieldProps) {
   const load = useWorld((store) => store.load);
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
+  const zones = useZones((store) => store.zones);
+  const zonesLoaded = useZones((store) => store.loaded);
+  const refreshZones = useZones((store) => store.refresh);
+  const mine = useMemo(() => {
+    const sought = folded(query.trim());
+    return zones
+      .filter((zone) => sought === "" || folded(zone.name).includes(sought))
+      .sort((a, b) => a.name.localeCompare(b.name));
+  }, [zones, query]);
   const atlas = read?.state === "read" ? read.atlas : null;
   const tree = useMemo(
     () => (atlas === null ? [] : worldTree(atlas, i18n.language, query)),
@@ -39,7 +49,8 @@ export function ZoneField({ value, onChange, who }: ZoneFieldProps) {
 
   useEffect(() => {
     void load();
-  }, [load]);
+    void refreshZones();
+  }, [load, refreshZones]);
 
   // The latest `onChange`, for a choice on the map that ends after renders with another.
   const latest = useRef(onChange);
@@ -96,7 +107,23 @@ export function ZoneField({ value, onChange, who }: ZoneFieldProps) {
           <CommandInput placeholder={t("zone.search")} value={query} onValueChange={setQuery} />
           <CommandList className="max-h-[300px]">
             <CommandGroup heading={t("zone.mine")}>
-              <p className="text-text-faint px-2 pb-1 text-xs">{t("zone.mineLater")}</p>
+              {zonesLoaded && zones.length === 0 && (
+                <p className="text-text-faint px-2 pb-1 text-xs">{t("zone.noneField")}</p>
+              )}
+              {mine.map((zone) => (
+                <CommandItem
+                  key={zone.id}
+                  value={`zone:${zone.id}`}
+                  onSelect={() => choose({ zone: zone.id })}
+                  className="h-6 text-xs data-selected:bg-[#04395e]"
+                >
+                  <MapPin aria-hidden="true" size={14} strokeWidth={1.5} className="text-[#e2a33a]" />
+                  {zone.name}
+                  <span className="text-text-faint ml-auto text-[11px]">
+                    {t("world.maps", { count: zone.maps.length })}
+                  </span>
+                </CommandItem>
+              ))}
             </CommandGroup>
             {read?.state === "failed" && (
               <p className="text-text-muted px-2 py-1 text-xs">{t("world.noData", { reason: read.error.reason })}</p>
@@ -140,15 +167,33 @@ export function ZoneField({ value, onChange, who }: ZoneFieldProps) {
   );
 }
 
-/** The zone chosen as the field says it: a sub-area's name, its area and level; a zone of mine's id until mine come. */
+/** The zone chosen as the field says it: a sub-area's name, its area and level, or a zone of mine's name and maps. */
 function ZoneText({ value }: { value: ZoneValue | null }) {
   const { t, i18n } = useTranslation();
   const read = useWorld((store) => store.read);
+  const zones = useZones((store) => store.zones);
+  const loaded = useZones((store) => store.loaded);
   if (value === null) {
     return <span className="text-text-faint truncate">{t("zone.toChoose")}</span>;
   }
   if ("zone" in value) {
-    return <span className="truncate text-white">{value.zone}</span>;
+    const zone = zones.find((one) => one.id === value.zone);
+    if (zone === undefined) {
+      // Before my zones are read, the zone by its id: it is not yet known, rather than gone.
+      return loaded ? (
+        <span className="truncate text-[#f2c55c]">{t("zone.mineMissing", { id: value.zone })}</span>
+      ) : (
+        <span className="truncate text-white">{value.zone}</span>
+      );
+    }
+    return (
+      <>
+        <span className="truncate text-white">{zone.name}</span>
+        <span className="text-text-faint truncate text-[11px]">
+          {[t("zone.mineOne"), t("world.maps", { count: zone.maps.length })].join(" · ")}
+        </span>
+      </>
+    );
   }
   if (read?.state !== "read") {
     // Without the game data, the sub-area by its number.

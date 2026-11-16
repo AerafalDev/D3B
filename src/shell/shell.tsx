@@ -4,6 +4,7 @@ import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/componen
 import { Inspector } from "@/inspector/inspector.tsx";
 import { InspectorHeader } from "@/inspector/inspector-header.tsx";
 import { cn } from "@/lib/utils.ts";
+import { useAppSettings } from "@/settings/app-settings.ts";
 import { CommandPalette } from "./command-palette.tsx";
 import { useLayout } from "./layout-store.ts";
 import { ActivityBar } from "./parts/activity-bar.tsx";
@@ -31,6 +32,7 @@ export function Shell() {
   const shownView = useLayout((store) => store.view);
   const active = SIDE_VIEWS.find((entry) => entry.id === shownView);
   const ActiveView = active?.component;
+  const advancedTools = useAppSettings((store) => store.advancedTools);
 
   return (
     <div className="bg-frame text-text relative flex h-svh flex-col overflow-hidden">
@@ -51,9 +53,12 @@ export function Shell() {
               </ResizablePanel>
               <ResizableHandle className={cn(SASH, !visible.panel && "hidden")} />
               <ResizablePart part="panel" defaultSize={260} minSize={100}>
-                <PartFrame part="panel" title={t("inspector.title")} header={<InspectorHeader />}>
-                  <Inspector />
-                </PartFrame>
+                {/* The Protocol view, the panel's one view until step 4's History, shows only with Advanced tools. */}
+                {advancedTools && (
+                  <PartFrame part="panel" title={t("inspector.title")} header={<InspectorHeader />}>
+                    <Inspector />
+                  </PartFrame>
+                )}
               </ResizablePart>
             </ResizablePanelGroup>
           </ResizablePanel>

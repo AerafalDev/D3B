@@ -12,6 +12,7 @@ vi.mock("@/bindings.ts", () => ({
     setCharacterBlueprint: backEnd.blueprint,
     setCharacterSetting: backEnd.setting,
     worldAtlas: backEnd.atlas,
+    zones: async () => ({ zones: [], kept: [] }),
   },
 }));
 const editors = vi.hoisted(() => ({ opened: [] as string[] }));

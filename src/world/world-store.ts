@@ -23,6 +23,9 @@ export interface Choosing {
   unwatch: () => void;
 }
 
+/** A tool of the World tab's map while a zone of mine is open (the owner, 2026-11-16). */
+export type Tool = "select" | "brush" | "eraser" | "subArea";
+
 /** The world the tab opens on: the Twelve's, the client's first. */
 const FIRST_WORLD = 1;
 
@@ -31,6 +34,10 @@ interface WorldStore {
   read: AtlasRead | null;
   /** The sub-area chosen in the view, shown on the map. */
   picked: number | null;
+  /** The zone of mine open on the map, painted with `tool`; `null` when none is. */
+  zone: string | null;
+  /** The map's tool while a zone of mine is open. */
+  tool: Tool;
   /** The world the tab shows. */
   world: number;
   /** The kinds of hints the map leaves out, for the session. */
@@ -41,7 +48,11 @@ interface WorldStore {
   load: () => Promise<void>;
   /** Chooses a sub-area, and shows the world that holds its maps. */
   pick: (subArea: number) => void;
-  /** Shows a world. */
+  /** Opens a zone of mine on its world, with `tool`; a sub-area chosen is no longer. */
+  openZone: (zone: string, world: number, tool?: Tool) => void;
+  /** Takes another tool. */
+  takeTool: (tool: Tool) => void;
+  /** Shows a world, closing a zone of mine open on another. */
   show: (world: number) => void;
   /** Sets the kinds of hints the map leaves out. */
   hide: (kinds: ReadonlySet<HintKind>) => void;
@@ -55,6 +66,8 @@ interface WorldStore {
 export const useWorld = create<WorldStore>((set, get) => ({
   read: null,
   picked: null,
+  zone: null,
+  tool: "brush",
   world: FIRST_WORLD,
   hidden: HIDDEN_KINDS,
   choosing: null,
@@ -86,10 +99,15 @@ export const useWorld = create<WorldStore>((set, get) => ({
     const held = read?.state === "read" ? findSubArea(read.atlas, subArea) : undefined;
     // A sub-area holds maps on one world at most (`ipc::atlas`): the tab goes there.
     const world = held?.maps[0]?.world;
-    set(world === undefined ? { picked: subArea } : { picked: subArea, world });
+    set(world === undefined ? { picked: subArea, zone: null } : { picked: subArea, zone: null, world });
   },
 
-  show: (world) => set({ world }),
+  openZone: (zone, world, tool) => set({ zone, world, picked: null, tool: tool ?? get().tool }),
+
+  takeTool: (tool) => set({ tool }),
+
+  // A zone of mine is on one world: another world closes it.
+  show: (world) => set(world === get().world ? {} : { world, zone: null }),
 
   hide: (hidden) => set({ hidden }),
 
