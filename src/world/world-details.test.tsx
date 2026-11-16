@@ -38,6 +38,7 @@ const ATLAS: Atlas_Serialize = {
                 [0, 0],
                 [1, 0],
               ],
+              priority: [],
             },
           ],
           resources: [303, 473, 421],

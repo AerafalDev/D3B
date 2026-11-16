@@ -119,8 +119,11 @@ The shell's parts (`docs/shell.md`); no information is shown twice:
   each zoom with its tiles' files) and the named areas' named sub-areas that hold a map, each with its level and its
   maps' coordinates on each world shown. The World view lists the sub-areas under their areas by level, then by name (the
   owner, 2026-11-15), a level on each, the search unfolding what it finds; a click opens the World tab. The World tab (`src/world/`) shows the world its editor action chose, fitted
-  to the sub-area chosen in the view, its name, area, level and number of maps on top, or, for one of the 112 no world
-  shows (dungeons, hidden worlds), "not on the map" (the owner, 2026-11-15), or the world it is on. The map takes the focus: the arrows move it, + and − zoom, 0 fits it again; its zoom
+  to the sub-area chosen in the view, its name, area, level and number of maps on top, or, for one of the 211 no world
+  shows (dungeons, houses, hidden worlds), "not on the map" (the owner, 2026-11-15), or the world it is on. The client
+  parks at 0, 0 the maps it draws nowhere (1,820 on the Twelve): only those flagged with the priority on the world map
+  are truly there, and on a map two sub-areas share, a click and the hover take the one with that priority (the
+  owner, 2026-11-16). The map takes the focus: the arrows move it, + and − zoom, 0 fits it again; its zoom
   shows bottom left, its buttons bottom right; a map's sub-area and coordinates on hover. The hints (the owner's mock-up 11,
   2026-11-15): the client's pictures, 28 pixels on the screen at every zoom; where two would overlap, the more useful
   kind stays, chosen over the whole world for a zoom so that moving the map never changes it; nine kinds, the picture

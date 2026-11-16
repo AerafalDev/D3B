@@ -11,7 +11,7 @@ use tauri::Manager;
 
 use super::LoadedData;
 use super::character::Names;
-use crate::data::{self, Hint, ItemTables, World, WorldMap};
+use crate::data::{self, Hint, ItemTables, MapFlag, World, WorldMap};
 
 /// The worlds and the sub-areas the World view lists, in order of id.
 #[derive(Debug, Clone, PartialEq, Serialize, Type)]
@@ -130,8 +130,8 @@ pub struct AtlasArea {
     pub sub_areas: Vec<AtlasSubArea>,
 }
 
-/// A sub-area, a ready-made zone, and the maps it covers on each world shown; none when no world shows it (112 on
-/// 3.7.13.17, dungeons and hidden worlds' among them), and never more than one world there, so its maps say its world.
+/// A sub-area, a ready-made zone, and the maps it covers on each world shown; none when no world shows it (211 on
+/// 3.7.13.17: dungeons, houses, hidden worlds' and those the client parks at 0, 0), and never more than one world there, so its maps say its world.
 #[derive(Debug, Clone, PartialEq, Serialize, Type)]
 pub struct AtlasSubArea {
     pub id: i32,
@@ -149,6 +149,9 @@ pub struct AtlasSubArea {
 pub struct WorldMaps {
     pub world: i32,
     pub at: Vec<[i16; 2]>,
+    /// Those of `at` where one of its maps has the client's priority on the world map, which a click there chooses
+    /// over a sub-area without it (Village des Zoths under the Hakam tree's trunk, 3.7.13.17).
+    pub priority: Vec<[i16; 2]>,
 }
 
 /// Why there is no atlas.
@@ -178,6 +181,9 @@ pub async fn world_atlas(app: tauri::AppHandle) -> Result<Atlas, AtlasError> {
     })
 }
 
+/// The coordinates of a sub-area's maps on one world, and those where one of them has the priority.
+type Covered = (BTreeSet<[i16; 2]>, BTreeSet<[i16; 2]>);
+
 /// The game data's world, worlds, hints and items.
 type Game<'a> = (&'a World, &'a [WorldMap], &'a [Hint], &'a ItemTables);
 
@@ -204,17 +210,25 @@ fn names(text: &crate::data::Text) -> Names {
 fn atlas((world, worlds, hints, items): Game, folder: &Path) -> Atlas {
     let shown: Vec<&WorldMap> = worlds.iter().filter(|one| one.visible).collect();
     let shown_ids: BTreeSet<i32> = shown.iter().map(|one| one.id).collect();
-    // Each sub-area's maps, by world then by coordinates: a map's floors share them.
-    let mut maps: BTreeMap<i32, BTreeMap<i32, BTreeSet<[i16; 2]>>> = BTreeMap::new();
+    // Each sub-area's maps, by world then by coordinates: a map's floors share them; and those with the priority.
+    let mut maps: BTreeMap<i32, BTreeMap<i32, Covered>> = BTreeMap::new();
     let mut held = BTreeSet::new();
     for position in &world.positions {
         held.insert(position.sub_area_id);
-        if shown_ids.contains(&position.world_map) {
-            maps.entry(position.sub_area_id)
+        let priority = position.flags.contains(&MapFlag::HasPriorityOnWorldmap);
+        // The client parks at 0, 0 the maps it draws nowhere (1,820 on the Twelve, 3.7.13.17: dungeons, houses, guild
+        // halls); only those with the priority are truly there (Village d'Amakna's).
+        let parked = (position.x, position.y) == (0, 0) && !priority;
+        if shown_ids.contains(&position.world_map) && !parked {
+            let (at, first) = maps
+                .entry(position.sub_area_id)
                 .or_default()
                 .entry(position.world_map)
-                .or_default()
-                .insert([position.x, position.y]);
+                .or_default();
+            at.insert([position.x, position.y]);
+            if priority {
+                first.insert([position.x, position.y]);
+            }
         }
     }
     // The professions and resources the sub-areas listed hold, gathered as they are listed.
@@ -247,9 +261,10 @@ fn atlas((world, worlds, hints, items): Game, folder: &Path) -> Atlas {
                             .get(&sub_area.id)
                             .into_iter()
                             .flatten()
-                            .map(|(world, at)| WorldMaps {
+                            .map(|(world, (at, first))| WorldMaps {
                                 world: *world,
                                 at: at.iter().copied().collect(),
+                                priority: first.iter().copied().collect(),
                             })
                             .collect(),
                         resources: held.iter().map(|resource| resource.item.id).collect(),
@@ -557,16 +572,45 @@ mod tests {
             [
                 WorldMaps {
                     world: 1,
-                    at: vec![[-1, -27]]
+                    at: vec![[-1, -27]],
+                    priority: vec![]
                 },
                 WorldMaps {
                     world: 2,
-                    at: vec![[4, 2]]
+                    at: vec![[4, 2]],
+                    priority: vec![]
                 }
             ]
         );
         // A sub-area on no world shown is listed, with no maps.
         assert_eq!(astrub.sub_areas[1].maps, []);
+    }
+
+    #[test]
+    fn leaves_out_the_maps_the_client_parks_at_0_0_and_says_where_a_sub_area_has_the_priority() {
+        let mut world = world();
+        let position = |id: i32, x: i16, y: i16, sub_area: i32, flags: &str| -> crate::data::MapPosition {
+            parse(&format!(
+                r#"{{"id":{id},"x":{x},"y":{y},"subAreaId":{sub_area},"worldMap":1,"name":null,"flags":[{flags}]}}"#
+            ))
+        };
+        // 95's house parked at 0, 0; 99 truly there, with the priority, and sharing 3, 3 with 97, which has it not.
+        world.positions.extend([
+            position(10, 0, 0, 95, ""),
+            position(11, 0, 0, 99, r#""hasPriorityOnWorldmap""#),
+            position(12, 3, 3, 99, r#""outdoor","hasPriorityOnWorldmap""#),
+        ]);
+        let atlas = atlas((&world, &worlds(), &[], &items()), Path::new("data"));
+        let astrub = &atlas.areas[0];
+        assert_eq!(astrub.sub_areas[0].maps[0].at, [[-1, -27]]);
+        assert_eq!(
+            astrub.sub_areas[1].maps,
+            [WorldMaps {
+                world: 1,
+                at: vec![[0, 0], [3, 3]],
+                priority: vec![[0, 0], [3, 3]]
+            }]
+        );
     }
 
     // The extractor's own tests write this file (tools/extractor/tests/Hints/HintTablesTests.cs): a bank on world 1, a

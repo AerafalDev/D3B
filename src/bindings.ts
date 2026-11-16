@@ -192,8 +192,8 @@ export type AtlasResource_Serialize = {
 };
 
 /**
- *  A sub-area, a ready-made zone, and the maps it covers on each world shown; none when no world shows it (112 on
- *  3.7.13.17, dungeons and hidden worlds' among them), and never more than one world there, so its maps say its world.
+ *  A sub-area, a ready-made zone, and the maps it covers on each world shown; none when no world shows it (211 on
+ *  3.7.13.17: dungeons, houses, hidden worlds' and those the client parks at 0, 0), and never more than one world there, so its maps say its world.
  */
 export type AtlasSubArea = {
 	id: number,
@@ -1037,6 +1037,11 @@ export type WireView = {
 export type WorldMaps = {
 	world: number,
 	at: ([number, number])[],
+	/**
+	 *  Those of `at` where one of its maps has the client's priority on the world map, which a click there chooses
+	 *  over a sub-area without it (Village des Zoths under the Hakam tree's trunk, 3.7.13.17).
+	 */
+	priority: ([number, number])[],
 };
 
 /* Tauri Specta runtime */

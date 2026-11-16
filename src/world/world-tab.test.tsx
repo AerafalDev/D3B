@@ -90,6 +90,7 @@ const ATLAS: Atlas_Serialize = {
                 [0, 0],
                 [1, 0],
               ],
+              priority: [],
             },
           ],
           resources: [],
@@ -102,7 +103,14 @@ const ATLAS: Atlas_Serialize = {
       id: 1,
       name: names("Incarnam"),
       subAreas: [
-        { id: 5, name: names("Pâturages"), level: 1, maps: [{ world: 2, at: [[2, 2]] }], resources: [], monsters: 0 },
+        {
+          id: 5,
+          name: names("Pâturages"),
+          level: 1,
+          maps: [{ world: 2, at: [[2, 2]], priority: [] }],
+          resources: [],
+          monsters: 0,
+        },
       ],
     },
   ],
@@ -170,6 +178,24 @@ describe("the World tab", () => {
     expect(document.body.textContent).toContain("détails 3");
     expect(click("clic 1, 0")).toBe("false");
     expect(click("clic 5, 5")).toBe("false");
+    expect(useWorld.getState().picked).toBe(3);
+  });
+
+  it("chooses on a map two sub-areas share the one with the client's priority there, whichever comes last", async () => {
+    const [astrub, incarnam] = ATLAS.areas;
+    const [forest, ...others] = astrub?.subAreas ?? [];
+    if (astrub === undefined || incarnam === undefined || forest === undefined) {
+      throw new Error("the atlas fixture changed");
+    }
+    // A house listed after the forest, on its map 1, 0, without the priority the forest has there.
+    const house = { ...forest, id: 6, name: names("Maison"), maps: [{ world: 1, at: [[1, 0]], priority: [] }] };
+    const prioritised = { ...forest, maps: [{ world: 1, at: forest.maps[0]?.at ?? [], priority: [[1, 0]] }] };
+    backEnd.atlas.mockResolvedValue({
+      ...ATLAS,
+      areas: [{ ...astrub, subAreas: [prioritised, ...others, house] }, incarnam],
+    } as Atlas_Serialize);
+    await shown(<WorldTab />);
+    fireEvent.click(screen.getByRole("button", { name: "clic 1, 0" }));
     expect(useWorld.getState().picked).toBe(3);
   });
 
