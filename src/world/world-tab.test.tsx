@@ -13,16 +13,22 @@ vi.mock("./world-map.tsx", () => ({
   WorldMap: ({
     chosen,
     hints,
+    nameAt,
     onPick,
     outlineAt,
   }: {
     chosen: unknown[] | null;
     hints: { id: number }[];
+    nameAt: (x: number, y: number) => string | null;
     onPick: (x: number, y: number) => boolean;
     outlineAt?: (x: number, y: number) => unknown[] | null;
   }) => (
     <>
-      <p data-hints={hints.map((one) => one.id).join(",")} data-outline={String(outlineAt?.(1, 0)?.length)}>
+      <p
+        data-hints={hints.map((one) => one.id).join(",")}
+        data-outline={String(outlineAt?.(1, 0)?.length)}
+        data-name={nameAt(1, 0) ?? ""}
+      >
         carte {chosen?.length ?? "vide"}
       </p>
       <button type="button" onClick={(event) => (event.currentTarget.dataset["picked"] = String(onPick(1, 0)))}>
@@ -181,7 +187,7 @@ describe("the World tab", () => {
     expect(useWorld.getState().picked).toBe(3);
   });
 
-  it("chooses on a map two sub-areas share the one with the client's priority there, whichever comes last", async () => {
+  it("names and chooses on a map two sub-areas share the one with the client's priority there, whichever comes last", async () => {
     const [astrub, incarnam] = ATLAS.areas;
     const [forest, ...others] = astrub?.subAreas ?? [];
     if (astrub === undefined || incarnam === undefined || forest === undefined) {
@@ -195,6 +201,7 @@ describe("the World tab", () => {
       areas: [{ ...astrub, subAreas: [prioritised, ...others, house] }, incarnam],
     } as Atlas_Serialize);
     await shown(<WorldTab />);
+    expect(document.querySelector("[data-name]")?.getAttribute("data-name")).toBe("Forêt d'Astrub");
     fireEvent.click(screen.getByRole("button", { name: "clic 1, 0" }));
     expect(useWorld.getState().picked).toBe(3);
   });

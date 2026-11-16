@@ -150,7 +150,8 @@ pub struct WorldMaps {
     pub world: i32,
     pub at: Vec<[i16; 2]>,
     /// Those of `at` where one of its maps has the client's priority on the world map, which a click there chooses
-    /// over a sub-area without it (Village des Zoths under the Hakam tree's trunk, 3.7.13.17).
+    /// over a sub-area without it (the Hakam tree's trunk over Village des Zoths; 3.7.13.17, inferred from the data
+    /// and checked on the World tab).
     pub priority: Vec<[i16; 2]>,
 }
 
@@ -216,8 +217,9 @@ fn atlas((world, worlds, hints, items): Game, folder: &Path) -> Atlas {
     for position in &world.positions {
         held.insert(position.sub_area_id);
         let priority = position.flags.contains(&MapFlag::HasPriorityOnWorldmap);
-        // The client parks at 0, 0 the maps it draws nowhere (1,820 on the Twelve, 3.7.13.17: dungeons, houses, guild
-        // halls); only those with the priority are truly there (Village d'Amakna's).
+        // The client parks at 0, 0 the maps it draws nowhere (1,820 on the Twelve: dungeons, houses, guild halls); only
+        // those with the priority are truly there (Village d'Amakna's). 3.7.13.17, inferred from the data and checked on
+        // the World tab, not read from the client's code.
         let parked = (position.x, position.y) == (0, 0) && !priority;
         if shown_ids.contains(&position.world_map) && !parked {
             let (at, first) = maps
