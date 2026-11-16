@@ -18,7 +18,7 @@ interface ShareStore {
   exportBlueprint: (source: BlueprintSummary) => Promise<void>;
   /** Import's first step from the system's open dialog: the file chosen, previewed. */
   pick: () => Promise<void>;
-  /** The `.d3b` at `path`, dropped on the window, previewed. */
+  /** The `.d3b` at `path`, dropped on the window, previewed; ignored while an import is saved. */
   open: (path: string) => Promise<void>;
   /** Imports the blueprint previewed among mine and opens its tab; the preview closes. */
   confirm: () => Promise<void>;
@@ -33,6 +33,8 @@ function shareFailure(error: ShareFailure): string {
       return i18next.t("share.failure.unreadable", { reason: error.reason });
     case "newer":
       return i18next.t("share.failure.newer", { found: error.found });
+    case "newerSchema":
+      return i18next.t("share.failure.newerSchema", { found: error.found });
     case "notOfItsShape":
       return i18next.t("share.failure.notOfItsShape", { detail: error.detail });
     case "notSaved":
@@ -82,6 +84,10 @@ export const useShare = create<ShareStore>((set, get) => ({
   },
 
   open: async (path) => {
+    // A file dropped while one is imported would be closed by the import's end without a word.
+    if (get().importing) {
+      return;
+    }
     try {
       set({ preview: await commands.previewShared(path) });
     } catch (error) {

@@ -126,5 +126,17 @@ describe("the .d3b file", () => {
     backEnd.exportBlueprint.mockRejectedValue({ kind: "noSuchBlueprint" });
     await useShare.getState().exportBlueprint(harvest);
     expect(backEnd.toasts[3]).toBe("Récolte automatique n'a pas été exporté : il n'est plus là.");
+    backEnd.previewShared.mockRejectedValue({ kind: "newerSchema", found: 2 });
+    await useShare.getState().open("x.d3b");
+    expect(backEnd.toasts[4]).toBe(
+      "Le fichier n'a pas été importé : son blueprint est écrit par un D3B plus récent (schéma 2) : mettez D3B à jour.",
+    );
+  });
+
+  it("ignores a file dropped while an import is saved", async () => {
+    useShare.setState({ preview, importing: true });
+    await useShare.getState().open("other.d3b");
+    expect(backEnd.previewShared).not.toHaveBeenCalled();
+    expect(useShare.getState().preview).toEqual(preview);
   });
 });
