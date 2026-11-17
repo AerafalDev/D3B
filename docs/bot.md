@@ -389,9 +389,12 @@ flowchart LR
   wildcard drawn as its type, a variable's pill as a box's pin (step 2 of (v2.2), done in code). **Colours by family**: a map teal beside the zone and the route (`#5fb3a1`), an item
   orange beside Items (`#e0a46b`), a duration and a time violets beside the numbers they compare with (`#b5a7ff`,
   `#d6a8ff`), an NPC pale yellow (`#dcdcaa`).
-- **Details**: a value typed on an untyped wildcard comes with a type chosen beside it, among the kind's (`of`);
-  editors by type: a duration ("1 min 30"), a time ("23:00"), a map, an item, a list (a row per value, + and ×) and
-  ranges; an NPC shows its id, marked step 4, until its data comes.
+- **Details**: a value typed on an untyped wildcard comes with a type chosen beside it, among the kind's (`of`), every
+  type but the NPC for a kind that lists none; the first is chosen first and, for a kind reading it meanwhile (`≥`),
+  sent as none; the choice is offered only while the wildcard is open, its node changing no variable and no other
+  wildcard of it wired or holding a value; editors by type: a duration ("1 min 30"), a time ("23:00", one not of that
+  form refused), a map, an item, a list (a row per value, + and ×) and ranges; a map, an item and an NPC show their
+  id until their data comes (step 3 of (v2.2), done in code for the chooser, the time and the values' words).
 - **A map** (the owner, 2026-11-17): the field's target opens the World tab's choosing mode, a hover outlining one map
   and a click taking the one the world map draws there, Escape cancelling; "5,-18" may be typed; "Where is
   <character>" takes the map a character online stands on, an inside too, which shares its street's coordinates.

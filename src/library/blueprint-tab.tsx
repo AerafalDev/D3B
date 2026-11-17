@@ -331,8 +331,8 @@ export function BlueprintTab({ api, params }: IDockviewPanelProps<BlueprintParam
                 onValue={
                   blueprint.given || shownGraph === undefined
                     ? undefined
-                    : (node, pin, value) =>
-                        edit(blueprint.id, shownGraph.id, { edit: "value", node, pin, value }).then((saved) => {
+                    : (node, pin, value, of) =>
+                        edit(blueprint.id, shownGraph.id, { edit: "value", node, pin, value, of }).then((saved) => {
                           if (saved) {
                             void refresh();
                           }

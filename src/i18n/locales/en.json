@@ -460,7 +460,14 @@
       "noItem": "Nothing",
       "items_one": "{{count}} item",
       "items_other": "{{count}} items",
-      "zone": "A chosen zone"
+      "zone": "A chosen zone",
+      "map": "Map {{id}}",
+      "item": "Item {{id}}",
+      "npc": "NPC {{id}}",
+      "list_one": "{{count}} value",
+      "list_other": "{{count}} values",
+      "ranges_one": "{{count}} range",
+      "ranges_other": "{{count}} ranges"
     },
     "rename": "Rename",
     "name": "Blueprint name",
@@ -550,6 +557,7 @@
       "memory": "Memory: kept per character across sessions",
       "oneRun": "One run",
       "reset": "Back to the default ({{value}})",
+      "typeOf": "Type of {{pin}}",
       "usedBy": "Used by",
       "nodes_one": "{{count}} node",
       "nodes_other": "{{count}} nodes",

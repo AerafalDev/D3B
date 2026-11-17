@@ -205,6 +205,103 @@ describe("the editor's Details", () => {
     expect(screen.queryByRole("listitem")).toBeNull();
   });
 
+  it("types a value on an untyped comparison as the type chosen beside it, read as a number with none", async () => {
+    const ge = node("ge", {
+      kind: "greater_or_equal",
+      family: "query",
+      pins: [{ ...pin("b", "in", "number"), wildcard: true }, pin("value", "out", "bool")],
+      types: ["number", "percentage", "duration", "time"],
+    });
+    const mine = { ...graph, nodes: [ge] } as GraphView_Serialize;
+    const onValue = vi.fn(() => Promise.resolve(true));
+    const details = (
+      <BlueprintDetails
+        blueprint={{ ...blueprint, given: false }}
+        graphs={[mine]}
+        graph={mine}
+        problems={[]}
+        selection={{ kind: "node", id: "ge" }}
+        names={names}
+        onValue={onValue}
+      />
+    );
+    render(details);
+    const number = screen.getByRole("textbox", { name: "B" });
+    fireEvent.change(number, { target: { value: "90" } });
+    fireEvent.keyDown(number, { key: "Enter" });
+    expect(onValue).toHaveBeenLastCalledWith("ge", "b", "90", undefined);
+    fireEvent.click(screen.getByRole("combobox", { name: "Type de B" }));
+    fireEvent.click(await screen.findByRole("option", { name: "Heure" }));
+    const time = screen.getByRole("textbox", { name: "B" });
+    expect(time.getAttribute("aria-invalid")).toBe("false");
+    for (const wrong of ["25:00", "9:00"]) {
+      fireEvent.change(time, { target: { value: wrong } });
+      expect(time.getAttribute("aria-invalid")).toBe("true");
+      fireEvent.keyDown(time, { key: "Enter" });
+      expect((time as HTMLInputElement).value).toBe("");
+    }
+    expect(onValue).toHaveBeenCalledTimes(1);
+    fireEvent.change(time, { target: { value: "23:00" } });
+    fireEvent.keyDown(time, { key: "Enter" });
+    expect(onValue).toHaveBeenLastCalledWith("ge", "b", '"23:00"', "time");
+    cleanup();
+    // Typed, it offers no type to choose.
+    const typed = { ...ge, options: { valueType: "time" }, pins: [{ ...pin("b", "in", "time"), wildcard: true }] };
+    const shown = { ...mine, nodes: [typed] } as GraphView_Serialize;
+    render(
+      <BlueprintDetails
+        blueprint={{ ...blueprint, given: false }}
+        graphs={[shown]}
+        graph={shown}
+        problems={[]}
+        selection={{ kind: "node", id: "ge" }}
+        names={names}
+        onValue={onValue}
+      />,
+    );
+    expect(screen.queryByRole("combobox", { name: "Type de B" })).toBeNull();
+    cleanup();
+    // Another wildcard holding a value reads it as a number already: no type to choose on this one.
+    const read = { ...ge, inputs: { a: "90" }, pins: [{ ...pin("a", "in", "number"), wildcard: true }, ...ge.pins] };
+    const reading = { ...mine, nodes: [read] } as GraphView_Serialize;
+    render(
+      <BlueprintDetails
+        blueprint={{ ...blueprint, given: false }}
+        graphs={[reading]}
+        graph={reading}
+        problems={[]}
+        selection={{ kind: "node", id: "ge" }}
+        names={names}
+        onValue={onValue}
+      />,
+    );
+    expect(screen.queryByRole("combobox", { name: "Type de B" })).toBeNull();
+  });
+
+  it("offers any type on a wildcard reading none, and always says the type chosen", async () => {
+    const any = node("eq", {
+      kind: "test_equal",
+      family: "query",
+      pins: [{ ...pin("b", "in", "wildcard"), wildcard: true }],
+    });
+    const mine = { ...graph, nodes: [any] } as GraphView_Serialize;
+    const onValue = vi.fn(() => Promise.resolve(true));
+    render(
+      <BlueprintDetails
+        blueprint={{ ...blueprint, given: false }}
+        graphs={[mine]}
+        graph={mine}
+        problems={[]}
+        selection={{ kind: "node", id: "eq" }}
+        names={names}
+        onValue={onValue}
+      />,
+    );
+    expect(screen.getByRole("combobox", { name: "Type de B" }).textContent).toContain("Oui / non");
+    fireEvent.click(screen.getByRole("switch", { name: "B" }));
+    expect(onValue).toHaveBeenLastCalledWith("eq", "b", "true", "bool");
+  });
+
   it("edits the values typed on a node's inputs of mine, a wired one said, a default put back", () => {
     const notify = node("notify", {
       kind: "notify",
@@ -240,11 +337,11 @@ describe("the editor's Details", () => {
     const text = screen.getByRole("textbox", { name: "Texte" });
     fireEvent.change(text, { target: { value: "Objectif atteint" } });
     fireEvent.keyDown(text, { key: "Enter" });
-    expect(onValue).toHaveBeenLastCalledWith("notify", "text", JSON.stringify("Objectif atteint"));
+    expect(onValue).toHaveBeenLastCalledWith("notify", "text", JSON.stringify("Objectif atteint"), undefined);
     // Cleared, it is none, so the node keeps its problem.
     fireEvent.change(text, { target: { value: "" } });
     fireEvent.keyDown(text, { key: "Enter" });
-    expect(onValue).toHaveBeenLastCalledWith("notify", "text", null);
+    expect(onValue).toHaveBeenLastCalledWith("notify", "text", null, undefined);
     unmount();
 
     const { container, unmount: away } = shown("harvest");
@@ -254,7 +351,7 @@ describe("the editor's Details", () => {
     // A value typed at its default, as D3B's files hold some, offers nothing to put back.
     expect(screen.getAllByRole("button", { name: /Revenir/ })).toHaveLength(1);
     fireEvent.click(screen.getByRole("button", { name: "Revenir à la valeur par défaut (90 %)" }));
-    expect(onValue).toHaveBeenLastCalledWith("harvest", "pods", null);
+    expect(onValue).toHaveBeenLastCalledWith("harvest", "pods", null, undefined);
     fireEvent.change(pods, { target: { value: "101" } });
     fireEvent.blur(pods);
     expect(onValue).toHaveBeenCalledTimes(3);
@@ -268,6 +365,6 @@ describe("the editor's Details", () => {
     expect(onValue).toHaveBeenCalledTimes(3);
     fireEvent.change(value, { target: { value: "50" } });
     fireEvent.blur(value);
-    expect(onValue).toHaveBeenLastCalledWith("set", "value", "50");
+    expect(onValue).toHaveBeenLastCalledWith("set", "value", "50", undefined);
   });
 });
