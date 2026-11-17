@@ -73,6 +73,7 @@ export function InputRow({ pin, typed, type, who, open, onValue }: InputRowProps
             {open.map((one) => (
               <SelectItem key={one} value={one} className="text-xs">
                 <span aria-hidden="true" className={cn("blueprint-chip-dot", `blueprint-type-${one}`)} />
+                {/* A kind's types are `ValueType`'s names, each with its key under `blueprint.type`. */}
                 {t(`blueprint.type.${one}` as never)}
               </SelectItem>
             ))}

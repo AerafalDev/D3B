@@ -162,6 +162,31 @@ const ANY_TYPE = [
   "time",
 ];
 
+/**
+ * The types the input `pin` of `node` may be typed as, when it is a wildcard still open, as `bot::pins::open_pins`
+ * decides: its node notes no type, changes no variable (typed by it), and no other wildcard of it is wired or holds a
+ * value, which would read it as the kind's first type already; `undefined` otherwise.
+ */
+function openTo(node: GraphNode, pin: string, graph: GraphView_Serialize): readonly string[] | undefined {
+  const at = node.pins.find((one) => one.id === pin && one.side === "in");
+  const wildcard = at?.carries === "wildcard" || at?.wildcard === true;
+  if (!wildcard || node.options?.valueType !== undefined || node.options?.variable !== undefined) {
+    return undefined;
+  }
+  const used = node.pins.some(
+    (one) =>
+      one.wildcard === true &&
+      !(one.id === pin && one.side === "in") &&
+      (node.inputs[one.id] !== undefined ||
+        graph.wires.some(({ from, to }) =>
+          one.side === "in" ? to[0] === node.id && to[1] === one.id : from[0] === node.id && from[1] === one.id,
+        )),
+  );
+  if (used) {
+    return undefined;
+  }
+  return (node.types ?? []).length > 0 ? (node.types ?? []) : ANY_TYPE;
+}
 function NodeDetails({ node, graph, problems, names, variables, onValue }: NodeDetailsProps) {
   const { t, i18n } = useTranslation();
   const kind = node.does === "kind" ? node.kind : null;
@@ -210,13 +235,8 @@ function NodeDetails({ node, graph, problems, names, variables, onValue }: NodeD
                   }}
                   who={title}
                   // A wildcard its node notes no type for offers the types it may take (the owner, 2026-11-17).
-                  open={
-                    pin.carries === "wildcard" || (pin.wildcard === true && (node.options?.valueType ?? null) === null)
-                      ? (node.types ?? []).length > 0
-                        ? (node.types ?? [])
-                        : ANY_TYPE
-                      : undefined
-                  }
+                  // A wildcard its node notes no type for offers the types it may take (the owner, 2026-11-17).
+                  open={openTo(node, pin.id, graph)}
                   onValue={(value, of) => onValue(pin.id, value, of)}
                 />
               ),

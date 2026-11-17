@@ -210,7 +210,8 @@ function TimeEditor({ value, onChange, label }: Omit<SettingEditorProps, "who" |
       inputMode="numeric"
       placeholder="23:00"
       aria-label={label}
-      aria-invalid={!valid && !(draft.trim() === "" && value === null)}
+      // Empty is no error: a value of another type, or none, shows nothing to put right yet.
+      aria-invalid={!valid && draft.trim() !== ""}
       value={draft}
       onChange={(event) => setDraft(event.target.value)}
       onBlur={commit}

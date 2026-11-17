@@ -233,8 +233,14 @@ describe("the editor's Details", () => {
     fireEvent.click(screen.getByRole("combobox", { name: "Type de B" }));
     fireEvent.click(await screen.findByRole("option", { name: "Heure" }));
     const time = screen.getByRole("textbox", { name: "B" });
-    fireEvent.change(time, { target: { value: "25:00" } });
-    expect(time.getAttribute("aria-invalid")).toBe("true");
+    expect(time.getAttribute("aria-invalid")).toBe("false");
+    for (const wrong of ["25:00", "9:00"]) {
+      fireEvent.change(time, { target: { value: wrong } });
+      expect(time.getAttribute("aria-invalid")).toBe("true");
+      fireEvent.keyDown(time, { key: "Enter" });
+      expect((time as HTMLInputElement).value).toBe("");
+    }
+    expect(onValue).toHaveBeenCalledTimes(1);
     fireEvent.change(time, { target: { value: "23:00" } });
     fireEvent.keyDown(time, { key: "Enter" });
     expect(onValue).toHaveBeenLastCalledWith("ge", "b", '"23:00"', "time");
@@ -254,6 +260,46 @@ describe("the editor's Details", () => {
       />,
     );
     expect(screen.queryByRole("combobox", { name: "Type de B" })).toBeNull();
+    cleanup();
+    // Another wildcard holding a value reads it as a number already: no type to choose on this one.
+    const read = { ...ge, inputs: { a: "90" }, pins: [{ ...pin("a", "in", "number"), wildcard: true }, ...ge.pins] };
+    const reading = { ...mine, nodes: [read] } as GraphView_Serialize;
+    render(
+      <BlueprintDetails
+        blueprint={{ ...blueprint, given: false }}
+        graphs={[reading]}
+        graph={reading}
+        problems={[]}
+        selection={{ kind: "node", id: "ge" }}
+        names={names}
+        onValue={onValue}
+      />,
+    );
+    expect(screen.queryByRole("combobox", { name: "Type de B" })).toBeNull();
+  });
+
+  it("offers any type on a wildcard reading none, and always says the type chosen", async () => {
+    const any = node("eq", {
+      kind: "test_equal",
+      family: "query",
+      pins: [{ ...pin("b", "in", "wildcard"), wildcard: true }],
+    });
+    const mine = { ...graph, nodes: [any] } as GraphView_Serialize;
+    const onValue = vi.fn(() => Promise.resolve(true));
+    render(
+      <BlueprintDetails
+        blueprint={{ ...blueprint, given: false }}
+        graphs={[mine]}
+        graph={mine}
+        problems={[]}
+        selection={{ kind: "node", id: "eq" }}
+        names={names}
+        onValue={onValue}
+      />,
+    );
+    expect(screen.getByRole("combobox", { name: "Type de B" }).textContent).toContain("Oui / non");
+    fireEvent.click(screen.getByRole("switch", { name: "B" }));
+    expect(onValue).toHaveBeenLastCalledWith("eq", "b", "true", "bool");
   });
 
   it("edits the values typed on a node's inputs of mine, a wired one said, a default put back", () => {
