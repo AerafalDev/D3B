@@ -106,6 +106,25 @@ describe("a variable of mine in Details", () => {
     expect(onChange).toHaveBeenLastCalledWith({ ...pods, valueType: "text" });
   });
 
+  it("offers v2's types and makes it a list or ranges, its bounds gone with either", async () => {
+    const { onChange } = shown();
+    fireEvent.click(screen.getByRole("combobox", { name: "Type" }));
+    for (const type of ["Carte", "Objet", "Durée", "Heure"]) {
+      expect(await screen.findByRole("option", { name: type })).toBeTruthy();
+    }
+    fireEvent.keyDown(screen.getByRole("listbox"), { key: "Escape" });
+    fireEvent.click(screen.getByRole("switch", { name: "Liste" }));
+    expect(onChange).toHaveBeenLastCalledWith({ ...pods, list: true });
+    fireEvent.click(screen.getByRole("switch", { name: "Par niveau" }));
+    expect(onChange).toHaveBeenLastCalledWith({ ...pods, ranges: true });
+    cleanup();
+    for (const shape of [{ list: true }, { ranges: true }]) {
+      render(<VariableEditor variable={{ ...pods, ...shape }} usedBy={0} onChange={onChange} onDelete={() => {}} />);
+      expect(screen.queryByRole("textbox", { name: "Plus petite valeur" })).toBeNull();
+      cleanup();
+    }
+  });
+
   it("deletes it", () => {
     const { onDelete } = shown();
     fireEvent.click(screen.getByRole("button", { name: "Supprimer la variable" }));

@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { givenText } from "@/library/given-text.ts";
 import { type BlueprintSummary, useLibrary } from "@/library/library-store.ts";
 import { blueprintName, openBlueprint } from "@/library/open-blueprint.ts";
-import { valueText } from "@/library/value-text.ts";
+import { shapedText } from "@/library/value-text.ts";
 import { SettingEditor } from "./setting-editor.tsx";
 
 /** The list's value for "no blueprint": no blueprint's id holds a space. */
@@ -149,7 +149,7 @@ function SettingRow({ character, blueprint, variable }: SettingRowProps) {
   const name = read(`variables.${variable.id}.name`, variable.name);
   const help = read(`variables.${variable.id}.help`, variable.help);
   const own = character.settings[variable.id];
-  const reset = t("settings.reset", { value: valueText(variable.valueType, variable.default, i18n.language) });
+  const reset = t("settings.reset", { value: shapedText(variable, variable.default, i18n.language) });
 
   return (
     <div className="relative flex flex-col gap-1">

@@ -464,6 +464,8 @@
       "map": "Carte {{id}}",
       "item": "Objet {{id}}",
       "npc": "PNJ {{id}}",
+      "listOf": "{{type}} · liste",
+      "byLevel": "{{type}} · par niveau",
       "list_one": "{{count}} valeur",
       "list_other": "{{count}} valeurs",
       "ranges_one": "{{count}} tranche",
@@ -563,6 +565,8 @@
       "nodes_other": "{{count}} nœuds",
       "name": "Nom",
       "memoryToggle": "Mémoire : gardée entre les séances",
+      "list": "Liste",
+      "ranges": "Par niveau",
       "deleteVariable": "Supprimer la variable",
       "smallest": "Plus petite valeur",
       "largest": "Plus grande valeur"
@@ -779,6 +783,11 @@
       "empty": "Aucune : peins ses cartes.",
       "share": "{{inZone}}/{{all}}"
     }
+  },
+  "values": {
+    "row": "{{label}}, valeur {{row}}",
+    "remove": "Retirer la valeur {{row}}",
+    "add": "{{label}} : ajouter une valeur"
   },
   "settings": {
     "title": "Blueprint et réglages",

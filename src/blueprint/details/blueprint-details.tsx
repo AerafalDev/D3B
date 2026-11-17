@@ -4,7 +4,7 @@ import type { GraphView_Serialize, ProblemView, VariableChange } from "@/binding
 import { cn } from "@/lib/utils.ts";
 import { givenText } from "@/library/given-text.ts";
 import type { BlueprintSummary } from "@/library/library-store.ts";
-import { valueText } from "@/library/value-text.ts";
+import { shapedText, typeText, valueText } from "@/library/value-text.ts";
 import { type GraphNode, graphSentences } from "../node-sentence.ts";
 import { pinLabel } from "../pin-label.ts";
 import { DetailRow } from "./detail-row.tsx";
@@ -285,9 +285,9 @@ function VariableDetails({ blueprint, variable, graphs }: VariableDetailsProps) 
         <span aria-hidden="true" className={cn("blueprint-chip-dot", `blueprint-type-${variable.valueType}`)} />
         {read(`variables.${variable.id}.name`, variable.name)}
       </div>
-      <DetailRow label={t("blueprint.details.type")}>{t(`blueprint.type.${variable.valueType}` as never)}</DetailRow>
+      <DetailRow label={t("blueprint.details.type")}>{typeText(variable)}</DetailRow>
       <DetailRow label={t("blueprint.details.default")}>
-        {valueText(variable.valueType, variable.default, i18n.language)}
+        {shapedText(variable, variable.default, i18n.language)}
       </DetailRow>
       {variable.bounds !== null && (
         <DetailRow label={t("blueprint.details.bounds")}>

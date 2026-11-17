@@ -407,7 +407,10 @@ flowchart LR
   number with nothing changed; "Copy as text" gives it back.
 - **My variables** (the owner, 2026-11-17: before (14), so the editors are used): the variable editor offers a map,
   an item, a duration and a time (the NPC at step 4), and two switches, "List" and "By level" (ranges), its default
-  and a character's setting typed with the editors above. (14) keeps the locals and the variables' nodes.
+  and a character's setting typed with the editors above, a list a row per value in its type's editor, × to remove one
+  and a last row adding the value typed there (step 4 of (v2.2), done in code; ranges said by their rows until their
+  table, step 7; a type its editor waits for, a map or an item, shows its rows and takes no new one yet; a type read
+  "Durée · liste" or "Zone · par niveau"). (14) keeps the locals and the variables' nodes.
 - **A node's options** ("+" a case or an output, the owner, 2026-11-17) come with v2.3's Sequence and Switch, their
   first kinds: "+ Add an output" on the node for Sequence's outputs and a list's inputs, Switch's cases typed in
   Details a row each with + and ×, and a pin's right-click "Remove" dropping its wire.
