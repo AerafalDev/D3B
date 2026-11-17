@@ -525,6 +525,7 @@
       "duration": "Duration",
       "memory": "Memory: kept per character across sessions",
       "oneRun": "One run",
+      "reset": "Back to the default ({{value}})",
       "usedBy": "Used by",
       "nodes_one": "{{count}} node",
       "nodes_other": "{{count}} nodes"

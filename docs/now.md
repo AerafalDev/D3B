@@ -281,6 +281,17 @@ _Updated 2026-11-17._
        the system's trash without asking and closes its tab; the character's tab says "Blueprint <id> introuvable";
        restore the file from the trash and reopen the Library: it is back, and the character runs it again with its
        values.
+- **step 3, values typed on a node's inputs** (the owner's request of 2026-11-17), on Windows x64 from `bun run app`
+  on `next` or the next release:
+    1. open Récolte automatique and choose "Récolter": Details says its inputs' values, no field;
+    2. in a copy of mine, add a Prévenir and choose it: Details shows "Texte" as a field; type "Objectif atteint",
+       press Enter: the node's sentence says it, the Library's count of problems drops by one, and the file
+       `Documents/D3B/blueprints/<id>.json` holds `"inputs": {"text": "Objectif atteint"}`; Ctrl+Z (outside the field)
+       takes it back, Ctrl+Y puts it again;
+    3. choose "Récolter": "Zone" says "relié"; set "Pods" to 101: the field is marked and put back when left; set 80:
+       a button "Revenir à la valeur par défaut (90 %)" shows; click it: 90 %, and the file holds no `pods`;
+    4. choose "Attendre" (or a "Mettre" of a percentage with bounds 10 to 100): a number out of its bounds is
+       refused; a Zone input opens the Zone field, its target choosing on the World's map and coming back.
 - **step 3, Advanced tools** ((24)), on Windows x64 from `bun run app` on `next` or the next release:
   Measured by the owner on 2026-11-17, Windows x64, `bun run app` on `next` 60cf228: items 1, 2, 3 and 5 pass, and 4 but
   for the palette's command, not tried. Not measured yet: item 6. The owner then asked for the panel closed by default
@@ -442,7 +453,9 @@ _Updated 2026-11-17._
   deletion not confirmed; a blueprint of mine deleted to the system's trash without asking, the characters that run it
   keeping its id), in two PRs: nodes and wires deleted, a move of many one change, undo, redo and `delete_blueprint`
   through the IPC (done in code), then Delete, Backspace and a context menu in the graph, Ctrl+Z and Ctrl+Y, and
-  Delete in the Library (done in code; its checklist under "Not measured"); then **blueprints v2**
+  Delete in the Library (done in code; its checklist under "Not measured"); the owner's requests of 2026-11-17, before
+  v2 (the owner's choices of that day): values typed on a node's inputs in Details (done in code; its checklist under
+  "Not measured"), then my variables, (14)'s first PR, then renaming a blueprint of mine; then **blueprints v2**
   ([bot.md](bot.md#the-language-v2), ADR 0016; the owner, 2026-11-16, after trying (12): "much more complete", "as
   practical as a Lua script"), from a mock-up of the catalogue and the Summary and an analysis of the reference Lua
   scripts: compact value nodes and a typed Expression, wildcards, lists and level ranges, flow for a bot, "When …
