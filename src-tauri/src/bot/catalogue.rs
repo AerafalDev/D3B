@@ -287,6 +287,9 @@ pub(crate) const KINDS: &[Kind] = &[
     of("wait_until", Flow, &[RUN, input("condition", Bool, None), input("longest", Duration, Some("0")), THEN, exec("too_long", Side::Out)], None),
     of("block", Flow, &[RUN, input("reason", Text, None)], None),
     of("pause_notify", Flow, &[RUN, input("text", Text, None), THEN], None),
+    // Retry (the owner, 2026-11-17): a node whose body is tried up to N times, the first included; an unlinked Failed
+    // inside it starts the next try, and after the last one it goes out of Failed with the reason.
+    of("retry", Flow, &[RUN, input("times", Number, Some("3")), exec("try", Side::Out), output("index", Number), THEN, FAILED, REASON], None),
     of("life_percent", Query, &[output("value", Percentage)], None),
     of("pods_percent", Query, &[output("value", Percentage)], None),
     // The items a profession harvests, from the data's skills (3.7.13.17, `artifacts/studies/items.md`, verified):

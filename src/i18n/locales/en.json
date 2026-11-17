@@ -305,6 +305,10 @@
         "sentence": "Pause and notify: {{text}}",
         "description": "Tells the player this text and pauses the run; it resumes after this node."
       },
+      "retry": {
+        "sentence": "Try up to {{times}} times",
+        "description": "Runs its try; an unlinked Failed inside it starts another, up to N tries, the first included, then Failed with the reason."
+      },
       "life_percent": {
         "sentence": "Life %",
         "description": "Life, as a percentage of its maximum."
@@ -394,6 +398,7 @@
       "second": "Second",
       "longest": "At most",
       "too_long": "Too long",
+      "try": "Try",
       "job": "Profession"
     }
   },
@@ -715,7 +720,9 @@
         "repeat_body": "Each pass:",
         "while_body": "While it holds:",
         "for_each_body": "For each element:",
-        "wait_until_too_long": "Too long:"
+        "wait_until_too_long": "Too long:",
+        "retry_try": "Try:",
+        "retry_failed": "If every try fails:"
       },
       "back": "Back to {{step}}.",
       "on": "Go on to {{step}}.",

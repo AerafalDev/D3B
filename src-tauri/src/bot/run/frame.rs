@@ -30,7 +30,7 @@ impl Call {
         Self {
             graph,
             caller,
-            chains: vec![Chain::new(None, false, start, String::new())],
+            chains: vec![Chain::new(None, Body::Plain, start, String::new())],
             slots: HashMap::new(),
             outputs: HashMap::new(),
             locals: HashMap::new(),
@@ -38,13 +38,24 @@ impl Call {
     }
 }
 
+/// What a chain a node runs is the body of.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub(crate) enum Body {
+    /// A Sequence's output, the call's own chain: nothing ends it but its flow.
+    Plain,
+    /// A loop's body, which Leave the loop ends.
+    Loop,
+    /// Retry's try, which an unlinked Failed ends, so that it is tried again.
+    Try,
+}
+
 /// A chain of nodes the flow follows: the call's own, or a body a node runs.
 #[derive(Debug)]
 pub(super) struct Chain {
     /// The node that ran it, resumed when it ends; none for the call's own.
     pub(super) owner: Option<usize>,
-    /// Whether Leave the loop ends it.
-    pub(super) breakable: bool,
+    /// What it is the body of: Leave the loop ends a loop's, an unlinked Failed a try's.
+    pub(super) body: Body,
     /// The node at work.
     pub(super) at: usize,
     /// The flow input it came in by, to enter it again after an interruption.
@@ -53,11 +64,11 @@ pub(super) struct Chain {
 }
 
 impl Chain {
-    pub(super) fn new(owner: Option<usize>, breakable: bool, at: usize, entered: String) -> Self {
+    pub(super) fn new(owner: Option<usize>, body: Body, at: usize, entered: String) -> Self {
         let resume = Resume::Enter { pin: entered.clone() };
         Self {
             owner,
-            breakable,
+            body,
             at,
             entered,
             resume,

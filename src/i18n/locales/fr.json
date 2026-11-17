@@ -305,6 +305,10 @@
         "sentence": "Mettre en pause et prévenir : {{text}}",
         "description": "Prévient le joueur avec ce texte et met le lancement en pause ; il reprend après ce nœud."
       },
+      "retry": {
+        "sentence": "Essayer jusqu'à {{times}} fois",
+        "description": "Lance son essai ; un Échec non relié dedans en relance un autre, jusqu'à N essais, le premier compris, puis Échec avec la raison."
+      },
       "life_percent": {
         "sentence": "Vie %",
         "description": "La vie, en pourcentage du maximum."
@@ -394,6 +398,7 @@
       "second": "Ensuite",
       "longest": "Au plus",
       "too_long": "Trop long",
+      "try": "Essai",
       "job": "Métier"
     }
   },
@@ -715,7 +720,9 @@
         "repeat_body": "À chaque tour :",
         "while_body": "Tant que c'est vrai :",
         "for_each_body": "Pour chaque élément :",
-        "wait_until_too_long": "Trop long :"
+        "wait_until_too_long": "Trop long :",
+        "retry_try": "Essai :",
+        "retry_failed": "Si tous les essais échouent :"
       },
       "back": "Revenir à {{step}}.",
       "on": "Aller à {{step}}.",

@@ -28,7 +28,7 @@ pub(crate) use values::Trace;
 use super::Blueprint;
 use super::catalogue::{DONE, FAILED, REASON};
 use crate::game::View;
-use frame::{Call, Chain, Slot};
+use frame::{Body, Call, Chain, Slot};
 use program::{Doing, Program, compile};
 use variables::Variables;
 
@@ -283,7 +283,7 @@ impl Run {
         match step {
             Step::Go(pin) => self.go(&pin),
             Step::Failed(reason) => self.failed(reason),
-            Step::Chain { pin, breakable } => {
+            Step::Chain { pin, body } => {
                 let (graph, node) = self.at();
                 let next = self
                     .program
@@ -293,7 +293,7 @@ impl Run {
                     return Then::Stops;
                 };
                 match next {
-                    Some((to, input)) => call.chains.push(Chain::new(Some(node), breakable, to, input)),
+                    Some((to, input)) => call.chains.push(Chain::new(Some(node), body, to, input)),
                     // A body wired to nothing ends at once.
                     None => {
                         if let Some(chain) = call.chains.last_mut() {
@@ -329,7 +329,7 @@ impl Run {
         {
             Some((to, input)) => {
                 if let Some(chain) = self.chain() {
-                    *chain = Chain::new(chain.owner, chain.breakable, to, input);
+                    *chain = Chain::new(chain.owner, chain.body, to, input);
                 }
                 Then::Runs
             }
@@ -341,7 +341,7 @@ impl Run {
     fn failed(&mut self, reason: String) -> Then {
         let (graph, node) = self.at();
         if self.program.next(graph, node, FAILED.id).is_none() {
-            return self.block(Reason::Failed(reason));
+            return self.tried(reason);
         }
         if let Some(call) = self.flows.last_mut().and_then(|flow| flow.last_mut()) {
             call.outputs.insert((node, REASON.id.to_owned()), Value::String(reason));
@@ -416,12 +416,40 @@ impl Run {
         }
     }
 
-    /// Leave the loop: the chains up to the nearest breakable one end, and its owner is told.
+    /// An unlinked Failed: the calls and chains up to the nearest try end and its Retry is told, through the calls
+    /// of functions too (the owner, 2026-11-17: a function behaves in a try as its actions would there), else the
+    /// character blocks with the reason, on the node that failed.
+    fn tried(&mut self, reason: String) -> Then {
+        let Some(flow) = self.flows.last() else {
+            return Then::Stops;
+        };
+        let found = flow.iter().enumerate().rev().find_map(|(at, call)| {
+            let chain = call.chains.iter().rposition(|chain| chain.body == Body::Try)?;
+            Some((at, chain))
+        });
+        let Some((call_at, try_at)) = found else {
+            return self.block(Reason::Failed(reason));
+        };
+        let Some(flow) = self.flows.last_mut() else {
+            return Then::Stops;
+        };
+        flow.truncate(call_at + 1);
+        let Some(call) = flow.last_mut() else {
+            return Then::Stops;
+        };
+        call.chains.truncate(try_at);
+        if let Some(chain) = call.chains.last_mut() {
+            chain.resume = Resume::Failed(reason);
+        }
+        Then::Runs
+    }
+
+    /// Leave the loop: the chains up to the nearest loop's body end, and its owner is told.
     fn leave(&mut self) -> Then {
         let Some(call) = self.flows.last_mut().and_then(|flow| flow.last_mut()) else {
             return Then::Stops;
         };
-        let Some(loop_at) = call.chains.iter().rposition(|chain| chain.breakable) else {
+        let Some(loop_at) = call.chains.iter().rposition(|chain| chain.body == Body::Loop) else {
             return self.block(Reason::Fault(Fault::NotInALoop));
         };
         call.chains.truncate(loop_at);

@@ -6,12 +6,13 @@
 use serde_json::Value;
 
 use super::super::behaviour::{Behaviour, Cx, Fault, Resume, Step};
+use super::super::frame::Body;
 
 /// The body again, a loop's.
 fn body() -> Step {
     Step::Chain {
         pin: "body".to_owned(),
-        breakable: true,
+        body: Body::Loop,
     }
 }
 
@@ -19,7 +20,8 @@ fn body() -> Step {
 fn passes(cx: &mut Cx<'_>, resume: &Resume) -> Option<u64> {
     let slot = cx.slot();
     match resume {
-        Resume::Left => return None,
+        // A failure ends the chains up to Retry's try, never a loop's alone: a loop is not told one.
+        Resume::Left | Resume::Failed(_) => return None,
         Resume::ChainEnded => slot.count += 1,
         Resume::Enter { .. } | Resume::Tick => slot.count = 0,
     }
