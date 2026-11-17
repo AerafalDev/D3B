@@ -16,7 +16,7 @@ pub(crate) use choices::choices;
 
 use super::blueprint::{Blueprint, Does, End, Graph, Id, Node, Wire};
 use super::catalogue::{Carries, Side};
-use super::pins::{NodePin, pins, uses_wildcards};
+use super::pins::{NodePin, has_wildcards, pins, uses_wildcards};
 use super::variable::{ValueType, Variable};
 
 /// One change the editor makes to a graph.
@@ -270,8 +270,9 @@ fn join(graph: &mut Graph, Link { wire, value, typed }: Link) {
     } else {
         graph.wires.retain(|it| it.from != wire.from);
     }
+    // A kind that changes a variable takes its variable's type, never one of its own.
     if let Some((id, of)) = typed
-        && let Some(node) = graph.nodes.iter_mut().find(|it| it.id == id)
+        && let Some(node) = graph.nodes.iter_mut().find(|it| it.id == id && has_wildcards(it))
     {
         node.options.value_type = Some(of);
     }
@@ -486,6 +487,35 @@ mod tests {
             done(&mut blueprint, change.clone());
             assert_eq!(typed(&blueprint, "eq"), None, "{change:?}");
         }
+    }
+
+    #[test]
+    fn a_switch_keeps_its_type_while_it_has_cases_and_a_hole_takes_any_value() {
+        let mut blueprint = harvest();
+        let more = [
+            r#"{"id": "sw", "kind": "test_switch", "options": {"type": "job", "cases": [24]}}"#,
+            r#"{"id": "tx", "kind": "test_text", "options": {"text": "{count} done"}}"#,
+            r#"{"id": "add", "kind": "test_add_to"}"#,
+        ];
+        for node in more {
+            let node = serde_json::from_str(node).unwrap_or_else(|error| panic!("{error}"));
+            blueprint.graphs[0].nodes.push(node);
+        }
+        done(&mut blueprint, value("n3", "pods", Some(serde_json::json!(80))));
+        assert_eq!(
+            typed(&blueprint, "sw"),
+            Some(ValueType::Job),
+            "its cases are of its type"
+        );
+        done(&mut blueprint, value("tx", "count", Some(serde_json::json!(5))));
+        done(&mut blueprint, wire(("n3", "count"), ("tx", "count")));
+        // Without its variable, Add to has no type to take from a wire.
+        refused(
+            &mut blueprint,
+            vec![(value("add", "amount", Some(serde_json::json!(5))), Refusal::NotItsType)],
+        );
+        done(&mut blueprint, wire(("n3", "count"), ("add", "amount")));
+        assert_eq!(typed(&blueprint, "add"), None);
     }
 
     #[test]

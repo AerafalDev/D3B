@@ -24,6 +24,8 @@ pub(super) fn typed(
     // A wildcard of a node with no type takes the type its first value is given as, of its own shape.
     let (value_type, typing) = match input.carries {
         Carries::Value(typed) => (Some(typed), None),
+        // A Text's hole holds any value.
+        Carries::Any => (None, None),
         Carries::Wildcard(shape) => (of.map(|of| Type::new(of, shape)), of),
         Carries::Exec => return Err(Refusal::NotItsType),
     };
@@ -38,7 +40,10 @@ pub(super) fn typed(
     let value = value.filter(|value| Some(value) != input.default.as_ref());
     if let Some(value) = &value {
         let holds = variable.map_or_else(
-            || !value.is_null() && value_type.is_some_and(|typed| typed.holds(value)),
+            || {
+                let any = input.carries == Carries::Any;
+                !value.is_null() && (any || value_type.is_some_and(|typed| typed.holds(value)))
+            },
             |variable| variable.accepts(value),
         );
         if !holds {

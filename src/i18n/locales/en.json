@@ -560,6 +560,9 @@
       "valueNotOfType": "{{pin}}'s value is not of its type.",
       "rangesOverlap": "Two rows of {{pin}}'s ranges share a level.",
       "noSuchOption": "This node does not take the option {{subject}}.",
+      "optionMissing": "This node needs its {{subject}}.",
+      "caseNotOfType": "The case {{pin}} is not of the type compared.",
+      "caseTwice": "The case {{pin}} is given twice.",
       "wildcardWithoutType": "This node is wired or given a value before it has a type.",
       "wireToNoPin": "A wire goes to {{pin}}, which this node does not have.",
       "wireTheWrongWay": "A wire is drawn the wrong way on {{pin}}.",
@@ -585,7 +588,8 @@
       "duration": "Duration",
       "time": "Time of day",
       "npc": "NPC",
-      "wildcard": "Any type"
+      "wildcard": "Any type",
+      "any": "Any value"
     },
     "faulty": "Has a problem.",
     "summary": {

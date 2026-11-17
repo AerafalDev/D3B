@@ -56,6 +56,9 @@ pub enum ProblemKind {
     ValueNotOfType,
     RangesOverlap,
     NoSuchOption,
+    OptionMissing,
+    CaseNotOfType,
+    CaseTwice,
     WildcardWithoutType,
     WireToNoPin,
     WireTheWrongWay,
@@ -104,6 +107,11 @@ impl From<&Problem> for ProblemView {
             Problem::NoSuchOption { graph, node, option } => {
                 (K::NoSuchOption, text(graph), text(node), None, text(option))
             }
+            Problem::OptionMissing { graph, node, option } => {
+                (K::OptionMissing, text(graph), text(node), None, text(option))
+            }
+            Problem::CaseNotOfType { graph, node, pin } => (K::CaseNotOfType, text(graph), text(node), text(pin), None),
+            Problem::CaseTwice { graph, node, pin } => (K::CaseTwice, text(graph), text(node), text(pin), None),
             Problem::WildcardWithoutType { graph, node } => {
                 (K::WildcardWithoutType, text(graph), text(node), None, None)
             }
@@ -314,6 +322,8 @@ pub enum PinCarries {
     Time,
     Npc,
     Wildcard,
+    /// Any value: a Text's hole.
+    Any,
 }
 
 impl From<Carries> for PinCarries {
@@ -321,6 +331,7 @@ impl From<Carries> for PinCarries {
         match carries {
             Carries::Exec => Self::Exec,
             Carries::Wildcard(_) => Self::Wildcard,
+            Carries::Any => Self::Any,
             Carries::Value(typed) => match typed.of {
                 ValueType::Bool => Self::Bool,
                 ValueType::Number => Self::Number,
@@ -344,7 +355,7 @@ impl From<Carries> for PinCarries {
 /// Whether what a pin carries is a list, and ranges.
 fn shape(carries: Carries) -> (bool, bool) {
     match carries {
-        Carries::Exec => (false, false),
+        Carries::Exec | Carries::Any => (false, false),
         Carries::Value(bot::Type { shape, .. }) | Carries::Wildcard(shape) => (shape.list, shape.ranges),
     }
 }

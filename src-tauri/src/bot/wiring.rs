@@ -5,10 +5,12 @@
 
 use std::collections::{HashMap, HashSet};
 
-use super::blueprint::{Blueprint, Does, End, Graph, Id};
+use super::blueprint::{Blueprint, Does, End, Graph, Id, Node};
+use super::catalogue::Takes;
 use super::catalogue::{self, Carries, Family, Side};
 use super::pins::{NodePin, has_wildcards, pins, uses_wildcards};
 use super::problems::Problem;
+use super::variable::{Shape, Type};
 
 /// The problems of `graph`'s nodes and wires, after those `problems` finds itself.
 pub(crate) fn of_graph(blueprint: &Blueprint, graph: &Graph, found: &mut Vec<Problem>) {
@@ -54,11 +56,7 @@ pub(crate) fn of_graph(blueprint: &Blueprint, graph: &Graph, found: &mut Vec<Pro
         let Some(node_pins) = pins(blueprint, graph, node).filter(|_| !twice.contains(&node.id)) else {
             continue;
         };
-        if node.options.value_type.is_some() && !has_wildcards(node) {
-            let (graph, node) = at(&node.id);
-            let option = Id("type".to_owned());
-            found.push(Problem::NoSuchOption { graph, node, option });
-        }
+        of_options(blueprint, &graph.id, node, found);
         // Wired or given a value, an untyped wildcard is said once for its node; its wires are not looked at.
         if node.options.value_type.is_none() && uses_wildcards(graph, node) {
             let (graph, node) = at(&node.id);
@@ -76,8 +74,9 @@ pub(crate) fn of_graph(blueprint: &Blueprint, graph: &Graph, found: &mut Vec<Pro
                 Some(Carries::Value(typed)) if typed.overlaps(value) => {
                     found.push(Problem::RangesOverlap { graph, node, pin });
                 }
+                Some(Carries::Any) if value.is_null() => found.push(Problem::ValueNotOfType { graph, node, pin }),
                 // A value on a wildcard of no type is its node's problem, said above.
-                Some(Carries::Value(_) | Carries::Wildcard(_)) => {}
+                Some(Carries::Value(_) | Carries::Wildcard(_) | Carries::Any) => {}
             }
         }
         known.insert(&node.id, node_pins);
@@ -96,6 +95,69 @@ pub(crate) fn of_graph(blueprint: &Blueprint, graph: &Graph, found: &mut Vec<Pro
                 let (graph, node) = at(&node.id);
                 found.push(Problem::InputWithoutValue { graph, node, pin: id });
             }
+        }
+    }
+}
+
+/// The problems of `node`'s options: one its kind does not take, a variable it lacks or does not name, a case of
+/// another type than the node's or given twice. A wildcard's type missing is said with its wires.
+fn of_options(blueprint: &Blueprint, graph: &Id, node: &Node, found: &mut Vec<Problem>) {
+    let kind = match &node.does {
+        Does::Kind(id) => catalogue::kind(&id.0),
+        _ => None,
+    };
+    let takes = |option: fn(&Takes) -> bool| kind.is_some_and(|kind| kind.takes.iter().any(option));
+    let options = &node.options;
+    let given = [
+        ("type", options.value_type.is_some(), has_wildcards(node)),
+        (
+            "count",
+            options.count.is_some(),
+            takes(|it| matches!(it, Takes::Count { .. })),
+        ),
+        ("cases", !options.cases.is_empty(), takes(|it| *it == Takes::Cases)),
+        ("text", options.text.is_some(), takes(|it| *it == Takes::Text)),
+        (
+            "expression",
+            options.expression.is_some(),
+            takes(|it| *it == Takes::Expression),
+        ),
+        (
+            "variable",
+            options.variable.is_some(),
+            takes(|it| *it == Takes::Variable),
+        ),
+        // The events of mine and the functions' exits come with their nodes.
+        ("event", options.event.is_some(), false),
+        ("exit", options.exit.is_some(), false),
+    ];
+    let at = || (graph.clone(), node.id.clone());
+    for (option, present, taken) in given {
+        let option = Id(option.to_owned());
+        let (graph, node) = at();
+        if present && !taken {
+            found.push(Problem::NoSuchOption { graph, node, option });
+        } else if !present && taken && matches!(option.0.as_str(), "variable" | "expression") {
+            found.push(Problem::OptionMissing { graph, node, option });
+        }
+    }
+    if let Some(variable) = options.variable.as_ref().filter(|_| takes(|it| *it == Takes::Variable))
+        && !blueprint.variables.iter().any(|it| &it.id == variable)
+    {
+        let (graph, node) = at();
+        let variable = variable.clone();
+        found.push(Problem::NoSuchVariable { graph, node, variable });
+    }
+    let Some(of) = options.value_type.filter(|_| takes(|it| *it == Takes::Cases)) else {
+        return;
+    };
+    for (at_case, case) in options.cases.iter().enumerate() {
+        let (graph, node) = at();
+        let pin = Id(format!("case_{}", at_case + 1));
+        if case.is_null() || !Type::new(of, Shape::ONE).holds(case) {
+            found.push(Problem::CaseNotOfType { graph, node, pin });
+        } else if options.cases[..at_case].contains(case) {
+            found.push(Problem::CaseTwice { graph, node, pin });
         }
     }
 }
@@ -445,6 +507,85 @@ mod tests {
         let (graph, node, pin) = at("eq", "b");
         let alone = with_wildcards(None, |_| {});
         assert_eq!(alone, [without, Problem::InputWithoutValue { graph, node, pin }]);
+    }
+
+    #[test]
+    fn an_option_the_kind_does_not_take_or_lacks_is_a_problem() {
+        let found = after(|blueprint| {
+            let graph = &mut blueprint.graphs[0];
+            graph.nodes[2].options.count = std::num::NonZeroU8::new(2);
+            graph.nodes[2].options.event = Some(id("empty"));
+            graph.nodes[3].options.exit = Some(id("full"));
+            let more = [
+                r#"{"id": "a1", "kind": "test_add_to", "options": {"type": "zone"}}"#,
+                r#"{"id": "a2", "kind": "test_add_to", "options": {"variable": "nothing"}}"#,
+                r#"{"id": "a3", "kind": "test_add_to", "options": {"variable": "harvests"}, "inputs": {"amount": 1}}"#,
+                r#"{"id": "x", "kind": "test_expression"}"#,
+            ];
+            graph.nodes.extend(more.map(node));
+        });
+        let option = |node: &str, option: &str, missing: bool| {
+            let (graph, node, option) = at(node, option);
+            if missing {
+                Problem::OptionMissing { graph, node, option }
+            } else {
+                Problem::NoSuchOption { graph, node, option }
+            }
+        };
+        let (graph, node, variable) = at("a2", "nothing");
+        let without = |node: &str| {
+            let (graph, node, pin) = at(node, "amount");
+            Problem::InputWithoutValue { graph, node, pin }
+        };
+        let expected = [
+            option("n3", "count", false),
+            option("n3", "event", false),
+            option("n4", "exit", false),
+            option("a1", "type", false),
+            option("a1", "variable", true),
+            Problem::NoSuchVariable { graph, node, variable },
+            option("x", "expression", true),
+            without("a1"),
+            without("a2"),
+        ];
+        assert_eq!(found, expected);
+    }
+
+    #[test]
+    fn a_case_of_another_type_or_given_twice_is_a_problem() {
+        let switch = |options: &str| {
+            after(|blueprint| {
+                let text = format!(
+                    r#"{{"id": "sw", "kind": "test_switch", "options": {options}, "inputs": {{"value": 24}}}}"#
+                );
+                blueprint.graphs[0].nodes.push(node(&text));
+            })
+        };
+        let (graph, node, pin) = at("sw", "case_2");
+        let other = Problem::CaseNotOfType { graph, node, pin };
+        let (graph, node, pin) = at("sw", "case_3");
+        let twice = Problem::CaseTwice { graph, node, pin };
+        assert_eq!(
+            switch(r#"{"type": "job", "cases": [24, "bûcheron", 24, 28]}"#),
+            [other, twice]
+        );
+        // Its cases are a use of its wildcard: without a type, that is said once.
+        let untyped = Problem::WildcardWithoutType {
+            graph: id("events"),
+            node: id("sw"),
+        };
+        assert_eq!(switch(r#"{"cases": [24]}"#), [untyped]);
+    }
+
+    #[test]
+    fn a_hole_takes_any_value_but_none() {
+        let found = after(|blueprint| {
+            let text = r#"{"id": "tx", "kind": "test_text", "options": {"text": "{count} in {zone}"}, "inputs": {"zone": null}}"#;
+            blueprint.graphs[0].nodes.push(node(text));
+            blueprint.graphs[0].wires.push(wire("n2", "value", "tx", "count"));
+        });
+        let (graph, node, pin) = at("tx", "zone");
+        assert_eq!(found, [Problem::ValueNotOfType { graph, node, pin }]);
     }
 
     #[test]

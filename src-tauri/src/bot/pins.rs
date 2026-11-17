@@ -4,7 +4,8 @@
 use serde_json::Value;
 
 use super::blueprint::{Blueprint, Does, End, Graph, Node, Parameter};
-use super::catalogue::{self, Carries, DONE, FAILED, Pin, REASON, RUN, Side, THEN};
+use super::blueprint::{Id, Options};
+use super::catalogue::{self, Carries, DONE, FAILED, Pin, REASON, RUN, Side, THEN, Takes};
 use super::variable::Type;
 
 /// A pin of a node of a blueprint.
@@ -46,7 +47,21 @@ pub(crate) fn pins(blueprint: &Blueprint, graph: &Graph, node: &Node) -> Option<
         Does::Kind(kind) => {
             let kind = catalogue::kind(&kind.0)?;
             pins = kind.pins.iter().map(NodePin::from).collect();
-            if let Some(of) = node.options.value_type {
+            pins.extend(kind.takes.iter().flat_map(|takes| optioned(*takes, &node.options)));
+            // A kind that changes a variable types its wildcards by it, else by the type the node notes.
+            let typed = if kind.takes.contains(&Takes::Variable) {
+                let named = node.options.variable.as_ref();
+                named.and_then(|id| {
+                    blueprint
+                        .variables
+                        .iter()
+                        .find(|it| &it.id == id)
+                        .map(|it| it.value_type)
+                })
+            } else {
+                node.options.value_type
+            };
+            if let Some(of) = typed {
                 for pin in &mut pins {
                     if let Carries::Wildcard(shape) = pin.carries {
                         pin.carries = Carries::Value(Type::new(of, shape));
@@ -83,13 +98,51 @@ pub(crate) fn pins(blueprint: &Blueprint, graph: &Graph, node: &Node) -> Option<
     Some(pins)
 }
 
+/// The pins `takes` makes from a node's `options`.
+fn optioned(takes: Takes, options: &Options) -> Vec<NodePin> {
+    match takes {
+        Takes::Count { pin, least } => {
+            let count = options.count.map_or(least, std::num::NonZeroU8::get);
+            let numbered = |at| NodePin {
+                id: format!("{}_{at}", pin.id),
+                ..NodePin::from(&pin)
+            };
+            (1..=count).map(numbered).collect()
+        }
+        Takes::Cases => (1..=options.cases.len())
+            .map(|at| value(&format!("case_{at}"), Side::Out, Carries::Exec))
+            .collect(),
+        Takes::Text => holes(options.text.as_deref().unwrap_or_default())
+            .iter()
+            .map(|hole| value(&hole.0, Side::In, Carries::Any))
+            .collect(),
+        Takes::Expression | Takes::Variable => Vec::new(),
+    }
+}
+
+/// The holes of a Text's template, each once in their order: a well-formed id between braces, `{count}`. Other braces
+/// are text.
+pub(crate) fn holes(template: &str) -> Vec<Id> {
+    let mut holes: Vec<Id> = Vec::new();
+    for (at, _) in template.match_indices('{') {
+        let rest = &template[at + 1..];
+        let Some(end) = rest.find('}') else { break };
+        let hole = Id(rest[..end].to_owned());
+        if hole.is_well_formed() && !holes.contains(&hole) {
+            holes.push(hole);
+        }
+    }
+    holes
+}
+
 /// Whether a wire or a value typed uses one of `node`'s wildcards, from its kind: what its type is noted for.
 pub(crate) fn uses_wildcards(graph: &Graph, node: &Node) -> bool {
     let at = |end: &End, pin: &str| end.0 == node.id && end.1.0 == pin;
-    wildcards(node).any(|pin| {
-        node.inputs.keys().any(|id| id.0 == pin)
-            || graph.wires.iter().any(|wire| at(&wire.from, pin) || at(&wire.to, pin))
-    })
+    !node.options.cases.is_empty()
+        || wildcards(node).any(|pin| {
+            node.inputs.keys().any(|id| id.0 == pin)
+                || graph.wires.iter().any(|wire| at(&wire.from, pin) || at(&wire.to, pin))
+        })
 }
 
 /// Whether `node`'s kind has a wildcard pin, which a type noted on it is for.
@@ -97,10 +150,11 @@ pub(crate) fn has_wildcards(node: &Node) -> bool {
     wildcards(node).next().is_some()
 }
 
-/// The ids of the wildcard pins of `node`'s kind.
+/// The ids of the wildcard pins of `node`'s kind that take the type it notes: none for a kind that changes a variable,
+/// whose wildcards take the variable's.
 fn wildcards(node: &Node) -> impl Iterator<Item = &'static str> {
     let kind = match &node.does {
-        Does::Kind(kind) => catalogue::kind(&kind.0),
+        Does::Kind(kind) => catalogue::kind(&kind.0).filter(|kind| !kind.takes.contains(&Takes::Variable)),
         _ => None,
     };
     let pins = kind.into_iter().flat_map(|kind| kind.pins);
@@ -163,6 +217,45 @@ mod tests {
         each.options.value_type = Some(ValueType::Map);
         let map = |shape| Some(Carries::Value(Type::new(ValueType::Map, shape)));
         assert_eq!(carried(&each), (map(list), map(one), exec));
+    }
+
+    fn optioned_pins(kind: &str, options: &str) -> Vec<(String, Side, Carries)> {
+        let blueprint = read(HARVEST).unwrap_or_else(|error| panic!("{error}"));
+        let text = format!(r#"{{"id": "n", "kind": "{kind}", "options": {options}}}"#);
+        let node: Node = serde_json::from_str(&text).unwrap_or_else(|error| panic!("{error}"));
+        let pins = pins(&blueprint, &blueprint.graphs[0], &node).unwrap_or_default();
+        pins.into_iter().map(|pin| (pin.id, pin.side, pin.carries)).collect()
+    }
+
+    #[test]
+    fn options_make_numbered_outputs_a_case_each_and_an_input_per_hole() {
+        let ids = |pins: Vec<(String, Side, Carries)>| pins.into_iter().map(|pin| pin.0).collect::<Vec<_>>();
+        assert_eq!(ids(optioned_pins("test_sequence", "{}")), ["run", "then_1", "then_2"]);
+        let three = optioned_pins("test_sequence", r#"{"count": 3}"#);
+        assert_eq!(three.last(), Some(&("then_3".to_owned(), Side::Out, Carries::Exec)));
+        let switch = optioned_pins("test_switch", r#"{"type": "job", "cases": [24, 28]}"#);
+        assert_eq!(ids(switch), ["run", "value", "otherwise", "case_1", "case_2"]);
+        let text = optioned_pins("test_text", r#"{"text": "{count} in {zone}, {count} {Zone} {} {"}"#);
+        let any = |id: &str| (id.to_owned(), Side::In, Carries::Any);
+        assert_eq!(text[1..], [any("count"), any("zone")]);
+    }
+
+    #[test]
+    fn a_kind_that_changes_a_variable_types_its_wildcards_by_it() {
+        let amount = |options| optioned_pins("test_add_to", options).pop().map(|pin| pin.2);
+        assert_eq!(
+            amount(r#"{"variable": "pods"}"#),
+            Some(Carries::one(ValueType::Percentage))
+        );
+        assert_eq!(
+            amount(r#"{"variable": "nothing"}"#),
+            Some(Carries::Wildcard(Shape::ONE))
+        );
+        assert_eq!(
+            amount(r#"{"type": "zone"}"#),
+            Some(Carries::Wildcard(Shape::ONE)),
+            "its type is its variable's"
+        );
     }
 
     #[test]

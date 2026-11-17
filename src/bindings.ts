@@ -984,7 +984,9 @@ export type ParameterView_Serialize = {
 };
 
 /**  What a pin carries: the flow, a value of a type, or a wildcard whose node notes no type yet. */
-export type PinCarries = "exec" | "bool" | "number" | "percentage" | "text" | "zone" | "route" | "bank" | "items" | "job" | "map" | "item" | "duration" | "time" | "npc" | "wildcard";
+export type PinCarries = "exec" | "bool" | "number" | "percentage" | "text" | "zone" | "route" | "bank" | "items" | "job" | "map" | "item" | "duration" | "time" | "npc" | "wildcard" | 
+/**  Any value: a Text's hole. */
+"any";
 
 /**  Which way a pin goes. */
 export type PinSide = "in" | "out";
@@ -1119,7 +1121,7 @@ export type PlayedList_Serialize = {
 };
 
 /**  The kinds of `bot::Problem`, by name. */
-export type ProblemKind = "malformedId" | "variableTwice" | "graphTwice" | "nodeTwice" | "parameterTwice" | "defaultNotOfType" | "defaultRangesOverlap" | "wrongBounds" | "defaultOutOfBounds" | "noSuchVariable" | "noSuchFunction" | "wireToNoNode" | "wireTwice" | "unknownKind" | "outOfPlace" | "eventSettingsOnNoEvent" | "noSuchInput" | "valueNotOfType" | "rangesOverlap" | "noSuchOption" | "wildcardWithoutType" | "wireToNoPin" | "wireTheWrongWay" | "wireOfAnotherType" | "wireOfAnotherShape" | "outputWiredTwice" | "inputFedTwice" | "inputWithoutValue" | "eventTwice";
+export type ProblemKind = "malformedId" | "variableTwice" | "graphTwice" | "nodeTwice" | "parameterTwice" | "defaultNotOfType" | "defaultRangesOverlap" | "wrongBounds" | "defaultOutOfBounds" | "noSuchVariable" | "noSuchFunction" | "wireToNoNode" | "wireTwice" | "unknownKind" | "outOfPlace" | "eventSettingsOnNoEvent" | "noSuchInput" | "valueNotOfType" | "rangesOverlap" | "noSuchOption" | "optionMissing" | "caseNotOfType" | "caseTwice" | "wildcardWithoutType" | "wireToNoPin" | "wireTheWrongWay" | "wireOfAnotherType" | "wireOfAnotherShape" | "outputWiredTwice" | "inputFedTwice" | "inputWithoutValue" | "eventTwice";
 
 /**
  *  A problem of a blueprint (`bot::Problem`), its kind for the interface to word, and where it is: its graph, its node
