@@ -1,4 +1,4 @@
-import { DndContext, DragOverlay, PointerSensor, useSensor, useSensors } from "@dnd-kit/core";
+import { DndContext, DragOverlay, PointerSensor, pointerWithin, useSensor, useSensors } from "@dnd-kit/core";
 import type { IDockviewPanelProps } from "dockview-react";
 import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { useHotkeys } from "react-hotkeys-hook";
@@ -6,7 +6,7 @@ import { useTranslation } from "react-i18next";
 
 import type { GraphEdit_Deserialize, ProblemView } from "@/bindings.ts";
 import { BlueprintDetails, type Selection } from "@/blueprint/details/blueprint-details.tsx";
-import { draggedVariable } from "@/blueprint/edit/variable-drop.ts";
+import { draggedVariable, GRAPH_DROP } from "@/blueprint/edit/variable-drop.ts";
 import { useGraphs } from "@/blueprint/graph-store.ts";
 import { MyBlueprint } from "@/blueprint/my-blueprint.tsx";
 import { Summary } from "@/blueprint/summary/summary.tsx";
@@ -203,11 +203,16 @@ export function BlueprintTab({ api, params }: IDockviewPanelProps<BlueprintParam
       </div>
       <DndContext
         sensors={sensors}
+        // The graph under the pointer, not under the name it drags; nothing scrolls under a drag, whose delta would
+        // count it.
+        collisionDetection={pointerWithin}
+        autoScroll={false}
         accessibility={{
           announcements: {
-            onDragStart: () => t("blueprint.drag.start", { name: names.get(dragging ?? "") ?? "" }),
+            onDragStart: ({ active }) =>
+              t("blueprint.drag.start", { name: names.get(draggedVariable(active.data.current) ?? "") ?? "" }),
             onDragOver: () => undefined,
-            onDragEnd: () => t("blueprint.drag.end"),
+            onDragEnd: ({ over }) => t(over?.id === GRAPH_DROP ? "blueprint.drag.end" : "blueprint.drag.cancel"),
             onDragCancel: () => t("blueprint.drag.cancel"),
           },
           screenReaderInstructions: { draggable: t("blueprint.drag.instructions") },

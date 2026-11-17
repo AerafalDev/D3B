@@ -14,12 +14,15 @@ describe("the menu of a variable dropped on the graph", () => {
 
   it("reads or writes it, its first item focused, the arrows moving between both", () => {
     const onPick = vi.fn();
-    render(<VariableMenu at={{ x: 10, y: 10 }} name="Objectif" onPick={onPick} onClose={() => {}} />);
+    const onClose = vi.fn();
+    render(<VariableMenu at={{ x: 10, y: 10 }} name="Objectif" onPick={onPick} onClose={onClose} />);
     const [read, write] = screen.getAllByRole("menuitem");
     expect([read?.textContent, write?.textContent]).toEqual(["Lire Objectif", "Écrire Objectif"]);
     expect(document.activeElement).toBe(read);
     fireEvent.keyDown(screen.getByRole("menu"), { key: "ArrowDown" });
     expect(document.activeElement).toBe(write);
+    fireEvent.blur(read as HTMLElement, { relatedTarget: write });
+    expect(onClose, "the focus moving inside keeps it open").not.toHaveBeenCalled();
     if (write) {
       fireEvent.click(write);
     }

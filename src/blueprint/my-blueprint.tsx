@@ -123,13 +123,18 @@ function VariableRow({ variable, name, hover, chosen, draggable, onChoose }: Var
   const data: VariableDrag = { variable: variable.id };
   // The pointer moves a few pixels first (the tab's sensor), so a click still chooses it; the graph's picker reads and
   // writes it by keyboard.
-  // Its listeners only: a pointer drags it, and the button keeps its own role and keyboard.
-  const { listeners, setNodeRef } = useDraggable({ id: `variable:${variable.id}`, data, disabled: !draggable });
+  // Its listeners and instructions only: a pointer drags it, and the button keeps its own role and keyboard.
+  const { attributes, listeners, setNodeRef } = useDraggable({
+    id: `variable:${variable.id}`,
+    data,
+    disabled: !draggable,
+  });
   return (
     <li title={hover}>
       <button
         ref={setNodeRef}
         {...(draggable ? listeners : {})}
+        aria-describedby={draggable ? attributes["aria-describedby"] : undefined}
         type="button"
         aria-current={chosen ? "true" : undefined}
         data-draggable={draggable ? "true" : undefined}

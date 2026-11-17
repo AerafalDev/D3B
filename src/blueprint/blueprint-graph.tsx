@@ -34,7 +34,7 @@ import { GraphPins, type PinOf } from "./edit/graph-pins.ts";
 import { type LinkEnd, linkRefusal } from "./edit/link-check.ts";
 import { Picker } from "./edit/picker.tsx";
 import { keptSelection } from "./edit/selection.ts";
-import { draggedVariable, dropPoint, droppedAs, GRAPH_DROP } from "./edit/variable-drop.ts";
+import { GRAPH_DROP, type Pointer, variableDropped } from "./edit/variable-drop.ts";
 import { VariableMenu } from "./edit/variable-menu.tsx";
 import { chosenNode, graphElements } from "./graph-elements.ts";
 import { type PillNode, VariablePill } from "./variable-pill.tsx";
@@ -106,11 +106,13 @@ function Graph({ graph, names, faulty, chosen = null, onChoose, onEdit }: Bluepr
     null,
   );
   const editable = onEdit !== undefined;
-  // The keys held as the pointer last moved, read when a variable is dropped: `@dnd-kit` gives the drop no event.
-  const held = useRef({ ctrlKey: false, metaKey: false, altKey: false });
+  // The pointer as it last moved, and the keys held, read when a variable is dropped: `@dnd-kit` gives the drop no
+  // event, and its delta counts the scroll of what the row was dragged from.
+  const last = useRef<Pointer | null>(null);
   useEffect(() => {
     const read = (event: KeyboardEvent | PointerEvent) => {
-      held.current = { ctrlKey: event.ctrlKey, metaKey: event.metaKey, altKey: event.altKey };
+      const at = "clientX" in event ? { x: event.clientX, y: event.clientY } : (last.current ?? { x: 0, y: 0 });
+      last.current = { ...at, ctrlKey: event.ctrlKey, metaKey: event.metaKey, altKey: event.altKey };
     };
     for (const type of ["pointermove", "keydown", "keyup"] as const) {
       window.addEventListener(type, read);
@@ -124,18 +126,19 @@ function Graph({ graph, names, faulty, chosen = null, onChoose, onEdit }: Bluepr
   const { setNodeRef: dropOn } = useDroppable({ id: GRAPH_DROP, disabled: onEdit === undefined });
   // A variable dragged from My Blueprint is read with Ctrl, written with Alt, else a small menu asks.
   useDndMonitor({
-    onDragEnd: ({ active, over, activatorEvent, delta }) => {
-      const variable = draggedVariable(active.data.current);
-      const client = dropPoint(activatorEvent, delta);
-      if (onEdit === undefined || over?.id !== GRAPH_DROP || variable === null || client === null) {
+    onDragEnd: ({ active, over }) => {
+      const dropped = variableDropped(active.data.current, over?.id === GRAPH_DROP, editable, last.current, (client) =>
+        flow.screenToFlowPosition(client),
+      );
+      if (dropped === null) {
         return;
       }
-      const at = flow.screenToFlowPosition(client);
-      const how = droppedAs(held.current);
-      if (how === "ask") {
-        setAsking({ client, at, variable });
+      // One overlay at a time: the picker open gives way.
+      setOpened(null);
+      if (dropped.kind === "ask") {
+        setAsking(dropped);
       } else {
-        addVariable(how, variable, at);
+        onEdit?.(dropped.edit);
       }
     },
   });

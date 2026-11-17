@@ -1,3 +1,5 @@
+import type { GraphEdit_Deserialize } from "@/bindings.ts";
+
 /** The id of the graph's drop target, which a variable of My Blueprint is dragged onto (step 3's (14)). */
 export const GRAPH_DROP = "blueprint-graph";
 
@@ -7,7 +9,7 @@ export interface VariableDrag {
 }
 
 /** The keys held when it is dropped. */
-interface Held {
+export interface Held {
   ctrlKey: boolean;
   metaKey: boolean;
   altKey: boolean;
@@ -25,20 +27,45 @@ export function droppedAs({ ctrlKey, metaKey, altKey }: Held): "get" | "set" | "
   return read ? "get" : "set";
 }
 
-/** Where a drag ended on the screen: the pointer's place when it began, moved by how far it went; none without one. */
-export function dropPoint(began: Event | null, moved: { x: number; y: number }): { x: number; y: number } | null {
-  if (began === null || !("clientX" in began) || !("clientY" in began)) {
-    return null;
-  }
-  const { clientX, clientY } = began as { clientX: unknown; clientY: unknown };
-  if (typeof clientX !== "number" || typeof clientY !== "number") {
-    return null;
-  }
-  return { x: clientX + moved.x, y: clientY + moved.y };
-}
-
 /** The variable a drag carries, or none for anything else dragged. */
 export function draggedVariable(data: unknown): string | null {
   const variable = (data as Partial<VariableDrag> | null | undefined)?.variable;
   return typeof variable === "string" && variable !== "" ? variable : null;
+}
+
+/** The pointer as it last moved over the window: where, and the keys held. */
+export interface Pointer extends Held {
+  x: number;
+  y: number;
+}
+
+/** A variable dropped on the graph: a node added at once, or the menu asking where it was dropped. */
+export type Dropped =
+  | { kind: "add"; edit: GraphEdit_Deserialize }
+  | { kind: "ask"; variable: string; client: { x: number; y: number }; at: { x: number; y: number } };
+
+/**
+ * What a drag ending makes in the graph (the owner's choice of 2026-11-17): nothing when it carries no variable, ends
+ * off the graph or the graph is not mine; else, at the pointer's last place (`toFlow` the graph's point under it), a
+ * node reading or writing it, or the menu asking which.
+ */
+export function variableDropped(
+  data: unknown,
+  overGraph: boolean,
+  editable: boolean,
+  pointer: Pointer | null,
+  toFlow: (client: { x: number; y: number }) => { x: number; y: number },
+): Dropped | null {
+  const variable = draggedVariable(data);
+  if (variable === null || !overGraph || !editable || pointer === null) {
+    return null;
+  }
+  const client = { x: pointer.x, y: pointer.y };
+  const at = toFlow(client);
+  const does = droppedAs(pointer);
+  if (does === "ask") {
+    return { kind: "ask", variable, client, at };
+  }
+  const position: [number, number] = [Math.round(at.x), Math.round(at.y)];
+  return { kind: "add", edit: { edit: "add", node: { does, variable }, position, wiredTo: null } };
 }
