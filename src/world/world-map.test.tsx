@@ -460,18 +460,23 @@ describe("the World's map", () => {
   it("ignores a tile decoded once its image is gone, its file drawn again by another", async () => {
     // The webview's decode, each settled by hand.
     const decoded: (() => void)[] = [];
+    const decodeAll = () => {
+      for (const done of decoded.splice(0)) {
+        done();
+      }
+    };
     const image = Object.getPrototypeOf(document.createElementNS("http://www.w3.org/2000/svg", "image"));
     const decode = vi.spyOn(image, "decode").mockImplementation(() => new Promise<void>((done) => decoded.push(done)));
     try {
       const { drawn, settle, press } = await threeLevels();
-      await act(async () => decoded.splice(0).forEach((done) => done()));
+      await act(async () => decodeAll());
       await press("+", 2);
       await settle("load", "fine.jpg");
       // Gone before its decode settles, then drawn again by a new image still loading.
       await press("-");
       expect(drawn()).toEqual(["coarse.jpg", "middle.jpg"]);
       await press("+");
-      await act(async () => decoded.splice(0).forEach((done) => done()));
+      await act(async () => decodeAll());
       expect(drawn()).toEqual(["coarse.jpg", "middle.jpg", "fine.jpg"]);
     } finally {
       decode.mockRestore();
