@@ -1,6 +1,6 @@
 import { useTranslation } from "react-i18next";
 
-import type { GraphView_Serialize, ProblemView } from "@/bindings.ts";
+import type { GraphView_Serialize, ProblemView, VariableChange } from "@/bindings.ts";
 import { cn } from "@/lib/utils.ts";
 import { givenText } from "@/library/given-text.ts";
 import type { BlueprintSummary } from "@/library/library-store.ts";
@@ -11,6 +11,7 @@ import { DetailRow } from "./detail-row.tsx";
 import { EventDetails } from "./event-details.tsx";
 import { InputRow } from "./input-row.tsx";
 import { problemText } from "./problem-text.ts";
+import { VariableEditor } from "./variable-editor.tsx";
 
 /** What Details shows: nothing chosen, a node of the graph shown, or a variable. */
 export type Selection = { kind: "node"; id: string } | { kind: "variable"; id: string } | null;
@@ -29,6 +30,10 @@ interface BlueprintDetailsProps {
    * a blueprint of mine only (the owner, 2026-11-17). Whether it was saved.
    */
   onValue?: (node: string, pin: string, value: string | null) => Promise<boolean>;
+  /** Changes a variable of mine, whole, saved at once (step 3's (14)); given for a blueprint of mine only. */
+  onVariable?: (change: VariableChange) => Promise<boolean>;
+  /** Deletes a variable of mine with its nodes. */
+  onDeleteVariable?: (variable: string) => void;
 }
 
 /**
@@ -43,6 +48,8 @@ export function BlueprintDetails({
   selection,
   names,
   onValue,
+  onVariable,
+  onDeleteVariable,
 }: BlueprintDetailsProps) {
   const { t } = useTranslation();
   const node = selection?.kind === "node" ? graph?.nodes.find((one) => one.id === selection.id) : undefined;
@@ -67,7 +74,18 @@ export function BlueprintDetails({
           onValue={onValue === undefined ? undefined : (pin, value) => onValue(node.id, pin, value)}
         />
       ) : variable !== undefined ? (
-        <VariableDetails blueprint={blueprint} variable={variable} graphs={graphs} />
+        onVariable !== undefined ? (
+          <VariableEditor
+            // Another variable chosen keeps no draft of the one before.
+            key={variable.id}
+            variable={variable}
+            usedBy={usedBy(graphs, variable.id)}
+            onChange={onVariable}
+            onDelete={() => onDeleteVariable?.(variable.id)}
+          />
+        ) : (
+          <VariableDetails blueprint={blueprint} variable={variable} graphs={graphs} />
+        )
       ) : (
         <>
           <p className="text-text-muted">{t("blueprint.details.nothing")}</p>
@@ -216,9 +234,6 @@ function VariableDetails({ blueprint, variable, graphs }: VariableDetailsProps) 
   const { t, i18n } = useTranslation();
   const read = (path: string, fallback: string) =>
     blueprint.given ? givenText(blueprint.id, path, fallback) : fallback;
-  const usedBy = graphs
-    .flatMap((one) => one.nodes)
-    .filter((node) => (node.does === "get" || node.does === "set") && node.variable === variable.id).length;
   return (
     <>
       <div className="flex items-center gap-2 text-sm text-white">
@@ -245,7 +260,16 @@ function VariableDetails({ blueprint, variable, graphs }: VariableDetailsProps) 
       <DetailRow label={t("blueprint.details.duration")}>
         {t(variable.memory ? "blueprint.details.memory" : "blueprint.details.oneRun")}
       </DetailRow>
-      <DetailRow label={t("blueprint.details.usedBy")}>{t("blueprint.details.nodes", { count: usedBy })}</DetailRow>
+      <DetailRow label={t("blueprint.details.usedBy")}>
+        {t("blueprint.details.nodes", { count: usedBy(graphs, variable.id) })}
+      </DetailRow>
     </>
   );
+}
+
+/** How many nodes of `graphs` read or write the variable `id`. */
+function usedBy(graphs: readonly GraphView_Serialize[], id: string) {
+  return graphs
+    .flatMap((one) => one.nodes)
+    .filter((node) => (node.does === "get" || node.does === "set") && node.variable === id).length;
 }

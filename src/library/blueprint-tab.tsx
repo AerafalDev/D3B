@@ -1,9 +1,9 @@
 import type { IDockviewPanelProps } from "dockview-react";
-import { lazy, Suspense, useEffect, useMemo, useState } from "react";
+import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { useHotkeys } from "react-hotkeys-hook";
 import { useTranslation } from "react-i18next";
 
-import type { ProblemView } from "@/bindings.ts";
+import type { GraphEdit_Deserialize, ProblemView } from "@/bindings.ts";
 import { BlueprintDetails, type Selection } from "@/blueprint/details/blueprint-details.tsx";
 import { useGraphs } from "@/blueprint/graph-store.ts";
 import { MyBlueprint } from "@/blueprint/my-blueprint.tsx";
@@ -51,6 +51,8 @@ export function BlueprintTab({ api, params }: IDockviewPanelProps<BlueprintParam
   const [shown, setShown] = useState<string | null>(null);
   const [selection, setSelection] = useState<Selection>(null);
   const view = useBlueprintView((store) => store.view[api.id] ?? "graph");
+  // The tab's own element, which Ctrl+Z listens on, given the keyboard back when what held it goes.
+  const tabBox = useRef<HTMLDivElement | null>(null);
 
   // Rust undoes and writes (the owner, 2026-11-16); the Library's count of problems follows.
   const editor = useHotkeys<HTMLDivElement>(
@@ -105,6 +107,25 @@ export function BlueprintTab({ api, params }: IDockviewPanelProps<BlueprintParam
     blueprint.given ? givenText(blueprint.id, path, fallback) : fallback;
   const graphs = read_?.state === "read" ? read_.graphs.graphs : [];
   const shownGraph = graphs.find((graph) => graph.id === shown) ?? graphs[0];
+  // A variable's edit is the blueprint's, whichever graph shows; the Library's variables and problems follow.
+  const blueprintEdit = (change: GraphEdit_Deserialize) =>
+    edit(blueprint.id, shownGraph?.id ?? "", change).then(async (saved) => {
+      if (saved) {
+        await refresh();
+      }
+      return saved;
+    });
+  const addVariable = () => {
+    const before = new Set(blueprint.variables.map((variable) => variable.id));
+    void blueprintEdit({ edit: "newVariable", name: t("blueprint.newVariable") }).then(() => {
+      // The new one is the variable the Library did not list before: Details shows it, to be named and typed.
+      const now = useLibrary.getState().blueprints.find((one) => one.id === blueprint.id);
+      const made = now?.variables.find((variable) => !before.has(variable.id));
+      if (made !== undefined) {
+        setSelection({ kind: "variable", id: made.id });
+      }
+    });
+  };
   // The nodes of the graph shown that a problem names, marked in the graph.
   const problems = read_?.state === "read" ? read_.graphs.problems : NO_PROBLEMS;
   const faulty = problems
@@ -125,7 +146,14 @@ export function BlueprintTab({ api, params }: IDockviewPanelProps<BlueprintParam
           .join(" · ");
 
   return (
-    <div ref={editor} tabIndex={-1} className="flex h-full min-h-0 flex-col outline-none">
+    <div
+      ref={(element) => {
+        tabBox.current = element;
+        editor(element);
+      }}
+      tabIndex={-1}
+      className="flex h-full min-h-0 flex-col outline-none"
+    >
       <div className="border-line flex flex-col gap-1 border-b px-5 py-3">
         <header className="flex items-center gap-2.5">
           <Icon name="blueprint" className="size-[22px]" />
@@ -189,6 +217,7 @@ export function BlueprintTab({ api, params }: IDockviewPanelProps<BlueprintParam
               }}
               chosen={selection?.kind === "variable" ? selection.id : null}
               onChoose={(variable) => setSelection({ kind: "variable", id: variable })}
+              onAddVariable={blueprint.given ? undefined : addVariable}
             />
             {view === "summary" ? (
               <Summary
@@ -237,6 +266,17 @@ export function BlueprintTab({ api, params }: IDockviewPanelProps<BlueprintParam
               problems={read_.graphs.problems}
               selection={selection}
               names={names}
+              onVariable={blueprint.given ? undefined : (variable) => blueprintEdit({ edit: "variable", variable })}
+              onDeleteVariable={
+                blueprint.given
+                  ? undefined
+                  : (variable) => {
+                      setSelection(null);
+                      // The button goes with it: the tab keeps the keyboard, so Ctrl+Z brings it back at once.
+                      tabBox.current?.focus({ preventScroll: true });
+                      void blueprintEdit({ edit: "deleteVariable", variable });
+                    }
+              }
               onValue={
                 blueprint.given || shownGraph === undefined
                   ? undefined

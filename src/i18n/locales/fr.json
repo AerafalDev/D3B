@@ -528,7 +528,12 @@
       "reset": "Revenir à la valeur par défaut ({{value}})",
       "usedBy": "Utilisée par",
       "nodes_one": "{{count}} nœud",
-      "nodes_other": "{{count}} nœuds"
+      "nodes_other": "{{count}} nœuds",
+      "name": "Nom",
+      "memoryToggle": "Mémoire : gardée entre les séances",
+      "deleteVariable": "Supprimer la variable",
+      "smallest": "Plus petite valeur",
+      "largest": "Plus grande valeur"
     },
     "problem": {
       "malformedId": "« {{subject}} » n'est pas un identifiant valable.",
@@ -618,7 +623,9 @@
     "notSaved": "La modification n'est pas enregistrée : {{reason}}",
     "editRefused": "La modification n'est pas enregistrée : le blueprint est relu.",
     "delete": "Supprimer",
-    "deleteKey": "Suppr"
+    "deleteKey": "Suppr",
+    "newVariable": "Nouvelle variable",
+    "addVariable": "Ajouter une variable"
   },
   "world": {
     "title": "Monde",

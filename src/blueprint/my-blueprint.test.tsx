@@ -90,4 +90,18 @@ describe("My Blueprint", () => {
       [...(list?.querySelectorAll("button") ?? [])].map((button) => button.textContent);
     expect([...names(graphList), ...names(functionList)]).toEqual(["Event graph", "Combats", "Vider à la banque"]);
   });
+
+  it("offers to add a variable in a blueprint of mine only", () => {
+    const onAddVariable = vi.fn();
+    const mine = { ...harvest, given: false };
+    render(
+      <MyBlueprint blueprint={mine} graphs={graphs} shown="events" onShow={() => {}} onAddVariable={onAddVariable} />,
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Ajouter une variable" }));
+    expect(onAddVariable).toHaveBeenCalledOnce();
+    cleanup();
+
+    render(<MyBlueprint blueprint={harvest} graphs={graphs} shown="events" onShow={() => {}} />);
+    expect(screen.queryByRole("button", { name: "Ajouter une variable" })).toBeNull();
+  });
 });

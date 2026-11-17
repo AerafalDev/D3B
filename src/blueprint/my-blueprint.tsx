@@ -1,4 +1,4 @@
-import { Eye } from "lucide-react";
+import { Eye, Plus } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 import type { GraphView_Serialize } from "@/bindings.ts";
@@ -17,14 +17,25 @@ interface MyBlueprintProps {
   /** The variable Details shows, if one. */
   chosen?: string | null;
   onChoose?: (variable: string) => void;
+  /** Creates a variable, in a blueprint of mine only. */
+  onAddVariable?: () => void;
 }
 
 /**
  * Unreal's "My Blueprint" (`docs/bot.md`, "In the app"): the blueprint's event graphs, its functions and its
  * variables, an eye on those set per character, each with its type's colour; a variable's help and default in its
- * hover and said to screen readers. A graph or a function shows on the canvas when chosen.
+ * hover and said to screen readers. A graph or a function shows on the canvas when chosen. In a blueprint of mine, "+"
+ * creates a variable (step 3's (14)).
  */
-export function MyBlueprint({ blueprint, graphs, shown, onShow, chosen = null, onChoose }: MyBlueprintProps) {
+export function MyBlueprint({
+  blueprint,
+  graphs,
+  shown,
+  onShow,
+  chosen = null,
+  onChoose,
+  onAddVariable,
+}: MyBlueprintProps) {
   const { t, i18n } = useTranslation();
   const read = (path: string, fallback: string) =>
     blueprint.given ? givenText(blueprint.id, path, fallback) : fallback;
@@ -55,30 +66,36 @@ export function MyBlueprint({ blueprint, graphs, shown, onShow, chosen = null, o
     >
       <Section title={t("blueprint.graphs")}>{graphs.filter((graph) => !graph.function).map(graphRow)}</Section>
       <Section title={t("blueprint.functions")}>{graphs.filter((graph) => graph.function).map(graphRow)}</Section>
-      <Section title={t("blueprint.variables")}>
+      <Section
+        title={t("blueprint.variables")}
+        action={
+          onAddVariable === undefined ? undefined : (
+            <button
+              type="button"
+              aria-label={t("blueprint.addVariable")}
+              title={t("blueprint.addVariable")}
+              onClick={onAddVariable}
+              className="text-text-muted hover:bg-hover focus-visible:outline-focus flex size-5 items-center justify-center rounded hover:text-white focus-visible:outline-1"
+            >
+              <Plus aria-hidden="true" size={14} strokeWidth={1.5} />
+            </button>
+          )
+        }
+      >
         {blueprint.variables.map((variable) => {
           const name = read(`variables.${variable.id}.name`, variable.name);
           const help = read(`variables.${variable.id}.help`, variable.help);
           const value = valueText(variable.valueType, variable.default, i18n.language);
           const hover = [help, t("blueprint.default", { value })].filter(Boolean).join("\n");
           return (
-            <li key={variable.id} title={hover}>
-              <button
-                type="button"
-                aria-current={variable.id === chosen ? "true" : undefined}
-                onClick={() => onChoose?.(variable.id)}
-                className="hover:bg-hover focus-visible:outline-focus mx-1 flex w-[calc(100%-0.5rem)] items-center gap-2 rounded-[5px] px-2 py-1 text-left focus-visible:outline-1 aria-[current=true]:bg-[#2a2c30] aria-[current=true]:text-white"
-              >
-                <span aria-hidden="true" className={cn("blueprint-chip-dot", `blueprint-type-${variable.valueType}`)} />
-                <span className="min-w-0 flex-1 truncate">{name}</span>
-                {variable.perCharacter && (
-                  <Eye aria-hidden="true" size={14} strokeWidth={1.5} className="text-text-muted shrink-0" />
-                )}
-                <span className="sr-only">
-                  {[variable.perCharacter ? t("blueprint.perCharacter") : null, hover].filter(Boolean).join(". ")}
-                </span>
-              </button>
-            </li>
+            <VariableRow
+              key={variable.id}
+              variable={variable}
+              name={name}
+              hover={hover}
+              chosen={variable.id === chosen}
+              onChoose={() => onChoose?.(variable.id)}
+            />
           );
         })}
       </Section>
@@ -86,12 +103,53 @@ export function MyBlueprint({ blueprint, graphs, shown, onShow, chosen = null, o
   );
 }
 
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
+interface VariableRowProps {
+  variable: BlueprintSummary["variables"][number];
+  /** Its name and hover, as the player reads them. */
+  name: string;
+  hover: string;
+  chosen: boolean;
+  onChoose: () => void;
+}
+
+/** A variable's row, chosen by a click. */
+function VariableRow({ variable, name, hover, chosen, onChoose }: VariableRowProps) {
+  const { t } = useTranslation();
+  return (
+    <li title={hover}>
+      <button
+        type="button"
+        aria-current={chosen ? "true" : undefined}
+        onClick={onChoose}
+        className="hover:bg-hover focus-visible:outline-focus mx-1 flex w-[calc(100%-0.5rem)] items-center gap-2 rounded-[5px] px-2 py-1 text-left focus-visible:outline-1 aria-[current=true]:bg-[#2a2c30] aria-[current=true]:text-white"
+      >
+        <span aria-hidden="true" className={cn("blueprint-chip-dot", `blueprint-type-${variable.valueType}`)} />
+        <span className="min-w-0 flex-1 truncate">{name}</span>
+        {variable.perCharacter && (
+          <Eye aria-hidden="true" size={14} strokeWidth={1.5} className="text-text-muted shrink-0" />
+        )}
+        <span className="sr-only">
+          {[variable.perCharacter ? t("blueprint.perCharacter") : null, hover].filter(Boolean).join(". ")}
+        </span>
+      </button>
+    </li>
+  );
+}
+
+interface SectionProps {
+  title: string;
+  /** A button on its header's right. */
+  action?: React.ReactNode;
+  children: React.ReactNode;
+}
+
+function Section({ title, action, children }: SectionProps) {
   return (
     <section>
-      <h3 className="text-text-muted flex h-[22px] items-center px-3 text-[11px] font-semibold tracking-[.04em] uppercase">
-        {title}
-      </h3>
+      <div className="flex h-[22px] items-center justify-between pr-2 pl-3">
+        <h3 className="text-text-muted text-[11px] font-semibold tracking-[.04em] uppercase">{title}</h3>
+        {action}
+      </div>
       <ul className="flex flex-col gap-px">{children}</ul>
     </section>
   );
