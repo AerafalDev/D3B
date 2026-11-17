@@ -29,10 +29,9 @@ _Updated 2026-11-17._
   Ankama's `https:` `ConfigUrl` back in `version`; v0.13.0 then said ready, and a client played, walked, changed maps
   and opened the inventory through it.
 - **Not measured**, by the owner:
-  - _Format 5_: from the monsters' PR on, `next` reads format 5 only, which is not published yet (the owner's go,
-    ADR 0013). A checklist below that says "with format 4's data" runs on `next` before that PR or from the last
-    release, or on a later `next` with the owner's own extraction: `dotnet run --project tools/extractor/src`, then
-    `tar -xzf artifacts/data/client-3.7.13.17-format5.tar.gz -C data` after emptying `data/` but its README;
+  - _Format 5_: from the monsters' PR on, `next` reads format 5 only, published on 2026-11-17 (from the PR's
+    b9412ad, the owner's go). A checklist below that says "with format 4's data" runs on `next` before that PR or
+    from the last release, or on a later `next` with format 5's: `bun run data:fetch 3.7.13.17`;
   - v0.10.0 on macOS, Linux and ARM64: built by CI, run by nobody yet. The owner has none of them and no tester yet; the README says so, and a round starts when a tester comes ([docs/testing.md](testing.md));
   - **step 1, the extractor**, on the installed client (Windows). Measured by the owner on 2026-11-11, Windows x64:
     items 1, 2 (every count as below, in 27.8 s) and 4 pass; on 2026-11-13, `bun run app` on `next` 3454d38, item 5
@@ -557,8 +556,8 @@ _Updated 2026-11-17._
   blueprints (Récolte, Combat, Mineur, Paysan, Alchimiste, Pêcheur, Bûcheron, Chasseur: the owner, 2026-11-16), with
   the ranges computed from the data and the C# version's measured behaviours, in four PRs: the extractor's format 5,
   the monsters' grades' levels, drops and flags, their races and super races (the owner's choices of 2026-11-17, race
-  347 and its 6 monsters left out; done in code: `client-3.7.13.17-format5.tar.gz` waits for the owner's go to be
-  published, ADR 0013, and until then `data:fetch` and a release find no data); the ranges; Récolte and the five
+  347 and its 6 monsters left out; done in code, `client-3.7.13.17-format5.tar.gz` published on the owner's go of
+  2026-11-17, ADR 0013); the ranges; Récolte and the five
   harvest blueprints; Combat and Chasseur, after the hunting weapon's and the meats' study. Each brings its sentences in French and English and its family in the picker; its checklist,
   [bot.md](bot.md#measure)'s items 6 and 7, is taken once (16) declares variables and events of mine. Then (14) variables, with locals, lists and the new types' editors; (15)
   functions opened in place, with their exits and the pure ones; (16) events: priority, re-arming, modes, the
