@@ -296,7 +296,12 @@ mod tests {
             Err(EditError::NotItsType)
         );
         let reset = parsed(r#"{"edit": "value", "node": "n3", "pin": "what", "value": null}"#);
-        assert!(change(&store, "my-harvest", "events", reset).is_ok());
+        let drawn = change(&store, "my-harvest", "events", reset).unwrap_or_else(|error| panic!("{error:?}"));
+        let n3 = drawn.graphs[0].nodes.iter().find(|node| node.id == "n3");
+        assert!(
+            n3.is_some_and(|node| !node.inputs.contains_key("what")),
+            "its value dropped"
+        );
     }
 
     #[test]

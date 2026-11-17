@@ -47,7 +47,14 @@ export function InputRow({ pin, typed, type, who, onValue }: InputRowProps) {
           </button>
         )}
       </div>
-      <SettingEditor variable={type} value={typed ?? fallback} onChange={onValue} who={who} label={label} />
+      <SettingEditor
+        variable={type}
+        value={typed ?? fallback}
+        // A text cleared is none, so a Prévenir with nothing to say keeps its problem.
+        onChange={(value) => onValue(value === '""' ? null : value)}
+        who={who}
+        label={label}
+      />
     </div>
   );
 }

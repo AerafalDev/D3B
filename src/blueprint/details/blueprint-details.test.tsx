@@ -140,6 +140,7 @@ describe("the editor's Details", () => {
     expect(inputs.map((line) => line.replace(/[  ]/g, " "))).toEqual(["Zone: relié", "Pods: 90 %"]);
     expect(text).toContain("Non reliée, la sortie Échec bloque le personnage, avec la raison.");
     expect(text).toContain("L'entrée Zone n'a pas de valeur.");
+    expect(screen.queryByRole("textbox"), "D3B's, without onValue, edits nothing").toBeNull();
   });
 
   it("says an event's priority, its re-arming and the mode it has, among the four", () => {
@@ -205,7 +206,11 @@ describe("the editor's Details", () => {
   });
 
   it("edits the values typed on a node's inputs of mine, a wired one said, a default put back", () => {
-    const notify = node("notify", { kind: "notify", pins: [pin("run", "in", "exec"), pin("text", "in", "text")] });
+    const notify = node("notify", {
+      kind: "notify",
+      pins: [pin("run", "in", "exec"), pin("text", "in", "text")],
+      inputs: { text: '"Fini"' },
+    });
     const harvest = {
       ...graph.nodes[0],
       pins: [...(graph.nodes[0]?.pins ?? []), pin("what", "in", "items", '"all"')],
@@ -236,6 +241,10 @@ describe("the editor's Details", () => {
     fireEvent.change(text, { target: { value: "Objectif atteint" } });
     fireEvent.keyDown(text, { key: "Enter" });
     expect(onValue).toHaveBeenLastCalledWith("notify", "text", JSON.stringify("Objectif atteint"));
+    // Cleared, it is none, so the node keeps its problem.
+    fireEvent.change(text, { target: { value: "" } });
+    fireEvent.keyDown(text, { key: "Enter" });
+    expect(onValue).toHaveBeenLastCalledWith("notify", "text", null);
     unmount();
 
     const { container, unmount: away } = shown("harvest");
@@ -248,7 +257,7 @@ describe("the editor's Details", () => {
     expect(onValue).toHaveBeenLastCalledWith("harvest", "pods", null);
     fireEvent.change(pods, { target: { value: "101" } });
     fireEvent.blur(pods);
-    expect(onValue).toHaveBeenCalledTimes(2);
+    expect(onValue).toHaveBeenCalledTimes(3);
     away();
 
     // A Set keeps its variable's bounds: 10 to 100.
@@ -256,7 +265,7 @@ describe("the editor's Details", () => {
     const value = screen.getByRole("textbox", { name: "Valeur" });
     fireEvent.change(value, { target: { value: "5" } });
     fireEvent.blur(value);
-    expect(onValue).toHaveBeenCalledTimes(2);
+    expect(onValue).toHaveBeenCalledTimes(3);
     fireEvent.change(value, { target: { value: "50" } });
     fireEvent.blur(value);
     expect(onValue).toHaveBeenLastCalledWith("set", "value", "50");

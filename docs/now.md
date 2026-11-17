@@ -288,10 +288,12 @@ _Updated 2026-11-17._
        press Enter: the node's sentence says it, the Library's count of problems drops by one, and the file
        `Documents/D3B/blueprints/<id>.json` holds `"inputs": {"text": "Objectif atteint"}`; Ctrl+Z (outside the field)
        takes it back, Ctrl+Y puts it again;
-    3. choose "Récolter": "Zone" says "relié"; set "Pods" to 101: the field is marked and put back when left; set 80:
-       a button "Revenir à la valeur par défaut (90 %)" shows; click it: 90 %, and the file holds no `pods`;
-    4. choose "Attendre" (or a "Mettre" of a percentage with bounds 10 to 100): a number out of its bounds is
-       refused; a Zone input opens the Zone field, its target choosing on the World's map and coming back.
+    3. choose "Récolter": "Zone" and "Pods" say "relié", without a field; add "Attendre … de vie" from the picker and
+       choose it: set "Vie" to 101: the field is marked and put back when left; set 80: a button "Revenir à la valeur
+       par défaut (90 %)" shows; click it: 90 %, and the file holds no `life` on that node;
+    4. add "Écrire Banque à" (Banque à is bounded from 10 to 100): 5 is refused, 50 kept; add "Aller dans …": its
+       "Zone" is the Zone field, its target choosing on the World's map and coming back to the blueprint's tab; clear
+       a Prévenir's text and press Enter: its value goes and its problem comes back.
 - **step 3, Advanced tools** ((24)), on Windows x64 from `bun run app` on `next` or the next release:
   Measured by the owner on 2026-11-17, Windows x64, `bun run app` on `next` 60cf228: items 1, 2, 3 and 5 pass, and 4 but
   for the palette's command, not tried. Not measured yet: item 6. The owner then asked for the panel closed by default

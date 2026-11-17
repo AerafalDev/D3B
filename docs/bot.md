@@ -348,8 +348,8 @@ The shell's parts (`docs/shell.md`); no information is shown twice:
 value typed on an input no wire feeds (the owner's choices of 2026-11-17), in Details only, where each such input of a
 node of mine is its editor by its type, a setting's (a Zone's field, a number or percentage within its bounds, a
 Set's within its variable's, a switch, a line of text, a profession; a bank and items say their value until step 5),
-saved when the field is left or Enter pressed, undone as the others, a value back at the pin's default dropped from
-the file, and a button saying the default putting it back.
+saved when the field is left or Enter pressed, undone as the others, a value back at the pin's default, or a text
+cleared, dropped from the file, and a button saying the default putting it back.
 Undo and redo (the owner, 2026-11-16) are Rust's: `storage` keeps a blueprint of mine as it was before each change
 that changed it, 100 at most, for the session and across its graphs, and the IPC's `undo_blueprint` and
 `redo_blueprint` write it back whole under the lock every save takes, so the file and the editor never disagree; a
