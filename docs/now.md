@@ -29,6 +29,10 @@ _Updated 2026-11-17._
   Ankama's `https:` `ConfigUrl` back in `version`; v0.13.0 then said ready, and a client played, walked, changed maps
   and opened the inventory through it.
 - **Not measured**, by the owner:
+  - _Format 5_: from the monsters' PR on, `next` reads format 5 only, which is not published yet (the owner's go,
+    ADR 0013). A checklist below that says "with format 4's data" runs on `next` before that PR or from the last
+    release, or on a later `next` with the owner's own extraction: `dotnet run --project tools/extractor/src`, then
+    `tar -xzf artifacts/data/client-3.7.13.17-format5.tar.gz -C data` after emptying `data/` but its README;
   - v0.10.0 on macOS, Linux and ARM64: built by CI, run by nobody yet. The owner has none of them and no tester yet; the README says so, and a round starts when a tester comes ([docs/testing.md](testing.md));
   - **step 1, the extractor**, on the installed client (Windows). Measured by the owner on 2026-11-11, Windows x64:
     items 1, 2 (every count as below, in 27.8 s) and 4 pass; on 2026-11-13, `bun run app` on `next` 3454d38, item 5

@@ -106,8 +106,9 @@ Three references the client breaks are left out and counted, the owner's choices
 than failing the extraction: an item of a type the client lacks (item 34,569, type 264, on 3.7.13.17), a skill
 gathering an item `items.json` lacks (skill 260, item 3,656), and a race of a super race the client lacks with its
 monsters (race 347, super race 50, and its 6 monsters, which no sub-area lists); the extractor prints how many it left
-out of each, and every other check fails as before, a duplicate id in these tables included. The app refuses a folder where an id is held twice in one of these four tables, an item's type is
-missing, or a skill's job or gathered item is. Which jobs are harvesting professions (2, 24, 26, 28 and 36 on
+out of each, and every other check fails as before, a duplicate id in these tables included. The app refuses a folder where an id is held twice in the items, their types,
+the jobs or the skills, an item's type is missing, or a skill's job or gathered item is; the monsters' refusals are in
+the paragraph above. Which jobs are harvesting professions (2, 24, 26, 28 and 36 on
 3.7.13.17, whose skills gather what the sub-areas' `harvestables` list) will be derived in Rust by step 3's PR 4.
 
 The app reads the whole folder once at start (`data::GameData`) and refuses it whole when a table cannot be read: the

@@ -115,11 +115,13 @@ public sealed class MonsterTablesTests
         var item = Assert.Throws<InvalidDataException>(() => MonsterTables.Kept([_blueLarva], _races, _superRaces, [303], []));
         var subArea = Assert.Throws<InvalidDataException>(() => MonsterTables.Kept([_blueLarva], _races, _superRaces, _items, [[31, 182]]));
         var leftOut = Assert.Throws<InvalidDataException>(() => MonsterTables.Kept([_blueLarva], _races, [_superRaces[0]], _items, [[31]]));
+        var negative = Assert.Throws<InvalidDataException>(() => MonsterTables.Kept([_blueLarva], _races, _superRaces, _items, [[-1]]));
 
         Assert.Equal("Monster 31 is of race 11, which the client lacks.", race.Message);
         Assert.Equal("Monster 31 drops item 289, which items.json lacks.", item.Message);
         Assert.Equal("A sub-area names monster 182, which monsters.json lacks.", subArea.Message);
         Assert.Equal("A sub-area names monster 31, which monsters.json lacks.", leftOut.Message);
+        Assert.Equal("A sub-area names monster -1, which monsters.json lacks.", negative.Message);
     }
 
     [Fact]
@@ -147,6 +149,31 @@ public sealed class MonsterTablesTests
 
         Assert.Equal((11, "Larves", 2), (race.Id, race.Name.Fr, race.SuperRaceId));
         Assert.Throws<InvalidDataException>(() => MonsterTables.ReadRaces([record], _ => null));
+    }
+
+    [Fact]
+    public void AMonsterIsReadFieldByFieldWithItsGradesAndDrops()
+    {
+        var flags = FlagEnum.From("MonsterFlags", [("UseSummonSlot", 1), ("IsBoss", 4), ("CanPlay", 64)]);
+        var monster = Assert.Single(MonsterTables.ReadMonsters([MonsterRecord(sixthChance: false)], id => id == 6522 ? _larva : null, flags));
+
+        Assert.Equal((31, "Larve Bleue", 11), (monster.Id, monster.Name.Fr, monster.RaceId));
+        Assert.Equal(["useSummonSlot", "canPlay"], monster.Flags);
+        Assert.Equal([16, 17], monster.Levels);
+
+        var drop = Assert.Single(monster.Drops);
+
+        Assert.Equal((303, "Qa=1198"), (drop.ItemId, drop.Criterion));
+        Assert.Equal([1, 2, 3, 4, 5.5f], drop.Chances);
+    }
+
+    [Fact]
+    public void ADropGivingChancesForASixthGradeIsRefused()
+    {
+        var flags = FlagEnum.From("MonsterFlags", [("UseSummonSlot", 1), ("CanPlay", 64)]);
+        var failure = Assert.Throws<InvalidDataException>(() => MonsterTables.ReadMonsters([MonsterRecord(sixthChance: true)], _ => _larva, flags));
+
+        Assert.Equal("Monster 31's drops give chances for more than 5 grades.", failure.Message);
     }
 
     [Fact]
@@ -178,6 +205,69 @@ public sealed class MonsterTablesTests
 
         Assert.Equal((5129, 265, 1, 6), (kept.Count, keptRaces.Count, skippedRaces, skippedMonsters));
         Assert.DoesNotContain(keptRaces, race => race.Id == 347);
+    }
+
+    // A monster's record as the client lays it out (3.7.13.17), with two grades and one drop, its other fields left out.
+    private static Fields MonsterRecord(bool sixthChance)
+    {
+        int[] chances = sixthChance ? [1, 2, 3, 4, 5, 6] : [1, 2, 3, 4, 5];
+        var tree = TypeTree.Build("MonsterData",
+        [
+            Node(0, "MonsterData", "Base"),
+            Node(1, "int", "m_flags", 4),
+            Node(1, "UInt16", "id", 2),
+            Node(1, "SInt16", "race", 2),
+            Node(1, "int", "nameId", 4),
+            Node(1, "vector", "grades"),
+            Array(2),
+            Node(3, "int", "size", 4),
+            Node(3, "MonsterGrade", "data"),
+            Node(4, "int", "grade", 4),
+            Node(4, "UInt16", "monsterId", 2),
+            Node(4, "UInt16", "level", 2),
+            Node(1, "vector", "drops"),
+            Array(2),
+            Node(3, "int", "size", 4),
+            Node(3, "MonsterDrop", "data"),
+            Node(4, "int", "monsterId", 4),
+            Node(4, "int", "objectId", 4),
+            .. chances.Select(grade => Node(4, "float", $"percentDropForGrade{grade}", 4)),
+            .. String(4, "criterions"),
+            Node(4, "UInt8", "hasCriterions", 1, align: true),
+        ]);
+        var bytes = new ObjectBytes();
+
+        bytes.Int32(65);
+        bytes.Raw([.. BitConverter.GetBytes((ushort)31), .. BitConverter.GetBytes((short)11)]);
+        bytes.Int32(6522);
+        bytes.Int32(2);
+
+        foreach (var (grade, level) in (ReadOnlySpan<(int, ushort)>)[(1, 16), (2, 17)])
+        {
+            bytes.Int32(grade);
+            bytes.Raw([.. BitConverter.GetBytes((ushort)31), .. BitConverter.GetBytes(level)]);
+        }
+
+        bytes.Int32(1);
+        bytes.Int32(31);
+        bytes.Int32(303);
+
+        foreach (var chance in chances)
+        {
+            bytes.Single(chance is 5 ? 5.5f : chance);
+        }
+
+        bytes.String("Qa=1198");
+        bytes.Byte(1);
+        bytes.Align();
+
+        var data = bytes.ToArray();
+        var reader = new ObjectReader(data, tree);
+        var fields = Fields.Read(ref reader, 0, tree.Name);
+
+        reader.ExpectEnd();
+
+        return fields;
     }
 
     private static byte[] Fixture(string name)

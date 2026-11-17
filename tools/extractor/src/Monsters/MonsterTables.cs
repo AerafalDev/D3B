@@ -170,9 +170,12 @@ internal static class MonsterTables
             }
         }
 
-        if (subAreaMonsters.SelectMany(ids => ids).FirstOrDefault(id => !known.Contains(id), -1) is not -1 and var lost)
+        foreach (var id in subAreaMonsters.SelectMany(ids => ids))
         {
-            throw new InvalidDataException($"A sub-area names monster {lost}, which monsters.json lacks.");
+            if (!known.Contains(id))
+            {
+                throw new InvalidDataException($"A sub-area names monster {id}, which monsters.json lacks.");
+            }
         }
 
         return (kept, keptRaces, races.Count - keptRaces.Count, monsters.Count - kept.Count);
