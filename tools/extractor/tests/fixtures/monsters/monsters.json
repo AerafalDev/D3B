@@ -1,0 +1,4 @@
+[
+{"id":31,"name":{"fr":"Larve Bleue","en":"Blue Larva","de":"Blaue Larve","es":"Larva Azul","pt":"Larva Azul"},"raceId":11,"flags":["useSummonSlot","canPlay"],"levels":[16,17,18,19,20],"drops":[{"itemId":289,"chances":[55,55,55,55,55],"criterion":"Pj>41,9&CU>0"},{"itemId":303,"chances":[9.24,9.5,10,10.5,11],"criterion":null}]},
+{"id":47,"name":{"fr":"Wabbit","en":"Wabbit","de":"Wabbit","es":"Wabbit","pt":"Wabbit"},"raceId":-1,"flags":[],"levels":[80,75,130],"drops":[]}
+]

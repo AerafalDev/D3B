@@ -2,7 +2,7 @@
 //!
 //! The .NET extractor (`tools/extractor`) writes one folder per client build: a `manifest.json` that lists every file
 //! with its SHA-256, the JSON tables (the large ones in shards), the world map's tiles, the breeds' heads, and the
-//! items' and jobs' icons. A `client-<build>` release asset carries that folder; the release workflow puts it in `data/`, which Tauri bundles as a resource. Nothing
+//! items' and jobs' icons, the monsters. A `client-<build>` release asset carries that folder; the release workflow puts it in `data/`, which Tauri bundles as a resource. Nothing
 //! extracted from the client is ever committed (`docs/data.md`).
 
 mod breeds;
@@ -26,6 +26,14 @@ mod map_flag;
     )
 )]
 mod maps;
+#[cfg_attr(
+    not(test),
+    expect(
+        dead_code,
+        reason = "D3B's default blueprints compute their ranges from them, and Chasseur its meats, from step (v2.10)'s PR 2"
+    )
+)]
+mod monsters;
 mod text;
 mod world;
 mod world_maps;
@@ -43,8 +51,9 @@ pub use world_maps::{Hint, HintKind, WorldMap};
 /// The format of the folder this version of the code reads. The extractor writes the same number in the manifest
 /// (`DataFolder.Format`); a different one is refused rather than half read. Format 2 adds the breeds and their heads,
 /// format 3 the items, their types, the jobs and their skills, and the items' and jobs' icons, format 4 the world map's
-/// hints, their categories and their pictures.
-pub const FORMAT: u32 = 4;
+/// hints, their categories and their pictures, format 5 the monsters, their grades' levels, their drops and their
+/// flags, their races and super races.
+pub const FORMAT: u32 = 5;
 
 #[cfg(test)]
 mod tests {
