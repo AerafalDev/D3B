@@ -312,7 +312,7 @@ fn kind_types(does: &Does) -> Vec<String> {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Type)]
 #[serde(tag = "does", rename_all = "camelCase")]
 pub enum NodeDoes {
-    /// One of the catalogue's kinds, by id; its sentence is the interface's `node.kinds.<kind>`.
+    /// One of the catalogue's kinds, by id; its sentence is the interface's `kinds.<kind>` of the nodes' words.
     Kind {
         kind: String,
     },

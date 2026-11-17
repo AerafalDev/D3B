@@ -1,6 +1,7 @@
 import { useTranslation } from "react-i18next";
 
 import type { GraphEdit_Deserialize, GraphView_Serialize, ProblemView, VariableChange } from "@/bindings.ts";
+import { nodeWord } from "@/i18n/node-words.ts";
 import { cn } from "@/lib/utils.ts";
 import { givenText } from "@/library/given-text.ts";
 import type { BlueprintSummary } from "@/library/library-store.ts";
@@ -207,12 +208,7 @@ function openTo(node: GraphNode, pin: string, graph: GraphView_Serialize): reado
 function NodeDetails({ node, graph, problems, names, variables, onValue, onEdit }: NodeDetailsProps) {
   const { t, i18n } = useTranslation();
   const kind = node.does === "kind" ? node.kind : null;
-  const description =
-    kind === null
-      ? null
-      : i18n.exists(`node.kinds.${kind}.description`)
-        ? String(t(`node.kinds.${kind}.description` as never))
-        : null;
+  const description = kind === null ? null : nodeWord(`kinds.${kind}.description`);
   // Its sentence as the graph says it, words and values in one line.
   const title = (graphSentences(graph, names).get(node.id) ?? [])
     .map((part) => ("text" in part ? part.text : part.chip))

@@ -5,6 +5,7 @@ import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 
 import type { GraphView_Serialize } from "@/bindings.ts";
+import { nodeWord } from "@/i18n/node-words.ts";
 import { cn } from "@/lib/utils.ts";
 import { FAMILY_COLOUR, nodeIcon } from "../graph-look.ts";
 import { type GraphNode, graphSentences, type SentencePart } from "../node-sentence.ts";
@@ -122,9 +123,7 @@ function rank(node: GraphNode): number {
 
 /** A kind's sentence alone, for an event the blueprint does not hold. */
 function kindSentence(kind: string): string {
-  return i18next.exists(`node.kinds.${kind}.sentence`)
-    ? String(i18next.t(`node.kinds.${kind}.sentence` as never))
-    : kind;
+  return nodeWord(`kinds.${kind}.sentence`) ?? kind;
 }
 
 function Heading({ node, icon, children }: { node?: GraphNode; icon?: string; children: ReactNode }) {

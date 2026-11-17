@@ -1,0 +1,211 @@
+{
+  "kinds": {
+    "on_start": {
+      "sentence": "On start",
+      "description": "The main flow: it starts when the character is started."
+    },
+    "life_below": {
+      "sentence": "Life below {{threshold}}",
+      "description": "When life falls below the threshold; re-arms above its re-arm value."
+    },
+    "pods_above": {
+      "sentence": "Pods above {{threshold}}",
+      "description": "When pods rise above the threshold; re-arms below its re-arm value."
+    },
+    "fight_starts": {
+      "sentence": "A fight starts",
+      "description": "The server starts a fight. Without this event, the fight AI fights it, then the flow resumes."
+    },
+    "died": {
+      "sentence": "The character died",
+      "description": "A fight is lost. Without this event, the character stops, blocked."
+    },
+    "action_failed": {
+      "sentence": "An action fails",
+      "description": "An action ends Failed and its Failed output leads nowhere. Without this event, the character stops, blocked with the reason."
+    },
+    "go_to_zone": {
+      "sentence": "Go to {{zone}}",
+      "description": "Goes into the zone."
+    },
+    "harvest_until": {
+      "sentence": "Harvest {{what}} in {{zone}} until pods are {{pods}}",
+      "description": "Harvests the chosen resources in the zone until pods reach the threshold."
+    },
+    "go_to_bank": {
+      "sentence": "Go to {{bank}}",
+      "description": "Goes to the bank."
+    },
+    "deposit_all_but": {
+      "sentence": "Deposit at the bank, keep {{keep}}",
+      "description": "Opens the bank and deposits everything but what is kept."
+    },
+    "hunt_until": {
+      "sentence": "Hunt in {{zone}} until pods are {{pods}}",
+      "description": "Fights the zone's monsters until pods reach the threshold."
+    },
+    "notify": {
+      "sentence": "Notify: {{text}}",
+      "description": "An alert in the app, then what follows."
+    },
+    "if": {
+      "sentence": "If {{condition}}",
+      "description": "Chooses what follows by the condition."
+    },
+    "wait": {
+      "sentence": "Wait {{duration}}",
+      "description": "Waits, then what follows."
+    },
+    "wait_for_life": {
+      "sentence": "Wait for life at {{life}}",
+      "description": "Stays where it is, out of a fight, until life, which comes back alone, reaches the threshold."
+    },
+    "finish": {
+      "sentence": "Finish",
+      "description": "Stops the blueprint: the character is \"Finished\"."
+    },
+    "sequence": {
+      "sentence": "Sequence",
+      "description": "Runs its outputs one after another, each once the one before has ended; the last is the rest of the flow."
+    },
+    "switch": {
+      "sentence": "Switch on {{value}}",
+      "description": "Follows the output of the case the value is, or Otherwise."
+    },
+    "repeat": {
+      "sentence": "Repeat {{times}} times",
+      "description": "Runs its body that many times, its index from 1 to N, then Completed: a loop."
+    },
+    "while": {
+      "sentence": "While {{condition}}",
+      "description": "Runs its body while the condition holds, read before each pass, then Completed: a loop."
+    },
+    "for_each": {
+      "sentence": "For each {{list}}",
+      "description": "Runs its body for each element of the list, read once as it enters, with the element and its index, then Completed: a loop."
+    },
+    "leave_loop": {
+      "sentence": "Leave the loop",
+      "description": "Ends the nearest loop's body, which goes on out of its Completed."
+    },
+    "do_n_times": {
+      "sentence": "At most {{times}} times",
+      "description": "Goes on its first N times, then no more until Reset re-arms it; its memory lasts the whole run."
+    },
+    "alternate": {
+      "sentence": "Alternate",
+      "description": "Goes out of First, then Second, then First, each time the flow comes in; its memory lasts the whole run."
+    },
+    "pick": {
+      "sentence": "Pick the next of {{list}}",
+      "description": "Gives the list's element picked least recently, in turn while the list does not change; its memory lasts the whole run."
+    },
+    "wait_until": {
+      "sentence": "Wait until {{condition}}",
+      "description": "Waits until the condition holds, read at each change and each second, then Then; after At most, Too long (0: no limit)."
+    },
+    "block": {
+      "sentence": "Block: {{reason}}",
+      "description": "Blocks the character with this reason."
+    },
+    "pause_notify": {
+      "sentence": "Pause and notify: {{text}}",
+      "description": "Tells the player this text and pauses the run; it resumes after this node."
+    },
+    "retry": {
+      "sentence": "Try up to {{times}} times",
+      "description": "Runs its try; an unlinked Failed inside it starts another, up to N tries, the first included, then Failed with the reason."
+    },
+    "life_percent": {
+      "sentence": "Life %",
+      "description": "Life, as a percentage of its maximum."
+    },
+    "pods_percent": {
+      "sentence": "Pods %",
+      "description": "Pods, as a percentage of their maximum."
+    },
+    "job_resources": {
+      "sentence": "Resources of {{job}}",
+      "description": "The resources this profession harvests, read in the game's data."
+    },
+    "level": {
+      "sentence": "Level",
+      "description": "The character's level."
+    },
+    "greater_or_equal": {
+      "sentence": "{{a}} ≥ {{b}}",
+      "description": "True when the first value reaches the second."
+    },
+    "minutes": {
+      "sentence": "{{minutes}} min",
+      "description": "A duration of so many minutes."
+    },
+    "add": {
+      "sentence": "{{a}} + {{b}}",
+      "description": "The sum of both values."
+    },
+    "entry": {
+      "sentence": "Inputs",
+      "description": "What the function receives."
+    },
+    "return_done": {
+      "sentence": "Return: done",
+      "description": "The function ends, giving back its outputs."
+    },
+    "return_failed": {
+      "sentence": "Return: failed",
+      "description": "The function ends Failed, with the reason."
+    },
+    "my_event": {
+      "sentence": "When my event happens",
+      "description": "Starts when Trigger fires this event of mine, with its inputs."
+    },
+    "return_exit": {
+      "sentence": "Return by an exit",
+      "description": "The function ends by one of its named exits, with its outputs."
+    },
+    "result": {
+      "sentence": "Result",
+      "description": "What a pure function gives back: its outputs."
+    }
+  },
+  "pins": {
+    "run": "",
+    "then": "",
+    "done": "Done",
+    "failed": "Failed",
+    "reason": "Reason",
+    "value": "Value",
+    "threshold": "Threshold",
+    "rearm": "Re-arm",
+    "zone": "Zone",
+    "life": "Life",
+    "what": "Resources",
+    "pods": "Pods",
+    "count": "Harvests",
+    "bank": "Bank",
+    "keep": "Keep",
+    "text": "Text",
+    "condition": "Condition",
+    "true": "True",
+    "false": "False",
+    "minutes": "Minutes",
+    "duration": "Duration",
+    "a": "A",
+    "b": "B",
+    "otherwise": "Otherwise",
+    "times": "Times",
+    "body": "Body",
+    "index": "Index",
+    "completed": "Completed",
+    "list": "List",
+    "element": "Element",
+    "reset": "Reset",
+    "first": "First",
+    "second": "Second",
+    "longest": "At most",
+    "too_long": "Too long",
+    "try": "Try",
+    "job": "Profession"
+  }
+}

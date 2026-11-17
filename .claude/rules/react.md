@@ -21,7 +21,9 @@ paths:
   `react-arborist` for trees, Monaco for text, xterm for logs, `@dnd-kit` for drag and drop, `react-hotkeys-hook` for
   shortcuts, `react-hook-form` + `zod` for forms. Load the heavy ones (Monaco, xterm, React Flow) with `React.lazy`.
 - **Every visible string** goes through `useTranslation()`; keys are typed from `src/i18n/locales/en.json`, and
-  `fr.json` has the same keys (a test checks it). No string concatenation for sentences: interpolation.
+  `fr.json` has the same keys (a test checks it); the nodes' sentences, descriptions and pin labels are the untyped
+  namespace `nodes` (`nodes.en.json`, `nodes.fr.json`, read by `nodeWord`; the owner, 2026-11-17). No string
+  concatenation for sentences: interpolation.
 - **Accessible**: real buttons and labels, keyboard focus visible, every action reachable by keyboard; shortcuts are
   listed in the command palette.
 - `react-best-practices` holds the general performance rules; this page wins where they differ.

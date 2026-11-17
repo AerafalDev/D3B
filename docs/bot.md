@@ -564,7 +564,9 @@ flowchart LR
 - **Sentences** read nested values in place, "Tant que Pods % < 80", "(Récoltes + 5) × 2", a node of N inputs
   joined by its word, a Text by its template filled; the Summary reads them so.
 - **Translations** (the owner, 2026-11-17): the nodes' sentences, descriptions and pin labels move to their own
-  i18next namespace `nodes`, read dynamically already, so the typed keys stop growing with the kinds.
+  i18next namespace `nodes`, read dynamically already, so the typed keys stop growing with the kinds (done in code:
+  `locales/nodes.<language>.json`, read by `nodeWord`, the French and English parity and the catalogue's locale test
+  reading them).
 - **Out**: the Expression (v2.8); the queries and the run's counts (v2.5), so between times compares typed times
   until then; Add to, Reset and a list's Add, Remove and Empty (v2.7, (14)); pure functions' calls (15); the
   debugger's display (step 4); "Advanced" and the picker by intent (v2.9); decimal numbers; sort, sum, last, filter.

@@ -4,6 +4,7 @@ import { useLayoutEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import type { ChoiceView_Serialize } from "@/bindings.ts";
+import { nodeWord } from "@/i18n/node-words.ts";
 import { cn } from "@/lib/utils.ts";
 import { FAMILY_COLOUR, nodeIcon } from "../graph-look.ts";
 import { pinLabel } from "../pin-label.ts";
@@ -35,11 +36,10 @@ function said(choice: ChoiceView_Serialize, names: ReadonlyMap<string, string>):
     case "call":
       return [names.get(choice.function) ?? choice.function, t("blueprint.picker.call")];
     case "kind": {
-      const sentence = i18next.getResource(i18next.language, "translation", `node.kinds.${choice.kind}.sentence`);
-      const description = i18next.getResource(i18next.language, "translation", `node.kinds.${choice.kind}.description`);
+      const sentence = nodeWord(`kinds.${choice.kind}.sentence`);
       return [
-        typeof sentence === "string" ? sentence.replace(/\{\{\w+\}\}/g, "…") : choice.kind,
-        typeof description === "string" ? description : "",
+        sentence === null ? choice.kind : sentence.replace(/\{\{\w+\}\}/g, "…"),
+        nodeWord(`kinds.${choice.kind}.description`) ?? "",
       ];
     }
   }

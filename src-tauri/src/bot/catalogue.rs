@@ -1,7 +1,7 @@
 //! The catalogue of nodes (`docs/bot.md`, "In the app"): every kind of node a blueprint may hold, its family, its pins
 //! and, for an event, how it runs. Rust holds ids only (the owner, 2026-11-13): the interface's translations hold a
-//! kind's sentence and description under `node.kinds.<kind>`, its pins' labels under `node.pins.<pin>`, by pin id
-//! across every kind, and the interface its icon. The bot's actions are listed before the step that makes them run,
+//! kind's sentence and description under `kinds.<kind>` of the nodes' words (`locales/nodes.<language>.json`), its
+//! pins' labels under `pins.<pin>`, by pin id across every kind, and the interface its icon. The bot's actions are listed before the step that makes them run,
 //! marked with it, so that D3B's blueprints ship whole (the owner, 2026-11-13).
 
 use super::variable::{Shape, Type, ValueType};
@@ -456,13 +456,13 @@ pub(crate) mod tests {
     #[test]
     fn every_kind_reads_as_a_sentence_in_each_language_whose_holes_are_its_inputs() {
         let locales = [
-            include_str!("../../../src/i18n/locales/en.json"),
-            include_str!("../../../src/i18n/locales/fr.json"),
+            include_str!("../../../src/i18n/locales/nodes.en.json"),
+            include_str!("../../../src/i18n/locales/nodes.fr.json"),
         ];
         let mut holes_by_language = Vec::new();
         for text in locales {
             let locale: serde_json::Value = serde_json::from_str(text).unwrap_or_else(|error| panic!("{error}"));
-            let (kinds, labels) = (&locale["node"]["kinds"], &locale["node"]["pins"]);
+            let (kinds, labels) = (&locale["kinds"], &locale["pins"]);
             let listed = kinds
                 .as_object()
                 .map(|kinds| kinds.keys().cloned().collect::<HashSet<_>>());

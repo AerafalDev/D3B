@@ -83,6 +83,9 @@ describe("a node's sentence", () => {
   it("says a kind this version does not know, with its id", () => {
     const unknown = { ...harvest, kind: "teleport", family: null, pins: [] } as GraphNode;
     expect(plain(nodeSentence(unknown, new Map(), names))).toBe("Nœud inconnu de cette version : teleport");
+    // A family but no words for its kind: the same.
+    const wordless = { ...harvest, kind: "teleport", pins: [] } as GraphNode;
+    expect(plain(nodeSentence(wordless, new Map(), names))).toBe("Nœud inconnu de cette version : teleport");
   });
 
   it("says what a wire brings: a variable's name, a query's own sentence, else its source pin's label", () => {

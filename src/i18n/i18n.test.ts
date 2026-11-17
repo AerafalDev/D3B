@@ -12,6 +12,7 @@ function keys(value: unknown, prefix = ""): string[] {
 describe("locales", () => {
   it("give French every key English has, and no other", () => {
     expect(keys(resources.fr.translation).sort()).toEqual(keys(resources.en.translation).sort());
+    expect(keys(resources.fr.nodes).sort()).toEqual(keys(resources.en.nodes).sort());
   });
 });
 
