@@ -91,7 +91,7 @@ describe("My Blueprint", () => {
     expect([...names(graphList), ...names(functionList)]).toEqual(["Event graph", "Combats", "Vider à la banque"]);
   });
 
-  it("offers to add a variable and to drag one onto the graph in a blueprint of mine only", () => {
+  it("offers to add a variable in a blueprint of mine only", () => {
     const onAddVariable = vi.fn();
     const mine = { ...harvest, given: false };
     render(
@@ -99,11 +99,9 @@ describe("My Blueprint", () => {
     );
     fireEvent.click(screen.getByRole("button", { name: "Ajouter une variable" }));
     expect(onAddVariable).toHaveBeenCalledOnce();
-    expect(screen.getByText("pods").closest("button")?.dataset["draggable"]).toBe("true");
     cleanup();
 
     render(<MyBlueprint blueprint={harvest} graphs={graphs} shown="events" onShow={() => {}} />);
     expect(screen.queryByRole("button", { name: "Ajouter une variable" })).toBeNull();
-    expect(screen.getByText("Banque à").closest("button")?.dataset["draggable"]).toBeUndefined();
   });
 });

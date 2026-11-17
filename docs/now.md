@@ -309,9 +309,8 @@ _Updated 2026-11-17._
     3. give the copy to a character: its tab shows "Objectif" at 5000; set it to 7000 there, then in the editor narrow
        the bounds to 0 to 6000: the character's 7000 goes (its file holds no `objectif`) and its tab says 5000; narrow
        them to 0 to 4000: the default becomes 4000;
-    4. drag "Objectif" onto the graph: a menu "Lire Objectif" / "Écrire Objectif" opens at the pointer, Escape closes
-       it; drag again with Ctrl held: a Lire node at once; with Alt: an Écrire node; wire the Lire into "Attendre …
-       min", then make Objectif a Texte: the wire goes, the Écrire's value with it;
+    4. Space on the graph: the picker offers "Objectif" and "Écrire Objectif"; add both, wire "Objectif" into
+       "Attendre … min", type 3 on "Écrire Objectif", then make Objectif a Texte: the wire goes, the 3 with it;
     5. "Supprimer la variable": it goes with its Lire and Écrire nodes and their wires, without a question; Ctrl+Z
        brings all back.
 - **step 3, Advanced tools** ((24)), on Windows x64 from `bun run app` on `next` or the next release:
@@ -483,9 +482,9 @@ _Updated 2026-11-17._
   through the IPC (done in code), then Delete, Backspace and a context menu in the graph, Ctrl+Z and Ctrl+Y, and
   Delete in the Library (done in code; its checklist under "Not measured"); the owner's requests of 2026-11-17, before
   v2 (the owner's choices of that day): values typed on a node's inputs in Details (done in code; its checklist under
-  "Not measured"), then my variables, (14)'s first PR, in two PRs: created, changed and deleted through
-  `edit_blueprint`, the characters' settings following (done in code), then My Blueprint's "+", Details and the drag
-  onto the graph (done in code; its checklist under "Not measured"); then renaming a blueprint of mine; then
+  "Not measured"), then my variables, (14)'s first PR, in three PRs: created, changed and deleted through
+  `edit_blueprint`, the characters' settings following (done in code), then My Blueprint's "+" and Details (done in
+  code; its checklist under "Not measured"), then a variable dragged onto the graph; then renaming a blueprint of mine; then
   **blueprints v2**
   ([bot.md](bot.md#the-language-v2), ADR 0016; the owner, 2026-11-16, after trying (12): "much more complete", "as
   practical as a Lua script"), from a mock-up of the catalogue and the Summary and an analysis of the reference Lua
