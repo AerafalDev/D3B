@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 
 import { Icon } from "@/icons/icon.tsx";
 import { MyZones } from "@/zone/my-zones.tsx";
+import { useZoneUndo } from "@/zone/zone-undo.ts";
 import { openWorld } from "./open-world.ts";
 import { useWorld } from "./world-store.ts";
 import { type TreeArea, worldTree } from "./world-tree.ts";
@@ -11,7 +12,8 @@ import { type TreeArea, worldTree } from "./world-tree.ts";
 /**
  * The World view of the primary side bar (the owner's mock-up 10 of 2026-11-15): a search, then the game's sub-areas
  * grouped by area in a folded tree, which the search unfolds; a sub-area no world shows greyed, said "not on the map".
- * A sub-area chosen shows on the World tab. My zones come first (step 3's PR 20); my routes come with PR 21.
+ * A sub-area chosen shows on the World tab. My zones come first (step 3's PR 20), Ctrl+Z and Ctrl+Y undoing and
+ * redoing their changes here too (the owner, 2026-11-17); my routes come with PR 21.
  */
 export function WorldView() {
   const { t, i18n } = useTranslation();
@@ -19,6 +21,7 @@ export function WorldView() {
   const load = useWorld((store) => store.load);
   const picked = useWorld((store) => store.picked);
   const pick = useWorld((store) => store.pick);
+  const undoBox = useZoneUndo<HTMLDivElement>();
   const [query, setQuery] = useState("");
   const [open, setOpen] = useState<ReadonlySet<number>>(new Set());
   // A search unfolds what it finds; the areas folded during it, kept apart, so the tree before it comes back after.
@@ -91,7 +94,8 @@ export function WorldView() {
   };
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col">
+    // Focusable, so that a click anywhere in the view takes its shortcuts there.
+    <div ref={undoBox} tabIndex={-1} className="flex min-h-0 flex-1 flex-col outline-none">
       <label className="focus-within:border-focus mx-2 mb-1 flex h-[26px] items-center gap-1.5 rounded border border-[#3c3c3c] bg-[#181818] px-2 text-xs">
         <Icon name="search" className="size-3.5" />
         <input

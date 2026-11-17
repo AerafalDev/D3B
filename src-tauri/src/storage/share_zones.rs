@@ -208,6 +208,33 @@ mod tests {
     }
 
     #[test]
+    fn an_import_carrying_zones_ends_my_zones_undo_history_so_no_step_writes_over_a_zone_it_brought() {
+        let folder = Folder::new("share-zones-history");
+        let store = Store::new(folder.path().to_path_buf());
+        store.create_zone("Wheat", 1).unwrap_or_else(|error| panic!("{error}"));
+        let remove = |path: &std::path::Path| std::fs::remove_file(path);
+        let undone = store.undo_zone(remove).unwrap_or_else(|error| panic!("{error}"));
+        assert!(undone.is_some_and(|state| state.zone.is_none()), "the creation undone");
+        // Its id free again, a zone brought by a `.d3b` takes it.
+        store
+            .import(Shared {
+                blueprint: harvest(),
+                zones: vec![zone("wheat", &[[7, 7]])],
+            })
+            .unwrap_or_else(|error| panic!("{error}"));
+        let redone = store.redo_zone(remove).unwrap_or_else(|error| panic!("{error}"));
+        assert!(redone.is_none(), "nothing to redo: {redone:?}");
+        let undone = store.undo_zone(remove).unwrap_or_else(|error| panic!("{error}"));
+        assert!(undone.is_none(), "nothing to undo: {undone:?}");
+        let wheat = store.zones().read.into_iter().find(|zone| zone.id.0 == "wheat");
+        assert_eq!(
+            wheat.map(|zone| zone.maps),
+            Some(zone("x", &[[7, 7]]).maps),
+            "the zone it brought"
+        );
+    }
+
+    #[test]
     fn only_the_zones_it_names_are_imported_and_a_new_id_is_never_one_it_names() {
         let folder = Folder::new("share-zones-named");
         let store = Store::new(folder.path().to_path_buf());

@@ -84,6 +84,13 @@ export const commands = {
 	/**  The file of the zone `id` to the system's trash, without asking (the owner, 2026-11-16, as Forget). */
 	deleteZone: (id: string) => __TAURI_INVOKE<null>("delete_zone", { id }),
 	/**
+	 *  Undo of my zones' last change: the zone it changed as it now is, or `None` when there was nothing to undo. A
+	 *  creation undone sends the file to the system's trash; a deletion undone writes it again.
+	 */
+	undoZone: () => __TAURI_INVOKE<ZoneStepped_Serialize | null>("undo_zone"),
+	/**  Redo of my zones' last undo: the zone it changed as it now is, or `None` when there was nothing to redo. */
+	redoZone: () => __TAURI_INVOKE<ZoneStepped_Serialize | null>("redo_zone"),
+	/**
 	 *  Watches the frames of `connection`, or none: those kept now; the next come as `InspectorFrames`. The front end
 	 *  watches none as it starts, so that a reload leaves nothing streamed to no one.
 	 */
@@ -1405,6 +1412,21 @@ export type ZoneError =
 export type ZoneList = {
 	zones: ZoneView[],
 	kept: KeptFile[],
+};
+
+/**  A zone of mine as an undo or a redo left it: `zone` is `None` once it is no longer there. */
+export type ZoneStepped = ZoneStepped_Serialize | ZoneStepped_Deserialize;
+
+/**  A zone of mine as an undo or a redo left it: `zone` is `None` once it is no longer there. */
+export type ZoneStepped_Deserialize = {
+	id: string,
+	zone?: ZoneView | null,
+};
+
+/**  A zone of mine as an undo or a redo left it: `zone` is `None` once it is no longer there. */
+export type ZoneStepped_Serialize = {
+	id: string,
+	zone: ZoneView | null,
 };
 
 /**  A zone of mine, as the World view, the World tab and the Zone field show it. */

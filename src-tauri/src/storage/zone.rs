@@ -11,6 +11,7 @@ use std::path::{Path, PathBuf};
 use serde::{Deserialize, Serialize};
 
 use super::atomic;
+use super::history::ZoneState;
 use super::store::{Kept, StorageError, Store, Why};
 use crate::bot::{self, Id};
 
@@ -80,9 +81,9 @@ impl Store {
     }
 
     /// A new zone named `name` on `world`, without maps, under an id made from its name that no file of the folder
-    /// holds, in any case; the id is chosen and the file written under one lock.
+    /// holds, in any case; the id is chosen and the file written under one lock, and undo deletes it.
     pub(crate) fn create_zone(&self, name: &str, world: i32) -> Result<Zone, StorageError> {
-        let _writing = self.lock();
+        let mut histories = self.lock();
         let folder = self.zones_folder();
         let mut taken = HashSet::new();
         match std::fs::read_dir(&folder) {
@@ -106,54 +107,74 @@ impl Store {
         };
         let path = folder.join(format!("{}.json", zone.id.0));
         write(&folder, &path, &zone)?;
+        histories.zones.record(ZoneState {
+            id: zone.id.clone(),
+            zone: None,
+        });
         Ok(zone)
     }
 
-    /// Changes the zone `id` by `change` and writes it whole, under the lock; the zone written. An id that names no
-    /// zone's file is refused, and nothing is written when `change` refuses.
+    /// Changes the zone `id` by `change` and writes it whole, under the lock, the zone before it one step to undo; the
+    /// zone written. An id that names no zone's file is refused, and nothing is written when `change` refuses or
+    /// changes nothing.
     pub(crate) fn change_zone<E: From<StorageError>>(
         &self,
         id: &str,
         change: impl FnOnce(&mut Zone) -> Result<(), E>,
     ) -> Result<Zone, E> {
-        let path = self.zone_path(id)?;
-        let _writing = self.lock();
-        self.no_other_case(id)?;
-        let mut zone = match read(&path) {
-            Ok(zone) => zone,
-            Err(Why::Unreadable(error)) if error.kind() == io::ErrorKind::NotFound => {
-                return Err(StorageError::NoSuchZone { id: id.to_owned() }.into());
-            }
-            Err(Why::Unreadable(source)) => return Err(StorageError::Unreadable { path, source }.into()),
-            Err(why) => return Err(StorageError::Kept { path, why }.into()),
-        };
+        let mut histories = self.lock();
+        let mut zone = self
+            .zone_while_locked(id)?
+            .ok_or_else(|| StorageError::NoSuchZone { id: id.to_owned() })?;
+        let before = zone.clone();
         change(&mut zone)?;
-        write(&self.zones_folder(), &path, &zone)?;
+        if zone != before {
+            self.write_zone_while_locked(&zone)?;
+            histories.zones.record(ZoneState {
+                id: before.id.clone(),
+                zone: Some(before),
+            });
+        }
         Ok(zone)
     }
 
-    /// Sends the file of the zone `id` to `discard` (the system's trash in the app), so that it can be brought back; an
-    /// id that names no zone that reads is refused, and a file kept is never discarded.
+    /// Sends the file of the zone `id` to `discard` (the system's trash in the app), so that it can be brought back,
+    /// and undo writes it again from what it held; an id that names no zone that reads is refused, and a file kept is
+    /// never discarded. Under the lock, as a blueprint's: no change may come between and take a step after it.
     pub(crate) fn delete_zone(
         &self,
         id: &str,
         discard: impl FnOnce(&Path) -> io::Result<()>,
     ) -> Result<(), StorageError> {
+        let mut histories = self.lock();
+        let zone = self
+            .zone_while_locked(id)?
+            .ok_or_else(|| StorageError::NoSuchZone { id: id.to_owned() })?;
         let path = self.zone_path(id)?;
-        {
-            // Checked under the lock; the trash, which may take its time, is not waited on there.
-            let _writing = self.lock();
-            self.no_other_case(id)?;
-            match read(&path) {
-                Ok(_) => {}
-                Err(Why::Unreadable(error)) if error.kind() == io::ErrorKind::NotFound => {
-                    return Err(StorageError::NoSuchZone { id: id.to_owned() });
-                }
-                Err(Why::Unreadable(source)) => return Err(StorageError::Unreadable { path, source }),
-                Err(why) => return Err(StorageError::Kept { path, why }),
-            }
+        discard(&path).map_err(|source| StorageError::Write { path, source })?;
+        histories.zones.record(ZoneState {
+            id: zone.id.clone(),
+            zone: Some(zone),
+        });
+        Ok(())
+    }
+
+    /// The zone `id` as its file holds it, `None` when there is no file; the lock held. An id that names no file is
+    /// refused, and so is a file that does not read, kept as it is.
+    pub(super) fn zone_while_locked(&self, id: &str) -> Result<Option<Zone>, StorageError> {
+        let path = self.zone_path(id)?;
+        self.no_other_case(id)?;
+        match read(&path) {
+            Ok(zone) => Ok(Some(zone)),
+            Err(Why::Unreadable(error)) if error.kind() == io::ErrorKind::NotFound => Ok(None),
+            Err(Why::Unreadable(source)) => Err(StorageError::Unreadable { path, source }),
+            Err(why) => Err(StorageError::Kept { path, why }),
         }
-        discard(&path).map_err(|source| StorageError::Write { path, source })
+    }
+
+    /// Writes `zone` whole in its file; the lock held.
+    pub(super) fn write_zone_while_locked(&self, zone: &Zone) -> Result<(), StorageError> {
+        write(&self.zones_folder(), &self.zone_path(&zone.id.0)?, zone)
     }
 
     /// Refuses the zone `id` when a file whose name differs from its only by case is there: on a system that ignores
@@ -177,7 +198,7 @@ impl Store {
     }
 
     /// The file of the zone `id`; an id from the webview names a file only when well formed, never a path elsewhere.
-    fn zone_path(&self, id: &str) -> Result<PathBuf, StorageError> {
+    pub(super) fn zone_path(&self, id: &str) -> Result<PathBuf, StorageError> {
         if Id(id.to_owned()).is_well_formed() {
             Ok(self.zones_folder().join(format!("{id}.json")))
         } else {

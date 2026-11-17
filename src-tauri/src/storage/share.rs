@@ -185,6 +185,11 @@ impl Store {
         for zone in &zones {
             named.remove(&zone.id);
         }
+        // An id my zones' history still knows, its file gone, may be taken now, and a step must never write over the zone
+        // brought or trash it: the zones' undo history ends here, as a blueprint's does for its id below.
+        if !zones.is_empty() {
+            writing.zones = super::history::History::default();
+        }
         let renamed = self.add_zones_while_locked(zones, named)?;
         super::share_zones::rename(&mut blueprint, &renamed);
         if taken.contains(&blueprint.id) || !blueprint.id.is_well_formed() {
@@ -192,7 +197,7 @@ impl Store {
         }
         self.save_while_locked(&blueprint)?;
         // A blueprint deleted by hand may have left its id free, never its undo history to the one imported.
-        writing.remove(&blueprint.id);
+        writing.blueprints.remove(&blueprint.id);
         Ok(blueprint.id)
     }
 }

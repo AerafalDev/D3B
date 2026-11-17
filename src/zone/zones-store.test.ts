@@ -10,6 +10,8 @@ const backEnd = vi.hoisted(() => ({
   rename: vi.fn(),
   paint: vi.fn(),
   remove: vi.fn(),
+  undo: vi.fn(),
+  redo: vi.fn(),
   toasts: [] as string[],
 }));
 vi.mock("@/bindings.ts", () => ({
@@ -19,6 +21,8 @@ vi.mock("@/bindings.ts", () => ({
     renameZone: backEnd.rename,
     paintZone: backEnd.paint,
     deleteZone: backEnd.remove,
+    undoZone: backEnd.undo,
+    redoZone: backEnd.redo,
   },
 }));
 vi.mock("sonner", () => ({ toast: { error: (text: string) => backEnd.toasts.push(text) } }));
@@ -33,7 +37,15 @@ describe("my zones", () => {
     await i18next.changeLanguage("fr");
   });
   beforeEach(() => {
-    for (const command of [backEnd.zones, backEnd.create, backEnd.rename, backEnd.paint, backEnd.remove]) {
+    for (const command of [
+      backEnd.zones,
+      backEnd.create,
+      backEnd.rename,
+      backEnd.paint,
+      backEnd.remove,
+      backEnd.undo,
+      backEnd.redo,
+    ]) {
       command.mockReset();
     }
     backEnd.toasts.length = 0;
@@ -123,26 +135,31 @@ describe("my zones", () => {
     expect(useZones.getState().zones.map((one) => one.id)).toEqual(["nouvelle-zone"]);
   });
 
-  it("shows a stroke at once, keeps the latest answer, and reads the zones again when it fails", async () => {
+  it("shows a stroke at once, sends the next once Rust answered, and reads the zones again when it fails", async () => {
     useZones.setState({ zones: [zone("a")] });
     let answer: (value: unknown) => void = () => {};
     backEnd.paint.mockReturnValueOnce(new Promise((resolve) => (answer = resolve)));
     const first = useZones.getState().paint("a", [[1, 1]], false);
     expect(useZones.getState().zones[0]?.maps).toEqual([[1, 1]]);
-    backEnd.paint.mockResolvedValueOnce(
-      zone("a", [
-        [1, 1],
-        [2, 2],
-      ]),
-    );
-    await useZones.getState().paint("a", [[2, 2]], false);
-    // The first stroke's answer comes last: dropped.
-    answer(zone("a", [[1, 1]]));
-    await first;
-    expect(useZones.getState().zones[0]?.maps).toEqual([
+    let answerSecond: (value: unknown) => void = () => {};
+    backEnd.paint.mockReturnValueOnce(new Promise((resolve) => (answerSecond = resolve)));
+    const second = useZones.getState().paint("a", [[2, 2]], false);
+    await Promise.resolve();
+    const both = [
       [1, 1],
       [2, 2],
-    ]);
+    ];
+    expect(useZones.getState().zones[0]?.maps).toEqual(both);
+    // Rust is told the second stroke only once it answered the first, so the two never cross.
+    expect(backEnd.paint).toHaveBeenCalledTimes(1);
+    answer(zone("a", [[1, 1]]));
+    await first;
+    expect(backEnd.paint).toHaveBeenCalledTimes(2);
+    // The first stroke's answer, older than the second shown, is not shown over it.
+    expect(useZones.getState().zones[0]?.maps).toEqual(both);
+    answerSecond(zone("a", both as [number, number][]));
+    await second;
+    expect(useZones.getState().zones[0]?.maps).toEqual(both);
     backEnd.paint.mockRejectedValueOnce({ kind: "noSuchZone" });
     backEnd.zones.mockResolvedValue({ zones: [], kept: [] });
     await useZones.getState().paint("a", [[3, 3]], false);
@@ -163,5 +180,71 @@ describe("my zones", () => {
     expect(await useZones.getState().remove("b")).toBe(false);
     expect(useZones.getState().zones.map((one) => one.id)).toEqual(["b"]);
     expect(backEnd.toasts).toEqual(["Rien n'a changé : disque plein"]);
+  });
+
+  it("undoes and redoes in Rust, the zone changed shown as it now is, made again or gone", async () => {
+    useZones.setState({ zones: [zone("a"), zone("c")] });
+    backEnd.undo.mockResolvedValueOnce({ id: "a", zone: zone("a", [[1, 1]]) });
+    expect(await useZones.getState().step(true)).toEqual({ id: "a", zone: zone("a", [[1, 1]]) });
+    expect(useZones.getState().zones).toEqual([zone("a", [[1, 1]]), zone("c")]);
+    backEnd.undo.mockResolvedValueOnce({ id: "b", zone: zone("b") });
+    await useZones.getState().step(true);
+    expect(useZones.getState().zones.map((one) => one.id)).toEqual(["a", "b", "c"]);
+    backEnd.redo.mockResolvedValueOnce({ id: "b", zone: null });
+    await useZones.getState().step(false);
+    expect(useZones.getState().zones.map((one) => one.id)).toEqual(["a", "c"]);
+    backEnd.redo.mockResolvedValueOnce(null);
+    expect(await useZones.getState().step(false)).toBeNull();
+    expect(useZones.getState().zones.map((one) => one.id)).toEqual(["a", "c"]);
+    expect([backEnd.undo.mock.calls.length, backEnd.redo.mock.calls.length]).toEqual([2, 2]);
+  });
+
+  it("sends a creation, a rename, a deletion and an undo only once the change before reached Rust", async () => {
+    useZones.setState({ zones: [zone("a")] });
+    let answer: (value: unknown) => void = () => {};
+    backEnd.paint.mockReturnValueOnce(new Promise((resolve) => (answer = resolve)));
+    backEnd.create.mockResolvedValue(zone("b"));
+    backEnd.zones.mockResolvedValue({ zones: [zone("a"), zone("b")], kept: [] });
+    backEnd.rename.mockResolvedValue(zone("a"));
+    backEnd.remove.mockResolvedValue(null);
+    backEnd.undo.mockResolvedValue(null);
+    const changes = [
+      useZones.getState().paint("a", [[1, 1]], false),
+      useZones.getState().create(1),
+      useZones.getState().rename("a", "Bois"),
+      useZones.getState().remove("a"),
+      useZones.getState().step(true),
+    ];
+    await Promise.resolve();
+    const sent = [backEnd.create, backEnd.rename, backEnd.remove, backEnd.undo].map((one) => one.mock.calls.length);
+    expect(sent).toEqual([0, 0, 0, 0]);
+    answer(zone("a", [[1, 1]]));
+    await Promise.all(changes);
+    const after = [backEnd.create, backEnd.rename, backEnd.remove, backEnd.undo].map((one) => one.mock.calls.length);
+    expect(after).toEqual([1, 1, 1, 1]);
+  });
+
+  it("undoes only once the change before reached Rust", async () => {
+    useZones.setState({ zones: [zone("a")] });
+    let answer: (value: unknown) => void = () => {};
+    backEnd.paint.mockReturnValueOnce(new Promise((resolve) => (answer = resolve)));
+    const painted = useZones.getState().paint("a", [[1, 1]], false);
+    backEnd.undo.mockResolvedValueOnce({ id: "a", zone: zone("a") });
+    const undone = useZones.getState().step(true);
+    await Promise.resolve();
+    expect(backEnd.undo).not.toHaveBeenCalled();
+    answer(zone("a", [[1, 1]]));
+    await Promise.all([painted, undone]);
+    expect(backEnd.undo).toHaveBeenCalledTimes(1);
+    expect(useZones.getState().zones).toEqual([zone("a")]);
+  });
+
+  it("says an undo refused, and reads the zones again", async () => {
+    useZones.setState({ zones: [zone("a")] });
+    backEnd.undo.mockRejectedValueOnce({ kind: "notSaved", reason: "fichier gardé" });
+    backEnd.zones.mockResolvedValue({ zones: [zone("a")], kept: [] });
+    expect(await useZones.getState().step(true)).toBeNull();
+    expect(backEnd.toasts).toEqual(["Rien n'a changé : fichier gardé"]);
+    expect(backEnd.zones).toHaveBeenCalledTimes(1);
   });
 });

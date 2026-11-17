@@ -3,13 +3,13 @@
 //! untouched and reported with why, and never written over: what a newer D3B or the player's own hand wrote is never
 //! lost.
 
-use std::collections::{HashMap, HashSet};
+use std::collections::HashSet;
 use std::io;
 use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex};
 
 use super::atomic;
-use super::history::History;
+use super::history::Histories;
 use crate::bot::{self, Blueprint, Id, ReadError};
 
 /// The folder of the player's blueprints, in the player's folder.
@@ -22,7 +22,7 @@ pub(crate) struct Store {
     root: PathBuf,
     /// Held while a file is written, so that two saves never share a temporary file, with each blueprint's undo
     /// history, which changes with its file; shared by the store's clones.
-    writing: Arc<Mutex<HashMap<Id, History>>>,
+    writing: Arc<Mutex<Histories>>,
 }
 
 /// A file D3B leaves as it is, and why.
@@ -180,7 +180,7 @@ impl Store {
         // A change that changes nothing (the same wire again) is no step to undo, and nothing to write.
         if blueprint != before {
             self.save_while_locked(&blueprint)?;
-            histories.entry(id).or_default().record(before);
+            histories.blueprints.entry(id).or_default().record(before);
         }
         Ok(blueprint)
     }
@@ -199,7 +199,7 @@ impl Store {
         let mut histories = self.lock();
         self.read_mine(&id)?;
         discard(&path).map_err(|source| StorageError::Write { path, source })?;
-        histories.remove(&id);
+        histories.blueprints.remove(&id);
         Ok(())
     }
 
@@ -251,7 +251,7 @@ impl Store {
         let copy = bot::copy(source, is_given, bot::id_for(&texts.name, "blueprint", &taken), texts);
         self.save_while_locked(&copy)?;
         // A blueprint deleted by hand may have left its id free, never its undo history to the copy.
-        writing.remove(&copy.id);
+        writing.blueprints.remove(&copy.id);
         Ok(copy.id)
     }
 
@@ -286,7 +286,7 @@ impl Store {
     }
 
     /// One write at a time, and the undo histories; a write that panicked left nothing to protect.
-    pub(super) fn lock(&self) -> std::sync::MutexGuard<'_, HashMap<Id, History>> {
+    pub(super) fn lock(&self) -> std::sync::MutexGuard<'_, Histories> {
         self.writing.lock().unwrap_or_else(std::sync::PoisonError::into_inner)
     }
 

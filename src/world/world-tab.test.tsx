@@ -6,9 +6,9 @@ import type { Atlas_Serialize, AtlasWorld_Serialize as AtlasWorld } from "@/bind
 import { initI18n } from "@/i18n/i18n.ts";
 
 // The back end, faked: the atlas the tab reads.
-const backEnd = vi.hoisted(() => ({ atlas: vi.fn(), zones: vi.fn(), paint: vi.fn() }));
+const backEnd = vi.hoisted(() => ({ atlas: vi.fn(), zones: vi.fn(), paint: vi.fn(), undo: vi.fn() }));
 vi.mock("@/bindings.ts", () => ({
-  commands: { worldAtlas: backEnd.atlas, zones: backEnd.zones, paintZone: backEnd.paint },
+  commands: { worldAtlas: backEnd.atlas, zones: backEnd.zones, paintZone: backEnd.paint, undoZone: backEnd.undo },
 }));
 // The map, faked: happy-dom draws no SVG images, and the tab's text is what is checked here.
 vi.mock("./world-map.tsx", () => ({
@@ -281,6 +281,19 @@ describe("the World tab", () => {
       act(() => useWorld.getState().show(2));
       expect(useWorld.getState().zone).toBeNull();
     });
+  });
+
+  it("undoes my zones' last change on Ctrl+Z anywhere in the tab", async () => {
+    backEnd.undo.mockReset().mockResolvedValue(null);
+    const { container } = render(<WorldTab />);
+    await act(async () => {});
+    const tab = container.firstElementChild as HTMLElement;
+    tab.focus();
+    await act(async () => {
+      fireEvent.keyDown(tab, { key: "z", code: "KeyW", ctrlKey: true });
+      fireEvent.keyUp(tab, { key: "z", code: "KeyW", ctrlKey: true });
+    });
+    expect(backEnd.undo).toHaveBeenCalledTimes(1);
   });
 
   it("reads the atlas once, opens on its first world when the one asked for is not in it, nothing chosen", async () => {

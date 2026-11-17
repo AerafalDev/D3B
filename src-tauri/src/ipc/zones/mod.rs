@@ -1,5 +1,6 @@
 //! My zones (`docs/bot.md`, "In the app"; the owner's choices of 2026-11-16): listed with the files kept, created empty
-//! on the world the World tab shows, painted a stroke at a time, renamed, and deleted into the system's trash.
+//! on the world the World tab shows, painted a stroke at a time, renamed, and deleted into the system's trash; each of
+//! those changes undone and redone, one history for them all (the owner's choices of 2026-11-17).
 
 use serde::{Deserialize, Serialize};
 use specta::Type;
@@ -7,7 +8,7 @@ use tauri::Manager;
 
 use super::blueprints::{KeptFile, PlayersFiles};
 use super::played::to_trash;
-use crate::storage::{StorageError, Store, Zone};
+use crate::storage::{StorageError, Store, Zone, ZoneState};
 
 /// A zone of mine, as the World view, the World tab and the Zone field show it.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Type)]
@@ -25,6 +26,13 @@ pub struct ZoneView {
 pub struct ZoneList {
     pub zones: Vec<ZoneView>,
     pub kept: Vec<KeptFile>,
+}
+
+/// A zone of mine as an undo or a redo left it: `zone` is `None` once it is no longer there.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Type)]
+pub struct ZoneStepped {
+    pub id: String,
+    pub zone: Option<ZoneView>,
 }
 
 /// A stroke on the map: the maps the brush or the whole sub-area adds, or the eraser takes away.
@@ -129,6 +137,13 @@ fn painted(files: &PlayersFiles, id: &str, stroke: &Stroke) -> Result<ZoneView, 
     Ok(view(zone))
 }
 
+fn stepped(state: Option<ZoneState>) -> Option<ZoneStepped> {
+    state.map(|state| ZoneStepped {
+        id: state.id.0,
+        zone: state.zone.map(view),
+    })
+}
+
 /// Runs `work` with the player's files off the main thread, as a file's write may take its time.
 async fn with_files<T: Send + 'static>(
     app: tauri::AppHandle,
@@ -177,6 +192,21 @@ pub async fn delete_zone(app: tauri::AppHandle, id: String) -> Result<(), ZoneEr
     with_files(app, move |files| Ok(store(files)?.delete_zone(&id, to_trash)?)).await
 }
 
+/// Undo of my zones' last change: the zone it changed as it now is, or `None` when there was nothing to undo. A
+/// creation undone sends the file to the system's trash; a deletion undone writes it again.
+#[tauri::command]
+#[specta::specta]
+pub async fn undo_zone(app: tauri::AppHandle) -> Result<Option<ZoneStepped>, ZoneError> {
+    with_files(app, |files| Ok(stepped(store(files)?.undo_zone(to_trash)?))).await
+}
+
+/// Redo of my zones' last undo: the zone it changed as it now is, or `None` when there was nothing to redo.
+#[tauri::command]
+#[specta::specta]
+pub async fn redo_zone(app: tauri::AppHandle) -> Result<Option<ZoneStepped>, ZoneError> {
+    with_files(app, |files| Ok(stepped(store(files)?.redo_zone(to_trash)?))).await
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -210,6 +240,43 @@ mod tests {
         let zone = renamed(&files, "ma-foret", "Bois").unwrap_or_else(|error| panic!("{error:?}"));
         assert_eq!((zone.id.as_str(), zone.name.as_str()), ("ma-foret", "Bois"));
         assert_eq!(listed(&files).zones, [zone]);
+    }
+
+    #[test]
+    fn an_undo_says_the_zone_it_changed_as_it_now_is_and_none_once_there_is_nothing() {
+        let folder = Folder::new("ipc-zones-undo");
+        let files = files(&folder);
+        created(&files, "Bois", 1).unwrap_or_else(|error| panic!("{error:?}"));
+        renamed(&files, "bois", "Forêt").unwrap_or_else(|error| panic!("{error:?}"));
+        let store = store(&files).unwrap_or_else(|error| panic!("{error:?}"));
+        let remove = |path: &std::path::Path| std::fs::remove_file(path);
+        let undone = stepped(store.undo_zone(remove).unwrap_or_else(|error| panic!("{error}")));
+        let bois = ZoneView {
+            id: "bois".into(),
+            name: "Bois".into(),
+            world: 1,
+            maps: Vec::new(),
+        };
+        assert_eq!(
+            undone,
+            Some(ZoneStepped {
+                id: "bois".into(),
+                zone: Some(bois)
+            })
+        );
+        let undone = stepped(store.undo_zone(remove).unwrap_or_else(|error| panic!("{error}")));
+        assert_eq!(
+            undone,
+            Some(ZoneStepped {
+                id: "bois".into(),
+                zone: None
+            })
+        );
+        assert_eq!(
+            stepped(store.undo_zone(remove).unwrap_or_else(|error| panic!("{error}"))),
+            None
+        );
+        assert_eq!(listed(&files).zones, []);
     }
 
     #[test]
