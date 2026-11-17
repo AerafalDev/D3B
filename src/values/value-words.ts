@@ -1,10 +1,10 @@
 import { commands } from "@/bindings.ts";
 import { named } from "@/characters/names.ts";
 import { valueText } from "@/library/value-text.ts";
-import { parseDuration } from "@/settings/duration.ts";
 import { useWorld } from "@/world/world-store.ts";
 import { folded } from "@/world/world-tree.ts";
 import { useZones } from "@/zone/zones-store.ts";
+import { parseDuration } from "./duration.ts";
 
 const YES = ["oui", "yes", "vrai", "true"];
 const NO = ["non", "no", "faux", "false"];
@@ -70,7 +70,8 @@ export async function fromWords(valueType: string, list: boolean, words: string)
       }
       const found = await commands.findItems(text, []).catch(() => []);
       const exact = found.find((item) => [item.name.fr, item.name.en].some((n) => folded(n) === sought));
-      return (exact ?? found[0])?.id ?? null;
+      // A name not found whole names nothing: a paste never takes another item silently.
+      return exact?.id ?? null;
     }
     default:
       // A bank, items, a route, an NPC: their file's JSON, until their editors.
@@ -96,7 +97,7 @@ export async function toWords(valueType: string, list: boolean, value: unknown, 
     case "time":
       return String(value);
     case "bool":
-      return value === true ? "oui" : "non";
+      return language.startsWith("fr") ? (value === true ? "oui" : "non") : value === true ? "yes" : "no";
     case "duration":
       return valueText("duration", JSON.stringify(value), language);
     case "job": {
@@ -118,7 +119,13 @@ export async function toWords(valueType: string, list: boolean, value: unknown, 
     case "map": {
       const found = id === null ? [] : await commands.findMaps([id]).catch(() => []);
       const map = found[0];
-      return map === undefined ? String(id) : `${map.at[0]},${map.at[1]}`;
+      // Coordinates read back the same map only on the world the World tab shows, and for the map drawn there: an
+      // inside, or a map of another world, is written by its id.
+      const back =
+        map === undefined
+          ? null
+          : await commands.mapAt(useWorld.getState().world, map.at[0], map.at[1]).catch(() => null);
+      return map === undefined || back?.id !== map.id ? String(id) : `${map.at[0]},${map.at[1]}`;
     }
     case "item": {
       const found = id === null ? [] : await commands.findItems("", [id]).catch(() => []);

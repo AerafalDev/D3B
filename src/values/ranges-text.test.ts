@@ -8,8 +8,8 @@ describe("ranges as text", () => {
     expect(read).toEqual({
       ok: true,
       rows: [
-        { from: 1, to: 49, text: "Forêt d'Astrub" },
-        { from: 50, to: 200, text: "Champs d'Astrub" },
+        { from: 1, to: 49, text: "Forêt d'Astrub", line: 1 },
+        { from: 50, to: 200, text: "Champs d'Astrub", line: 3 },
       ],
     });
   });
@@ -27,7 +27,8 @@ describe("ranges as text", () => {
       { from: 1, to: 49, text: "1 min 30" },
       { from: 50, to: 200, text: "5,-18" },
     ];
-    expect(readRanges(writeRanges(rows))).toEqual({ ok: true, rows });
+    const read = readRanges(writeRanges(rows));
+    expect(read.ok && read.rows.map(({ from, to, text }) => ({ from, to, text }))).toEqual(rows);
   });
 
   it("finds the rows a level reaches with another, and none for a gap", () => {

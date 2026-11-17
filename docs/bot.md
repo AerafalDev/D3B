@@ -411,8 +411,9 @@ flowchart LR
   typed (a name, "5,-18", "1 min 30", an id), replaces the table, undone by Ctrl+Z, a line not read said by its
   number with nothing changed; "Copy as text" gives it back (step 7 of (v2.2), done in code: a value's words are its
   editor's, a sub-area's, zone's, profession's or item's name or an id, a map's coordinates on the world the World tab shows, a list's
-  separated by ";"; a map inside a building, which shares its street's coordinates, is copied as those coordinates
-  and so pasted back as the street's).
+  separated by ";", an item by its whole name only; a map is copied by its coordinates when they read it back on
+  the world the World tab shows, else by its id, an inside or another world's; a gap shows in its place, a row is
+  added from the level after the highest and none once a row reaches 200, and a blank paste changes nothing).
 - **My variables** (the owner, 2026-11-17: before (14), so the editors are used): the variable editor offers a map,
   an item, a duration and a time (the NPC at step 4), and two switches, "List" and "By level" (ranges), its default
   and a character's setting typed with the editors above, a list a row per value in its type's editor, × to remove one

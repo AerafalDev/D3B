@@ -47,6 +47,58 @@ describe("a ranges' table", () => {
     expect(onChange).toHaveBeenLastCalledWith(rows([1, 39, 60]));
   });
 
+  it("removes the row whose level was just changed, though the ranges did not come back yet", () => {
+    const onChange = shown(rows([1, 49, 60], [50, 200, 120]));
+    const to = screen.getByRole("textbox", { name: "Tranche 1 : au niveau" });
+    fireEvent.change(to, { target: { value: "39" } });
+    fireEvent.blur(to);
+    fireEvent.click(screen.getByRole("button", { name: "Retirer la tranche 1" }));
+    expect(onChange).toHaveBeenLastCalledWith(rows([50, 200, 120]));
+  });
+
+  it("edits a row's value, and adds a row from the level after the highest", () => {
+    const onChange = shown(rows([50, 59, 60], [1, 9, 60]));
+    const second = screen.getByRole("textbox", { name: "Pause, tranche 2" });
+    fireEvent.change(second, { target: { value: "3 min" } });
+    fireEvent.keyDown(second, { key: "Enter" });
+    expect(onChange).toHaveBeenLastCalledWith(rows([50, 59, 180], [1, 9, 60]));
+    expect(screen.getByText("Niveaux 60 à 200 :")).toBeTruthy();
+    const added = screen.getByRole("textbox", { name: "Pause : ajouter une tranche" });
+    fireEvent.change(added, { target: { value: "45 s" } });
+    fireEvent.keyDown(added, { key: "Enter" });
+    expect(onChange).toHaveBeenLastCalledWith(rows([50, 59, 180], [1, 9, 60], [60, 200, 45]));
+  });
+
+  it("offers no row to add once a row reaches level 200", () => {
+    shown(rows([1, 49, 60], [50, 200, 120]));
+    expect(screen.queryByRole("textbox", { name: "Pause : ajouter une tranche" })).toBeNull();
+  });
+
+  it("builds on the ranges as they were after a change refused", async () => {
+    const onChange = vi.fn(async () => false);
+    render(
+      <SettingEditor variable={durations} value={rows([1, 200, 60])} onChange={onChange} who="Lyra" label="Pause" />,
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Retirer la tranche 1" }));
+    await act(async () => {});
+    const value = screen.getByRole("textbox", { name: "Pause, tranche 1" });
+    fireEvent.change(value, { target: { value: "2 min" } });
+    fireEvent.keyDown(value, { key: "Enter" });
+    expect(onChange).toHaveBeenLastCalledWith(rows([1, 200, 120]));
+  });
+
+  it("says a pasted table refused, keeping the text", async () => {
+    const onChange = vi.fn(async () => false);
+    render(<SettingEditor variable={durations} value={null} onChange={onChange} who="Lyra" label="Pause" />);
+    const text = screen.getByRole("textbox", { name: "Pause : tranches en texte" }) as HTMLTextAreaElement;
+    fireEvent.change(text, { target: { value: "1-200: 1 min" } });
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "Remplacer le tableau" }));
+    });
+    expect(screen.getByText("Le tableau n'a pas été gardé : une valeur ne tient pas.")).toBeTruthy();
+    expect(text.value).toBe("1-200: 1 min");
+  });
+
   it("puts back a level out of 1 to 200 or past its other end", () => {
     const onChange = shown(rows([10, 49, 60]));
     const from = screen.getByRole("textbox", { name: "Tranche 1 : du niveau" }) as HTMLInputElement;
@@ -66,7 +118,7 @@ describe("a ranges' table", () => {
       fireEvent.click(screen.getByRole("button", { name: "Remplacer le tableau" }));
     });
     expect(screen.getByText("La ligne 2 ne se lit pas : rien n'a changé.")).toBeTruthy();
-    fireEvent.change(text, { target: { value: "1-49: 1 min 30\n50-200: bientôt" } });
+    fireEvent.change(text, { target: { value: "1-49: 1 min\n50-200: min" } });
     await act(async () => {
       fireEvent.click(screen.getByRole("button", { name: "Remplacer le tableau" }));
     });

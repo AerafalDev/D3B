@@ -5,8 +5,13 @@ export interface RowText {
   text: string;
 }
 
+/** A row read from text, with the line it was on, numbered from 1. */
+export interface ReadRow extends RowText {
+  line: number;
+}
+
 /** Ranges read from text, or the first line that does not read, numbered from 1. */
-export type ReadRanges = { ok: true; rows: RowText[] } | { ok: false; line: number };
+export type ReadRanges = { ok: true; rows: ReadRow[] } | { ok: false; line: number };
 
 /** The highest level a range reaches. */
 export const TOP_LEVEL = 200;
@@ -20,7 +25,7 @@ const COLUMNS = /^\s*(\d+)\t(\d+)\t(.+?)\s*$/;
  * skipped, levels from 1 to 200 with the first no higher than the second; any other line is said by its number.
  */
 export function readRanges(text: string): ReadRanges {
-  const rows: RowText[] = [];
+  const rows: ReadRow[] = [];
   const lines = text.split(/\r?\n/);
   for (const [at, line] of lines.entries()) {
     if (line.trim() === "") {
@@ -31,7 +36,7 @@ export function readRanges(text: string): ReadRanges {
     if (value === undefined || value.trim() === "" || from < 1 || to > TOP_LEVEL || from > to) {
       return { ok: false, line: at + 1 };
     }
-    rows.push({ from, to, text: value.trim() });
+    rows.push({ from, to, text: value.trim(), line: at + 1 });
   }
   return { ok: true, rows };
 }

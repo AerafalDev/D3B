@@ -3,10 +3,10 @@ import { useTranslation } from "react-i18next";
 
 import { Switch } from "@/components/ui/switch.tsx";
 import { valueText } from "@/library/value-text.ts";
+import { parseDuration } from "@/values/duration.ts";
 import { ItemField } from "@/values/item-field.tsx";
 import { MapField } from "@/values/map-field.tsx";
 import { ZoneField, type ZoneValue } from "@/zone/zone-field.tsx";
-import { parseDuration } from "./duration.ts";
 import { JobSelect } from "./job-select.tsx";
 import { ListEditor } from "./list-editor.tsx";
 import { RangesTable } from "./ranges-table.tsx";

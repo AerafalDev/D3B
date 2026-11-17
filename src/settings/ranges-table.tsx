@@ -1,4 +1,4 @@
-import { X } from "lucide-react";
+import { Plus, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 
@@ -48,32 +48,81 @@ function rowsOf(json: string | null): Row[] {
 const FIELD =
   "h-[26px] w-[44px] rounded border border-[#3c3c3c] bg-[#181818] px-1 text-right text-xs text-white tabular-nums outline-0 focus:border-focus aria-invalid:border-[#f48771]";
 
+interface LevelProps {
+  level: number;
+  label: string;
+  crossed: boolean;
+  /** Whether a level typed holds: 1 to 200, and on the right side of the row's other end. */
+  holds: (level: number) => boolean;
+  onLevel: (level: number) => void;
+}
+
+/** A row's level, kept in a draft while typed, sent when left, put back when it does not hold. */
+function Level({ level, label, crossed, holds, onLevel }: LevelProps) {
+  const [draft, setDraft] = useState(String(level));
+  useEffect(() => setDraft(String(level)), [level]);
+  const commit = () => {
+    const typed = Number(draft);
+    if (!Number.isInteger(typed) || !holds(typed) || typed === level) {
+      setDraft(String(level));
+      return;
+    }
+    onLevel(typed);
+  };
+  return (
+    <input
+      type="text"
+      inputMode="numeric"
+      aria-label={label}
+      aria-invalid={crossed}
+      value={draft}
+      onChange={(event) => setDraft(event.target.value)}
+      onBlur={commit}
+      onKeyDown={(event) => event.key === "Enter" && commit()}
+      className={FIELD}
+    />
+  );
+}
+
 /**
  * Ranges (the owner, 2026-11-17): a table "From level", "To level" and the value in its type's editor, sorted, the rows a
- * level reaches twice marked, a gap a faint row, × to remove a row and a last row adding one once its value is typed;
- * a text pasted, lines `1-49: value`, replaces the table, a line not read said by its number with nothing changed, and
- * "Copy as text" writes it back. Each change sends the whole ranges, built on the last ones sent.
+ * level reaches twice marked, a gap a faint row in its place, × to remove a row and a last row adding one from the
+ * level after the highest once its value is typed; a text pasted, lines `1-49: value`, replaces the table, a line not
+ * read said by its number with nothing changed, and "Copy as text" writes it back. Each change sends the whole ranges,
+ * built on the last ones sent, a row known by its place in them, so a level changed then × clicked removes that row.
  */
 export function RangesTable({ variable, value, onChange, who, label }: RangesTableProps) {
   const { t, i18n } = useTranslation();
-  const rows = rowsOf(value).sort((a, b) => a.from - b.from);
+  const rows = rowsOf(value);
   const sent = useRef(rows);
   useEffect(() => {
-    sent.current = rowsOf(value).sort((a, b) => a.from - b.from);
+    sent.current = rowsOf(value);
   }, [value]);
   const save = (change: (rows: Row[]) => Row[]) => {
-    const next = change(sent.current).sort((a, b) => a.from - b.from);
+    const next = change(sent.current);
     sent.current = next;
-    return onChange(JSON.stringify(next));
+    return onChange(JSON.stringify(next)).then((kept) => {
+      if (!kept) {
+        sent.current = rowsOf(value);
+      }
+      return kept;
+    });
   };
+  // Shown sorted, each row known by its place in the ranges sent, which a level changed keeps.
+  const order = rows.map((_, at) => at).sort((a, b) => (rows[a]?.from ?? 0) - (rows[b]?.from ?? 0));
   const crossed = overlapping(rows);
+  const holes = gaps(rows);
   const one = { valueType: variable.valueType, list: variable.list, bounds: null };
+  const highest = Math.max(0, ...rows.map((row) => row.to));
   const [pasted, setPasted] = useState("");
-  const [unread, setUnread] = useState<number | null>(null);
+  const [said, setSaid] = useState<string | null>(null);
   const replace = async () => {
+    if (pasted.trim() === "") {
+      return;
+    }
     const read = readRanges(pasted);
     if (!read.ok) {
-      setUnread(read.line);
+      setSaid(t("values.rangesUnread", { line: read.line }));
       return;
     }
     const values = await Promise.all(
@@ -81,127 +130,130 @@ export function RangesTable({ variable, value, onChange, who, label }: RangesTab
     );
     const missing = values.indexOf(null);
     if (missing >= 0) {
-      // The line of the row whose value names nothing, counting the blank lines skipped.
-      const lines = pasted.split(/\r?\n/);
-      const line = lines.findIndex((it) => it.includes(read.rows[missing]?.text ?? "\u0000")) + 1;
-      setUnread(line);
+      setSaid(t("values.rangesUnread", { line: read.rows[missing]?.line ?? 0 }));
       return;
     }
-    setUnread(null);
-    setPasted("");
-    void save(() => read.rows.map((row, at) => ({ from: row.from, to: row.to, value: values[at] })));
+    const kept = await save(() => read.rows.map((row, at) => ({ from: row.from, to: row.to, value: values[at] })));
+    setSaid(kept ? null : t("values.rangesRefused"));
+    if (kept) {
+      setPasted("");
+    }
   };
   const copy = async () => {
     const lines = await Promise.all(
-      rows.map(async (row) => ({
-        from: row.from,
-        to: row.to,
-        text: await toWords(variable.valueType, variable.list === true, row.value, i18n.language),
-      })),
+      order.map(async (at) => {
+        const row = rows[at] as Row;
+        const text = await toWords(variable.valueType, variable.list === true, row.value, i18n.language);
+        return { from: row.from, to: row.to, text };
+      }),
     );
     const text = writeRanges(lines);
     setPasted(text);
+    setSaid(null);
     await navigator.clipboard?.writeText(text).catch(() => undefined);
   };
-  const level = (row: Row, at: number, end: "from" | "to") => (
-    <input
-      type="text"
-      inputMode="numeric"
-      aria-label={t(end === "from" ? "values.rangesFrom" : "values.rangesTo", { row: at + 1 })}
-      aria-invalid={crossed.has(at)}
-      defaultValue={row[end]}
-      onBlur={(event) => {
-        const typed = Number(event.target.value);
-        const other = end === "from" ? row.to : row.from;
-        const holds =
-          Number.isInteger(typed) &&
-          typed >= 1 &&
-          typed <= TOP_LEVEL &&
-          (end === "from" ? typed <= other : typed >= other);
-        if (!holds || typed === row[end]) {
-          event.target.value = String(row[end]);
-          return;
-        }
-        void save((list) =>
-          list.map((it) => (it.from === row.from && it.to === row.to ? { ...it, [end]: typed } : it)),
-        );
-      }}
-      className={FIELD}
-    />
-  );
-  const holes = gaps(rows);
-  const last = rows.at(-1);
+  const gapBefore = (from: number) => holes.find(([, to]) => to === from - 1);
   return (
     <div className="flex flex-col gap-1 text-xs">
-      {rows.map((row, at) => (
-        <div key={`${row.from}-${row.to}`} className="flex items-center gap-1">
-          {level(row, at, "from")}
-          <span className="text-text-muted">–</span>
-          {level(row, at, "to")}
+      {rows.length > 0 && (
+        <div className="text-text-muted flex gap-1" aria-hidden="true">
+          <span className="w-[44px] text-right">{t("values.rangesFromHead")}</span>
+          <span className="w-[44px] pl-3 text-right">{t("values.rangesToHead")}</span>
+        </div>
+      )}
+      {order.map((at, shown) => {
+        const row = rows[at] as Row;
+        const gap = gapBefore(row.from);
+        return (
+          <div key={at} className="flex flex-col gap-1">
+            {gap !== undefined && (
+              <p className="text-text-faint">{t("values.rangesNothing", { from: gap[0], to: gap[1] })}</p>
+            )}
+            <div className="flex items-center gap-1">
+              <Level
+                level={row.from}
+                label={t("values.rangesFrom", { row: shown + 1 })}
+                crossed={crossed.has(at)}
+                holds={(level) => level >= 1 && level <= row.to}
+                onLevel={(from) => void save((list) => list.map((it, index) => (index === at ? { ...it, from } : it)))}
+              />
+              <span className="text-text-muted">–</span>
+              <Level
+                level={row.to}
+                label={t("values.rangesTo", { row: shown + 1 })}
+                crossed={crossed.has(at)}
+                holds={(level) => level <= TOP_LEVEL && level >= row.from}
+                onLevel={(to) => void save((list) => list.map((it, index) => (index === at ? { ...it, to } : it)))}
+              />
+              <div className="min-w-0 flex-1">
+                <SettingEditor
+                  variable={one}
+                  value={row.value === undefined ? null : JSON.stringify(row.value)}
+                  onChange={(changed) =>
+                    save((list) =>
+                      list.map((it, index) => (index === at ? { ...it, value: JSON.parse(changed) as unknown } : it)),
+                    )
+                  }
+                  who={who}
+                  label={t("values.rangesValue", { label, row: shown + 1 })}
+                />
+              </div>
+              <button
+                type="button"
+                aria-label={t("values.rangesRemove", { row: shown + 1 })}
+                onClick={() => void save((list) => list.filter((_, index) => index !== at))}
+                className="text-text-muted hover:bg-hover focus-visible:outline-focus flex size-5 shrink-0 items-center justify-center rounded hover:text-white focus-visible:outline-1"
+              >
+                <X aria-hidden="true" size={14} strokeWidth={1.5} />
+              </button>
+            </div>
+          </div>
+        );
+      })}
+      {holes
+        .filter(([from]) => from > highest)
+        .map(([from, to]) => (
+          <p key={`gap-${from}`} className="text-text-faint">
+            {t("values.rangesNothing", { from, to })}
+          </p>
+        ))}
+      {crossed.size > 0 && <p className="text-[#f48771]">{t("values.rangesOverlap")}</p>}
+      {highest < TOP_LEVEL && (
+        <div className="flex items-center gap-1">
+          <Plus aria-hidden="true" size={14} strokeWidth={1.5} className="text-text-muted shrink-0" />
+          <span className="text-text-muted whitespace-nowrap">
+            {t("values.rangesAdd", { from: highest + 1, to: TOP_LEVEL })}
+          </span>
           <div className="min-w-0 flex-1">
             <SettingEditor
+              key={rows.length}
               variable={one}
-              value={row.value === undefined ? null : JSON.stringify(row.value)}
-              onChange={(changed) =>
-                save((list) =>
-                  list.map((it) =>
-                    it.from === row.from && it.to === row.to ? { ...it, value: JSON.parse(changed) } : it,
-                  ),
-                )
-              }
+              value={null}
+              onChange={(added) => {
+                const from = Math.max(0, ...sent.current.map((row) => row.to)) + 1;
+                return save((list) => [...list, { from, to: TOP_LEVEL, value: JSON.parse(added) as unknown }]);
+              }}
               who={who}
-              label={t("values.rangesValue", { label, row: at + 1 })}
+              label={t("values.rangesNew", { label })}
             />
           </div>
-          <button
-            type="button"
-            aria-label={t("values.rangesRemove", { row: at + 1 })}
-            onClick={() => void save((list) => list.filter((it) => it.from !== row.from || it.to !== row.to))}
-            className="text-text-muted hover:bg-hover focus-visible:outline-focus flex size-5 shrink-0 items-center justify-center rounded hover:text-white focus-visible:outline-1"
-          >
-            <X aria-hidden="true" size={14} strokeWidth={1.5} />
-          </button>
         </div>
-      ))}
-      {crossed.size > 0 && <p className="text-[#f48771]">{t("values.rangesOverlap")}</p>}
-      {holes.map(([from, to]) => (
-        <p key={`gap-${from}`} className="text-text-faint">
-          {t("values.rangesNothing", { from, to })}
-        </p>
-      ))}
-      <div className="flex items-center gap-1">
-        <span className="text-text-muted whitespace-nowrap">
-          {t("values.rangesAdd", { from: (last?.to ?? 0) + 1, to: TOP_LEVEL })}
-        </span>
-        <div className="min-w-0 flex-1">
-          <SettingEditor
-            key={rows.length}
-            variable={one}
-            value={null}
-            onChange={(added) => {
-              const from = Math.min((sent.current.at(-1)?.to ?? 0) + 1, TOP_LEVEL);
-              return save((list) => [...list, { from, to: TOP_LEVEL, value: JSON.parse(added) }]);
-            }}
-            who={who}
-            label={t("values.rangesNew", { label })}
-          />
-        </div>
-      </div>
+      )}
       <textarea
         aria-label={t("values.rangesPaste", { label })}
         placeholder={t("values.rangesHint")}
         value={pasted}
         onChange={(event) => {
           setPasted(event.target.value);
-          setUnread(null);
+          setSaid(null);
         }}
         rows={3}
         className={cn(
           "focus:border-focus min-h-[52px] rounded border border-[#3c3c3c] bg-[#181818] px-2 py-1 text-white outline-0",
-          unread !== null && "border-[#f48771]",
+          said !== null && "border-[#f48771]",
         )}
       />
-      {unread !== null && <p className="text-[#f48771]">{t("values.rangesUnread", { line: unread })}</p>}
+      {said !== null && <p className="text-[#f48771]">{said}</p>}
       <div className="flex gap-1.5">
         <button
           type="button"
