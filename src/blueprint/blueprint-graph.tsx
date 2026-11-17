@@ -32,11 +32,13 @@ import { ConnectionLine } from "./edit/connection-line.tsx";
 import { deletion, type MenuTarget, menuDeletion } from "./edit/deletion.ts";
 import { GraphPins, type PinOf, pinFinder } from "./edit/graph-pins.ts";
 import { type LinkEnd, linkRefusal } from "./edit/link-check.ts";
+import { NodeEdit, optionPin, pinRemoval } from "./edit/node-options.ts";
 import { Picker } from "./edit/picker.tsx";
 import { keptSelection } from "./edit/selection.ts";
 import { GRAPH_DROP, type Pointer, variableDropped } from "./edit/variable-drop.ts";
 import { VariableMenu } from "./edit/variable-menu.tsx";
 import { chosenNode, graphElements } from "./graph-elements.ts";
+import { pinLabel } from "./pin-label.ts";
 import { type PillNode, VariablePill } from "./variable-pill.tsx";
 import { WireEdge } from "./wire-edge.tsx";
 
@@ -89,7 +91,10 @@ type Opened = { client: { x: number; y: number }; at: { x: number; y: number }; 
 export function BlueprintGraph(props: BlueprintGraphProps) {
   return (
     <ReactFlowProvider>
-      <Graph {...props} />
+      {/* A node's "+" edits the graph of a blueprint of mine. */}
+      <NodeEdit value={props.onEdit}>
+        <Graph {...props} />
+      </NodeEdit>
     </ReactFlowProvider>
   );
 }
@@ -175,8 +180,10 @@ function Graph({ graph, names, faulty, chosen = null, onChoose, onEdit }: Bluepr
   }, [drawn, chosen]);
   // What the right-click under way landed on: a node or a wire opens the menu, the pane the picker, the rest nothing.
   const target = useRef<MenuTarget | null>(null);
-  // What the menu open deletes.
+  // What the menu open deletes, or the pin it removes.
   const menuFor = useRef<MenuTarget | null>(null);
+  // The pin the menu open is for, and what its "Remove" does: nothing at its kind's least.
+  const [onPin, setOnPin] = useState<{ removal: GraphEdit_Deserialize | null } | null>(null);
   const remove = (change: GraphEdit_Deserialize | null) => {
     if (change !== null) {
       onEdit?.(change);
@@ -203,6 +210,11 @@ function Graph({ graph, names, faulty, chosen = null, onChoose, onEdit }: Bluepr
           onContextMenu={(event) => {
             // Nothing deletable under the pointer (the pane opened the picker): no menu.
             menuFor.current = target.current;
+            const pinned = target.current;
+            const pinNode = pinned?.kind === "pin" ? graph.nodes.find((one) => one.id === pinned.id) : undefined;
+            setOnPin(
+              pinned?.kind === "pin" && pinNode !== undefined ? { removal: pinRemoval(pinNode, pinned.pin) } : null,
+            );
             target.current = null;
             if (menuFor.current === null) {
               event.preventDefault();
@@ -255,8 +267,19 @@ function Graph({ graph, names, faulty, chosen = null, onChoose, onEdit }: Bluepr
               deleteKeyCode={null}
               edgesFocusable={editable}
               onEdgesChange={(changes) => setEdges((now) => applyEdgeChanges(changes, now))}
-              onNodeContextMenu={(_, node) => {
-                target.current = editable ? { kind: "node", id: node.id } : null;
+              onNodeContextMenu={(event, node) => {
+                // A numbered output or a case under the pointer, its dot or its row, has its own menu, "Remove"
+                // (the owner, 2026-11-17), which never deletes the node, even at its kind's least.
+                const at = event.target instanceof Element ? event.target : null;
+                const row = at?.closest(".blueprint-row");
+                const handle = at?.closest(".react-flow__handle") ?? row?.querySelector(".react-flow__handle");
+                const pin = handle?.getAttribute("data-handleid") ?? null;
+                const option = pin !== null && node.type === "box" && optionPin((node as BoxNode).data.node, pin);
+                target.current = !editable
+                  ? null
+                  : option
+                    ? { kind: "pin", id: node.id, pin }
+                    : { kind: "node", id: node.id };
               }}
               onEdgeContextMenu={(_, edge) => {
                 target.current = editable ? { kind: "wire", id: edge.id } : null;
@@ -337,6 +360,14 @@ function Graph({ graph, names, faulty, chosen = null, onChoose, onEdit }: Bluepr
                 at={{ x: opened.client.x - (corner?.left ?? 0), y: opened.client.y - (corner?.top ?? 0) }}
                 choices={graph.choices}
                 dragged={opened.dragged}
+                draggedLabel={
+                  opened.dragged === null
+                    ? undefined
+                    : pinLabel(
+                        opened.dragged.pin.id,
+                        graph.nodes.find((one) => one.id === opened.dragged?.node),
+                      )
+                }
                 names={names}
                 onClose={close}
                 onPick={(choice) => {
@@ -379,15 +410,21 @@ function Graph({ graph, names, faulty, chosen = null, onChoose, onEdit }: Bluepr
             }
           }}
         >
-          <ContextMenuItem
-            onSelect={() => {
-              const chosen = menuFor.current;
-              remove(chosen === null ? null : menuDeletion(chosen, nodes, edges));
-            }}
-          >
-            {t("blueprint.delete")}
-            <ContextMenuShortcut>{t("blueprint.deleteKey")}</ContextMenuShortcut>
-          </ContextMenuItem>
+          {onPin !== null ? (
+            <ContextMenuItem disabled={onPin.removal === null} onSelect={() => remove(onPin.removal)}>
+              {t("blueprint.removePin")}
+            </ContextMenuItem>
+          ) : (
+            <ContextMenuItem
+              onSelect={() => {
+                const chosen = menuFor.current;
+                remove(chosen === null ? null : menuDeletion(chosen, nodes, edges));
+              }}
+            >
+              {t("blueprint.delete")}
+              <ContextMenuShortcut>{t("blueprint.deleteKey")}</ContextMenuShortcut>
+            </ContextMenuItem>
+          )}
         </ContextMenuContent>
       </ContextMenu>
     </GraphPins>

@@ -83,6 +83,31 @@ export async function fromWords(valueType: string, list: boolean, words: string)
   }
 }
 
+/** A profession's, or a zone of mine's or a sub-area's, name as its editor shows it; `null` for another type. */
+export function nameOf(valueType: string, value: unknown, language: string): string | null {
+  switch (valueType) {
+    case "job": {
+      const id = typeof value === "number" ? value : null;
+      const read = useWorld.getState().read;
+      const job = read?.state === "read" ? read.atlas.jobs.find((one) => one.id === id) : undefined;
+      return named(job?.name, language) ?? String(id);
+    }
+    case "zone": {
+      const zone = value as { sub_area?: number; zone?: string };
+      const mine = useZones.getState().zones.find((one) => one.id === zone.zone);
+      if (mine !== undefined) {
+        return mine.name;
+      }
+      const read = useWorld.getState().read;
+      const subAreas = read?.state === "read" ? read.atlas.areas.flatMap((area) => area.subAreas) : [];
+      const found = subAreas.find((one) => one.id === zone.sub_area);
+      return named(found?.name, language) ?? String(zone.sub_area ?? zone.zone);
+    }
+    default:
+      return null;
+  }
+}
+
 /** The words `value` of `valueType` is typed as, which `fromWords` reads back the same. */
 export async function toWords(valueType: string, list: boolean, value: unknown, language: string): Promise<string> {
   if (list && Array.isArray(value)) {
@@ -100,22 +125,9 @@ export async function toWords(valueType: string, list: boolean, value: unknown, 
       return language.startsWith("fr") ? (value === true ? "oui" : "non") : value === true ? "yes" : "no";
     case "duration":
       return valueText("duration", JSON.stringify(value), language);
-    case "job": {
-      const read = useWorld.getState().read;
-      const job = read?.state === "read" ? read.atlas.jobs.find((one) => one.id === id) : undefined;
-      return named(job?.name, language) ?? String(id);
-    }
-    case "zone": {
-      const zone = value as { sub_area?: number; zone?: string };
-      const mine = useZones.getState().zones.find((one) => one.id === zone.zone);
-      if (mine !== undefined) {
-        return mine.name;
-      }
-      const read = useWorld.getState().read;
-      const subAreas = read?.state === "read" ? read.atlas.areas.flatMap((area) => area.subAreas) : [];
-      const found = subAreas.find((one) => one.id === zone.sub_area);
-      return named(found?.name, language) ?? String(zone.sub_area ?? zone.zone);
-    }
+    case "job":
+    case "zone":
+      return nameOf(valueType, value, language) ?? JSON.stringify(value);
     case "map": {
       const found = id === null ? [] : await commands.findMaps([id]).catch(() => []);
       const map = found[0];

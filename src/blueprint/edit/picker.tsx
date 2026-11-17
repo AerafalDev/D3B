@@ -16,6 +16,8 @@ interface PickerProps {
   choices: readonly ChoiceView_Serialize[];
   /** The pin a wire dropped on the ground came from, if it did. */
   dragged: LinkEnd | null;
+  /** That pin's label as its node draws it, "Alors 2"; its kind's label when not given. */
+  draggedLabel?: string;
   /** The blueprint's variables' and functions' names by id, as the player reads them. */
   names: ReadonlyMap<string, string>;
   onPick: (choice: ChoiceView_Serialize) => void;
@@ -48,7 +50,7 @@ function said(choice: ChoiceView_Serialize, names: ReadonlyMap<string, string>):
  * "Often here" and every choice by family, each its sentence and description, an action the bot does not do yet tagged
  * with its step; with a wire dragged, only what its pin fits. The arrows and Enter choose, Escape closes.
  */
-export function Picker({ at, choices, dragged, names, onPick, onClose }: PickerProps) {
+export function Picker({ at, choices, dragged, draggedLabel, names, onPick, onClose }: PickerProps) {
   const { t } = useTranslation();
   const card = useRef<HTMLDivElement>(null);
   const field = useRef<HTMLInputElement>(null);
@@ -150,7 +152,7 @@ export function Picker({ at, choices, dragged, names, onPick, onClose }: PickerP
         />
         {dragged !== null && (
           <span className="text-text-faint shrink-0 text-[11px]">
-            {t("blueprint.picker.after", { pin: pinLabel(dragged.pin.id) })}
+            {t("blueprint.picker.after", { pin: draggedLabel ?? pinLabel(dragged.pin.id) })}
           </span>
         )}
       </label>

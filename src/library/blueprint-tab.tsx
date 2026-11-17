@@ -328,6 +328,17 @@ export function BlueprintTab({ api, params }: IDockviewPanelProps<BlueprintParam
                         void blueprintEdit({ edit: "deleteVariable", variable });
                       }
                 }
+                onEdit={
+                  blueprint.given || shownGraph === undefined
+                    ? undefined
+                    : (change) =>
+                        edit(blueprint.id, shownGraph.id, change).then((saved) => {
+                          if (saved) {
+                            void refresh();
+                          }
+                          return saved;
+                        })
+                }
                 onValue={
                   blueprint.given || shownGraph === undefined
                     ? undefined

@@ -1,8 +1,11 @@
 import { Handle, type Node, type NodeProps, Position } from "@xyflow/react";
+import { Plus } from "lucide-react";
+import { useContext } from "react";
 import { useTranslation } from "react-i18next";
 
 import type { PinView_Serialize } from "@/bindings.ts";
 import { cn } from "@/lib/utils.ts";
+import { addedPin, NodeEdit } from "./edit/node-options.ts";
 import { FAMILY_COLOUR, nodeIcon } from "./graph-look.ts";
 import type { GraphNode, SentencePart } from "./node-sentence.ts";
 import { pinLabel } from "./pin-label.ts";
@@ -41,7 +44,11 @@ export function BlueprintNode({ data, selected }: NodeProps<BoxNode>) {
   const Icon = nodeIcon(node.family, node.does === "kind" ? node.kind : null);
   const flowIn = node.pins.find((pin) => pin.side === "in" && pin.carries === "exec");
   const flowOuts = node.pins.filter((pin) => pin.side === "out" && pin.carries === "exec");
-  const head = flowOuts[0];
+  // A node's numbered outputs and cases are rows, each with its label, never one alone on its head.
+  const numbered = (node.adds ?? null) !== null || node.takesCases === true;
+  const head = numbered ? undefined : flowOuts[0];
+  const onEdit = useContext(NodeEdit);
+  const added = onEdit === undefined ? null : addedPin(node);
   const ins = node.pins.filter((pin) => pin.side === "in" && pin.carries !== "exec");
   const outs = node.pins.filter((pin) => pin.side === "out" && pin !== head);
   // A kind that changes a variable is typed by it, never open (`bot::pins`).
@@ -89,23 +96,37 @@ export function BlueprintNode({ data, selected }: NodeProps<BoxNode>) {
           <Handle type="source" position={Position.Right} id={head.id} className={pinClass(head, open)} />
         )}
       </div>
-      {(ins.length > 0 || outs.length > 0) && (
+      {(ins.length > 0 || outs.length > 0 || added !== null) && (
         <div className="blueprint-node-body">
           <div className="flex flex-col">
             {ins.map((pin) => (
               <div key={pin.id} className="blueprint-row">
                 <Handle type="target" position={Position.Left} id={pin.id} className={pinClass(pin, open)} />
-                {pinLabel(pin.id)}
+                {pinLabel(pin.id, node)}
               </div>
             ))}
           </div>
           <div className="flex flex-col items-end">
             {outs.map((pin) => (
               <div key={pin.id} className={cn("blueprint-row", pin.id === "failed" && "is-failed")}>
-                {pinLabel(pin.id)}
+                {pinLabel(pin.id, node)}
                 <Handle type="source" position={Position.Right} id={pin.id} className={pinClass(pin, open)} />
               </div>
             ))}
+            {added !== null && (
+              <button
+                type="button"
+                // A click or a key adds the output and neither drags nor chooses the node.
+                className="nodrag nopan nokey text-text-muted hover:bg-hover focus-visible:outline-focus flex items-center gap-1 rounded px-1 text-[11px] hover:text-white focus-visible:outline-1"
+                onClick={(event) => {
+                  event.stopPropagation();
+                  onEdit?.(added);
+                }}
+              >
+                <Plus aria-hidden="true" size={12} strokeWidth={1.5} />
+                {t("blueprint.addOutput")}
+              </button>
+            )}
           </div>
         </div>
       )}

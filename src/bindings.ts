@@ -1037,6 +1037,8 @@ export type NodeView_Deserialize = {
 	types?: string[],
 	/**  The pins "+" adds, Sequence's outputs; omitted for a kind that numbers none. */
 	adds?: AddsView | null,
+	/**  Whether it takes cases, each a flow output, typed in Details: Switch; omitted for no. */
+	takesCases?: boolean,
 } & NodeDoes;
 
 /**  A node of a graph. */
@@ -1063,6 +1065,8 @@ export type NodeView_Serialize = {
 	types?: string[],
 	/**  The pins "+" adds, Sequence's outputs; omitted for a kind that numbers none. */
 	adds?: AddsView,
+	/**  Whether it takes cases, each a flow output, typed in Details: Switch; omitted for no. */
+	takesCases?: boolean,
 } & NodeDoes;
 
 /**

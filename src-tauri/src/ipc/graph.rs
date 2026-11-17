@@ -357,6 +357,10 @@ pub struct NodeView {
     #[serde(skip_serializing_if = "Option::is_none")]
     #[specta(optional)]
     pub adds: Option<AddsView>,
+    /// Whether it takes cases, each a flow output, typed in Details: Switch; omitted for no.
+    #[serde(skip_serializing_if = "std::ops::Not::not")]
+    #[specta(optional)]
+    pub takes_cases: bool,
 }
 
 /// The numbered pins a node's "+" adds: `<pin>_1` to `<pin>_<count>`, at least `least` of them.
@@ -631,6 +635,8 @@ pub(crate) fn graphs(blueprint: &Blueprint) -> BlueprintGraphs {
                 options: (&node.options).into(),
                 types: kind_types(&node.does),
                 adds: adds(&node.does),
+                takes_cases: matches!(&node.does, Does::Kind(kind)
+                    if bot::kind(&kind.0).is_some_and(|kind| kind.takes.contains(&bot::Takes::Cases))),
                 inputs: node
                     .inputs
                     .iter()
