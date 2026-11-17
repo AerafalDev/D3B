@@ -593,6 +593,10 @@ export type EditError = { kind: "noFolder" } |
 { kind: "noSuchBlueprint" } | 
 /**  One of D3B's, which only Duplicate changes. */
 { kind: "locked" } | { kind: "noSuchGraph" } | { kind: "noSuchNode" } | { kind: "noSuchWire" } | { kind: "noSuchPin" } | { kind: "wrongWay" } | { kind: "otherType" } | { kind: "sameNode" } | { kind: "notAChoice" } | 
+/**  A wire feeds the input a value was typed on. */
+{ kind: "wired" } | 
+/**  Not JSON, not of the input's type, or out of its bounds. */
+{ kind: "notItsType" } | 
 /**  The system could not read or write its file, or it no longer reads and is kept as it is: the reason, in words. */
 { kind: "notSaved"; reason: string };
 
@@ -731,7 +735,9 @@ export type GraphEdit_Deserialize =
 /**  Nodes put elsewhere, dragged together: one change, undone at once. */
 { edit: "move"; nodes: MovedNode[] } | 
 /**  Nodes, with every wire to or from them, and wires, chosen together. */
-{ edit: "delete"; nodes: string[]; wires: WireEnds[] };
+{ edit: "delete"; nodes: string[]; wires: WireEnds[] } | 
+/**  A value typed on the input `pin` of `node`, as JSON, which no wire feeds; none, or the pin's default, drops it. */
+{ edit: "value"; node: string; pin: string; value?: string | null };
 
 /**  One change to a graph. */
 export type GraphEdit_Serialize = 
@@ -745,7 +751,9 @@ export type GraphEdit_Serialize =
 /**  Nodes put elsewhere, dragged together: one change, undone at once. */
 { edit: "move"; nodes: MovedNode[] } | 
 /**  Nodes, with every wire to or from them, and wires, chosen together. */
-{ edit: "delete"; nodes: string[]; wires: WireEnds[] };
+{ edit: "delete"; nodes: string[]; wires: WireEnds[] } | 
+/**  A value typed on the input `pin` of `node`, as JSON, which no wire feeds; none, or the pin's default, drops it. */
+{ edit: "value"; node: string; pin: string; value: string | null };
 
 /**  An event graph, or a function when it has a signature. */
 export type GraphView = GraphView_Serialize | GraphView_Deserialize;

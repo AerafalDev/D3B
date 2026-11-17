@@ -28,6 +28,12 @@ pub enum GraphEdit {
     Move { nodes: Vec<MovedNode> },
     /// Nodes, with every wire to or from them, and wires, chosen together.
     Delete { nodes: Vec<String>, wires: Vec<WireEnds> },
+    /// A value typed on the input `pin` of `node`, as JSON, which no wire feeds; none, or the pin's default, drops it.
+    Value {
+        node: String,
+        pin: String,
+        value: Option<String>,
+    },
 }
 
 /// A node and where it was put.
@@ -69,6 +75,10 @@ pub enum EditError {
     OtherType,
     SameNode,
     NotAChoice,
+    /// A wire feeds the input a value was typed on.
+    Wired,
+    /// Not JSON, not of the input's type, or out of its bounds.
+    NotItsType,
     /// The system could not read or write its file, or it no longer reads and is kept as it is: the reason, in words.
     NotSaved {
         reason: String,
@@ -98,6 +108,8 @@ impl From<Refusal> for EditError {
             Refusal::OtherType => Self::OtherType,
             Refusal::SameNode => Self::SameNode,
             Refusal::NotAChoice => Self::NotAChoice,
+            Refusal::Wired => Self::Wired,
+            Refusal::NotItsType => Self::NotItsType,
         }
     }
 }
@@ -106,9 +118,11 @@ fn end([node, pin]: [String; 2]) -> End {
     End(Id(node), Id(pin))
 }
 
-impl From<GraphEdit> for bot::Edit {
-    fn from(edit: GraphEdit) -> Self {
-        match edit {
+impl TryFrom<GraphEdit> for bot::Edit {
+    type Error = EditError;
+
+    fn try_from(edit: GraphEdit) -> Result<Self, EditError> {
+        Ok(match edit {
             GraphEdit::Wire { from, to } => Self::Wire {
                 from: end(from),
                 to: end(to),
@@ -138,15 +152,24 @@ impl From<GraphEdit> for bot::Edit {
                     })
                     .collect(),
             },
-        }
+            GraphEdit::Value { node, pin, value } => Self::Value {
+                node: Id(node),
+                pin: Id(pin),
+                value: value
+                    .map(|json| serde_json::from_str(&json))
+                    .transpose()
+                    .map_err(|_| EditError::NotItsType)?,
+            },
+        })
     }
 }
 
 /// Makes `edit` in the graph `graph` of my blueprint `id` and saves it; its graphs then.
 fn change(store: &Store, id: &str, graph: &str, edit: GraphEdit) -> Result<BlueprintGraphs, EditError> {
     let graph = Id(graph.to_owned());
+    let edit = bot::Edit::try_from(edit)?;
     let blueprint = store.change_blueprint(id, |blueprint| {
-        bot::edit(blueprint, &graph, edit.into()).map_err(EditError::from)
+        bot::edit(blueprint, &graph, edit).map_err(EditError::from)
     })?;
     Ok(graphs(&blueprint))
 }
@@ -255,6 +278,30 @@ mod tests {
             parsed(r#"{"edit": "delete", "nodes": ["n4"], "wires": [{"from": ["n1", "then"], "to": ["n3", "run"]}]}"#);
         let drawn = change(&store, "my-harvest", "events", delete).unwrap_or_else(|error| panic!("{error:?}"));
         assert_eq!((drawn.graphs[0].nodes.len(), drawn.graphs[0].wires.len()), (5, 2));
+        let typed = parsed(r#"{"edit": "value", "node": "n3", "pin": "pods", "value": "80"}"#);
+        let drawn = change(&store, "my-harvest", "events", typed).unwrap_or_else(|error| panic!("{error:?}"));
+        let n3 = drawn.graphs[0].nodes.iter().find(|node| node.id == "n3");
+        assert_eq!(
+            n3.and_then(|node| node.inputs.get("pods")).map(String::as_str),
+            Some("80")
+        );
+    }
+
+    #[test]
+    fn a_value_that_is_not_json_is_refused_as_not_of_its_type() {
+        let (_folder, store) = mine("ipc-edit-value");
+        let typed = parsed(r#"{"edit": "value", "node": "n3", "pin": "pods", "value": "eighty"}"#);
+        assert_eq!(
+            change(&store, "my-harvest", "events", typed),
+            Err(EditError::NotItsType)
+        );
+        let reset = parsed(r#"{"edit": "value", "node": "n3", "pin": "what", "value": null}"#);
+        let drawn = change(&store, "my-harvest", "events", reset).unwrap_or_else(|error| panic!("{error:?}"));
+        let n3 = drawn.graphs[0].nodes.iter().find(|node| node.id == "n3");
+        assert!(
+            n3.is_some_and(|node| !node.inputs.contains_key("what")),
+            "its value dropped"
+        );
     }
 
     #[test]

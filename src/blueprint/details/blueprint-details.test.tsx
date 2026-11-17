@@ -1,6 +1,6 @@
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import i18next from "i18next";
-import { afterEach, beforeAll, describe, expect, it } from "vitest";
+import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 
 import type { GraphView_Serialize, ProblemView } from "@/bindings.ts";
 import { initI18n } from "@/i18n/i18n.ts";
@@ -140,6 +140,7 @@ describe("the editor's Details", () => {
     expect(inputs.map((line) => line.replace(/[  ]/g, " "))).toEqual(["Zone: relié", "Pods: 90 %"]);
     expect(text).toContain("Non reliée, la sortie Échec bloque le personnage, avec la raison.");
     expect(text).toContain("L'entrée Zone n'a pas de valeur.");
+    expect(screen.queryByRole("textbox"), "D3B's, without onValue, edits nothing").toBeNull();
   });
 
   it("says an event's priority, its re-arming and the mode it has, among the four", () => {
@@ -202,5 +203,71 @@ describe("the editor's Details", () => {
     );
     expect(container.textContent).toContain("Le flux principal");
     expect(screen.queryByRole("listitem")).toBeNull();
+  });
+
+  it("edits the values typed on a node's inputs of mine, a wired one said, a default put back", () => {
+    const notify = node("notify", {
+      kind: "notify",
+      pins: [pin("run", "in", "exec"), pin("text", "in", "text")],
+      inputs: { text: '"Fini"' },
+    });
+    const harvest = {
+      ...graph.nodes[0],
+      pins: [...(graph.nodes[0]?.pins ?? []), pin("what", "in", "items", '"all"')],
+      inputs: { pods: "80", what: '"all"' },
+    } as GraphNode;
+    const set = node("set", {
+      does: "set",
+      variable: "pods",
+      family: "variable",
+      pins: [pin("value", "in", "percentage"), pin("value", "out", "percentage")],
+    });
+    const mine = { ...graph, nodes: [harvest, notify, set] } as GraphView_Serialize;
+    const onValue = vi.fn(() => Promise.resolve(true));
+    const shown = (id: string) =>
+      render(
+        <BlueprintDetails
+          blueprint={{ ...blueprint, given: false }}
+          graphs={[mine]}
+          graph={mine}
+          problems={[]}
+          selection={{ kind: "node", id }}
+          names={names}
+          onValue={onValue}
+        />,
+      );
+    const { unmount } = shown("notify");
+    const text = screen.getByRole("textbox", { name: "Texte" });
+    fireEvent.change(text, { target: { value: "Objectif atteint" } });
+    fireEvent.keyDown(text, { key: "Enter" });
+    expect(onValue).toHaveBeenLastCalledWith("notify", "text", JSON.stringify("Objectif atteint"));
+    // Cleared, it is none, so the node keeps its problem.
+    fireEvent.change(text, { target: { value: "" } });
+    fireEvent.keyDown(text, { key: "Enter" });
+    expect(onValue).toHaveBeenLastCalledWith("notify", "text", null);
+    unmount();
+
+    const { container, unmount: away } = shown("harvest");
+    expect(container.textContent).toContain("relié");
+    const pods = screen.getByRole("textbox", { name: "Pods" }) as HTMLInputElement;
+    expect(pods.value).toBe("80");
+    // A value typed at its default, as D3B's files hold some, offers nothing to put back.
+    expect(screen.getAllByRole("button", { name: /Revenir/ })).toHaveLength(1);
+    fireEvent.click(screen.getByRole("button", { name: "Revenir à la valeur par défaut (90 %)" }));
+    expect(onValue).toHaveBeenLastCalledWith("harvest", "pods", null);
+    fireEvent.change(pods, { target: { value: "101" } });
+    fireEvent.blur(pods);
+    expect(onValue).toHaveBeenCalledTimes(3);
+    away();
+
+    // A Set keeps its variable's bounds: 10 to 100.
+    shown("set");
+    const value = screen.getByRole("textbox", { name: "Valeur" });
+    fireEvent.change(value, { target: { value: "5" } });
+    fireEvent.blur(value);
+    expect(onValue).toHaveBeenCalledTimes(3);
+    fireEvent.change(value, { target: { value: "50" } });
+    fireEvent.blur(value);
+    expect(onValue).toHaveBeenLastCalledWith("set", "value", "50");
   });
 });

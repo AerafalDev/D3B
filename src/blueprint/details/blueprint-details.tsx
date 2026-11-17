@@ -9,6 +9,7 @@ import { type GraphNode, graphSentences } from "../node-sentence.ts";
 import { pinLabel } from "../pin-label.ts";
 import { DetailRow } from "./detail-row.tsx";
 import { EventDetails } from "./event-details.tsx";
+import { InputRow } from "./input-row.tsx";
 import { problemText } from "./problem-text.ts";
 
 /** What Details shows: nothing chosen, a node of the graph shown, or a variable. */
@@ -23,13 +24,26 @@ interface BlueprintDetailsProps {
   problems: readonly ProblemView[];
   selection: Selection;
   names: ReadonlyMap<string, string>;
+  /**
+   * Types a value on the input `pin` of the node `node` of the graph shown, as JSON, or none for its default; given for
+   * a blueprint of mine only (the owner, 2026-11-17). Whether it was saved.
+   */
+  onValue?: (node: string, pin: string, value: string | null) => Promise<boolean>;
 }
 
 /**
  * The editor's Details, Unreal's, in a column on the tab's right (the owner, 2026-11-14): the node or the variable
- * chosen, else the blueprint's problems. Read-only until step 3's PR 13.
+ * chosen, else the blueprint's problems; in a blueprint of mine, the values typed on a node's inputs are edited there.
  */
-export function BlueprintDetails({ blueprint, graphs, graph, problems, selection, names }: BlueprintDetailsProps) {
+export function BlueprintDetails({
+  blueprint,
+  graphs,
+  graph,
+  problems,
+  selection,
+  names,
+  onValue,
+}: BlueprintDetailsProps) {
   const { t } = useTranslation();
   const node = selection?.kind === "node" ? graph?.nodes.find((one) => one.id === selection.id) : undefined;
   const variable =
@@ -49,6 +63,8 @@ export function BlueprintDetails({ blueprint, graphs, graph, problems, selection
           graph={graph}
           problems={problems.filter((one) => one.node === node.id && one.graph === graph.id)}
           names={names}
+          variables={blueprint.variables}
+          onValue={onValue === undefined ? undefined : (pin, value) => onValue(node.id, pin, value)}
         />
       ) : variable !== undefined ? (
         <VariableDetails blueprint={blueprint} variable={variable} graphs={graphs} />
@@ -106,9 +122,12 @@ interface NodeDetailsProps {
   graph: GraphView_Serialize;
   problems: readonly ProblemView[];
   names: ReadonlyMap<string, string>;
+  /** The blueprint's variables, whose bounds a Set's value keeps. */
+  variables: BlueprintSummary["variables"];
+  onValue: ((pin: string, value: string | null) => Promise<boolean>) | undefined;
 }
 
-function NodeDetails({ node, graph, problems, names }: NodeDetailsProps) {
+function NodeDetails({ node, graph, problems, names, variables, onValue }: NodeDetailsProps) {
   const { t, i18n } = useTranslation();
   const kind = node.does === "kind" ? node.kind : null;
   const description =
@@ -134,7 +153,35 @@ function NodeDetails({ node, graph, problems, names }: NodeDetailsProps) {
       {node.fromStep !== null && (
         <p className="text-text-faint">{t("blueprint.details.fromStep", { step: node.fromStep })}</p>
       )}
-      {inputs.length > 0 && (
+      {inputs.length > 0 && onValue !== undefined && (
+        <DetailRow label={t("blueprint.details.inputs")}>
+          <div className="flex flex-col gap-2">
+            {inputs.map((pin) =>
+              wired.has(pin.id) ? (
+                <div key={pin.id} className="flex justify-between">
+                  <span className="text-text-muted">{pinLabel(pin.id)}</span>
+                  <span className="text-text-faint">{t("blueprint.details.wired")}</span>
+                </div>
+              ) : (
+                <InputRow
+                  // A node chosen in its place keeps no draft of the one before.
+                  key={`${node.id}.${pin.id}`}
+                  pin={pin}
+                  typed={node.inputs[pin.id]}
+                  type={{
+                    valueType: pin.carries,
+                    bounds:
+                      node.does === "set" ? (variables.find((one) => one.id === node.variable)?.bounds ?? null) : null,
+                  }}
+                  who={title}
+                  onValue={(value) => onValue(pin.id, value)}
+                />
+              ),
+            )}
+          </div>
+        </DetailRow>
+      )}
+      {inputs.length > 0 && onValue === undefined && (
         <DetailRow label={t("blueprint.details.inputs")}>
           <dl className="grid grid-cols-[1fr_auto] gap-y-1">
             {inputs.map((pin) => (

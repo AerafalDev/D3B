@@ -1,10 +1,11 @@
 //! The editor's changes to a blueprint (`docs/bot.md`, "In the app"), the owner's choices of 2026-11-16: a wire checked
 //! by what its pins carry, which replaces the wire that fed its input or left its flow output, an input having one
 //! value and a flow one way on; a node the picker offers, under an id of its own, wired to the pin it came from; nodes
-//! moved; nodes and wires deleted, a node's wires with it (step 3's PR 13). Each is done whole or refused with nothing
-//! changed; `storage` saves it at once and keeps what it replaced, for undo.
+//! moved; nodes and wires deleted, a node's wires with it (step 3's PR 13); a value typed on an input (`value`). Each
+//! is done whole or refused with nothing changed; `storage` saves it at once and keeps what it replaced, for undo.
 
 mod choices;
+mod value;
 
 use std::collections::BTreeMap;
 
@@ -29,6 +30,12 @@ pub(crate) enum Edit {
     Move { nodes: Vec<(Id, [i32; 2])> },
     /// Nodes, with every wire to or from them, and wires, chosen together.
     Delete { nodes: Vec<Id>, wires: Vec<Wire> },
+    /// A value typed on an input no wire feeds, or none to go back to the pin's default.
+    Value {
+        node: Id,
+        pin: Id,
+        value: Option<serde_json::Value>,
+    },
 }
 
 /// Why an edit is refused. The editor offers none of these; a refusal says the webview and the file disagree.
@@ -50,6 +57,10 @@ pub(crate) enum Refusal {
     SameNode,
     #[error("the picker does not offer it here")]
     NotAChoice,
+    #[error("a wire feeds the input")]
+    Wired,
+    #[error("the value is not of the input's type, or out of its bounds")]
+    NotItsType,
 }
 
 /// Makes `edit` in `blueprint`'s graph `graph`, or refuses it and changes nothing.
@@ -121,6 +132,7 @@ pub(crate) fn edit(blueprint: &mut Blueprint, graph: &Id, edit: Edit) -> Result<
                 }
             }
         }
+        Edit::Value { node, pin, value } => value::typed(blueprint, at, &node, &pin, value)?,
     }
     Ok(())
 }
