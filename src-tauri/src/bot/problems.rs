@@ -88,6 +88,8 @@ pub(crate) enum Problem {
     NoSuchExit { graph: Id, node: Id, exit: Id },
     /// A node with a flow pin in a pure function: an action, a wait, a Set, a return, a call of a function not pure.
     NotPure { graph: Id, node: Id },
+    /// A Leave the loop a flow reaches outside any loop's body.
+    LeaveOutsideLoop { graph: Id, node: Id },
 }
 
 /// Every problem of `blueprint`: its own in the order of its file, then each graph's nodes and wires, then the events

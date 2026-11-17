@@ -94,6 +94,7 @@ pub(crate) fn of_graph(blueprint: &Blueprint, graph: &Graph, found: &mut Vec<Pro
         known.insert(&node.id, node_pins);
     }
     wires(graph, &known, found);
+    leaves_outside_loops(graph, &known, found);
     for node in &graph.nodes {
         let Some(node_pins) = known.get(&node.id) else { continue };
         for pin in node_pins
@@ -107,6 +108,56 @@ pub(crate) fn of_graph(blueprint: &Blueprint, graph: &Graph, found: &mut Vec<Pro
                 let (graph, node) = at(&node.id);
                 found.push(Problem::InputWithoutValue { graph, node, pin: id });
             }
+        }
+    }
+}
+
+/// The kinds whose output `body` is a loop's, which Leave the loop ends.
+const LOOPS: [&str; 3] = ["repeat", "while", "for_each"];
+
+/// Each Leave the loop a flow reaches from where it starts (an event, a function's entry: a node without a flow input)
+/// without entering a loop's body, the flow output `body`: it would leave no loop. One no flow reaches is no problem;
+/// through a Sequence or a node that waits inside a body, it is still inside. A function's flow is its own: its loops
+/// are none of its caller's.
+fn leaves_outside_loops(graph: &Graph, known: &HashMap<&Id, Vec<NodePin>>, found: &mut Vec<Problem>) {
+    let flow_in = |id: &Id| {
+        let pins = known.get(id).map(Vec::as_slice).unwrap_or_default();
+        pins.iter()
+            .any(|pin| pin.side == Side::In && pin.carries == Carries::Exec)
+    };
+    let mut reached: Vec<&Id> = graph
+        .nodes
+        .iter()
+        .map(|node| &node.id)
+        .filter(|id| known.contains_key(id) && !flow_in(id))
+        .collect();
+    let mut seen: HashSet<&Id> = reached.iter().copied().collect();
+    while let Some(at) = reached.pop() {
+        // A loop's body only: a call's exit may be named `body` too.
+        let looping = graph
+            .nodes
+            .iter()
+            .any(|node| &node.id == at && matches!(&node.does, Does::Kind(kind) if LOOPS.contains(&kind.0.as_str())));
+        for wire in graph
+            .wires
+            .iter()
+            .filter(|wire| &wire.from.0 == at && !(looping && wire.from.1.0 == "body"))
+        {
+            let exec = known.get(at).is_some_and(|pins| {
+                pins.iter()
+                    .any(|pin| pin.id == wire.from.1.0 && pin.side == Side::Out && pin.carries == Carries::Exec)
+            });
+            if exec && seen.insert(&wire.to.0) {
+                reached.push(&wire.to.0);
+            }
+        }
+    }
+    for node in &graph.nodes {
+        if matches!(&node.does, Does::Kind(kind) if kind.0 == "leave_loop") && seen.contains(&node.id) {
+            found.push(Problem::LeaveOutsideLoop {
+                graph: graph.id.clone(),
+                node: node.id.clone(),
+            });
         }
     }
 }
@@ -693,6 +744,61 @@ mod tests {
         let found = after(|blueprint| blueprint.graphs[0].nodes[1] = node(r#"{"id": "n2", "get": "bank"}"#));
         let (graph, node, variable) = at("n2", "bank");
         assert_eq!(found, [Problem::NoSuchVariable { graph, node, variable }]);
+    }
+
+    #[test]
+    fn leave_the_loop_reached_outside_any_loops_body_is_a_problem_and_inside_one_none() {
+        let found = after(|blueprint| {
+            let events = &mut blueprint.graphs[0];
+            events.nodes.extend(
+                [
+                    r#"{"id": "out", "kind": "leave_loop"}"#,
+                    r#"{"id": "rep", "kind": "repeat"}"#,
+                    r#"{"id": "seq", "kind": "sequence"}"#,
+                    r#"{"id": "inside", "kind": "leave_loop"}"#,
+                    r#"{"id": "after", "kind": "leave_loop"}"#,
+                    r#"{"id": "alone", "kind": "leave_loop"}"#,
+                ]
+                .map(node),
+            );
+            events.wires.extend([
+                wire("n3", "done", "out", "run"),
+                wire("n3", "failed", "rep", "run"),
+                wire("rep", "body", "seq", "run"),
+                wire("seq", "then_1", "inside", "run"),
+                wire("rep", "completed", "after", "run"),
+            ]);
+            let function = &mut blueprint.graphs[1];
+            function.nodes.extend(
+                [
+                    r#"{"id": "in", "kind": "entry"}"#,
+                    r#"{"id": "back", "kind": "leave_loop"}"#,
+                ]
+                .map(node),
+            );
+            function.wires.push(wire("in", "then", "back", "run"));
+            // A call's exit named `body` is no loop's body.
+            let exits = r#"{"exits": [{"id": "body", "name": "Body"}], "inputs": [{"id": "bank", "name": "Bank", "type": "bank"}]}"#;
+            function.function = Some(serde_json::from_str(exits).unwrap_or_else(|error| panic!("{error}")));
+            let events = &mut blueprint.graphs[0];
+            events.nodes.push(node(r#"{"id": "exit", "kind": "leave_loop"}"#));
+            events
+                .wires
+                .extend([wire("n5", "then", "n4", "run"), wire("n4", "body", "exit", "run")]);
+        });
+        let outside = |graph: &str, node: &str| Problem::LeaveOutsideLoop {
+            graph: id(graph),
+            node: id(node),
+        };
+        assert_eq!(
+            found,
+            [
+                outside("events", "out"),
+                outside("events", "after"),
+                outside("events", "exit"),
+                outside("empty_at_bank", "back")
+            ]
+        );
     }
 
     #[test]

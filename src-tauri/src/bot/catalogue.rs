@@ -271,6 +271,12 @@ pub(crate) const KINDS: &[Kind] = &[
     // flow; Switch follows the case its value is, or Otherwise.
     Kind { takes: &[Takes::Count { pin: exec("then", Side::Out), least: 2 }], ..of("sequence", Flow, &[RUN], None) },
     Kind { takes: &[Takes::Cases], ..of("switch", Flow, &[RUN, wildcard("value", Side::In, false), exec("otherwise", Side::Out)], None) },
+    // The loops (the owner, 2026-11-17): each its body, run again as its flow ends, then Completed; indexes from 1, a
+    // list read once as the flow enters; Leave the loop ends the nearest one's body and goes on out of its Completed.
+    of("repeat", Flow, &[RUN, input("times", Number, Some("3")), exec("body", Side::Out), output("index", Number), exec("completed", Side::Out)], None),
+    of("while", Flow, &[RUN, input("condition", Bool, None), exec("body", Side::Out), exec("completed", Side::Out)], None),
+    of("for_each", Flow, &[RUN, wildcard("list", Side::In, true), exec("body", Side::Out), wildcard("element", Side::Out, false), output("index", Number), exec("completed", Side::Out)], None),
+    of("leave_loop", Flow, &[RUN], None),
     of("life_percent", Query, &[output("value", Percentage)], None),
     of("pods_percent", Query, &[output("value", Percentage)], None),
     // The items a profession harvests, from the data's skills (3.7.13.17, `artifacts/studies/items.md`, verified):
@@ -309,12 +315,11 @@ pub(crate) mod tests {
         Kind { takes, ..kind }
     }
 
-    /// Kinds for the tests, until v2's flow and values bring theirs: `=` of two values of one type, For each element of
-    /// a list, a list of its numbered inputs, Text, Add to a variable and an Expression.
+    /// Kinds for the tests, until v2's values bring theirs: `=` of two values of one type, a list of its numbered
+    /// inputs, Text, Add to a variable and an Expression.
     #[rustfmt::skip]
     pub(crate) const WILDCARDS: &[Kind] = &[
         of("test_equal", Query, &[wildcard("a", Side::In, false), wildcard("b", Side::In, false), output("value", Bool)], None),
-        of("test_for_each", Flow, &[RUN, wildcard("list", Side::In, true), exec("body", Side::Out), wildcard("element", Side::Out, false), exec("completed", Side::Out)], None),
         taking(of("test_list", Query, &[output("value", Number)], None), &[Takes::Count { pin: input("in", Number, None), least: 1 }]),
         taking(of("test_text", Query, &[output("value", Text)], None), &[Takes::Text]),
         taking(of("test_add_to", Flow, &[RUN, THEN, wildcard("amount", Side::In, false)], None), &[Takes::Variable]),

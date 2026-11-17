@@ -265,6 +265,22 @@
         "sentence": "Selon {{value}}",
         "description": "Suit la sortie du cas que vaut la valeur, ou Sinon."
       },
+      "repeat": {
+        "sentence": "Répéter {{times}} fois",
+        "description": "Lance son corps autant de fois, son index de 1 à N, puis Terminé : une boucle."
+      },
+      "while": {
+        "sentence": "Tant que {{condition}}",
+        "description": "Lance son corps tant que la condition est vraie, lue avant chaque tour, puis Terminé : une boucle."
+      },
+      "for_each": {
+        "sentence": "Pour chaque {{list}}",
+        "description": "Lance son corps pour chaque élément de la liste, lue une fois à l'entrée, avec l'élément et son index, puis Terminé : une boucle."
+      },
+      "leave_loop": {
+        "sentence": "Sortir de la boucle",
+        "description": "Arrête le corps de la boucle la plus proche, qui continue par son Terminé."
+      },
       "life_percent": {
         "sentence": "Vie %",
         "description": "La vie, en pourcentage du maximum."
@@ -343,6 +359,12 @@
       "a": "A",
       "b": "B",
       "otherwise": "Sinon",
+      "times": "Fois",
+      "body": "Corps",
+      "index": "Index",
+      "completed": "Terminé",
+      "list": "Liste",
+      "element": "Élément",
       "job": "Métier"
     }
   },
@@ -625,7 +647,8 @@
       "ownEventTwice": "Deux événements s'appellent « {{subject}} ».",
       "noSuchEvent": "Ce nœud nomme l'événement {{subject}}, que ce blueprint n'a pas.",
       "noSuchExit": "Ce nœud sort par {{subject}}, que cette fonction n'a pas.",
-      "notPure": "Une fonction pure ne calcule que des valeurs : ce nœud a un flux."
+      "notPure": "Une fonction pure ne calcule que des valeurs : ce nœud a un flux.",
+      "leaveOutsideLoop": "Sortir de la boucle n'est dans le corps d'aucune boucle."
     },
     "type": {
       "bool": "Oui / non",
@@ -659,14 +682,18 @@
       "branch": {
         "failed": "Si ça échoue :",
         "true": "Si oui :",
-        "false": "Sinon :"
+        "false": "Sinon :",
+        "repeat_body": "À chaque tour :",
+        "while_body": "Tant que c'est vrai :",
+        "for_each_body": "Pour chaque élément :"
       },
       "back": "Revenir à {{step}}.",
       "on": "Aller à {{step}}.",
       "to": "{{pin}} → {{step}}",
       "nowhere": "rien",
       "branchOf": "Si {{pin}} :",
-      "outTo": "{{pin}} : aller à {{step}}."
+      "outTo": "{{pin}} : aller à {{step}}.",
+      "afterLoop": "Puis (terminé) : aller à {{step}}."
     },
     "view": {
       "label": "Vue du blueprint",

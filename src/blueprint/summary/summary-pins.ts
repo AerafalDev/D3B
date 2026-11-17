@@ -7,8 +7,8 @@ import type { GraphNode } from "../node-sentence.ts";
  */
 export type PinRole = "titled" | "untitled" | "listed";
 
-/** The outputs a step goes on by, the first of them its node has. */
-const ON = ["then", "done"];
+/** The outputs a step goes on by, the first of them its node has: a loop's Completed is what follows it. */
+const ON = ["then", "done", "completed"];
 
 /** The outputs said on one line under their step, by kind of pin, beyond a Switch's cases. */
 const LISTED = new Set(["otherwise"]);

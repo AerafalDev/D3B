@@ -277,7 +277,7 @@ mod tests {
         let blueprint = read(HARVEST).unwrap_or_else(|error| panic!("{error}"));
         let graph = &blueprint.graphs[0];
         let mut each: Node =
-            serde_json::from_str(r#"{"id": "e", "kind": "test_for_each"}"#).unwrap_or_else(|error| panic!("{error}"));
+            serde_json::from_str(r#"{"id": "e", "kind": "for_each"}"#).unwrap_or_else(|error| panic!("{error}"));
         let carried = |node: &Node| {
             let pins = pins(&blueprint, graph, node).unwrap_or_default();
             let of = |id: &str| pins.iter().find(|pin| pin.id == id).map(|pin| pin.carries);

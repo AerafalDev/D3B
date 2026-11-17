@@ -265,6 +265,22 @@
         "sentence": "Switch on {{value}}",
         "description": "Follows the output of the case the value is, or Otherwise."
       },
+      "repeat": {
+        "sentence": "Repeat {{times}} times",
+        "description": "Runs its body that many times, its index from 1 to N, then Completed: a loop."
+      },
+      "while": {
+        "sentence": "While {{condition}}",
+        "description": "Runs its body while the condition holds, read before each pass, then Completed: a loop."
+      },
+      "for_each": {
+        "sentence": "For each {{list}}",
+        "description": "Runs its body for each element of the list, read once as it enters, with the element and its index, then Completed: a loop."
+      },
+      "leave_loop": {
+        "sentence": "Leave the loop",
+        "description": "Ends the nearest loop's body, which goes on out of its Completed."
+      },
       "life_percent": {
         "sentence": "Life %",
         "description": "Life, as a percentage of its maximum."
@@ -343,6 +359,12 @@
       "a": "A",
       "b": "B",
       "otherwise": "Otherwise",
+      "times": "Times",
+      "body": "Body",
+      "index": "Index",
+      "completed": "Completed",
+      "list": "List",
+      "element": "Element",
       "job": "Profession"
     }
   },
@@ -625,7 +647,8 @@
       "ownEventTwice": "Two events are named \"{{subject}}\".",
       "noSuchEvent": "This node names the event {{subject}}, which this blueprint does not have.",
       "noSuchExit": "This node returns by {{subject}}, which this function does not have.",
-      "notPure": "A pure function computes values only: this node has a flow."
+      "notPure": "A pure function computes values only: this node has a flow.",
+      "leaveOutsideLoop": "Leave the loop is in no loop's body."
     },
     "type": {
       "bool": "Yes / no",
@@ -659,14 +682,18 @@
       "branch": {
         "failed": "If it fails:",
         "true": "If so:",
-        "false": "Otherwise:"
+        "false": "Otherwise:",
+        "repeat_body": "Each pass:",
+        "while_body": "While it holds:",
+        "for_each_body": "For each element:"
       },
       "back": "Back to {{step}}.",
       "on": "Go on to {{step}}.",
       "to": "{{pin}} → {{step}}",
       "nowhere": "nothing",
       "branchOf": "If {{pin}}:",
-      "outTo": "{{pin}}: go to {{step}}."
+      "outTo": "{{pin}}: go to {{step}}.",
+      "afterLoop": "Then (completed): go to {{step}}."
     },
     "view": {
       "label": "Blueprint view",

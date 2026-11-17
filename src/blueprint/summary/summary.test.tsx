@@ -236,6 +236,72 @@ describe("the blueprint's Summary", () => {
     expect(read()[0]).toEqual(["Au lancement", "1. Séquence", "1.1. Prévenir : à choisir", "Alors 3 : aller à 1."]);
   });
 
+  it("reads a loop's body under its title, its Completed as what follows it, and a jump out of it as such", () => {
+    const loop = (id: string, kind: string) =>
+      node(id, kind, {
+        family: "flow",
+        pins: [pin("run", "in"), pin("body", "out"), pin("completed", "out"), pin("times", "in", "number", "3")],
+      });
+    const flows = {
+      ...events,
+      nodes: [
+        node("start", "on_start", { family: "event", pins: [pin("then", "out")] }),
+        node("a", "notify"),
+        loop("rep", "repeat"),
+        loop("each", "for_each"),
+        node("b", "notify"),
+      ],
+      wires: [
+        { from: ["start", "then"], to: ["a", "run"] },
+        { from: ["a", "done"], to: ["rep", "run"] },
+        { from: ["rep", "body"], to: ["each", "run"] },
+        { from: ["each", "body"], to: ["b", "run"] },
+        { from: ["each", "completed"], to: ["a", "run"] },
+      ],
+    };
+    render(
+      <Summary graphs={[flows] as unknown as GraphView_Serialize[]} names={names} chosen={null} onChoose={() => {}} />,
+    );
+    expect(read()[0]).toEqual([
+      "Au lancement",
+      "1. Prévenir : à choisir",
+      "2. Répéter 3 fois",
+      "À chaque tour :",
+      "2.1. Pour chaque à choisir",
+      "Pour chaque élément :",
+      "2.1.1. Prévenir : à choisir",
+      "Puis (terminé) : aller à 1.",
+    ]);
+    cleanup();
+    // A call's exit named `completed` is no loop's: going back by its Done reads as any jump back.
+    const calling = {
+      ...events,
+      nodes: [
+        node("start", "on_start", { family: "event", pins: [pin("then", "out")] }),
+        node("bank", "call", {
+          does: "call",
+          function: "bank",
+          family: "call",
+          pins: [...flow, pin("completed", "out")],
+          exits: [{ id: "completed", name: "Fini" }],
+        }),
+      ],
+      wires: [
+        { from: ["start", "then"], to: ["bank", "run"] },
+        { from: ["bank", "done"], to: ["bank", "run"] },
+      ],
+    };
+    render(
+      <Summary
+        graphs={[calling] as unknown as GraphView_Serialize[]}
+        names={names}
+        chosen={null}
+        onChoose={() => {}}
+      />,
+    );
+    expect(read()[0]).toEqual(["Au lancement", "1. Vider à la banque", "Revenir à 1."]);
+  });
+
   it("chooses a step's node, in its graph", () => {
     const onChoose = vi.fn();
     render(<Summary graphs={graphs} names={names} chosen={null} onChoose={onChoose} />);

@@ -10,6 +10,7 @@ import { FAMILY_COLOUR, nodeIcon } from "../graph-look.ts";
 import { type GraphNode, graphSentences, type SentencePart } from "../node-sentence.ts";
 import { pinLabel } from "../pin-label.ts";
 import { type SummaryFlow, summaryFlow } from "./summary-flow.ts";
+import { onPin } from "./summary-pins.ts";
 
 /**
  * The events the game forces, said with their default when the blueprint does not handle them (`docs/bot.md`): the
@@ -162,6 +163,12 @@ function StepTag({ step }: { step: number }) {
   return <span className="text-text-faint text-[11px] whitespace-nowrap">{t("blueprint.fromStep", { step })}</span>;
 }
 
+/** The output a flow's last step goes on by, which its jump leaves through. */
+function lastOn(flow: SummaryFlow): string | undefined {
+  const last = flow.steps.at(-1);
+  return last === undefined ? undefined : onPin(last.node);
+}
+
 /** Where a listed output leads: its first step, the step it jumps to, or nowhere. */
 function target(flow: SummaryFlow): string {
   return flow.steps[0]?.label ?? flow.jump?.to ?? i18next.t("blueprint.summary.nowhere");
@@ -169,6 +176,11 @@ function target(flow: SummaryFlow): string {
 
 /** A branch's title, "Si ça échoue :", or for a function's named exit, its name: "Si Plein :". */
 function branchTitle(pin: string, node: GraphNode): string {
+  // A loop's body says when it runs, by its kind: "À chaque tour :", "Pour chaque élément :".
+  const own = node.does === "kind" ? `blueprint.summary.branch.${node.kind}_${pin}` : null;
+  if (own !== null && i18next.exists(own)) {
+    return String(i18next.t(own as never));
+  }
   const key = `blueprint.summary.branch.${pin}`;
   // The pins' ids are data, so their keys are checked at run time rather than typed; a named exit's id may be any,
   // `true` too, and is said by its name.
@@ -247,7 +259,10 @@ function Flow({ flow, sentences, chosen, onChoose }: FlowProps) {
       ))}
       {flow.jump !== null && (
         <li className="text-text-muted px-1 pl-11">
-          {t(flow.jump.back ? "blueprint.summary.back" : "blueprint.summary.on", { step: flow.jump.to })}
+          {/* Out of a loop's Completed, the jump says what follows it (the owner, 2026-11-17, on the mock-up). */}
+          {lastOn(flow) === "completed"
+            ? t("blueprint.summary.afterLoop", { step: flow.jump.to })
+            : t(flow.jump.back ? "blueprint.summary.back" : "blueprint.summary.on", { step: flow.jump.to })}
         </li>
       )}
     </ol>
