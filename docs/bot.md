@@ -311,9 +311,13 @@ The shell's parts (`docs/shell.md`); no information is shown twice:
   the Pods gauge at the current step's target, and Play, Pause and Stop as the tab's editor actions.
 - **Library** view: "Given by D3B", then "Mine"; a row opens the blueprint's editor. A row is its name alone, its
   description or what a copy is based on in its hover, an amber mark with how many problems it has; a right-click
-  offers Duplicate and Export…; Import… in the view's header (step 3's PR 22); last, folded, "Ignored": the player's files kept as they are, blueprints' and characters', each
+  offers Duplicate and Export…, and on mine Rename (F2 too), its name edited in its row, Enter or leaving saving and
+  Escape or a blank leaving it (the owner, 2026-11-17); Import… in the view's header (step 3's PR 22); last, folded, "Ignored": the player's files kept as they are, blueprints' and characters', each
   with why in its hover (the owner, 2026-11-14, mock-up 9). A blueprint's tab is its editor, D3B's read-only and mine
-  edited in its graph (step 3's PR 12): on top its name, whose it is, its problems, its description, Duplicate and Export; under them My Blueprint (the event
+  edited in its graph (step 3's PR 12): on top its name, whose it is, its problems, its description, Duplicate and Export, a click on mine's name or
+  description editing it in place, as a zone's name (the owner, 2026-11-17: Enter or leaving saves, Escape or a blank
+  name puts it back, a description may be emptied; its id and file stay, so its characters and `.d3b` files keep
+  naming it; saved through `edit_blueprint` and undone as the editor's changes); under them My Blueprint (the event
   graph, the functions, the variables with an eye on those set per character, a variable's help and default in its
   hover) and the graph chosen in it, and Details on the right (the owner, 2026-11-14): a node chosen says its sentence,
   its description, the step from which the bot does it, its inputs' values (or "wired"), what an unlinked Failed does,
@@ -349,7 +353,7 @@ value typed on an input no wire feeds (the owner's choices of 2026-11-17), in De
 node of mine is its editor by its type, a setting's (a Zone's field, a number or percentage within its bounds, a
 Set's within its variable's, a switch, a line of text, a profession; a bank and items say their value until step 5),
 saved when the field is left or Enter pressed, undone as the others, a value back at the pin's default, or a text
-cleared, dropped from the file, and a button saying the default putting it back.
+cleared, dropped from the file, and a button saying the default putting it back; the blueprint's name and description (`about`, the blueprint's whichever graph shows), a blank name refused.
 Undo and redo (the owner, 2026-11-16) are Rust's: `storage` keeps a blueprint of mine as it was before each change
 that changed it, 100 at most, for the session and across its graphs, and the IPC's `undo_blueprint` and
 `redo_blueprint` write it back whole under the lock every save takes, so the file and the editor never disagree; a

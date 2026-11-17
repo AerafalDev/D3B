@@ -441,7 +441,11 @@
       "items_one": "{{count}} objet",
       "items_other": "{{count}} objets",
       "zone": "Une zone choisie"
-    }
+    },
+    "rename": "Renommer",
+    "name": "Nom du blueprint",
+    "descriptionLabel": "Description du blueprint",
+    "describe": "Ajouter une description"
   },
   "share": {
     "export": "Exporter…",

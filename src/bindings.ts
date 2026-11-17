@@ -757,7 +757,9 @@ export type GraphEdit_Deserialize =
 /**  The variable of its id made this one, whole; a new type drops what it no longer fits. */
 { edit: "variable"; variable: VariableChange_Deserialize } | 
 /**  The variable `variable` gone, with the nodes that read or write it. */
-{ edit: "deleteVariable"; variable: string };
+{ edit: "deleteVariable"; variable: string } | 
+/**  The blueprint named and described so, its id and file kept. */
+{ edit: "about"; name: string; description: string };
 
 /**  One change to a graph. */
 export type GraphEdit_Serialize = 
@@ -779,7 +781,9 @@ export type GraphEdit_Serialize =
 /**  The variable of its id made this one, whole; a new type drops what it no longer fits. */
 { edit: "variable"; variable: VariableChange_Serialize } | 
 /**  The variable `variable` gone, with the nodes that read or write it. */
-{ edit: "deleteVariable"; variable: string };
+{ edit: "deleteVariable"; variable: string } | 
+/**  The blueprint named and described so, its id and file kept. */
+{ edit: "about"; name: string; description: string };
 
 /**  An event graph, or a function when it has a signature. */
 export type GraphView = GraphView_Serialize | GraphView_Deserialize;

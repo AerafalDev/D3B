@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import i18next from "i18next";
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -132,6 +132,36 @@ describe("the Library view", () => {
     await vi.waitFor(() => expect(opened.closed).toEqual(["blueprint:ma-chasse"]));
     expect(remove).toHaveBeenCalledWith(expect.objectContaining({ id: "ma-chasse" }));
     expect(useGraphs.getState().read["ma-chasse"]).toBeUndefined();
+  });
+
+  it("renames one of mine in its row, by its right-click or F2, Enter saving and Escape or a blank leaving it", async () => {
+    const rename = vi.fn().mockResolvedValue(true);
+    useLibrary.setState({ rename });
+    render(<LibraryView />);
+    fireEvent.contextMenu(screen.getByRole("button", { name: /^Chasse/ }));
+    await screen.findByRole("menuitem", { name: "Dupliquer" });
+    expect(screen.queryByRole("menuitem", { name: "Renommer" }), "none on D3B's").toBeNull();
+    fireEvent.keyDown(document.activeElement ?? document.body, { key: "Escape" });
+    fireEvent.keyDown(screen.getByRole("button", { name: /^Chasse/ }), { key: "F2" });
+    expect(screen.queryByRole("textbox"), "F2 renames none of D3B's").toBeNull();
+    fireEvent.contextMenu(screen.getByRole("button", { name: /^Ma chasse/ }));
+    fireEvent.click(await screen.findByRole("menuitem", { name: "Renommer" }));
+    const field = await screen.findByRole("textbox", { name: "Nom du blueprint" });
+    fireEvent.change(field, { target: { value: " Mes bouftous " } });
+    await act(async () => fireEvent.keyDown(field, { key: "Enter" }));
+    expect(rename).toHaveBeenCalledWith(expect.objectContaining({ id: "ma-chasse" }), { name: "Mes bouftous" });
+    // The row takes the focus back, so F2 renames it again from the keyboard.
+    const row = screen.getByRole("button", { name: /^Ma chasse/ });
+    expect(document.activeElement).toBe(row);
+    fireEvent.keyDown(row, { key: "F2" });
+    const again = screen.getByRole("textbox", { name: "Nom du blueprint" });
+    fireEvent.change(again, { target: { value: "Ailleurs" } });
+    fireEvent.keyDown(again, { key: "Escape" });
+    fireEvent.keyDown(screen.getByRole("button", { name: /^Ma chasse/ }), { key: "F2" });
+    const blank = screen.getByRole("textbox", { name: "Nom du blueprint" });
+    fireEvent.change(blank, { target: { value: "  " } });
+    fireEvent.blur(blank);
+    expect(rename).toHaveBeenCalledOnce();
   });
 
   it("keeps the tab and its graphs when Delete failed", async () => {
