@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable.tsx";
 import { Inspector } from "@/inspector/inspector.tsx";
 import { InspectorHeader } from "@/inspector/inspector-header.tsx";
+import { usePanelOpening } from "@/inspector/use-panel-opening.ts";
 import { cn } from "@/lib/utils.ts";
 import { useAppSettings } from "@/settings/app-settings.ts";
 import { ImportPreview } from "@/share/import-preview.tsx";
@@ -28,6 +29,7 @@ const SASH =
  */
 export function Shell() {
   useShellShortcuts();
+  usePanelOpening();
   const { t } = useTranslation();
   const visible = useLayout((store) => store.visible);
   const shownView = useLayout((store) => store.view);
