@@ -2,7 +2,7 @@
 
 The app ships the game data of one client build, as JSON, inside the installer: for now the world (maps, world graph,
 positions, sub-areas, areas, zaaps, the world map and its tiles), the breeds with their heads, and the items, their
-types, the jobs and their skills, with the items' and jobs' icons; monsters and spells come with the step that reads them. A .NET tool extracts it from the official client, it is published as a release asset and packed by the
+types, the jobs and their skills, with the items' and jobs' icons, and the monsters, their races and super races; spells come with the step that reads them. A .NET tool extracts it from the official client, it is published as a release asset and packed by the
 release workflow. Nothing of it is ever committed (ADR [0008](adr/0008-world-data-first-in-five-languages-as-a-tar-gz.md), its archive's name
 superseded by [0013](adr/0013-a-new-data-format-is-a-second-asset-named-by-its-format.md)).
 
@@ -17,7 +17,7 @@ flowchart LR
 
 ## The folder
 
-- `manifest.json`: `format` (equal to `data::FORMAT`, currently 4), `build` (such as `3.7.13.17`), `extractor` (its
+- `manifest.json`: `format` (equal to `data::FORMAT`, currently 5), `build` (such as `3.7.13.17`), `extractor` (its
   version) and `tables`, one entry per file, tiles included, in order of `path` (relative, forward slashes), with its
   `name` (the path without its extension, such as `maps/37`, unique) and its `sha256`. Unknown fields are refused.
 - One JSON file per table, an array of records sorted by id, one record per line; names in camelCase.
@@ -77,6 +77,9 @@ flowchart LR
 | `hints.json` | `id`, `categoryId`, `gfx`, `name`, `mapId`, `x`, `y`, `outdoor`, `subAreaId`, `worldMapId` (the world the client draws it on), `level` | `HintsData`, 835 records in 6 categories |
 | `hint-categories.json` | `id`, `name` | `HintCategoryData`, 12 records |
 | `icons/hints/<gfx>.png` | one hint's picture, PNG, 64 or 62 px | 91 of the 92 pictures the hints name, 395 KB as PNG |
+| `monsters.json` | `id`, `name`, `raceId`, `flags` (`MonsterFlags`), `levels` (each grade's, grade 1 first), `drops` (`itemId`, `chances`: five percentages for grades 1 to 5, `criterion`: the client's text, or `null`) | `MonsterData`, 5,135 records, 5,129 written, 26,821 grades, 13,567 drops, 2.9 MB |
+| `monster-races.json` | `id`, `name`, `superRaceId` | `MonsterRaceData`, 266 records, 265 written |
+| `monster-super-races.json` | `id`, `name` | `MonsterSuperRaceData`, 35 records |
 
 A cell's `flags` pack its booleans, bit 0 first: `mov` (walkable), `los` (line of sight), `nonWalkableDuringFight`,
 `nonWalkableDuringRP`, `farmCell`, `visible`, `havenbagCell`, `roleplayMonstersMovementBlocked`, `red`, `blue`: fields
@@ -84,10 +87,26 @@ of the cell, not an enum of the client, so the order is ours (`data::maps::cell`
 has, a transition through an element its map lacks, a position or a zaap on a map the client does not hold. A map's
 interactive elements are in its record; the app reads a map's file when it needs the map, not at start.
 
-Two references the client breaks are left out and counted, the owner's choice of 2026-11-14, rather than failing the
-extraction: an item of a type the client lacks (item 34,569, type 264, on 3.7.13.17) and a skill gathering an item
-`items.json` lacks (skill 260, item 3,656); the extractor prints how many it left out of each, and every other check
-fails as before, a duplicate id in these four tables included. The app refuses a folder where an id is held twice in one of these four tables, an item's type is
+A monster keeps what D3B's default blueprints compute their ranges from, and Chasseur its meats (the owner,
+2026-11-17): its grades' levels, its drops and its flags; its grades' characteristics, spells, looks and its own
+`subareas` are left out, the sub-areas' `monsters` saying where it lives (all 1,681 they list are in `monsters.json`).
+Measured on 3.7.13.17: 1 to 20 grades, 5 on 4,037 monsters, numbered from 1 in order, levels 1 to 2,400, falling from
+one grade to the next on 46 monsters (Wabbit Gm, 182: 80 five times, then 75, 130, 200), all written as they are. A drop
+gives chances for grades 1 to 5 only, `percentDropForGrade1` to `5`, even for the 611 dropping monsters of more grades;
+what a sixth grade draws is not measured. 2,348 monsters drop 3,513 items; 93 drop one item twice under two criteria;
+8,645 drops carry a criterion, the bot's to read in Rust, 1,374 of them a hunter's meat, `Pj>41,<level>` (job 41
+above a level), 45 items. The drops' `count`, their per-grade coefficients (2,792) and the global drops (14,249, two
+event items on every monster) are left out. `MonsterFlags` names 19 bits, `isBoss` on 204 monsters, `isMiniBoss` 306,
+`isQuestMonster` 2,839, `hideInBestiary` 48. The extraction fails on a monster without a grade, grades out of order or
+of another monster, a drop of another monster, a chance outside 0 to 100 or for a sixth grade, a criterion its
+`hasCriterions` contradicts, a monster of a race the client lacks, a drop of an item `items.json` lacks, or a sub-area
+naming a monster `monsters.json` lacks; the app refuses a folder where any of these references breaks.
+
+Three references the client breaks are left out and counted, the owner's choices of 2026-11-14 and 2026-11-17, rather
+than failing the extraction: an item of a type the client lacks (item 34,569, type 264, on 3.7.13.17), a skill
+gathering an item `items.json` lacks (skill 260, item 3,656), and a race of a super race the client lacks with its
+monsters (race 347, super race 50, and its 6 monsters, which no sub-area lists); the extractor prints how many it left
+out of each, and every other check fails as before, a duplicate id in these tables included. The app refuses a folder where an id is held twice in one of these four tables, an item's type is
 missing, or a skill's job or gathered item is. Which jobs are harvesting professions (2, 24, 26, 28 and 36 on
 3.7.13.17, whose skills gather what the sub-areas' `harvestables` list) will be derived in Rust by step 3's PR 4.
 
@@ -120,7 +139,8 @@ OS). It is the file the `data` skill publishes and `data:fetch` unpacks. Format 
 named `client-<build>.tar.gz`; format 2 added the breeds and their heads (the owner, 2026-11-13): since a published
 asset is never replaced, a build's data in a new format is a second asset of the build's release, named by its format.
 Format 3 adds the items, their types, the jobs and their skills, and the items' and jobs' icons (the owner,
-2026-11-14); format 4 the world map's hints, their categories and their pictures (step 3's (9b), 2026-11-15). The C# version's tools on `main`
+2026-11-14); format 4 the world map's hints, their categories and their pictures (step 3's (9b), 2026-11-15); format 5
+the monsters, their grades' levels, drops and flags, their races and super races (blueprints v2's (v2.10), 2026-11-17). The C# version's tools on `main`
 (`scripts/extract/`, `scripts/unity/`) and its measures (`docs/client.md`) are the sources it was rewritten from.
 
 ## Where it lives

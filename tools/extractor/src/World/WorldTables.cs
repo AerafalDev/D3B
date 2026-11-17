@@ -8,9 +8,9 @@ namespace D3B.Extractor.World;
 internal static class WorldTables
 {
     /// <summary>Reads the world's tables from the client and writes them into the folder.</summary>
-    /// <returns>The positions and the zaaps, which the world graph's checks hold against the maps.</returns>
+    /// <returns>The positions and the zaaps, which the world graph's checks hold against the maps, and the sub-areas, whose monsters the monsters' checks hold.</returns>
     /// <exception cref="InvalidDataException">The client's tables are not what the extractor measured.</exception>
-    public static (IReadOnlyList<MapPosition> Positions, IReadOnlyList<Zaap> Zaaps) Extract(ClientInstall client, TextFiles texts, ClientCode code, DataFolder folder, TextWriter output)
+    public static (IReadOnlyList<MapPosition> Positions, IReadOnlyList<Zaap> Zaaps, IReadOnlyList<SubArea> SubAreas) Extract(ClientInstall client, TextFiles texts, ClientCode code, DataFolder folder, TextWriter output)
     {
         var positions = ReadPositions(DataTable.Read(client, "mapsinformation"), texts, code.FlagEnum("MapInformationFlags"));
         var subAreas = ReadSubAreas(DataTable.ReadById(client, "subareas"), texts);
@@ -24,7 +24,7 @@ internal static class WorldTables
 
         output.WriteLine($"World: {positions.Count:N0} map positions, {subAreas.Count:N0} sub-areas, {areas.Count:N0} areas, {zaaps.Count:N0} zaaps");
 
-        return (positions, zaaps);
+        return (positions, zaaps, subAreas);
     }
 
     /// <exception cref="InvalidDataException">A position is keyed under another map's id, or sets a flag its enum does not name.</exception>

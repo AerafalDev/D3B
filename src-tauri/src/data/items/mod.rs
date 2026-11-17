@@ -89,7 +89,7 @@ impl ItemTables {
 }
 
 /// The ids of a table, refused when one is held twice.
-fn unique(table: &'static str, ids: impl Iterator<Item = i32>) -> Result<HashSet<i32>, DataError> {
+pub(super) fn unique(table: &'static str, ids: impl Iterator<Item = i32>) -> Result<HashSet<i32>, DataError> {
     let mut seen = HashSet::new();
     for id in ids {
         if !seen.insert(id) {

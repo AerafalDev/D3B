@@ -552,7 +552,9 @@ _Updated 2026-11-17._
   (v2.9) the picker by intent with its synonyms, and a node's inputs folded under "Advanced"; (v2.10) D3B's eight
   blueprints (Récolte, Combat, Mineur, Paysan, Alchimiste, Pêcheur, Bûcheron, Chasseur: the owner, 2026-11-16), with
   the ranges computed from the data and the C# version's measured behaviours, in four PRs: the extractor's format 5,
-  the monsters' grades, levels and drops (published on the owner's go, ADR 0013); the ranges; Récolte and the five
+  the monsters' grades' levels, drops and flags, their races and super races (the owner's choices of 2026-11-17, race
+  347 and its 6 monsters left out; done in code: `client-3.7.13.17-format5.tar.gz` waits for the owner's go to be
+  published, ADR 0013, and until then `data:fetch` and a release find no data); the ranges; Récolte and the five
   harvest blueprints; Combat and Chasseur, after the hunting weapon's and the meats' study. Each brings its sentences in French and English and its family in the picker; its checklist,
   [bot.md](bot.md#measure)'s items 6 and 7, is taken once (16) declares variables and events of mine. Then (14) variables, with locals, lists and the new types' editors; (15)
   functions opened in place, with their exits and the pure ones; (16) events: priority, re-arming, modes, the

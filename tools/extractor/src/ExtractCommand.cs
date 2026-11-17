@@ -7,6 +7,7 @@ using D3B.Extractor.Graph;
 using D3B.Extractor.Hints;
 using D3B.Extractor.Items;
 using D3B.Extractor.Maps;
+using D3B.Extractor.Monsters;
 using D3B.Extractor.Protocol;
 using D3B.Extractor.Texts;
 using D3B.Extractor.World;
@@ -110,7 +111,7 @@ internal static class ExtractCommand
 
         var schema = SchemaReader.Read(code.ProtocolTypes());
 
-        var (positions, zaaps) = WorldTables.Extract(client, texts, code, folder, output);
+        var (positions, zaaps, subAreas) = WorldTables.Extract(client, texts, code, folder, output);
 
         WorldMapTables.Extract(client, texts, folder, output);
         HintTables.Extract(client, texts, positions, folder, output);
@@ -121,6 +122,7 @@ internal static class ExtractCommand
         var jobs = JobTables.Extract(client, texts, items, folder, output);
 
         IconTables.Extract(client, items, jobs, folder, output);
+        MonsterTables.Extract(client, texts, code, items, subAreas, folder, output);
 
         var maps = MapTables.Extract(client, folder, output);
 
