@@ -127,6 +127,8 @@ pub(crate) enum Fault {
     NotSeen { what: String },
     #[error("the list {pin} is empty")]
     Empty { pin: String },
+    #[error("the input {pin} divides by 0")]
+    DividedByZero { pin: String },
 }
 
 /// What a node may use while it runs.

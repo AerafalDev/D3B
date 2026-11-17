@@ -318,6 +318,17 @@ pub(crate) const KINDS: &[Kind] = &[
     Kind { takes: &[Takes::Count { pin: input("in", Bool, None), least: 2 }], ..of("or", Value, &[output("value", Bool)], None) },
     of("not", Value, &[input("value", Bool, None), output("value", Bool)], None),
     of("choose", Value, &[input("condition", Bool, None), wildcard("if_true", Side::In, false), wildcard("if_false", Side::In, false), wildcard("value", Side::Out, false)], None),
+    // Arithmetic of whole numbers only (the owner, 2026-11-17), two inputs each; ÷ and % of round down, a remainder is
+    // never negative (settled alone); a duration by N seconds, as by N minutes.
+    of("subtract", Value, &[input("a", Number, None), input("b", Number, None), output("value", Number)], None),
+    of("multiply", Value, &[input("a", Number, None), input("b", Number, None), output("value", Number)], None),
+    of("divide", Value, &[input("a", Number, None), input("b", Number, Some("1")), output("value", Number)], None),
+    of("remainder", Value, &[input("a", Number, None), input("b", Number, Some("2")), output("value", Number)], None),
+    of("min", Value, &[input("a", Number, None), input("b", Number, None), output("value", Number)], None),
+    of("max", Value, &[input("a", Number, None), input("b", Number, None), output("value", Number)], None),
+    of("clamp", Value, &[input("value", Number, None), input("low", Number, None), input("high", Number, None), output("value", Number)], None),
+    of("percent_of", Value, &[input("percent", Number, Some("50")), input("of", Number, None), output("value", Number)], None),
+    of("seconds", Value, &[input("seconds", Number, Some("30")), output("value", Duration)], None),
     of("entry", Function, &[THEN], None),
     of("return_done", Function, &[RUN], None),
     of("return_failed", Function, &[RUN, input("reason", Text, Some("\"\""))], None),

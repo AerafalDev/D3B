@@ -95,6 +95,7 @@ pub(crate) fn of_graph(blueprint: &Blueprint, graph: &Graph, found: &mut Vec<Pro
     }
     wires(graph, &known, found);
     leaves_outside_loops(graph, &known, found);
+    zero_divisors(graph, found);
     for node in &graph.nodes {
         let Some(node_pins) = known.get(&node.id) else { continue };
         for pin in node_pins
@@ -108,6 +109,20 @@ pub(crate) fn of_graph(blueprint: &Blueprint, graph: &Graph, found: &mut Vec<Pro
                 let (graph, node) = at(&node.id);
                 found.push(Problem::InputWithoutValue { graph, node, pin: id });
             }
+        }
+    }
+}
+
+/// Each ÷ or remainder given a 0 typed as its divisor `b`, which would block the character when read.
+fn zero_divisors(graph: &Graph, found: &mut Vec<Problem>) {
+    for node in &graph.nodes {
+        let divides = matches!(&node.does, Does::Kind(kind) if kind.0 == "divide" || kind.0 == "remainder");
+        if divides && node.inputs.get(&Id("b".to_owned())).and_then(serde_json::Value::as_i64) == Some(0) {
+            found.push(Problem::ZeroDivisor {
+                graph: graph.id.clone(),
+                node: node.id.clone(),
+                pin: Id("b".to_owned()),
+            });
         }
     }
 }
@@ -817,6 +832,27 @@ mod tests {
                 outside("empty_at_bank", "back")
             ]
         );
+    }
+
+    #[test]
+    fn a_0_typed_as_a_divisor_is_a_problem_and_another_number_none() {
+        let found = after(|blueprint| {
+            blueprint.graphs[0].nodes.extend(
+                [
+                    r#"{"id": "d", "kind": "divide", "inputs": {"a": 4, "b": 0}}"#,
+                    r#"{"id": "r", "kind": "remainder", "inputs": {"a": 4, "b": 0}}"#,
+                    r#"{"id": "ok", "kind": "divide", "inputs": {"a": 4, "b": 2}}"#,
+                    r#"{"id": "s", "kind": "subtract", "inputs": {"a": 4, "b": 0}}"#,
+                ]
+                .map(node),
+            );
+        });
+        let zero = |node: &str| Problem::ZeroDivisor {
+            graph: id("events"),
+            node: id(node),
+            pin: id("b"),
+        };
+        assert_eq!(found, [zero("d"), zero("r")]);
     }
 
     #[test]

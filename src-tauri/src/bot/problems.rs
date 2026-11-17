@@ -90,6 +90,8 @@ pub(crate) enum Problem {
     NotPure { graph: Id, node: Id },
     /// A Leave the loop a flow reaches outside any loop's body.
     LeaveOutsideLoop { graph: Id, node: Id },
+    /// A 0 typed as a ÷'s or a remainder's divisor: it would block the character.
+    ZeroDivisor { graph: Id, node: Id, pin: Id },
 }
 
 /// Every problem of `blueprint`: its own in the order of its file, then each graph's nodes and wires, then the events

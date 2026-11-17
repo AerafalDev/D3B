@@ -162,3 +162,92 @@ fn not_and_choose_reading_only_the_side_it_takes() {
     assert_eq!(choose(true), Ok("yes".into()), "its false side, unseen, never read");
     assert!(choose(false).is_err(), "its false side read");
 }
+
+/// The value `kind` gives of `inputs`, read by an `=` of its type against `expected`: whether it is that.
+fn gives(kind: &str, inputs: &str, expected: i64) -> Result<bool, Reason> {
+    let of = if kind == "seconds" || kind == "minutes" {
+        "duration"
+    } else {
+        "number"
+    };
+    let node = it("equal", of, &format!(r#"{{"b": {expected}}}"#));
+    let more = format!(r#", {{"id": "x", "kind": "{kind}", "inputs": {inputs}}}"#);
+    decide(&node, &more, r#", {"from": ["x", "value"], "to": ["it", "a"]}"#).map(|said| said == "yes")
+}
+
+#[test]
+fn the_arithmetic_of_whole_numbers_rounds_down_and_keeps_a_remainder_positive() {
+    for (kind, inputs, expected) in [
+        ("add", r#"{"a": 2, "b": 3}"#, 5),
+        ("subtract", r#"{"a": 2, "b": 3}"#, -1),
+        ("multiply", r#"{"a": -2, "b": 3}"#, -6),
+        ("divide", r#"{"a": 7, "b": 2}"#, 3),
+        ("divide", r#"{"a": -7, "b": 2}"#, -4),
+        ("divide", r#"{"a": 7, "b": -2}"#, -4),
+        ("divide", r#"{"a": -8, "b": 2}"#, -4),
+        ("divide", r#"{"a": -7, "b": -2}"#, 3),
+        ("remainder", r#"{"a": 7, "b": 3}"#, 1),
+        ("remainder", r#"{"a": -7, "b": 3}"#, 2),
+        ("remainder", r#"{"a": 7, "b": -3}"#, 1),
+        ("min", r#"{"a": 2, "b": 3}"#, 2),
+        ("max", r#"{"a": 2, "b": 3}"#, 3),
+        ("clamp", r#"{"value": 12, "low": 1, "high": 10}"#, 10),
+        ("clamp", r#"{"value": 5, "low": 10, "high": 1}"#, 5),
+        ("clamp", r#"{"value": 7, "low": 3, "high": 3}"#, 3),
+        ("clamp", r#"{"value": 5, "low": 1, "high": 10}"#, 5),
+        ("percent_of", r#"{"percent": 50, "of": 7}"#, 3),
+        ("percent_of", r#"{"percent": 25, "of": 3}"#, 0),
+        ("percent_of", r#"{"percent": 150, "of": 10}"#, 15),
+        ("percent_of", r#"{"percent": 50, "of": -7}"#, -4),
+        ("seconds", r#"{"seconds": 45}"#, 45),
+        ("minutes", r#"{"minutes": 2}"#, 120),
+    ] {
+        assert_eq!(gives(kind, inputs, expected), Ok(true), "{kind} {inputs}");
+    }
+}
+
+#[test]
+fn a_division_by_0_and_a_result_too_large_block_on_the_node() {
+    // A 0 that comes by a wire, which the editor cannot see: 1 − 1.
+    let more = r#", {"id": "x", "kind": "divide", "inputs": {"a": 5}}, {"id": "zero", "kind": "subtract", "inputs": {"a": 1, "b": 1}}"#;
+    let wires = r#", {"from": ["x", "value"], "to": ["it", "a"]}, {"from": ["zero", "value"], "to": ["x", "b"]}"#;
+    let node = it("equal", "number", r#"{"b": 0}"#);
+    assert_eq!(
+        decide(&node, more, wires),
+        Err(Reason::Fault(Fault::DividedByZero { pin: "b".into() }))
+    );
+    let wired_zero = |kind: &str| {
+        let more = format!(
+            r#", {{"id": "x", "kind": "{kind}", "inputs": {{"a": 5}}}}, {{"id": "zero", "kind": "subtract", "inputs": {{"a": 1, "b": 1}}}}"#
+        );
+        decide(&node, &more, wires)
+    };
+    assert_eq!(
+        wired_zero("remainder"),
+        Err(Reason::Fault(Fault::DividedByZero { pin: "b".into() }))
+    );
+    let huge = format!(r#"{{"a": {}, "b": 2}}"#, i64::MAX);
+    assert_eq!(gives("multiply", &huge, 0), Err(Reason::Fault(Fault::TooLarge)));
+    assert_eq!(gives("add", &huge, 0), Err(Reason::Fault(Fault::TooLarge)));
+    let below = format!(r#"{{"a": {}, "b": 1}}"#, i64::MIN);
+    assert_eq!(gives("subtract", &below, 0), Err(Reason::Fault(Fault::TooLarge)));
+    let lowest = format!(r#"{{"a": {}, "b": -1}}"#, i64::MIN);
+    assert_eq!(
+        gives("divide", &lowest, 0),
+        Err(Reason::Fault(Fault::TooLarge)),
+        "its quotient does not fit"
+    );
+    assert_eq!(gives("remainder", &lowest, 0), Ok(true), "its remainder, 0, fits");
+    let wide = format!(r#"{{"percent": 50, "of": {}}}"#, i64::MAX);
+    assert_eq!(
+        gives("percent_of", &wide, i64::MAX / 2),
+        Ok(true),
+        "a wide product, a result that fits"
+    );
+    let past = format!(r#"{{"percent": 300, "of": {}}}"#, i64::MAX);
+    assert_eq!(gives("percent_of", &past, 0), Err(Reason::Fault(Fault::TooLarge)));
+    assert_eq!(
+        gives("seconds", r#"{"seconds": -5}"#, 0),
+        Err(Reason::Fault(Fault::NotOfType { pin: "seconds".into() }))
+    );
+}

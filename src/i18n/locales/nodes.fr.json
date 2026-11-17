@@ -207,6 +207,42 @@
     "choose": {
       "sentence": "Si {{condition}} : {{if_true}}, sinon {{if_false}}",
       "description": "Donne une valeur si la condition est vraie, une autre sinon ; seul le côté pris est lu."
+    },
+    "subtract": {
+      "sentence": "{{a}} − {{b}}",
+      "description": "A moins B, en nombres entiers."
+    },
+    "multiply": {
+      "sentence": "{{a}} × {{b}}",
+      "description": "A fois B, en nombres entiers."
+    },
+    "divide": {
+      "sentence": "{{a}} ÷ {{b}}",
+      "description": "A divisé par B, arrondi vers le bas ; par 0, le personnage est bloqué."
+    },
+    "remainder": {
+      "sentence": "Reste de {{a}} ÷ {{b}}",
+      "description": "Ce qui reste de A divisé par B, jamais négatif ; par 0, le personnage est bloqué."
+    },
+    "min": {
+      "sentence": "Min de {{a}} et {{b}}",
+      "description": "La plus petite des deux valeurs."
+    },
+    "max": {
+      "sentence": "Max de {{a}} et {{b}}",
+      "description": "La plus grande des deux valeurs."
+    },
+    "clamp": {
+      "sentence": "{{value}} borné de {{low}} à {{high}}",
+      "description": "La valeur, ramenée entre les deux bornes."
+    },
+    "percent_of": {
+      "sentence": "{{percent}} de {{of}}",
+      "description": "Ce pourcentage de la valeur, arrondi vers le bas."
+    },
+    "seconds": {
+      "sentence": "{{seconds}} s",
+      "description": "Une durée de tant de secondes."
     }
   },
   "pins": {
@@ -250,6 +286,9 @@
     "low": "De",
     "high": "À",
     "if_true": "Si vrai",
-    "if_false": "Si faux"
+    "if_false": "Si faux",
+    "percent": "Pourcentage",
+    "of": "De",
+    "seconds": "Secondes"
   }
 }
