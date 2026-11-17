@@ -179,7 +179,8 @@ flowchart LR
   For each element of a list (the element, its index), each with its body and Completed, and Leave the loop; Do once
   and Do N times (each re-armed by its Reset input); Alternate (A, then B, then A); Wait until a condition, with an
   optional longest wait (Then, or Too long); Retry an action up to N times, then Failed; Pick from a list, in turn,
-  the least recently picked or at random (its memory per node, for the run); Trigger an event of mine, now or after a duration, and Cancel its timer;
+  the least recently picked or at random (its memory per node, for the run; (v2.3) below merges Do once into Do N
+  times and keeps one mode of Pick); Trigger an event of mine, now or after a duration, and Cancel its timer (with (v2.6));
   Block with a reason; Pause and notify (the player resumes it, from step 4). Gate, MultiGate and Unreal's rarer
   nodes stay out: a bot hardly uses them (the owner, 2026-11-16).
 - **Variables**: a duration of one run, or **memory** per character; set per character or not; and **local** to a
@@ -423,6 +424,64 @@ flowchart LR
 - **A node's options** ("+" a case or an output, the owner, 2026-11-17) come with v2.3's Sequence and Switch, their
   first kinds: "+ Add an output" on the node for Sequence's outputs and a list's inputs, Switch's cases typed in
   Details a row each with + and ×, and a pin's right-click "Remove" dropping its wire.
+
+### The flow's kinds (v2.3)
+
+Designed with the owner on 2026-11-17: the flow's kinds run, each with its problems, its words in French and English
+and its reading in the Summary, and a node's options are edited, closing (v2.2). It starts before (v2.2) is measured,
+both steps of blueprints v2, (v2.2)'s measures taken alongside (the owner, 2026-11-17).
+
+```mermaid
+flowchart LR
+    ui["the node's '+', a pin's 'Remove', Switch's cases in Details"] -->|"GraphEdit::Options, RemovePin"| edit["bot::edit: count, cases, wires renumbered, one undo"]
+    edit --> file["the file, schema 2 unchanged"] --> view["ipc NodeView: options, adds"] --> sum["Summary: each pin's role"]
+    file --> prog["run: flow, loops, waits"] -->|"chains Plain, Loop, Try; a pause past its node"| eng["the engine's stack"]
+```
+
+- **The kinds**, and their pins (French names on a mock-up of the Summary, before its PR; the owner, 2026-11-17):
+  - v1's If, Wait (a duration), Wait for life and Finish, as they are;
+  - **Sequence** (`then_1` to `then_n`, at least 2), as Unreal's: no Completed, its last output the rest of the flow,
+    the Summary reading its outputs at the level of the steps around it;
+  - **Switch** on a value (a wildcard of any type but lists and ranges, an output `case_n` per case and `otherwise`);
+  - **Repeat** N times (`times`, 3 by default, `body`, `index`, `completed`), **While** (`condition`, `body`,
+    `completed`), **For each** (a list, `body`, `element`, `index`, `completed`), the list read once as the flow
+    enters, indexes from 1, and **Leave the loop**;
+  - **Do N times** (`times`, `then`, and a second flow input `reset` re-arming it), Do once being N = 1, read "Une
+    seule fois" (the owner, 2026-11-17: one kind rather than two);
+  - **Alternate** (`first`, then `second`, then `first`);
+  - **Wait until** a condition (`longest`, a duration, 0 none; `then`, or `too_long`), counted again after an
+    interruption as Wait is;
+  - **Retry**, a node whose body `try` is tried up to N times, the first included (the owner, 2026-11-17: it wraps any
+    chain of actions, rather than a setting on each action or a function's call): an unlinked Failed inside it starts
+    the next try, after the last one `failed` with its `reason`; a Failed wired inside it is not retried;
+  - **Pick** the next of a list (`then`, `element`), the least recently picked, which is in turn while the list does
+    not change; at random is (v2.4)'s random element of a list (the owner, 2026-11-17: one mode);
+  - **Block** with a reason; **Pause and notify** (`text`, `then`), which pauses the run past itself, so that resuming
+    (step 4) goes on after it.
+- **Memory** of Do N times, Alternate and Pick is the node's for the whole run, in a function called many times too,
+  and kept through "restart from the start" (the owner, 2026-11-17).
+- **Out**: Trigger and Cancel its timer come with (v2.6) and (26), when an event of mine starts something (the owner,
+  2026-11-17); a value read in a sentence ("Tant que récoltes < objectif") with (v2.4)'s values; "Advanced" with (v2.9).
+- **A node's options**: "+ Add an output" on Sequence (a list's inputs reuse it in (v2.4)), absent on D3B's
+  blueprints; Switch's cases in Details, a row each in the type's editor with + and ×, a case given twice marked; a
+  pin's right-click "Remove" drops its wire and renumbers the later pins and their wires, as Unreal does, refused
+  below the kind's least. Each is one change, undone in one step (`GraphEdit::Options`, `GraphEdit::RemovePin`;
+  `NodeView.adds` says where "+" goes).
+- **The engine** (ADR 0017, matching no kind): a chain is plain, a loop's (what Leave the loop ends) or a try's (where
+  an unlinked Failed ends the try rather than blocking); a node's memory lasts the run; a pause leaves the flow past
+  its node. New problem: Leave the loop outside a loop's body (through a Sequence or a Retry inside a loop it is in
+  one).
+- **The Summary** reads each pin by its role, from one table: `then`, `completed` go on; `true`, `false`,
+  `failed`, `case_n`, `otherwise`, `too_long`, `first`, `second` branch; `body`, `try` hold sub-steps (`1.1`) with
+  Completed after them; `reset` re-arms and is no step. A Switch reads a line per case, "Bûcheron → 3.1", an unwired
+  case leading nowhere; Wait until "(au plus 5 min)" with its Too long.
+- **Six PRs**: Sequence and Switch in Rust with the options' edits; a node's options in the editor (closing (v2.2));
+  the Summary by pin roles, after its mock-up; the loops; the kinds that remember; the waits and stops (Wait until,
+  Retry, Block, Pause) with a run on the captures. Each kind replaces the tests' own (`test_sequence`, `test_switch`,
+  `test_for_each`).
+- **Measured** (nothing acts in the game before step 4): the picker's "boucle" finding the loops; "+" and "Remove"
+  with their wires and Ctrl+Z; Switch's cases typed by its type, a case twice a problem; Leave the loop's problem; the
+  Summary's lines; a run on the captures that never blocks "runs without pause".
 
 ## In the app
 
