@@ -1,7 +1,8 @@
 //! A blueprint's variables (`docs/bot.md`, "The concepts"): a type, a default, bounds for a number, a help line, set
 //! per character or not (Unreal's Instance Editable: the blueprint holds the default, each character its own value),
 //! and kept for one run or as memory across sessions. The owner allowed both at once on 2026-11-13, as Unreal does: a
-//! value the player sets that the bot then carries on.
+//! value the player sets that the bot then carries on. v2's types (ADR 0016): a map, an item, a duration, a time of day
+//! and an NPC beside v1's, each with its list and its ranges ("from level N to M: a value").
 
 use std::collections::BTreeMap;
 
@@ -12,12 +13,22 @@ use super::blueprint::Id;
 
 /// A variable of a blueprint.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[expect(
+    clippy::struct_excessive_bools,
+    reason = "a variable's list, ranges, setting and memory, each the player's yes or no, independent of the others"
+)]
 #[serde(deny_unknown_fields)]
 pub(crate) struct Variable {
     pub(crate) id: Id,
     pub(crate) name: String,
     #[serde(rename = "type")]
     pub(crate) value_type: ValueType,
+    /// A list of values of its type, rather than one.
+    #[serde(default, skip_serializing_if = "is_false")]
+    pub(crate) list: bool,
+    /// Ranges whose rows hold a value of its type (or a list of them, with `list`).
+    #[serde(default, skip_serializing_if = "is_false")]
+    pub(crate) ranges: bool,
     /// `null` when the blueprint gives none, so that each character must set its own before it runs.
     #[serde(default, skip_serializing_if = "Value::is_null")]
     pub(crate) default: Value,
@@ -34,11 +45,16 @@ pub(crate) struct Variable {
 }
 
 impl Variable {
+    /// Its whole type: its type, as a list or ranges or neither.
+    pub(crate) fn of_type(&self) -> Type {
+        Type::new(self.value_type, Shape::new(self.list, self.ranges))
+    }
+
     /// Whether a character may hold `value` as its own: a value of its type, within its bounds.
     pub(crate) fn accepts(&self, value: &Value) -> bool {
         let within =
             |[smallest, largest]: [i64; 2]| value.as_i64().is_none_or(|whole| (smallest..=largest).contains(&whole));
-        !value.is_null() && self.value_type.holds(value) && self.bounds.is_none_or(within)
+        !value.is_null() && self.of_type().holds(value) && self.bounds.is_none_or(within)
     }
 }
 
@@ -51,7 +67,7 @@ pub(crate) fn carried(
     from: Option<&[Variable]>,
     to: &[Variable],
 ) -> BTreeMap<String, Value> {
-    let had = |id: &str| from.map(|from| from.iter().find(|variable| variable.id.0 == id).map(|it| it.value_type));
+    let had = |id: &str| from.map(|from| from.iter().find(|variable| variable.id.0 == id).map(Variable::of_type));
     settings
         .iter()
         .filter(|(id, value)| {
@@ -61,7 +77,7 @@ pub(crate) fn carried(
                     && variable.accepts(value)
                     // A value that is the new default is no longer the character's own, as when set back to it.
                     && **value != variable.default
-                    && had(id).is_none_or(|had| had == Some(variable.value_type))
+                    && had(id).is_none_or(|had| had == Some(variable.of_type()))
             })
         })
         .map(|(id, value)| (id.clone(), value.clone()))
@@ -77,7 +93,7 @@ fn is_false(value: &bool) -> bool {
 }
 
 /// What a variable, a pin or a function's parameter holds.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub(crate) enum ValueType {
     /// Yes or no: `true`, `false`.
@@ -98,6 +114,16 @@ pub(crate) enum ValueType {
     Items,
     /// A profession, by the game's job id: `28`.
     Job,
+    /// A map, by the game's map id: `191104002`.
+    Map,
+    /// One item, by the game's item id: `289`.
+    Item,
+    /// A duration, in whole seconds: `90`.
+    Duration,
+    /// A time of day, `"HH:MM"` from `"00:00"` to `"23:59"`: `"23:00"`.
+    Time,
+    /// A non-player character, by the game's NPC id: `774`.
+    Npc,
 }
 
 impl ValueType {
@@ -119,7 +145,8 @@ impl ValueType {
             (Self::Bank, Value::Object(object)) => object.len() == 1 && object.get("map").is_some_and(Value::is_u64),
             (Self::Items, Value::String(word)) => word == "all" || word == "none",
             (Self::Items, Value::Array(ids)) => ids.iter().all(Value::is_u64),
-            (Self::Job, Value::Number(id)) => id.is_u64(),
+            (Self::Job | Self::Map | Self::Item | Self::Duration | Self::Npc, Value::Number(whole)) => whole.is_u64(),
+            (Self::Time, Value::String(time)) => is_time(time),
             _ => false,
         }
     }
@@ -127,6 +154,91 @@ impl ValueType {
     /// Whether this type has bounds: a number or a percentage.
     pub(crate) fn is_numeric(self) -> bool {
         matches!(self, Self::Number | Self::Percentage)
+    }
+}
+
+/// `"HH:MM"`, from `"00:00"` to `"23:59"`.
+fn is_time(text: &str) -> bool {
+    // Digits only: a number's parse would take `+1`.
+    let two = |part: &str, below: u8| {
+        part.len() == 2
+            && part.bytes().all(|byte| byte.is_ascii_digit())
+            && part.parse::<u8>().is_ok_and(|it| it < below)
+    };
+    text.split_once(':')
+        .is_some_and(|(hours, minutes)| two(hours, 24) && two(minutes, 60))
+}
+
+/// How many values of a type a value holds: one, a list of them, or ranges whose rows hold one or a list.
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Hash)]
+pub(crate) struct Shape {
+    pub(crate) list: bool,
+    pub(crate) ranges: bool,
+}
+
+impl Shape {
+    /// One value.
+    pub(crate) const ONE: Self = Self::new(false, false);
+
+    pub(crate) const fn new(list: bool, ranges: bool) -> Self {
+        Self { list, ranges }
+    }
+}
+
+/// What a variable, a parameter or a pin holds, whole: a type and its shape.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub(crate) struct Type {
+    pub(crate) of: ValueType,
+    pub(crate) shape: Shape,
+}
+
+impl Type {
+    pub(crate) const fn new(of: ValueType, shape: Shape) -> Self {
+        Self { of, shape }
+    }
+
+    /// Whether `value` holds as this type; `null`, no value yet, holds as any. A list is an array of values, never
+    /// `null`; ranges are rows `{"from": 1, "to": 49, "value": …}`, from no greater than to, in any order.
+    pub(crate) fn holds(self, value: &Value) -> bool {
+        let one = |value: &Value| !value.is_null() && self.of.holds(value);
+        let some = |value: &Value| {
+            if self.shape.list {
+                value.as_array().is_some_and(|values| values.iter().all(one))
+            } else {
+                one(value)
+            }
+        };
+        if value.is_null() {
+            return true;
+        }
+        if !self.shape.ranges {
+            return some(value);
+        }
+        value.as_array().is_some_and(|rows| {
+            rows.iter().all(|row| {
+                let ends = row.as_object().filter(|row| row.len() == 3).and_then(|row| {
+                    let end = |key| row.get(key).and_then(Value::as_u64);
+                    Some((end("from")?, end("to")?, row.get("value")?))
+                });
+                ends.is_some_and(|(from, to, value)| from <= to && some(value))
+            })
+        })
+    }
+
+    /// Whether ranges hold two rows that a number reaches at once; `false` for a value that holds no ranges.
+    pub(crate) fn overlaps(self, value: &Value) -> bool {
+        if !self.shape.ranges || !self.holds(value) {
+            return false;
+        }
+        let end = |row: &Value, key| row.get(key).and_then(Value::as_u64).unwrap_or_default();
+        let mut rows: Vec<(u64, u64)> = value
+            .as_array()
+            .into_iter()
+            .flatten()
+            .map(|row| (end(row, "from"), end(row, "to")))
+            .collect();
+        rows.sort_unstable();
+        rows.windows(2).any(|pair| pair[1].0 <= pair[0].1)
     }
 }
 
@@ -153,6 +265,13 @@ mod tests {
             (ValueType::Items, json!("none")),
             (ValueType::Items, json!([289, 400])),
             (ValueType::Job, json!(28)),
+            (ValueType::Map, json!(191_104_002)),
+            (ValueType::Item, json!(289)),
+            (ValueType::Duration, json!(0)),
+            (ValueType::Duration, json!(90)),
+            (ValueType::Time, json!("00:00")),
+            (ValueType::Time, json!("23:59")),
+            (ValueType::Npc, json!(774)),
         ];
         for (value_type, value) in holding {
             assert!(value_type.holds(&value), "{value_type:?} {value}");
@@ -183,10 +302,75 @@ mod tests {
             (ValueType::Items, json!([289, "wheat"])),
             (ValueType::Job, json!(-1)),
             (ValueType::Job, json!("farmer")),
+            (ValueType::Map, json!(-1)),
+            (ValueType::Map, json!({"map": 191_104_002})),
+            (ValueType::Item, json!([289])),
+            (ValueType::Duration, json!(1.5)),
+            (ValueType::Duration, json!("1 min 30")),
+            (ValueType::Time, json!("24:00")),
+            (ValueType::Time, json!("23:60")),
+            (ValueType::Time, json!("9:00")),
+            (ValueType::Time, json!("09:00:00")),
+            (ValueType::Time, json!("+1:00")),
+            (ValueType::Time, json!("09:+5")),
+            (ValueType::Time, json!(900)),
+            (ValueType::Npc, json!("Otomaï")),
         ];
         for (value_type, value) in refused {
             assert!(!value_type.holds(&value), "{value_type:?} {value}");
         }
+    }
+
+    #[test]
+    fn a_list_holds_values_of_its_type_and_never_none() {
+        let maps = Type::new(ValueType::Map, Shape::new(true, false));
+        for holding in [json!([]), json!([191_104_002, 88_080_385]), Value::Null] {
+            assert!(maps.holds(&holding), "{holding}");
+        }
+        for refused in [json!(191_104_002), json!([191_104_002, null]), json!(["5,-18"])] {
+            assert!(!maps.holds(&refused), "{refused}");
+        }
+    }
+
+    #[test]
+    fn ranges_hold_rows_from_a_level_to_another_of_a_value_or_a_list() {
+        let zones = Type::new(ValueType::Zone, Shape::new(false, true));
+        let rows = json!([
+            {"from": 1, "to": 49, "value": {"sub_area": 445}},
+            {"from": 50, "to": 200, "value": {"zone": "my-wheat"}}
+        ]);
+        assert!(zones.holds(&rows) && zones.holds(&json!([])));
+        let refused = [
+            json!({"from": 1, "to": 49, "value": {"sub_area": 445}}),
+            json!([{"from": 50, "to": 49, "value": {"sub_area": 445}}]),
+            json!([{"from": 1, "value": {"sub_area": 445}}]),
+            json!([{"from": 1, "to": 49, "value": null}]),
+            json!([{"from": 1, "to": 49, "value": {"sub_area": 445}, "note": ""}]),
+            json!([{"from": 1, "to": 49, "value": [{"sub_area": 445}]}]),
+        ];
+        for refused in refused {
+            assert!(!zones.holds(&refused), "{refused}");
+        }
+        let lists = Type::new(ValueType::Zone, Shape::new(true, true));
+        assert!(lists.holds(&json!([{"from": 1, "to": 49, "value": [{"sub_area": 445}]}])));
+    }
+
+    #[test]
+    fn ranges_overlap_when_a_level_reaches_two_rows() {
+        let numbers = Type::new(ValueType::Number, Shape::new(false, true));
+        let row = |from: u64, to: u64| json!({"from": from, "to": to, "value": 1});
+        assert!(!numbers.overlaps(&json!([row(50, 200), row(1, 49)])), "in any order");
+        assert!(
+            !numbers.overlaps(&json!([row(1, 9), row(20, 30)])),
+            "a gap is no overlap"
+        );
+        assert!(numbers.overlaps(&json!([row(40, 60), row(1, 40)])), "a level shared");
+        assert!(
+            numbers.overlaps(&json!([row(1, 100), row(20, 30)])),
+            "one inside another"
+        );
+        let one = Type::new(ValueType::Number, Shape::ONE);
+        assert!(!one.overlaps(&json!(5)) && !numbers.overlaps(&json!("rows")));
     }
 
     fn variable(id: &str, value_type: ValueType, bounds: Option<[i64; 2]>) -> Variable {
@@ -194,6 +378,8 @@ mod tests {
             id: Id(id.into()),
             name: id.into(),
             value_type,
+            list: false,
+            ranges: false,
             default: Value::Null,
             bounds,
             per_character: true,
@@ -243,6 +429,12 @@ mod tests {
         ];
         let kept = carried(&settings, Some(&from), &to);
         assert_eq!(kept.keys().collect::<Vec<_>>(), ["zone"]);
+        // A list of items now, which holds `[289]` as Items did: another type.
+        let picked = BTreeMap::from([("keep".to_owned(), json!([289]))]);
+        let mut items = variable("keep", ValueType::Item, None);
+        items.list = true;
+        assert!(items.accepts(&json!([289])));
+        assert!(carried(&picked, Some(&from), &[items]).is_empty());
         let gone = carried(&settings, None, &to);
         assert_eq!(
             gone.keys().collect::<Vec<_>>(),
@@ -256,6 +448,7 @@ mod tests {
         let variable: Variable = serde_json::from_str(r#"{"id": "zone", "name": "Zone", "type": "zone"}"#)
             .unwrap_or_else(|error| panic!("{error}"));
         assert!(variable.default.is_null() && !variable.per_character && !variable.memory);
+        assert!(!variable.list && !variable.ranges);
         let written = serde_json::to_string(&variable).unwrap_or_else(|error| panic!("{error}"));
         assert_eq!(written, r#"{"id":"zone","name":"Zone","type":"zone"}"#);
     }

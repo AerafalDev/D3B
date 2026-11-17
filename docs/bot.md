@@ -169,7 +169,9 @@ flowchart LR
   id, picked on the World), one **item**, a **duration** (whole seconds, typed "1 min 30") and a **time** of day
   ("23:00"), an **NPC**. Any type has its **list** (a list of zones, of maps, of numbers…), its pin a square. A generic pin, a
   **wildcard**, takes the type of its first wire or value, and every wildcard of a node the same one: one `=`, one
-  Switch, one For each for every type. A percentage feeds a number, any value a Text's hole; numbers, percentages,
+  Switch, one For each for every type. The node notes that type (the owner, 2026-11-17, as Unreal keeps its pins'
+  types), since a value alone does not say it (`5` is a number, a duration, a map…): one truth for the editor, the
+  Summary and the runtime. A percentage feeds a number, any value a Text's hole; numbers, percentages,
   durations and times are compared. v1's Items stays the selection actions take ("all", "none", these items); a list of
   items feeds it, and For each takes lists only.
 - **Flow**: v1's If, Wait (now a duration), Wait for life and Finish; Sequence (its outputs one after another, "+" adds
@@ -278,8 +280,17 @@ as one line per case ("Bûcheron → 2.1", "Sinon → 2.4"), Trigger as "Déclen
 section per event of mine by priority beside the game's; values are read in place in the sentence that uses them
 ("Tant que récoltes < objectif"), never as steps.
 
-In the file (`bot::json`, **schema 2**, its shape settled alone, open to change until (v2.1) merges): a variable, a
-parameter or a local holds `"list": true` for a list; a node's own pins (Sequence's outputs, Switch's cases, Text's
+In the file (`bot::json`, **schema 2**, its shape settled alone, open to change until (v2.1) merges): a map, an item
+and an NPC are the game's ids (`191104002`, `289`, `774`), a duration its whole seconds (`90`), a time `"HH:MM"` from
+`"00:00"` to `"23:59"`; a variable, a parameter or a local holds `"list": true` for a list, an array of its values,
+and `"ranges": true` for ranges, rows `{"from": 1, "to": 49, "value": …}` with both ends included, in any order, each
+row's value one or, with `"list"`, a list; two rows a level reaches at once are a problem, a gap none (the runtime says
+what a level in no row does). A wildcard's type is the node's `options.type` (`{"type": "zone"}`), set by the editor's
+first wire to one of its wildcards, of the wildcard's shape (a list into a list's), and dropped with its last wire or
+value, a variable's change or deletion included; a first value on a wildcard of a node with no type is typed as a
+type the editor gives with it (from (v2.2)), which the node notes; two wildcards are never wired to each other, and a
+list of items feeds the items actions take, a list never one value. Bounds hold for a single number or percentage
+only. A node's own pins (Sequence's outputs, Switch's cases, Text's
 holes, a list's inputs) and the event, variable or exit it names are its `options`; the blueprint's own `events`
 beside its `graphs`, each with its id, name and inputs; a function's signature gains `exits`, `locals` and `pure`. A
 schema 1 file reads migrated ("at least" to `≥`, Wait's minutes to a duration) and is written as 2 at its next change;
@@ -289,7 +300,9 @@ cases' values in `options.cases`) and `otherwise`, a list's inputs `in_1` to `in
 names (`{count}` is the pin `count`), a hole renamed or removed dropping its wire. A call has a flow
 output per exit of its function, the exit's id its pin's, beside `done`, `failed` and `reason`; a function's locals
 live in its call's frame. A pure function's call has no flow pin and is read on demand, as a query is, its value kept
-for the debugger. New problems: an exit named as a built-in pin (`run`, `done`, `failed`, `reason`); wildcards of one node fed two types; a list into a pin that takes none; an
+for the debugger. New problems: an exit named as a built-in pin (`run`, `done`, `failed`, `reason`); a wildcard wired or given a value
+before its node has a type, and a type on a node without wildcards (`options` it does not take); a list or ranges
+into a pin of another shape (step 1 of (v2.1), done in code; a wire of another type into a typed wildcard is v1's); an
 option naming an event, variable or exit the blueprint lacks; a case typed twice or of another type; Leave the loop
 outside a loop's body; a flow, action or wait in a pure function; a time not "HH:MM"; an Expression that does not
 parse, names what the blueprint lacks or is not of its pin's type; ranges whose rows overlap.

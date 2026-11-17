@@ -16,8 +16,8 @@ pub(crate) use choices::choices;
 
 use super::blueprint::{Blueprint, Does, End, Graph, Id, Node, Wire};
 use super::catalogue::{Carries, Side};
-use super::pins::{NodePin, pins};
-use super::variable::Variable;
+use super::pins::{NodePin, pins, uses_wildcards};
+use super::variable::{ValueType, Variable};
 
 /// One change the editor makes to a graph.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -34,11 +34,13 @@ pub(crate) enum Edit {
     Move { nodes: Vec<(Id, [i32; 2])> },
     /// Nodes, with every wire to or from them, and wires, chosen together.
     Delete { nodes: Vec<Id>, wires: Vec<Wire> },
-    /// A value typed on an input no wire feeds, or none to go back to the pin's default.
+    /// A value typed on an input no wire feeds, or none to go back to the pin's default; on a wildcard of a node with no
+    /// type yet, as a value of `of`, which its node then notes, since a value alone does not say its type.
     Value {
         node: Id,
         pin: Id,
         value: Option<serde_json::Value>,
+        of: Option<ValueType>,
     },
     /// A variable of mine named so, under an id made from its name; the graph it is sent from does not matter.
     NewVariable { name: String },
@@ -113,6 +115,7 @@ pub(crate) fn edit(blueprint: &mut Blueprint, graph: &Id, edit: Edit) -> Result<
                 does,
                 inputs: BTreeMap::new(),
                 event: None,
+                options: super::blueprint::Options::default(),
             };
             let link = wired_to
                 .map(|(end, side)| to_new(blueprint, shown, &node, end, side))
@@ -149,6 +152,7 @@ pub(crate) fn edit(blueprint: &mut Blueprint, graph: &Id, edit: Edit) -> Result<
             shown
                 .wires
                 .retain(|it| !wires.contains(it) && !gone(&it.from) && !gone(&it.to));
+            untype(shown);
             if let Some(places) = blueprint.layout.get_mut(graph) {
                 places.retain(|node, _| !nodes.contains(node));
                 if places.is_empty() {
@@ -156,16 +160,59 @@ pub(crate) fn edit(blueprint: &mut Blueprint, graph: &Id, edit: Edit) -> Result<
                 }
             }
         }
-        Edit::Value { node, pin, value } => value::typed(blueprint, at, &node, &pin, value)?,
+        Edit::Value { node, pin, value, of } => {
+            value::typed(blueprint, at, &node, &pin, value, of)?;
+            untype(&mut blueprint.graphs[at]);
+        }
         Edit::NewVariable { .. } | Edit::Variable(_) | Edit::DeleteVariable { .. } | Edit::About { .. } => {}
     }
     Ok(())
 }
 
-/// A wire checked, and whether it carries a value rather than the flow.
+/// A wire checked: whether it carries a value rather than the flow, and the type it gives a wildcard's node.
 struct Link {
     wire: Wire,
     value: bool,
+    typed: Option<(Id, ValueType)>,
+}
+
+/// The link `wire` makes from an output carrying `out` into an input carrying `input`: one feeding the other, or a value
+/// giving its type to a wildcard of its shape, whose node notes it. `None` when they do not fit.
+fn link(wire: Wire, out: Carries, input: Carries) -> Option<Link> {
+    let typed = if out.feeds(input) {
+        None
+    } else {
+        let of = out.types(input)?;
+        let wildcard = if matches!(out, Carries::Wildcard(_)) {
+            &wire.from
+        } else {
+            &wire.to
+        };
+        Some((wildcard.0.clone(), of))
+    };
+    Some(Link {
+        value: input.is_value(),
+        typed,
+        wire,
+    })
+}
+
+/// Whether a wire from `out` into `input` fits.
+fn fits(out: Carries, input: Carries) -> bool {
+    out.feeds(input) || out.types(input).is_some()
+}
+
+/// Drops the type a node notes for its wildcards once no wire and no value typed uses one of them.
+pub(super) fn untype(graph: &mut Graph) {
+    let unused: Vec<Id> = graph
+        .nodes
+        .iter()
+        .filter(|node| node.options.value_type.is_some() && !uses_wildcards(graph, node))
+        .map(|node| node.id.clone())
+        .collect();
+    for node in graph.nodes.iter_mut().filter(|node| unused.contains(&node.id)) {
+        node.options.value_type = None;
+    }
 }
 
 fn node<'g>(graph: &'g Graph, id: &Id) -> Result<&'g Node, Refusal> {
@@ -190,13 +237,7 @@ fn checked(blueprint: &Blueprint, graph: &Graph, from: End, to: End) -> Result<L
     if from.0 == to.0 {
         return Err(Refusal::SameNode);
     }
-    if !out.carries.feeds(input.carries) {
-        return Err(Refusal::OtherType);
-    }
-    Ok(Link {
-        value: input.carries != Carries::Exec,
-        wire: Wire { from, to },
-    })
+    link(Wire { from, to }, out.carries, input.carries).ok_or(Refusal::OtherType)
 }
 
 /// The wire between the pin a wire dropped on the ground came from and `new`'s first pin that fits it.
@@ -204,28 +245,23 @@ fn to_new(blueprint: &Blueprint, graph: &Graph, new: &Node, end: End, side: Side
     let dragged = pin_of(blueprint, graph, node(graph, &end.0)?, &end.1, side)?;
     let theirs = pins(blueprint, graph, new).unwrap_or_default();
     let at = |pin: &NodePin| End(new.id.clone(), Id(pin.id.clone()));
-    let link = if side == Side::Out {
+    let made = if side == Side::Out {
         let pin = theirs
             .iter()
-            .find(|it| it.side == Side::In && dragged.carries.feeds(it.carries));
-        pin.map(|pin| Link {
-            value: pin.carries != Carries::Exec,
-            wire: Wire { from: end, to: at(pin) },
-        })
+            .find(|it| it.side == Side::In && fits(dragged.carries, it.carries));
+        pin.and_then(|pin| link(Wire { from: end, to: at(pin) }, dragged.carries, pin.carries))
     } else {
         let pin = theirs
             .iter()
-            .find(|it| it.side == Side::Out && it.carries.feeds(dragged.carries));
-        pin.map(|pin| Link {
-            value: dragged.carries != Carries::Exec,
-            wire: Wire { from: at(pin), to: end },
-        })
+            .find(|it| it.side == Side::Out && fits(it.carries, dragged.carries));
+        pin.and_then(|pin| link(Wire { from: at(pin), to: end }, pin.carries, dragged.carries))
     };
-    link.ok_or(Refusal::OtherType)
+    made.ok_or(Refusal::OtherType)
 }
 
-/// Adds `link`'s wire in place of the one that fed its input, with the value typed there, or that left its flow output.
-fn join(graph: &mut Graph, Link { wire, value }: Link) {
+/// Adds `link`'s wire in place of the one that fed its input, with the value typed there, or that left its flow output;
+/// the wildcard it types notes its type, and one the wire replaced may no longer be used.
+fn join(graph: &mut Graph, Link { wire, value, typed }: Link) {
     if value {
         graph.wires.retain(|it| it.to != wire.to);
         if let Some(node) = graph.nodes.iter_mut().find(|it| it.id == wire.to.0) {
@@ -234,7 +270,13 @@ fn join(graph: &mut Graph, Link { wire, value }: Link) {
     } else {
         graph.wires.retain(|it| it.from != wire.from);
     }
+    if let Some((id, of)) = typed
+        && let Some(node) = graph.nodes.iter_mut().find(|it| it.id == id)
+    {
+        node.options.value_type = Some(of);
+    }
     graph.wires.push(wire);
+    untype(graph);
 }
 
 /// An id no node of `graph` holds, nor a wire names, read from what the node does: `notify`, `notify_2`, `get_zone`…
@@ -320,6 +362,181 @@ mod tests {
             assert_eq!(edit(blueprint, &id("events"), change.clone()), Err(why), "{change:?}");
         }
         assert_eq!(*blueprint, before, "a refusal changes nothing");
+    }
+
+    /// The harvest with an `=` and a For each of no type yet, a query of the pods and a get of a list of zones.
+    fn with_wildcards() -> Blueprint {
+        let mut blueprint = harvest();
+        let zones = r#"{"id": "zones", "name": "Zones", "type": "zone", "list": true}"#;
+        blueprint
+            .variables
+            .push(serde_json::from_str(zones).unwrap_or_else(|error| panic!("{error}")));
+        let more = [
+            r#"{"id": "eq", "kind": "test_equal"}"#,
+            r#"{"id": "each", "kind": "test_for_each"}"#,
+            r#"{"id": "q", "kind": "pods_percent"}"#,
+            r#"{"id": "g", "get": "zones"}"#,
+        ];
+        for node in more {
+            let node = serde_json::from_str(node).unwrap_or_else(|error| panic!("{error}"));
+            blueprint.graphs[0].nodes.push(node);
+        }
+        blueprint
+    }
+
+    fn typed(blueprint: &Blueprint, node: &str) -> Option<ValueType> {
+        let found = blueprint.graphs[0].nodes.iter().find(|it| it.id.0 == node);
+        found.and_then(|it| it.options.value_type)
+    }
+
+    fn unwire(from: (&str, &str), to: (&str, &str)) -> Edit {
+        let wires = vec![Wire {
+            from: end(from.0, from.1),
+            to: end(to.0, to.1),
+        }];
+        Edit::Delete { nodes: vec![], wires }
+    }
+
+    fn value(node: &str, pin: &str, value: Option<serde_json::Value>) -> Edit {
+        Edit::Value {
+            node: id(node),
+            pin: id(pin),
+            value,
+            of: None,
+        }
+    }
+
+    #[test]
+    fn a_wire_to_a_wildcard_types_its_node_and_its_last_wire_gone_untypes_it() {
+        let mut blueprint = with_wildcards();
+        done(&mut blueprint, wire(("n2", "value"), ("eq", "a")));
+        assert_eq!(typed(&blueprint, "eq"), Some(ValueType::Zone));
+        // Typed, its other wildcard takes a zone and nothing else.
+        refused(
+            &mut blueprint,
+            vec![(wire(("q", "value"), ("eq", "b")), Refusal::OtherType)],
+        );
+        done(&mut blueprint, unwire(("n2", "value"), ("eq", "a")));
+        assert_eq!(typed(&blueprint, "eq"), None);
+        done(&mut blueprint, wire(("q", "value"), ("eq", "b")));
+        assert_eq!(typed(&blueprint, "eq"), Some(ValueType::Percentage));
+    }
+
+    #[test]
+    fn a_wildcard_output_takes_the_type_of_the_input_it_feeds_until_another_wire_replaces_it() {
+        let mut blueprint = with_wildcards();
+        done(&mut blueprint, wire(("each", "element"), ("n3", "zone")));
+        assert_eq!(typed(&blueprint, "each"), Some(ValueType::Zone));
+        assert!(has(&blueprint, "each.element", "n3.zone") && !has(&blueprint, "n2.value", "n3.zone"));
+        done(&mut blueprint, wire(("n2", "value"), ("n3", "zone")));
+        assert_eq!(typed(&blueprint, "each"), None, "its only wire replaced");
+    }
+
+    #[test]
+    fn a_wildcard_takes_a_wire_of_its_shape_and_never_another_wildcard() {
+        let mut blueprint = with_wildcards();
+        let refusals = vec![
+            (wire(("n2", "value"), ("each", "list")), Refusal::OtherType),
+            (wire(("g", "value"), ("eq", "a")), Refusal::OtherType),
+            (wire(("each", "element"), ("eq", "a")), Refusal::OtherType),
+        ];
+        refused(&mut blueprint, refusals);
+        done(&mut blueprint, wire(("g", "value"), ("each", "list")));
+        assert_eq!(typed(&blueprint, "each"), Some(ValueType::Zone));
+        // Typed, its element is one zone, which the equality takes and types.
+        done(&mut blueprint, wire(("each", "element"), ("eq", "a")));
+        assert_eq!(typed(&blueprint, "eq"), Some(ValueType::Zone));
+    }
+
+    #[test]
+    fn a_first_value_on_a_wildcard_types_its_node_with_the_type_it_is_given_as() {
+        let mut blueprint = with_wildcards();
+        let typed_as = |of| Edit::Value {
+            node: id("eq"),
+            pin: id("b"),
+            value: Some(serde_json::json!(90)),
+            of,
+        };
+        let refusals = vec![
+            (typed_as(Some(ValueType::Zone)), Refusal::NotItsType),
+            (typed_as(None), Refusal::NotItsType),
+        ];
+        refused(&mut blueprint, refusals);
+        done(&mut blueprint, typed_as(Some(ValueType::Percentage)));
+        assert_eq!(typed(&blueprint, "eq"), Some(ValueType::Percentage));
+        // Typed, the node keeps its type whatever another value says it is.
+        done(&mut blueprint, typed_as(Some(ValueType::Duration)));
+        assert_eq!(typed(&blueprint, "eq"), Some(ValueType::Percentage));
+        done(&mut blueprint, value("eq", "b", None));
+        assert_eq!(typed(&blueprint, "eq"), None);
+    }
+
+    #[test]
+    fn a_variable_changed_or_deleted_takes_the_type_of_the_wildcards_it_alone_typed() {
+        for change in [
+            Edit::DeleteVariable { id: id("zone") },
+            Edit::Variable(Variable {
+                value_type: ValueType::Number,
+                default: serde_json::json!(0),
+                ..harvest().variables[0].clone()
+            }),
+        ] {
+            let mut blueprint = with_wildcards();
+            done(&mut blueprint, wire(("n2", "value"), ("eq", "a")));
+            done(&mut blueprint, change.clone());
+            assert_eq!(typed(&blueprint, "eq"), None, "{change:?}");
+        }
+    }
+
+    #[test]
+    fn a_value_left_on_a_wildcard_of_no_type_can_be_dropped() {
+        let mut blueprint = with_wildcards();
+        if let Some(eq) = blueprint.graphs[0].nodes.iter_mut().find(|it| it.id.0 == "eq") {
+            eq.inputs.insert(id("b"), serde_json::json!(5));
+        }
+        done(&mut blueprint, value("eq", "b", None));
+        assert!(
+            blueprint.graphs[0]
+                .nodes
+                .iter()
+                .all(|it| !it.inputs.contains_key(&id("b")))
+        );
+    }
+
+    #[test]
+    fn a_node_added_from_a_wildcard_types_it_by_its_pin() {
+        let mut blueprint = with_wildcards();
+        done(
+            &mut blueprint,
+            add(Does::Kind(id("notify")), Some(("each", "element", Side::Out))),
+        );
+        assert_eq!(typed(&blueprint, "each"), Some(ValueType::Text));
+        assert!(has(&blueprint, "each.element", "notify.text"));
+        let mut untouched = with_wildcards();
+        refused(
+            &mut untouched,
+            vec![(
+                add(Does::Kind(id("finish")), Some(("each", "element", Side::Out))),
+                Refusal::OtherType,
+            )],
+        );
+    }
+
+    #[test]
+    fn a_value_on_a_wildcard_waits_for_its_type_and_keeps_it_once_typed() {
+        let mut blueprint = with_wildcards();
+        let zone = || Some(serde_json::json!({"sub_area": 445}));
+        refused(&mut blueprint, vec![(value("eq", "b", zone()), Refusal::NotItsType)]);
+        done(&mut blueprint, wire(("n2", "value"), ("eq", "a")));
+        refused(
+            &mut blueprint,
+            vec![(value("eq", "b", Some(serde_json::json!(5))), Refusal::NotItsType)],
+        );
+        done(&mut blueprint, value("eq", "b", zone()));
+        done(&mut blueprint, unwire(("n2", "value"), ("eq", "a")));
+        assert_eq!(typed(&blueprint, "eq"), Some(ValueType::Zone), "its value keeps it");
+        done(&mut blueprint, value("eq", "b", None));
+        assert_eq!(typed(&blueprint, "eq"), None);
     }
 
     #[test]

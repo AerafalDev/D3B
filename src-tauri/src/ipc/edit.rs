@@ -49,12 +49,24 @@ pub enum GraphEdit {
 
 /// A variable of mine as the editor changes it, whole.
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize, Type)]
+#[expect(
+    clippy::struct_excessive_bools,
+    reason = "a variable's list, ranges, setting and memory, each the player's yes or no, independent of the others"
+)]
 #[serde(rename_all = "camelCase")]
 pub struct VariableChange {
     pub id: String,
     pub name: String,
     /// Its type, as the file writes it: `zone`, `percentage`, `bank`…
     pub value_type: String,
+    /// A list of values of its type; none says no, as the file does.
+    #[serde(default)]
+    #[specta(optional)]
+    pub list: bool,
+    /// Ranges of values of its type, or of lists with `list`.
+    #[serde(default)]
+    #[specta(optional)]
+    pub ranges: bool,
     /// Its default as JSON; none for no default, which each character then sets.
     pub default: Option<String>,
     /// The smallest and largest value of a number or a percentage.
@@ -80,6 +92,8 @@ impl TryFrom<VariableChange> for bot::Variable {
             id: Id(change.id),
             name: change.name,
             value_type,
+            list: change.list,
+            ranges: change.ranges,
             default,
             bounds: change
                 .bounds
@@ -213,7 +227,9 @@ impl TryFrom<GraphEdit> for bot::Edit {
                     })
                     .collect(),
             },
+            // The editor types a value on a wildcard from (v2.2).
             GraphEdit::Value { node, pin, value } => Self::Value {
+                of: None,
                 node: Id(node),
                 pin: Id(pin),
                 value: value

@@ -42,6 +42,7 @@ pub enum ProblemKind {
     NodeTwice,
     ParameterTwice,
     DefaultNotOfType,
+    DefaultRangesOverlap,
     WrongBounds,
     DefaultOutOfBounds,
     NoSuchVariable,
@@ -53,9 +54,13 @@ pub enum ProblemKind {
     EventSettingsOnNoEvent,
     NoSuchInput,
     ValueNotOfType,
+    RangesOverlap,
+    NoSuchOption,
+    WildcardWithoutType,
     WireToNoPin,
     WireTheWrongWay,
     WireOfAnotherType,
+    WireOfAnotherShape,
     OutputWiredTwice,
     InputFedTwice,
     InputWithoutValue,
@@ -75,6 +80,7 @@ impl From<&Problem> for ProblemView {
                 (K::ParameterTwice, text(graph), None, None, text(parameter))
             }
             Problem::DefaultNotOfType { variable } => (K::DefaultNotOfType, None, None, None, text(variable)),
+            Problem::DefaultRangesOverlap { variable } => (K::DefaultRangesOverlap, None, None, None, text(variable)),
             Problem::WrongBounds { variable } => (K::WrongBounds, None, None, None, text(variable)),
             Problem::DefaultOutOfBounds { variable } => (K::DefaultOutOfBounds, None, None, None, text(variable)),
             Problem::NoSuchVariable { graph, node, variable } => {
@@ -94,12 +100,26 @@ impl From<&Problem> for ProblemView {
             Problem::ValueNotOfType { graph, node, pin } => {
                 (K::ValueNotOfType, text(graph), text(node), text(pin), None)
             }
+            Problem::RangesOverlap { graph, node, pin } => (K::RangesOverlap, text(graph), text(node), text(pin), None),
+            Problem::NoSuchOption { graph, node, option } => {
+                (K::NoSuchOption, text(graph), text(node), None, text(option))
+            }
+            Problem::WildcardWithoutType { graph, node } => {
+                (K::WildcardWithoutType, text(graph), text(node), None, None)
+            }
             Problem::WireToNoPin { graph, node, pin } => (K::WireToNoPin, text(graph), text(node), text(pin), None),
             Problem::WireTheWrongWay { graph, node, pin } => {
                 (K::WireTheWrongWay, text(graph), text(node), text(pin), None)
             }
             Problem::WireOfAnotherType { graph, from, to } => (
                 K::WireOfAnotherType,
+                text(graph),
+                text(&from.0),
+                text(&from.1),
+                text(&to.0),
+            ),
+            Problem::WireOfAnotherShape { graph, from, to } => (
+                K::WireOfAnotherShape,
                 text(graph),
                 text(&from.0),
                 text(&from.1),
@@ -159,6 +179,12 @@ pub struct ParameterView {
     pub id: String,
     pub name: String,
     pub value_type: PinCarries,
+    #[serde(skip_serializing_if = "std::ops::Not::not")]
+    #[specta(optional)]
+    pub list: bool,
+    #[serde(skip_serializing_if = "std::ops::Not::not")]
+    #[specta(optional)]
+    pub ranges: bool,
 }
 
 /// An event graph, or a function when it has a signature.
@@ -235,6 +261,14 @@ pub struct PinView {
     pub id: String,
     pub side: PinSide,
     pub carries: PinCarries,
+    /// A list of values (a square pin), rather than one; omitted for no.
+    #[serde(skip_serializing_if = "std::ops::Not::not")]
+    #[specta(optional)]
+    pub list: bool,
+    /// Ranges whose rows hold a value, or a list with `list`.
+    #[serde(skip_serializing_if = "std::ops::Not::not")]
+    #[specta(optional)]
+    pub ranges: bool,
     /// The value an input no wire feeds holds by default, as JSON.
     pub default: Option<String>,
 }
@@ -260,7 +294,7 @@ pub enum PinSide {
     Out,
 }
 
-/// What a pin carries: the flow, or a value of a type.
+/// What a pin carries: the flow, a value of a type, or a wildcard whose node notes no type yet.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Type)]
 #[serde(rename_all = "camelCase")]
 pub enum PinCarries {
@@ -274,13 +308,20 @@ pub enum PinCarries {
     Bank,
     Items,
     Job,
+    Map,
+    Item,
+    Duration,
+    Time,
+    Npc,
+    Wildcard,
 }
 
 impl From<Carries> for PinCarries {
     fn from(carries: Carries) -> Self {
         match carries {
             Carries::Exec => Self::Exec,
-            Carries::Value(value_type) => match value_type {
+            Carries::Wildcard(_) => Self::Wildcard,
+            Carries::Value(typed) => match typed.of {
                 ValueType::Bool => Self::Bool,
                 ValueType::Number => Self::Number,
                 ValueType::Percentage => Self::Percentage,
@@ -290,8 +331,21 @@ impl From<Carries> for PinCarries {
                 ValueType::Bank => Self::Bank,
                 ValueType::Items => Self::Items,
                 ValueType::Job => Self::Job,
+                ValueType::Map => Self::Map,
+                ValueType::Item => Self::Item,
+                ValueType::Duration => Self::Duration,
+                ValueType::Time => Self::Time,
+                ValueType::Npc => Self::Npc,
             },
         }
+    }
+}
+
+/// Whether what a pin carries is a list, and ranges.
+fn shape(carries: Carries) -> (bool, bool) {
+    match carries {
+        Carries::Exec => (false, false),
+        Carries::Value(bot::Type { shape, .. }) | Carries::Wildcard(shape) => (shape.list, shape.ranges),
     }
 }
 
@@ -362,15 +416,20 @@ impl From<NodeDoes> for Does {
 }
 
 fn pin_views(pins: Vec<bot::NodePin>) -> Vec<PinView> {
-    let views = pins.into_iter().map(|pin| PinView {
-        id: pin.id,
-        side: if pin.side == Side::In {
-            PinSide::In
-        } else {
-            PinSide::Out
-        },
-        carries: pin.carries.into(),
-        default: pin.default.map(|value| value.to_string()),
+    let views = pins.into_iter().map(|pin| {
+        let (list, ranges) = shape(pin.carries);
+        PinView {
+            id: pin.id,
+            side: if pin.side == Side::In {
+                PinSide::In
+            } else {
+                PinSide::Out
+            },
+            carries: pin.carries.into(),
+            list,
+            ranges,
+            default: pin.default.map(|value| value.to_string()),
+        }
     });
     views.collect()
 }
@@ -383,6 +442,7 @@ fn choices(blueprint: &Blueprint, graph: &bot::Graph) -> Vec<ChoiceView> {
             does,
             inputs: BTreeMap::new(),
             event: None,
+            options: bot::Options::default(),
         };
         let (family, from_step) = family(&node);
         ChoiceView {
@@ -399,7 +459,9 @@ fn parameters(parameters: Option<&Vec<bot::Parameter>>) -> Vec<ParameterView> {
     let views = parameters.into_iter().flatten().map(|parameter| ParameterView {
         id: parameter.id.0.clone(),
         name: parameter.name.clone(),
-        value_type: Carries::Value(parameter.value_type).into(),
+        value_type: Carries::one(parameter.value_type).into(),
+        list: parameter.list,
+        ranges: parameter.ranges,
     });
     views.collect()
 }
@@ -492,6 +554,37 @@ mod tests {
             .into_iter()
             .next()
             .unwrap_or_else(|| panic!("no given blueprint"))
+    }
+
+    #[test]
+    fn a_pin_is_drawn_with_its_shape_and_a_wildcard_as_one_until_its_node_notes_a_type() {
+        let mut blueprint = harvest();
+        let zone = blueprint.variables.iter_mut().find(|it| it.id.0 == "zone");
+        if let Some(zone) = zone {
+            zone.list = true;
+        }
+        let each = r#"{"id": "each", "kind": "test_for_each"}"#;
+        blueprint.graphs[0]
+            .nodes
+            .push(serde_json::from_str(each).unwrap_or_else(|error| panic!("{error}")));
+        let pin = |blueprint: &Blueprint, node: &str, pin: &str| {
+            let drawn = graphs(blueprint);
+            let node = drawn.graphs[0].nodes.iter().find(|it| it.id == node).cloned();
+            let pin = node.and_then(|node| node.pins.into_iter().find(|it| it.id == pin));
+            pin.map(|it| (it.carries, it.list, it.ranges))
+        };
+        assert_eq!(pin(&blueprint, "zone", "value"), Some((PinCarries::Zone, true, false)));
+        assert_eq!(
+            pin(&blueprint, "each", "list"),
+            Some((PinCarries::Wildcard, true, false))
+        );
+        if let Some(each) = blueprint.graphs[0].nodes.last_mut() {
+            each.options.value_type = Some(ValueType::Npc);
+        }
+        assert_eq!(
+            pin(&blueprint, "each", "element"),
+            Some((PinCarries::Npc, false, false))
+        );
     }
 
     #[test]

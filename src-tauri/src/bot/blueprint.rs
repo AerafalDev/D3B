@@ -7,7 +7,7 @@ use std::num::NonZeroU32;
 
 use serde::{Deserialize, Serialize};
 
-use super::variable::{ValueType, Variable};
+use super::variable::{Shape, Type, ValueType, Variable};
 
 /// The `schema` this version writes and the newest it reads. A change to the file's shape bumps it, with a migration
 /// and a test that reads the former shape (ADR 0015).
@@ -105,6 +105,17 @@ pub(crate) struct Parameter {
     pub(crate) name: String,
     #[serde(rename = "type")]
     pub(crate) value_type: ValueType,
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    pub(crate) list: bool,
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    pub(crate) ranges: bool,
+}
+
+impl Parameter {
+    /// Its whole type: its type, as a list or ranges or neither.
+    pub(crate) fn of_type(&self) -> Type {
+        Type::new(self.value_type, Shape::new(self.list, self.ranges))
+    }
 }
 
 /// A node: what it does, the values typed on its inputs that no wire feeds, and, for an event, when it runs.
@@ -116,6 +127,23 @@ pub(crate) struct Node {
     /// By pin, as JSON: the pin's type, which the catalogue knows, says how it reads.
     pub(crate) inputs: BTreeMap<Id, serde_json::Value>,
     pub(crate) event: Option<EventSettings>,
+    pub(crate) options: Options,
+}
+
+/// What a node of a kind holds beyond its inputs.
+#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub(crate) struct Options {
+    /// The type its wildcard pins take (the owner, 2026-11-17: noted on the node, as Unreal keeps its pins' types), set
+    /// by the first wire or value on one of them and dropped with the last.
+    #[serde(default, rename = "type", skip_serializing_if = "Option::is_none")]
+    pub(crate) value_type: Option<ValueType>,
+}
+
+impl Options {
+    fn is_empty(&self) -> bool {
+        self == &Self::default()
+    }
 }
 
 /// What a node does: one of the catalogue's, or a variable read or written, or a function of the blueprint called.
@@ -144,6 +172,8 @@ struct NodeFile {
     inputs: BTreeMap<Id, serde_json::Value>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     event: Option<EventSettings>,
+    #[serde(default, skip_serializing_if = "Options::is_empty")]
+    options: Options,
 }
 
 impl TryFrom<NodeFile> for Node {
@@ -167,6 +197,7 @@ impl TryFrom<NodeFile> for Node {
             does,
             inputs: file.inputs,
             event: file.event,
+            options: file.options,
         })
     }
 }
@@ -188,6 +219,7 @@ impl From<Node> for NodeFile {
             call,
             inputs: node.inputs,
             event: node.event,
+            options: node.options,
         }
     }
 }
@@ -271,6 +303,26 @@ mod tests {
             "{error}"
         );
         assert!(read(r#"{"id": "n1"}"#).is_err());
+    }
+
+    #[test]
+    fn a_node_notes_the_type_of_its_wildcards_in_its_options_and_omits_none() {
+        let read = |text: &str| serde_json::from_str::<Node>(text).map_err(|error| error.to_string());
+        let typed = read(r#"{"id": "n1", "kind": "equal", "options": {"type": "zone"}}"#);
+        assert_eq!(
+            typed.as_ref().map(|node| node.options.value_type),
+            Ok(Some(ValueType::Zone))
+        );
+        let written = typed.map(|node| serde_json::to_string(&node).unwrap_or_default());
+        assert_eq!(
+            written.as_deref(),
+            Ok(r#"{"id":"n1","kind":"equal","options":{"type":"zone"}}"#)
+        );
+        let untyped =
+            read(r#"{"id": "n1", "kind": "equal"}"#).map(|node| serde_json::to_string(&node).unwrap_or_default());
+        assert_eq!(untyped.as_deref(), Ok(r#"{"id":"n1","kind":"equal"}"#));
+        let unknown = read(r#"{"id": "n1", "kind": "equal", "options": {"colour": "red"}}"#);
+        assert!(unknown.is_err_and(|error| error.contains("unknown field `colour`")));
     }
 
     #[test]

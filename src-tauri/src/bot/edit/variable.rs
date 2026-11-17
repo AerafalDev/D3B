@@ -11,7 +11,7 @@ use super::Refusal;
 use crate::bot::blueprint::{Blueprint, Does, End, Id};
 use crate::bot::copy::id_for;
 use crate::bot::pins::pins;
-use crate::bot::variable::{ValueType, Variable};
+use crate::bot::variable::{Shape, ValueType, Variable};
 
 /// A variable named `name`, yes or no and false, as Unreal's new variable; its id, made from its name.
 pub(super) fn create(blueprint: &mut Blueprint, name: &str) -> Result<Id, Refusal> {
@@ -25,6 +25,8 @@ pub(super) fn create(blueprint: &mut Blueprint, name: &str) -> Result<Id, Refusa
         id: id.clone(),
         name: name.to_owned(),
         value_type: ValueType::Bool,
+        list: false,
+        ranges: false,
         default: Value::Bool(false),
         bounds: None,
         per_character: false,
@@ -50,17 +52,19 @@ pub(super) fn change(blueprint: &mut Blueprint, mut changed: Variable) -> Result
     let was = &blueprint.variables[at];
     let percentage = changed.value_type == ValueType::Percentage;
     let wrong = |[smallest, largest]: [i64; 2]| percentage && (smallest < 0 || largest > 100);
-    if was.value_type != changed.value_type {
-        // Bounds a new type cannot have go: none on a text, none past 0 to 100 on a percentage.
-        if !changed.value_type.is_numeric() || changed.bounds.is_some_and(wrong) {
+    // Bounds hold for a single number or percentage only.
+    let numeric = changed.value_type.is_numeric() && changed.of_type().shape == Shape::ONE;
+    if was.of_type() != changed.of_type() {
+        // Bounds a new type cannot have go: none on a text or a list, none past 0 to 100 on a percentage.
+        if !numeric || changed.bounds.is_some_and(wrong) {
             changed.bounds = None;
         }
-        if !changed.value_type.holds(&changed.default) {
+        if !changed.of_type().holds(&changed.default) {
             changed.default = Value::Null;
         }
     }
     if let Some([smallest, largest]) = changed.bounds {
-        if !changed.value_type.is_numeric() || smallest > largest || wrong([smallest, largest]) {
+        if !numeric || smallest > largest || wrong([smallest, largest]) {
             return Err(Refusal::NotItsType);
         }
         // Bounds narrowed past the default bring it within them, as a field of a number would; a default typed out
@@ -121,6 +125,8 @@ fn fit(blueprint: &mut Blueprint, variable: &Id) {
         for node in graph.nodes.iter_mut().filter(|node| nodes.contains(&node.id)) {
             node.inputs.retain(|_, value| it.accepts(value));
         }
+        // A wildcard whose last wire went no longer has a type.
+        super::untype(graph);
     }
 }
 
@@ -143,6 +149,7 @@ pub(super) fn delete(blueprint: &mut Blueprint, id: &Id) -> Result<(), Refusal> 
         graph
             .wires
             .retain(|wire| !gone.contains(&wire.from.0) && !gone.contains(&wire.to.0));
+        super::untype(graph);
         if let Some(places) = blueprint.layout.get_mut(&graph.id) {
             places.retain(|node, _| !gone.contains(node));
             if places.is_empty() {
@@ -242,6 +249,7 @@ mod tests {
                 node: id("set_pods"),
                 pin: id("value"),
                 value: Some(json!(50)),
+                of: None,
             },
         );
         done(
@@ -314,6 +322,22 @@ mod tests {
             "{:?}",
             wires(&blueprint)
         );
+    }
+
+    #[test]
+    fn a_number_made_a_list_drops_the_default_and_the_bounds_a_list_cannot_hold() {
+        let mut blueprint = harvest();
+        let mut goal = variable(&blueprint, "harvests");
+        goal.bounds = Some([0, 10_000]);
+        done(&mut blueprint, Edit::Variable(goal.clone()));
+        goal.list = true;
+        done(&mut blueprint, Edit::Variable(goal.clone()));
+        let made = variable(&blueprint, "harvests");
+        assert_eq!((made.list, made.bounds, made.default), (true, None, Value::Null));
+        goal.default = json!([5000]);
+        goal.bounds = Some([0, 10_000]);
+        let refused = edit(&mut blueprint, &Id("events".into()), Edit::Variable(goal));
+        assert_eq!(refused, Err(Refusal::NotItsType), "no bounds on a list");
     }
 
     #[test]

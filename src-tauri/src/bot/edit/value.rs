@@ -7,6 +7,7 @@ use serde_json::Value;
 use super::{Refusal, node, pin_of};
 use crate::bot::blueprint::{Blueprint, Does, Id};
 use crate::bot::catalogue::{Carries, Side};
+use crate::bot::variable::{Type, ValueType};
 
 /// Types `value` on the input `pin` of `node` in the graph at `at`, or drops the one typed there for `None`.
 pub(super) fn typed(
@@ -15,12 +16,16 @@ pub(super) fn typed(
     id: &Id,
     pin: &Id,
     value: Option<Value>,
+    of: Option<ValueType>,
 ) -> Result<(), Refusal> {
     let graph = &blueprint.graphs[at];
     let found = node(graph, id)?;
     let input = pin_of(blueprint, graph, found, pin, Side::In)?;
-    let Carries::Value(value_type) = input.carries else {
-        return Err(Refusal::NotItsType);
+    // A wildcard of a node with no type takes the type its first value is given as, of its own shape.
+    let (value_type, typing) = match input.carries {
+        Carries::Value(typed) => (Some(typed), None),
+        Carries::Wildcard(shape) => (of.map(|of| Type::new(of, shape)), of),
+        Carries::Exec => return Err(Refusal::NotItsType),
     };
     if graph.wires.iter().any(|wire| &wire.to.0 == id && &wire.to.1 == pin) {
         return Err(Refusal::Wired);
@@ -33,7 +38,7 @@ pub(super) fn typed(
     let value = value.filter(|value| Some(value) != input.default.as_ref());
     if let Some(value) = &value {
         let holds = variable.map_or_else(
-            || !value.is_null() && value_type.holds(value),
+            || !value.is_null() && value_type.is_some_and(|typed| typed.holds(value)),
             |variable| variable.accepts(value),
         );
         if !holds {
@@ -43,6 +48,9 @@ pub(super) fn typed(
     let Some(found) = blueprint.graphs[at].nodes.iter_mut().find(|it| &it.id == id) else {
         return Err(Refusal::NoSuchNode);
     };
+    if value.is_some() && typing.is_some() {
+        found.options.value_type = typing;
+    }
     match value {
         Some(value) => found.inputs.insert(pin.clone(), value),
         None => found.inputs.remove(pin),
@@ -71,6 +79,7 @@ mod tests {
             node: id(node),
             pin: id(pin),
             value,
+            of: None,
         }
     }
 

@@ -61,6 +61,10 @@ pub struct BlueprintSummary {
 
 /// A variable of a blueprint, as the Library's preview shows it.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Type)]
+#[expect(
+    clippy::struct_excessive_bools,
+    reason = "a variable's list, ranges, setting and memory, each the player's yes or no, independent of the others"
+)]
 #[serde(rename_all = "camelCase")]
 pub struct VariableView {
     pub id: String,
@@ -68,6 +72,14 @@ pub struct VariableView {
     pub name: String,
     /// Its type, as the file writes it: `zone`, `percentage`, `bank`…
     pub value_type: String,
+    /// A list of values of its type; omitted for no, as the file does.
+    #[serde(skip_serializing_if = "std::ops::Not::not")]
+    #[specta(optional)]
+    pub list: bool,
+    /// Ranges of values of its type, or of lists with `list`.
+    #[serde(skip_serializing_if = "std::ops::Not::not")]
+    #[specta(optional)]
+    pub ranges: bool,
     /// Its default as JSON, which the interface reads by its type; `None` when the blueprint gives none.
     pub default: Option<String>,
     /// The smallest and largest value of a number or a percentage.
@@ -210,6 +222,8 @@ fn summary(blueprint: &Blueprint, given: bool) -> BlueprintSummary {
                     .ok()
                     .and_then(|value| value.as_str().map(str::to_owned))
                     .unwrap_or_default(),
+                list: variable.list,
+                ranges: variable.ranges,
                 default: (!variable.default.is_null()).then(|| variable.default.to_string()),
                 // Bounds a file can hold beyond a 32-bit number read as its ends.
                 bounds: variable.bounds.map(|bounds| {

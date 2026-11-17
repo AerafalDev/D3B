@@ -24,7 +24,10 @@ pub(crate) enum Problem {
     ParameterTwice { graph: Id, parameter: Id },
     /// A variable's default that its type does not hold.
     DefaultNotOfType { variable: Id },
-    /// Bounds on a type that is no number, or whose smallest is above its largest, or a percentage's outside 0 to 100.
+    /// A variable's default of ranges two of whose rows a level reaches at once.
+    DefaultRangesOverlap { variable: Id },
+    /// Bounds on a type that is no single number, or whose smallest is above its largest, or a percentage's outside 0
+    /// to 100.
     WrongBounds { variable: Id },
     /// A variable's default outside its bounds.
     DefaultOutOfBounds { variable: Id },
@@ -46,12 +49,20 @@ pub(crate) enum Problem {
     NoSuchInput { graph: Id, node: Id, pin: Id },
     /// A value typed that its pin's type does not hold.
     ValueNotOfType { graph: Id, node: Id, pin: Id },
+    /// Ranges typed two of whose rows a level reaches at once.
+    RangesOverlap { graph: Id, node: Id, pin: Id },
+    /// An option that the node does not take: a type on a node without wildcards.
+    NoSuchOption { graph: Id, node: Id, option: Id },
+    /// A wildcard wired or given a value while its node notes no type.
+    WildcardWithoutType { graph: Id, node: Id },
     /// A wire from or to a pin its node does not have.
     WireToNoPin { graph: Id, node: Id, pin: Id },
     /// A wire from an input or to an output.
     WireTheWrongWay { graph: Id, node: Id, pin: Id },
     /// A wire between the flow and a value, or between values of two types.
     WireOfAnotherType { graph: Id, from: End, to: End },
+    /// A wire between a list or ranges and a pin that takes another shape: one value, a list, ranges.
+    WireOfAnotherShape { graph: Id, from: End, to: End },
     /// A flow output wired twice: the flow goes one way.
     OutputWiredTwice { graph: Id, node: Id, pin: Id },
     /// A value input fed by two wires, or by a wire and a value typed.
@@ -102,12 +113,17 @@ fn well_formed(id: &Id, found: &mut Vec<Problem>) {
 
 fn of_variable(variable: &Variable) -> Option<Problem> {
     let id = variable.id.clone();
-    if !variable.value_type.holds(&variable.default) {
+    let typed = variable.of_type();
+    if !typed.holds(&variable.default) {
         return Some(Problem::DefaultNotOfType { variable: id });
+    }
+    if typed.overlaps(&variable.default) {
+        return Some(Problem::DefaultRangesOverlap { variable: id });
     }
     let [smallest, largest] = variable.bounds?;
     let percentage = variable.value_type == super::variable::ValueType::Percentage;
-    if !variable.value_type.is_numeric() || smallest > largest || percentage && (smallest < 0 || largest > 100) {
+    let numeric = variable.value_type.is_numeric() && typed.shape == super::variable::Shape::ONE;
+    if !numeric || smallest > largest || percentage && (smallest < 0 || largest > 100) {
         return Some(Problem::WrongBounds { variable: id });
     }
     let outside = variable
@@ -277,6 +293,36 @@ mod tests {
         blueprint.variables[1].default = json!("ninety");
         let problem = Problem::DefaultNotOfType { variable: id("pods") };
         assert_eq!(problems(&blueprint), [problem]);
+    }
+
+    #[test]
+    fn a_default_list_or_ranges_its_type_does_not_hold_or_whose_rows_overlap_is_a_problem() {
+        let mut blueprint = harvest();
+        let harvests = &mut blueprint.variables[2];
+        harvests.list = true;
+        let not = Problem::DefaultNotOfType {
+            variable: id("harvests"),
+        };
+        assert_eq!(problems(&blueprint), [not]);
+        blueprint.variables[2].default = json!([0, 5000]);
+        assert_eq!(problems(&blueprint), []);
+        blueprint.variables[2].ranges = true;
+        let row = |from, to| json!({"from": from, "to": to, "value": [5000]});
+        blueprint.variables[2].default = json!([row(1, 50), row(50, 200)]);
+        let overlap = Problem::DefaultRangesOverlap {
+            variable: id("harvests"),
+        };
+        assert_eq!(problems(&blueprint), [overlap]);
+        blueprint.variables[2].default = json!([row(1, 49), row(50, 200)]);
+        assert_eq!(problems(&blueprint), []);
+    }
+
+    #[test]
+    fn bounds_on_a_list_of_numbers_are_wrong() {
+        let mut blueprint = harvest();
+        blueprint.variables[1].list = true;
+        blueprint.variables[1].default = json!([90]);
+        assert_eq!(problems(&blueprint), [Problem::WrongBounds { variable: id("pods") }]);
     }
 
     #[test]
