@@ -2,7 +2,6 @@ import { create } from "zustand";
 
 import { type Atlas_Serialize, type AtlasError, commands, type HintKind } from "@/bindings.ts";
 import { useEditors } from "@/shell/parts/editor-store.ts";
-import { HIDDEN_KINDS } from "./hint-layout.ts";
 import { WORLD_EDITOR } from "./open-world.ts";
 
 /** The atlas as read: loading, read, or why not. */
@@ -72,7 +71,8 @@ export const useWorld = create<WorldStore>((set, get) => ({
   tool: "brush",
   panning: false,
   world: FIRST_WORLD,
-  hidden: HIDDEN_KINDS,
+  // Every kind shown at first (the owner, 2026-11-17, in place of the other places and the passages hidden).
+  hidden: new Set(),
   choosing: null,
 
   load: async () => {

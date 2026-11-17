@@ -6,6 +6,12 @@ vi.mock("@/shell/parts/editor-store.ts", () => ({ useEditors: { getState: () => 
 
 const { useWorld } = await import("./world-store.ts");
 
+describe("the World store's hints", () => {
+  it("shows every kind at first, the other places and the passages too (the owner, 2026-11-17)", () => {
+    expect(useWorld.getInitialState().hidden.size).toBe(0);
+  });
+});
+
 describe("the World store's zone of mine", () => {
   beforeEach(() => useWorld.setState({ read: null, picked: 3, world: 1, zone: null, tool: "eraser" }));
 

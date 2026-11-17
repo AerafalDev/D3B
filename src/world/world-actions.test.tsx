@@ -9,7 +9,6 @@ vi.mock("@tauri-apps/api/core", () => ({ convertFileSrc: (path: string) => `asse
 
 const { WorldActions } = await import("./world-actions.tsx");
 const { useWorld } = await import("./world-store.ts");
-const { HIDDEN_KINDS } = await import("./hint-layout.ts");
 
 const hint = (id: number, kind: HintKind, picture: string | null): AtlasHint_Serialize => ({
   id,
@@ -51,11 +50,11 @@ describe("the World tab's hints", () => {
     await i18next.changeLanguage("fr");
   });
   beforeEach(() => {
-    useWorld.setState({ read: { state: "read", atlas: ATLAS }, world: 1, hidden: HIDDEN_KINDS });
+    useWorld.setState({ read: { state: "read", atlas: ATLAS }, world: 1, hidden: new Set(["passage"]) });
   });
   afterEach(cleanup);
 
-  it("lists the kinds the world holds with their counts and a picture, the passages off at first", () => {
+  it("lists the kinds the world holds with their counts, a picture and whether each is shown", () => {
     render(<WorldActions />);
     open();
     const switches = screen.getAllByRole("menuitemcheckbox");
