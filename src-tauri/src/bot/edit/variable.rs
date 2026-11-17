@@ -47,9 +47,12 @@ pub(super) fn change(blueprint: &mut Blueprint, mut changed: Variable) -> Result
     if changed.name.is_empty() {
         return Err(Refusal::Blank);
     }
-    let retyped = blueprint.variables[at].value_type != changed.value_type;
-    if retyped {
-        if !changed.value_type.is_numeric() {
+    let was = &blueprint.variables[at];
+    let percentage = changed.value_type == ValueType::Percentage;
+    let wrong = |[smallest, largest]: [i64; 2]| percentage && (smallest < 0 || largest > 100);
+    if was.value_type != changed.value_type {
+        // Bounds a new type cannot have go: none on a text, none past 0 to 100 on a percentage.
+        if !changed.value_type.is_numeric() || changed.bounds.is_some_and(wrong) {
             changed.bounds = None;
         }
         if !changed.value_type.holds(&changed.default) {
@@ -57,12 +60,14 @@ pub(super) fn change(blueprint: &mut Blueprint, mut changed: Variable) -> Result
         }
     }
     if let Some([smallest, largest]) = changed.bounds {
-        let percentage = changed.value_type == ValueType::Percentage;
-        if !changed.value_type.is_numeric() || smallest > largest || percentage && (smallest < 0 || largest > 100) {
+        if !changed.value_type.is_numeric() || smallest > largest || wrong([smallest, largest]) {
             return Err(Refusal::NotItsType);
         }
-        // Bounds narrowed past the default bring it within them, as a field of a number would.
-        if let Some(whole) = changed.default.as_i64() {
+        // Bounds narrowed past the default bring it within them, as a field of a number would; a default typed out
+        // of bounds left as they were is refused below.
+        if changed.bounds != was.bounds
+            && let Some(whole) = changed.default.as_i64()
+        {
             changed.default = Value::from(whole.clamp(smallest, largest));
         }
     }
@@ -221,7 +226,7 @@ mod tests {
     }
 
     #[test]
-    fn a_variable_retyped_drops_the_wires_and_the_values_it_no_longer_fits() {
+    fn a_variable_retyped_drops_the_wires_and_the_values_it_no_longer_fits_and_keeps_the_others() {
         let mut blueprint = harvest();
         done(
             &mut blueprint,
@@ -242,19 +247,54 @@ mod tests {
         done(
             &mut blueprint,
             Edit::Wire {
-                from: End(id("n2"), id("value")),
-                to: End(id("n3"), id("zone")),
+                from: End(id("n4"), id("done")),
+                to: End(id("set_pods"), id("run")),
             },
         );
-        let mut zone = variable(&blueprint, "zone");
-        zone.value_type = ValueType::Number;
-        zone.default = json!(7);
-        done(&mut blueprint, Edit::Variable(zone));
+        done(
+            &mut blueprint,
+            Edit::Add {
+                does: Does::Get(id("pods")),
+                position: [0, 0],
+                wired_to: None,
+            },
+        );
+        done(
+            &mut blueprint,
+            Edit::Add {
+                does: Does::Kind(id("wait")),
+                position: [0, 0],
+                wired_to: None,
+            },
+        );
+        done(
+            &mut blueprint,
+            Edit::Wire {
+                from: End(id("get_pods"), id("value")),
+                to: End(id("wait"), id("minutes")),
+            },
+        );
+        // A number: its percentage's bounds and value still fit, and so do the flow and the wire into a number.
+        let mut pods = variable(&blueprint, "pods");
+        pods.value_type = ValueType::Number;
+        done(&mut blueprint, Edit::Variable(pods));
+        let pods = variable(&blueprint, "pods");
+        assert_eq!((pods.default.clone(), pods.bounds), (json!(90), Some([10, 100])));
+        let set_inputs = |blueprint: &Blueprint| {
+            let set = blueprint.graphs[0].nodes.iter().find(|node| node.id.0 == "set_pods");
+            set.map(|node| node.inputs.len()).unwrap_or_default()
+        };
+        assert_eq!(set_inputs(&blueprint), 1, "50 still holds");
+        let kept = [
+            "n4.done>set_pods.run".to_owned(),
+            "get_pods.value>wait.minutes".to_owned(),
+        ];
         assert!(
-            !wires(&blueprint).contains(&"n2.value>n3.zone".to_owned()),
+            kept.iter().all(|wire| wires(&blueprint).contains(wire)),
             "{:?}",
             wires(&blueprint)
         );
+        // A text: the wire into a number goes, the flow stays, and its default, bounds and value go.
         let mut pods = variable(&blueprint, "pods");
         pods.value_type = ValueType::Text;
         done(&mut blueprint, Edit::Variable(pods));
@@ -264,8 +304,33 @@ mod tests {
             (Value::Null, None),
             "a default and bounds a text refuses"
         );
-        let set = blueprint.graphs[0].nodes.iter().find(|node| node.id.0 == "set_pods");
-        assert!(set.is_some_and(|node| node.inputs.is_empty()), "its value typed goes");
+        assert_eq!(set_inputs(&blueprint), 0, "its value typed goes");
+        assert!(wires(&blueprint).contains(&kept[0]) && !wires(&blueprint).contains(&kept[1]));
+        let mut zone = variable(&blueprint, "zone");
+        zone.value_type = ValueType::Number;
+        done(&mut blueprint, Edit::Variable(zone));
+        assert!(
+            !wires(&blueprint).contains(&"n2.value>n3.zone".to_owned()),
+            "{:?}",
+            wires(&blueprint)
+        );
+    }
+
+    #[test]
+    fn a_number_made_a_percentage_drops_bounds_past_0_to_100() {
+        let mut blueprint = harvest();
+        let mut goal = variable(&blueprint, "harvests");
+        goal.bounds = Some([0, 10_000]);
+        goal.default = json!(5000);
+        done(&mut blueprint, Edit::Variable(goal.clone()));
+        goal.value_type = ValueType::Percentage;
+        done(&mut blueprint, Edit::Variable(goal));
+        let goal = variable(&blueprint, "harvests");
+        assert_eq!(
+            (goal.bounds, goal.default),
+            (None, Value::Null),
+            "5000 is no percentage"
+        );
     }
 
     #[test]

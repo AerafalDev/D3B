@@ -226,39 +226,34 @@ impl TryFrom<GraphEdit> for bot::Edit {
     }
 }
 
-/// My blueprint `id` changed by `change`, then the characters running it carried to its variables: its graphs, and
-/// whether a character's settings changed.
-fn followed(
-    store: &Store,
-    id: &str,
-    change: impl FnOnce() -> Result<bot::Blueprint, EditError>,
-) -> Result<(BlueprintGraphs, bool), EditError> {
-    let before = store.read_blueprint(id).map(|it| it.variables).unwrap_or_default();
-    let blueprint = change()?;
+/// Makes `edit` in the graph `graph` of my blueprint `id` and saves it, the characters running it carried to its
+/// variables; its graphs then, and whether a character's settings changed.
+fn change(store: &Store, id: &str, graph: &str, edit: GraphEdit) -> Result<(BlueprintGraphs, bool), EditError> {
+    let graph = Id(graph.to_owned());
+    let edit = bot::Edit::try_from(edit)?;
+    // Read under the lock the change takes, so the settings are carried from the variables it changed.
+    let mut before = Vec::new();
+    let blueprint = store.change_blueprint(id, |blueprint| {
+        before.clone_from(&blueprint.variables);
+        bot::edit(blueprint, &graph, edit).map_err(EditError::from)
+    })?;
     let carried = follow(store, id, &before, &blueprint.variables);
     Ok((graphs(&blueprint), carried))
 }
 
-/// Makes `edit` in the graph `graph` of my blueprint `id` and saves it; its graphs then.
-fn change(store: &Store, id: &str, graph: &str, edit: GraphEdit) -> Result<(BlueprintGraphs, bool), EditError> {
-    let graph = Id(graph.to_owned());
-    let edit = bot::Edit::try_from(edit)?;
-    followed(store, id, || {
-        store.change_blueprint(id, |blueprint| {
-            bot::edit(blueprint, &graph, edit).map_err(EditError::from)
-        })
-    })
-}
-
-/// Undo, or redo, of the last change to my blueprint `id`, written at once; its graphs then.
+/// Undo, or redo, of the last change to my blueprint `id`, written at once, the characters running it carried to its
+/// variables; its graphs then, and whether a character's settings changed.
 fn step(store: &Store, id: &str, back: bool) -> Result<(BlueprintGraphs, bool), EditError> {
-    followed(store, id, || {
-        Ok(if back {
-            store.undo_blueprint(id)
-        } else {
-            store.redo_blueprint(id)
-        }?)
-    })
+    // Undo writes under its own lock: the variables are read before it, the editor sending one change at a time. A
+    // file that does not read carries nothing, rather than dropping every setting.
+    let before = store.read_blueprint(id).ok().map(|it| it.variables);
+    let blueprint = if back {
+        store.undo_blueprint(id)
+    } else {
+        store.redo_blueprint(id)
+    }?;
+    let carried = before.is_some_and(|before| follow(store, id, &before, &blueprint.variables));
+    Ok((graphs(&blueprint), carried))
 }
 
 /// Runs `change` on the player's folder away from the webview's thread; the characters' tabs hear when their settings
@@ -409,6 +404,46 @@ mod tests {
             Err(EditError::NoSuchVariable)
         );
         assert_eq!(variables().len(), 3);
+    }
+
+    #[test]
+    fn a_character_running_it_follows_its_variables_an_undo_bringing_back_the_variable_not_its_value() {
+        let (_folder, store) = mine("ipc-edit-follow");
+        let character = crate::storage::Played {
+            schema: crate::storage::CHARACTER_SCHEMA,
+            id: 1,
+            name: "Kalyx".into(),
+            level: 54,
+            breed: 8,
+            sex: None,
+            last_seen: 1,
+            map_id: None,
+            blueprint: Some("my-harvest".into()),
+            settings: std::collections::BTreeMap::from([("pods".to_owned(), serde_json::json!(80))]),
+            blueprint_version: None,
+            dropped: Vec::new(),
+        };
+        store.remember(&character).unwrap_or_else(|error| panic!("{error}"));
+        let own = || store.played().read[0].settings.clone();
+        let text = parsed(
+            r#"{"edit": "variable", "variable": {"id": "pods", "name": "Empty pods at", "valueType": "text",
+                "default": null, "bounds": null, "perCharacter": true, "memory": false, "help": ""}}"#,
+        );
+        let followed = change(&store, "my-harvest", "events", text).map(|(_, carried)| carried);
+        assert_eq!(followed, Ok(true));
+        assert!(own().is_empty(), "80 is no text");
+        assert_eq!(step(&store, "my-harvest", true).map(|(_, carried)| carried), Ok(false));
+        assert_eq!(
+            store.blueprints().read[0].variables[1].bounds,
+            Some([10, 100]),
+            "the variable back"
+        );
+        assert!(own().is_empty(), "the value stays lost");
+        let moved = parsed(r#"{"edit": "move", "nodes": [{"node": "n4", "position": [0, 0]}]}"#);
+        assert_eq!(
+            change(&store, "my-harvest", "events", moved).map(|(_, carried)| carried),
+            Ok(false)
+        );
     }
 
     #[test]
