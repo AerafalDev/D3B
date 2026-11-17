@@ -10,12 +10,14 @@ export type AtlasRead =
   | { state: "read"; atlas: Atlas_Serialize }
   | { state: "failed"; error: AtlasError };
 
-/** A Zone being chosen on the map (the owner's mock-up 12, 2026-11-15). */
+/** A Zone being chosen on the map (the owner's mock-up 12, 2026-11-15), or a map (the owner, 2026-11-17). */
 export interface Choosing {
-  /** Whose Zone, as the map's banner says. */
+  /** Whose Zone or map, as the map's banner says. */
   who: string;
-  /** Takes the sub-area chosen. */
-  choose: (subArea: number) => void;
+  /** What a click takes: a sub-area, or the map the world map draws there. */
+  kind: "subArea" | "map";
+  /** Takes the sub-area or the map chosen, by id. */
+  choose: (id: number) => void;
   /** The editor whose tab was active when the choice began, brought back when it ends. */
   back: string | null;
   /** Stops watching for the World tab's closing, which cancels the choice. */
@@ -57,11 +59,14 @@ interface WorldStore {
   show: (world: number) => void;
   /** Sets the kinds of hints the map leaves out. */
   hide: (kinds: ReadonlySet<HintKind>) => void;
-  /** Begins choosing `who`'s Zone on the map, remembering the tab active now; closing the World tab cancels it. */
-  startChoosing: (who: string, choose: (subArea: number) => void) => void;
-  /** Ends the choice with the sub-area chosen, also shown on the map, or `null` when cancelled; the tab it began in
-   * comes back. */
-  endChoosing: (subArea: number | null) => void;
+  /**
+   * Begins choosing `who`'s Zone, or with `kind` "map" a map, on the map, remembering the tab active now; closing the
+   * World tab cancels it.
+   */
+  startChoosing: (who: string, choose: (id: number) => void, kind?: Choosing["kind"]) => void;
+  /** Ends the choice with the sub-area chosen, also shown on the map, or the map chosen, or `null` when cancelled; the
+   * tab it began in comes back. */
+  endChoosing: (id: number | null) => void;
 }
 
 export const useWorld = create<WorldStore>((set, get) => ({
@@ -114,7 +119,7 @@ export const useWorld = create<WorldStore>((set, get) => ({
 
   hide: (hidden) => set({ hidden }),
 
-  startChoosing: (who, choose) => {
+  startChoosing: (who, choose, kind = "subArea") => {
     get().choosing?.unwatch();
     const { api, active } = useEditors.getState();
     // A choice left by closing the World tab must not wait for its next opening.
@@ -123,16 +128,19 @@ export const useWorld = create<WorldStore>((set, get) => ({
         get().endChoosing(null);
       }
     });
-    set({ choosing: { who, choose, back: active, unwatch: () => closing?.dispose() } });
+    set({ choosing: { who, kind, choose, back: active, unwatch: () => closing?.dispose() } });
   },
 
-  endChoosing: (subArea) => {
+  endChoosing: (id) => {
     const { choosing, pick } = get();
     choosing?.unwatch();
     set({ choosing: null });
-    if (subArea !== null) {
-      pick(subArea);
-      choosing?.choose(subArea);
+    if (id !== null) {
+      // A sub-area chosen is shown on the map too; a map is its field's.
+      if (choosing?.kind !== "map") {
+        pick(id);
+      }
+      choosing?.choose(id);
     }
     const back = choosing?.back;
     if (back !== null && back !== undefined) {

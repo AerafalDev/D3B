@@ -2,6 +2,7 @@ import { Crosshair } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 
+import { commands } from "@/bindings.ts";
 import { named } from "@/characters/names.ts";
 import { Button } from "@/components/ui/button.tsx";
 import { Kbd } from "@/components/ui/kbd.tsx";
@@ -163,6 +164,14 @@ export function WorldTab() {
       // Nothing chosen: the view stays, and fits again for the next choice.
       return false;
     }
+    if (choosing?.kind === "map" && world !== undefined) {
+      // The map the world map draws there: the one with the priority, else the first (Rust's `map_at`).
+      void commands.mapAt(world.id, x, y).then(
+        (map) => map !== null && endChoosing(map.id),
+        () => endChoosing(null),
+      );
+      return true;
+    }
     const under = names.get(`${x},${y}`)?.id;
     if (under === undefined || (choosing === null && under === picked)) {
       return false;
@@ -186,11 +195,13 @@ export function WorldTab() {
           hints={hints}
           onPick={pickAt}
           outlineAt={
-            choosing !== null || (open !== undefined && tool === "subArea")
-              ? (x, y) => names.get(`${x},${y}`)?.maps ?? null
-              : painting === undefined
-                ? undefined
-                : cellAt
+            choosing?.kind === "map"
+              ? (x, y) => [[x, y]]
+              : choosing !== null || (open !== undefined && tool === "subArea")
+                ? (x, y) => names.get(`${x},${y}`)?.maps ?? null
+                : painting === undefined
+                  ? undefined
+                  : cellAt
           }
           fitTo={frame}
           mine={open?.maps ?? null}
@@ -204,7 +215,7 @@ export function WorldTab() {
             className="absolute top-3 left-1/2 flex -translate-x-1/2 items-center gap-2.5 rounded-lg border border-[#39c5bb88] bg-[#1b1c1f] py-1.5 pr-2 pl-3 text-xs whitespace-nowrap shadow-[0_6px_20px_rgb(0_0_0/45%)]"
           >
             <Crosshair aria-hidden="true" size={14} strokeWidth={1.5} />
-            {t("world.choosing.banner", { who: choosing.who })}
+            {t(choosing.kind === "map" ? "world.choosing.bannerMap" : "world.choosing.banner", { who: choosing.who })}
             <Button variant="outline" size="xs" onClick={() => endChoosing(null)}>
               {t("world.choosing.cancel")}
               <Kbd>{t("world.choosing.escape")}</Kbd>

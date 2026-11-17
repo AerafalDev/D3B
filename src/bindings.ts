@@ -78,6 +78,13 @@ export const commands = {
 	 *  or, when `ids` are given, those items, in that order; or why the game data is not there.
 	 */
 	findItems: (query: string, ids: number[]) => __TAURI_INVOKE<ItemView_Serialize[]>("find_items", { query, ids }),
+	/**
+	 *  The map a click at `x`, `y` on `world` takes: the one with the priority there, else the first by id; `None` where
+	 *  no map is.
+	 */
+	mapAt: (world: number, x: number, y: number) => __TAURI_INVOKE<MapView_Serialize | null>("map_at", { world, x, y }),
+	/**  The maps of `ids` the data holds, in that order: what a value already chosen names. */
+	findMaps: (ids: number[]) => __TAURI_INVOKE<MapView_Serialize[]>("find_maps", { ids }),
 	/**  My zones and the files kept. */
 	zones: () => __TAURI_INVOKE<ZoneList>("zones"),
 	/**  A new zone named `name`, without maps, on `world`. */
@@ -928,6 +935,27 @@ export type MapCells = {
 	exits: number[],
 	/**  The interactive elements, each with its cell, or −1 for one drawn without a cell. */
 	elements: ElementAt[],
+};
+
+/**  A map as the field shows it. */
+export type MapView = MapView_Serialize | MapView_Deserialize;
+
+/**  A map as the field shows it. */
+export type MapView_Deserialize = {
+	id: number,
+	at: [number, number],
+	/**  The world it is drawn on, -1 for none. */
+	world: number,
+	subArea?: Names | null,
+};
+
+/**  A map as the field shows it. */
+export type MapView_Serialize = {
+	id: number,
+	at: [number, number],
+	/**  The world it is drawn on, -1 for none. */
+	world: number,
+	subArea: Names | null,
 };
 
 /**  A monster of a group, its main one first. */

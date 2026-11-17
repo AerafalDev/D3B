@@ -397,7 +397,9 @@ flowchart LR
   id until their data comes (step 3 of (v2.2), done in code for the chooser, the time and the values' words).
 - **A map** (the owner, 2026-11-17): the field's target opens the World tab's choosing mode, a hover outlining one map
   and a click taking the one the world map draws there, Escape cancelling; "5,-18" may be typed; "Where is
-  <character>" takes the map a character online stands on, an inside too, which shares its street's coordinates.
+  <character>" takes the map a character online stands on, an inside too, which shares its street's coordinates;
+  the map is shown by its coordinates and sub-area, typed coordinates are the Twelve's, and Rust's `map_at` and
+  `find_maps` look them up (step 6 of (v2.2), done in code).
 - **An item** (the owner, 2026-11-17): every item but the invisible (type 203), searched by name in Rust (accents
   ignored, 50 at most), each with its icon, level and type (`find_items`; those starting with the text first, then by
   level); a click, or Enter for the first, chooses it, the one chosen shown by its icon, name and level, by its id

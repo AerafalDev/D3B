@@ -87,6 +87,36 @@ impl World {
             zaaps: manifest.read(folder, "zaaps")?,
         })
     }
+
+    /// The map a click at `x`, `y` on world `world` takes (the owner, 2026-11-17): the one the client draws there, with
+    /// the priority on the world map, else the first by id; a house's inside shares its street's coordinates.
+    pub fn map_at(&self, world: i32, x: i16, y: i16) -> Option<&MapPosition> {
+        let here = self
+            .positions
+            .iter()
+            .filter(|position| position.world_map == world && (position.x, position.y) == (x, y));
+        let mut first = None;
+        for position in here {
+            if position.flags.contains(&MapFlag::HasPriorityOnWorldmap) {
+                return Some(position);
+            }
+            first.get_or_insert(position);
+        }
+        first
+    }
+
+    /// The map of `id`, if the data holds it.
+    pub fn position(&self, id: u32) -> Option<&MapPosition> {
+        // The positions are in order of map id (the extractor writes them so).
+        let at = self.positions.binary_search_by_key(&id, |position| position.id).ok()?;
+        self.positions.get(at)
+    }
+
+    /// The sub-area of `id`, if the data holds it.
+    pub fn sub_area(&self, id: i32) -> Option<&SubArea> {
+        let at = self.sub_areas.binary_search_by_key(&id, |sub_area| sub_area.id).ok()?;
+        self.sub_areas.get(at)
+    }
 }
 
 #[cfg(test)]
@@ -98,6 +128,54 @@ mod tests {
     const ZAAPS: &str = include_str!("../../../tools/extractor/tests/fixtures/world/zaaps.json");
     const POSITIONS: &str = include_str!("../../../tools/extractor/tests/fixtures/world/map-positions.json");
     const SUB_AREAS: &str = include_str!("../../../tools/extractor/tests/fixtures/world/sub-areas.json");
+
+    fn position(id: u32, x: i16, y: i16, priority: bool) -> MapPosition {
+        let flags = if priority {
+            vec![MapFlag::HasPriorityOnWorldmap]
+        } else {
+            Vec::new()
+        };
+        MapPosition {
+            id,
+            x,
+            y,
+            sub_area_id: 1,
+            world_map: 1,
+            name: None,
+            flags,
+        }
+    }
+
+    fn world(positions: Vec<MapPosition>) -> World {
+        World {
+            positions,
+            sub_areas: Vec::new(),
+            areas: Vec::new(),
+            zaaps: Vec::new(),
+        }
+    }
+
+    #[test]
+    fn a_click_takes_the_map_with_the_priority_there_else_the_first_by_id_on_that_world() {
+        let shared = world(vec![
+            position(10, 5, -18, false),
+            position(11, 5, -18, true),
+            position(12, 6, -18, false),
+        ]);
+        assert_eq!(shared.map_at(1, 5, -18).map(|it| it.id), Some(11));
+        assert_eq!(shared.map_at(1, 6, -18).map(|it| it.id), Some(12));
+        assert_eq!(shared.map_at(2, 5, -18).map(|it| it.id), None, "another world");
+        assert_eq!(shared.map_at(1, 0, 0).map(|it| it.id), None);
+        let inside = world(vec![position(20, 5, -18, false), position(21, 5, -18, false)]);
+        assert_eq!(inside.map_at(1, 5, -18).map(|it| it.id), Some(20));
+    }
+
+    #[test]
+    fn a_map_is_found_by_its_id() {
+        let maps = world(vec![position(10, 5, -18, false), position(12, 6, -18, false)]);
+        assert_eq!(maps.position(12).map(|it| (it.x, it.y)), Some((6, -18)));
+        assert!(maps.position(11).is_none());
+    }
 
     #[test]
     fn reads_the_positions_the_extractor_writes() {
