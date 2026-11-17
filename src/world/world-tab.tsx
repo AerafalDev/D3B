@@ -165,12 +165,16 @@ export function WorldTab() {
       return false;
     }
     if (choosing?.kind === "map" && world !== undefined) {
-      // The map the world map draws there: the one with the priority, else the first (Rust's `map_at`).
+      // The map the world map draws there (Rust's `map_at`), taken only if this choice is still the one open: a
+      // second click, an Escape or another choice since leaves it.
+      const asked = choosing;
+      const still = () => useWorld.getState().choosing === asked;
       void commands.mapAt(world.id, x, y).then(
-        (map) => map !== null && endChoosing(map.id),
-        () => endChoosing(null),
+        (map) => map !== null && still() && endChoosing(map.id),
+        () => still() && endChoosing(null),
       );
-      return true;
+      // The view stays as it is: no sub-area is chosen.
+      return false;
     }
     const under = names.get(`${x},${y}`)?.id;
     if (under === undefined || (choosing === null && under === picked)) {
@@ -196,7 +200,7 @@ export function WorldTab() {
           onPick={pickAt}
           outlineAt={
             choosing?.kind === "map"
-              ? (x, y) => [[x, y]]
+              ? cellAt
               : choosing !== null || (open !== undefined && tool === "subArea")
                 ? (x, y) => names.get(`${x},${y}`)?.maps ?? null
                 : painting === undefined

@@ -398,8 +398,9 @@ flowchart LR
 - **A map** (the owner, 2026-11-17): the field's target opens the World tab's choosing mode, a hover outlining one map
   and a click taking the one the world map draws there, Escape cancelling; "5,-18" may be typed; "Where is
   <character>" takes the map a character online stands on, an inside too, which shares its street's coordinates;
-  the map is shown by its coordinates and sub-area, typed coordinates are the Twelve's, and Rust's `map_at` and
-  `find_maps` look them up (step 6 of (v2.2), done in code).
+  the map is shown by its coordinates and sub-area, typed coordinates are on the world the World tab shows (the
+  Twelve's before it shows one), a click takes the map with the priority there else the first by id, a map at 0, 0
+  without the priority none's, and Rust's `map_at` and `find_maps` look them up (step 6 of (v2.2), done in code).
 - **An item** (the owner, 2026-11-17): every item but the invisible (type 203), searched by name in Rust (accents
   ignored, 50 at most), each with its icon, level and type (`find_items`; those starting with the text first, then by
   level); a click, or Enter for the first, chooses it, the one chosen shown by its icon, name and level, by its id
@@ -413,7 +414,7 @@ flowchart LR
   an item, a duration and a time (the NPC at step 4), and two switches, "List" and "By level" (ranges), its default
   and a character's setting typed with the editors above, a list a row per value in its type's editor, × to remove one
   and a last row adding the value typed there (step 4 of (v2.2), done in code; ranges said by their rows until their
-  table, step 7; a type its editor waits for, a map or an item, shows its rows and takes no new one yet; a type read
+  table, step 7; a type its editor waits for, a route or a bank, shows its rows and takes no new one yet; a type read
   "Durée · liste" or "Zone · par niveau"). (14) keeps the locals and the variables' nodes.
 - **A node's options** ("+" a case or an output, the owner, 2026-11-17) come with v2.3's Sequence and Switch, their
   first kinds: "+ Add an output" on the node for Sequence's outputs and a list's inputs, Switch's cases typed in

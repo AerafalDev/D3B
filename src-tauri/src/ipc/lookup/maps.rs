@@ -59,12 +59,15 @@ pub async fn map_at(app: tauri::AppHandle, world: i32, x: i16, y: i16) -> Result
 #[specta::specta]
 pub async fn find_maps(app: tauri::AppHandle, ids: Vec<u32>) -> Result<Vec<MapView>, AtlasError> {
     let data = app.state::<LoadedData>();
-    let world = loaded(&data)?;
-    Ok(ids
-        .iter()
+    Ok(maps_of(loaded(&data)?, &ids))
+}
+
+/// The maps of `ids` that `world` holds, in that order.
+fn maps_of(world: &World, ids: &[u32]) -> Vec<MapView> {
+    ids.iter()
         .filter_map(|id| world.position(*id))
         .map(|position| view(world, position))
-        .collect())
+        .collect()
 }
 
 #[cfg(test)]
@@ -82,9 +85,12 @@ mod tests {
         );
     }
 
+    fn read<T: serde::de::DeserializeOwned>(text: &str) -> Vec<T> {
+        serde_json::from_str(text).unwrap_or_else(|error| panic!("{error}"))
+    }
+
     #[test]
     fn a_map_is_shown_by_its_coordinates_world_and_sub_area_named() {
-        let read = |text: &str| serde_json::from_str(text).unwrap_or_else(|error| panic!("{error}"));
         let world = World {
             positions: read(include_str!(
                 "../../../../tools/extractor/tests/fixtures/world/map-positions.json"
@@ -95,6 +101,32 @@ mod tests {
         };
         let first = &world.positions[0];
         let shown = view(&world, first);
-        assert_eq!((shown.id, shown.at, shown.sub_area), (first.id, [-1, -27], None));
+        assert_eq!(
+            (shown.id, shown.at, shown.sub_area),
+            (first.id, [-1, -27], None),
+            "a sub-area the data lacks"
+        );
+        let mut named = world.clone();
+        named.sub_areas = read(include_str!(
+            "../../../../tools/extractor/tests/fixtures/world/sub-areas.json"
+        ));
+        let held = named
+            .positions
+            .iter()
+            .find(|it| named.sub_area(it.sub_area_id).is_some_and(|it| it.name.is_some()));
+        if let Some(held) = held {
+            assert!(view(&named, held).sub_area.is_some(), "its sub-area named");
+        }
+        let mut two = world.clone();
+        let mut second = first.clone();
+        second.id = first.id + 1;
+        two.positions.push(second);
+        let ids = [first.id + 1, first.id];
+        let found = maps_of(&two, &[ids[0], 1, ids[1]]);
+        assert_eq!(
+            found.iter().map(|it| it.id).collect::<Vec<_>>(),
+            [ids[0], ids[1]],
+            "in order, those held"
+        );
     }
 }

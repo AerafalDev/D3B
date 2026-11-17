@@ -6,9 +6,15 @@ import type { Atlas_Serialize, AtlasWorld_Serialize as AtlasWorld } from "@/bind
 import { initI18n } from "@/i18n/i18n.ts";
 
 // The back end, faked: the atlas the tab reads.
-const backEnd = vi.hoisted(() => ({ atlas: vi.fn(), zones: vi.fn(), paint: vi.fn(), undo: vi.fn() }));
+const backEnd = vi.hoisted(() => ({ atlas: vi.fn(), zones: vi.fn(), paint: vi.fn(), undo: vi.fn(), mapAt: vi.fn() }));
 vi.mock("@/bindings.ts", () => ({
-  commands: { worldAtlas: backEnd.atlas, zones: backEnd.zones, paintZone: backEnd.paint, undoZone: backEnd.undo },
+  commands: {
+    worldAtlas: backEnd.atlas,
+    zones: backEnd.zones,
+    paintZone: backEnd.paint,
+    undoZone: backEnd.undo,
+    mapAt: backEnd.mapAt,
+  },
 }));
 // The map, faked: happy-dom draws no SVG images, and the tab's text is what is checked here.
 vi.mock("./world-map.tsx", () => ({
@@ -380,6 +386,46 @@ describe("the World tab", () => {
     expect(editors.shown).toEqual(["character:1"]);
     expect(screen.queryByRole("status")).toBeNull();
     expect(document.querySelector("[data-outline]")?.getAttribute("data-outline")).toBe("undefined");
+  });
+
+  it("while choosing a map, says for whom, outlines one map, and a click takes the one Rust says, no sub-area chosen", async () => {
+    const choose = vi.fn();
+    backEnd.mapAt.mockResolvedValue({ id: 88_080_385, at: [1, 0], world: 1, subArea: null });
+    useWorld.setState({ picked: null });
+    useWorld.getState().startChoosing("Aerinth", choose, "map");
+    await shown(<WorldTab />);
+    expect(screen.getByRole("status").textContent).toContain("Aerinth : clique une carte pour la choisir.");
+    expect(document.querySelector("[data-outline]")?.getAttribute("data-outline")).toBe("1");
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "clic 1, 0" }));
+    });
+    expect(backEnd.mapAt).toHaveBeenLastCalledWith(1, 1, 0);
+    expect(choose.mock.calls).toEqual([[88_080_385]]);
+    expect(useWorld.getState()).toMatchObject({ choosing: null, picked: null });
+  });
+
+  it("leaves a map's choice open where no map is, and a late answer to an ended choice takes nothing", async () => {
+    const choose = vi.fn();
+    backEnd.mapAt.mockResolvedValue(null);
+    useWorld.getState().startChoosing("Aerinth", choose, "map");
+    await shown(<WorldTab />);
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "clic 5, 5" }));
+    });
+    expect(useWorld.getState().choosing?.kind).toBe("map");
+    let answer: (map: unknown) => void = () => {};
+    backEnd.mapAt.mockReturnValue(new Promise((resolve) => (answer = resolve)));
+    fireEvent.click(screen.getByRole("button", { name: "clic 1, 0" }));
+    fireEvent.keyDown(window, { key: "Escape" });
+    const zone = vi.fn();
+    useWorld.getState().startChoosing("Aerinth", zone);
+    await act(async () => {
+      answer({ id: 88_080_385, at: [1, 0], world: 1, subArea: null });
+    });
+    expect(choose).not.toHaveBeenCalled();
+    expect(zone).not.toHaveBeenCalled();
+    expect(useWorld.getState().choosing?.kind).toBe("subArea");
+    useWorld.getState().endChoosing(null);
   });
 
   it("keeps choosing after a click on the sea, and Escape or Cancel goes back without choosing", async () => {

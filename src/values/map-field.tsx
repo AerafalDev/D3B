@@ -18,9 +18,6 @@ interface MapFieldProps {
   label: string;
 }
 
-/** The world coordinates typed are on: the Twelve's, where nearly every map is. */
-const TWELVE = 1;
-
 function chosenId(json: string | null): number | null {
   if (json === null) {
     return null;
@@ -41,7 +38,8 @@ function coordinates(text: string): [number, number] | null {
 
 /**
  * A map (the owner, 2026-11-17): the one chosen shown by its coordinates and sub-area; its target opens the World tab
- * choosing a map, a click there taking the one the world map draws; coordinates typed "5,-18" take the Twelve's; and
+ * choosing a map, a click there taking the one the world map draws; coordinates typed "5,-18" take the world's the World
+ * tab shows; and
  * "Where is <character>" takes the map a character online stands on, an inside too, which shares its street's
  * coordinates.
  */
@@ -71,6 +69,10 @@ export function MapField({ value, onChange, who, label }: MapFieldProps) {
   }, [onChange]);
   const [draft, setDraft] = useState("");
   const [wrong, setWrong] = useState(false);
+  // The text asked for, so a reply to an earlier text, or a second ask of the same, takes nothing.
+  const asked = useRef<string | null>(null);
+  const drafted = useRef(draft);
+  drafted.current = draft;
   const typed = () => {
     const at = coordinates(draft);
     if (draft.trim() === "") {
@@ -81,31 +83,42 @@ export function MapField({ value, onChange, who, label }: MapFieldProps) {
       setWrong(true);
       return;
     }
+    if (asked.current === draft) {
+      return;
+    }
+    const text = draft;
+    asked.current = text;
+    // On the world the World tab shows, the Twelve's until it shows another (settled alone, 2026-11-17).
+    const world = useWorld.getState().world;
     commands
-      .mapAt(TWELVE, at[0], at[1])
+      .mapAt(world, at[0], at[1])
       .then((map) => {
+        if (drafted.current !== text) {
+          return;
+        }
         setWrong(map === null);
         if (map !== null) {
           setDraft("");
           void onChange(String(map.id));
         }
       })
-      .catch(() => setWrong(true));
+      .catch(() => drafted.current === text && setWrong(true))
+      .finally(() => {
+        asked.current = null;
+      });
   };
   const views = useCharacters((store) => store.views);
-  const standing = Object.values(views).flatMap((view) =>
-    view.name != null && view.place?.mapId != null ? [{ name: view.name, map: view.place.mapId }] : [],
+  const standing = Object.entries(views).flatMap(([connection, view]) =>
+    view.name != null && view.place?.mapId != null ? [{ connection, name: view.name, map: view.place.mapId }] : [],
   );
   const shown =
     chosen === null
       ? id === null
         ? t("library.value.none")
         : t("library.value.map", { id })
-      : t("values.mapAt", {
-          x: chosen.at[0],
-          y: chosen.at[1],
-          subArea: named(chosen.subArea, i18n.language) ?? "",
-        });
+      : chosen.subArea === null
+        ? t("values.mapCoordinates", { x: chosen.at[0], y: chosen.at[1] })
+        : t("values.mapAt", { x: chosen.at[0], y: chosen.at[1], subArea: named(chosen.subArea, i18n.language) ?? "" });
   return (
     <div className="flex flex-col gap-1 text-xs">
       <span className="flex h-[22px] items-center gap-1.5 text-white">
@@ -140,7 +153,7 @@ export function MapField({ value, onChange, who, label }: MapFieldProps) {
       />
       {standing.map((one) => (
         <button
-          key={one.name}
+          key={one.connection}
           type="button"
           onClick={() => void onChange(String(one.map))}
           className="hover:bg-hover focus-visible:outline-focus self-start rounded px-1 py-0.5 text-left focus-visible:outline-1"

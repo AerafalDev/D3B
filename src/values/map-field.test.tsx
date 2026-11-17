@@ -67,6 +67,34 @@ describe("a map's field", () => {
     expect(onChange).toHaveBeenLastCalledWith(String(fields.id));
   });
 
+  it("takes coordinates on blur too, once, and says no map without the game data", async () => {
+    const onChange = shown(null);
+    const typed = screen.getByRole("textbox", { name: "Carte : coordonnées" });
+    fireEvent.change(typed, { target: { value: "5,-18" } });
+    await act(async () => {
+      fireEvent.keyDown(typed, { key: "Enter" });
+      fireEvent.blur(typed);
+    });
+    expect(onChange).toHaveBeenCalledTimes(1);
+    backEnd.mapAt.mockRejectedValue({ kind: "noData", reason: "no data" });
+    fireEvent.change(typed, { target: { value: "6,-18" } });
+    await act(async () => {
+      fireEvent.blur(typed);
+    });
+    expect(typed.getAttribute("aria-invalid")).toBe("true");
+    cleanup();
+    backEnd.findMaps.mockRejectedValue({ kind: "noData", reason: "no data" });
+    shown(String(fields.id));
+    expect(await screen.findByText(`Carte ${fields.id}`)).toBeTruthy();
+  });
+
+  it("takes nothing from a choice on the World cancelled", () => {
+    const onChange = shown(null);
+    fireEvent.click(screen.getByRole("button", { name: "Choisir Carte sur le Monde" }));
+    useWorld.getState().endChoosing(null);
+    expect(onChange).not.toHaveBeenCalled();
+  });
+
   it("chooses on the World a map, which the field takes", () => {
     const onChange = shown(null);
     fireEvent.click(screen.getByRole("button", { name: "Choisir Carte sur le Monde" }));

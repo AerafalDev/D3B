@@ -88,13 +88,16 @@ impl World {
         })
     }
 
-    /// The map a click at `x`, `y` on world `world` takes (the owner, 2026-11-17): the one the client draws there, with
-    /// the priority on the world map, else the first by id; a house's inside shares its street's coordinates.
+    /// The map a click at `x`, `y` on world `world` takes (the owner, 2026-11-17): the one with the priority on the
+    /// world map there, which the client draws; else, settled alone, the first by id. A house's inside shares its
+    /// street's coordinates. A map at 0, 0 without the priority is drawn nowhere (3.7.13.17, inferred from the data, as
+    /// the atlas reads it: dungeons, houses), so it is none's.
     pub fn map_at(&self, world: i32, x: i16, y: i16) -> Option<&MapPosition> {
-        let here = self
-            .positions
-            .iter()
-            .filter(|position| position.world_map == world && (position.x, position.y) == (x, y));
+        let here = self.positions.iter().filter(|position| {
+            let parked =
+                (position.x, position.y) == (0, 0) && !position.flags.contains(&MapFlag::HasPriorityOnWorldmap);
+            position.world_map == world && (position.x, position.y) == (x, y) && !parked
+        });
         let mut first = None;
         for position in here {
             if position.flags.contains(&MapFlag::HasPriorityOnWorldmap) {
@@ -168,6 +171,20 @@ mod tests {
         assert_eq!(shared.map_at(1, 0, 0).map(|it| it.id), None);
         let inside = world(vec![position(20, 5, -18, false), position(21, 5, -18, false)]);
         assert_eq!(inside.map_at(1, 5, -18).map(|it| it.id), Some(20));
+        let parked = world(vec![position(30, 0, 0, false)]);
+        assert_eq!(parked.map_at(1, 0, 0).map(|it| it.id), None, "drawn nowhere");
+        let drawn = world(vec![position(30, 0, 0, false), position(31, 0, 0, true)]);
+        assert_eq!(drawn.map_at(1, 0, 0).map(|it| it.id), Some(31));
+    }
+
+    #[test]
+    fn a_sub_area_is_found_by_its_id() {
+        let read: Vec<SubArea> = serde_json::from_str(SUB_AREAS).unwrap_or_else(|error| panic!("{error}"));
+        let first = read[0].id;
+        let mut sub_areas = world(Vec::new());
+        sub_areas.sub_areas = read;
+        assert_eq!(sub_areas.sub_area(first).map(|it| it.id), Some(first));
+        assert!(sub_areas.sub_area(-5).is_none());
     }
 
     #[test]

@@ -798,6 +798,7 @@
     "itemLevel": "{{name}} · lv. {{level}}",
     "itemKind": "{{kind}} · lv. {{level}}",
     "mapAt": "{{x}},{{y}} · {{subArea}}",
+    "mapCoordinates": "{{x}},{{y}}",
     "mapTyped": "{{label}}: coordinates",
     "chooseOnWorld": "Choose {{label}} on the World",
     "whereIs": "Where is {{name}}"
