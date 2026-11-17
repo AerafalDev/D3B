@@ -36,8 +36,10 @@ Each is `inferred` unless said `verified`.
 - **The build** of each connection (verified, 171 connection phases): the identification request carries the client's
   version at path 1.3.5, equal to the build each capture recorded. No game frame holds it, so the relay reads it in the
   connection phase and hands it over with the ticket.
-- **Between builds**: 3.7.13.17's schema is 3.7.12.12's byte for byte (the C# version, D361); what a build that changes
-  the schema does is not measured (the C# version's Q17). Patch builds come every one to two weeks.
+- **Between builds**: 3.7.13.17's schema is 3.7.12.12's byte for byte (the C# version, D361), and 3.7.14.18's (built
+  2026-11-16) is 3.7.13.17's, obfuscated names included: the extractor gives both the same digest (verified,
+  2026-11-17), so 3.7.14.18's pins are 3.7.13.17's under its build. What a build that changes the schema does is not
+  measured (the C# version's Q17). Patch builds come every one to two weeks.
 
 ## The tap
 
@@ -203,7 +205,8 @@ The pins' audit (`protocol::audit`, ignored unless run with `--ignored`; it read
 the folder `D3B_SCHEMAS` names) starts from each pinned pair and follows the messages their fields hold: every field
 our `.proto` declares must be in the build's message with its number, kind (an `int32` may read an enum), list,
 presence and oneof, each of our messages paired with one of the build's, the digest the pins'. `build.rs` describes
-our messages for it in `OUT_DIR/protocol-shapes.txt`. On 2026-11-12, 3.7.13.17's 17 pins hold; on 2026-11-16, its 18. The protocol's replay
+our messages for it in `OUT_DIR/protocol-shapes.txt`. On 2026-11-12, 3.7.13.17's 17 pins hold; on 2026-11-16, its 18;
+on 2026-11-17, 3.7.14.18's 18. The protocol's replay
 (`protocol::replay`, `D3B_CAPTURES`) read the owner's 54 game connections of 3.7.13.17: of 3,048,392 frames, 284,214
 understood, 256,933 read, 2,507,245 unknown (messages not pinned) and none not trusted; each of the 17 messages was
 decoded, as many times as the study counted them in these 54 (it read 2 more, of

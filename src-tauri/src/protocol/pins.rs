@@ -11,7 +11,10 @@ use serde::de::{Deserializer, MapAccess, Visitor};
 use super::message::READABLE;
 
 /// The pins embedded in the app: one file per build, named after it.
-const EMBEDDED: &[(&str, &str)] = &[("3.7.13.17", include_str!("../../protocol/pins/3.7.13.17.json"))];
+const EMBEDDED: &[(&str, &str)] = &[
+    ("3.7.13.17", include_str!("../../protocol/pins/3.7.13.17.json")),
+    ("3.7.14.18", include_str!("../../protocol/pins/3.7.14.18.json")),
+];
 
 /// The longest name a build gives a message, as `protocol::envelope` reads it; 3.7.13.17's are three letters.
 const NAME_LIMIT: usize = 8;
@@ -214,6 +217,19 @@ mod tests {
         assert_eq!(pins.readable("kqp"), Some("CharacterLevelUpEvent"));
         assert_eq!(pins.readable("ith"), Some("KamasUpdateEvent"));
         assert_eq!(pins.schema_sha256, DIGEST);
+    }
+
+    #[test]
+    fn the_pins_of_3_7_14_18_are_those_of_3_7_13_17() {
+        // Its schema is 3.7.13.17's byte for byte, obfuscated names included (verified, 2026-11-17, the extractor's
+        // digest), so its pins are copied (`docs/protocol.md`, "A new build").
+        let embedded = |build: &str| {
+            Pins::embedded(build)
+                .unwrap_or_else(|| panic!("no pins of {build}"))
+                .unwrap_or_else(|error| panic!("{error}"))
+        };
+
+        assert_eq!(embedded("3.7.14.18"), embedded("3.7.13.17"));
     }
 
     #[test]
