@@ -3,10 +3,10 @@ import { useTranslation } from "react-i18next";
 
 import { Switch } from "@/components/ui/switch.tsx";
 import { shapedText, valueText } from "@/library/value-text.ts";
-import { ListEditor } from "@/values/list-editor.tsx";
 import { ZoneField, type ZoneValue } from "@/zone/zone-field.tsx";
 import { parseDuration } from "./duration.ts";
 import { JobSelect } from "./job-select.tsx";
+import { ListEditor } from "./list-editor.tsx";
 
 /** The step of the roadmap whose actions use a bank and items, which brings their editors (the owner, 2026-11-16). */
 const LATER = 5;
@@ -33,8 +33,9 @@ interface SettingEditorProps {
 
 /**
  * A setting's editor by its type (the owner, 2026-11-16): a Zone's field, a bounded number, a switch, a line of text, a
- * profession, a duration; a bank and items say their value only until step 5 brings their editors. A node's input typed
- * in Details takes the same (the owner, 2026-11-17).
+ * profession, a duration, a time, a list a row per value; a bank and items say their value only until step 5 brings
+ * their editors, ranges their rows until their table. A node's input typed in Details takes the same (the owner,
+ * 2026-11-17).
  */
 export function SettingEditor({ variable, value, onChange, who, label }: SettingEditorProps) {
   const { t, i18n } = useTranslation();

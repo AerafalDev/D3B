@@ -464,6 +464,8 @@
       "map": "Map {{id}}",
       "item": "Item {{id}}",
       "npc": "NPC {{id}}",
+      "listOf": "{{type}} · list",
+      "byLevel": "{{type}} · by level",
       "list_one": "{{count}} value",
       "list_other": "{{count}} values",
       "ranges_one": "{{count}} range",

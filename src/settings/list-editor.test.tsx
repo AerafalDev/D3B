@@ -3,7 +3,7 @@ import i18next from "i18next";
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 
 import { initI18n } from "@/i18n/i18n.ts";
-import { SettingEditor } from "@/settings/setting-editor.tsx";
+import { SettingEditor } from "./setting-editor.tsx";
 
 describe("a list's editor", () => {
   beforeAll(async () => {
@@ -29,14 +29,38 @@ describe("a list's editor", () => {
     expect(onChange).toHaveBeenLastCalledWith("[60,120]");
   });
 
-  it("removes a value and adds one typed in its last row", () => {
+  it("removes a value", () => {
     const onChange = shown("[60, 90]");
     fireEvent.click(screen.getByRole("button", { name: "Retirer la valeur 1" }));
     expect(onChange).toHaveBeenLastCalledWith("[90]");
+  });
+
+  it("adds a value typed in its last row", () => {
+    const onChange = shown("[60, 90]");
     const added = screen.getByRole("textbox", { name: "Pauses : ajouter une valeur" });
     fireEvent.change(added, { target: { value: "45 s" } });
     fireEvent.keyDown(added, { key: "Enter" });
     expect(onChange).toHaveBeenLastCalledWith("[60,90,45]");
+  });
+
+  it("keeps a row left by a click on × before the list came back", () => {
+    const onChange = shown("[60, 90]");
+    const second = screen.getByRole("textbox", { name: "Pauses, valeur 2" });
+    fireEvent.change(second, { target: { value: "2 min" } });
+    fireEvent.blur(second);
+    fireEvent.click(screen.getByRole("button", { name: "Retirer la valeur 1" }));
+    expect(onChange).toHaveBeenLastCalledWith("[120]");
+  });
+
+  it("shows no row for a value that is no list, and none to add for a type with no editor yet", () => {
+    shown('"60"');
+    expect(screen.queryByRole("button", { name: /Retirer/ })).toBeNull();
+    cleanup();
+    const onChange = vi.fn(async () => true);
+    const maps = { valueType: "map", list: true, bounds: null };
+    render(<SettingEditor variable={maps} value="[1]" onChange={onChange} who="Lyra" label="Cartes" />);
+    expect(screen.queryByRole("textbox", { name: /ajouter/ })).toBeNull();
+    expect(screen.getByRole("button", { name: "Retirer la valeur 1" })).toBeTruthy();
   });
 
   it("starts empty when none is set, and adds nothing for text that holds no value", () => {

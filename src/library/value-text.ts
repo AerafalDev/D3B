@@ -16,6 +16,16 @@ export function valueText(valueType: string, json: string | null, language: stri
   return shapedText({ valueType, list: false, ranges: false }, json, language);
 }
 
+/** A type and shape as the player reads it: "Durée", "Durée · liste", "Zone · par niveau". */
+export function typeText(typed: { valueType: string; list?: boolean; ranges?: boolean }): string {
+  // A type's name is `ValueType`'s, each with its key under `blueprint.type`.
+  const type = i18next.t(`blueprint.type.${typed.valueType}` as never);
+  if (typed.ranges === true) {
+    return i18next.t("library.value.byLevel", { type });
+  }
+  return typed.list === true ? i18next.t("library.value.listOf", { type }) : type;
+}
+
 /** A value of a type and shape: a list or ranges said by how many values or rows they hold, one value by its type. */
 export function shapedText(
   typed: { valueType: string; list?: boolean; ranges?: boolean },

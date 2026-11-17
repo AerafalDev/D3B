@@ -118,8 +118,11 @@ describe("a variable of mine in Details", () => {
     fireEvent.click(screen.getByRole("switch", { name: "Par niveau" }));
     expect(onChange).toHaveBeenLastCalledWith({ ...pods, ranges: true });
     cleanup();
-    render(<VariableEditor variable={{ ...pods, list: true }} usedBy={0} onChange={onChange} onDelete={() => {}} />);
-    expect(screen.queryByRole("textbox", { name: "Plus petite valeur" })).toBeNull();
+    for (const shape of [{ list: true }, { ranges: true }]) {
+      render(<VariableEditor variable={{ ...pods, ...shape }} usedBy={0} onChange={onChange} onDelete={() => {}} />);
+      expect(screen.queryByRole("textbox", { name: "Plus petite valeur" })).toBeNull();
+      cleanup();
+    }
   });
 
   it("deletes it", () => {

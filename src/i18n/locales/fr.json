@@ -464,6 +464,8 @@
       "map": "Carte {{id}}",
       "item": "Objet {{id}}",
       "npc": "PNJ {{id}}",
+      "listOf": "{{type}} · liste",
+      "byLevel": "{{type}} · par niveau",
       "list_one": "{{count}} valeur",
       "list_other": "{{count}} valeurs",
       "ranges_one": "{{count}} tranche",
