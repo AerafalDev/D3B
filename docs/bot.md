@@ -353,7 +353,11 @@ flowchart LR
   a value feeds a wildcard of its shape and types its node, an untyped wildcard never another, a list only a list,
   ranges only ranges, a list of items the items, a percentage a number, any value a Text's hole; a type a kind's
   wildcards do not take (`Kind.types`) is refused when wired. An untyped `≥` stays open to its types (its numbers
-  are only what it reads while none is noted), so it compares durations and times once wired or typed.
+  are only what it reads while none is noted), so it compares durations and times once wired or typed: a wire that
+  feeds as it reads wins, so a percentage or a number notes no type, in either order; another taken type types it
+  while no other wire or value uses its wildcards as numbers, the input an edit replaces not counting; a value given
+  with no type is read as a number, one with a type its kind takes types it, one it does not take is refused, and on a
+  node already typed the type given is not looked at (step 1 of (v2.2), done in code).
 - **Pins** (the owner, 2026-11-17, from a mock-up): a value a filled circle, a list a filled square, ranges a hollow
   square of the type's colour, an untyped wildcard a hollow grey circle (a hollow grey square for a list one), a typed
   wildcard drawn as its type. **Colours by family**: a map teal beside the zone and the route (`#5fb3a1`), an item

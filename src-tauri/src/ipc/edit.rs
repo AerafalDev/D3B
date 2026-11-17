@@ -36,6 +36,10 @@ pub enum GraphEdit {
         node: String,
         pin: String,
         value: Option<String>,
+        /// The type a first value on a wildcard of a node with no type is given as: `duration`, `time`…
+        #[serde(default)]
+        #[specta(optional)]
+        of: Option<String>,
     },
     /// A variable of mine named so, yes or no, under an id made from its name.
     NewVariable { name: String },
@@ -227,9 +231,11 @@ impl TryFrom<GraphEdit> for bot::Edit {
                     })
                     .collect(),
             },
-            // The editor types a value on a wildcard from (v2.2).
-            GraphEdit::Value { node, pin, value } => Self::Value {
-                of: None,
+            GraphEdit::Value { node, pin, value, of } => Self::Value {
+                of: of
+                    .map(|of| serde_json::from_value(serde_json::Value::String(of)))
+                    .transpose()
+                    .map_err(|_| EditError::NotItsType)?,
                 node: Id(node),
                 pin: Id(pin),
                 value: value
@@ -482,6 +488,23 @@ mod tests {
         );
         let blank = parsed(r#"{"edit": "about", "name": " ", "description": ""}"#);
         assert_eq!(changed(&store, "my-harvest", "", blank), Err(EditError::Blank));
+    }
+
+    #[test]
+    fn a_value_comes_with_the_type_it_is_typed_as_and_an_unknown_one_is_refused() {
+        let (_folder, store) = mine("ipc-edit-of");
+        let add =
+            parsed(r#"{"edit": "add", "node": {"does": "kind", "kind": "greater_or_equal"}, "position": [0, 0]}"#);
+        changed(&store, "my-harvest", "events", add).unwrap_or_else(|error| panic!("{error:?}"));
+        let typed = |of: &str| {
+            let json =
+                format!(r#"{{"edit": "value", "node": "greater_or_equal", "pin": "b", "value": "90", "of": "{of}"}}"#);
+            changed(&store, "my-harvest", "events", parsed(&json))
+        };
+        assert_eq!(typed("colour").err(), Some(EditError::NotItsType));
+        let drawn = typed("duration").unwrap_or_else(|error| panic!("{error:?}"));
+        let ge = drawn.graphs[0].nodes.iter().find(|node| node.id == "greater_or_equal");
+        assert_eq!(ge.and_then(|node| node.options.value_type.as_deref()), Some("duration"));
     }
 
     #[test]

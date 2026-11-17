@@ -542,6 +542,8 @@ export type ChoiceView_Deserialize = {
 	family?: NodeFamily | null,
 	fromStep?: number | null,
 	pins: PinView_Deserialize[],
+	/**  The types its wildcards may take, the first while its node notes none; omitted for any type. */
+	types?: string[],
 } & NodeDoes;
 
 /**  A node the picker may add: what it does, its family, the step from which it runs, and its pins. */
@@ -549,6 +551,8 @@ export type ChoiceView_Serialize = {
 	family: NodeFamily | null,
 	fromStep: number | null,
 	pins: PinView_Serialize[],
+	/**  The types its wildcards may take, the first while its node notes none; omitted for any type. */
+	types?: string[],
 } & NodeDoes;
 
 /**  A copy's texts in the player's language: its name, description, and each variable's name and help by id. */
@@ -751,7 +755,9 @@ export type GraphEdit_Deserialize =
 /**  Nodes, with every wire to or from them, and wires, chosen together. */
 { edit: "delete"; nodes: string[]; wires: WireEnds[] } | 
 /**  A value typed on the input `pin` of `node`, as JSON, which no wire feeds; none, or the pin's default, drops it. */
-{ edit: "value"; node: string; pin: string; value?: string | null } | 
+{ edit: "value"; node: string; pin: string; value?: string | null; 
+/**  The type a first value on a wildcard of a node with no type is given as: `duration`, `time`… */
+of?: string | null } | 
 /**  A variable of mine named so, yes or no, under an id made from its name. */
 { edit: "newVariable"; name: string } | 
 /**  The variable of its id made this one, whole; a new type drops what it no longer fits. */
@@ -775,7 +781,9 @@ export type GraphEdit_Serialize =
 /**  Nodes, with every wire to or from them, and wires, chosen together. */
 { edit: "delete"; nodes: string[]; wires: WireEnds[] } | 
 /**  A value typed on the input `pin` of `node`, as JSON, which no wire feeds; none, or the pin's default, drops it. */
-{ edit: "value"; node: string; pin: string; value: string | null } | 
+{ edit: "value"; node: string; pin: string; value: string | null; 
+/**  The type a first value on a wildcard of a node with no type is given as: `duration`, `time`… */
+of?: string | null } | 
 /**  A variable of mine named so, yes or no, under an id made from its name. */
 { edit: "newVariable"; name: string } | 
 /**  The variable of its id made this one, whole; a new type drops what it no longer fits. */
@@ -940,6 +948,10 @@ export type NodeView_Deserialize = {
 	position?: [number, number] | null,
 	/**  An event's priority and mode, as the file sets them. */
 	event?: EventView | null,
+	/**  What it holds beyond its inputs; omitted when nothing. */
+	options?: OptionsView_Deserialize,
+	/**  The types its wildcards may take, the first while it notes none; omitted for any type. */
+	types?: string[],
 } & NodeDoes;
 
 /**  A node of a graph. */
@@ -960,7 +972,49 @@ export type NodeView_Serialize = {
 	position: [number, number] | null,
 	/**  An event's priority and mode, as the file sets them. */
 	event: EventView | null,
+	/**  What it holds beyond its inputs; omitted when nothing. */
+	options?: OptionsView_Serialize,
+	/**  The types its wildcards may take, the first while it notes none; omitted for any type. */
+	types?: string[],
 } & NodeDoes;
+
+/**
+ *  What a node holds beyond its inputs (`bot::Options`): the type its wildcards take, the pins its options make and what
+ *  of the blueprint it names; each omitted when not given.
+ */
+export type OptionsView = OptionsView_Serialize | OptionsView_Deserialize;
+
+/**
+ *  What a node holds beyond its inputs (`bot::Options`): the type its wildcards take, the pins its options make and what
+ *  of the blueprint it names; each omitted when not given.
+ */
+export type OptionsView_Deserialize = {
+	valueType?: string | null,
+	count?: number | null,
+	/**  Switch's cases, each as JSON. */
+	cases?: string[],
+	text?: string | null,
+	expression?: string | null,
+	event?: string | null,
+	variable?: string | null,
+	exit?: string | null,
+};
+
+/**
+ *  What a node holds beyond its inputs (`bot::Options`): the type its wildcards take, the pins its options make and what
+ *  of the blueprint it names; each omitted when not given.
+ */
+export type OptionsView_Serialize = {
+	valueType?: string,
+	count?: number,
+	/**  Switch's cases, each as JSON. */
+	cases?: string[],
+	text?: string,
+	expression?: string,
+	event?: string,
+	variable?: string,
+	exit?: string,
+};
 
 /**  One of a function's inputs or outputs. */
 export type ParameterView = ParameterView_Serialize | ParameterView_Deserialize;
@@ -1001,6 +1055,8 @@ export type PinView_Deserialize = {
 	carries: PinCarries,
 	/**  A list of values (a square pin), rather than one; omitted for no. */
 	list?: boolean,
+	/**  One of its kind's wildcards, typed or not: the editor checks a wire into it by its kind's types. */
+	wildcard?: boolean,
 	/**  Ranges whose rows hold a value, or a list with `list`. */
 	ranges?: boolean,
 	/**  The value an input no wire feeds holds by default, as JSON. */
@@ -1014,6 +1070,8 @@ export type PinView_Serialize = {
 	carries: PinCarries,
 	/**  A list of values (a square pin), rather than one; omitted for no. */
 	list?: boolean,
+	/**  One of its kind's wildcards, typed or not: the editor checks a wire into it by its kind's types. */
+	wildcard?: boolean,
 	/**  Ranges whose rows hold a value, or a list with `list`. */
 	ranges?: boolean,
 	/**  The value an input no wire feeds holds by default, as JSON. */
