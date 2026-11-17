@@ -293,6 +293,18 @@
         "sentence": "Pick the next of {{list}}",
         "description": "Gives the list's element picked least recently, in turn while the list does not change; its memory lasts the whole run."
       },
+      "wait_until": {
+        "sentence": "Wait until {{condition}}",
+        "description": "Waits until the condition holds, read at each change and each second, then Then; after At most, Too long (0: no limit)."
+      },
+      "block": {
+        "sentence": "Block: {{reason}}",
+        "description": "Blocks the character with this reason."
+      },
+      "pause_notify": {
+        "sentence": "Pause and notify: {{text}}",
+        "description": "Tells the player this text and pauses the run; it resumes after this node."
+      },
       "life_percent": {
         "sentence": "Life %",
         "description": "Life, as a percentage of its maximum."
@@ -380,6 +392,8 @@
       "reset": "Reset",
       "first": "First",
       "second": "Second",
+      "longest": "At most",
+      "too_long": "Too long",
       "job": "Profession"
     }
   },
@@ -700,7 +714,8 @@
         "false": "Otherwise:",
         "repeat_body": "Each pass:",
         "while_body": "While it holds:",
-        "for_each_body": "For each element:"
+        "for_each_body": "For each element:",
+        "wait_until_too_long": "Too long:"
       },
       "back": "Back to {{step}}.",
       "on": "Go on to {{step}}.",
@@ -748,6 +763,7 @@
     "delete": "Delete",
     "deleteKey": "Del",
     "doOnce": "Only once",
+    "atMostOf": " (at most {{longest}})",
     "addOutput": "Add an output",
     "removePin": "Remove",
     "pin": {

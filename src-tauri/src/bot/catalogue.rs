@@ -282,6 +282,11 @@ pub(crate) const KINDS: &[Kind] = &[
     of("do_n_times", Flow, &[RUN, exec("reset", Side::In), input("times", Number, Some("1")), THEN], None),
     of("alternate", Flow, &[RUN, exec("first", Side::Out), exec("second", Side::Out)], None),
     of("pick", Flow, &[RUN, wildcard("list", Side::In, true), THEN, wildcard("element", Side::Out, false)], None),
+    // Waits and stops (the owner, 2026-11-17): Wait until a condition, at most a duration (0 for no limit); Block with a
+    // reason; Pause and notify, which pauses the run past itself, so that resuming (step 4) goes on after it.
+    of("wait_until", Flow, &[RUN, input("condition", Bool, None), input("longest", Duration, Some("0")), THEN, exec("too_long", Side::Out)], None),
+    of("block", Flow, &[RUN, input("reason", Text, None)], None),
+    of("pause_notify", Flow, &[RUN, input("text", Text, None), THEN], None),
     of("life_percent", Query, &[output("value", Percentage)], None),
     of("pods_percent", Query, &[output("value", Percentage)], None),
     // The items a profession harvests, from the data's skills (3.7.13.17, `artifacts/studies/items.md`, verified):

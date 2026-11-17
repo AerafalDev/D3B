@@ -293,6 +293,18 @@
         "sentence": "Prendre le suivant de {{list}}",
         "description": "Donne l'élément de la liste pris le moins récemment, à tour de rôle tant que la liste ne change pas ; sa mémoire dure tout le lancement."
       },
+      "wait_until": {
+        "sentence": "Attendre que {{condition}}",
+        "description": "Attend que la condition soit vraie, lue à chaque changement et chaque seconde, puis Alors ; au bout de Au plus, Trop long (0 : sans limite)."
+      },
+      "block": {
+        "sentence": "Bloquer : {{reason}}",
+        "description": "Bloque le personnage avec cette raison."
+      },
+      "pause_notify": {
+        "sentence": "Mettre en pause et prévenir : {{text}}",
+        "description": "Prévient le joueur avec ce texte et met le lancement en pause ; il reprend après ce nœud."
+      },
       "life_percent": {
         "sentence": "Vie %",
         "description": "La vie, en pourcentage du maximum."
@@ -380,6 +392,8 @@
       "reset": "Réarmer",
       "first": "D'abord",
       "second": "Ensuite",
+      "longest": "Au plus",
+      "too_long": "Trop long",
       "job": "Métier"
     }
   },
@@ -700,7 +714,8 @@
         "false": "Sinon :",
         "repeat_body": "À chaque tour :",
         "while_body": "Tant que c'est vrai :",
-        "for_each_body": "Pour chaque élément :"
+        "for_each_body": "Pour chaque élément :",
+        "wait_until_too_long": "Trop long :"
       },
       "back": "Revenir à {{step}}.",
       "on": "Aller à {{step}}.",
@@ -748,6 +763,7 @@
     "delete": "Supprimer",
     "deleteKey": "Suppr",
     "doOnce": "Une seule fois",
+    "atMostOf": " (au plus {{longest}})",
     "addOutput": "Ajouter une sortie",
     "removePin": "Retirer",
     "pin": {

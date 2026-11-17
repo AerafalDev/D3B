@@ -504,8 +504,12 @@ flowchart LR
   comes in, so a Reset is what re-arms it; Alternate's outputs on one line; Pick by each element's JSON and which of
   its copies it is, so one listed twice takes two turns, the memory forgetting what left the list, an empty list
   blocking the character; kept through "restart from the start" once (26) brings restarts, the memory being the
-  run's); the waits and stops (Wait until,
-  Retry, Block, Pause) with a run on the captures. Each kind replaces the tests' own (`test_sequence`, `test_switch`,
+  run's); the waits and stops, in two PRs (settled alone, for their size): Wait until, Block, and Pause and notify
+  (done in code: Wait until read again each second and woken at its longest, "(au plus 5 min)" in its sentence when it
+  has one, its Too long titled "Trop long :", a value not seen yet waited for as Wait for life does (the owner,
+  2026-11-17); Pause and notify telling its text and pausing the run on itself, resumed out of its Then, so a loop's
+  body it ends goes on to its next pass and one ending the flow finishes only once resumed), then Retry with its try
+  chain and a run on the captures. Each kind replaces the tests' own (`test_sequence`, `test_switch`,
   `test_for_each`).
 - **Measured** (nothing acts in the game before step 4): the picker's "boucle" finding the loops; "+" and "Remove"
   with their wires and Ctrl+Z; Switch's cases typed by its type, a case twice a problem; Leave the loop's problem; the

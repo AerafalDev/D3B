@@ -309,6 +309,11 @@ impl Run {
             }
             Step::Return { exit, outputs } => self.returned(exit, outputs),
             Step::Leave => self.leave(),
+            Step::Pause => {
+                self.state = State::Paused;
+                self.wake = None;
+                Then::Stops
+            }
             Step::Finish => self.finish(),
             Step::Block(reason) => self.block(Reason::Said(reason)),
         }

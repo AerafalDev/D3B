@@ -619,6 +619,153 @@ fn pick_takes_the_least_recently_picked_in_turn_and_an_empty_list_blocks() {
     );
 }
 
+/// On start → Wait until the life ≥ 90 %, at most `longest` seconds: Then → "then", Too long → "late".
+fn wait_until(longest: i64) -> Blueprint {
+    let nodes = format!(
+        r#"{{"id": "until", "kind": "wait_until", "inputs": {{"longest": {longest}}}}}, {{"id": "life", "kind": "life_percent"}},
+           {{"id": "ge", "kind": "greater_or_equal", "inputs": {{"b": 90}}}}, {}, {}"#,
+        said("then"),
+        said("late")
+    );
+    let wires = [
+        wire("start", "then", "until", "run"),
+        wire("life", "value", "ge", "a"),
+        wire("ge", "value", "until", "condition"),
+        wire("until", "then", "then", "run"),
+        wire("until", "too_long", "late", "run"),
+    ];
+    graph("", &nodes, &wires.join(", "))
+}
+
+#[test]
+fn wait_until_goes_on_once_its_condition_holds_read_each_second() {
+    let at = Instant::now();
+    let mut waits = run(&wait_until(0));
+    assert_eq!(waits.advance(Some(&view(1, 179, 0)), &Map1, at), &State::Running);
+    assert_eq!(
+        waits.wake(),
+        Some(at + Duration::from_secs(1)),
+        "read again each second"
+    );
+    let later = at + Duration::from_secs(3_600);
+    assert_eq!(
+        waits.advance(Some(&view(1, 179, 0)), &Map1, later),
+        &State::Running,
+        "0: no limit"
+    );
+    assert_eq!(waits.advance(Some(&view(1, 180, 0)), &Map1, later), &State::Finished);
+    assert_eq!(told(&mut waits), ["then"]);
+}
+
+#[test]
+fn wait_until_counts_again_after_an_interruption_and_waits_on_a_value_not_seen_yet() {
+    let at = Instant::now();
+    let second = |seconds| at + Duration::from_secs(seconds);
+    let mut waits = run(&wait_until(60));
+    waits.advance(Some(&view(1, 100, 0)), &Map1, at);
+    assert_eq!(waits.advance(None, &Map1, second(30)), &State::Running, "away");
+    waits.advance(Some(&view(1, 100, 0)), &Map1, second(50));
+    assert_eq!(waits.wake(), Some(second(51)));
+    assert_eq!(
+        waits.advance(Some(&view(1, 100, 0)), &Map1, second(60)),
+        &State::Running,
+        "counted from its return"
+    );
+    assert_eq!(
+        waits.advance(Some(&view(1, 100, 0)), &Map1, second(110)),
+        &State::Finished
+    );
+    assert_eq!(told(&mut waits), ["late"]);
+    let mut unseen = run(&wait_until(0));
+    assert_eq!(
+        unseen.advance(Some(&View::default()), &Map1, at),
+        &State::Running,
+        "no life seen: it waits"
+    );
+    assert_eq!(unseen.wake(), Some(second(1)));
+}
+
+#[test]
+fn wait_until_goes_out_of_too_long_after_its_longest_wait() {
+    let at = Instant::now();
+    let mut waits = run(&wait_until(60));
+    waits.advance(Some(&view(1, 100, 0)), &Map1, at);
+    assert_eq!(waits.wake(), Some(at + Duration::from_secs(1)));
+    let almost = at + Duration::from_millis(59_500);
+    waits.advance(Some(&view(1, 100, 0)), &Map1, almost);
+    assert_eq!(
+        waits.wake(),
+        Some(at + Duration::from_secs(60)),
+        "woken at its longest, not past it"
+    );
+    assert_eq!(
+        waits.advance(Some(&view(1, 100, 0)), &Map1, at + Duration::from_secs(60)),
+        &State::Finished
+    );
+    assert_eq!(told(&mut waits), ["late"]);
+}
+
+#[test]
+fn block_blocks_the_character_with_its_reason() {
+    let nodes = r#"{"id": "stop", "kind": "block", "inputs": {"reason": "Plus de place"}}"#;
+    let mut blocks = run(&graph("", nodes, &wire("start", "then", "stop", "run")));
+    blocks.advance(Some(&view(1, 200, 0)), &Map1, Instant::now());
+    assert_eq!(failed(&blocks), Some(&Reason::Said("Plus de place".to_owned())));
+}
+
+#[test]
+fn pause_and_notify_tells_its_text_and_resumes_after_itself() {
+    let nodes = format!(
+        r#"{{"id": "pause", "kind": "pause_notify", "inputs": {{"text": "Pause"}}}}, {}"#,
+        said("after")
+    );
+    let wires = [
+        wire("start", "then", "pause", "run"),
+        wire("pause", "then", "after", "run"),
+    ];
+    let mut pauses = run(&graph("", &nodes, &wires.join(", ")));
+    let (seen, at) = (view(1, 200, 0), Instant::now());
+    assert_eq!(pauses.advance(Some(&seen), &Map1, at), &State::Paused);
+    assert_eq!(told(&mut pauses), ["Pause"]);
+    pauses.resume();
+    assert_eq!(pauses.advance(Some(&seen), &Map1, at), &State::Finished);
+    assert_eq!(told(&mut pauses), ["after"], "told once, and on past it");
+}
+
+#[test]
+fn pause_ending_a_loops_body_resumes_into_the_next_pass_though_the_character_was_away() {
+    // Repeat 3 → "x" → Pause "p", its Then wired to nothing; Completed → "done".
+    let nodes = format!(
+        r#"{{"id": "rep", "kind": "repeat", "inputs": {{"times": 3}}}}, {{"id": "pause", "kind": "pause_notify", "inputs": {{"text": "p"}}}},
+           {}, {}"#,
+        said("x"),
+        said("done")
+    );
+    let wires = [
+        wire("start", "then", "rep", "run"),
+        wire("rep", "body", "x", "run"),
+        wire("x", "done", "pause", "run"),
+        wire("rep", "completed", "done", "run"),
+    ];
+    let mut pauses = run(&graph("", &nodes, &wires.join(", ")));
+    let (seen, at) = (view(1, 200, 0), Instant::now());
+    assert_eq!(pauses.advance(Some(&seen), &Map1, at), &State::Paused);
+    for pass in 2..=3 {
+        pauses.resume();
+        pauses.advance(None, &Map1, at);
+        assert_eq!(pauses.advance(Some(&seen), &Map1, at), &State::Paused, "pass {pass}");
+    }
+    pauses.resume();
+    assert_eq!(pauses.advance(Some(&seen), &Map1, at), &State::Finished);
+    assert_eq!(told(&mut pauses), ["x", "p", "x", "p", "x", "p", "done"]);
+    // At the end of the flow, it pauses too, and finishes once resumed.
+    let nodes = r#"{"id": "pause", "kind": "pause_notify", "inputs": {"text": "p"}}"#;
+    let mut last = run(&graph("", nodes, &wire("start", "then", "pause", "run")));
+    assert_eq!(last.advance(Some(&seen), &Map1, at), &State::Paused);
+    last.resume();
+    assert_eq!(last.advance(Some(&seen), &Map1, at), &State::Finished);
+}
+
 /// On start → Switch on numbers of `cases`, its value `value`: case 1 → Notify one, case 2 → Notify two,
 /// Otherwise → Notify other.
 fn switch(cases: &str, value: &str) -> Run {
