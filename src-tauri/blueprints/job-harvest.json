@@ -1,5 +1,5 @@
 {
-  "schema": 1, "id": "job-harvest", "name": "Profession harvest", "version": 1,
+  "schema": 2, "id": "job-harvest", "name": "Profession harvest", "version": 1,
   "description": "Harvests a profession's resources in a zone, empties its pods at the bank, and starts again.",
   "variables": [
     {"id": "job", "name": "Profession", "type": "job", "per_character": true, "help": "What it harvests."},

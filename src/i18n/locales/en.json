@@ -246,7 +246,7 @@
         "description": "Chooses what follows by the condition."
       },
       "wait": {
-        "sentence": "Wait {{minutes}} min",
+        "sentence": "Wait {{duration}}",
         "description": "Waits, then what follows."
       },
       "wait_for_life": {
@@ -273,9 +273,13 @@
         "sentence": "Level",
         "description": "The character's level."
       },
-      "at_least": {
+      "greater_or_equal": {
         "sentence": "{{a}} ≥ {{b}}",
         "description": "True when the first value reaches the second."
+      },
+      "minutes": {
+        "sentence": "{{minutes}} min",
+        "description": "A duration of so many minutes."
       },
       "add": {
         "sentence": "{{a}} + {{b}}",
@@ -327,6 +331,7 @@
       "true": "True",
       "false": "False",
       "minutes": "Minutes",
+      "duration": "Duration",
       "a": "A",
       "b": "B",
       "job": "Profession"
@@ -443,6 +448,9 @@
     },
     "value": {
       "percent": "{{value}}%",
+      "seconds": "{{seconds}} s",
+      "minutes": "{{minutes}} min",
+      "minutesSeconds": "{{minutes}} min {{seconds}} s",
       "none": "to choose",
       "yes": "Yes",
       "no": "No",
@@ -575,6 +583,7 @@
       "optionMissing": "This node needs its {{subject}}.",
       "caseNotOfType": "The case {{pin}} is not of the type compared.",
       "caseTwice": "The case {{pin}} is given twice.",
+      "typeNotTaken": "This node does not take this type.",
       "wildcardWithoutType": "This node is wired or given a value before it has a type.",
       "wireToNoPin": "A wire goes to {{pin}}, which this node does not have.",
       "wireTheWrongWay": "A wire is drawn the wrong way on {{pin}}.",

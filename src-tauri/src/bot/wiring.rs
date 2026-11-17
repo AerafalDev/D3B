@@ -66,8 +66,10 @@ pub(crate) fn of_graph(blueprint: &Blueprint, graph: &Graph, found: &mut Vec<Pro
             let (graph, node) = at(&node.id);
             found.push(Problem::NotPure { graph, node });
         }
-        // Wired or given a value, an untyped wildcard is said once for its node; its wires are not looked at.
-        if node.options.value_type.is_none() && uses_wildcards(graph, node) {
+        // Wired or given a value, an untyped wildcard is said once for its node; its wires are not looked at. A kind
+        // with a type by default has none untyped.
+        let untyped = node_pins.iter().any(|pin| matches!(pin.carries, Carries::Wildcard(_)));
+        if untyped && uses_wildcards(graph, node) {
             let (graph, node) = at(&node.id);
             found.push(Problem::WildcardWithoutType { graph, node });
         }
@@ -117,6 +119,13 @@ fn of_options(blueprint: &Blueprint, of_graph: &Graph, node: &Node, found: &mut 
         Does::Kind(id) => catalogue::kind(&id.0),
         _ => None,
     };
+    if let (Some(kind), Some(noted)) = (kind, node.options.value_type)
+        && !kind.types.is_empty()
+        && !kind.types.contains(&noted)
+    {
+        let (graph, node) = (graph.clone(), node.id.clone());
+        found.push(Problem::TypeNotTaken { graph, node });
+    }
     let takes = |option: fn(&Takes) -> bool| kind.is_some_and(|kind| kind.takes.iter().any(option));
     let options = &node.options;
     let given = [
@@ -619,6 +628,31 @@ mod tests {
         });
         let (graph, node, pin) = at("tx", "zone");
         assert_eq!(found, [Problem::ValueNotOfType { graph, node, pin }]);
+    }
+
+    #[test]
+    fn a_comparison_reads_numbers_until_it_notes_a_type_it_takes() {
+        let compare = |options: &str| {
+            after(|blueprint| {
+                let text = format!(
+                    r#"{{"id": "ge", "kind": "greater_or_equal", "options": {options}, "inputs": {{"b": 50}}}}"#
+                );
+                blueprint.graphs[0].nodes.push(node(&text));
+                blueprint.graphs[0]
+                    .nodes
+                    .push(node(r#"{"id": "q", "kind": "life_percent"}"#));
+                blueprint.graphs[0].wires.push(wire("q", "value", "ge", "a"));
+            })
+        };
+        // A percentage feeds the number it reads by default, as "at least" did.
+        assert_eq!(compare("{}"), []);
+        assert_eq!(compare(r#"{"type": "percentage"}"#), []);
+        let other = compare(r#"{"type": "zone"}"#);
+        let not = Problem::TypeNotTaken {
+            graph: id("events"),
+            node: id("ge"),
+        };
+        assert_eq!(other.first(), Some(&not), "{other:?}");
     }
 
     #[test]

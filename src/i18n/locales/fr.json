@@ -246,7 +246,7 @@
         "description": "Choisit la suite selon la condition."
       },
       "wait": {
-        "sentence": "Attendre {{minutes}} min",
+        "sentence": "Attendre {{duration}}",
         "description": "Attend, puis la suite."
       },
       "wait_for_life": {
@@ -273,9 +273,13 @@
         "sentence": "Niveau",
         "description": "Le niveau du personnage."
       },
-      "at_least": {
+      "greater_or_equal": {
         "sentence": "{{a}} ≥ {{b}}",
         "description": "Vrai quand la première valeur atteint la seconde."
+      },
+      "minutes": {
+        "sentence": "{{minutes}} min",
+        "description": "Une durée de tant de minutes."
       },
       "add": {
         "sentence": "{{a}} + {{b}}",
@@ -327,6 +331,7 @@
       "true": "Vrai",
       "false": "Faux",
       "minutes": "Minutes",
+      "duration": "Durée",
       "a": "A",
       "b": "B",
       "job": "Métier"
@@ -443,6 +448,9 @@
     },
     "value": {
       "percent": "{{value}} %",
+      "seconds": "{{seconds}} s",
+      "minutes": "{{minutes}} min",
+      "minutesSeconds": "{{minutes}} min {{seconds}}",
       "none": "à choisir",
       "yes": "Oui",
       "no": "Non",
@@ -574,6 +582,7 @@
       "optionMissing": "Ce nœud a besoin de son option {{subject}}.",
       "caseNotOfType": "Le cas {{pin}} n'est pas du type comparé.",
       "caseTwice": "Le cas {{pin}} est donné deux fois.",
+      "typeNotTaken": "Ce nœud ne prend pas ce type.",
       "wildcardWithoutType": "Ce nœud est relié ou reçoit une valeur avant d'avoir un type.",
       "valueNotOfType": "La valeur de {{pin}} n'est pas de son type.",
       "wireToNoPin": "Un fil va vers {{pin}}, que ce nœud n'a pas.",

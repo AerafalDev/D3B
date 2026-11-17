@@ -54,7 +54,7 @@ pub(crate) fn pins(blueprint: &Blueprint, graph: &Graph, node: &Node) -> Option<
                 let named = node.options.variable.as_ref();
                 named.and_then(|id| variable_of(blueprint, graph, id).map(|it| it.value_type))
             } else {
-                node.options.value_type
+                node.options.value_type.or(kind.types.first().copied())
             };
             if let Some(of) = typed {
                 for pin in &mut pins {

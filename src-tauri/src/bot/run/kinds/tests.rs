@@ -206,6 +206,76 @@ fn notify_tells_its_text_and_goes_on() {
     assert_eq!(looped.notices().len(), crate::bot::run::Notice::KEPT);
 }
 
+/// On start → If [`≥` of its `options`, `a` from N minutes of `minutes`, `b` typed] → True: Finish.
+fn at_least(options: &str, minutes: i64, b: &str) -> Run {
+    run(&read(&format!(
+        r#"{{"schema": 2, "id": "q", "name": "Q", "version": 1, "graphs": [{{"id": "events", "name": "Events",
+  "nodes": [{{"id": "start", "kind": "on_start"}}, {{"id": "min", "kind": "minutes", "inputs": {{"minutes": {minutes}}}}},
+            {{"id": "ge", "kind": "greater_or_equal", "options": {options}, "inputs": {{"b": {b}}}}},
+            {{"id": "if", "kind": "if"}}, {{"id": "end", "kind": "finish"}}],
+  "wires": [{{"from": ["start", "then"], "to": ["if", "run"]}}, {{"from": ["min", "value"], "to": ["ge", "a"]}},
+            {{"from": ["ge", "value"], "to": ["if", "condition"]}}, {{"from": ["if", "true"], "to": ["end", "run"]}}]}}]}}"#
+    ))
+    .unwrap_or_else(|error| panic!("{error}")))
+}
+
+#[test]
+fn n_minutes_are_their_seconds_and_a_comparison_reads_durations_by_their_value() {
+    let at = Instant::now();
+    let condition = |mut run: Run| {
+        run.advance(Some(&View::default()), &Map1, at);
+        run.trace().iter().map(|it| it.value.clone()).next()
+    };
+    let duration = r#"{"type": "duration"}"#;
+    assert_eq!(condition(at_least(duration, 2, "120")), Some(json!(true)));
+    assert_eq!(condition(at_least(duration, 2, "121")), Some(json!(false)));
+    let mut negative = at_least(duration, -1, "0");
+    negative.advance(Some(&View::default()), &Map1, at);
+    let not = Fault::NotOfType {
+        pin: "minutes".to_owned(),
+    };
+    assert_eq!(failed(&negative), Some(&Reason::Fault(not)));
+    let mut long = at_least(duration, i64::MAX, "0");
+    long.advance(Some(&View::default()), &Map1, at);
+    assert_eq!(failed(&long), Some(&Reason::Fault(Fault::TooLarge)));
+}
+
+#[test]
+fn a_comparison_of_times_reads_them_in_the_days_order() {
+    let at = Instant::now();
+    let times = |a: &str, b: &str| {
+        let text = format!(
+            r#"{{"schema": 2, "id": "q", "name": "Q", "version": 1, "graphs": [{{"id": "events", "name": "Events",
+  "nodes": [{{"id": "start", "kind": "on_start"}},
+            {{"id": "ge", "kind": "greater_or_equal", "options": {{"type": "time"}}, "inputs": {{"a": "{a}", "b": "{b}"}}}},
+            {{"id": "if", "kind": "if"}}],
+  "wires": [{{"from": ["start", "then"], "to": ["if", "run"]}}, {{"from": ["ge", "value"], "to": ["if", "condition"]}}]}}]}}"#
+        );
+        let mut run = run(&read(&text).unwrap_or_else(|error| panic!("{error}")));
+        run.advance(Some(&View::default()), &Map1, at);
+        run.trace().iter().map(|it| it.value.clone()).next()
+    };
+    assert_eq!(times("09:30", "08:45"), Some(json!(true)));
+    assert_eq!(times("08:45", "09:30"), Some(json!(false)));
+    assert_eq!(times("23:00", "23:00"), Some(json!(true)));
+}
+
+#[test]
+fn a_wait_whose_minutes_a_wire_fed_in_schema_1_waits_them_through_its_minutes_node() {
+    let at = Instant::now();
+    let text = r#"{"schema": 1, "id": "w", "name": "W", "version": 1,
+      "variables": [{"id": "pause", "name": "Pause", "type": "number", "default": 2}],
+      "graphs": [{"id": "events", "name": "Events",
+        "nodes": [{"id": "start", "kind": "on_start"}, {"id": "pause", "get": "pause"}, {"id": "it", "kind": "wait"},
+                  {"id": "end", "kind": "finish"}],
+        "wires": [{"from": ["start", "then"], "to": ["it", "run"]}, {"from": ["pause", "value"], "to": ["it", "minutes"]},
+                  {"from": ["it", "then"], "to": ["end", "run"]}]}]}"#;
+    let mut waits = run(&read(text).unwrap_or_else(|error| panic!("{error}")));
+    let seen = view(1, 200, 0);
+    assert_eq!(waits.advance(Some(&seen), &Map1, at), &State::Running);
+    assert_eq!(waits.wake(), Some(at + Duration::from_secs(120)));
+}
+
 /// On start → If [`query` ≥ `b`] → True: Finish; False wired to nothing.
 fn compared(query: &str, b: i64) -> Blueprint {
     read(&format!(

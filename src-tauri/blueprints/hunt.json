@@ -1,5 +1,5 @@
 {
-  "schema": 1, "id": "hunt", "name": "Hunt", "version": 1,
+  "schema": 2, "id": "hunt", "name": "Hunt", "version": 1,
   "description": "Fights the monsters of a zone, empties its pods at the bank, and starts again.",
   "variables": [
     {"id": "zone", "name": "Zone", "type": "zone", "per_character": true, "help": "Where to hunt."},

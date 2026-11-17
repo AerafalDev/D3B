@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 import { Switch } from "@/components/ui/switch.tsx";
 import { valueText } from "@/library/value-text.ts";
 import { ZoneField, type ZoneValue } from "@/zone/zone-field.tsx";
+import { parseDuration } from "./duration.ts";
 import { JobSelect } from "./job-select.tsx";
 
 /** The step of the roadmap whose actions use a bank and items, which brings their editors (the owner, 2026-11-16). */
@@ -29,8 +30,8 @@ interface SettingEditorProps {
 
 /**
  * A setting's editor by its type (the owner, 2026-11-16): a Zone's field, a bounded number, a switch, a line of text, a
- * profession; a bank and items say their value only until step 5 brings their editors. A node's input typed in Details
- * takes the same (the owner, 2026-11-17).
+ * profession, a duration; a bank and items say their value only until step 5 brings their editors. A node's input typed
+ * in Details takes the same (the owner, 2026-11-17).
  */
 export function SettingEditor({ variable, value, onChange, who, label }: SettingEditorProps) {
   const { t, i18n } = useTranslation();
@@ -50,6 +51,8 @@ export function SettingEditor({ variable, value, onChange, who, label }: Setting
       );
     case "text":
       return <TextEditor value={value} onChange={onChange} label={label} />;
+    case "duration":
+      return <DurationEditor value={value} onChange={onChange} label={label} />;
     case "job":
       return <JobSelect value={jobValue(value)} onChange={(job) => void onChange(JSON.stringify(job))} label={label} />;
     default:
@@ -145,6 +148,44 @@ function NumberEditor({ variable, value, onChange, label }: Omit<SettingEditorPr
       />
       {percentage && <span className="text-text-muted">%</span>}
     </span>
+  );
+}
+
+/**
+ * A duration typed "1 min 30" (the owner, 2026-11-17: before v2.2, so a Wait's time stays typed), sent as its seconds
+ * when the field is left or Enter is pressed; text that holds none is marked and sent nowhere, and Escape, leaving, or
+ * the back end's refusal puts the value back.
+ */
+function DurationEditor({ value, onChange, label }: Omit<SettingEditorProps, "who" | "variable">) {
+  const { i18n } = useTranslation();
+  const shown = value === null ? "" : valueText("duration", value, i18n.language);
+  const [draft, setDraft] = useState(shown);
+  useEffect(() => setDraft(shown), [shown]);
+  const seconds = parseDuration(draft);
+  const commit = () => {
+    if (seconds !== null && String(seconds) !== value) {
+      void onChange(String(seconds)).then((kept) => kept || setDraft(shown));
+    } else if (seconds === null) {
+      setDraft(shown);
+    }
+  };
+  return (
+    <input
+      type="text"
+      aria-label={label}
+      aria-invalid={seconds === null && !(draft.trim() === "" && value === null)}
+      value={draft}
+      onChange={(event) => setDraft(event.target.value)}
+      onBlur={commit}
+      onKeyDown={(event) => {
+        if (event.key === "Enter") {
+          commit();
+        } else if (event.key === "Escape") {
+          setDraft(shown);
+        }
+      }}
+      className={`${FIELD} w-[96px] tabular-nums`}
+    />
   );
 }
 

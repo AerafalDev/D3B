@@ -109,7 +109,7 @@ flowchart LR
   see this before step N", its reason the id `unseen_before_step_<N>` the interface words (settled alone). Go to a zone
   is done on a map of the zone; Harvest until and Hunt until once the pods reach their share, their harvests' count
   not given before step 5 (a node reading it blocks); Go to the bank on the bank's map, the nearest one failing until
-  step 4's paths; Deposit all but failing until step 5. Wait counts its minutes from when the flow came in, Wait for
+  step 4's paths; Deposit all but failing until step 5. Wait counts its duration from when the flow came in, Wait for
   life waits for the life's share, read each second since it rises with no message; Notify's texts wait in the run, the last 100, for step 4's History. The queries
   read the view when used, one not seen yet (no life read since the connection opened) blocking with what is missing.
 - **What it knows beyond the view** (whether a map is in a zone, a profession's resources) it asks of a `Knows` that
@@ -280,7 +280,7 @@ as one line per case ("Bûcheron → 2.1", "Sinon → 2.4"), Trigger as "Déclen
 section per event of mine by priority beside the game's; values are read in place in the sentence that uses them
 ("Tant que récoltes < objectif"), never as steps.
 
-In the file (`bot::json`, **schema 2**, its shape settled alone, open to change until (v2.1) merges): a map, an item
+In the file (`bot::json`, **schema 2**, its shape settled alone in (v2.1), done in code): a map, an item
 and an NPC are the game's ids (`191104002`, `289`, `774`), a duration its whole seconds (`90`), a time `"HH:MM"` from
 `"00:00"` to `"23:59"`; a variable, a parameter or a local holds `"list": true` for a list, an array of its values,
 and `"ranges": true` for ranges, rows `{"from": 1, "to": 49, "value": …}` with both ends included, in any order, each
@@ -307,7 +307,15 @@ an exit `return_exit` naming it in `options.exit` and a pure function's `result`
 return by an exit and the locals run; an event of mine starts nothing before (26), and a blueprint calling a pure
 function is refused, "result" not running, until the engine reads pure calls; the picker offers neither an event of
 mine nor a return by an exit, which (15) and (16) add from My Blueprint). A
-schema 1 file reads migrated ("at least" to `≥`, Wait's minutes to a duration) and is written as 2 at its next change;
+schema 1 file reads migrated in memory by `bot::schema` ("at least" to `≥` of numbers, a Wait's minutes typed to
+its seconds, ×60, and a Wait whose minutes a wire fed to a node "N minutes" fed by that wire, left of the Wait where
+it is placed; a value no whole minutes held stays and says its problem), and is written as 2 at its next change, so
+a file only read stays as it is (step 4 of (v2.1), done in code: `≥` and N minutes come before v2.4's other values,
+`≥` comparing numbers, percentages and durations by their value and times "HH:MM" by their order, another type
+noted on it a problem, and reading numbers while its node notes no type (the owner, 2026-11-17: as "at least" did,
+so the editor keeps working until (v2.2) types it), a kind's types with the first by default; Wait's input is
+`duration`, 60 s by default, typed in Details as "1 min 30", "5 min" or "90 s", a bare number refused (the owner,
+2026-11-17: v2.2's duration editor brought forward, so a Wait's time stays typed));
 D3B's blueprints ship as 2. A node still does one thing (`kind`, `get`, `set` or `call`), with `options` beside;
 the pins its options make are numbered from 1: Sequence's `then_1` to `then_n`, Switch's `case_1` to `case_n` (the
 cases' values in `options.cases`) and `otherwise`, a list's inputs `in_1` to `in_n`; Text's inputs are its holes'
@@ -554,7 +562,8 @@ The app's own settings are `settings.json` at the folder's root (schema 1, step 
 [shell.md](shell.md#settings)), written whole under the same lock; one that does not read gives the defaults, is
 reported at start and is never written over.
 
-A blueprint's file (`bot::json`, schema 1, the owner's choices of 2026-11-13): its `id`, `name`, `description`,
+A blueprint's file (`bot::json`, schema 1, the owner's choices of 2026-11-13; schema 2 from (v2.1), "The language,
+v2", a schema 1 file migrated as it is read): its `id`, `name`, `description`,
 `version` and `based_on`; its `variables` (`type`, `default`, `bounds`, `per_character`, `memory`, both allowed at once
 as in Unreal, and `help`); its `graphs`, an event graph or, with a `function` signature, a function, each a list of
 `nodes` and of `wires` from `[node, pin]` to `[node, pin]`. A node does one thing: a catalogue `kind`, or `get`, `set`
@@ -565,11 +574,12 @@ schema, not JSON, or not of its shape (a field missing, unknown or given twice, 
 twice, a wire to no node, a default its type or bounds refuse, a node on a variable or function the blueprint lacks)
 opens with its **problems** and cannot run; a node kind this version does not know is one of them.
 
-The **catalogue** (`bot::catalogue`, the owner's v1 list of 2026-11-13) holds 25 kinds by family: the events on start,
+The **catalogue** (`bot::catalogue`, the owner's v1 list of 2026-11-13) holds 25 kinds by family (v1's; v2.1 adds an event of mine, a return by an exit, a pure function's result and N
+minutes, and makes "at least" `≥`, `greater_or_equal`): the events on start,
 life below, pods above, a fight starts (forced: the default fight, then resume), died and an action fails (forced:
 blocked with the reason); the actions go to a zone (step 4), harvest until, go to the bank and deposit
 all but (step 5), hunt until (step 6), and notify; If, Wait, Wait for life (sitting no longer gives life back
-faster: the owner, 2026-11-14) and Finish; the queries life %, pods %, level, at least,
+faster: the owner, 2026-11-14) and Finish; the queries life %, pods %, level, at least (`greater_or_equal` from (v2.1)),
 add and the resources of a profession; a function's entry, done return and failed return. Flow pins are `run` in, `then` out, an action's `done`
 and `failed` with its `reason`; a get has `value`, a set and a call their variable's or function's. Rust holds ids
 only: sentences, descriptions and icons are the interface's. A wire carries one type, but a percentage feeds a number.

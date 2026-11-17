@@ -60,6 +60,8 @@ pub(crate) enum Problem {
     CaseNotOfType { graph: Id, node: Id, pin: Id },
     /// A Switch's case equal to one before it.
     CaseTwice { graph: Id, node: Id, pin: Id },
+    /// A type noted on a node whose kind takes others only: `≥` of zones.
+    TypeNotTaken { graph: Id, node: Id },
     /// A wildcard wired or given a value while its node notes no type.
     WildcardWithoutType { graph: Id, node: Id },
     /// A wire from or to a pin its node does not have.

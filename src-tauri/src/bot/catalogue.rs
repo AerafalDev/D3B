@@ -36,13 +36,6 @@ pub(crate) enum Carries {
     Value(Type),
     /// Any value, of any type: a Text's hole. It takes no type and gives none.
     Any,
-    #[cfg_attr(
-        not(test),
-        expect(
-            dead_code,
-            reason = "v2's flow and values bring the first kinds of wildcards (docs/now.md)"
-        )
-    )]
     Wildcard(Shape),
 }
 
@@ -110,6 +103,15 @@ const fn input(id: &'static str, value_type: ValueType, default: Option<&'static
         side: Side::In,
         carries: Carries::one(value_type),
         default,
+    }
+}
+
+const fn wildcard(id: &'static str, side: Side, list: bool) -> Pin {
+    Pin {
+        id,
+        side,
+        carries: Carries::Wildcard(Shape::new(list, false)),
+        default: None,
     }
 }
 
@@ -193,6 +195,9 @@ pub(crate) struct Kind {
     pub(crate) from_step: Option<u8>,
     /// The options it takes beyond its wildcards' type.
     pub(crate) takes: &'static [Takes],
+    /// The types its wildcards may take, the first while its node notes none (the owner, 2026-11-17: `≥` reads numbers
+    /// as "at least" did until the editor types it, (v2.2)); empty for any type and none by default.
+    pub(crate) types: &'static [ValueType],
 }
 
 const fn event(id: &'static str, pins: &'static [Pin], role: EventRole) -> Kind {
@@ -203,6 +208,7 @@ const fn event(id: &'static str, pins: &'static [Pin], role: EventRole) -> Kind 
         event: Some(role),
         from_step: None,
         takes: &[],
+        types: &[],
     }
 }
 
@@ -214,6 +220,7 @@ const fn of(id: &'static str, family: Family, pins: &'static [Pin], from_step: O
         event: None,
         from_step,
         takes: &[],
+        types: &[],
     }
 }
 
@@ -245,7 +252,7 @@ const MINE: EventRole = EventRole {
 };
 
 use Family::{Action, Flow, Function, Query};
-use ValueType::{Bank, Bool, Items, Job, Number, Percentage, Text, Zone};
+use ValueType::{Bank, Bool, Duration, Items, Job, Number, Percentage, Text, Zone};
 
 /// Every kind, the owner's v1 list of 2026-11-13: what D3B's blueprints and the six scenarios need, the rest later.
 #[rustfmt::skip] // One kind per line reads as a table.
@@ -263,7 +270,7 @@ pub(crate) const KINDS: &[Kind] = &[
     of("hunt_until", Action, &[RUN, DONE, FAILED, REASON, input("zone", Zone, None), input("pods", Percentage, Some("90"))], Some(6)),
     of("notify", Action, &[RUN, DONE, input("text", Text, None)], None),
     of("if", Flow, &[RUN, input("condition", Bool, None), exec("true", Side::Out), exec("false", Side::Out)], None),
-    of("wait", Flow, &[RUN, THEN, input("minutes", Number, Some("1"))], None),
+    of("wait", Flow, &[RUN, THEN, input("duration", Duration, Some("60"))], None),
     // Sitting no longer gives life back faster: life comes back alone, out of a fight (the owner, 2026-11-14).
     of("wait_for_life", Flow, &[RUN, THEN, input("life", Percentage, Some("90"))], None),
     of("finish", Flow, &[RUN], None),
@@ -273,7 +280,9 @@ pub(crate) const KINDS: &[Kind] = &[
     // `job-harvest` reads its setting through it (the owner, 2026-11-14).
     of("job_resources", Query, &[input("job", Job, None), output("value", Items)], None),
     of("level", Query, &[output("value", Number)], None),
-    of("at_least", Query, &[input("a", Number, None), input("b", Number, None), output("value", Bool)], None),
+    // v1's "at least", now any two values compared in order (ADR 0016): numbers, percentages, durations, times.
+    Kind { types: &[Number, Percentage, Duration, ValueType::Time], ..of("greater_or_equal", Query, &[wildcard("a", Side::In, false), wildcard("b", Side::In, false), output("value", Bool)], None) },
+    of("minutes", Query, &[input("minutes", Number, Some("1")), output("value", Duration)], None),
     of("add", Query, &[input("a", Number, None), input("b", Number, None), output("value", Number)], None),
     of("entry", Function, &[THEN], None),
     of("return_done", Function, &[RUN], None),
@@ -298,15 +307,6 @@ pub(crate) mod tests {
 
     use super::*;
     use crate::bot::blueprint::Id;
-
-    const fn wildcard(id: &'static str, side: Side, list: bool) -> Pin {
-        Pin {
-            id,
-            side,
-            carries: Carries::Wildcard(Shape::new(list, false)),
-            default: None,
-        }
-    }
 
     const fn taking(kind: Kind, takes: &'static [Takes]) -> Kind {
         Kind { takes, ..kind }

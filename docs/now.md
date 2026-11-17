@@ -541,10 +541,10 @@ _Updated 2026-11-17._
   scripts: compact value nodes and a typed Expression, wildcards, lists and level ranges, flow for a bot, "When …
   becomes true" and events of mine, functions with exits, locals and pure ones, durations and times, randomness, a loop guard
   at run time, the unobserved data marked and studied at its step; before (14), so that the editors of variables,
-  functions and events and the runtime are written once, on the final model, in sixteen PRs: (v2.1) the model in Rust, in four PRs (the owner, 2026-11-17: the second split in two): the new types (an NPC, ranges), lists and wildcard
+  functions and events and the runtime are written once, on the final model, in sixteen PRs: (v2.1) the model in Rust (done in code), in four PRs (the owner, 2026-11-17: the second split in two): the new types (an NPC, ranges), lists and wildcard
   pins in the wiring's check (the owner's choice of 2026-11-17: a wildcard's type noted on its node; done in code); then a node's `options` and the pins they make (done in code); then the blueprint's own events, functions' exits, locals and pure (done in code);
-  then the file's schema 2 and its migration from 1 (in a `bot/` subfolder, the folder holding ten files), D3B's
-  blueprints in 2; each kind's problems come with the PR that brings the kind; (v2.2) the editor reads it: wildcards and
+  then the file's schema 2 and its migration from 1 (in `bot/schema/`, the folder holding ten files), D3B's
+  blueprints in 2, with `≥` and N minutes brought before v2.4 for "at least" and Wait's minutes (done in code); each kind's problems come with the PR that brings the kind; (v2.2) the editor reads it: wildcards and
   lists (a square pin) in the drag's check, a node's options ("+" a case, an output), the new types' colours and
   values typed (a duration, a time, a map, an item, ranges as a table pasted from text); (v2.3) the flow's kinds and how the Summary reads them; (v2.4)
   the values: comparisons, logic, arithmetic, randomness, text, durations, lists, drawn compact; (v2.5) the queries
