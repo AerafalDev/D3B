@@ -3,7 +3,7 @@ import { lazy, Suspense, useEffect, useMemo, useState } from "react";
 import { useHotkeys } from "react-hotkeys-hook";
 import { useTranslation } from "react-i18next";
 
-import type { ProblemView } from "@/bindings.ts";
+import type { GraphEdit_Deserialize, ProblemView } from "@/bindings.ts";
 import { BlueprintDetails, type Selection } from "@/blueprint/details/blueprint-details.tsx";
 import { useGraphs } from "@/blueprint/graph-store.ts";
 import { MyBlueprint } from "@/blueprint/my-blueprint.tsx";
@@ -105,6 +105,25 @@ export function BlueprintTab({ api, params }: IDockviewPanelProps<BlueprintParam
     blueprint.given ? givenText(blueprint.id, path, fallback) : fallback;
   const graphs = read_?.state === "read" ? read_.graphs.graphs : [];
   const shownGraph = graphs.find((graph) => graph.id === shown) ?? graphs[0];
+  // A variable's edit is the blueprint's, whichever graph shows; the Library's variables and problems follow.
+  const blueprintEdit = (change: GraphEdit_Deserialize) =>
+    edit(blueprint.id, shownGraph?.id ?? "", change).then(async (saved) => {
+      if (saved) {
+        await refresh();
+      }
+      return saved;
+    });
+  const addVariable = () => {
+    const before = new Set(blueprint.variables.map((variable) => variable.id));
+    void blueprintEdit({ edit: "newVariable", name: t("blueprint.newVariable") }).then(() => {
+      // The new one is the variable the Library did not list before: Details shows it, to be named and typed.
+      const now = useLibrary.getState().blueprints.find((one) => one.id === blueprint.id);
+      const made = now?.variables.find((variable) => !before.has(variable.id));
+      if (made !== undefined) {
+        setSelection({ kind: "variable", id: made.id });
+      }
+    });
+  };
   // The nodes of the graph shown that a problem names, marked in the graph.
   const problems = read_?.state === "read" ? read_.graphs.problems : NO_PROBLEMS;
   const faulty = problems
@@ -189,6 +208,7 @@ export function BlueprintTab({ api, params }: IDockviewPanelProps<BlueprintParam
               }}
               chosen={selection?.kind === "variable" ? selection.id : null}
               onChoose={(variable) => setSelection({ kind: "variable", id: variable })}
+              onAddVariable={blueprint.given ? undefined : addVariable}
             />
             {view === "summary" ? (
               <Summary
@@ -237,6 +257,15 @@ export function BlueprintTab({ api, params }: IDockviewPanelProps<BlueprintParam
               problems={read_.graphs.problems}
               selection={selection}
               names={names}
+              onVariable={blueprint.given ? undefined : (variable) => blueprintEdit({ edit: "variable", variable })}
+              onDeleteVariable={
+                blueprint.given
+                  ? undefined
+                  : (variable) => {
+                      setSelection(null);
+                      void blueprintEdit({ edit: "deleteVariable", variable });
+                    }
+              }
               onValue={
                 blueprint.given || shownGraph === undefined
                   ? undefined

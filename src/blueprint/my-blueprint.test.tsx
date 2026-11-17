@@ -90,4 +90,27 @@ describe("My Blueprint", () => {
       [...(list?.querySelectorAll("button") ?? [])].map((button) => button.textContent);
     expect([...names(graphList), ...names(functionList)]).toEqual(["Event graph", "Combats", "Vider à la banque"]);
   });
+
+  it("offers to add a variable and to drag one onto the graph in a blueprint of mine only", () => {
+    const onAddVariable = vi.fn();
+    const mine = { ...harvest, given: false };
+    render(
+      <MyBlueprint blueprint={mine} graphs={graphs} shown="events" onShow={() => {}} onAddVariable={onAddVariable} />,
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Ajouter une variable" }));
+    expect(onAddVariable).toHaveBeenCalledOnce();
+    const pods = screen.getByText("pods").closest("button");
+    expect(pods?.getAttribute("draggable")).toBe("true");
+    const data = new Map<string, string>();
+    const dataTransfer = { setData: (type: string, value: string) => data.set(type, value), effectAllowed: "" };
+    if (pods) {
+      fireEvent.dragStart(pods, { dataTransfer });
+    }
+    expect(data.get("application/x-d3b-variable")).toBe("pods");
+    cleanup();
+
+    render(<MyBlueprint blueprint={harvest} graphs={graphs} shown="events" onShow={() => {}} />);
+    expect(screen.queryByRole("button", { name: "Ajouter une variable" })).toBeNull();
+    expect(screen.getByText("Banque à").closest("button")?.getAttribute("draggable")).toBe("false");
+  });
 });

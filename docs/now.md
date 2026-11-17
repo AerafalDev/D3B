@@ -299,6 +299,21 @@ _Updated 2026-11-17._
     4. add "Écrire Banque à" (Banque à is bounded from 10 to 100): 5 is refused, 50 kept; add "Aller dans …": its
        "Zone" is the Zone field, its target choosing on the World's map and coming back to the blueprint's tab; clear
        a Prévenir's text and press Enter: its value goes and its problem comes back.
+- **step 3, my variables** ((14)'s first PR, the owner's choices of 2026-11-17), on Windows x64 from `bun run app` on
+  `next` or the next release:
+    1. open Récolte automatique: no "+" on Variables, its variables do not drag, Details only says them;
+    2. in a copy of mine, "+" on Variables: "Nouvelle variable" joins the list, chosen, Details showing its fields;
+       name it "Objectif", type Nombre, default 5000, bounds 0 to 10000, "Réglage par personnage" on, an help line:
+       each is in `Documents/D3B/blueprints/<id>.json` at once (`"id": "nouvelle-variable"`), and Ctrl+Z (outside a
+       field) undoes them one by one;
+    3. give the copy to a character: its tab shows "Objectif" at 5000; set it to 7000 there, then in the editor narrow
+       the bounds to 0 to 6000: the character's 7000 goes (its file holds no `objectif`) and its tab says 5000; narrow
+       them to 0 to 4000: the default becomes 4000;
+    4. drag "Objectif" onto the graph: a menu "Lire Objectif" / "Écrire Objectif" opens at the pointer, Escape closes
+       it; drag again with Ctrl held: a Lire node at once; with Alt: an Écrire node; wire the Lire into "Attendre …
+       min", then make Objectif a Texte: the wire goes, the Écrire's value with it;
+    5. "Supprimer la variable": it goes with its Lire and Écrire nodes and their wires, without a question; Ctrl+Z
+       brings all back.
 - **step 3, Advanced tools** ((24)), on Windows x64 from `bun run app` on `next` or the next release:
   Measured by the owner on 2026-11-17, Windows x64, `bun run app` on `next` 60cf228: items 1, 2, 3 and 5 pass, and 4 but
   for the palette's command, not tried. The owner then asked for the panel closed by default and opened by a character
@@ -468,9 +483,8 @@ _Updated 2026-11-17._
   through the IPC (done in code), then Delete, Backspace and a context menu in the graph, Ctrl+Z and Ctrl+Y, and
   Delete in the Library (done in code; its checklist under "Not measured"); the owner's requests of 2026-11-17, before
   v2 (the owner's choices of that day): values typed on a node's inputs in Details (done in code; its checklist under
-  "Not measured"), then my variables, (14)'s first PR, in two PRs: created, changed and deleted through
-  `edit_blueprint`, the characters' settings following (done in code), then My Blueprint's "+", Details and the drag
-  onto the graph; then renaming a blueprint of mine; then **blueprints v2**
+  "Not measured"), then my variables, (14)'s first PR (done in code; its checklist under "Not measured"), then
+  renaming a blueprint of mine; then **blueprints v2**
   ([bot.md](bot.md#the-language-v2), ADR 0016; the owner, 2026-11-16, after trying (12): "much more complete", "as
   practical as a Lua script"), from a mock-up of the catalogue and the Summary and an analysis of the reference Lua
   scripts: compact value nodes and a typed Expression, wildcards, lists and level ranges, flow for a bot, "When …

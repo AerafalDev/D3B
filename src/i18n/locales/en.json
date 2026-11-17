@@ -528,7 +528,12 @@
       "reset": "Back to the default ({{value}})",
       "usedBy": "Used by",
       "nodes_one": "{{count}} node",
-      "nodes_other": "{{count}} nodes"
+      "nodes_other": "{{count}} nodes",
+      "name": "Name",
+      "memoryToggle": "Memory: kept across sessions",
+      "deleteVariable": "Delete the variable",
+      "smallest": "Smallest value",
+      "largest": "Largest value"
     },
     "problem": {
       "malformedId": "\"{{subject}}\" is not a valid id.",
@@ -618,7 +623,11 @@
     "notSaved": "The change was not saved: {{reason}}",
     "editRefused": "The change was not saved: the blueprint is read again.",
     "delete": "Delete",
-    "deleteKey": "Del"
+    "deleteKey": "Del",
+    "newVariable": "New variable",
+    "addVariable": "Add a variable",
+    "get": "Read {{name}}",
+    "dropVariable": "Read or write {{name}}"
   },
   "world": {
     "title": "World",

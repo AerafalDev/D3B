@@ -11,6 +11,7 @@ import {
   ReactFlow,
   ReactFlowProvider,
   useReactFlow,
+  type XYPosition,
 } from "@xyflow/react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -31,6 +32,8 @@ import { GraphPins, type PinOf } from "./edit/graph-pins.ts";
 import { type LinkEnd, linkRefusal } from "./edit/link-check.ts";
 import { Picker } from "./edit/picker.tsx";
 import { keptSelection } from "./edit/selection.ts";
+import { droppedAs, VARIABLE_DRAG } from "./edit/variable-drop.ts";
+import { VariableMenu } from "./edit/variable-menu.tsx";
 import { chosenNode, graphElements } from "./graph-elements.ts";
 import { type PillNode, VariablePill } from "./variable-pill.tsx";
 import { WireEdge } from "./wire-edge.tsx";
@@ -96,7 +99,18 @@ function Graph({ graph, names, faulty, chosen = null, onChoose, onEdit }: Bluepr
   // The pointer's last place on the pane, where Space opens the picker.
   const pointer = useRef({ x: 0, y: 0 });
   const [opened, setOpened] = useState<Opened | null>(null);
+  // A variable dropped from My Blueprint, asking whether to read or write it: where, and which.
+  const [asking, setAsking] = useState<{ client: { x: number; y: number }; at: XYPosition; variable: string } | null>(
+    null,
+  );
   const editable = onEdit !== undefined;
+  const addVariable = (does: "get" | "set", variable: string, at: XYPosition) =>
+    onEdit?.({
+      edit: "add",
+      node: { does, variable },
+      position: [Math.round(at.x), Math.round(at.y)],
+      wiredTo: null,
+    });
   const open = (client: { x: number; y: number }, dragged: LinkEnd | null) =>
     setOpened({ client, at: flow.screenToFlowPosition(client), dragged });
   // The picker closed, the graph keeps the keyboard, so Space opens it again.
@@ -168,6 +182,28 @@ function Graph({ graph, names, faulty, chosen = null, onChoose, onEdit }: Bluepr
             ref={box}
             tabIndex={-1}
             className="relative h-full w-full outline-none"
+            // A variable dragged from My Blueprint is read with Ctrl, written with Alt, else a small menu asks.
+            onDragOver={(event) => {
+              if (editable && event.dataTransfer.types.includes(VARIABLE_DRAG)) {
+                event.preventDefault();
+                event.dataTransfer.dropEffect = "copy";
+              }
+            }}
+            onDrop={(event) => {
+              const variable = event.dataTransfer.getData(VARIABLE_DRAG);
+              if (!editable || variable === "") {
+                return;
+              }
+              event.preventDefault();
+              const client = { x: event.clientX, y: event.clientY };
+              const at = flow.screenToFlowPosition(client);
+              const how = droppedAs(event);
+              if (how === "ask") {
+                setAsking({ client, at, variable });
+              } else {
+                addVariable(how, variable, at);
+              }
+            }}
             onKeyDown={(event) => {
               if (!editable || opened !== null) {
                 return;
@@ -301,6 +337,18 @@ function Graph({ graph, names, faulty, chosen = null, onChoose, onEdit }: Bluepr
                   });
                   close();
                 }}
+              />
+            )}
+            {asking !== null && (
+              <VariableMenu
+                at={{ x: asking.client.x - (corner?.left ?? 0), y: asking.client.y - (corner?.top ?? 0) }}
+                name={names.get(asking.variable) ?? asking.variable}
+                onPick={(does) => {
+                  addVariable(does, asking.variable, asking.at);
+                  setAsking(null);
+                  box.current?.focus({ preventScroll: true });
+                }}
+                onClose={() => setAsking(null)}
               />
             )}
           </div>
