@@ -68,7 +68,7 @@ export function InPlace({ value, label, blank, multiline = false, onSave, classN
     void onSave(trimmed);
   };
   const field = {
-    // biome-ignore lint/a11y/noAutofocus: a click asked to type it now
+    // Focused at once: a click asked to type it now.
     autoFocus: true,
     "aria-label": label,
     value: draft,
