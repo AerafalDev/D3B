@@ -10,6 +10,14 @@ mod edit;
 mod given;
 mod json;
 mod pins;
+#[cfg_attr(
+    not(test),
+    expect(
+        dead_code,
+        reason = "D3B's default blueprints read their ranges from step (v2.10)'s next PRs: Récolte and the five harvest blueprints, then Combat"
+    )
+)]
+mod places;
 mod problems;
 #[cfg_attr(
     not(test),
