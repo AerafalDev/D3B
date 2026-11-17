@@ -404,8 +404,8 @@ its own undo; the editor sends one change at a time, so Rust takes them in their
   2026-11-15): the client's pictures, 28 pixels on the screen at every zoom; where two would overlap, the more useful
   kind stays, chosen over the whole world for a zoom so that moving the map never changes it; nine kinds, the picture
   read before the client's category, which mixes the zaaps with the boats and the banks with the taverns: zaaps,
-  banks, dungeons, workshops, auction houses, class places, other transports, other places and passages, the last two
-  off by default; their switches, with each kind's picture and count, behind "Hints" in the tab's editor action, for
+  banks, dungeons, workshops, auction houses, class places, other transports, other places and passages, all shown at
+  first (the owner, 2026-11-17, in place of the last two off by default of 2026-11-15); their switches, with each kind's picture and count, behind "Hints" in the tab's editor action, for
   the session; a hint's name, and a dungeon's level, on hover in place of its map's. `world_atlas` gives each world its
   hints by kind, each with its name, coordinates, level and picture's file, the one the client lacks drawn as a dot.
   The game's sub-areas as zones (the owner's mock-up 12, 2026-11-15): a Zone's value is a sub-area's id or a zone of

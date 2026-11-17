@@ -17,9 +17,6 @@ export const HINT_KINDS: readonly HintKind[] = [
   "passage",
 ];
 
-/** The kinds hidden until shown: the other places and the passages, which crowd the map (the owner, 2026-11-15). */
-export const HIDDEN_KINDS: ReadonlySet<HintKind> = new Set(["place", "passage"]);
-
 /** A hint to draw, its picture centred on `x, y` of the image at zoom 100. */
 export interface PlacedHint {
   hint: AtlasHint_Serialize;

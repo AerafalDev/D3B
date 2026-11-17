@@ -1,6 +1,6 @@
 # Now
 
-_Updated 2026-11-16._
+_Updated 2026-11-17._
 
 - **Step**: 2, Observe ([ROADMAP.md](../ROADMAP.md)); its first feature, the relay and the client's redirection, is
   designed with the owner ([docs/relay.md](relay.md), ADR 0011); its second, the protocol and its per-build mapping,
@@ -163,7 +163,9 @@ _Updated 2026-11-16._
        shows Récolter; Graphe brings the graph back; a character's tab shows no toggle;
     6. put a broken file in `Documents/D3B/blueprints` (a stray letter), then show the Library again (Personnages,
        then Bibliothèque): "Ignorés 1" appears folded at the bottom; open it: the file, and why in its hover.
-- **step 3, the World**, on Windows x64 from `bun run app` on `next` or the next release:
+- **step 3, the World**, on Windows x64 from `bun run app` on `next` or the next release. Measured by the owner on
+  2026-11-17: items 1 to 11 pass; item 8 changed since at the owner's request (every kind ticked at first), to measure
+  again:
     1. the activity bar has "Monde" under "Bibliothèque"; its view lists "Sous-zones du jeu" by area, folded, each
        area with its count; a click on Astrub unfolds it, its sub-areas by level, then by name;
     2. type "foret" in the search: the areas holding a matching sub-area unfold, the others go; a nonsense word says
@@ -178,8 +180,8 @@ _Updated 2026-11-16._
     7. (with format 4's data, `bun run data:fetch 3.7.13.17`) on the Twelve's map, the hints' pictures stand on their maps, the same size at every
        zoom, more of them as it zooms in, none overlapping, and dragging never changes which are shown; hovering a zaap
        says "Zaap" and its coordinates, a dungeon also its level;
-    8. "Indices" beside the worlds lists the kinds the world holds, each with its picture and count, all ticked but
-       "Autres lieux" and "Passages"; unticking Zaaps takes them off the map with the menu still open; "Tout cacher"
+    8. "Indices" beside the worlds lists the kinds the world holds, each with its picture and count, all ticked,
+       "Autres lieux" and "Passages" too (the owner, 2026-11-17), their pictures on the map; unticking Zaaps takes them off the map with the menu still open; "Tout cacher"
        and "Tout montrer" do what they say; Incarnam's list has only its own kinds;
     9. with nothing chosen, Details on the right of the World tab says "Choisis une sous-zone dans la vue ou sur la
        carte."; choose Forêt d'Astrub in the view: Details says "Forêt d'Astrub", "Sous-zone du jeu · Astrub", Niveau
@@ -408,7 +410,8 @@ _Updated 2026-11-16._
   pictures of 395 KB, graphic 475's missing one counted, an archive of 105 MB in 28 s); format 3 is then never
   published: `client-3.7.13.17-format4.tar.gz` replaces it, published on 2026-11-16 (under "Published"); (9c) the hints on the World's map (the owner's mock-up 11, 2026-11-15): pictures 28 px on screen, those that would
   overlap thinned out by kind over the whole world, a switch per kind behind "Indices" in the tab's editor action, nine
-  kinds told apart by picture before category, the other places and passages off by default (done in code; the nearest
+  kinds told apart by picture before category, the other places and passages off by default, all shown at first since
+  the owner's change of 2026-11-17 (done in code; the nearest
   bank waits for step 4, measured by path with going to the bank);
   (10) sub-areas as zones, a Zone chosen in a list or on the map (the owner's mock-up 12, 2026-11-15: the field's list
   unfolding under it and its target, one click on the map choosing and going back, Details on the World tab's right),
