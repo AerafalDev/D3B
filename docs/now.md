@@ -8,7 +8,7 @@ _Updated 2026-11-17._
   each character and the protocol inspector, on 2026-11-12 ([docs/game.md](game.md)). Steps 0 and 1 are done but
   for their measures below, which the owner takes alongside: the owner started step 2 before them, on 2026-11-11.
 - **Step 3 designed ahead**: what is left of step 2 waits on outside events (the next release for the in-app Restart,
-  the next client patch for the protocol's item 7, a Windows account whose name holds a space or an accent for the
+  client 3.7.14.18, out on 2026-11-16, for the protocol's item 7 before a release carries its pins, a Windows account whose name holds a space or an accent for the
   relay's item 11, testers on macOS and Linux) or on the owner's measures taken alongside (the breed, the life's fix),
   so the owner granted on 2026-11-13 an exception to "the next feature does not start": step 3, the bot's
   model, was designed, from mock-ups then a prototype in the real shell (local branch `prototype/step3-model`, never
@@ -80,7 +80,8 @@ _Updated 2026-11-17._
     `next` or the next release. Never paste a capture. Measured by the owner on 2026-11-12, Windows x64, `bun run app`
     on `next` b200248: items 1 to 6 pass; its two captures replayed through the relay byte for byte and through the
     protocol with no frame not trusted; on 2026-11-13, `bun run app` on `next` d978253, items 1 and 3's counts in the
-    inspector and its items 8 and 9 pass. Not measured yet: item 7, at the next client patch.
+    inspector and its items 8 and 9 pass. Not measured yet: item 7, to take now with v0.14.0 on client 3.7.14.18 (out on
+    2026-11-16), which v0.14.0 has no pins for, before the next release, which will (`next` has them since 2026-11-17).
     Since the new shell (the owner, 2026-11-13), the relay's hover no longer lists the connections: items 1, 2, 4, 5
     and 7 read the Characters view and a character's tab; the counts of items 1 and 3 read the inspector: the panel's
     "Protocol" view under the character's tab (Ctrl+J shows the panel), its counts on its header's line. Since step 3's
@@ -109,7 +110,8 @@ _Updated 2026-11-17._
     release (done in code); (2) the character's sex, read from its look (done in code: the pins' audit holds, and the owner's 54 game connections
     replay with no frame not trusted); (3) the tab's breed name and head (done in code); (4) the
     Characters list's head (done in code). Measured by the owner on 2026-11-13, v0.14.0 installed: items 3 and 4
-    pass. Not measured yet: items 1 and 2 (the owner's own extraction and `data:fetch`), 5 at the next client patch.
+    pass. Not measured yet: items 1 and 2 (the owner's own extraction and `data:fetch`), 5 now with v0.14.0 on client
+    3.7.14.18, whose data it lacks.
     On Windows x64:
     1. on `next` at 25c5c4c or before (format 2; since the items' PR the extractor writes format 3),
        `dotnet run --project tools/extractor/src` also prints "Breeds: 19 breeds, 38 heads of 64 px" and writes
@@ -433,7 +435,9 @@ _Updated 2026-11-17._
   replay of the owner's 225 captures (171 connection phases, 161 handed over, 54 game connections, no failure), the
   status-bar indicator and the restore before an update.
 - **Next**: the owner measures the relay's item 10's status-bar offer with the release after v0.14.0, and item 11 when
-  an account is at hand; the protocol's item 7 at the next client patch, with its pins (`GameAssembly.dll`,
+  an account is at hand; the protocol's item 7 now, with v0.14.0 on client 3.7.14.18, before the release that carries
+  its pins: 3.7.14.18's schema is 3.7.13.17's, so its pins are copied ([protocol.md](protocol.md#on-the-wire)), and Q17,
+  a build that changes the schema, waits for a later patch (`GameAssembly.dll`,
   `global-metadata.dat` and `version` of 3.7.13.17 copied into `artifacts/` for Q17 on 2026-11-13). Step 2's next feature is designed below. The
   protocol's code was a stack of seven PRs against `next`, all merged (#155 to #171): (1) the game connection split into
   frames both ways, with the tap (done in code, in v0.13.0); (2) `relay/capture/` and `D3B_RECORD` (done in code); (3)
