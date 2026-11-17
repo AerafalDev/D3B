@@ -34,6 +34,8 @@ pub(crate) enum Side {
 pub(crate) enum Carries {
     Exec,
     Value(Type),
+    /// Any value, of any type: a Text's hole. It takes no type and gives none.
+    Any,
     #[cfg_attr(
         not(test),
         expect(
@@ -55,7 +57,7 @@ impl Carries {
     /// 2026-11-13), and a list of items into the items actions take (ADR 0016). A wildcard carries nothing yet.
     pub(crate) fn feeds(self, input: Self) -> bool {
         match (self, input) {
-            (Self::Exec, Self::Exec) => true,
+            (Self::Exec, Self::Exec) | (Self::Value(_), Self::Any) => true,
             (Self::Value(from), Self::Value(to)) => {
                 let items = from == Type::new(ValueType::Item, Shape::new(true, false))
                     && to == Type::new(ValueType::Items, Shape::ONE);
@@ -154,6 +156,28 @@ pub(crate) enum Fallback {
     Block,
 }
 
+/// An option a kind takes (`Options`), and the pins it makes.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[cfg_attr(
+    not(test),
+    expect(
+        dead_code,
+        reason = "v2's flow, values and actions bring the first kinds that take options (docs/now.md)"
+    )
+)]
+pub(crate) enum Takes {
+    /// `count`: the pins `<pin>_1` to `<pin>_<count>`, as `pin` is, `least` of them when the node gives no count.
+    Count { pin: Pin, least: u8 },
+    /// `cases`: a flow output `case_<n>` per case, each a value of the node's type.
+    Cases,
+    /// `text`: an input of any value per hole of the template, named by it.
+    Text,
+    /// `expression`: a formula, its pins none (v2.8).
+    Expression,
+    /// `variable`: the variable it changes, whose type its wildcards take, rather than `type`.
+    Variable,
+}
+
 /// A kind of node.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub(crate) struct Kind {
@@ -163,6 +187,8 @@ pub(crate) struct Kind {
     pub(crate) event: Option<EventRole>,
     /// The roadmap step from which the bot does it in the game; the picker marks it until then.
     pub(crate) from_step: Option<u8>,
+    /// The options it takes beyond its wildcards' type.
+    pub(crate) takes: &'static [Takes],
 }
 
 const fn event(id: &'static str, pins: &'static [Pin], role: EventRole) -> Kind {
@@ -172,6 +198,7 @@ const fn event(id: &'static str, pins: &'static [Pin], role: EventRole) -> Kind 
         pins,
         event: Some(role),
         from_step: None,
+        takes: &[],
     }
 }
 
@@ -182,6 +209,7 @@ const fn of(id: &'static str, family: Family, pins: &'static [Pin], from_step: O
         pins,
         event: None,
         from_step,
+        takes: &[],
     }
 }
 
@@ -266,12 +294,21 @@ pub(crate) mod tests {
         }
     }
 
-    /// Kinds of wildcards for the tests, until v2's flow and values bring theirs: `=` of two values of one type, and
-    /// For each element of a list.
+    const fn taking(kind: Kind, takes: &'static [Takes]) -> Kind {
+        Kind { takes, ..kind }
+    }
+
+    /// Kinds for the tests, until v2's flow and values bring theirs: `=` of two values of one type, For each element of
+    /// a list, Sequence, Switch, Text, Add to a variable and an Expression.
     #[rustfmt::skip]
     pub(crate) const WILDCARDS: &[Kind] = &[
         of("test_equal", Query, &[wildcard("a", Side::In, false), wildcard("b", Side::In, false), output("value", Bool)], None),
         of("test_for_each", Flow, &[RUN, wildcard("list", Side::In, true), exec("body", Side::Out), wildcard("element", Side::Out, false), exec("completed", Side::Out)], None),
+        taking(of("test_sequence", Flow, &[RUN], None), &[Takes::Count { pin: exec("then", Side::Out), least: 2 }]),
+        taking(of("test_switch", Flow, &[RUN, wildcard("value", Side::In, false), exec("otherwise", Side::Out)], None), &[Takes::Cases]),
+        taking(of("test_text", Query, &[output("value", Text)], None), &[Takes::Text]),
+        taking(of("test_add_to", Flow, &[RUN, THEN, wildcard("amount", Side::In, false)], None), &[Takes::Variable]),
+        taking(of("test_expression", Query, &[wildcard("value", Side::Out, false)], None), &[Takes::Expression]),
     ];
 
     #[test]

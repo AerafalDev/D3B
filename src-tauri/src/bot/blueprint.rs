@@ -3,7 +3,7 @@
 //! sit, kept apart from the logic under `layout` so that a moved node never changes what the blueprint does.
 
 use std::collections::BTreeMap;
-use std::num::NonZeroU32;
+use std::num::{NonZeroU8, NonZeroU32};
 
 use serde::{Deserialize, Serialize};
 
@@ -130,7 +130,8 @@ pub(crate) struct Node {
     pub(crate) options: Options,
 }
 
-/// What a node of a kind holds beyond its inputs.
+/// What a node of a kind holds beyond its inputs (ADR 0016): the pins it makes and what of the blueprint it names. Each
+/// is schema 2's, even those whose kinds come later, so that a kind added never changes the file's shape.
 #[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub(crate) struct Options {
@@ -138,6 +139,27 @@ pub(crate) struct Options {
     /// by the first wire or value on one of them and dropped with the last.
     #[serde(default, rename = "type", skip_serializing_if = "Option::is_none")]
     pub(crate) value_type: Option<ValueType>,
+    /// How many numbered pins it makes, `<pin>_1` to `<pin>_<count>`: Sequence's outputs, a list's inputs.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub(crate) count: Option<NonZeroU8>,
+    /// Switch's cases, each a value of its type and an output `case_<n>`, from 1.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub(crate) cases: Vec<serde_json::Value>,
+    /// Text's template, each of whose `{holes}` is an input of that name.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub(crate) text: Option<String>,
+    /// An Expression's formula, read by Rust's parser (v2.8).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub(crate) expression: Option<String>,
+    /// The event of mine it is or fires.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub(crate) event: Option<Id>,
+    /// The variable it changes, whose type its wildcards take.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub(crate) variable: Option<Id>,
+    /// The function's exit it returns by.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub(crate) exit: Option<Id>,
 }
 
 impl Options {
@@ -323,6 +345,18 @@ mod tests {
         assert_eq!(untyped.as_deref(), Ok(r#"{"id":"n1","kind":"equal"}"#));
         let unknown = read(r#"{"id": "n1", "kind": "equal", "options": {"colour": "red"}}"#);
         assert!(unknown.is_err_and(|error| error.contains("unknown field `colour`")));
+    }
+
+    #[test]
+    fn a_node_reads_every_option_and_writes_them_back_as_they_were() {
+        let all = r#"{"id":"n1","kind":"k","options":{"type":"job","count":3,"cases":[24,28],"text":"{count} done","expression":"level >= 50","event":"empty","variable":"pods","exit":"full"}}"#;
+        let node = serde_json::from_str::<Node>(all).unwrap_or_else(|error| panic!("{error}"));
+        assert_eq!(node.options.count.map(NonZeroU8::get), Some(3));
+        assert_eq!(serde_json::to_string(&node).ok().as_deref(), Some(all));
+        for refused in [r#"{"count": 0}"#, r#"{"count": 256}"#, r#"{"cases": 24}"#] {
+            let text = format!(r#"{{"id": "n1", "kind": "k", "options": {refused}}}"#);
+            assert!(serde_json::from_str::<Node>(&text).is_err(), "{refused}");
+        }
     }
 
     #[test]

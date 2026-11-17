@@ -559,6 +559,9 @@
       "noSuchInput": "Une valeur est donnée à {{pin}}, que ce nœud n'a pas.",
       "rangesOverlap": "Deux lignes des tranches de {{pin}} partagent un niveau.",
       "noSuchOption": "Ce nœud ne prend pas l'option {{subject}}.",
+      "optionMissing": "Ce nœud a besoin de son option {{subject}}.",
+      "caseNotOfType": "Le cas {{pin}} n'est pas du type comparé.",
+      "caseTwice": "Le cas {{pin}} est donné deux fois.",
       "wildcardWithoutType": "Ce nœud est relié ou reçoit une valeur avant d'avoir un type.",
       "valueNotOfType": "La valeur de {{pin}} n'est pas de son type.",
       "wireToNoPin": "Un fil va vers {{pin}}, que ce nœud n'a pas.",
@@ -585,7 +588,8 @@
       "duration": "Durée",
       "time": "Heure",
       "npc": "PNJ",
-      "wildcard": "Tout type"
+      "wildcard": "Tout type",
+      "any": "Toute valeur"
     },
     "faulty": "A un problème.",
     "summary": {

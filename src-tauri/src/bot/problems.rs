@@ -51,8 +51,14 @@ pub(crate) enum Problem {
     ValueNotOfType { graph: Id, node: Id, pin: Id },
     /// Ranges typed two of whose rows a level reaches at once.
     RangesOverlap { graph: Id, node: Id, pin: Id },
-    /// An option that the node does not take: a type on a node without wildcards.
+    /// An option the node does not take: a type on a node without wildcards, cases on a node that is no Switch…
     NoSuchOption { graph: Id, node: Id, option: Id },
+    /// An option the node's kind needs and it lacks: the variable it changes, an Expression's formula.
+    OptionMissing { graph: Id, node: Id, option: Id },
+    /// A Switch's case that is no value of its type.
+    CaseNotOfType { graph: Id, node: Id, pin: Id },
+    /// A Switch's case equal to one before it.
+    CaseTwice { graph: Id, node: Id, pin: Id },
     /// A wildcard wired or given a value while its node notes no type.
     WildcardWithoutType { graph: Id, node: Id },
     /// A wire from or to a pin its node does not have.

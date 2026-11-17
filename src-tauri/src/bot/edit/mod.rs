@@ -16,7 +16,7 @@ pub(crate) use choices::choices;
 
 use super::blueprint::{Blueprint, Does, End, Graph, Id, Node, Wire};
 use super::catalogue::{Carries, Side};
-use super::pins::{NodePin, pins, uses_wildcards};
+use super::pins::{NodePin, has_wildcards, pins, uses_wildcards};
 use super::variable::{ValueType, Variable};
 
 /// One change the editor makes to a graph.
@@ -237,7 +237,18 @@ fn checked(blueprint: &Blueprint, graph: &Graph, from: End, to: End) -> Result<L
     if from.0 == to.0 {
         return Err(Refusal::SameNode);
     }
-    link(Wire { from, to }, out.carries, input.carries).ok_or(Refusal::OtherType)
+    let link = link(Wire { from, to }, out.carries, input.carries).ok_or(Refusal::OtherType)?;
+    typeable(graph, &link)?;
+    Ok(link)
+}
+
+/// Refuses a link that would type a kind that changes a variable, which takes its type from it alone.
+fn typeable(graph: &Graph, link: &Link) -> Result<(), Refusal> {
+    let Some((id, _)) = &link.typed else { return Ok(()) };
+    match graph.nodes.iter().find(|it| &it.id == id) {
+        Some(node) if !has_wildcards(node) => Err(Refusal::OtherType),
+        _ => Ok(()),
+    }
 }
 
 /// The wire between the pin a wire dropped on the ground came from and `new`'s first pin that fits it.
@@ -486,6 +497,77 @@ mod tests {
             done(&mut blueprint, change.clone());
             assert_eq!(typed(&blueprint, "eq"), None, "{change:?}");
         }
+    }
+
+    #[test]
+    fn a_switch_keeps_its_type_while_it_has_cases_and_a_hole_takes_any_value() {
+        let mut blueprint = harvest();
+        let more = [
+            r#"{"id": "sw", "kind": "test_switch", "options": {"type": "job", "cases": [24]}}"#,
+            r#"{"id": "tx", "kind": "test_text", "options": {"text": "{count} done"}}"#,
+            r#"{"id": "add", "kind": "test_add_to"}"#,
+        ];
+        for node in more {
+            let node = serde_json::from_str(node).unwrap_or_else(|error| panic!("{error}"));
+            blueprint.graphs[0].nodes.push(node);
+        }
+        done(&mut blueprint, value("n3", "pods", Some(serde_json::json!(80))));
+        assert_eq!(
+            typed(&blueprint, "sw"),
+            Some(ValueType::Job),
+            "its cases are of its type"
+        );
+        done(&mut blueprint, value("tx", "count", Some(serde_json::json!("five"))));
+        let refusals = vec![
+            (value("tx", "count", Some(serde_json::json!(5))), Refusal::NotItsType),
+            (value("tx", "count", Some(serde_json::Value::Null)), Refusal::NotItsType),
+        ];
+        refused(&mut blueprint, refusals);
+        done(&mut blueprint, wire(("n3", "count"), ("tx", "count")));
+        // Without its variable, Add to has no type to take from a wire or a value.
+        let as_number = Edit::Value {
+            node: id("add"),
+            pin: id("amount"),
+            value: Some(serde_json::json!(5)),
+            of: Some(ValueType::Number),
+        };
+        let refusals = vec![
+            (value("add", "amount", Some(serde_json::json!(5))), Refusal::NotItsType),
+            (as_number, Refusal::NotItsType),
+            (wire(("n3", "count"), ("add", "amount")), Refusal::OtherType),
+        ];
+        refused(&mut blueprint, refusals);
+    }
+
+    #[test]
+    fn a_node_naming_a_variable_follows_its_change_and_goes_with_it() {
+        let mut blueprint = harvest();
+        let more = [
+            r#"{"id": "add", "kind": "test_add_to", "options": {"variable": "pods"}, "inputs": {"amount": 5}}"#,
+            r#"{"id": "q", "kind": "pods_percent"}"#,
+            r#"{"id": "add2", "kind": "test_add_to", "options": {"variable": "pods"}}"#,
+        ];
+        for node in more {
+            let node = serde_json::from_str(node).unwrap_or_else(|error| panic!("{error}"));
+            blueprint.graphs[0].nodes.push(node);
+        }
+        done(&mut blueprint, wire(("q", "value"), ("add2", "amount")));
+        let pods = blueprint.variables.iter().find(|it| it.id.0 == "pods").cloned();
+        let zone = Variable {
+            value_type: ValueType::Zone,
+            default: serde_json::Value::Null,
+            bounds: None,
+            ..pods.unwrap_or_else(|| panic!("pods"))
+        };
+        done(&mut blueprint, Edit::Variable(zone));
+        assert!(
+            !has(&blueprint, "q.value", "add2.amount"),
+            "a percentage no longer fits a zone"
+        );
+        let add = blueprint.graphs[0].nodes.iter().find(|it| it.id.0 == "add");
+        assert_eq!(add.map(|it| it.inputs.len()), Some(0), "5 is no zone");
+        done(&mut blueprint, Edit::DeleteVariable { id: id("pods") });
+        assert!(blueprint.graphs[0].nodes.iter().all(|it| !it.id.0.starts_with("add")));
     }
 
     #[test]
