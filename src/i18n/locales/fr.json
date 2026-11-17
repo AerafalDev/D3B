@@ -564,7 +564,7 @@
       "wireToNoPin": "Un fil va vers {{pin}}, que ce nœud n'a pas.",
       "wireTheWrongWay": "Un fil est tiré à l'envers sur {{pin}}.",
       "wireOfAnotherType": "Un fil relie des types différents depuis {{pin}}.",
-      "wireOfAnotherShape": "Un fil relie une liste et une valeur seule depuis {{pin}}.",
+      "wireOfAnotherShape": "Un fil relie une liste ou des tranches à un pin d'une autre forme depuis {{pin}}.",
       "outputWiredTwice": "La sortie {{pin}} part vers deux suites.",
       "inputFedTwice": "L'entrée {{pin}} reçoit deux valeurs.",
       "inputWithoutValue": "L'entrée {{pin}} n'a pas de valeur.",

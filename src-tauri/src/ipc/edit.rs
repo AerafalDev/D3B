@@ -227,7 +227,9 @@ impl TryFrom<GraphEdit> for bot::Edit {
                     })
                     .collect(),
             },
+            // The editor types a value on a wildcard from (v2.2).
             GraphEdit::Value { node, pin, value } => Self::Value {
+                of: None,
                 node: Id(node),
                 pin: Id(pin),
                 value: value

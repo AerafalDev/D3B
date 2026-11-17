@@ -287,9 +287,10 @@ and `"ranges": true` for ranges, rows `{"from": 1, "to": 49, "value": …}` with
 row's value one or, with `"list"`, a list; two rows a level reaches at once are a problem, a gap none (the runtime says
 what a level in no row does). A wildcard's type is the node's `options.type` (`{"type": "zone"}`), set by the editor's
 first wire to one of its wildcards, of the wildcard's shape (a list into a list's), and dropped with its last wire or
-value; a value is typed on a wildcard once its node has a type, two wildcards are never wired to each other, and a
+value, a variable's change or deletion included; a first value on a wildcard of a node with no type is typed as a
+type the editor gives with it (from (v2.2)), which the node notes; two wildcards are never wired to each other, and a
 list of items feeds the items actions take, a list never one value. Bounds hold for a single number or percentage
-only. a node's own pins (Sequence's outputs, Switch's cases, Text's
+only. A node's own pins (Sequence's outputs, Switch's cases, Text's
 holes, a list's inputs) and the event, variable or exit it names are its `options`; the blueprint's own `events`
 beside its `graphs`, each with its id, name and inputs; a function's signature gains `exits`, `locals` and `pure`. A
 schema 1 file reads migrated ("at least" to `≥`, Wait's minutes to a duration) and is written as 2 at its next change;

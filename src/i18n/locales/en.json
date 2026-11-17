@@ -564,7 +564,7 @@
       "wireToNoPin": "A wire goes to {{pin}}, which this node does not have.",
       "wireTheWrongWay": "A wire is drawn the wrong way on {{pin}}.",
       "wireOfAnotherType": "A wire joins different types from {{pin}}.",
-      "wireOfAnotherShape": "A wire joins a list and a single value from {{pin}}.",
+      "wireOfAnotherShape": "A wire joins a list or ranges to a pin of another shape from {{pin}}.",
       "outputWiredTwice": "The output {{pin}} leads to two next steps.",
       "inputFedTwice": "The input {{pin}} gets two values.",
       "inputWithoutValue": "The input {{pin}} has no value.",

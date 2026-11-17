@@ -159,7 +159,12 @@ impl ValueType {
 
 /// `"HH:MM"`, from `"00:00"` to `"23:59"`.
 fn is_time(text: &str) -> bool {
-    let two = |part: &str, below: u8| part.len() == 2 && part.parse::<u8>().is_ok_and(|whole| whole < below);
+    // Digits only: a number's parse would take `+1`.
+    let two = |part: &str, below: u8| {
+        part.len() == 2
+            && part.bytes().all(|byte| byte.is_ascii_digit())
+            && part.parse::<u8>().is_ok_and(|it| it < below)
+    };
     text.split_once(':')
         .is_some_and(|(hours, minutes)| two(hours, 24) && two(minutes, 60))
 }
@@ -306,6 +311,8 @@ mod tests {
             (ValueType::Time, json!("23:60")),
             (ValueType::Time, json!("9:00")),
             (ValueType::Time, json!("09:00:00")),
+            (ValueType::Time, json!("+1:00")),
+            (ValueType::Time, json!("09:+5")),
             (ValueType::Time, json!(900)),
             (ValueType::Npc, json!("Otomaï")),
         ];
