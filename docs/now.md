@@ -1,6 +1,6 @@
 # Now
 
-_Updated 2026-11-16._
+_Updated 2026-11-17._
 
 - **Step**: 2, Observe ([ROADMAP.md](../ROADMAP.md)); its first feature, the relay and the client's redirection, is
   designed with the owner ([docs/relay.md](relay.md), ADR 0011); its second, the protocol and its per-build mapping,
@@ -194,6 +194,10 @@ _Updated 2026-11-16._
        worlds' menu are the same height.
 - **step 3, my zones painted** ((20)), on Windows x64 from `bun run app` on `next` or the next release, with format 4's
   data:
+  Measured by the owner on 2026-11-17, Windows x64, `bun run app` on `next` 60cf228: item 1 passes, and 2 to 5 but for
+  what was not tried (Space with the main button, V then a click, F2, Renommer, a blank name or Escape, the file's
+  form); a zone of mine is listed first in a character's Zone field. Not measured yet: choosing it there (item 6), its
+  deletion (7) and a file kept (8).
     1. the World view says "Mes zones" above the sub-areas, "Aucune zone : « + » en peint une."; click "+": "Nouvelle
        zone" appears with 0 carte, the World tab opens on the world it showed, the brush pressed in the toolbar on top,
        "Nouvelle zone" and "Zone à moi · 0 carte" on top left, Details with its name and "Aucune : peins ses cartes.";
@@ -212,6 +216,9 @@ _Updated 2026-11-16._
     8. put a stray letter in a zone's file: the Library's "Ignorés" lists it, and it is never written over.
 - **step 3, a character's blueprint and settings** ((10)'s Zone field and (11)), on Windows x64 from `bun run app` on
   `next` or the next release, with format 4's data:
+  Measured by the owner on 2026-11-17, Windows x64, `bun run app` on `next` 60cf228: items 1, 3, 4, 6 and 8 pass, and 2,
+  5 and 7 but for what was not tried (the arrow opening the blueprint's tab, "Zone de A et B", the file's schema and an
+  older file still reading). Not measured yet: item 9.
     1. play a character: its tab says "Blueprint", "Aucun blueprint" in the list, its arrow greyed, no setting; then
        its state and map as before;
     2. choose Récolte automatique: Zone "À choisir", Banque à 90 %, Banque "La plus proche" and Garder "Rien", both
@@ -234,6 +241,8 @@ _Updated 2026-11-16._
     9. duplicate Récolte automatique, give it to a character, then delete its file by hand and restart D3B: the list says "Blueprint
        <id> introuvable" and no setting shows.
 - **step 3, a blueprint's graph edited** ((12)), on Windows x64 from `bun run app` on `next` or the next release:
+  Measured by the owner on 2026-11-17, Windows x64, `bun run app` on `next` 60cf228: items 1 to 5 pass: (12) is measured
+  on Windows x64.
     1. open Récolte automatique: its nodes do not move, no wire can be drawn, a right-click or Space opens nothing;
        the wire from "Déposer à la banque" back to "Aller dans" runs under the nodes, no line leaving the screen, and
        no mini-map in the bottom right corner;
@@ -250,6 +259,10 @@ _Updated 2026-11-16._
        no text: one).
 - **step 3, deleting and undoing in a blueprint's graph** ((13)), on Windows x64 from `bun run app` on `next` or the
   next release:
+  Measured by the owner on 2026-11-17, Windows x64, `bun run app` on `next` 60cf228: item 6 passes, and 2 to 5 but for
+  what was not tried (Ctrl+Shift+Z, Delete with the Library's list focused, a right-click inside a box, two nodes moved
+  together undone in one step, the file following each change, after a restart). Not measured yet: item 1, and Ctrl+Z in
+  the picker's search (item 4).
     1. open Récolte automatique: a click on a node then Delete or Backspace removes nothing, a right-click on a node
        offers no "Supprimer", Ctrl+Z changes nothing;
     2. duplicate it and open the copy: click "Récolter", press Delete: it goes with its four wires, at once, without
@@ -269,6 +282,9 @@ _Updated 2026-11-16._
        restore the file from the trash and reopen the Library: it is back, and the character runs it again with its
        values.
 - **step 3, Advanced tools** ((24)), on Windows x64 from `bun run app` on `next` or the next release:
+  Measured by the owner on 2026-11-17, Windows x64, `bun run app` on `next` 60cf228: items 1, 2, 3 and 5 pass, and 4 but
+  for the palette's command, not tried. Not measured yet: item 6. The owner then asked for the panel closed by default
+  and opened by a character online (2026-11-17), the next PR's work.
     1. with no `Documents/D3B/settings.json`, start D3B: no panel under the editor area, no panel toggle in the title
        bar, no Panneau in Affichage, Ctrl+J does nothing, and the palette has no "Afficher ou masquer le panneau";
     2. Affichage > Outils avancés: the panel slides open on the Protocol view, the toggle, Panneau and Ctrl+J come
@@ -292,6 +308,8 @@ _Updated 2026-11-16._
        Library row, its hover and its tab's line saying "son original a une version plus récente, v2"; a character
        running it keeps its values, a notice naming any lost.
 - **step 3, the `.d3b` file** ((22)), on Windows x64 from `bun run app` on `next` or the next release:
+  Measured by the owner on 2026-11-17, Windows x64, `bun run app` on `next` 60cf228: items 1, 2 and 3 pass, and a
+  `.json` refused (item 5). Not measured yet: item 4, the rest of item 5, and item 6.
     1. right-click Récolte automatique in the Library, Exporter…: the system's save dialog offers
        `Récolte automatique.d3b`; save it: a notification names the file; it is indented JSON beginning `"d3b": 1`;
     2. on another D3B (or after moving the file away from `Documents/D3B`), Importer… in the Library's header, choose
@@ -419,7 +437,7 @@ _Updated 2026-11-16._
   replacing the one that fed its input or left its flow output, the picker offering the catalogue and the blueprint's
   variables and functions, "Often here" from a fixed table by context), in two PRs: `edit_blueprint`, a wire, a node
   added or moved checked and saved, and each graph's choices (done in code), then the graph editable, a wire checked
-  as it is dragged, and the picker (done in code; its checklist under "Not measured"); (13) delete and undo
+  as it is dragged, and the picker (done in code; measured on Windows x64 on 2026-11-17); (13) delete and undo
   (autosave done by (12); the owner's choices of 2026-11-16: undo and redo kept in Rust, 100 changes for the session; a
   deletion not confirmed; a blueprint of mine deleted to the system's trash without asking, the characters that run it
   keeping its id), in two PRs: nodes and wires deleted, a move of many one change, undo, redo and `delete_blueprint`
