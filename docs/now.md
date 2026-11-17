@@ -164,8 +164,9 @@ _Updated 2026-11-17._
     6. put a broken file in `Documents/D3B/blueprints` (a stray letter), then show the Library again (Personnages,
        then Bibliothèque): "Ignorés 1" appears folded at the bottom; open it: the file, and why in its hover.
 - **step 3, the World**, on Windows x64 from `bun run app` on `next` or the next release. Measured by the owner on
-  2026-11-17: items 1 to 11 passed; item 8 has changed since at the owner's request (every kind ticked at first) and
-  is to be measured again:
+  2026-11-17: items 1 to 11 passed; item 8 then changed at the owner's request (every kind ticked at first), and was
+  measured again with item 12 on `next` 75c2e7b the same day: both pass but for what was not tried in 8 (unticking,
+  "Tout cacher", "Tout montrer", Incarnam's list):
     1. the activity bar has "Monde" under "Bibliothèque"; its view lists "Sous-zones du jeu" by area, folded, each
        area with its count; a click on Astrub unfolds it, its sub-areas by level, then by name;
     2. type "foret" in the search: the areas holding a matching sub-area unfold, the others go; a nonsense word says
@@ -221,6 +222,8 @@ _Updated 2026-11-17._
     8. put a stray letter in a zone's file: the Library's "Ignorés" lists it, and it is never written over.
 - **step 3, undo and redo of my zones** (the owner's request of 2026-11-17), on Windows x64 from `bun run app` on
   `next` or the next release, with format 4's data:
+  Measured by the owner on 2026-11-17, Windows x64, `bun run app` on `next` 75c2e7b: items 1 and 2 pass, and 4 and 6 but
+  for what was not tried (the file and the trash, the stroke undone at once). Not measured yet: items 3 and 5.
     1. "+" makes "Nouvelle zone"; paint two strokes with the brush, then a whole sub-area with S: Ctrl+Z three times
        undoes the sub-area, then each stroke, one stroke a step; Ctrl+Y twice and Ctrl+Shift+Z once bring them back;
     2. rename it in Details, then Ctrl+Z on the map: the old name is back in the row, the top left and Details; while
@@ -302,6 +305,9 @@ _Updated 2026-11-17._
        values.
 - **step 3, values typed on a node's inputs** (the owner's request of 2026-11-17), on Windows x64 from `bun run app`
   on `next` or the next release:
+  Measured by the owner on 2026-11-17, Windows x64, `bun run app` on `next` 75c2e7b: item 1 passes, and 2 and 3 but for
+  what was not tried (the Library's count of problems, the file, "Zone" and "Pods" saying "relié"). Not measured yet:
+  item 4.
     1. open Récolte automatique and choose "Récolter": Details says its inputs' values, no field;
     2. in a copy of mine, add a Prévenir and choose it: Details shows "Texte" as a field; type "Objectif atteint",
        press Enter: the node's sentence says it, the Library's count of problems drops by one, and the file
@@ -315,6 +321,9 @@ _Updated 2026-11-17._
        a Prévenir's text and press Enter: its value goes and its problem comes back.
 - **step 3, my variables** ((14)'s first PR, the owner's choices of 2026-11-17), on Windows x64 from `bun run app` on
   `next` or the next release:
+  Measured by the owner on 2026-11-17, Windows x64, `bun run app` on `next` 75c2e7b: item 5 passes, and 2, 3 and 6 but
+  for what was not tried (the file, the help line, the bounds narrowed to 0 to 4000, Escape, a click only choosing,
+  Récolte automatique's variables). Not measured yet: items 1 and 4.
     1. open Récolte automatique: no "+" on Variables, its variables do not drag, Details only says them;
     2. in a copy of mine, "+" on Variables: "Nouvelle variable" joins the list, chosen, Details showing its fields;
        name it "Objectif", type Nombre, default 5000, bounds 0 to 10000, "Réglage par personnage" on, an help line:
@@ -333,6 +342,8 @@ _Updated 2026-11-17._
        automatique, its variables do not drag.
 - **step 3, renaming a blueprint of mine** (the owner's request of 2026-11-17), on Windows x64 from `bun run app` on
   `next` or the next release:
+  Measured by the owner on 2026-11-17, Windows x64, `bun run app` on `next` 75c2e7b: items 1, 3 and 4 pass, and 2 but
+  for the file, not looked at.
     1. open Récolte automatique: its name and description are not buttons; right-click it in the Library: no
        "Renommer", and F2 on its row does nothing;
     2. open a copy of mine, click its name: a field; type "Mes blés", Enter: the tab's title, the Library's row and
@@ -354,6 +365,8 @@ _Updated 2026-11-17._
        the file is unchanged.
 - **step 3, the Protocol panel's opening** (after (24), the owner's ask of 2026-11-17), on Windows x64 from
   `bun run app` on `next` or the next release, two clients open and Advanced tools on:
+  Measured by the owner on 2026-11-17, Windows x64, `bun run app` on `next` 75c2e7b: items 1 to 4 pass. Not measured
+  yet: item 5.
     1. start D3B: no panel under the editor area; Affichage > Panneau and Ctrl+J still open and close it by hand;
     2. click a character online in Personnages: its tab opens and the panel slides open on its frames; click the
        other's tab: the panel stays open on the other's frames;
