@@ -237,22 +237,30 @@ fn checked(blueprint: &Blueprint, graph: &Graph, from: End, to: End) -> Result<L
     if from.0 == to.0 {
         return Err(Refusal::SameNode);
     }
-    let (out_open, in_open) = (
-        open_of(blueprint, graph, &from, Side::Out).unwrap_or(out.carries),
-        open_of(blueprint, graph, &to, Side::In).unwrap_or(input.carries),
-    );
+    // A wire that feeds as the pins read wins, so a percentage into an untyped `≥`'s numbers notes no type and a
+    // number may follow it; else a wildcard still open takes the type of the other end.
     let wire = Wire { from, to };
-    let link = link(wire.clone(), out_open, in_open)
-        .or_else(|| link(wire, out.carries, input.carries))
-        .ok_or(Refusal::OtherType)?;
+    let fed = out.carries.feeds(input.carries).then(|| Link {
+        value: input.carries.is_value(),
+        typed: None,
+        wire: wire.clone(),
+    });
+    let link = if let Some(link) = fed {
+        link
+    } else {
+        let out_open = open_of(blueprint, graph, &wire.from, Side::Out).unwrap_or(out.carries);
+        let in_open = open_of(blueprint, graph, &wire.to, Side::In).unwrap_or(input.carries);
+        link(wire, out_open, in_open).ok_or(Refusal::OtherType)?
+    };
     typeable(graph, &link)?;
     Ok(link)
 }
 
-/// What the pin at `end` carries as the editor's check sees it (`open_pins`).
+/// What the pin at `end` carries as the editor's check sees it (`open_pins`), a wire into an input replacing its own.
 fn open_of(blueprint: &Blueprint, graph: &Graph, end: &End, side: Side) -> Option<Carries> {
     let node = graph.nodes.iter().find(|it| it.id == end.0)?;
-    let pins = super::pins::open_pins(blueprint, graph, node)?;
+    let replacing = (side == Side::In).then_some(&end.1);
+    let pins = super::pins::open_pins(blueprint, graph, node, replacing)?;
     pins.into_iter()
         .find(|it| it.side == side && it.id == end.1.0)
         .map(|it| it.carries)
@@ -270,17 +278,23 @@ fn typeable(graph: &Graph, link: &Link) -> Result<(), Refusal> {
 
 /// The wire between the pin a wire dropped on the ground came from and `new`'s first pin that fits it.
 fn to_new(blueprint: &Blueprint, graph: &Graph, new: &Node, end: End, side: Side) -> Result<Link, Refusal> {
-    let resolved = pin_of(blueprint, graph, node(graph, &end.0)?, &end.1, side)?.carries;
+    let from = node(graph, &end.0)?;
+    let resolved = pin_of(blueprint, graph, from, &end.1, side)?.carries;
     let dragged = open_of(blueprint, graph, &end, side).unwrap_or(resolved);
-    let theirs = super::pins::open_pins(blueprint, graph, new).unwrap_or_default();
+    let theirs = super::pins::open_pins(blueprint, graph, new, None).unwrap_or_default();
     let at = |pin: &NodePin| End(new.id.clone(), Id(pin.id.clone()));
-    // A link that types the new node gives it a type its kind takes; one typing the dragged node is checked as a wire.
+    // A link that types a wildcard gives it a type its kind takes, whichever end it is, so another pin is tried.
     let fit = |out: Carries, input: Carries, new_is_out: bool| {
-        let typed_new = matches!(if new_is_out { out } else { input }, Carries::Wildcard(_));
+        let new_end = if new_is_out { out } else { input };
+        let typed = if matches!(new_end, Carries::Wildcard(_)) {
+            new
+        } else {
+            from
+        };
         fits(out, input)
             && out
                 .types(input)
-                .is_none_or(|of| !typed_new || super::pins::takes_type(new, of))
+                .is_none_or(|of| has_wildcards(typed) && super::pins::takes_type(typed, of))
     };
     let made = if side == Side::Out {
         let pin = theirs
@@ -293,11 +307,7 @@ fn to_new(blueprint: &Blueprint, graph: &Graph, new: &Node, end: End, side: Side
             .find(|it| it.side == Side::Out && fit(it.carries, dragged, true));
         pin.and_then(|pin| link(Wire { from: at(pin), to: end }, pin.carries, dragged))
     };
-    let made = made.ok_or(Refusal::OtherType)?;
-    if made.typed.as_ref().is_some_and(|(id, _)| id != &new.id) {
-        typeable(graph, &made)?;
-    }
-    Ok(made)
+    made.ok_or(Refusal::OtherType)
 }
 
 /// Adds `link`'s wire in place of the one that fed its input, with the value typed there, or that left its flow output;
@@ -625,9 +635,73 @@ mod tests {
         );
         done(&mut blueprint, wire(("m", "value"), ("ge", "a")));
         assert_eq!(typed(&blueprint, "ge"), Some(ValueType::Duration));
+        // A percentage feeds the numbers it reads untyped, in either order with a number.
         let mut percentages = with_comparison();
         done(&mut percentages, wire(("q", "value"), ("ge", "b")));
-        assert_eq!(typed(&percentages, "ge"), Some(ValueType::Percentage));
+        assert_eq!(typed(&percentages, "ge"), None);
+        let level = serde_json::from_str(r#"{"id": "lv", "kind": "level"}"#).unwrap_or_else(|error| panic!("{error}"));
+        percentages.graphs[0].nodes.push(level);
+        done(&mut percentages, wire(("lv", "value"), ("ge", "a")));
+        // Read as numbers by its wires, it takes no other type under them.
+        refused(
+            &mut percentages,
+            vec![(wire(("m", "value"), ("ge", "a")), Refusal::OtherType)],
+        );
+        // Replacing its only wire, it is open again.
+        let mut again = with_comparison();
+        done(&mut again, wire(("q", "value"), ("ge", "a")));
+        done(&mut again, wire(("m", "value"), ("ge", "a")));
+        assert_eq!(typed(&again, "ge"), Some(ValueType::Duration));
+    }
+
+    #[test]
+    fn a_value_read_as_a_number_keeps_an_untyped_comparison_from_another_type() {
+        let mut blueprint = with_comparison();
+        let ninety = |pin: &str, of| Edit::Value {
+            node: id("ge"),
+            pin: id(pin),
+            value: Some(serde_json::json!(90)),
+            of,
+        };
+        done(&mut blueprint, ninety("b", None));
+        refused(
+            &mut blueprint,
+            vec![(wire(("m", "value"), ("ge", "a")), Refusal::OtherType)],
+        );
+        // Read as numbers by `b`, `a` takes a number whatever type it is given with.
+        done(&mut blueprint, ninety("a", Some(ValueType::Duration)));
+        assert_eq!(typed(&blueprint, "ge"), None);
+        done(&mut blueprint, value("ge", "a", None));
+        // Typed again on its own pin, the value it replaces does not count.
+        done(&mut blueprint, ninety("b", Some(ValueType::Duration)));
+        assert_eq!(typed(&blueprint, "ge"), Some(ValueType::Duration));
+        // Typed, another type given with a value is not taken, and none drops the value whatever it says.
+        done(&mut blueprint, ninety("b", Some(ValueType::Time)));
+        assert_eq!(typed(&blueprint, "ge"), Some(ValueType::Duration));
+        let dropped = Edit::Value {
+            node: id("ge"),
+            pin: id("b"),
+            value: None,
+            of: Some(ValueType::Zone),
+        };
+        done(&mut blueprint, dropped);
+        assert_eq!(typed(&blueprint, "ge"), None);
+    }
+
+    #[test]
+    fn a_node_added_from_an_untyped_comparison_skips_an_output_of_a_type_it_does_not_take() {
+        let mut blueprint = with_comparison();
+        done(
+            &mut blueprint,
+            add(Does::Kind(id("harvest_until")), Some(("ge", "a", Side::In))),
+        );
+        assert!(
+            has(&blueprint, "harvest_until.count", "ge.a"),
+            "the count, not the reason's text"
+        );
+        let mut zones = with_comparison();
+        let ge_from_zone = add(Does::Kind(id("greater_or_equal")), Some(("n2", "value", Side::Out)));
+        refused(&mut zones, vec![(ge_from_zone, Refusal::OtherType)]);
     }
 
     #[test]

@@ -47,9 +47,24 @@ pub(crate) fn pins(blueprint: &Blueprint, graph: &Graph, node: &Node) -> Option<
 }
 
 /// `node`'s pins as the editor's check sees them: an untyped wildcard stays one, though its kind reads its first type
-/// meanwhile (`≥`'s numbers), so a wire or a value of another type it takes can still type it.
-pub(crate) fn open_pins(blueprint: &Blueprint, graph: &Graph, node: &Node) -> Option<Vec<NodePin>> {
-    built(blueprint, graph, node, false)
+/// meanwhile (`≥`'s numbers), so a wire or a value of another type it takes can still type it; but only while no
+/// other wire or value uses its wildcards as that first type, which a new type would change under them. `replacing`
+/// is the input an edit replaces the wire and value of, which do not count.
+pub(crate) fn open_pins(
+    blueprint: &Blueprint,
+    graph: &Graph,
+    node: &Node,
+    replacing: Option<&Id>,
+) -> Option<Vec<NodePin>> {
+    let mut alone = node.clone();
+    let mut graph_alone = graph.clone();
+    if let Some(pin) = replacing {
+        alone.inputs.remove(pin);
+        graph_alone
+            .wires
+            .retain(|wire| !(wire.to.0 == node.id && &wire.to.1 == pin));
+    }
+    built(blueprint, graph, node, uses_wildcards(&graph_alone, &alone))
 }
 
 /// Whether `node`'s kind lets its wildcards take `of`: any type, unless it lists those it takes.

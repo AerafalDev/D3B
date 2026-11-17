@@ -22,7 +22,7 @@ pub(super) fn typed(
     let graph = &blueprint.graphs[at];
     let found = node(graph, id)?;
     let input = pin_of(blueprint, graph, found, pin, Side::In)?;
-    let open = crate::bot::pins::open_pins(blueprint, graph, found)
+    let open = crate::bot::pins::open_pins(blueprint, graph, found, Some(pin))
         .and_then(|pins| pins.into_iter().find(|it| it.side == Side::In && it.id == pin.0))
         .map_or(input.carries, |it| it.carries);
     // A wildcard of a node with no type takes the type its first value is given as, of its own shape and among those
