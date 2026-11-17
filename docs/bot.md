@@ -444,7 +444,8 @@ flowchart LR
   le suivant de, Bloquer, Mettre en pause et prévenir):
   - v1's If, Wait (a duration), Wait for life and Finish, as they are;
   - **Sequence** (`then_1` to `then_n`, at least 2), as Unreal's: no Completed, its last output the rest of the flow,
-    the Summary reading its outputs at the level of the steps around it;
+    the Summary reading its outputs but the last as sub-steps under it (`1.1`, `1.2`) and its last at the level of
+    the steps around it (`2`), as the owner's mock-up shows;
   - **Switch** on a value (a wildcard of any type but lists and ranges, an output `case_n` per case and `otherwise`);
   - **Repeat** N times (`times`, 3 by default, `body`, `index`, `completed`), **While** (`condition`, `body`,
     `completed`), **For each** (a list, `body`, `element`, `index`, `completed`), the list read once as the flow
@@ -489,7 +490,10 @@ flowchart LR
   Switch notes none and given with the first case, a profession's or a zone's case named, and a pin's row offering
   "Retirer" in place of "Supprimer", greyed at the kind's least; a Sequence's outputs listed in Details, a × each,
   the keyboard's way to remove one (the owner, 2026-11-17), the cases listed there on D3B's blueprints);
-  the Summary by pin roles, after its mock-up; the loops; the kinds that remember; the waits and stops (Wait until,
+  the Summary by pin roles, after its mock-up (done in code: `summary-pins.ts`, a Switch's outputs said on one line,
+  an unwired one "→ rien", a function's named exit a branch "Si Plein :" by its name, which the IPC now gives a call
+  (`NodeView.exits`) and its node draws too; an output of a kind the table does not know yet titled by its label);
+  the loops; the kinds that remember; the waits and stops (Wait until,
   Retry, Block, Pause) with a run on the captures. Each kind replaces the tests' own (`test_sequence`, `test_switch`,
   `test_for_each`).
 - **Measured** (nothing acts in the game before step 4): the picker's "boucle" finding the loops; "+" and "Remove"
@@ -529,7 +533,8 @@ The shell's parts (`docs/shell.md`); no information is shown twice:
   marked in the graph. "Graph | Summary", the tab's editor action in the tab strip (the owner, 2026-11-14), shows the
   **Summary** in the graph's place: a section per event, "On start" first and the others by priority, with their mode;
   its steps numbered as the flow runs them, an action's Failed and an If's True and False numbered under their step
-  ("2.1"), a node met again said "Back to 2" (or "Go on to 4" forward), a step's "étape N" tag; the events the game
+  ("2.1"), and from (v2.3) every output by its role (a Sequence's sub-steps, a Switch's line, a named exit "Si Plein
+  :"), a node met again said "Back to 2" (or "Go on to 4" forward), a step's "étape N" tag; the events the game
   forces, when the blueprint leaves them, with their default (a fight by the default AI from step 6, then resume; a
   death stops the run; an unlinked Failed blocks with the reason); then each function from its entry. A step chosen
   shows its node in Details.

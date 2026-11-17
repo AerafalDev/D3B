@@ -125,6 +125,63 @@ describe("the Summary's flow", () => {
     expect(lines(summaryFlow(retry, "start", "then"))).toEqual(["1 bank", "1:failed", "back 1"]);
   });
 
+  it("holds a Sequence's outputs as sub-steps under it, and its last as the rest of the flow", () => {
+    const sequence = {
+      id: "seq",
+      pins: [exec("run", "in"), exec("then_1", "out"), exec("then_2", "out"), exec("then_3", "out")],
+      adds: { pin: "then", side: "out", least: 2 },
+    };
+    const sequenced = graph(
+      [start, sequence, action("a"), action("b"), action("c")],
+      [
+        ["start", "then", "seq"],
+        ["seq", "then_1", "a"],
+        ["seq", "then_2", "b"],
+        ["seq", "then_3", "c"],
+      ],
+    );
+    expect(lines(summaryFlow(sequenced, "start", "then"))).toEqual([
+      "1 seq",
+      "1:then_1",
+      "1.1 a",
+      "1:then_2",
+      "1.2 b",
+      "2 c",
+    ]);
+  });
+
+  it("opens a branch per case of a Switch, one wired to nothing too, and its Otherwise", () => {
+    const switched = {
+      id: "sw",
+      pins: [exec("run", "in"), exec("case_1", "out"), exec("case_2", "out"), exec("otherwise", "out")],
+      takesCases: true,
+    };
+    const cases = graph(
+      [start, switched, action("a"), action("b")],
+      [
+        ["start", "then", "sw"],
+        ["sw", "case_1", "a"],
+        ["sw", "otherwise", "b"],
+      ],
+    );
+    const flow = summaryFlow(cases, "start", "then");
+    expect(lines(flow)).toEqual(["1 sw", "1:case_1", "1.1 a", "1:case_2", "1:otherwise", "1.2 b"]);
+    expect(flow.steps[0]?.branches.map((branch) => branch.role)).toEqual(["listed", "listed", "listed"]);
+  });
+
+  it("reads a function's named exit as a titled branch, beside its Done", () => {
+    const call = { id: "call", pins: [exec("run", "in"), exec("done", "out"), exec("full", "out")] };
+    const exits = graph(
+      [start, call, action("bank"), action("go")],
+      [
+        ["start", "then", "call"],
+        ["call", "done", "go"],
+        ["call", "full", "bank"],
+      ],
+    );
+    expect(lines(summaryFlow(exits, "start", "then"))).toEqual(["1 call", "1:full", "1.1 bank", "2 go"]);
+  });
+
   it("ends a chain at a wire to no node", () => {
     expect(lines(summaryFlow(graph([start], [["start", "then", "gone"]]), "start", "then"))).toEqual([]);
   });

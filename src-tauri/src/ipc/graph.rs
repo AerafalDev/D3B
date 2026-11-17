@@ -361,6 +361,36 @@ pub struct NodeView {
     #[serde(skip_serializing_if = "std::ops::Not::not")]
     #[specta(optional)]
     pub takes_cases: bool,
+    /// A call's named exits, each its flow output's id and the name the player gave it; omitted for none.
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    #[specta(optional)]
+    pub exits: Vec<ExitView>,
+}
+
+/// A function's named exit as its call draws it: its pin's id, and its name.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Type)]
+pub struct ExitView {
+    pub id: String,
+    pub name: String,
+}
+
+/// The named exits of the function `does` calls, in its signature's order.
+fn exits(blueprint: &Blueprint, does: &Does) -> Vec<ExitView> {
+    let Does::Call(function) = does else {
+        return Vec::new();
+    };
+    let signature = blueprint
+        .graphs
+        .iter()
+        .find(|graph| &graph.id == function)
+        .and_then(|graph| graph.function.as_ref());
+    let exits = signature.into_iter().flat_map(|signature| &signature.exits);
+    exits
+        .map(|exit| ExitView {
+            id: exit.id.0.clone(),
+            name: exit.name.clone(),
+        })
+        .collect()
 }
 
 /// The numbered pins a node's "+" adds: `<pin>_1` to `<pin>_<count>`, at least `least` of them.
@@ -637,6 +667,7 @@ pub(crate) fn graphs(blueprint: &Blueprint) -> BlueprintGraphs {
                 adds: adds(&node.does),
                 takes_cases: matches!(&node.does, Does::Kind(kind)
                     if bot::kind(&kind.0).is_some_and(|kind| kind.takes.contains(&bot::Takes::Cases))),
+                exits: exits(blueprint, &node.does),
                 inputs: node
                     .inputs
                     .iter()
@@ -829,6 +860,20 @@ mod tests {
             from: ["deposit".into(), "done".into()],
             to: ["go".into(), "run".into()]
         }));
+    }
+
+    #[test]
+    fn a_call_is_drawn_with_its_functions_exits_by_name_and_another_node_with_none() {
+        let text = r#"{"schema": 2, "id": "b", "name": "B", "version": 1,
+          "graphs": [{"id": "events", "name": "Events", "nodes": [{"id": "c", "call": "f"}, {"id": "n", "kind": "notify"}]},
+            {"id": "f", "name": "F", "function": {"exits": [{"id": "full", "name": "Plein"}]}, "nodes": []}]}"#;
+        let drawn = graphs(&bot::read(text).unwrap_or_else(|error| panic!("{error}")));
+        let exits = |node: usize| drawn.graphs[0].nodes[node].exits.clone();
+        let full = ExitView {
+            id: "full".into(),
+            name: "Plein".into(),
+        };
+        assert_eq!((exits(0), exits(1)), (vec![full], Vec::new()));
     }
 
     #[test]

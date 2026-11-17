@@ -662,7 +662,11 @@
         "false": "Otherwise:"
       },
       "back": "Back to {{step}}.",
-      "on": "Go on to {{step}}."
+      "on": "Go on to {{step}}.",
+      "to": "{{pin}} → {{step}}",
+      "nowhere": "nothing",
+      "branchOf": "If {{pin}}:",
+      "outTo": "{{pin}}: go to {{step}}."
     },
     "view": {
       "label": "Blueprint view",

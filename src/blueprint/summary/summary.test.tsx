@@ -140,6 +140,102 @@ describe("the blueprint's Summary", () => {
     expect(headings).not.toContain("Un combat commence · par défaut");
   });
 
+  it("reads a Sequence's outputs as sub-steps and a Switch's on one line, each to its step", () => {
+    const exec = (id: string) => pin(id, "out");
+    const flows = {
+      ...events,
+      nodes: [
+        node("start", "on_start", { family: "event", pins: [pin("then", "out")] }),
+        node("seq", "sequence", {
+          family: "flow",
+          pins: [pin("run", "in"), exec("then_1"), exec("then_2")],
+          adds: { pin: "then", side: "out", least: 2 },
+        }),
+        node("sw", "switch", {
+          family: "flow",
+          pins: [pin("run", "in"), exec("case_1"), exec("case_2"), exec("otherwise")],
+          options: { valueType: "number", cases: ["24", "28"] },
+          takesCases: true,
+        }),
+        node("a", "notify"),
+        node("end", "finish", { family: "flow", pins: [pin("run", "in")] }),
+      ],
+      wires: [
+        { from: ["start", "then"], to: ["seq", "run"] },
+        { from: ["seq", "then_1"], to: ["a", "run"] },
+        { from: ["seq", "then_2"], to: ["sw", "run"] },
+        { from: ["sw", "case_1"], to: ["end", "run"] },
+        { from: ["sw", "otherwise"], to: ["a", "run"] },
+      ],
+    };
+    render(
+      <Summary graphs={[flows] as unknown as GraphView_Serialize[]} names={names} chosen={null} onChoose={() => {}} />,
+    );
+    expect(read()[0]).toEqual([
+      "Au lancement",
+      "1. Séquence",
+      "1.1. Prévenir : à choisir",
+      "2. Selon à choisir",
+      "24 → 2.1 · 28 → rien · Sinon → 1.1",
+      "2.1. Terminer",
+    ]);
+  });
+
+  it("titles a function's named exit by its name, an id of If's own too", () => {
+    const calling = {
+      ...events,
+      nodes: [
+        node("start", "on_start", { family: "event", pins: [pin("then", "out")] }),
+        node("bank", "call", {
+          does: "call",
+          function: "bank",
+          family: "call",
+          pins: [...flow, pin("true", "out")],
+          exits: [{ id: "true", name: "Plein" }],
+        }),
+        node("go", "notify"),
+      ],
+      wires: [
+        { from: ["start", "then"], to: ["bank", "run"] },
+        { from: ["bank", "true"], to: ["go", "run"] },
+      ],
+    };
+    render(
+      <Summary
+        graphs={[calling] as unknown as GraphView_Serialize[]}
+        names={names}
+        chosen={null}
+        onChoose={() => {}}
+      />,
+    );
+    expect(read()[0]).toEqual(["Au lancement", "1. Vider à la banque", "Si Plein :", "1.1. Prévenir : à choisir"]);
+  });
+
+  it("names a Sequence's output that leads straight to a step said, and numbers the next when one is unwired", () => {
+    const exec = (id: string) => pin(id, "out");
+    const flows = {
+      ...events,
+      nodes: [
+        node("start", "on_start", { family: "event", pins: [pin("then", "out")] }),
+        node("seq", "sequence", {
+          family: "flow",
+          pins: [pin("run", "in"), exec("then_1"), exec("then_2"), exec("then_3"), exec("then_4")],
+          adds: { pin: "then", side: "out", least: 2 },
+        }),
+        node("a", "notify"),
+      ],
+      wires: [
+        { from: ["start", "then"], to: ["seq", "run"] },
+        { from: ["seq", "then_2"], to: ["a", "run"] },
+        { from: ["seq", "then_3"], to: ["seq", "run"] },
+      ],
+    };
+    render(
+      <Summary graphs={[flows] as unknown as GraphView_Serialize[]} names={names} chosen={null} onChoose={() => {}} />,
+    );
+    expect(read()[0]).toEqual(["Au lancement", "1. Séquence", "1.1. Prévenir : à choisir", "Alors 3 : aller à 1."]);
+  });
+
   it("chooses a step's node, in its graph", () => {
     const onChoose = vi.fn();
     render(<Summary graphs={graphs} names={names} chosen={null} onChoose={onChoose} />);

@@ -8,6 +8,7 @@ import type { GraphView_Serialize } from "@/bindings.ts";
 import { cn } from "@/lib/utils.ts";
 import { FAMILY_COLOUR, nodeIcon } from "../graph-look.ts";
 import { type GraphNode, graphSentences, type SentencePart } from "../node-sentence.ts";
+import { pinLabel } from "../pin-label.ts";
 import { type SummaryFlow, summaryFlow } from "./summary-flow.ts";
 
 /**
@@ -34,7 +35,8 @@ interface SummaryProps {
 /**
  * The blueprint read as sentences, the graph's other form (`docs/bot.md`, "In the app"; the prototype the owner
  * approved on 2026-11-13): a section per event, "On start" first and the others by priority, with their mode; its
- * steps numbered as the flow runs them, a Failed's or an If's under their step, a loop back to its number; the forced
+ * steps numbered as the flow runs them, each output but the one a step goes on by under it by its role (a Failed, an
+ * If's, a Sequence's outputs, a Switch's on one line, `summary-pins.ts`), a loop back to its number; the forced
  * events' defaults when the blueprint leaves them; then each function from its entry.
  */
 export function Summary({ graphs, names, chosen, onChoose }: SummaryProps) {
@@ -160,6 +162,22 @@ function StepTag({ step }: { step: number }) {
   return <span className="text-text-faint text-[11px] whitespace-nowrap">{t("blueprint.fromStep", { step })}</span>;
 }
 
+/** Where a listed output leads: its first step, the step it jumps to, or nowhere. */
+function target(flow: SummaryFlow): string {
+  return flow.steps[0]?.label ?? flow.jump?.to ?? i18next.t("blueprint.summary.nowhere");
+}
+
+/** A branch's title, "Si ça échoue :", or for a function's named exit, its name: "Si Plein :". */
+function branchTitle(pin: string, node: GraphNode): string {
+  const key = `blueprint.summary.branch.${pin}`;
+  // The pins' ids are data, so their keys are checked at run time rather than typed; a named exit's id may be any,
+  // `true` too, and is said by its name.
+  const exit = node.exits?.some((one) => one.id === pin) === true;
+  return !exit && i18next.exists(key)
+    ? String(i18next.t(key as never))
+    : i18next.t("blueprint.summary.branchOf", { pin: pinLabel(pin, node) });
+}
+
 interface FlowProps {
   flow: SummaryFlow;
   sentences: ReadonlyMap<string, SentencePart[]>;
@@ -196,12 +214,35 @@ function Flow({ flow, sentences, chosen, onChoose }: FlowProps) {
               </>
             )}
           </button>
-          {step.branches.map((branch) => (
-            <div key={branch.pin} className="flex flex-col gap-1 pl-10">
-              <span className="text-text-muted">{t(`blueprint.summary.branch.${branch.pin}`)}</span>
-              <Flow flow={branch.flow} sentences={sentences} chosen={chosen} onChoose={onChoose} />
-            </div>
-          ))}
+          {step.branches.some((branch) => branch.role === "listed") && (
+            // A Switch's outputs on one line, each to the step it leads to (the owner, 2026-11-17, on the mock-up).
+            <p className="text-text-muted m-0 pl-10">
+              {step.branches
+                .filter((branch) => branch.role === "listed")
+                .map((branch) =>
+                  t("blueprint.summary.to", { pin: pinLabel(branch.pin, step.node), step: target(branch.flow) }),
+                )
+                .join(" · ")}
+            </p>
+          )}
+          {step.branches
+            // A listed output leading to no step of its own is all said on its line.
+            .filter((branch) => branch.role !== "listed" || branch.flow.steps.length > 0)
+            .map((branch) => (
+              <div key={branch.pin} className="flex flex-col gap-1 pl-10">
+                {branch.role === "titled" && (
+                  <span className="text-text-muted">{branchTitle(branch.pin, step.node)}</span>
+                )}
+                {branch.role === "untitled" && branch.flow.steps.length === 0 ? (
+                  // A Sequence's output wired straight to a step said already names its output.
+                  <p className="text-text-muted m-0 pl-1">
+                    {t("blueprint.summary.outTo", { pin: pinLabel(branch.pin, step.node), step: target(branch.flow) })}
+                  </p>
+                ) : (
+                  <Flow flow={branch.flow} sentences={sentences} chosen={chosen} onChoose={onChoose} />
+                )}
+              </div>
+            ))}
         </li>
       ))}
       {flow.jump !== null && (

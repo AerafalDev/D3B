@@ -7,9 +7,15 @@ import { nameOf } from "@/values/value-words.ts";
 /**
  * A pin's label in the player's language (`node.pins.<pin>`), or its id when the translations have none: a function's
  * input or output, whose id the player chose. Of `node`, a numbered output is said with its number, "Alors 2", and a
- * Switch's case by its value, a profession or a zone by its name (`docs/bot.md`, "The flow's kinds (v2.3)").
+ * Switch's case by its value, a profession or a zone by its name (`docs/bot.md`, "The flow's kinds (v2.3)"), and a
+ * call's named exit by its name.
  */
 export function pinLabel(pin: string, node?: NodeView_Serialize): string {
+  // A call's named exit by the name the player gave it, whatever its id.
+  const exit = node?.exits?.find((one) => one.id === pin);
+  if (exit !== undefined) {
+    return exit.name;
+  }
   const numbered = /^(then|case)_([1-9][0-9]*)$/.exec(pin);
   if (node !== undefined && numbered !== null) {
     const [, prefix, number] = numbered;

@@ -1,5 +1,6 @@
 import type { GraphView_Serialize } from "@/bindings.ts";
 import type { GraphNode } from "../node-sentence.ts";
+import { onPin, type PinRole, pinRole } from "./summary-pins.ts";
 
 /** A step of the Summary: its number ("3", or "3.1" in a branch), its node, and the branches it opens. */
 export interface SummaryStep {
@@ -8,9 +9,10 @@ export interface SummaryStep {
   branches: SummaryBranch[];
 }
 
-/** A branch a step opens: on its Failed, or an If's true or false. */
+/** A branch a step opens: its Failed, an If's true or false, a Sequence's output, a Switch's case; read by its role. */
 export interface SummaryBranch {
-  pin: BranchPin;
+  pin: string;
+  role: PinRole;
   flow: SummaryFlow;
 }
 
@@ -22,13 +24,6 @@ export interface SummaryFlow {
   steps: SummaryStep[];
   jump: SummaryJump;
 }
-
-/** The flow outputs that open a branch rather than go on, in the order they are said. */
-const BRANCHES = ["true", "false", "failed"] as const;
-type BranchPin = (typeof BRANCHES)[number];
-
-/** The flow outputs a step goes on by. */
-const ON = new Set(["then", "done"]);
 
 /** "3.1" against "5", segment by segment: negative when `a` comes first. */
 function order(a: string, b: string): number {
@@ -44,9 +39,10 @@ function order(a: string, b: string): number {
 }
 
 /**
- * The flow `graph` runs from `node`'s output `pin`, as numbered steps (`docs/bot.md`, "In the app"): each node once,
- * its Failed and an If's outputs as branches numbered under it, counting on across an If's two, and a node met again said as a jump to its number, a
- * loop's "back to 2". The steps go on first, so a branch that joins them later jumps to them.
+ * The flow `graph` runs from `node`'s output `pin`, as numbered steps (`docs/bot.md`, "In the app" and "The flow's kinds
+ * (v2.3)"): each node once, its outputs but the one it goes on by as branches numbered under it, counting on across
+ * them, and a node met again said as a jump to its number, a loop's "back to 2". The steps go on first, so a branch
+ * that joins them later jumps to them.
  */
 export function summaryFlow(graph: GraphView_Serialize, node: string, pin: string): SummaryFlow {
   const byId = new Map(graph.nodes.map((one) => [one.id, one]));
@@ -71,21 +67,25 @@ export function summaryFlow(graph: GraphView_Serialize, node: string, pin: strin
       numbered.set(current.id, label);
       steps.push({ label, node: current, branches: [] });
       at = label;
-      const on = current.pins.find((one) => one.side === "out" && one.carries === "exec" && ON.has(one.id));
-      current = on === undefined ? undefined : next(current.id, on.id);
+      const on = onPin(current);
+      current = on === undefined ? undefined : next(current.id, on);
     }
     return { steps, jump: null };
   };
   const branch = (flow: SummaryFlow) => {
     for (const step of flow.steps) {
-      // An If's two outputs count on from one another, True's 2.1 and 2.2 then False's 2.3, so a jump names one step.
+      // A node's other outputs, in its pins' order, count on from one another, an If's True 2.1 and 2.2 then its
+      // False 2.3, so a jump names one step; a Switch's case wired to nothing is said, leading nowhere.
       let start = 1;
-      for (const out of BRANCHES) {
+      const on = onPin(step.node);
+      const outs = step.node.pins.filter((one) => one.side === "out" && one.carries === "exec" && one.id !== on);
+      for (const { id: out } of outs) {
+        const role = pinRole(step.node, out);
         const target = next(step.node.id, out);
-        if (target !== undefined) {
+        if (target !== undefined || role === "listed") {
           const opened = chain(target, `${step.label}.`, step.label, start);
           start += opened.steps.length;
-          step.branches.push({ pin: out, flow: opened });
+          step.branches.push({ pin: out, role, flow: opened });
         }
       }
       for (const opened of step.branches) {
