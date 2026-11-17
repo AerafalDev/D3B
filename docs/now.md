@@ -557,7 +557,7 @@ _Updated 2026-11-17._
   item searched among all, ranges pasted as `1-49: value` replacing the table, my variables taking the new types and
   "List" and "By level" so each editor is used now), in seven PRs: the Rust and the IPC (an untyped `≥` open to its
   types, a type not taken refused when wired, `of` sent, `NodeView.options` and `types`; done in code); the drag's check, the
-  picker's filter, the pins' shapes and colours; Details' type chooser on a wildcard, the time and the values' words;
+  picker's filter, the pins' shapes and colours (done in code); Details' type chooser on a wildcard, the time and the values' words;
   my variables' new types and the list editor; items; maps; ranges; then a node's options with v2.3; (v2.3) the flow's kinds and how the Summary reads them; (v2.4)
   the values: comparisons, logic, arithmetic, randomness, text, durations, lists, drawn compact; (v2.5) the queries
   over `game::Live`, and those marked with their study and step; (v2.6) the events: When, Every, At, the game's new

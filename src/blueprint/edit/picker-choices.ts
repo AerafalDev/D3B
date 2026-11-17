@@ -39,7 +39,8 @@ export function pickerChoices(
   const wanted = folded(search.trim());
   const kept = choices.filter(
     (choice) =>
-      (dragged === null || choice.pins.some((pin) => linkRefusal(dragged, { node: "", pin }) === null)) &&
+      (dragged === null ||
+        choice.pins.some((pin) => linkRefusal(dragged, { node: "", pin, types: choice.types ?? [] }) === null)) &&
       (wanted === "" || folded(words(choice)).includes(wanted)),
   );
   let often: ChoiceView_Serialize[] = [];

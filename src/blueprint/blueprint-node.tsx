@@ -13,11 +13,19 @@ export type BoxData = { node: GraphNode; sentence: SentencePart[]; faulty?: bool
 /** A node as React Flow holds it. */
 export type BoxNode = Node<BoxData, "box">;
 
-function pinClass(pin: PinView_Serialize): string {
+/**
+ * A pin's look (the owner, 2026-11-17, from a mock-up): a triangle for the flow, a circle for a value coloured by its
+ * type, a filled square for a list and a hollow one for ranges; a wildcard its node notes no type for a hollow grey
+ * circle (a square for a list), drawn as its type once typed.
+ */
+function pinClass(pin: PinView_Serialize, open: boolean): string {
   return cn(
     "blueprint-pin",
     pin.carries === "exec" ? "blueprint-exec" : "blueprint-value",
     `blueprint-type-${pin.carries}`,
+    pin.list === true && "blueprint-list",
+    pin.ranges === true && "blueprint-ranges",
+    (pin.carries === "wildcard" || (open && pin.wildcard === true)) && "blueprint-open",
   );
 }
 
@@ -36,6 +44,8 @@ export function BlueprintNode({ data, selected }: NodeProps<BoxNode>) {
   const head = flowOuts[0];
   const ins = node.pins.filter((pin) => pin.side === "in" && pin.carries !== "exec");
   const outs = node.pins.filter((pin) => pin.side === "out" && pin !== head);
+  // A kind that changes a variable is typed by it, never open (`bot::pins`).
+  const open = (node.options?.valueType ?? null) === null && node.options?.variable === undefined;
   return (
     <div
       className={cn(
@@ -47,7 +57,7 @@ export function BlueprintNode({ data, selected }: NodeProps<BoxNode>) {
     >
       <div className="blueprint-node-head">
         {flowIn !== undefined && (
-          <Handle type="target" position={Position.Left} id="run" className={pinClass(flowIn)} />
+          <Handle type="target" position={Position.Left} id="run" className={pinClass(flowIn, open)} />
         )}
         <Icon
           aria-hidden="true"
@@ -76,7 +86,7 @@ export function BlueprintNode({ data, selected }: NodeProps<BoxNode>) {
           <span className="blueprint-step">{t("blueprint.fromStep", { step: node.fromStep })}</span>
         )}
         {head !== undefined && (
-          <Handle type="source" position={Position.Right} id={head.id} className={pinClass(head)} />
+          <Handle type="source" position={Position.Right} id={head.id} className={pinClass(head, open)} />
         )}
       </div>
       {(ins.length > 0 || outs.length > 0) && (
@@ -84,7 +94,7 @@ export function BlueprintNode({ data, selected }: NodeProps<BoxNode>) {
           <div className="flex flex-col">
             {ins.map((pin) => (
               <div key={pin.id} className="blueprint-row">
-                <Handle type="target" position={Position.Left} id={pin.id} className={pinClass(pin)} />
+                <Handle type="target" position={Position.Left} id={pin.id} className={pinClass(pin, open)} />
                 {pinLabel(pin.id)}
               </div>
             ))}
@@ -93,7 +103,7 @@ export function BlueprintNode({ data, selected }: NodeProps<BoxNode>) {
             {outs.map((pin) => (
               <div key={pin.id} className={cn("blueprint-row", pin.id === "failed" && "is-failed")}>
                 {pinLabel(pin.id)}
-                <Handle type="source" position={Position.Right} id={pin.id} className={pinClass(pin)} />
+                <Handle type="source" position={Position.Right} id={pin.id} className={pinClass(pin, open)} />
               </div>
             ))}
           </div>

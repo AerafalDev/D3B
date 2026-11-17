@@ -28,6 +28,23 @@ const CHOICES: ChoiceView_Serialize[] = [
   { does: "get", variable: "zone", family: "variable", fromStep: null, pins: [pin("value", "out", "zone")] },
 ];
 
+describe("pickerChoices from a value a wildcard may take", () => {
+  const ge: ChoiceView_Serialize = {
+    ...kind("greater_or_equal", "query", [
+      { ...pin("a", "in", "number"), wildcard: true },
+      { ...pin("b", "in", "number"), wildcard: true },
+    ]),
+    types: ["number", "percentage", "duration", "time"],
+  };
+
+  it("offers a comparison from a duration it takes, not from a zone", () => {
+    expect(ids(pickerChoices([ge], from("out", "value", "duration"), "").all.flatMap(([, it]) => it))).toEqual([
+      "greater_or_equal",
+    ]);
+    expect(pickerChoices([ge], from("out", "value", "zone"), "").all).toEqual([]);
+  });
+});
+
 function from(side: PinSide, id: string, carries: PinCarries): LinkEnd {
   return { node: "n3", pin: pin(id, side, carries) };
 }

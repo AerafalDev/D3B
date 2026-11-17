@@ -358,9 +358,12 @@ flowchart LR
   while no other wire or value uses its wildcards as numbers, the input an edit replaces not counting; a value given
   with no type is read as a number, one with a type its kind takes types it, one it does not take is refused, and on a
   node already typed the type given is not looked at (step 1 of (v2.2), done in code).
+- **The drag's check** and the picker's filter follow the same rules in the editor (step 2 of (v2.2), done in code); it
+  does not know when an untyped `≥` is read as numbers by another wire or value, so the drag lets a duration in and
+  Rust refuses it when saved.
 - **Pins** (the owner, 2026-11-17, from a mock-up): a value a filled circle, a list a filled square, ranges a hollow
   square of the type's colour, an untyped wildcard a hollow grey circle (a hollow grey square for a list one), a typed
-  wildcard drawn as its type. **Colours by family**: a map teal beside the zone and the route (`#5fb3a1`), an item
+  wildcard drawn as its type, a variable's pill as a box's pin (step 2 of (v2.2), done in code). **Colours by family**: a map teal beside the zone and the route (`#5fb3a1`), an item
   orange beside Items (`#e0a46b`), a duration and a time violets beside the numbers they compare with (`#b5a7ff`,
   `#d6a8ff`), an NPC pale yellow (`#dcdcaa`).
 - **Details**: a value typed on an untyped wildcard comes with a type chosen beside it, among the kind's (`of`);
