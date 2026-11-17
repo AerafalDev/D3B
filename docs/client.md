@@ -23,7 +23,8 @@ journeys were measured on 2026-11-02 for session 9g5 ([the game, kept on its way
 summons for session 9f2 ([the game, summoned](client-game.md#the-game-summoned)), and its bombs and fights' placement cells for session
 9f3 ([the game, bombed](client-game.md#the-game-bombed), [the game, placed](client-game.md#the-game-placed)). Client 3.7.13.17, built on
 2026-11-03, was measured against it the same day, its pack, schema and mapping beside 3.7.12.12's
-([Client 3.7.13.17](#client-371317)).
+([Client 3.7.13.17](#client-371317)), and client 3.7.14.18, built on 2026-11-16, against 3.7.13.17 on 2026-11-17
+([Client 3.7.14.18](#client-371418)).
 Dofus Remastered's `docs/client.md`, in `vendor/Dofus`,
 measures much more of the same client for drawing it: maps' graphics, effects, shaders, characters.
 
@@ -230,7 +231,7 @@ interactive transition ([the game, used](client-game.md#the-game-used)).
 
 **Coverage.** 10,981 of the 17,722 maps have a vertex, all `ClientMapData`. Every map with a vertex has a position in
 `MapsInformationDataRoot`, and every zaap stands on one; in 3.7.13.17, all but one
-([Client 3.7.13.17](#client-371317)).
+([Client 3.7.13.17](#client-371317)), and in 3.7.14.18 all again ([Client 3.7.14.18](#client-371418)).
 
 ## Data tables
 
@@ -279,7 +280,8 @@ What the world tables hold, as the pack keeps them (D27, D29):
   names a zaap's map on 329 and is 0 on the other 238. `level` from 0 to 200. `harvestables` lists items on 190
   sub-areas ([Harvestables](#harvestables)). Every map a sub-area lists names that sub-area back.
 - **Zaaps.** 62, 47 `activated`; every one stands on a map of the world graph, in the sub-area of its map, but
-  3.7.13.17's zaap 81 ([Client 3.7.13.17](#client-371317)). The graph has
+  3.7.13.17's zaap 81 ([Client 3.7.13.17](#client-371317)), which 3.7.14.18's graph reaches
+  ([Client 3.7.14.18](#client-371418)). The graph has
   no zaap transitions: the path teleports to the zaaps the server says the character knows (D83).
 - **Areas and super-areas.** 69 areas and 10 super-areas; the pack keeps the areas' `superAreaId`, not the super-areas.
 - `MapScrollActionsDataRoot` and `MapReferencesDataRoot` are not extracted: the graph's scroll actions already lead
@@ -709,6 +711,35 @@ table and print counts only.
   fights, asked for the information of each of the 49 maps it entered, and ended all 25 of D3B's uses (D60). In the AI's
   fight it ended 8 of the character's turns by itself, `automatic` set, over the fight's last 80 s, after 13 turns the
   AI played (D252), its inactive state (D366).
+
+## Client 3.7.14.18
+
+Measured on 2026-11-17 (D427, D428), against 3.7.13.17: `scripts/inspect.cs`, the extraction, the schema and mapping
+tools, and D3B's rewrite on `next`, whose extractor writes each table's SHA-256 in its manifest: its tables of the two
+builds were compared hash by hash, the C# pack's other tables by their counts. Nothing was captured on this build.
+
+- **The installation.** Built on 2026-11-16 at 11:09 UTC, Unity 6000.3.16f1, serialized format 22, Addressables 2.9.1,
+  20,671 bundles, 21.1 GiB, as 3.7.13.17: `Data` 208 bundles, 99.1 MiB decompressed; `Map/Data` 596. The texts: 340,817
+  numbered, as before.
+- **The pack**, format 12: 111,873,405 bytes, 632 more than 3.7.13.17's. The maps, their cells, elements and 3,512
+  graphics, the map positions, sub-areas, areas, zaaps, worlds and their tiles, items and their types, professions and
+  skills, breeds and their heads, hints, monsters and their races, and the items', professions' and hints' icons are
+  the same bytes in D3B's extraction of both builds. The tables D3B's does not extract were compared by their counts
+  where [Client 3.7.13.17](#client-371317) gives them: 34,249 spell levels, 6,378 spell states, 457 interactives,
+  26,851 grades and 11,764 items' icons, the same; the spells' effects and the NPCs were not compared.
+- **The world graph** is the one table that changed: 11,373 vertices against 11,331, 31,001 edges against 30,917,
+  31,422 transitions against 31,337 (55 scrolls, 27 interactive, 3 scroll actions), 628 criteria against 619; none
+  gone. All 42 vertices are new maps of the graph in area 104, La Source: 35 in sub-area 1137, Lac originel, and 7 in
+  1163, Souvenirs de Tiama, whose maps 3.7.13.17 already held with their positions; one transition joins them from
+  Amakna's village. **Zaap 81**, on Lac originel's map 243140612, now stands on the graph: no zaap is left off it, and a
+  path may teleport there (D83, D360).
+- **The graphics** (D362): every map's elements keep their graphic, the maps' bytes being the same: the graphics learned
+  are kept.
+- **The protocol** (D428): the schema is 3.7.13.17's byte for byte, 170,287 bytes, SHA-256 `e383c947…`, Unity's IL2CPP
+  metadata version 39. With 3.7.13.17's pins, the mapping made from pins and structure alone pairs every message,
+  field, enum and value as 3.7.13.17's mapping, made with the owner's captures (D364), does: 224 messages and 31 enums,
+  three of them paired by their fields or scores where the captures anchored them (`GameMessage`, `GameRequest`,
+  `GameEvent`).
 
 ## Connection
 

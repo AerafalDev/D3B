@@ -559,3 +559,9 @@ or refines another says so in its own entry. Add a line here with every new deci
   - The far cell kept for an element beside another zone, going to the other zone in the same change, skipping silently.
 - [D425](decisions/d424-step-9-the-harvests-zones.md#d425-the-harvests-tour-goes-into-another-zone-of-a-map-as-one-more-place-of-its-tour-once-per-tour-by-a-goal-of-vertices-its-sets-stay-keyed-by-map) The harvest's tour goes into another zone of a map as one more place of its tour, once per tour, by a goal of vertices; its sets stay keyed by map (2026-11-10)
   - Keying every set of the tour by vertex, visiting the other zone before the map is done, wanting every zone an element borders, going whatever the way costs.
+
+## Client 3.7.14.18 (D427, D428)
+
+- [D427](decisions/d427-d428-client-3-7-14-18.md#d427-client-371418-measured-against-371317) Client 3.7.14.18, measured against 3.7.13.17 (2026-11-17)
+- [D428](decisions/d427-d428-client-3-7-14-18.md#d428-371418-mapped-from-371317s-pins-without-its-own-captures-and-released) 3.7.14.18 mapped from 3.7.13.17's pins without its own captures, and released (2026-11-17)
+  - Capturing first, as D364 did; 3.7.13.17's mapping file renamed for the new build.

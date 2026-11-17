@@ -305,8 +305,21 @@ internal sealed partial class ReportDialogViewModel : ObservableObject, IDisposa
                 return;
             }
 
-            var progress = new Progress<long>(sent => SendProgress = written.Size is 0 ? 1 : Math.Min(1, sent / (double)written.Size));
+            // Progress<T> posts to the thread pool when there is no synchronization context, so a report can come after
+            // the send has ended: one that late is dropped, and a report sent shows its bar full whatever came before.
+            var progress = new Progress<long>(sent =>
+            {
+                if (IsSending)
+                {
+                    SendProgress = written.Size is 0 ? 1 : Math.Min(1, sent / (double)written.Size);
+                }
+            });
             var result = await sink.SendAsync(new ReportSendRequest(written.Path, written.Manifest, written.Message), progress, _sending.Token).ConfigureAwait(true);
+
+            if (result.IsSent)
+            {
+                SendProgress = 1;
+            }
 
             IsSent = result.IsSent;
             SendText = TextOf(result, written);

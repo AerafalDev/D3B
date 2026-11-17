@@ -29,7 +29,7 @@ body:
     attributes:
       label: Client build
       description: The Dofus 3 client build, on the app's settings page.
-      placeholder: 3.7.13.17
+      placeholder: 3.7.14.18
     validations:
       required: true
 
