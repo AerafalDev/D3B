@@ -73,6 +73,11 @@ export const commands = {
 	mapCells: (mapId: number) => __TAURI_INVOKE<MapCells>("map_cells", { mapId }),
 	/**  The atlas of the packed game data, or why there is none; built off the main thread, its 15,000 positions grouped. */
 	worldAtlas: () => __TAURI_INVOKE<Atlas_Serialize>("world_atlas"),
+	/**
+	 *  Up to 50 items whose French or English name holds `query`, accents and case aside, the invisible ones left out;
+	 *  or, when `ids` are given, those items, in that order; or why the game data is not there.
+	 */
+	findItems: (query: string, ids: number[]) => __TAURI_INVOKE<ItemView_Serialize[]>("find_items", { query, ids }),
 	/**  My zones and the files kept. */
 	zones: () => __TAURI_INVOKE<ZoneList>("zones"),
 	/**  A new zone named `name`, without maps, on `world`. */
@@ -859,6 +864,31 @@ export type InteractiveSeen = {
 	kindId: number,
 	/**  Whether one of its skills is enabled for the character. */
 	usable: boolean,
+};
+
+/**  An item as the field shows it. */
+export type ItemView = ItemView_Serialize | ItemView_Deserialize;
+
+/**  An item as the field shows it. */
+export type ItemView_Deserialize = {
+	id: number,
+	name: Names,
+	level: number,
+	/**  Its type's name, such as "Céréale". */
+	kind: Names,
+	/**  The file of its icon, in the data folder; `None` when the folder lacks it. */
+	icon?: string | null,
+};
+
+/**  An item as the field shows it. */
+export type ItemView_Serialize = {
+	id: number,
+	name: Names,
+	level: number,
+	/**  Its type's name, such as "Céréale". */
+	kind: Names,
+	/**  The file of its icon, in the data folder; `None` when the folder lacks it. */
+	icon: string | null,
 };
 
 /**  A file of the player's folder kept as it is, and why. */

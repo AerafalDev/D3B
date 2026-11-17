@@ -787,7 +787,12 @@
   "values": {
     "row": "{{label}}, valeur {{row}}",
     "remove": "Retirer la valeur {{row}}",
-    "add": "{{label}} : ajouter une valeur"
+    "add": "{{label}} : ajouter une valeur",
+    "searchItem": "{{label}} : chercher un objet",
+    "searchItemHint": "Blé, épée…",
+    "itemsFound": "Objets trouvés",
+    "itemLevel": "{{name}} · niv. {{level}}",
+    "itemKind": "{{kind}} · niv. {{level}}"
   },
   "settings": {
     "title": "Blueprint et réglages",

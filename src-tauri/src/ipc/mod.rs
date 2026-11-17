@@ -8,6 +8,7 @@ mod commands;
 mod edit;
 mod graph;
 mod inspector;
+mod lookup;
 mod map;
 mod played;
 mod relay;
@@ -49,6 +50,7 @@ pub fn builder() -> Builder<tauri::Wry> {
             relay::relay_restore,
             map::map_cells,
             atlas::world_atlas,
+            lookup::items::find_items,
             zones::zones,
             zones::create_zone,
             zones::rename_zone,

@@ -29,7 +29,7 @@ function rows(json: string | null): string[] {
 }
 
 /** The types a value is typed as in Details yet; the others' editors come with their data (v2.2's next PRs). */
-const EDITED = ["bool", "number", "percentage", "text", "zone", "job", "duration", "time"];
+const EDITED = ["bool", "number", "percentage", "text", "zone", "job", "duration", "time", "item"];
 
 /**
  * A list (the owner, 2026-11-17: v2.2's, so my variables take one now): a row per value in its type's own editor, × to
