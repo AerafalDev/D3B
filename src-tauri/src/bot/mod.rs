@@ -33,4 +33,4 @@ pub(crate) use json::tests::HARVEST;
 pub(crate) use json::{ReadError, read, write};
 pub(crate) use pins::{NodePin, pins};
 pub(crate) use problems::{Problem, problems};
-pub(crate) use variable::{ValueType, carried};
+pub(crate) use variable::{ValueType, Variable, carried};

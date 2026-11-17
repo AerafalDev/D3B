@@ -359,7 +359,16 @@ Unreal's; the keys act with the keyboard in that graph only. Ctrl+Z undoes and C
 the letter typed whatever the keyboard's layout, while the keyboard is in the blueprint's tab, a text field keeping
 its own undo; the editor sends one change at a time, so Rust takes them in their order. The Library's right-click offers Delete on mine, which closes its tab. Each graph gives the picker its **choices** (`bot::choices`) with their pins: the catalogue's
   kinds in their place, an event held once never again and a function's entry once, then the blueprint's variables,
-  read and written, and its functions called; creating a variable comes with PR 14. In a graph of mine, a wire
+  read and written, and its functions called. **My variables** (step 3's (14), the owner's choices of 2026-11-17): "+"
+  on My Blueprint's Variables creates "Nouvelle variable", yes or no and false, under an id made from its name that
+  stays when it is renamed, and Details shows it; there a variable of mine is edited, its name, type (the nine), default
+  by its type's editor, bounds for a number or a percentage, whether each character sets it, its help and memory, each
+  field saved when left through `edit_blueprint` and undone as the others; a new type drops the wires of its nodes it
+  no longer fits, a default or a Set's value it refuses and its bounds, bounds narrowed bring the default within them,
+  and Delete takes its Get and Set nodes with it, without a question; the characters running the blueprint keep the
+  values of their settings that still fit (`bot::carried`), a value lost staying lost after an undo. A variable dragged
+  from My Blueprint onto the graph opens a small menu at the pointer, Lire or Écrire, Ctrl (Cmd) reading it at once and
+  Alt writing it. In a graph of mine, a wire
   dragged from a pin is checked by type as it goes: a pin that refuses it says why beside the pointer (another type,
   two ends of one side, a node to itself); dropped on a pin, it is made; dropped on the ground, it opens the picker
   there, as Space (at the pointer) and a right-click do: a search, "Often here" after a Failed (Notify, Wait, Finish),
