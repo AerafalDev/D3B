@@ -64,6 +64,16 @@ describe("a graph's elements", () => {
     expect(nodes[1]?.data).toEqual({ name: "Zone", valueType: "zone", faulty: false });
   });
 
+  it("draws a list or ranges read as a pill that says so", () => {
+    const listed = (one: GraphNode): GraphNode =>
+      one.does === "get" ? { ...one, pins: one.pins.map((it) => ({ ...it, list: true })) } : one;
+    // The fixture is typed `never` to stand for a whole graph; its nodes are this file's.
+    const drawn = graph as unknown as { nodes: GraphNode[] };
+    const shown = { ...drawn, nodes: drawn.nodes.map(listed) } as never;
+    const { nodes } = graphElements(shown, new Map([["zone", "Zone"]]));
+    expect(nodes[1]?.data).toEqual({ name: "Zone", valueType: "zone", list: true, faulty: false });
+  });
+
   it("joins each wire's ends by their pins, classed by what its source carries, drawn as the graph's wire", () => {
     const { edges } = graphElements(graph, new Map());
     expect(

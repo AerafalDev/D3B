@@ -27,8 +27,16 @@ export function graphElements(
     const [x, y] = node.position ?? [UNPLACED_X, UNPLACED_STEP * unplaced++];
     const position = { x, y };
     if (node.does === "get") {
-      const valueType = node.pins[0]?.carries ?? "text";
-      const data = { name: names.get(node.variable) ?? node.variable, valueType, faulty: faulty.has(node.id) };
+      const read = node.pins[0];
+      const valueType = read?.carries ?? "text";
+      const data = {
+        name: names.get(node.variable) ?? node.variable,
+        valueType,
+        // A list's square and ranges' hollow square, as a box's pin (the owner, 2026-11-17).
+        ...(read?.list === true && { list: true }),
+        ...(read?.ranges === true && { ranges: true }),
+        faulty: faulty.has(node.id),
+      };
       return { id: node.id, type: "pill", position, data, selected: node.id === chosen };
     }
     const data = { node, sentence: sentences.get(node.id) ?? [], faulty: faulty.has(node.id) };

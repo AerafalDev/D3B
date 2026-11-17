@@ -44,7 +44,8 @@ export function BlueprintNode({ data, selected }: NodeProps<BoxNode>) {
   const head = flowOuts[0];
   const ins = node.pins.filter((pin) => pin.side === "in" && pin.carries !== "exec");
   const outs = node.pins.filter((pin) => pin.side === "out" && pin !== head);
-  const open = (node.options?.valueType ?? null) === null;
+  // A kind that changes a variable is typed by it, never open (`bot::pins`).
+  const open = (node.options?.valueType ?? null) === null && node.options?.variable === undefined;
   return (
     <div
       className={cn(

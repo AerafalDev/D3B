@@ -60,6 +60,14 @@ describe("linkRefusal", () => {
     expect(linkRefusal(end("a", "out", "map"), end("b", "in", "wildcard", { wildcard: true }))).toBeNull();
   });
 
+  it("lets an open wildcard output take the type of the input it feeds", () => {
+    const element = end("each", "out", "wildcard", { wildcard: true });
+    expect(linkRefusal(element, end("b", "in", "zone"))).toBeNull();
+    expect(linkRefusal(element, end("b", "in", "zone", { list: true }))).toBe("otherType");
+    const comparing = { ...element, types: ["number", "time"] };
+    expect(linkRefusal(comparing, end("b", "in", "zone"))).toBe("otherType");
+  });
+
   it("reads a typed wildcard as its type and an untyped comparison as numbers too", () => {
     expect(linkRefusal(end("a", "out", "percentage"), comparison())).toBeNull();
     expect(linkRefusal(end("a", "out", "duration"), comparison("time", "time"))).toBe("otherType");

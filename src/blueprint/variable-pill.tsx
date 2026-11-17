@@ -2,8 +2,8 @@ import { Handle, type Node, type NodeProps, Position } from "@xyflow/react";
 
 import { cn } from "@/lib/utils.ts";
 
-/** What a variable's pill carries: its name and type. */
-export type PillData = { name: string; valueType: string; faulty?: boolean };
+/** What a variable's pill carries: its name and type, and whether a list or ranges. */
+export type PillData = { name: string; valueType: string; list?: boolean; ranges?: boolean; faulty?: boolean };
 
 /** A pill as React Flow holds it. */
 export type PillNode = Node<PillData, "pill">;
@@ -25,7 +25,12 @@ export function VariablePill({ data, selected }: NodeProps<PillNode>) {
         type="source"
         position={Position.Right}
         id="value"
-        className={cn("blueprint-pin blueprint-value", `blueprint-type-${data.valueType}`)}
+        className={cn(
+          "blueprint-pin blueprint-value",
+          `blueprint-type-${data.valueType}`,
+          data.list === true && "blueprint-list",
+          data.ranges === true && "blueprint-ranges",
+        )}
       />
     </div>
   );

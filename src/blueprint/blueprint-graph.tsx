@@ -30,7 +30,7 @@ import type { BoxNode } from "./blueprint-node.tsx";
 import { BlueprintNode } from "./blueprint-node.tsx";
 import { ConnectionLine } from "./edit/connection-line.tsx";
 import { deletion, type MenuTarget, menuDeletion } from "./edit/deletion.ts";
-import { GraphPins, type PinOf } from "./edit/graph-pins.ts";
+import { GraphPins, type PinOf, pinFinder } from "./edit/graph-pins.ts";
 import { type LinkEnd, linkRefusal } from "./edit/link-check.ts";
 import { Picker } from "./edit/picker.tsx";
 import { keptSelection } from "./edit/selection.ts";
@@ -184,17 +184,7 @@ function Graph({ graph, names, faulty, chosen = null, onChoose, onEdit }: Bluepr
       box.current?.focus({ preventScroll: true });
     }
   };
-  const pinOf = useMemo<PinOf>(() => {
-    const byNode = new Map(graph.nodes.map((node) => [node.id, node]));
-    return (node, pin, side) => {
-      const drawn = byNode.get(node);
-      const found = drawn?.pins.find((one) => one.id === pin && one.side === side);
-      if (drawn === undefined || found === undefined) {
-        return null;
-      }
-      return { node, pin: found, types: drawn.types ?? [], typed: drawn.options?.valueType ?? null };
-    };
-  }, [graph]);
+  const pinOf = useMemo<PinOf>(() => pinFinder(graph), [graph]);
   // React Flow's own words, in the player's language.
   const ariaLabelConfig = {
     "controls.ariaLabel": t("blueprint.controls"),

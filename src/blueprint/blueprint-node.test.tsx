@@ -64,9 +64,10 @@ describe("a node of the graph", () => {
       ],
     } as GraphNode;
     const { container } = node(ge);
+    expect(container.querySelectorAll(".blueprint-open")).toHaveLength(1);
     expect(container.querySelector(".blueprint-open.blueprint-type-number")).not.toBeNull();
-    expect(container.querySelector(".blueprint-list.blueprint-type-zone")).not.toBeNull();
-    expect(container.querySelector(".blueprint-ranges.blueprint-type-zone")).not.toBeNull();
+    expect(container.querySelector(".blueprint-list.blueprint-type-zone:not(.blueprint-open)")).not.toBeNull();
+    expect(container.querySelector(".blueprint-ranges.blueprint-type-zone:not(.blueprint-open)")).not.toBeNull();
     cleanup();
     const typed = node({ ...ge, options: { valueType: "time" }, pins: [shaped({ carries: "time", wildcard: true })] });
     expect(typed.container.querySelector(".blueprint-open")).toBeNull();
