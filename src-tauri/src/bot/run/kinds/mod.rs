@@ -52,9 +52,6 @@ pub(super) fn behaviour(kind: &str) -> Option<&'static dyn Behaviour> {
         "return_failed" => &functions::ReturnFailed,
         "return_exit" => &functions::ReturnExit,
         "result" => &functions::PureResult,
-        "greater_or_equal" => &values::GreaterOrEqual,
-        "minutes" => &values::Minutes,
-        "add" => &values::Add,
-        _ => return None,
+        _ => return values::behaviour(kind),
     })
 }

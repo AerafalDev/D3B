@@ -45,7 +45,7 @@ pub(crate) fn choices(blueprint: &Blueprint, graph: &Graph) -> Vec<Does> {
                 false
             }
             Family::Function => in_function && !(kind.id == "entry" && has_entry),
-            Family::Action | Family::Flow | Family::Query => true,
+            Family::Action | Family::Flow | Family::Query | Family::Value => true,
         })
         .map(|kind| Does::Kind(Id(kind.id.to_owned())));
     // An id given twice, or malformed, is its own problem: the first well-formed one is what its nodes mean, and a

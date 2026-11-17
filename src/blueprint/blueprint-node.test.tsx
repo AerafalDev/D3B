@@ -98,6 +98,24 @@ describe("a node of the graph", () => {
     expect(onEdit).toHaveBeenCalledWith({ edit: "options", node: "seq", count: 3 });
   });
 
+  it("says AND's inputs by their number, its '+' among them adding the next", () => {
+    const onEdit = vi.fn();
+    const and = {
+      ...sequence,
+      id: "and",
+      kind: "and",
+      family: "value",
+      pins: [pin("in_1", "in", "bool"), pin("in_2", "in", "bool"), pin("value", "out", "bool")],
+      adds: { pin: "in", side: "in", least: 2 },
+    } as GraphNode;
+    const { container } = node(and, onEdit);
+    expect(rows(container)).toEqual(["Entrée 1", "Entrée 2", "Valeur"]);
+    const add = screen.getByRole("button", { name: "Ajouter une entrée" });
+    expect(add.closest(".items-end"), "among the inputs, on the left").toBeNull();
+    fireEvent.click(add);
+    expect(onEdit).toHaveBeenCalledWith({ edit: "options", node: "and", count: 3 });
+  });
+
   it("draws no '+' on a blueprint of D3B's, read-only", () => {
     node(sequence);
     expect(screen.queryByRole("button", { name: "Ajouter une sortie" })).toBeNull();

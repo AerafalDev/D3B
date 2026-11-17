@@ -280,8 +280,8 @@ describe("the editor's Details", () => {
 
   it("offers any type on a wildcard reading none, and always says the type chosen", async () => {
     const any = node("eq", {
-      kind: "test_equal",
-      family: "query",
+      kind: "equal",
+      family: "value",
       pins: [{ ...pin("b", "in", "wildcard"), wildcard: true }],
     });
     const mine = { ...graph, nodes: [any] } as GraphView_Serialize;

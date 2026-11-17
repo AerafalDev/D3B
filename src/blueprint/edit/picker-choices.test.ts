@@ -23,14 +23,14 @@ const CHOICES: ChoiceView_Serialize[] = [
   kind("wait", "flow", [RUN, THEN, pin("minutes", "in", "number")]),
   kind("finish", "flow", [RUN]),
   kind("life_percent", "query", [pin("value", "out", "percentage")]),
-  kind("add", "query", [pin("a", "in", "number"), pin("value", "out", "number")]),
-  kind("at_least", "query", [pin("a", "in", "number"), pin("value", "out", "bool")]),
+  kind("add", "value", [pin("a", "in", "number"), pin("value", "out", "number")]),
+  kind("at_least", "value", [pin("a", "in", "number"), pin("value", "out", "bool")]),
   { does: "get", variable: "zone", family: "variable", fromStep: null, pins: [pin("value", "out", "zone")] },
 ];
 
 describe("pickerChoices from a value a wildcard may take", () => {
   const ge: ChoiceView_Serialize = {
-    ...kind("greater_or_equal", "query", [
+    ...kind("greater_or_equal", "value", [
       { ...pin("a", "in", "number"), wildcard: true },
       { ...pin("b", "in", "number"), wildcard: true },
     ]),
@@ -76,7 +76,7 @@ describe("pickerChoices", () => {
     expect(all.map(([family, choices]) => [family, ids(choices)])).toEqual([
       ["event", ["life_below"]],
       ["flow", ["wait"]],
-      ["query", ["add", "at_least"]],
+      ["value", ["add", "at_least"]],
     ]);
     const free = pickerChoices(CHOICES, null, "");
     expect(free.often).toEqual([]);

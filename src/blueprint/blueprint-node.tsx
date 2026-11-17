@@ -49,6 +49,22 @@ export function BlueprintNode({ data, selected }: NodeProps<BoxNode>) {
   const head = numbered ? undefined : flowOuts[0];
   const onEdit = useContext(NodeEdit);
   const added = onEdit === undefined ? null : addedPin(node);
+  const adding = (side: "in" | "out") =>
+    added !== null &&
+    node.adds?.side === side && (
+      <button
+        type="button"
+        // A click or a key adds the pin and neither drags nor chooses the node.
+        className="nodrag nopan nokey text-text-muted hover:bg-hover focus-visible:outline-focus flex items-center gap-1 rounded px-1 text-[11px] hover:text-white focus-visible:outline-1"
+        onClick={(event) => {
+          event.stopPropagation();
+          onEdit?.(added);
+        }}
+      >
+        <Plus aria-hidden="true" size={12} strokeWidth={1.5} />
+        {t(side === "in" ? "blueprint.addInput" : "blueprint.addOutput")}
+      </button>
+    );
   // A second flow input, Do N times' Reset, is a row with the values.
   const ins = node.pins.filter((pin) => pin.side === "in" && pin !== flowIn);
   const outs = node.pins.filter((pin) => pin.side === "out" && pin !== head);
@@ -106,6 +122,7 @@ export function BlueprintNode({ data, selected }: NodeProps<BoxNode>) {
                 {pinLabel(pin.id, node)}
               </div>
             ))}
+            {adding("in")}
           </div>
           <div className="flex flex-col items-end">
             {outs.map((pin) => (
@@ -114,20 +131,7 @@ export function BlueprintNode({ data, selected }: NodeProps<BoxNode>) {
                 <Handle type="source" position={Position.Right} id={pin.id} className={pinClass(pin, open)} />
               </div>
             ))}
-            {added !== null && (
-              <button
-                type="button"
-                // A click or a key adds the output and neither drags nor chooses the node.
-                className="nodrag nopan nokey text-text-muted hover:bg-hover focus-visible:outline-focus flex items-center gap-1 rounded px-1 text-[11px] hover:text-white focus-visible:outline-1"
-                onClick={(event) => {
-                  event.stopPropagation();
-                  onEdit?.(added);
-                }}
-              >
-                <Plus aria-hidden="true" size={12} strokeWidth={1.5} />
-                {t("blueprint.addOutput")}
-              </button>
-            )}
+            {adding("out")}
           </div>
         </div>
       )}

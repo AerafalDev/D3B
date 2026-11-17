@@ -570,7 +570,9 @@ flowchart LR
 - **Out**: the Expression (v2.8); the queries and the run's counts (v2.5), so between times compares typed times
   until then; Add to, Reset and a list's Add, Remove and Empty (v2.7, (14)); pure functions' calls (15); the
   debugger's display (step 4); "Advanced" and the picker by intent (v2.9); decimal numbers; sort, sum, last, filter.
-- **Eight PRs**: the namespace `nodes`; comparisons, logic and Choose; arithmetic and N seconds; randomness; lists;
+- **Eight PRs**: the namespace `nodes`; comparisons, logic and Choose (done in code: `bot/run/kinds/values/`, each
+  input read only when needed; AND's and OR's inputs numbered as Sequence's outputs, "+" and × in Details; drawn as
+  boxes until the compact look; `=` of two lists comes with the lists, its wildcard of one value today); arithmetic and N seconds; randomness; lists;
   Text and Join; drawn compact; sentences in place, the Summary, a run on the captures and the checklist. Each kind
   replaces the catalogue's test kinds (`test_equal`, `test_list`, `test_text`) as it comes.
 - **Measured** (nothing acts in the game before step 4): the picker's group; a compact `<` with a chip; "Tant que Pods

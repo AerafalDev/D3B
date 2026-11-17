@@ -167,6 +167,46 @@
     "result": {
       "sentence": "Résultat",
       "description": "Ce que rend une fonction pure : ses sorties."
+    },
+    "equal": {
+      "sentence": "{{a}} = {{b}}",
+      "description": "Vrai si les deux valeurs sont les mêmes, de n'importe quel type."
+    },
+    "not_equal": {
+      "sentence": "{{a}} ≠ {{b}}",
+      "description": "Vrai si les deux valeurs diffèrent."
+    },
+    "less": {
+      "sentence": "{{a}} < {{b}}",
+      "description": "Vrai si A est plus petit que B : nombres, pourcentages, durées ou heures."
+    },
+    "less_or_equal": {
+      "sentence": "{{a}} ≤ {{b}}",
+      "description": "Vrai si A est plus petit que B ou égal."
+    },
+    "greater": {
+      "sentence": "{{a}} > {{b}}",
+      "description": "Vrai si A est plus grand que B."
+    },
+    "between": {
+      "sentence": "{{value}} entre {{low}} et {{high}}",
+      "description": "Vrai si la valeur est entre les deux bornes, comprises ; de 23:00 à 08:00 passe minuit."
+    },
+    "and": {
+      "sentence": "ET",
+      "description": "Vrai si toutes ses conditions sont vraies, lues dans l'ordre jusqu'à la première fausse."
+    },
+    "or": {
+      "sentence": "OU",
+      "description": "Vrai si une de ses conditions est vraie, lues dans l'ordre jusqu'à la première vraie."
+    },
+    "not": {
+      "sentence": "NON {{value}}",
+      "description": "Le contraire de la condition."
+    },
+    "choose": {
+      "sentence": "Si {{condition}} : {{if_true}}, sinon {{if_false}}",
+      "description": "Donne une valeur si la condition est vraie, une autre sinon ; seul le côté pris est lu."
     }
   },
   "pins": {
@@ -206,6 +246,10 @@
     "longest": "Au plus",
     "too_long": "Trop long",
     "try": "Essai",
-    "job": "Métier"
+    "job": "Métier",
+    "low": "De",
+    "high": "À",
+    "if_true": "Si vrai",
+    "if_false": "Si faux"
   }
 }

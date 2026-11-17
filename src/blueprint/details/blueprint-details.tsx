@@ -274,7 +274,9 @@ function NodeDetails({ node, graph, problems, names, variables, onValue, onEdit 
         </DetailRow>
       )}
       {(node.adds ?? null) !== null && onEdit !== undefined && (
-        <DetailRow label={t("blueprint.details.outputs")}>
+        <DetailRow
+          label={t(node.adds?.side === "in" ? "blueprint.details.numberedInputs" : "blueprint.details.outputs")}
+        >
           <OutputsEditor node={node} onEdit={onEdit} />
         </DetailRow>
       )}

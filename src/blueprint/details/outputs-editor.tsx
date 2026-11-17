@@ -15,13 +15,15 @@ interface OutputsEditorProps {
 }
 
 /**
- * A Sequence's outputs in Details (the owner, 2026-11-17: the keyboard's way, as a Switch's cases): a row each, × removing
- * it with its wire while it has more than its kind's least, and "+ Add an output", as on the node.
+ * A node's numbered pins in Details, a Sequence's outputs or AND's inputs (the owner, 2026-11-17: the keyboard's way, as
+ * a Switch's cases): a row each, × removing it with its wire while it has more than its kind's least, and "+", as on
+ * the node.
  */
 export function OutputsEditor({ node, onEdit }: OutputsEditorProps) {
   const { t } = useTranslation();
   const prefix = node.adds?.pin ?? "";
-  const outputs = node.pins.filter((pin) => pin.side === "out" && new RegExp(`^${prefix}_[1-9][0-9]*$`).test(pin.id));
+  const side = node.adds?.side ?? "out";
+  const outputs = node.pins.filter((pin) => pin.side === side && new RegExp(`^${prefix}_[1-9][0-9]*$`).test(pin.id));
   const added = addedPin(node);
   // An edit waits for the outputs to come back, so a second click never removes the output renumbered into its place.
   const waiting = useRef(false);
@@ -67,7 +69,7 @@ export function OutputsEditor({ node, onEdit }: OutputsEditorProps) {
           className="text-text-muted hover:bg-hover focus-visible:outline-focus flex w-max items-center gap-1 rounded px-1 hover:text-white focus-visible:outline-1"
         >
           <Plus aria-hidden="true" size={14} strokeWidth={1.5} />
-          {t("blueprint.addOutput")}
+          {t(side === "in" ? "blueprint.addInput" : "blueprint.addOutput")}
         </button>
       )}
     </div>
