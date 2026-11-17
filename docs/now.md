@@ -327,6 +327,10 @@ _Updated 2026-11-17._
        "Attendre … min", type 3 on "Écrire Objectif", then make Objectif a Texte: the wire goes, the 3 with it;
     5. "Supprimer la variable": it goes with its Lire and Écrire nodes and their wires, without a question; Ctrl+Z
        brings all back.
+    6. drag "Objectif" from My Blueprint onto the graph: its name follows the pointer, and a menu "Lire Objectif" /
+       "Écrire Objectif" opens where it is dropped; Escape closes it; drag again with Ctrl held: a Lire node at once,
+       where it was dropped; with Alt: an Écrire node; a click on "Objectif" still only chooses it; in Récolte
+       automatique, its variables do not drag.
 - **step 3, Advanced tools** ((24)), on Windows x64 from `bun run app` on `next` or the next release:
   Measured by the owner on 2026-11-17, Windows x64, `bun run app` on `next` 60cf228: items 1, 2, 3 and 5 pass, and 4 but
   for the palette's command, not tried. The owner then asked for the panel closed by default and opened by a character
@@ -498,7 +502,8 @@ _Updated 2026-11-17._
   v2 (the owner's choices of that day): values typed on a node's inputs in Details (done in code; its checklist under
   "Not measured"), then my variables, (14)'s first PR, in three PRs: created, changed and deleted through
   `edit_blueprint`, the characters' settings following (done in code), then My Blueprint's "+" and Details (done in
-  code; its checklist under "Not measured"), then a variable dragged onto the graph; then renaming a blueprint of mine; then
+  code; its checklist under "Not measured"), then a variable dragged onto the graph (done in code, item 6 of
+  that checklist); then renaming a blueprint of mine; then
   **blueprints v2**
   ([bot.md](bot.md#the-language-v2), ADR 0016; the owner, 2026-11-16, after trying (12): "much more complete", "as
   practical as a Lua script"), from a mock-up of the catalogue and the Summary and an analysis of the reference Lua

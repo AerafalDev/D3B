@@ -1,3 +1,4 @@
+import { useDraggable } from "@dnd-kit/core";
 import { Eye, Plus } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
@@ -7,6 +8,7 @@ import { cn } from "@/lib/utils.ts";
 import { givenText } from "@/library/given-text.ts";
 import type { BlueprintSummary } from "@/library/library-store.ts";
 import { valueText } from "@/library/value-text.ts";
+import type { VariableDrag } from "./edit/variable-drop.ts";
 
 interface MyBlueprintProps {
   blueprint: BlueprintSummary;
@@ -17,7 +19,7 @@ interface MyBlueprintProps {
   /** The variable Details shows, if one. */
   chosen?: string | null;
   onChoose?: (variable: string) => void;
-  /** Creates a variable, in a blueprint of mine only. */
+  /** Creates a variable, in a blueprint of mine only, whose variables are then dragged onto the graph. */
   onAddVariable?: () => void;
 }
 
@@ -25,7 +27,7 @@ interface MyBlueprintProps {
  * Unreal's "My Blueprint" (`docs/bot.md`, "In the app"): the blueprint's event graphs, its functions and its
  * variables, an eye on those set per character, each with its type's colour; a variable's help and default in its
  * hover and said to screen readers. A graph or a function shows on the canvas when chosen. In a blueprint of mine, "+"
- * creates a variable (step 3's (14)).
+ * creates a variable and a variable dragged onto the graph is read or written there (step 3's (14)).
  */
 export function MyBlueprint({
   blueprint,
@@ -94,6 +96,7 @@ export function MyBlueprint({
               name={name}
               hover={hover}
               chosen={variable.id === chosen}
+              draggable={onAddVariable !== undefined}
               onChoose={() => onChoose?.(variable.id)}
             />
           );
@@ -109,17 +112,32 @@ interface VariableRowProps {
   name: string;
   hover: string;
   chosen: boolean;
+  /** Whether it drags onto the graph: in a blueprint of mine. */
+  draggable: boolean;
   onChoose: () => void;
 }
 
-/** A variable's row, chosen by a click. */
-function VariableRow({ variable, name, hover, chosen, onChoose }: VariableRowProps) {
+/** A variable's row, chosen by a click and, in a blueprint of mine, dragged onto the graph by `@dnd-kit`. */
+function VariableRow({ variable, name, hover, chosen, draggable, onChoose }: VariableRowProps) {
   const { t } = useTranslation();
+  const data: VariableDrag = { variable: variable.id };
+  // The pointer moves a few pixels first (the tab's sensor), so a click still chooses it; the graph's picker reads and
+  // writes it by keyboard.
+  // Its listeners and instructions only: a pointer drags it, and the button keeps its own role and keyboard.
+  const { attributes, listeners, setNodeRef } = useDraggable({
+    id: `variable:${variable.id}`,
+    data,
+    disabled: !draggable,
+  });
   return (
     <li title={hover}>
       <button
+        ref={setNodeRef}
+        {...(draggable ? listeners : {})}
+        aria-describedby={draggable ? attributes["aria-describedby"] : undefined}
         type="button"
         aria-current={chosen ? "true" : undefined}
+        data-draggable={draggable ? "true" : undefined}
         onClick={onChoose}
         className="hover:bg-hover focus-visible:outline-focus mx-1 flex w-[calc(100%-0.5rem)] items-center gap-2 rounded-[5px] px-2 py-1 text-left focus-visible:outline-1 aria-[current=true]:bg-[#2a2c30] aria-[current=true]:text-white"
       >
