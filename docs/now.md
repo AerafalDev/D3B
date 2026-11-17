@@ -580,7 +580,8 @@ _Updated 2026-11-17._
   measures alongside; Sequence without Completed, Retry a node with a body, a node's memory for the run, Do once as Do
   N times, Pick of one mode, Trigger with (v2.6), the French names on a mock-up of the Summary), in six PRs: Sequence and
   Switch in Rust with the options' edits (done in code); a node's options in the editor (done in code); the Summary by pin roles (done in code); the loops (done in code); the
-  kinds that remember (done in code); the waits and stops; (v2.4)
+  kinds that remember (done in code); the waits and stops, in two PRs: Wait until, Block, and Pause and notify (done
+  in code), then Retry and a run on the captures; (v2.4)
   the values: comparisons, logic, arithmetic, randomness, text, durations, lists, drawn compact; (v2.5) the queries
   over `game::Live`, and those marked with their study and step; (v2.6) the events: When, Every, At, the game's new
   ones, mine and Trigger with its timers; (v2.7) the actions of steps 4 to 7, marked (the haven bag, zaaps, doors,

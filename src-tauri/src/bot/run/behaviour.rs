@@ -77,6 +77,8 @@ pub(crate) enum Step {
     },
     /// Leave the nearest loop.
     Leave,
+    /// The run pauses on the node at work, which the run's resume runs again (Pause and notify's).
+    Pause,
     /// The run is finished.
     Finish,
     /// The character is blocked with this reason.

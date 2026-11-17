@@ -60,6 +60,26 @@ describe("a node's sentence", () => {
     expect(plain(nodeSentence(most({}), new Map([["times", "Tours"]]), names))).toBe("Au plus [Tours] fois");
   });
 
+  it("says Wait until's longest wait when it has one", () => {
+    const until = (inputs: object) =>
+      ({
+        ...harvest,
+        kind: "wait_until",
+        family: "flow",
+        pins: [pin("condition", "bool"), pin("longest", "duration", "0")],
+        inputs,
+      }) as GraphNode;
+    expect(plain(nodeSentence(until({}), new Map([["condition", "Vie ≥ 90"]]), names))).toBe("Attendre que [Vie ≥ 90]");
+    expect(plain(nodeSentence(until({ longest: "300" }), new Map([["condition", "Vie ≥ 90"]]), names))).toBe(
+      "Attendre que [Vie ≥ 90] (au plus [5 min])",
+    );
+    const wired = new Map([
+      ["condition", "Vie ≥ 90"],
+      ["longest", "Patience"],
+    ]);
+    expect(plain(nodeSentence(until({}), wired, names))).toBe("Attendre que [Vie ≥ 90] (au plus [Patience])");
+  });
+
   it("says a kind this version does not know, with its id", () => {
     const unknown = { ...harvest, kind: "teleport", family: null, pins: [] } as GraphNode;
     expect(plain(nodeSentence(unknown, new Map(), names))).toBe("Nœud inconnu de cette version : teleport");

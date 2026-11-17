@@ -386,6 +386,29 @@ describe("the blueprint's Summary", () => {
     ]);
   });
 
+  it("titles Wait until's Too long", () => {
+    const flows = {
+      ...events,
+      nodes: [
+        node("start", "on_start", { family: "event", pins: [pin("then", "out")] }),
+        node("until", "wait_until", {
+          family: "flow",
+          pins: [pin("run", "in"), pin("condition", "in", "bool"), pin("then", "out"), pin("too_long", "out")],
+          inputs: { condition: "true" },
+        }),
+        node("a", "notify"),
+      ],
+      wires: [
+        { from: ["start", "then"], to: ["until", "run"] },
+        { from: ["until", "too_long"], to: ["a", "run"] },
+      ],
+    };
+    render(
+      <Summary graphs={[flows] as unknown as GraphView_Serialize[]} names={names} chosen={null} onChoose={() => {}} />,
+    );
+    expect(read()[0]).toEqual(["Au lancement", "1. Attendre que Oui", "Trop long :", "1.1. Prévenir : à choisir"]);
+  });
+
   it("chooses a step's node, in its graph", () => {
     const onChoose = vi.fn();
     render(<Summary graphs={graphs} names={names} chosen={null} onChoose={onChoose} />);

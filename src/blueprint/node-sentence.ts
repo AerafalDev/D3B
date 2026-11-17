@@ -57,6 +57,20 @@ export function nodeSentence(
     const chip = wired.get(piece) ?? valueText(valueType, typed ?? pin?.default ?? null, language);
     parts.push({ chip, valueType });
   }
+  // Wait until's longest wait, 0 by default for none, said when it has one (the owner's mock-up of 2026-11-17).
+  const longest = node.inputs["longest"] ?? node.pins.find((one) => one.id === "longest")?.default ?? "0";
+  if (node.kind === "wait_until" && (wired.has("longest") || longest !== "0")) {
+    const chip = wired.get("longest") ?? valueText("duration", longest, language);
+    const words = String(i18next.t("blueprint.atMostOf", { longest: "{{longest}}" }));
+    for (const [index, piece] of words.split(/\{\{longest\}\}/).entries()) {
+      if (index > 0) {
+        parts.push({ chip, valueType: "duration" });
+      }
+      if (piece !== "") {
+        parts.push({ text: piece });
+      }
+    }
+  }
   return parts;
 }
 

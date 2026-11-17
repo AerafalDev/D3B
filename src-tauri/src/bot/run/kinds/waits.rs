@@ -1,5 +1,5 @@
-//! The flow's nodes that wait: Wait, on the clock, and Wait for life, on the observed state. Each starts over when the
-//! flow comes back to it after an interruption, as an action does.
+//! The flow's nodes that wait: Wait, on the clock, Wait for life and Wait until, on the observed state. Each starts
+//! over when the flow comes back to it after an interruption, as an action does.
 
 use std::time::Duration;
 
@@ -27,6 +27,39 @@ impl Behaviour for Wait {
             Step::go("then")
         } else {
             Step::Wait { until: Some(until) }
+        })
+    }
+}
+
+/// Wait until: out of Then once its condition holds, read at each advance and each second, or out of Too long after its
+/// `longest`, in seconds, from when the flow came in; 0 waits with no limit. It starts over after an interruption, as
+/// Wait does.
+pub(super) struct WaitUntil;
+
+impl Behaviour for WaitUntil {
+    fn run(&self, cx: &mut Cx<'_>, resume: Resume) -> Result<Step, Fault> {
+        let now = cx.now();
+        if matches!(resume, Resume::Enter { .. }) {
+            let seconds = u64::try_from(cx.number("longest")?).map_err(|_| Fault::NotOfType {
+                pin: "longest".to_owned(),
+            })?;
+            let longest = (seconds > 0)
+                .then(|| now.checked_add(Duration::from_secs(seconds)).ok_or(Fault::TooLarge))
+                .transpose()?;
+            cx.slot().at = longest;
+        }
+        // A value not seen yet is neither true nor false: it waits for it (the owner, 2026-11-17), as Wait for life does.
+        match cx.condition("condition") {
+            Ok(true) => return Ok(Step::go("then")),
+            Ok(false) | Err(Fault::NotSeen { .. }) => {}
+            Err(fault) => return Err(fault),
+        }
+        let longest = cx.slot().at;
+        Ok(match longest {
+            Some(until) if now >= until => Step::go("too_long"),
+            _ => Step::Wait {
+                until: Some(longest.map_or(now + AGAIN, |until| until.min(now + AGAIN))),
+            },
         })
     }
 }

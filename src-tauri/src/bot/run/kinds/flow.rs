@@ -1,5 +1,5 @@
-//! The flow's behaviours that need no clock: If, Sequence, Switch and Finish. Wait and Wait for life come with the
-//! nodes that wait.
+//! The flow's behaviours that need no clock: If, Sequence, Switch, Block, Pause and notify, and Finish. The waits
+//! come with the nodes that wait.
 
 use serde_json::Value;
 
@@ -56,6 +56,39 @@ fn same(a: &Value, b: &Value) -> bool {
     match (a.as_f64(), b.as_f64()) {
         (Some(a), Some(b)) => (a - b).abs() < f64::EPSILON,
         _ => a == b,
+    }
+}
+
+/// Block: the character is blocked with its reason.
+pub(super) struct Block;
+
+impl Behaviour for Block {
+    fn run(&self, cx: &mut Cx<'_>, _: Resume) -> Result<Step, Fault> {
+        let reason = cx.input("reason")?;
+        let reason = reason.as_str().ok_or_else(|| Fault::NotOfType {
+            pin: "reason".to_owned(),
+        })?;
+        Ok(Step::Block(reason.to_owned()))
+    }
+}
+
+/// Pause and notify: tells its text and pauses the run on itself; resumed by the player (step 4), it goes on out of
+/// Then, so it pauses again only when the flow comes back to it.
+pub(super) struct PauseNotify;
+
+impl Behaviour for PauseNotify {
+    fn run(&self, cx: &mut Cx<'_>, _: Resume) -> Result<Step, Fault> {
+        if cx.slot().count == 1 {
+            cx.slot().count = 0;
+            return Ok(Step::go("then"));
+        }
+        let text = cx.input("text")?;
+        let text = text
+            .as_str()
+            .ok_or_else(|| Fault::NotOfType { pin: "text".to_owned() })?;
+        cx.notify(text);
+        cx.slot().count = 1;
+        Ok(Step::Pause)
     }
 }
 
