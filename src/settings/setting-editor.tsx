@@ -2,13 +2,14 @@ import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import { Switch } from "@/components/ui/switch.tsx";
-import { shapedText, valueText } from "@/library/value-text.ts";
+import { valueText } from "@/library/value-text.ts";
+import { parseDuration } from "@/values/duration.ts";
 import { ItemField } from "@/values/item-field.tsx";
 import { MapField } from "@/values/map-field.tsx";
 import { ZoneField, type ZoneValue } from "@/zone/zone-field.tsx";
-import { parseDuration } from "./duration.ts";
 import { JobSelect } from "./job-select.tsx";
 import { ListEditor } from "./list-editor.tsx";
+import { RangesTable } from "./ranges-table.tsx";
 
 /** The step of the roadmap whose actions use a bank and items, which brings their editors (the owner, 2026-11-16). */
 const LATER = 5;
@@ -36,16 +37,13 @@ interface SettingEditorProps {
 /**
  * A setting's editor by its type (the owner, 2026-11-16): a Zone's field, a bounded number, a switch, a line of text, a
  * profession, a duration, a time, an item searched by name, a map chosen on the World, typed or where a character stands, a list a row per value; a bank and items say their value only until step 5 brings
- * their editors, ranges their rows until their table. A node's input typed in Details takes the same (the owner,
+ * their editors; ranges a table of levels, pasted or copied as text. A node's input typed in Details takes the same (the owner,
  * 2026-11-17).
  */
 export function SettingEditor({ variable, value, onChange, who, label }: SettingEditorProps) {
   const { t, i18n } = useTranslation();
   if (variable.ranges === true) {
-    // Ranges are edited as a table, v2.2's last editor: said by their rows meanwhile.
-    return (
-      <p className="flex h-[26px] items-center text-xs text-white">{shapedText(variable, value, i18n.language)}</p>
-    );
+    return <RangesTable variable={variable} value={value} onChange={onChange} who={who} label={label} />;
   }
   if (variable.list === true) {
     return <ListEditor variable={variable} value={value} onChange={onChange} who={who} label={label} />;

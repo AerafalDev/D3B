@@ -74,13 +74,4 @@ describe("a list's editor", () => {
     fireEvent.keyDown(added, { key: "Enter" });
     expect(onChange).toHaveBeenLastCalledWith("[30]");
   });
-
-  it("says ranges by their rows until their table comes", () => {
-    const ranges = { valueType: "zone", ranges: true, bounds: null };
-    const onChange = vi.fn(async () => true);
-    const rows =
-      '[{"from": 1, "to": 49, "value": {"sub_area": 445}}, {"from": 50, "to": 200, "value": {"sub_area": 1}}]';
-    render(<SettingEditor variable={ranges} value={rows} onChange={onChange} who="Lyra" label="Où" />);
-    expect(screen.getByText("2 tranches")).toBeTruthy();
-  });
 });
