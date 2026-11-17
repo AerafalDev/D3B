@@ -9,7 +9,7 @@ export type ViewId = "characters" | "library" | "world";
 interface LayoutStore {
   /**
    * Which parts are shown. As in VS Code, the secondary side bar starts hidden (the owner, 2026-11-12); the panel too,
-   * until the app's settings say Advanced tools are on (`src/settings/app-settings.ts`).
+   * until a connected character's tab opens it with Advanced tools on (`src/inspector/use-panel-opening.ts`).
    */
   visible: Record<Part, boolean>;
   /** The view the primary side bar shows. */
