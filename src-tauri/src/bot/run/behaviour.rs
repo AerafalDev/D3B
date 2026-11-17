@@ -7,7 +7,7 @@ use std::time::Instant;
 
 use serde_json::Value;
 
-use super::frame::{Call, Slot};
+use super::frame::{Body, Call, Slot};
 use super::knows::Knows;
 use super::program::Program;
 use super::values::{self, Trace};
@@ -57,6 +57,8 @@ pub(crate) enum Resume {
     ChainEnded,
     /// Leave the loop was reached in the chain it ran.
     Left,
+    /// The try it ran failed with this reason, its Failed linked to nothing.
+    Failed(String),
 }
 
 /// What the node does next.
@@ -66,8 +68,8 @@ pub(crate) enum Step {
     Go(String),
     /// It failed: the flow goes out of `failed` with the reason, and blocks the character if nothing is wired there.
     Failed(String),
-    /// It runs the chain out of `pin` and is resumed when that ends; a breakable one is what Leave the loop ends.
-    Chain { pin: String, breakable: bool },
+    /// It runs the chain out of `pin`, a body of `body`'s, and is resumed when that ends.
+    Chain { pin: String, body: Body },
     /// It waits on the observed state, or on the clock until then at the latest.
     Wait { until: Option<Instant> },
     /// The function ends by this exit, giving back its outputs.

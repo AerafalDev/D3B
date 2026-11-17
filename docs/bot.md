@@ -114,7 +114,8 @@ flowchart LR
   read the view when used, one not seen yet (no life read since the connection opened) blocking with what is missing.
 - **What it knows beyond the view** (whether a map is in a zone, a profession's resources) it asks of a `Knows` that
   step 4's actor answers from the game data and `storage`'s zones; unknown, an action waits and a query blocks.
-- **It blocks**, with the reason and the node, on an unlinked Failed, a death (the character's fights lost rising:
+- **It blocks**, with the reason and the node, on an unlinked Failed outside any Retry's try (from (v2.3), one inside
+  starts the next try), a death (the character's fights lost rising:
   the forced default; a `died` event held by the blueprint is (26)'s), 10,000 nodes in a row without waiting ("runs
   without pause"), more than 64 calls at work one inside the other, a value that cannot be computed (on the node
   that computes it), or a Set out of its variable's bounds, which memory would lose at the next run (settled alone). Its states are ready, running, paused,
@@ -474,8 +475,8 @@ flowchart LR
   cases are edited in Rust (`bot::edit::options`; a count back at the kind's least is written as none, the cases of
   a Switch with no type typed by `of`), and Otherwise is drawn after the cases.
 - **The engine** (ADR 0017, matching no kind): a chain is plain, a loop's (what Leave the loop ends) or a try's (where
-  an unlinked Failed ends the try rather than blocking); a node's memory lasts the run; a pause leaves the flow past
-  its node. New problem: Leave the loop outside a loop's body (through a Sequence or a Retry inside a loop it is in
+  an unlinked Failed ends the try rather than blocking); a node's memory lasts the run; a pause stops the run on its
+  node, which goes on once resumed. New problem: Leave the loop outside a loop's body (through a Sequence or a Retry inside a loop it is in
   one).
 - **The Summary** reads each pin by its role, from one table: `then`, `completed` go on; `true`, `false`,
   `failed`, `case_n`, `otherwise`, `too_long`, `first`, `second` branch; `body`, `try` hold sub-steps (`1.1`) with
@@ -509,8 +510,14 @@ flowchart LR
   has one, its Too long titled "Trop long :", a value not seen yet waited for as Wait for life does (the owner,
   2026-11-17); Pause and notify telling its text and pausing the run on itself, resumed out of its Then, so a loop's
   body it ends goes on to its next pass and one ending the flow finishes only once resumed), then Retry with its try
-  chain and a run on the captures. Each kind replaces the tests' own (`test_sequence`, `test_switch`,
-  `test_for_each`).
+  chain and a run on the captures (done in code: a chain is plain, a loop's or a try's; an unlinked Failed ends the
+  nearest try, through the calls of functions too (the owner, 2026-11-17: a function in a try behaves as its actions
+  would there); Retry reads its tries once, its first try made as the flow enters so 0 tries once (settled alone), its
+  index from 1; its try titled "Essai :", its Failed "Si tous les essais
+  échouent :"; the run on the captures, v2's flow of a Retry around a Repeat of Wait until and a Switch, waits for the
+  owner's captures, and never makes its Retry fail). (v2.3) is done in code, its checklist under "Not measured" in
+  `docs/now.md`. Each kind replaces the catalogue's test kinds (`test_sequence`, `test_switch`, `test_for_each`); the
+  engine's own test kinds stay, proving its stack apart from any kind.
 - **Measured** (nothing acts in the game before step 4): the picker's "boucle" finding the loops; "+" and "Remove"
   with their wires and Ctrl+Z; Switch's cases typed by its type, a case twice a problem; Leave the loop's problem; the
   Summary's lines; a run on the captures that never blocks "runs without pause".

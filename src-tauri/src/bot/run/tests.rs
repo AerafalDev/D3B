@@ -310,15 +310,15 @@ impl Behaviour for Sequence {
                 slot.count = 1;
                 Ok(Step::Chain {
                     pin: "then_2".to_owned(),
-                    breakable: false,
+                    body: Body::Plain,
                 })
             }
-            Resume::ChainEnded | Resume::Left => Ok(Step::go("completed")),
+            Resume::ChainEnded | Resume::Left | Resume::Failed(_) => Ok(Step::go("completed")),
             Resume::Enter { .. } | Resume::Tick => {
                 *slot = Slot::default();
                 Ok(Step::Chain {
                     pin: "then_1".to_owned(),
-                    breakable: false,
+                    body: Body::Plain,
                 })
             }
         }
@@ -333,14 +333,14 @@ impl Behaviour for Repeat {
         let times = u64::try_from(cx.number("times")?).unwrap_or_default();
         let slot = cx.slot();
         match resume {
-            Resume::Left => return Ok(Step::go("completed")),
+            Resume::Left | Resume::Failed(_) => return Ok(Step::go("completed")),
             Resume::ChainEnded => slot.count += 1,
             Resume::Enter { .. } | Resume::Tick => *slot = Slot::default(),
         }
         Ok(if slot.count < times {
             Step::Chain {
                 pin: "body".to_owned(),
-                breakable: true,
+                body: Body::Loop,
             }
         } else {
             Step::go("completed")

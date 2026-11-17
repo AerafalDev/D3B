@@ -766,6 +766,190 @@ fn pause_ending_a_loops_body_resumes_into_the_next_pass_though_the_character_was
     assert_eq!(last.advance(Some(&seen), &Map1, at), &State::Finished);
 }
 
+/// On start → Retry 3: its try a Switch on its index, case `case` → "second", Otherwise → a call of `f`, which says
+/// "try" and fails "busy" (its call's Failed → "handled" when `handled`); Then → "ok", Failed → its reason said.
+fn retry(case: i64, handled: bool) -> Blueprint {
+    let handled_wire = if handled {
+        r#", {"from": ["c", "failed"], "to": ["handled", "run"]}"#
+    } else {
+        ""
+    };
+    let text = format!(
+        r#"{{"schema": 2, "id": "r", "name": "R", "version": 1, "graphs": [
+      {{"id": "events", "name": "Events",
+       "nodes": [{{"id": "start", "kind": "on_start"}}, {{"id": "retry", "kind": "retry"}},
+                 {{"id": "sw", "kind": "switch", "options": {{"type": "number", "cases": [{case}]}}}}, {{"id": "c", "call": "f"}},
+                 {}, {}, {}, {{"id": "gave", "kind": "notify"}}],
+       "wires": [{{"from": ["start", "then"], "to": ["retry", "run"]}}, {{"from": ["retry", "try"], "to": ["sw", "run"]}},
+                 {{"from": ["retry", "index"], "to": ["sw", "value"]}}, {{"from": ["sw", "case_1"], "to": ["second", "run"]}},
+                 {{"from": ["sw", "otherwise"], "to": ["c", "run"]}}, {{"from": ["retry", "then"], "to": ["ok", "run"]}},
+                 {{"from": ["retry", "failed"], "to": ["gave", "run"]}}, {{"from": ["retry", "reason"], "to": ["gave", "text"]}}{handled_wire}]}},
+      {{"id": "f", "name": "F", "function": {{}},
+       "nodes": [{{"id": "in", "kind": "entry"}}, {{"id": "say", "kind": "notify", "inputs": {{"text": "try"}}}},
+                 {{"id": "no", "kind": "return_failed", "inputs": {{"reason": "busy"}}}}],
+       "wires": [{{"from": ["in", "then"], "to": ["say", "run"]}}, {{"from": ["say", "done"], "to": ["no", "run"]}}]}}]}}"#,
+        said("second"),
+        said("ok"),
+        said("handled")
+    );
+    read(&text).unwrap_or_else(|error| panic!("{error}"))
+}
+
+#[test]
+fn retry_tries_again_on_an_unlinked_failed_and_goes_on_once_one_ends() {
+    assert_eq!(
+        told_by(&retry(2, false)).0,
+        ["try", "second", "ok"],
+        "its second try, index 2"
+    );
+}
+
+#[test]
+fn retry_goes_out_of_failed_with_the_last_reason_after_its_last_try() {
+    assert_eq!(told_by(&retry(9, false)).0, ["try", "try", "try", "busy"]);
+}
+
+#[test]
+fn a_failed_wired_inside_the_try_is_not_tried_again() {
+    assert_eq!(told_by(&retry(9, true)).0, ["try", "handled", "ok"]);
+}
+
+/// Events of `nodes` and `wires` beside two functions: `f` says "try" and fails "busy"; `h` calls `f`, its Failed
+/// linked to nothing.
+fn with_failing(nodes: &str, wires: &str) -> Blueprint {
+    read(&format!(
+        r#"{{"schema": 2, "id": "t", "name": "T", "version": 1, "graphs": [
+      {{"id": "events", "name": "Events", "nodes": [{{"id": "start", "kind": "on_start"}}, {nodes}], "wires": [{wires}]}},
+      {{"id": "f", "name": "F", "function": {{}},
+       "nodes": [{{"id": "in", "kind": "entry"}}, {{"id": "say", "kind": "notify", "inputs": {{"text": "try"}}}},
+                 {{"id": "no", "kind": "return_failed", "inputs": {{"reason": "busy"}}}}],
+       "wires": [{{"from": ["in", "then"], "to": ["say", "run"]}}, {{"from": ["say", "done"], "to": ["no", "run"]}}]}},
+      {{"id": "h", "name": "H", "function": {{}},
+       "nodes": [{{"id": "in", "kind": "entry"}}, {{"id": "cf", "call": "f"}}],
+       "wires": [{{"from": ["in", "then"], "to": ["cf", "run"]}}]}}]}}"#
+    ))
+    .unwrap_or_else(|error| panic!("{error}"))
+}
+
+/// A Retry of `times`, its Failed's reason said by a Notify when `said`.
+fn retry_node(id: &str, times: i64, said: bool) -> String {
+    let notify = if said {
+        format!(r#", {{"id": "{id}_gave", "kind": "notify"}}"#)
+    } else {
+        String::new()
+    };
+    format!(r#"{{"id": "{id}", "kind": "retry", "inputs": {{"times": {times}}}}}{notify}"#)
+}
+
+fn gave(id: &str) -> [String; 2] {
+    [
+        wire(id, "failed", &format!("{id}_gave"), "run"),
+        wire(id, "reason", &format!("{id}_gave"), "text"),
+    ]
+}
+
+#[test]
+fn a_failure_inside_a_function_called_in_a_try_tries_it_again() {
+    let nodes = format!(r#"{}, {{"id": "ch", "call": "h"}}"#, retry_node("r", 2, true));
+    let mut wires = vec![wire("start", "then", "r", "run"), wire("r", "try", "ch", "run")];
+    wires.extend(gave("r"));
+    assert_eq!(
+        told_by(&with_failing(&nodes, &wires.join(", "))).0,
+        ["try", "try", "busy"]
+    );
+}
+
+#[test]
+fn a_retry_used_up_inside_another_tries_the_outer_again() {
+    let nodes = format!(
+        r#"{}, {}, {{"id": "cf", "call": "f"}}"#,
+        retry_node("outer", 2, true),
+        retry_node("inner", 2, false)
+    );
+    let mut wires = vec![
+        wire("start", "then", "outer", "run"),
+        wire("outer", "try", "inner", "run"),
+        wire("inner", "try", "cf", "run"),
+    ];
+    wires.extend(gave("outer"));
+    let said_all = told_by(&with_failing(&nodes, &wires.join(", "))).0;
+    assert_eq!(
+        said_all,
+        ["try", "try", "try", "try", "busy"],
+        "the inner's Failed unlinked"
+    );
+}
+
+#[test]
+fn a_failure_in_a_loop_in_a_try_drops_the_loop_which_starts_over() {
+    let nodes = format!(
+        r#"{}, {{"id": "rep", "kind": "repeat", "inputs": {{"times": 3}}}}, {}, {{"id": "cf", "call": "f"}}"#,
+        retry_node("r", 2, true),
+        said("pass")
+    );
+    let mut wires = vec![
+        wire("start", "then", "r", "run"),
+        wire("r", "try", "rep", "run"),
+        wire("rep", "body", "pass", "run"),
+        wire("pass", "done", "cf", "run"),
+    ];
+    wires.extend(gave("r"));
+    let said_all = told_by(&with_failing(&nodes, &wires.join(", "))).0;
+    assert_eq!(said_all, ["pass", "try", "pass", "try", "busy"]);
+}
+
+#[test]
+fn leave_the_loop_in_a_try_in_a_loop_leaves_the_loop() {
+    let nodes = format!(
+        r#"{{"id": "rep", "kind": "repeat", "inputs": {{"times": 2}}}}, {}, {{"id": "seq", "kind": "sequence"}},
+           {{"id": "out", "kind": "leave_loop"}}, {}, {}"#,
+        retry_node("r", 3, false),
+        said("a"),
+        said("done")
+    );
+    let wires = [
+        wire("start", "then", "rep", "run"),
+        wire("rep", "body", "r", "run"),
+        wire("r", "try", "seq", "run"),
+        wire("seq", "then_1", "a", "run"),
+        wire("seq", "then_2", "out", "run"),
+        wire("rep", "completed", "done", "run"),
+    ];
+    assert_eq!(told_by(&with_failing(&nodes, &wires.join(", "))).0, ["a", "done"]);
+}
+
+#[test]
+fn retry_of_no_tries_tries_once_and_an_interrupted_try_keeps_its_count() {
+    let nodes = format!(r#"{}, {{"id": "cf", "call": "f"}}"#, retry_node("r", 0, true));
+    let mut wires = vec![wire("start", "then", "r", "run"), wire("r", "try", "cf", "run")];
+    wires.extend(gave("r"));
+    assert_eq!(
+        told_by(&with_failing(&nodes, &wires.join(", "))).0,
+        ["try", "busy"],
+        "one at least"
+    );
+    // Retry 2 → Wait 60 s → f: away during the second try's wait, it is still the second.
+    let nodes = format!(
+        r#"{}, {{"id": "w", "kind": "wait"}}, {{"id": "cf", "call": "f"}}"#,
+        retry_node("r", 2, true)
+    );
+    let mut wires = vec![
+        wire("start", "then", "r", "run"),
+        wire("r", "try", "w", "run"),
+        wire("w", "then", "cf", "run"),
+    ];
+    wires.extend(gave("r"));
+    let mut run = run(&with_failing(&nodes, &wires.join(", ")));
+    let (seen, at) = (view(1, 200, 0), Instant::now());
+    let second = |seconds| at + Duration::from_secs(seconds);
+    run.advance(Some(&seen), &Map1, at);
+    run.advance(Some(&seen), &Map1, second(60));
+    run.advance(None, &Map1, second(70));
+    run.advance(Some(&seen), &Map1, second(80));
+    assert_eq!(run.advance(Some(&seen), &Map1, second(140)), &State::Finished);
+    assert_eq!(told(&mut run), ["try", "try", "busy"]);
+}
+
 /// On start → Switch on numbers of `cases`, its value `value`: case 1 → Notify one, case 2 → Notify two,
 /// Otherwise → Notify other.
 fn switch(cases: &str, value: &str) -> Run {

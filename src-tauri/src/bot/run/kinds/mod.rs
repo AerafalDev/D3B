@@ -42,6 +42,7 @@ pub(super) fn behaviour(kind: &str) -> Option<&'static dyn Behaviour> {
         "wait_until" => &waits::WaitUntil,
         "block" => &flow::Block,
         "pause_notify" => &flow::PauseNotify,
+        "retry" => &flow::Retry,
         "life_percent" => &queries::LifePercent,
         "pods_percent" => &queries::PodsPercent,
         "job_resources" => &queries::JobResources,

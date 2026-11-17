@@ -1,6 +1,6 @@
 //! The runtime on the owner's game captures (`docs/bot.md`, "The runtime"): a blueprint that waits for its life, waits a
-//! minute, reads its life and loops, run on each connection's character as an actor would, advanced at each message
-//! and when it asked to wake. A capture holds the account's ticket: it prints counts only. Ignored unless
+//! minute, reads its life and loops, and one of v2's flow (a Retry around a Repeat of Wait until, a Switch), each run
+//! on each connection's character as an actor would, advanced at each message and when it asked to wake. A capture holds the account's ticket: it prints counts only. Ignored unless
 //! `D3B_CAPTURES` names their folder.
 
 use std::collections::BTreeMap;
@@ -47,10 +47,67 @@ struct Counts {
     lows: usize,
 }
 
+/// v2's flow (`docs/bot.md`, "The flow's kinds (v2.3)"): On start → Retry 3 → its try a Repeat 3 of Wait until the
+/// life ≥ 90 % (at most 1 min; Too long → Notify), then a Switch on the level (200 → Notify, else n ← n + 1); Retry's
+/// Then → Wait 1 min → Retry again. Nothing in it fails: it measures the flow never running without pause.
+const FLOW: &str = r#"{"schema": 2, "id": "flow", "name": "Flow", "version": 1,
+  "variables": [{"id": "n", "name": "N", "type": "number", "default": 0, "memory": true}],
+  "graphs": [{"id": "events", "name": "Events",
+    "nodes": [{"id": "start", "kind": "on_start"}, {"id": "retry", "kind": "retry"},
+              {"id": "rep", "kind": "repeat"}, {"id": "until", "kind": "wait_until", "inputs": {"longest": 60}},
+              {"id": "life", "kind": "life_percent"}, {"id": "ge", "kind": "greater_or_equal", "inputs": {"b": 90}},
+              {"id": "slow", "kind": "notify", "inputs": {"text": "slow"}},
+              {"id": "sw", "kind": "switch", "options": {"type": "number", "cases": [200]}}, {"id": "level", "kind": "level"},
+              {"id": "top", "kind": "notify", "inputs": {"text": "top"}},
+              {"id": "n", "get": "n"}, {"id": "add", "kind": "add", "inputs": {"b": 1}}, {"id": "bump", "set": "n"},
+              {"id": "minute", "kind": "wait", "inputs": {"duration": 60}}],
+    "wires": [{"from": ["start", "then"], "to": ["retry", "run"]}, {"from": ["retry", "try"], "to": ["rep", "run"]},
+              {"from": ["rep", "body"], "to": ["until", "run"]}, {"from": ["life", "value"], "to": ["ge", "a"]},
+              {"from": ["ge", "value"], "to": ["until", "condition"]}, {"from": ["until", "too_long"], "to": ["slow", "run"]},
+              {"from": ["until", "then"], "to": ["sw", "run"]}, {"from": ["level", "value"], "to": ["sw", "value"]},
+              {"from": ["sw", "case_1"], "to": ["top", "run"]}, {"from": ["sw", "otherwise"], "to": ["bump", "run"]},
+              {"from": ["n", "value"], "to": ["add", "a"]}, {"from": ["add", "value"], "to": ["bump", "value"]},
+              {"from": ["retry", "then"], "to": ["minute", "run"]}, {"from": ["minute", "then"], "to": ["retry", "run"]}]}]}"#;
+
+#[test]
+fn v2s_flow_replayed_on_the_captures_compiles() {
+    let blueprint = read(FLOW).unwrap_or_else(|error| panic!("{error}"));
+    assert!(Run::new(&blueprint, &BTreeMap::new(), &BTreeMap::new()).is_ok());
+}
+
 #[test]
 #[ignore = "needs the owner's captures: set D3B_CAPTURES to their folder"]
 fn the_owners_game_captures_run_a_blueprint_on_each_character() {
-    let blueprint = read(LOOP).unwrap_or_else(|error| panic!("{error}"));
+    let counts = replayed(LOOP);
+    eprintln!("{counts:?}");
+    assert!(
+        counts.runs > 0 && counts.loops > 0 && counts.wakes > 0,
+        "nothing ran: {counts:?}"
+    );
+    assert_eq!(counts.blocked_otherwise, 0, "blocked by something else than a death");
+    assert_eq!(
+        counts.died, counts.with_a_loss,
+        "one death blocks each run whose character lost"
+    );
+    assert_eq!(counts.died_at_the_fights_end, counts.died, "blocked at the fight's end");
+}
+
+#[test]
+#[ignore = "needs the owner's captures: set D3B_CAPTURES to their folder"]
+fn the_owners_game_captures_run_v2s_flow_without_blocking_but_on_a_death() {
+    let counts = replayed(FLOW);
+    eprintln!("{counts:?}");
+    assert!(counts.runs > 0 && counts.wakes > 0, "nothing ran: {counts:?}");
+    assert_eq!(
+        counts.blocked_otherwise, 0,
+        "never \"runs without pause\", nor another block"
+    );
+    assert_eq!(counts.died, counts.with_a_loss, "only a death blocks");
+}
+
+/// `blueprint` run on each connection's character of the owner's captures, as an actor would.
+fn replayed(blueprint: &str) -> Counts {
+    let blueprint = read(blueprint).unwrap_or_else(|error| panic!("{error}"));
     let start = Instant::now();
     let mut counts = Counts::default();
     decoded(&folder(), |messages| {
@@ -105,15 +162,5 @@ fn the_owners_game_captures_run_a_blueprint_on_each_character() {
             counts.with_a_loss += u32::from(character.view(start, 0).fights.lost > 0);
         }
     });
-    eprintln!("{counts:?}");
-    assert!(
-        counts.runs > 0 && counts.loops > 0 && counts.wakes > 0,
-        "nothing ran: {counts:?}"
-    );
-    assert_eq!(counts.blocked_otherwise, 0, "blocked by something else than a death");
-    assert_eq!(
-        counts.died, counts.with_a_loss,
-        "one death blocks each run whose character lost"
-    );
-    assert_eq!(counts.died_at_the_fights_end, counts.died, "blocked at the fight's end");
+    counts
 }

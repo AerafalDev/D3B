@@ -1,9 +1,10 @@
-//! The flow's behaviours that need no clock: If, Sequence, Switch, Block, Pause and notify, and Finish. The waits
-//! come with the nodes that wait.
+//! The flow's behaviours that need no clock: If, Sequence, Switch, Retry, Block, Pause and notify, and Finish. The
+//! waits come with the nodes that wait.
 
 use serde_json::Value;
 
 use super::super::behaviour::{Behaviour, Cx, Fault, Resume, Step};
+use super::super::frame::Body;
 
 /// If: out of True or False by its condition.
 pub(super) struct If;
@@ -23,6 +24,8 @@ impl Behaviour for Sequence {
         let next = match resume {
             // Leave the loop ends the chains up to the loop's, this one's with them: it is never told.
             Resume::Left => return Ok(Step::Leave),
+            // So does a failure up to Retry's try: it is never told either.
+            Resume::Failed(reason) => return Ok(Step::Failed(reason)),
             Resume::ChainEnded => cx.slot().count + 1,
             Resume::Enter { .. } | Resume::Tick => 0,
         };
@@ -32,7 +35,7 @@ impl Behaviour for Sequence {
         Ok(match outs.get(at) {
             Some(pin) if at + 1 < outs.len() => Step::Chain {
                 pin: pin.clone(),
-                breakable: false,
+                body: Body::Plain,
             },
             Some(pin) => Step::Go(pin.clone()),
             None => Step::Go(String::new()),
@@ -56,6 +59,46 @@ fn same(a: &Value, b: &Value) -> bool {
     match (a.as_f64(), b.as_f64()) {
         (Some(a), Some(b)) => (a - b).abs() < f64::EPSILON,
         _ => a == b,
+    }
+}
+
+/// Retry: its try, a chain an unlinked Failed ends, up to `times` tries, the first included and one at least, read
+/// as the flow enters; out of Then when one ends, of Failed with the last reason after the last; its index from 1.
+pub(super) struct Retry;
+
+impl Behaviour for Retry {
+    fn run(&self, cx: &mut Cx<'_>, resume: Resume) -> Result<Step, Fault> {
+        match resume {
+            Resume::ChainEnded => Ok(Step::go("then")),
+            // A Leave the loop inside its try ends the chains past it: it is never told.
+            Resume::Left => Ok(Step::Leave),
+            Resume::Failed(reason) => {
+                let tries = cx.slot().value.as_ref().and_then(Value::as_u64).unwrap_or(1);
+                cx.slot().count += 1;
+                let done = cx.slot().count;
+                if done >= tries {
+                    return Ok(Step::Failed(reason));
+                }
+                cx.give("index", Value::from(done + 1));
+                Ok(tried())
+            }
+            Resume::Enter { .. } | Resume::Tick => {
+                // The first try runs as the flow enters, so 0 or fewer tries once (settled alone).
+                let tries = u64::try_from(cx.number("times")?).unwrap_or_default();
+                cx.slot().value = Some(Value::from(tries));
+                cx.slot().count = 0;
+                cx.give("index", Value::from(1));
+                Ok(tried())
+            }
+        }
+    }
+}
+
+/// Retry's try again.
+fn tried() -> Step {
+    Step::Chain {
+        pin: "try".to_owned(),
+        body: Body::Try,
     }
 }
 
