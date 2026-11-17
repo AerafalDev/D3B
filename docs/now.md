@@ -544,9 +544,13 @@ _Updated 2026-11-17._
   functions and events and the runtime are written once, on the final model, in sixteen PRs: (v2.1) the model in Rust (done in code), in four PRs (the owner, 2026-11-17: the second split in two): the new types (an NPC, ranges), lists and wildcard
   pins in the wiring's check (the owner's choice of 2026-11-17: a wildcard's type noted on its node; done in code); then a node's `options` and the pins they make (done in code); then the blueprint's own events, functions' exits, locals and pure (done in code);
   then the file's schema 2 and its migration from 1 (in `bot/schema/`, the folder holding ten files), D3B's
-  blueprints in 2, with `≥` and N minutes brought before v2.4 for "at least" and Wait's minutes (done in code); each kind's problems come with the PR that brings the kind; (v2.2) the editor reads it: wildcards and
-  lists (a square pin) in the drag's check, a node's options ("+" a case, an output), the new types' colours and
-  values typed (a duration, a time, a map, an item, ranges as a table pasted from text); (v2.3) the flow's kinds and how the Summary reads them; (v2.4)
+  blueprints in 2, with `≥` and N minutes brought before v2.4 for "at least" and Wait's minutes (done in code); each kind's problems come with the PR that brings the kind; (v2.2) the editor reads it ([bot.md](bot.md#the-editor-reads-it-v22), the owner's
+  choices of 2026-11-17: pins and colours from a mock-up, a map picked on the World or where a character stands, an
+  item searched among all, ranges pasted as `1-49: value` replacing the table, my variables taking the new types and
+  "List" and "By level" so each editor is used now), in seven PRs: the Rust and the IPC (an untyped `≥` open to its
+  types, a type not taken refused when wired, `of` sent, `NodeView.options` and `types`); the drag's check, the
+  picker's filter, the pins' shapes and colours; Details' type chooser on a wildcard, the time and the values' words;
+  my variables' new types and the list editor; items; maps; ranges; then a node's options with v2.3; (v2.3) the flow's kinds and how the Summary reads them; (v2.4)
   the values: comparisons, logic, arithmetic, randomness, text, durations, lists, drawn compact; (v2.5) the queries
   over `game::Live`, and those marked with their study and step; (v2.6) the events: When, Every, At, the game's new
   ones, mine and Trigger with its timers; (v2.7) the actions of steps 4 to 7, marked (the haven bag, zaaps, doors,

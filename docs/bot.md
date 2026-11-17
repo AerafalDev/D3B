@@ -335,6 +335,50 @@ an action, a wait, a Set or a return, and its result elsewhere, the picker offer
 call of a function not pure (step 3); Leave the loop outside a loop's body; a time not "HH:MM"; an Expression that does not
 parse, names what the blueprint lacks or is not of its pin's type; ranges whose rows overlap.
 
+### The editor reads it (v2.2)
+
+Designed with the owner on 2026-11-17: the editor checks a wire as Rust does and draws v2's types; a variable of mine
+takes them, so each editor has a use measured now.
+
+```mermaid
+flowchart LR
+    rust["bot: pins, the wiring's check, Edit"] --> ipc["ipc: NodeView.options and types, PinView.wildcard"]
+    ipc --> check["link-check and the picker: shapes, wildcards, Any"]
+    ipc --> details["Details: a wildcard's type chooser, editors by type"]
+    data["data: items, maps' places"] --> lookup["ipc::lookup: find_items, map places"] --> details
+    details -->|"edit_blueprint: Value with of, Variable"| rust
+```
+
+- **Wires** (the drag's check and the picker's "what fits", from the same rules as `Carries::feeds` and `types`):
+  a value feeds a wildcard of its shape and types its node, an untyped wildcard never another, a list only a list,
+  ranges only ranges, a list of items the items, a percentage a number, any value a Text's hole; a type a kind's
+  wildcards do not take (`Kind.types`) is refused when wired. An untyped `≥` stays open to its types (its numbers
+  are only what it reads while none is noted), so it compares durations and times once wired or typed.
+- **Pins** (the owner, 2026-11-17, from a mock-up): a value a filled circle, a list a filled square, ranges a hollow
+  square of the type's colour, an untyped wildcard a hollow grey circle (a hollow grey square for a list one), a typed
+  wildcard drawn as its type. **Colours by family**: a map teal beside the zone and the route (`#5fb3a1`), an item
+  orange beside Items (`#e0a46b`), a duration and a time violets beside the numbers they compare with (`#b5a7ff`,
+  `#d6a8ff`), an NPC pale yellow (`#dcdcaa`).
+- **Details**: a value typed on an untyped wildcard comes with a type chosen beside it, among the kind's (`of`);
+  editors by type: a duration ("1 min 30"), a time ("23:00"), a map, an item, a list (a row per value, + and ×) and
+  ranges; an NPC shows its id, marked step 4, until its data comes.
+- **A map** (the owner, 2026-11-17): the field's target opens the World tab's choosing mode, a hover outlining one map
+  and a click taking the one the world map draws there, Escape cancelling; "5,-18" may be typed; "Where is
+  <character>" takes the map a character online stands on, an inside too, which shares its street's coordinates.
+- **An item** (the owner, 2026-11-17): every item but the invisible (type 203), searched by name in Rust (accents
+  ignored, 50 at most), each with its icon, level and type.
+- **Ranges** (the owner, 2026-11-17): a table "From level", "To level" and the value in its type's editor, sorted
+  when a field is left, overlaps marked on their rows, a gap a faint row "levels 50 to 59: nothing", + and ×, levels 1
+  to 200; a text pasted, lines `1-49: value` or columns separated by tabs (a spreadsheet's), each value as it is
+  typed (a name, "5,-18", "1 min 30", an id), replaces the table, undone by Ctrl+Z, a line not read said by its
+  number with nothing changed; "Copy as text" gives it back.
+- **My variables** (the owner, 2026-11-17: before (14), so the editors are used): the variable editor offers a map,
+  an item, a duration and a time (the NPC at step 4), and two switches, "List" and "By level" (ranges), its default
+  and a character's setting typed with the editors above. (14) keeps the locals and the variables' nodes.
+- **A node's options** ("+" a case or an output, the owner, 2026-11-17) come with v2.3's Sequence and Switch, their
+  first kinds: "+ Add an output" on the node for Sequence's outputs and a list's inputs, Switch's cases typed in
+  Details a row each with + and ×, and a pin's right-click "Remove" dropping its wire.
+
 ## In the app
 
 The shell's parts (`docs/shell.md`); no information is shown twice:
