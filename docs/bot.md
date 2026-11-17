@@ -241,9 +241,10 @@ flowchart LR
   **Alchimiste**, **Pêcheur**, **Bûcheron**, and **Chasseur**, the profession (job 41: fights with a hunting weapon
   for meat, after its study). This reverses 2026-11-14's one profession blueprint, its profession a setting. Where
   they go is, by default, **ranges computed from the data** as the app runs, never written in the blueprints'
-  committed files: a resource's or a monster's worth halved every 20 levels below the character's and nothing above
-  it, Combat's sub-areas holding at least 10 maps of the world map (no dungeon), reckoned again each tour; the
-  monsters' levels and drops come from the extractor's **format 5** (the owner, 2026-11-16). A setting replaces them
+  committed files: a resource's worth halved every 20 levels below its profession's, a monster's below the
+  character's, nothing above, Combat's sub-areas holding at least 10 maps of the world map (no dungeon), the row of
+  the level read again each tour (how, below: "The ranges computed from the data"); the monsters' levels and drops
+  come from the extractor's **format 5** (the owner, 2026-11-16). A setting replaces them
   by ranges, a zone or a route of mine. Five or six settings show, those changed often: where, the pods' threshold,
   the bank (the nearest, a map, or the haven bag's chest) and the items kept, fighting on the way, the goal (a
   profession's or the character's level, a number of harvests or fights); the others fold under "Advanced",
@@ -258,8 +259,9 @@ flowchart LR
 - **The ranges computed from the data** (`bot::places`, (v2.10)'s second PR, done in code; the owner's choices of
   2026-11-17): a table by level, from 1 to 200, rows "from level N to M: these sub-areas", consecutive levels of the
   same sub-areas in one row, as a player's ranges of a list of zones are written, so that the player can read them
-  and start from them. Each row holds the sub-areas worth most, the richest first, then the one whose level is
-  nearest, then by id: at most 10, each worth at least a quarter of the richest (the C# version's rotation, D391). A
+  and start from them. Each row holds the sub-areas worth most, the richest first, then (settled alone) the one whose
+  level is nearest the row's, then by id: at most 10, each worth at least a quarter of the richest (the C# version's
+  rotation, D391). A
   profession's table follows its level: each resource of that profession a sub-area lists counts once, worth 1 at the
   profession's level, halved every 20 levels below, smoothly, nothing above (the data says which resources a sub-area
   holds, not on how many maps: the maps come with the graphics learned, step 5). Combat's follows the character's:
@@ -269,7 +271,8 @@ flowchart LR
   worth fighting, those drawing at least one. A sub-area of no map that the world graph reaches on a world map is
   never taken: on 3.7.13.17 they are dungeons, a mine of one resource ("Mine", 778), the tutorial and a convention's
   test zone listing 85 resources, which topped every profession from level 100. As the bot plays, a sub-area above
-  the character's level, or closed to a basic account when its account is not subscribed, is left out (`fits`).
+  the character's level, or closed to a basic account when its account is not subscribed, is left out (`fits`), and when none of its row is left, the rows below are read until one holds a sub-area it
+  may enter (`reachable`; the owner, 2026-11-17: a level-20 lumberjack of 100 harvests rather than nothing).
   Measured on 3.7.13.17's data: every level from 1 to 200 has a row, Combat in 126 rows, from the Route des âmes of
   Incarnam at levels 1 to 4 (no sub-area of 10 maps shown holds a monster there) to Osavane at 200; the five
   professions in 34 to 53 rows, a lumberjack of 100 first to the Bois de Litneg as the C# version measured at 80, a

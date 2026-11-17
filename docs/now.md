@@ -559,7 +559,7 @@ _Updated 2026-11-17._
   347 and its 6 monsters left out; done in code, `client-3.7.13.17-format5.tar.gz` published on the owner's go of
   2026-11-17, ADR 0013); the ranges (the owner's choices of 2026-11-17: a table by level of the richest sub-areas,
   resources counted once by kind, monsters as the C# version measured, a sub-area above the character or closed to
-  its account left out as the bot plays, none without a map on a world map; done in code, `bot::places`, read by the
+  its account left out as the bot plays, the rows below read when none is left, none without a map on a world map; done in code, `bot::places`, read by the
   next two PRs, [bot.md](bot.md#the-language-v2)); Récolte and the five
   harvest blueprints; Combat and Chasseur, after the hunting weapon's and the meats' study. Each brings its sentences in French and English and its family in the picker; its checklist,
   [bot.md](bot.md#measure)'s items 6 and 7, is taken once (16) declares variables and events of mine. Then (14) variables, with locals, lists and the new types' editors; (15)

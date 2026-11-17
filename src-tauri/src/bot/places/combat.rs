@@ -76,27 +76,30 @@ mod tests {
 
     #[test]
     fn combat_goes_where_the_monsters_are_worth_most_and_never_above_the_character() {
-        // Larvae of 1 to 5 in a field of level 1; Bouftous of 30 to 34 in a field of level 30; both of 12 maps shown.
+        // Larvae of 1 to 5 in a field of level 1 and in a cave of level 30; Bouftous of 30 to 34 in a field of level 30;
+        // all of 12 maps shown.
         let sub_areas = [
             sub_area(1, 1, &[], &[31, 31], true),
             sub_area(2, 30, &[], &[101, 102], true),
+            sub_area(3, 30, &[], &[31], true),
         ];
         let monsters = [
             monster(31, &[1, 2, 3, 4, 5]),
             monster(101, &[30, 34]),
             monster(102, &[31, 33]),
         ];
-        let positions = [maps(100, 12, 1, 1), maps(200, 12, 2, 1)].concat();
+        let positions = [maps(100, 12, 1, 1), maps(200, 12, 2, 1), maps(300, 12, 3, 1)].concat();
         let rows = combat(&sub_areas, &monsters, &shown(&positions, &all_reached(&positions)));
-        // Below 30 the Bouftous' field is above the character. At 30 only the Bouftou of 30 counts, 102's lowest grade
-        // being above, and the larvae, 2^(-25/20) from their grade 5, are worth more than a quarter of it; from 31 the
-        // two Bouftous are worth 2 and the larvae less than a quarter of them.
-        assert_eq!(rows, [row(1, 29, &[1]), row(30, 30, &[2, 1]), row(31, 200, &[2])]);
+        // Below 30 both sub-areas of level 30 are above the character, the cave's larvae worth fighting all the same. At
+        // 30 only the Bouftou of 30 counts, 102's lowest grade being above, and the larvae, 2^(-25/20) from their grade
+        // 5, are worth more than a quarter of it, the cave's first, its level the nearest; from 31 the two Bouftous are
+        // worth 2 and the larvae less than a quarter of them.
+        assert_eq!(rows, [row(1, 29, &[1]), row(30, 30, &[2, 3, 1]), row(31, 200, &[2])]);
     }
 
     #[test]
     fn a_sub_area_of_few_maps_shown_is_taken_only_when_no_wider_one_holds_a_monster_worth_fighting() {
-        // A dungeon of 30 maps on no world map, never taken; a cave of 3 maps shown; a field of 10 maps shown from 5.
+        // A dungeon of 30 maps on no world map, never taken; a cave of 3 maps shown; a field of 14 maps shown from 5.
         let sub_areas = [
             sub_area(1, 1, &[], &[31], true),
             sub_area(2, 1, &[], &[31], true),
@@ -106,14 +109,17 @@ mod tests {
         let positions = [
             maps(100, 30, 1, -1),
             maps(200, 3, 2, 1),
-            maps(300, 10, 3, 1),
+            maps(300, 9, 3, 1),
             maps(400, 5, 3, 1),
         ]
         .concat();
-        // Five of the field's maps are not in the world graph: they do not count, but the other ten do.
+        let rows = combat(&sub_areas, &monsters, &shown(&positions, &all_reached(&positions)));
+        assert_eq!(rows, [row(1, 4, &[2]), row(5, 200, &[3])]);
+        // Five of the field's maps are not in the world graph: with nine shown it is no wider than the cave, and both
+        // are taken, the cave's larvae worth more than a quarter of the field's monster.
         let graph: HashSet<i64> = all_reached(&positions).into_iter().filter(|&id| id < 400).collect();
         let rows = combat(&sub_areas, &monsters, &shown(&positions, &graph));
-        assert_eq!(rows, [row(1, 4, &[2]), row(5, 200, &[3])]);
+        assert_eq!(rows, [row(1, 4, &[2]), row(5, 200, &[3, 2])]);
     }
 
     #[test]

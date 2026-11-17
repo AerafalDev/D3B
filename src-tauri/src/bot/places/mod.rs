@@ -63,6 +63,18 @@ pub(crate) fn fits(sub_area: &SubArea, level: u16, subscribed: bool) -> bool {
     sub_area.level <= u32::from(level) && (subscribed || sub_area.basic_account_allowed)
 }
 
+/// Where to go at `level`: the sub-areas of its row that `fits` keeps, in their order, else those of the nearest row
+/// below that holds one, else none. A low character of a high profession harvests the richest place it may enter
+/// rather than nothing (the owner, 2026-11-17); `fits` is [`fits`] for the character, by sub-area id.
+pub(crate) fn reachable(rows: &[Row], level: u16, fits: impl Fn(i32) -> bool) -> Vec<i32> {
+    rows.iter()
+        .rev()
+        .filter(|row| row.from <= level)
+        .map(|row| row.sub_areas.iter().copied().filter(|&id| fits(id)).collect::<Vec<_>>())
+        .find(|kept| !kept.is_empty())
+        .unwrap_or_default()
+}
+
 /// The ranges `rank` gives level by level, consecutive levels of the same sub-areas in one row; a level where no
 /// sub-area is worth anything is in no row.
 fn ranges(rank: impl Fn(u16) -> Vec<i32>) -> Vec<Row> {
@@ -197,6 +209,9 @@ pub(super) mod tests {
             sub_areas: sub_areas.to_vec(),
         };
         assert_eq!(rows, [row(1, 4, &[7]), row(10, 19, &[8, 7]), row(20, 200, &[9])]);
+        // The same sub-areas on both sides of levels of none make two rows, never one over the levels of none.
+        let split = ranges(|level| if (5..=9).contains(&level) { Vec::new() } else { vec![7] });
+        assert_eq!(split, [row(1, 4, &[7]), row(10, 200, &[7])]);
     }
 
     #[test]
@@ -231,6 +246,35 @@ pub(super) mod tests {
         assert!(!fits(&open, 11, true));
         assert!(!fits(&closed, 50, false));
         assert!(fits(&closed, 50, true));
+    }
+
+    #[test]
+    fn a_row_with_no_sub_area_that_fits_gives_way_to_the_rows_below() {
+        let rows = [
+            Row {
+                from: 1,
+                to: 19,
+                sub_areas: vec![1, 2],
+            },
+            Row {
+                from: 20,
+                to: 99,
+                sub_areas: vec![3, 4],
+            },
+            Row {
+                from: 100,
+                to: 200,
+                sub_areas: vec![5, 6],
+            },
+        ];
+        // A lumberjack of 100 whose character reaches only sub-areas 2 and 4: its row's sub-areas that fit, in order.
+        assert_eq!(reachable(&rows, 100, |id| id != 6), [5]);
+        assert_eq!(reachable(&rows, 100, |id| id == 2 || id == 4), [4]);
+        assert_eq!(reachable(&rows, 150, |id| id == 2), [2]);
+        assert_eq!(reachable(&rows, 100, |_| false), Vec::<i32>::new());
+        // A level of no row reads the rows below it.
+        assert_eq!(reachable(&rows[..2], 150, |_| true), [3, 4]);
+        assert_eq!(reachable(&rows[1..], 10, |_| true), Vec::<i32>::new());
     }
 
     #[test]
