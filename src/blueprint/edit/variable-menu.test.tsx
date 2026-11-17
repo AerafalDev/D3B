@@ -35,4 +35,18 @@ describe("the menu of a variable dropped on the graph", () => {
     expect(onClose).toHaveBeenCalledTimes(2);
     expect(onPick).not.toHaveBeenCalled();
   });
+
+  it("keeps its keys from the graph, and the focus on a mouse press", () => {
+    const outside = vi.fn();
+    render(
+      // biome-ignore lint/a11y/noStaticElementInteractions: the graph's box, which listens to its keys
+      <div onKeyDown={outside}>
+        <VariableMenu at={{ x: 10, y: 10 }} name="Objectif" onPick={() => {}} onClose={() => {}} />
+      </div>,
+    );
+    fireEvent.keyDown(screen.getByRole("menu"), { key: "Backspace" });
+    expect(outside).not.toHaveBeenCalled();
+    const pressed = fireEvent.mouseDown(screen.getAllByRole("menuitem")[1] as HTMLElement);
+    expect(pressed, "a press keeps the focus where it is").toBe(false);
+  });
 });

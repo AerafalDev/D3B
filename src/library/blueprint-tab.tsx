@@ -1,10 +1,12 @@
+import { DndContext, DragOverlay, PointerSensor, useSensor, useSensors } from "@dnd-kit/core";
 import type { IDockviewPanelProps } from "dockview-react";
-import { lazy, Suspense, useEffect, useMemo, useState } from "react";
+import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { useHotkeys } from "react-hotkeys-hook";
 import { useTranslation } from "react-i18next";
 
 import type { GraphEdit_Deserialize, ProblemView } from "@/bindings.ts";
 import { BlueprintDetails, type Selection } from "@/blueprint/details/blueprint-details.tsx";
+import { draggedVariable } from "@/blueprint/edit/variable-drop.ts";
 import { useGraphs } from "@/blueprint/graph-store.ts";
 import { MyBlueprint } from "@/blueprint/my-blueprint.tsx";
 import { Summary } from "@/blueprint/summary/summary.tsx";
@@ -51,6 +53,11 @@ export function BlueprintTab({ api, params }: IDockviewPanelProps<BlueprintParam
   const [shown, setShown] = useState<string | null>(null);
   const [selection, setSelection] = useState<Selection>(null);
   const view = useBlueprintView((store) => store.view[api.id] ?? "graph");
+  // A variable dragged from My Blueprint onto the graph, once the pointer moved a few pixels: a click still chooses it.
+  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
+  const [dragging, setDragging] = useState<string | null>(null);
+  // The tab's own element, which Ctrl+Z listens on, given the keyboard back when what held it goes.
+  const tabBox = useRef<HTMLDivElement | null>(null);
 
   // Rust undoes and writes (the owner, 2026-11-16); the Library's count of problems follows.
   const editor = useHotkeys<HTMLDivElement>(
@@ -144,7 +151,14 @@ export function BlueprintTab({ api, params }: IDockviewPanelProps<BlueprintParam
           .join(" · ");
 
   return (
-    <div ref={editor} tabIndex={-1} className="flex h-full min-h-0 flex-col outline-none">
+    <div
+      ref={(element) => {
+        tabBox.current = element;
+        editor(element);
+      }}
+      tabIndex={-1}
+      className="flex h-full min-h-0 flex-col outline-none"
+    >
       <div className="border-line flex flex-col gap-1 border-b px-5 py-3">
         <header className="flex items-center gap-2.5">
           <Icon name="blueprint" className="size-[22px]" />
@@ -187,100 +201,125 @@ export function BlueprintTab({ api, params }: IDockviewPanelProps<BlueprintParam
           {read("description", blueprint.description)}
         </p>
       </div>
-      <div className="grid min-h-0 flex-1 grid-cols-[220px_1fr_280px]">
-        {read_ === undefined || read_.state === "loading" ? (
-          <p className="text-text-muted col-span-3 p-6 text-xs">{t("blueprint.loading")}</p>
-        ) : read_.state === "failed" ? (
-          <p className="text-text-muted col-span-3 p-6 text-xs">
-            {read_.error.kind === "noSuchBlueprint"
-              ? t("library.gone")
-              : t("blueprint.bug", { reason: read_.error.reason })}
-          </p>
-        ) : (
-          <>
-            <MyBlueprint
-              blueprint={blueprint}
-              graphs={read_.graphs.graphs}
-              shown={shownGraph?.id ?? ""}
-              onShow={(graph) => {
-                setShown(graph);
-                setSelection(null);
-              }}
-              chosen={selection?.kind === "variable" ? selection.id : null}
-              onChoose={(variable) => setSelection({ kind: "variable", id: variable })}
-              onAddVariable={blueprint.given ? undefined : addVariable}
-            />
-            {view === "summary" ? (
-              <Summary
-                graphs={graphs}
-                names={names}
-                chosen={
-                  selection?.kind === "node" && shownGraph !== undefined
-                    ? { graph: shownGraph.id, node: selection.id }
-                    : null
-                }
-                onChoose={(graph, node) => {
+      <DndContext
+        sensors={sensors}
+        accessibility={{
+          announcements: {
+            onDragStart: () => t("blueprint.drag.start", { name: names.get(dragging ?? "") ?? "" }),
+            onDragOver: () => undefined,
+            onDragEnd: () => t("blueprint.drag.end"),
+            onDragCancel: () => t("blueprint.drag.cancel"),
+          },
+          screenReaderInstructions: { draggable: t("blueprint.drag.instructions") },
+        }}
+        onDragStart={({ active }) => setDragging(draggedVariable(active.data.current))}
+        onDragEnd={() => setDragging(null)}
+        onDragCancel={() => setDragging(null)}
+      >
+        <div className="grid min-h-0 flex-1 grid-cols-[220px_1fr_280px]">
+          {read_ === undefined || read_.state === "loading" ? (
+            <p className="text-text-muted col-span-3 p-6 text-xs">{t("blueprint.loading")}</p>
+          ) : read_.state === "failed" ? (
+            <p className="text-text-muted col-span-3 p-6 text-xs">
+              {read_.error.kind === "noSuchBlueprint"
+                ? t("library.gone")
+                : t("blueprint.bug", { reason: read_.error.reason })}
+            </p>
+          ) : (
+            <>
+              <MyBlueprint
+                blueprint={blueprint}
+                graphs={read_.graphs.graphs}
+                shown={shownGraph?.id ?? ""}
+                onShow={(graph) => {
                   setShown(graph);
-                  setSelection({ kind: "node", id: node });
+                  setSelection(null);
                 }}
+                chosen={selection?.kind === "variable" ? selection.id : null}
+                onChoose={(variable) => setSelection({ kind: "variable", id: variable })}
+                onAddVariable={blueprint.given ? undefined : addVariable}
               />
-            ) : shownGraph === undefined ? (
-              <div />
-            ) : (
-              <Suspense fallback={<p className="text-text-muted p-6 text-xs">{t("blueprint.loading")}</p>}>
-                <BlueprintGraph
-                  // One graph per mount: a picker open on one never adds to another.
-                  key={shownGraph.id}
-                  graph={shownGraph}
+              {view === "summary" ? (
+                <Summary
+                  graphs={graphs}
                   names={names}
-                  faulty={faulty}
-                  chosen={selection?.kind === "node" ? selection.id : null}
-                  onChoose={(node) => setSelection(node === null ? null : { kind: "node", id: node })}
-                  // D3B's blueprints are locked; mine are edited in place, the Library's count of problems after.
-                  onEdit={
-                    blueprint.given
-                      ? undefined
-                      : (change) =>
-                          void edit(blueprint.id, shownGraph.id, change).then((saved) => {
-                            if (saved) {
-                              void refresh();
-                            }
-                          })
+                  chosen={
+                    selection?.kind === "node" && shownGraph !== undefined
+                      ? { graph: shownGraph.id, node: selection.id }
+                      : null
                   }
+                  onChoose={(graph, node) => {
+                    setShown(graph);
+                    setSelection({ kind: "node", id: node });
+                  }}
                 />
-              </Suspense>
-            )}
-            <BlueprintDetails
-              blueprint={blueprint}
-              graphs={graphs}
-              graph={shownGraph}
-              problems={read_.graphs.problems}
-              selection={selection}
-              names={names}
-              onVariable={blueprint.given ? undefined : (variable) => blueprintEdit({ edit: "variable", variable })}
-              onDeleteVariable={
-                blueprint.given
-                  ? undefined
-                  : (variable) => {
-                      setSelection(null);
-                      void blueprintEdit({ edit: "deleteVariable", variable });
+              ) : shownGraph === undefined ? (
+                <div />
+              ) : (
+                <Suspense fallback={<p className="text-text-muted p-6 text-xs">{t("blueprint.loading")}</p>}>
+                  <BlueprintGraph
+                    // One graph per mount: a picker open on one never adds to another.
+                    key={shownGraph.id}
+                    graph={shownGraph}
+                    names={names}
+                    faulty={faulty}
+                    chosen={selection?.kind === "node" ? selection.id : null}
+                    onChoose={(node) => setSelection(node === null ? null : { kind: "node", id: node })}
+                    // D3B's blueprints are locked; mine are edited in place, the Library's count of problems after.
+                    onEdit={
+                      blueprint.given
+                        ? undefined
+                        : (change) =>
+                            void edit(blueprint.id, shownGraph.id, change).then((saved) => {
+                              if (saved) {
+                                void refresh();
+                              }
+                            })
                     }
-              }
-              onValue={
-                blueprint.given || shownGraph === undefined
-                  ? undefined
-                  : (node, pin, value) =>
-                      edit(blueprint.id, shownGraph.id, { edit: "value", node, pin, value }).then((saved) => {
-                        if (saved) {
-                          void refresh();
-                        }
-                        return saved;
-                      })
-              }
-            />
-          </>
-        )}
-      </div>
+                  />
+                </Suspense>
+              )}
+              <BlueprintDetails
+                blueprint={blueprint}
+                graphs={graphs}
+                graph={shownGraph}
+                problems={read_.graphs.problems}
+                selection={selection}
+                names={names}
+                onVariable={blueprint.given ? undefined : (variable) => blueprintEdit({ edit: "variable", variable })}
+                onDeleteVariable={
+                  blueprint.given
+                    ? undefined
+                    : (variable) => {
+                        setSelection(null);
+                        // The button goes with it: the tab keeps the keyboard, so Ctrl+Z brings it back at once.
+                        tabBox.current?.focus({ preventScroll: true });
+                        void blueprintEdit({ edit: "deleteVariable", variable });
+                      }
+                }
+                onValue={
+                  blueprint.given || shownGraph === undefined
+                    ? undefined
+                    : (node, pin, value) =>
+                        edit(blueprint.id, shownGraph.id, { edit: "value", node, pin, value }).then((saved) => {
+                          if (saved) {
+                            void refresh();
+                          }
+                          return saved;
+                        })
+                }
+              />
+            </>
+          )}
+        </div>
+        <DragOverlay dropAnimation={null}>
+          {dragging === null ? null : (
+            <span className="flex w-max items-center gap-2 rounded-[5px] border border-[#3c3c3c] bg-[#2a2c30] px-2 py-1 text-[13px] text-white shadow-lg">
+              {names.get(dragging) ?? dragging}
+            </span>
+          )}
+        </DragOverlay>
+      </DndContext>
     </div>
   );
 }

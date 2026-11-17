@@ -99,18 +99,11 @@ describe("My Blueprint", () => {
     );
     fireEvent.click(screen.getByRole("button", { name: "Ajouter une variable" }));
     expect(onAddVariable).toHaveBeenCalledOnce();
-    const pods = screen.getByText("pods").closest("button");
-    expect(pods?.getAttribute("draggable")).toBe("true");
-    const data = new Map<string, string>();
-    const dataTransfer = { setData: (type: string, value: string) => data.set(type, value), effectAllowed: "" };
-    if (pods) {
-      fireEvent.dragStart(pods, { dataTransfer });
-    }
-    expect(data.get("application/x-d3b-variable")).toBe("pods");
+    expect(screen.getByText("pods").closest("button")?.dataset["draggable"]).toBe("true");
     cleanup();
 
     render(<MyBlueprint blueprint={harvest} graphs={graphs} shown="events" onShow={() => {}} />);
     expect(screen.queryByRole("button", { name: "Ajouter une variable" })).toBeNull();
-    expect(screen.getByText("Banque à").closest("button")?.getAttribute("draggable")).toBe("false");
+    expect(screen.getByText("Banque à").closest("button")?.dataset["draggable"]).toBeUndefined();
   });
 });

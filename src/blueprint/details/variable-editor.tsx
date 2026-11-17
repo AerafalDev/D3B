@@ -87,7 +87,11 @@ export function VariableEditor({ variable, usedBy, onChange, onDelete }: Variabl
       </DetailRow>
       {numeric && (
         <DetailRow label={t("blueprint.details.bounds")}>
-          <Bounds bounds={variable.bounds} onCommit={(bounds) => save({ bounds })} />
+          <Bounds
+            bounds={variable.bounds}
+            percentage={variable.valueType === "percentage"}
+            onCommit={(bounds) => save({ bounds })}
+          />
         </DetailRow>
       )}
       <Toggle
@@ -167,34 +171,46 @@ function Toggle({ label, checked, onChange }: { label: string; checked: boolean;
 
 interface BoundsProps {
   bounds: [number, number] | null;
+  /** A percentage's bounds stay within 0 to 100. */
+  percentage: boolean;
   onCommit: (bounds: [number, number] | null) => Promise<boolean>;
 }
 
-/** The smallest and largest value, two whole numbers saved together; both left empty, none. */
-function Bounds({ bounds, onCommit }: BoundsProps) {
+/** The largest whole number the file's bounds hold either way. */
+const LIMIT = 2 ** 31 - 1;
+
+/**
+ * The smallest and largest value, two whole numbers saved together when the focus leaves both, so the second can be
+ * typed after the first; both left empty, none. A pair the wrong way round, a percentage's past 0 to 100, or a refusal
+ * puts the bounds saved back.
+ */
+function Bounds({ bounds, percentage, onCommit }: BoundsProps) {
   const { t } = useTranslation();
   const shown = (at: 0 | 1) => (bounds === null ? "" : String(bounds[at]));
   const [low, setLow] = useState(shown(0));
   const [high, setHigh] = useState(shown(1));
-  // biome-ignore lint/correctness/useExhaustiveDependencies: the fields follow the bounds saved
-  useEffect(() => {
+  const putBack = () => {
     setLow(shown(0));
     setHigh(shown(1));
-  }, [bounds?.[0], bounds?.[1]]);
-  const whole = (text: string) => (text.trim() !== "" && Number.isInteger(Number(text)) ? Number(text) : null);
+  };
+  // biome-ignore lint/correctness/useExhaustiveDependencies: the fields follow the bounds saved
+  useEffect(putBack, [bounds?.[0], bounds?.[1]]);
+  const whole = (text: string) => {
+    const number = Number(text);
+    return text.trim() !== "" && Number.isInteger(number) && Math.abs(number) <= LIMIT ? number : null;
+  };
   const none = low.trim() === "" && high.trim() === "";
-  const pair = whole(low) !== null && whole(high) !== null ? ([whole(low), whole(high)] as [number, number]) : null;
-  const valid = none || (pair !== null && pair[0] <= pair[1]);
+  const smallest = whole(low);
+  const largest = whole(high);
+  const pair: [number, number] | null = smallest !== null && largest !== null ? [smallest, largest] : null;
+  const valid = none || (pair !== null && pair[0] <= pair[1] && (!percentage || (pair[0] >= 0 && pair[1] <= 100)));
   const commit = () => {
     const next = none ? null : pair;
-    if (!valid || JSON.stringify(next) === JSON.stringify(bounds)) {
-      if (!valid) {
-        setLow(shown(0));
-        setHigh(shown(1));
-      }
-      return;
+    if (!valid) {
+      putBack();
+    } else if (JSON.stringify(next) !== JSON.stringify(bounds)) {
+      void onCommit(next).then((kept) => kept || putBack());
     }
-    void onCommit(next);
   };
   const field = (label: string, value: string, set: (text: string) => void) => (
     <input
@@ -204,16 +220,30 @@ function Bounds({ bounds, onCommit }: BoundsProps) {
       aria-invalid={!valid}
       value={value}
       onChange={(event) => set(event.target.value)}
-      onBlur={commit}
-      onKeyDown={(event) => event.key === "Enter" && commit()}
+      onKeyDown={(event) => {
+        if (event.key === "Enter") {
+          commit();
+        } else if (event.key === "Escape") {
+          putBack();
+        }
+      }}
       className={cn(FIELD, "w-[64px] text-right tabular-nums")}
     />
   );
   return (
-    <span className="flex items-center gap-1.5">
+    <fieldset
+      aria-label={t("blueprint.details.bounds")}
+      className="m-0 flex items-center gap-1.5 border-0 p-0"
+      onBlur={(event) => {
+        // Saved once the focus leaves the pair, not when it goes from one field to the other.
+        if (!event.currentTarget.contains(event.relatedTarget as Node | null)) {
+          commit();
+        }
+      }}
+    >
       {field(t("blueprint.details.smallest"), low, setLow)}
       <span className="text-text-muted">–</span>
       {field(t("blueprint.details.largest"), high, setHigh)}
-    </span>
+    </fieldset>
   );
 }

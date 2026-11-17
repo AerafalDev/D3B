@@ -35,6 +35,8 @@ export function VariableMenu({ at, name, onPick, onClose }: VariableMenuProps) {
     <button
       type="button"
       role="menuitem"
+      // WebKit focuses no button on a click: the item focused would blur first and close the menu before the click.
+      onMouseDown={(event) => event.preventDefault()}
       onClick={() => onPick(does)}
       className="hover:bg-hover focus-visible:bg-focus/30 rounded px-2 py-1 text-left whitespace-nowrap outline-none"
     >
@@ -48,6 +50,8 @@ export function VariableMenu({ at, name, onPick, onClose }: VariableMenuProps) {
       role="menu"
       aria-label={t("blueprint.dropVariable", { name })}
       onKeyDown={(event) => {
+        // Its keys are its own: the graph's Delete, Backspace and Space act on the graph, not under the menu.
+        event.stopPropagation();
         const items = [...(menu.current?.querySelectorAll("button") ?? [])];
         const now = items.indexOf(document.activeElement as HTMLButtonElement);
         if (event.key === "Escape") {

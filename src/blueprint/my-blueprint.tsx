@@ -1,3 +1,4 @@
+import { useDraggable } from "@dnd-kit/core";
 import { Eye, Plus } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
@@ -7,7 +8,7 @@ import { cn } from "@/lib/utils.ts";
 import { givenText } from "@/library/given-text.ts";
 import type { BlueprintSummary } from "@/library/library-store.ts";
 import { valueText } from "@/library/value-text.ts";
-import { VARIABLE_DRAG } from "./edit/variable-drop.ts";
+import type { VariableDrag } from "./edit/variable-drop.ts";
 
 interface MyBlueprintProps {
   blueprint: BlueprintSummary;
@@ -89,32 +90,62 @@ export function MyBlueprint({
           const value = valueText(variable.valueType, variable.default, i18n.language);
           const hover = [help, t("blueprint.default", { value })].filter(Boolean).join("\n");
           return (
-            <li key={variable.id} title={hover}>
-              <button
-                type="button"
-                aria-current={variable.id === chosen ? "true" : undefined}
-                onClick={() => onChoose?.(variable.id)}
-                draggable={onAddVariable !== undefined}
-                onDragStart={(event) => {
-                  event.dataTransfer.setData(VARIABLE_DRAG, variable.id);
-                  event.dataTransfer.effectAllowed = "copy";
-                }}
-                className="hover:bg-hover focus-visible:outline-focus mx-1 flex w-[calc(100%-0.5rem)] items-center gap-2 rounded-[5px] px-2 py-1 text-left focus-visible:outline-1 aria-[current=true]:bg-[#2a2c30] aria-[current=true]:text-white"
-              >
-                <span aria-hidden="true" className={cn("blueprint-chip-dot", `blueprint-type-${variable.valueType}`)} />
-                <span className="min-w-0 flex-1 truncate">{name}</span>
-                {variable.perCharacter && (
-                  <Eye aria-hidden="true" size={14} strokeWidth={1.5} className="text-text-muted shrink-0" />
-                )}
-                <span className="sr-only">
-                  {[variable.perCharacter ? t("blueprint.perCharacter") : null, hover].filter(Boolean).join(". ")}
-                </span>
-              </button>
-            </li>
+            <VariableRow
+              key={variable.id}
+              variable={variable}
+              name={name}
+              hover={hover}
+              chosen={variable.id === chosen}
+              draggable={onAddVariable !== undefined}
+              onChoose={() => onChoose?.(variable.id)}
+            />
           );
         })}
       </Section>
     </nav>
+  );
+}
+
+interface VariableRowProps {
+  variable: BlueprintSummary["variables"][number];
+  /** Its name and hover, as the player reads them. */
+  name: string;
+  hover: string;
+  chosen: boolean;
+  /** Whether it drags onto the graph: in a blueprint of mine. */
+  draggable: boolean;
+  onChoose: () => void;
+}
+
+/** A variable's row, chosen by a click and, in a blueprint of mine, dragged onto the graph by `@dnd-kit`. */
+function VariableRow({ variable, name, hover, chosen, draggable, onChoose }: VariableRowProps) {
+  const { t } = useTranslation();
+  const data: VariableDrag = { variable: variable.id };
+  // The pointer moves a few pixels first (the tab's sensor), so a click still chooses it; the graph's picker reads and
+  // writes it by keyboard.
+  // Its listeners only: a pointer drags it, and the button keeps its own role and keyboard.
+  const { listeners, setNodeRef } = useDraggable({ id: `variable:${variable.id}`, data, disabled: !draggable });
+  return (
+    <li title={hover}>
+      <button
+        ref={setNodeRef}
+        {...(draggable ? listeners : {})}
+        type="button"
+        aria-current={chosen ? "true" : undefined}
+        data-draggable={draggable ? "true" : undefined}
+        onClick={onChoose}
+        className="hover:bg-hover focus-visible:outline-focus mx-1 flex w-[calc(100%-0.5rem)] items-center gap-2 rounded-[5px] px-2 py-1 text-left focus-visible:outline-1 aria-[current=true]:bg-[#2a2c30] aria-[current=true]:text-white"
+      >
+        <span aria-hidden="true" className={cn("blueprint-chip-dot", `blueprint-type-${variable.valueType}`)} />
+        <span className="min-w-0 flex-1 truncate">{name}</span>
+        {variable.perCharacter && (
+          <Eye aria-hidden="true" size={14} strokeWidth={1.5} className="text-text-muted shrink-0" />
+        )}
+        <span className="sr-only">
+          {[variable.perCharacter ? t("blueprint.perCharacter") : null, hover].filter(Boolean).join(". ")}
+        </span>
+      </button>
+    </li>
   );
 }
 

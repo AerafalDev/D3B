@@ -18,9 +18,14 @@ vi.mock("@/blueprint/blueprint-graph.tsx", () => ({
   ),
 }));
 // The back end, faked: the graphs the tab reads.
-const backEnd = vi.hoisted(() => ({ graphs: vi.fn(), undo: vi.fn(), redo: vi.fn() }));
+const backEnd = vi.hoisted(() => ({ graphs: vi.fn(), undo: vi.fn(), redo: vi.fn(), edit: vi.fn() }));
 vi.mock("@/bindings.ts", () => ({
-  commands: { blueprintGraphs: backEnd.graphs, undoBlueprint: backEnd.undo, redoBlueprint: backEnd.redo },
+  commands: {
+    blueprintGraphs: backEnd.graphs,
+    undoBlueprint: backEnd.undo,
+    redoBlueprint: backEnd.redo,
+    editBlueprint: backEnd.edit,
+  },
 }));
 
 const { BlueprintTab } = await import("./blueprint-tab.tsx");
@@ -229,6 +234,28 @@ describe("a blueprint's tab, its editor read-only", () => {
     given.focus();
     await press(given, "z");
     expect(backEnd.undo).toHaveBeenCalledTimes(1);
+  });
+
+  it("creates a variable of mine and chooses it, and gives the tab the keyboard back once one is deleted", async () => {
+    const mine = { ...harvest, id: "mine", name: "Ma récolte", given: false };
+    const made = { ...mine, variables: [...mine.variables, variable("nouvelle-variable", "bool", "false", false)] };
+    backEnd.edit.mockReset().mockResolvedValue(GRAPHS);
+    const { refresh } = useLibrary.getState();
+    useLibrary.setState({ blueprints: [mine], refresh: async () => useLibrary.setState({ blueprints: [made] }) });
+    const { container } = tab("mine");
+    await screen.findByText(/graphe events/);
+    await act(() => fireEvent.click(screen.getByRole("button", { name: "Ajouter une variable" })));
+    expect(backEnd.edit).toHaveBeenCalledWith("mine", "events", { edit: "newVariable", name: "Nouvelle variable" });
+    const name = await screen.findByRole("textbox", { name: "Nom" });
+    expect((name as HTMLInputElement).value, "Details shows the new one").toBe("nouvelle-variable");
+    await act(() => fireEvent.click(screen.getByRole("button", { name: "Supprimer la variable" })));
+    expect(backEnd.edit).toHaveBeenLastCalledWith("mine", "events", {
+      edit: "deleteVariable",
+      variable: "nouvelle-variable",
+    });
+    expect(document.activeElement, "Ctrl+Z works at once").toBe(container.firstElementChild);
+    expect(screen.queryByRole("textbox", { name: "Nom" })).toBeNull();
+    useLibrary.setState({ refresh });
   });
 
   it("says the blueprint is gone once its file is", () => {

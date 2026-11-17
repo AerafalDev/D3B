@@ -627,7 +627,13 @@
     "newVariable": "New variable",
     "addVariable": "Add a variable",
     "get": "Read {{name}}",
-    "dropVariable": "Read or write {{name}}"
+    "dropVariable": "Read or write {{name}}",
+    "drag": {
+      "start": "{{name}} picked up: drop it on the graph to read or write it.",
+      "end": "Variable dropped.",
+      "cancel": "Drag cancelled.",
+      "instructions": "Drag a variable onto the graph with the mouse; the graph’s picker also reads and writes it by keyboard."
+    }
   },
   "world": {
     "title": "World",

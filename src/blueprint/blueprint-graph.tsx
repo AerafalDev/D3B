@@ -1,6 +1,8 @@
 import "@xyflow/react/dist/style.css";
 import "./blueprint-graph.css";
 
+import { useDndMonitor, useDroppable } from "@dnd-kit/core";
+
 import {
   applyEdgeChanges,
   applyNodeChanges,
@@ -32,7 +34,7 @@ import { GraphPins, type PinOf } from "./edit/graph-pins.ts";
 import { type LinkEnd, linkRefusal } from "./edit/link-check.ts";
 import { Picker } from "./edit/picker.tsx";
 import { keptSelection } from "./edit/selection.ts";
-import { droppedAs, VARIABLE_DRAG } from "./edit/variable-drop.ts";
+import { draggedVariable, dropPoint, droppedAs, GRAPH_DROP } from "./edit/variable-drop.ts";
 import { VariableMenu } from "./edit/variable-menu.tsx";
 import { chosenNode, graphElements } from "./graph-elements.ts";
 import { type PillNode, VariablePill } from "./variable-pill.tsx";
@@ -104,6 +106,39 @@ function Graph({ graph, names, faulty, chosen = null, onChoose, onEdit }: Bluepr
     null,
   );
   const editable = onEdit !== undefined;
+  // The keys held as the pointer last moved, read when a variable is dropped: `@dnd-kit` gives the drop no event.
+  const held = useRef({ ctrlKey: false, metaKey: false, altKey: false });
+  useEffect(() => {
+    const read = (event: KeyboardEvent | PointerEvent) => {
+      held.current = { ctrlKey: event.ctrlKey, metaKey: event.metaKey, altKey: event.altKey };
+    };
+    for (const type of ["pointermove", "keydown", "keyup"] as const) {
+      window.addEventListener(type, read);
+    }
+    return () => {
+      for (const type of ["pointermove", "keydown", "keyup"] as const) {
+        window.removeEventListener(type, read);
+      }
+    };
+  }, []);
+  const { setNodeRef: dropOn } = useDroppable({ id: GRAPH_DROP, disabled: onEdit === undefined });
+  // A variable dragged from My Blueprint is read with Ctrl, written with Alt, else a small menu asks.
+  useDndMonitor({
+    onDragEnd: ({ active, over, activatorEvent, delta }) => {
+      const variable = draggedVariable(active.data.current);
+      const client = dropPoint(activatorEvent, delta);
+      if (onEdit === undefined || over?.id !== GRAPH_DROP || variable === null || client === null) {
+        return;
+      }
+      const at = flow.screenToFlowPosition(client);
+      const how = droppedAs(held.current);
+      if (how === "ask") {
+        setAsking({ client, at, variable });
+      } else {
+        addVariable(how, variable, at);
+      }
+    },
+  });
   const addVariable = (does: "get" | "set", variable: string, at: XYPosition) =>
     onEdit?.({
       edit: "add",
@@ -179,31 +214,12 @@ function Graph({ graph, names, faulty, chosen = null, onChoose, onEdit }: Bluepr
         >
           {/* biome-ignore lint/a11y/noStaticElementInteractions: Space opens the picker at the pointer over the graph */}
           <div
-            ref={box}
+            ref={(element) => {
+              box.current = element;
+              dropOn(element);
+            }}
             tabIndex={-1}
             className="relative h-full w-full outline-none"
-            // A variable dragged from My Blueprint is read with Ctrl, written with Alt, else a small menu asks.
-            onDragOver={(event) => {
-              if (editable && event.dataTransfer.types.includes(VARIABLE_DRAG)) {
-                event.preventDefault();
-                event.dataTransfer.dropEffect = "copy";
-              }
-            }}
-            onDrop={(event) => {
-              const variable = event.dataTransfer.getData(VARIABLE_DRAG);
-              if (!editable || variable === "") {
-                return;
-              }
-              event.preventDefault();
-              const client = { x: event.clientX, y: event.clientY };
-              const at = flow.screenToFlowPosition(client);
-              const how = droppedAs(event);
-              if (how === "ask") {
-                setAsking({ client, at, variable });
-              } else {
-                addVariable(how, variable, at);
-              }
-            }}
             onKeyDown={(event) => {
               if (!editable || opened !== null) {
                 return;
@@ -348,7 +364,11 @@ function Graph({ graph, names, faulty, chosen = null, onChoose, onEdit }: Bluepr
                   setAsking(null);
                   box.current?.focus({ preventScroll: true });
                 }}
-                onClose={() => setAsking(null)}
+                onClose={() => {
+                  // The graph keeps the keyboard, for Space, Delete and Ctrl+Z, as when the picker closes.
+                  setAsking(null);
+                  box.current?.focus({ preventScroll: true });
+                }}
               />
             )}
           </div>

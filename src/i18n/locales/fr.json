@@ -627,7 +627,13 @@
     "newVariable": "Nouvelle variable",
     "addVariable": "Ajouter une variable",
     "get": "Lire {{name}}",
-    "dropVariable": "Lire ou écrire {{name}}"
+    "dropVariable": "Lire ou écrire {{name}}",
+    "drag": {
+      "start": "{{name}} saisie : lâche-la sur le graphe pour la lire ou l’écrire.",
+      "end": "Variable lâchée.",
+      "cancel": "Glisser annulé.",
+      "instructions": "Glisse une variable sur le graphe à la souris ; le sélecteur du graphe la lit et l’écrit aussi au clavier."
+    }
   },
   "world": {
     "title": "Monde",
