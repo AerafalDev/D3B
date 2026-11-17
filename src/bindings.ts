@@ -656,6 +656,12 @@ export type EventView = {
 	mode: EventMode,
 };
 
+/**  A function's named exit as its call draws it: its pin's id, and its name. */
+export type ExitView = {
+	id: string,
+	name: string,
+};
+
 /**  Why a character was not forgotten. */
 export type ForgetError = { kind: "noSuchCharacter" } | { kind: "noFolder" } | 
 /**  The system could not move its file to the trash: its own words. */
@@ -1039,6 +1045,8 @@ export type NodeView_Deserialize = {
 	adds?: AddsView | null,
 	/**  Whether it takes cases, each a flow output, typed in Details: Switch; omitted for no. */
 	takesCases?: boolean,
+	/**  A call's named exits, each its flow output's id and the name the player gave it; omitted for none. */
+	exits?: ExitView[],
 } & NodeDoes;
 
 /**  A node of a graph. */
@@ -1067,6 +1075,8 @@ export type NodeView_Serialize = {
 	adds?: AddsView,
 	/**  Whether it takes cases, each a flow output, typed in Details: Switch; omitted for no. */
 	takesCases?: boolean,
+	/**  A call's named exits, each its flow output's id and the name the player gave it; omitted for none. */
+	exits?: ExitView[],
 } & NodeDoes;
 
 /**

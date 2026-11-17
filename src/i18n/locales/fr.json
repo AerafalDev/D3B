@@ -662,7 +662,11 @@
         "false": "Sinon :"
       },
       "back": "Revenir à {{step}}.",
-      "on": "Aller à {{step}}."
+      "on": "Aller à {{step}}.",
+      "to": "{{pin}} → {{step}}",
+      "nowhere": "rien",
+      "branchOf": "Si {{pin}} :",
+      "outTo": "{{pin}} : aller à {{step}}."
     },
     "view": {
       "label": "Vue du blueprint",
