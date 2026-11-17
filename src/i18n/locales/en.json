@@ -257,6 +257,14 @@
         "sentence": "Finish",
         "description": "Stops the blueprint: the character is \"Finished\"."
       },
+      "sequence": {
+        "sentence": "Sequence",
+        "description": "Runs its outputs one after another, each once the one before has ended; the last is the rest of the flow."
+      },
+      "switch": {
+        "sentence": "Switch on {{value}}",
+        "description": "Follows the output of the case the value is, or Otherwise."
+      },
       "life_percent": {
         "sentence": "Life %",
         "description": "Life, as a percentage of its maximum."
@@ -334,6 +342,7 @@
       "duration": "Duration",
       "a": "A",
       "b": "B",
+      "otherwise": "Otherwise",
       "job": "Profession"
     }
   },

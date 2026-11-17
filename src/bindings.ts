@@ -140,6 +140,13 @@ export type ActorSeen_Serialize = {
 	cell: number | null,
 };
 
+/**  The numbered pins a node's "+" adds: `<pin>_1` to `<pin>_<count>`, at least `least` of them. */
+export type AddsView = {
+	pin: string,
+	side: PinSide,
+	least: number,
+};
+
 /**  What the About dialog and the status bar show. */
 export type AppInfo = AppInfo_Serialize | AppInfo_Deserialize;
 
@@ -627,6 +634,10 @@ export type EditError = { kind: "noFolder" } |
 { kind: "noSuchVariable" } | 
 /**  A name of nothing but spaces. */
 { kind: "blank" } | 
+/**  The node does not number this pin, or takes no such option. */
+{ kind: "notAnOption" } | 
+/**  The node keeps at least its kind's pins. */
+{ kind: "belowLeast" } | 
 /**  The system could not read or write its file, or it no longer reads and is kept as it is: the reason, in words. */
 { kind: "notSaved"; reason: string };
 
@@ -770,6 +781,13 @@ export type GraphEdit_Deserialize =
 { edit: "value"; node: string; pin: string; value?: string | null; 
 /**  The type a first value on a wildcard of a node with no type is given as: `duration`, `time`… */
 of?: string | null } | 
+/**
+ *  A node's own pins: `count` numbered pins, Sequence's outputs; Switch's cases, each as JSON, of its type or, on a
+ *  node with none, of `of`, which it then notes. Pins past them go with their wires.
+ */
+{ edit: "options"; node: string; count?: number | null; cases?: string[] | null; of?: string | null } | 
+/**  The numbered pin or case `pin` of `node` gone with its wire, those after it renumbered. */
+{ edit: "removePin"; node: string; pin: string } | 
 /**  A variable of mine named so, yes or no, under an id made from its name. */
 { edit: "newVariable"; name: string } | 
 /**  The variable of its id made this one, whole; a new type drops what it no longer fits. */
@@ -796,6 +814,13 @@ export type GraphEdit_Serialize =
 { edit: "value"; node: string; pin: string; value: string | null; 
 /**  The type a first value on a wildcard of a node with no type is given as: `duration`, `time`… */
 of?: string | null } | 
+/**
+ *  A node's own pins: `count` numbered pins, Sequence's outputs; Switch's cases, each as JSON, of its type or, on a
+ *  node with none, of `of`, which it then notes. Pins past them go with their wires.
+ */
+{ edit: "options"; node: string; count?: number | null; cases?: string[] | null; of?: string | null } | 
+/**  The numbered pin or case `pin` of `node` gone with its wire, those after it renumbered. */
+{ edit: "removePin"; node: string; pin: string } | 
 /**  A variable of mine named so, yes or no, under an id made from its name. */
 { edit: "newVariable"; name: string } | 
 /**  The variable of its id made this one, whole; a new type drops what it no longer fits. */
@@ -1010,6 +1035,8 @@ export type NodeView_Deserialize = {
 	options?: OptionsView_Deserialize,
 	/**  The types its wildcards may take, the first while it notes none; omitted for any type. */
 	types?: string[],
+	/**  The pins "+" adds, Sequence's outputs; omitted for a kind that numbers none. */
+	adds?: AddsView | null,
 } & NodeDoes;
 
 /**  A node of a graph. */
@@ -1034,6 +1061,8 @@ export type NodeView_Serialize = {
 	options?: OptionsView_Serialize,
 	/**  The types its wildcards may take, the first while it notes none; omitted for any type. */
 	types?: string[],
+	/**  The pins "+" adds, Sequence's outputs; omitted for a kind that numbers none. */
+	adds?: AddsView,
 } & NodeDoes;
 
 /**

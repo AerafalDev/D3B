@@ -160,13 +160,6 @@ pub(crate) enum Fallback {
 
 /// An option a kind takes (`Options`), and the pins it makes.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-#[cfg_attr(
-    not(test),
-    expect(
-        dead_code,
-        reason = "v2's flow, values and actions bring the first kinds that take options (docs/now.md)"
-    )
-)]
 pub(crate) enum Takes {
     /// `count`: the pins `<pin>_1` to `<pin>_<count>`, as `pin` is, `least` of them when the node gives no count.
     Count { pin: Pin, least: u8 },
@@ -274,6 +267,10 @@ pub(crate) const KINDS: &[Kind] = &[
     // Sitting no longer gives life back faster: life comes back alone, out of a fight (the owner, 2026-11-14).
     of("wait_for_life", Flow, &[RUN, THEN, input("life", Percentage, Some("90"))], None),
     of("finish", Flow, &[RUN], None),
+    // v2's flow (`docs/bot.md`, "The flow's kinds (v2.3)"): Sequence runs its outputs in turn, its last the rest of the
+    // flow; Switch follows the case its value is, or Otherwise.
+    Kind { takes: &[Takes::Count { pin: exec("then", Side::Out), least: 2 }], ..of("sequence", Flow, &[RUN], None) },
+    Kind { takes: &[Takes::Cases], ..of("switch", Flow, &[RUN, wildcard("value", Side::In, false), exec("otherwise", Side::Out)], None) },
     of("life_percent", Query, &[output("value", Percentage)], None),
     of("pods_percent", Query, &[output("value", Percentage)], None),
     // The items a profession harvests, from the data's skills (3.7.13.17, `artifacts/studies/items.md`, verified):
@@ -313,13 +310,12 @@ pub(crate) mod tests {
     }
 
     /// Kinds for the tests, until v2's flow and values bring theirs: `=` of two values of one type, For each element of
-    /// a list, Sequence, Switch, Text, Add to a variable and an Expression.
+    /// a list, a list of its numbered inputs, Text, Add to a variable and an Expression.
     #[rustfmt::skip]
     pub(crate) const WILDCARDS: &[Kind] = &[
         of("test_equal", Query, &[wildcard("a", Side::In, false), wildcard("b", Side::In, false), output("value", Bool)], None),
         of("test_for_each", Flow, &[RUN, wildcard("list", Side::In, true), exec("body", Side::Out), wildcard("element", Side::Out, false), exec("completed", Side::Out)], None),
-        taking(of("test_sequence", Flow, &[RUN], None), &[Takes::Count { pin: exec("then", Side::Out), least: 2 }]),
-        taking(of("test_switch", Flow, &[RUN, wildcard("value", Side::In, false), exec("otherwise", Side::Out)], None), &[Takes::Cases]),
+        taking(of("test_list", Query, &[output("value", Number)], None), &[Takes::Count { pin: input("in", Number, None), least: 1 }]),
         taking(of("test_text", Query, &[output("value", Text)], None), &[Takes::Text]),
         taking(of("test_add_to", Flow, &[RUN, THEN, wildcard("amount", Side::In, false)], None), &[Takes::Variable]),
         taking(of("test_expression", Query, &[wildcard("value", Side::Out, false)], None), &[Takes::Expression]),

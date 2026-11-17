@@ -41,6 +41,22 @@ pub enum GraphEdit {
         #[specta(optional)]
         of: Option<String>,
     },
+    /// A node's own pins: `count` numbered pins, Sequence's outputs; Switch's cases, each as JSON, of its type or, on a
+    /// node with none, of `of`, which it then notes. Pins past them go with their wires.
+    Options {
+        node: String,
+        #[serde(default)]
+        #[specta(optional)]
+        count: Option<u8>,
+        #[serde(default)]
+        #[specta(optional)]
+        cases: Option<Vec<String>>,
+        #[serde(default)]
+        #[specta(optional)]
+        of: Option<String>,
+    },
+    /// The numbered pin or case `pin` of `node` gone with its wire, those after it renumbered.
+    RemovePin { node: String, pin: String },
     /// A variable of mine named so, yes or no, under an id made from its name.
     NewVariable { name: String },
     /// The variable of its id made this one, whole; a new type drops what it no longer fits.
@@ -156,6 +172,10 @@ pub enum EditError {
     NoSuchVariable,
     /// A name of nothing but spaces.
     Blank,
+    /// The node does not number this pin, or takes no such option.
+    NotAnOption,
+    /// The node keeps at least its kind's pins.
+    BelowLeast,
     /// The system could not read or write its file, or it no longer reads and is kept as it is: the reason, in words.
     NotSaved {
         reason: String,
@@ -189,6 +209,8 @@ impl From<Refusal> for EditError {
             Refusal::NotItsType => Self::NotItsType,
             Refusal::NoSuchVariable => Self::NoSuchVariable,
             Refusal::Blank => Self::Blank,
+            Refusal::NotAnOption => Self::NotAnOption,
+            Refusal::BelowLeast => Self::BelowLeast,
         }
     }
 }
@@ -232,10 +254,7 @@ impl TryFrom<GraphEdit> for bot::Edit {
                     .collect(),
             },
             GraphEdit::Value { node, pin, value, of } => Self::Value {
-                of: of
-                    .map(|of| serde_json::from_value(serde_json::Value::String(of)))
-                    .transpose()
-                    .map_err(|_| EditError::NotItsType)?,
+                of: type_of(of)?,
                 node: Id(node),
                 pin: Id(pin),
                 value: value
@@ -243,12 +262,34 @@ impl TryFrom<GraphEdit> for bot::Edit {
                     .transpose()
                     .map_err(|_| EditError::NotItsType)?,
             },
+            GraphEdit::Options { node, count, cases, of } => Self::Options {
+                node: Id(node),
+                count: count
+                    .map(|count| std::num::NonZeroU8::new(count).ok_or(EditError::BelowLeast))
+                    .transpose()?,
+                cases: cases
+                    .map(|cases| cases.iter().map(|json| serde_json::from_str(json)).collect())
+                    .transpose()
+                    .map_err(|_| EditError::NotItsType)?,
+                of: type_of(of)?,
+            },
+            GraphEdit::RemovePin { node, pin } => Self::RemovePin {
+                node: Id(node),
+                pin: Id(pin),
+            },
             GraphEdit::NewVariable { name } => Self::NewVariable { name },
             GraphEdit::Variable { variable } => Self::Variable(variable.try_into()?),
             GraphEdit::DeleteVariable { variable } => Self::DeleteVariable { id: Id(variable) },
             GraphEdit::About { name, description } => Self::About { name, description },
         })
     }
+}
+
+/// A type as the file writes it, `duration`, read.
+fn type_of(of: Option<String>) -> Result<Option<bot::ValueType>, EditError> {
+    of.map(|of| serde_json::from_value(serde_json::Value::String(of)))
+        .transpose()
+        .map_err(|_| EditError::NotItsType)
 }
 
 /// Makes `edit` in the graph `graph` of my blueprint `id` and saves it, the characters running it carried to its
@@ -505,6 +546,58 @@ mod tests {
         let drawn = typed("duration").unwrap_or_else(|error| panic!("{error:?}"));
         let ge = drawn.graphs[0].nodes.iter().find(|node| node.id == "greater_or_equal");
         assert_eq!(ge.and_then(|node| node.options.value_type.as_deref()), Some("duration"));
+    }
+
+    #[test]
+    fn a_nodes_outputs_and_cases_come_in_their_json_removed_by_pin_and_undone_in_one_step() {
+        let (_folder, store) = mine("ipc-edit-options");
+        let edit = |json: &str| changed(&store, "my-harvest", "events", parsed(json));
+        let node = |drawn: &BlueprintGraphs, id: &str| {
+            let found = drawn.graphs[0].nodes.iter().find(|node| node.id == id).cloned();
+            found.unwrap_or_else(|| panic!("{id}"))
+        };
+        let added = edit(r#"{"edit": "add", "node": {"does": "kind", "kind": "sequence"}, "position": [0, 0]}"#);
+        let drawn = added.unwrap_or_else(|error| panic!("{error:?}"));
+        let adds = node(&drawn, "sequence").adds;
+        assert_eq!(
+            adds.map(|it| (it.pin, it.side, it.least)),
+            Some(("then".to_owned(), PinSide::Out, 2))
+        );
+        let drawn =
+            edit(r#"{"edit": "options", "node": "sequence", "count": 3}"#).unwrap_or_else(|error| panic!("{error:?}"));
+        assert_eq!(node(&drawn, "sequence").options.count, Some(3));
+        let removed = edit(r#"{"edit": "removePin", "node": "sequence", "pin": "then_2"}"#);
+        let drawn = removed.unwrap_or_else(|error| panic!("{error:?}"));
+        assert_eq!(node(&drawn, "sequence").options.count, None, "back to its least");
+        let back = stepped(&store, "my-harvest", true).unwrap_or_else(|error| panic!("{error:?}"));
+        assert_eq!(node(&back, "sequence").options.count, Some(3), "one step back");
+        for (json, error) in [
+            (
+                r#"{"edit": "options", "node": "sequence", "count": 0}"#,
+                EditError::BelowLeast,
+            ),
+            (
+                r#"{"edit": "options", "node": "n3", "count": 3}"#,
+                EditError::NotAnOption,
+            ),
+            (
+                r#"{"edit": "removePin", "node": "sequence", "pin": "run"}"#,
+                EditError::NotAnOption,
+            ),
+        ] {
+            assert_eq!(edit(json).err(), Some(error), "{json}");
+        }
+        edit(r#"{"edit": "add", "node": {"does": "kind", "kind": "switch"}, "position": [0, 0]}"#)
+            .unwrap_or_else(|error| panic!("{error:?}"));
+        let typed = edit(r#"{"edit": "options", "node": "switch", "cases": ["24", "28"], "of": "job"}"#);
+        let switch = node(&typed.unwrap_or_else(|error| panic!("{error:?}")), "switch");
+        assert_eq!(
+            (switch.options.value_type.as_deref(), switch.options.cases.len()),
+            (Some("job"), 2)
+        );
+        assert!(switch.adds.is_none(), "its cases are added in Details");
+        let not_json = edit(r#"{"edit": "options", "node": "switch", "cases": ["bûcheron"]}"#);
+        assert_eq!(not_json.err(), Some(EditError::NotItsType));
     }
 
     #[test]

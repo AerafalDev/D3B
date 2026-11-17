@@ -405,6 +405,8 @@ impl Built {
             inputs: Vec::new(),
             pure,
             named: None,
+            outs: Vec::new(),
+            cases: Vec::new(),
         });
         self
     }

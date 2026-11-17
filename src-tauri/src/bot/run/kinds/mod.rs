@@ -28,6 +28,8 @@ pub(super) fn behaviour(kind: &str) -> Option<&'static dyn Behaviour> {
         "wait" => &waits::Wait,
         "wait_for_life" => &waits::WaitForLife,
         "finish" => &flow::Finish,
+        "sequence" => &flow::Sequence,
+        "switch" => &flow::Switch,
         "life_percent" => &queries::LifePercent,
         "pods_percent" => &queries::PodsPercent,
         "job_resources" => &queries::JobResources,

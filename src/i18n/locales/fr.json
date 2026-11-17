@@ -257,6 +257,14 @@
         "sentence": "Terminer",
         "description": "Arrête le blueprint : le personnage est « Fini »."
       },
+      "sequence": {
+        "sentence": "Séquence",
+        "description": "Lance ses sorties l'une après l'autre, chacune quand la précédente a fini ; la dernière est la suite."
+      },
+      "switch": {
+        "sentence": "Selon {{value}}",
+        "description": "Suit la sortie du cas que vaut la valeur, ou Sinon."
+      },
       "life_percent": {
         "sentence": "Vie %",
         "description": "La vie, en pourcentage du maximum."
@@ -334,6 +342,7 @@
       "duration": "Durée",
       "a": "A",
       "b": "B",
+      "otherwise": "Sinon",
       "job": "Métier"
     }
   },

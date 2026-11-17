@@ -7,6 +7,7 @@
 
 mod about;
 mod choices;
+mod options;
 mod value;
 mod variable;
 
@@ -42,6 +43,16 @@ pub(crate) enum Edit {
         value: Option<serde_json::Value>,
         of: Option<ValueType>,
     },
+    /// A node's own pins (`docs/bot.md`, "The flow's kinds (v2.3)"): `count` numbered pins, Sequence's outputs; its
+    /// cases, Switch's, each of its type or, on a node with none, of `of`, which it then notes.
+    Options {
+        node: Id,
+        count: Option<std::num::NonZeroU8>,
+        cases: Option<Vec<serde_json::Value>>,
+        of: Option<ValueType>,
+    },
+    /// A numbered pin or a case gone with its wire, those after it renumbered.
+    RemovePin { node: Id, pin: Id },
     /// A variable of mine named so, under an id made from its name; the graph it is sent from does not matter.
     NewVariable { name: String },
     /// The variable of its id made this one, whole: its name, type, default, bounds, help, set per character, memory.
@@ -79,6 +90,10 @@ pub(crate) enum Refusal {
     NoSuchVariable,
     #[error("a name holds more than spaces")]
     Blank,
+    #[error("the node takes no such option")]
+    NotAnOption,
+    #[error("the node keeps at least its kind's pins")]
+    BelowLeast,
 }
 
 /// Makes `edit` in `blueprint`'s graph `graph`, or refuses it and changes nothing.
@@ -164,6 +179,8 @@ pub(crate) fn edit(blueprint: &mut Blueprint, graph: &Id, edit: Edit) -> Result<
             value::typed(blueprint, at, &node, &pin, value, of)?;
             untype(&mut blueprint.graphs[at]);
         }
+        Edit::Options { node, count, cases, of } => options::set(blueprint, at, &node, count, cases, of)?,
+        Edit::RemovePin { node, pin } => options::remove(blueprint, at, &node, &pin)?,
         Edit::NewVariable { .. } | Edit::Variable(_) | Edit::DeleteVariable { .. } | Edit::About { .. } => {}
     }
     Ok(())
@@ -543,7 +560,7 @@ mod tests {
     fn a_switch_keeps_its_type_while_it_has_cases_and_a_hole_takes_any_value() {
         let mut blueprint = harvest();
         let more = [
-            r#"{"id": "sw", "kind": "test_switch", "options": {"type": "job", "cases": [24]}}"#,
+            r#"{"id": "sw", "kind": "switch", "options": {"type": "job", "cases": [24]}}"#,
             r#"{"id": "tx", "kind": "test_text", "options": {"text": "{count} done"}}"#,
             r#"{"id": "add", "kind": "test_add_to"}"#,
         ];

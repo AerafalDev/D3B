@@ -438,7 +438,9 @@ flowchart LR
     file --> prog["run: flow, loops, waits"] -->|"chains Plain, Loop, Try; a pause past its node"| eng["the engine's stack"]
 ```
 
-- **The kinds**, and their pins (French names on a mock-up of the Summary, before its PR; the owner, 2026-11-17):
+- **The kinds**, and their pins (the owner, 2026-11-17, on a mock-up of the Summary: Séquence, Selon, Répéter N fois,
+  Tant que, Pour chaque, Sortir de la boucle, Au plus N fois, Alterner, Attendre que, Essayer jusqu'à N fois, Prendre
+  le suivant de, Bloquer, Mettre en pause et prévenir):
   - v1's If, Wait (a duration), Wait for life and Finish, as they are;
   - **Sequence** (`then_1` to `then_n`, at least 2), as Unreal's: no Completed, its last output the rest of the flow,
     the Summary reading its outputs at the level of the steps around it;
@@ -466,16 +468,22 @@ flowchart LR
   blueprints; Switch's cases in Details, a row each in the type's editor with + and ×, a case given twice marked; a
   pin's right-click "Remove" drops its wire and renumbers the later pins and their wires, as Unreal does, refused
   below the kind's least. Each is one change, undone in one step (`GraphEdit::Options`, `GraphEdit::RemovePin`;
-  `NodeView.adds` says where "+" goes).
+  `NodeView.adds` says where "+" goes). Step 1 of (v2.3), done in code: Sequence and Switch run, their outputs and
+  cases are edited in Rust (`bot::edit::options`; a count back at the kind's least is written as none, the cases of
+  a Switch with no type typed by `of`), and Otherwise is drawn after the cases.
 - **The engine** (ADR 0017, matching no kind): a chain is plain, a loop's (what Leave the loop ends) or a try's (where
   an unlinked Failed ends the try rather than blocking); a node's memory lasts the run; a pause leaves the flow past
   its node. New problem: Leave the loop outside a loop's body (through a Sequence or a Retry inside a loop it is in
   one).
 - **The Summary** reads each pin by its role, from one table: `then`, `completed` go on; `true`, `false`,
   `failed`, `case_n`, `otherwise`, `too_long`, `first`, `second` branch; `body`, `try` hold sub-steps (`1.1`) with
-  Completed after them; `reset` re-arms and is no step. A Switch reads a line per case, "Bûcheron → 3.1", an unwired
-  case leading nowhere; Wait until "(au plus 5 min)" with its Too long.
-- **Six PRs**: Sequence and Switch in Rust with the options' edits; a node's options in the editor (closing (v2.2));
+  Completed after them; `reset` re-arms and is no step. A Switch reads its cases on one line under it, "Bûcheron →
+  2.1 · Mineur → 2.2 · Sinon → 2.3", an unwired case leading nowhere; Wait until "(au plus 5 min)" with its Too long.
+  Each body says when it runs, "À chaque tour", "Pour chaque élément", "Tant que c'est vrai", "Essai", "Si tous les
+  essais échouent", "Trop long", and a loop's Completed reads as what follows, "Puis (terminé) : aller à 3" (the owner,
+  2026-11-17, on the mock-up).
+- **Six PRs**: Sequence and Switch in Rust with the options' edits; a node's options in the editor (closing (v2.2)),
+  with the numbered pins' labels ("Alors 2", a case by its value);
   the Summary by pin roles, after its mock-up; the loops; the kinds that remember; the waits and stops (Wait until,
   Retry, Block, Pause) with a run on the captures. Each kind replaces the tests' own (`test_sequence`, `test_switch`,
   `test_for_each`).

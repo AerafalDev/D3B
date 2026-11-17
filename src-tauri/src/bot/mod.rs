@@ -33,7 +33,7 @@ mod variable;
 mod wiring;
 
 pub(crate) use blueprint::{Blueprint, Does, End, Graph, Id, Mode, Node, Options, Parameter, Wire};
-pub(crate) use catalogue::{Carries, Family, Side, kind};
+pub(crate) use catalogue::{Carries, Family, Side, Takes, kind};
 pub(crate) use copy::{Texts, copy, id_for};
 pub(crate) use edit::{Edit, Refusal, choices, edit};
 pub(crate) use given::{given, is_given};

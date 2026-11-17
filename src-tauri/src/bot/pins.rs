@@ -82,6 +82,11 @@ fn built(blueprint: &Blueprint, graph: &Graph, node: &Node, defaulted: bool) -> 
             let kind = catalogue::kind(&kind.0)?;
             pins = kind.pins.iter().map(NodePin::from).collect();
             pins.extend(kind.takes.iter().flat_map(|takes| optioned(*takes, &node.options)));
+            // Otherwise follows a Switch's cases, as Unreal's Default does.
+            if let Some(at) = pins.iter().position(|pin| pin.id == "otherwise") {
+                let otherwise = pins.remove(at);
+                pins.push(otherwise);
+            }
             // A kind that changes a variable types its wildcards by it, else by the type the node notes.
             let typed = if kind.takes.contains(&Takes::Variable) {
                 let named = node.options.variable.as_ref();
@@ -300,11 +305,11 @@ mod tests {
     #[test]
     fn options_make_numbered_outputs_a_case_each_and_an_input_per_hole() {
         let ids = |pins: Vec<(String, Side, Carries)>| pins.into_iter().map(|pin| pin.0).collect::<Vec<_>>();
-        assert_eq!(ids(optioned_pins("test_sequence", "{}")), ["run", "then_1", "then_2"]);
-        let three = optioned_pins("test_sequence", r#"{"count": 3}"#);
+        assert_eq!(ids(optioned_pins("sequence", "{}")), ["run", "then_1", "then_2"]);
+        let three = optioned_pins("sequence", r#"{"count": 3}"#);
         assert_eq!(three.last(), Some(&("then_3".to_owned(), Side::Out, Carries::Exec)));
-        let switch = optioned_pins("test_switch", r#"{"type": "job", "cases": [24, 28]}"#);
-        assert_eq!(ids(switch), ["run", "value", "otherwise", "case_1", "case_2"]);
+        let switch = optioned_pins("switch", r#"{"type": "job", "cases": [24, 28]}"#);
+        assert_eq!(ids(switch), ["run", "value", "case_1", "case_2", "otherwise"]);
         let text = optioned_pins("test_text", r#"{"text": "{count} in {zone}, {count} {Zone} {} {"}"#);
         let any = |id: &str| (id.to_owned(), Side::In, Carries::Any);
         assert_eq!(text[1..], [any("count"), any("zone")]);

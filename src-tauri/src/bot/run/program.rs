@@ -39,6 +39,10 @@ pub(super) struct NodeCode {
     pub(super) pure: bool,
     /// The exit it returns by.
     pub(super) named: Option<String>,
+    /// Its flow outputs, in its pins' order: Sequence's `then_1` to `then_n`.
+    pub(super) outs: Vec<String>,
+    /// Switch's cases, each the value of its output `case_<n>`.
+    pub(super) cases: Vec<Value>,
 }
 
 /// What a node does: a kind's behaviour, or the engine's own Get, Set and Call.
@@ -105,6 +109,14 @@ fn doing(blueprint: &Blueprint, functions: &HashMap<&Id, usize>, does: &Does) ->
             Doing::Call(at)
         }
     })
+}
+
+/// A node's flow outputs, in its pins' order.
+fn flow_outputs(pins: &[crate::bot::NodePin]) -> Vec<String> {
+    let outs = pins
+        .iter()
+        .filter(|pin| pin.side == Side::Out && pin.carries == Carries::Exec);
+    outs.map(|pin| pin.id.clone()).collect()
 }
 
 /// `blueprint` compiled, refused when it has a problem or holds a kind that cannot run yet.
@@ -182,6 +194,8 @@ pub(crate) fn compile(blueprint: &Blueprint) -> Result<Program, Refused> {
                 inputs,
                 pure,
                 named: node.options.exit.as_ref().map(|exit| exit.0.clone()),
+                outs: flow_outputs(its),
+                cases: node.options.cases.clone(),
             });
         }
         let starting = |starts| {
