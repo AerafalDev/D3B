@@ -72,8 +72,8 @@ function overlap(a: PlacedTile, b: PlacedTile): boolean {
 }
 
 /**
- * The tiles to draw, bottom first: those `under` all, the coarsest level's, which once loaded leave no part of the map
- * bare where the view never was; then, of the tiles drawn `before`, those `loaded` that a tile `wanted` not loaded yet
+ * The tiles to draw, bottom first: those `under` all, the coarsest level's whole, which once loaded leave no part of the
+ * map bare where the view never was; then, of the tiles drawn `before`, those `loaded` that a tile `wanted` not loaded yet
  * overlaps, sharper than those under; then those wanted. So a level's tiles still loading never leave the map's
  * background showing (the owner's report of 2026-11-17: black patches for a few milliseconds while zooming).
  */

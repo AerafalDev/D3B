@@ -378,8 +378,11 @@ describe("the World's map", () => {
     expect(document.querySelector("circle")).toBeNull();
   });
 
-  it("draws the coarsest level under all, and the level drawn before under a new one until that one is loaded", async () => {
-    // One tile a level, each covering the whole image: the fine one from 61 %, the middle one from 21 %.
+  /**
+   * A map of three levels, one tile each covering the whole image: the fine one from 61 %, the middle one from 21 %, the
+   * coarse one at 20 %; open at 50 %, the coarse and middle tiles loaded.
+   */
+  async function threeLevels() {
     const level = (percent: number, file: string) => ({
       percent,
       width: percent,
@@ -399,32 +402,80 @@ describe("the World's map", () => {
     const map = screen.getByRole("application");
     Object.defineProperty(map, "clientWidth", { value: 100 });
     Object.defineProperty(map, "clientHeight", { value: 100 });
-    const drawn = () => [...document.querySelectorAll("image")].map((image) => image.getAttribute("href"));
-    const load = (...files: string[]) =>
+    const image = (file: string) => document.querySelector(`image[href="asset://${file}"]`);
+    const settle = (event: "load" | "error", ...files: string[]) =>
       act(async () => {
         for (const file of files) {
-          const image = document.querySelector(`image[href="asset://${file}"]`);
-          if (image !== null) {
-            fireEvent.load(image);
+          const found = image(file);
+          if (found !== null) {
+            fireEvent[event](found);
           }
         }
       });
+    const press = async (key: "+" | "-", times = 1) => {
+      for (let pressed = 0; pressed < times; pressed += 1) {
+        fireEvent.keyDown(map, { key });
+      }
+      return await zoomSaid();
+    };
     fireEvent.keyDown(map, { key: "ArrowLeft" });
     await zoomSaid();
-    expect(drawn()).toEqual(["asset://coarse.jpg", "asset://middle.jpg"]);
-    await load("coarse.jpg", "middle.jpg");
-    fireEvent.keyDown(map, { key: "+" });
-    fireEvent.keyDown(map, { key: "+" });
-    expect(await zoomSaid()).toBe("72 %");
-    expect(drawn()).toEqual(["asset://coarse.jpg", "asset://middle.jpg", "asset://fine.jpg"]);
-    await load("fine.jpg");
-    expect(drawn()).toEqual(["asset://coarse.jpg", "asset://fine.jpg"]);
+    const drawn = () => [...document.querySelectorAll("image")].map((one) => one.getAttribute("href")?.slice(8));
+    expect(drawn()).toEqual(["coarse.jpg", "middle.jpg"]);
+    await settle("load", "coarse.jpg", "middle.jpg");
+    return { drawn, image, settle, press };
+  }
+
+  it("draws the coarsest level under all, and the level drawn before under a new one until that one is loaded", async () => {
+    const { drawn, settle, press } = await threeLevels();
+    expect(await press("+", 2)).toBe("72 %");
+    expect(drawn()).toEqual(["coarse.jpg", "middle.jpg", "fine.jpg"]);
+    await settle("load", "fine.jpg");
+    expect(drawn()).toEqual(["coarse.jpg", "fine.jpg"]);
     // Down to the bound, the coarsest level alone.
-    for (let press = 0; press < 8; press += 1) {
-      fireEvent.keyDown(map, { key: "-" });
+    expect(await press("-", 8)).toBe("20 %");
+    expect(drawn()).toEqual(["coarse.jpg"]);
+  });
+
+  it("takes a tile that failed to load as loaded, keeping nothing under it", async () => {
+    const { drawn, settle, press } = await threeLevels();
+    await press("+", 2);
+    await settle("error", "fine.jpg");
+    expect(drawn()).toEqual(["coarse.jpg", "fine.jpg"]);
+  });
+
+  it("waits again for a tile that left and came back", async () => {
+    const { drawn, settle, press } = await threeLevels();
+    await press("+", 2);
+    await settle("load", "fine.jpg");
+    // 59.7 %: the middle level, the fine one kept over it until it loads.
+    await press("-");
+    expect(drawn()).toEqual(["coarse.jpg", "fine.jpg", "middle.jpg"]);
+    await settle("load", "middle.jpg");
+    expect(drawn()).toEqual(["coarse.jpg", "middle.jpg"]);
+    await press("+");
+    expect(drawn()).toEqual(["coarse.jpg", "middle.jpg", "fine.jpg"]);
+  });
+
+  it("ignores a tile decoded once its image is gone, its file drawn again by another", async () => {
+    // The webview's decode, each settled by hand.
+    const decoded: (() => void)[] = [];
+    const image = Object.getPrototypeOf(document.createElementNS("http://www.w3.org/2000/svg", "image"));
+    const decode = vi.spyOn(image, "decode").mockImplementation(() => new Promise<void>((done) => decoded.push(done)));
+    try {
+      const { drawn, settle, press } = await threeLevels();
+      await act(async () => decoded.splice(0).forEach((done) => done()));
+      await press("+", 2);
+      await settle("load", "fine.jpg");
+      // Gone before its decode settles, then drawn again by a new image still loading.
+      await press("-");
+      expect(drawn()).toEqual(["coarse.jpg", "middle.jpg"]);
+      await press("+");
+      await act(async () => decoded.splice(0).forEach((done) => done()));
+      expect(drawn()).toEqual(["coarse.jpg", "middle.jpg", "fine.jpg"]);
+    } finally {
+      decode.mockRestore();
     }
-    expect(await zoomSaid()).toBe("20 %");
-    expect(drawn()).toEqual(["asset://coarse.jpg"]);
   });
 
   it("keeps none of another world's tiles under a new world's", async () => {

@@ -1,6 +1,15 @@
 import { convertFileSrc } from "@tauri-apps/api/core";
 import { Maximize, Minus, Plus } from "lucide-react";
-import { type KeyboardEvent, type PointerEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  type KeyboardEvent,
+  type PointerEvent,
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { flushSync } from "react-dom";
 import { useTranslation } from "react-i18next";
 
@@ -118,7 +127,7 @@ export function WorldMap({
   // A choice made by a click here: the view stays where the player clicked rather than fitting it.
   const stay = useRef(false);
   const unfitted = useRef(false);
-  // The tiles drawn (`tilesDrawn`): the coarsest level's under all, those drawn before that still hide the background
+  // The tiles drawn (`tilesDrawn`): the coarsest level's whole under all, those drawn before that still hide the background
   // where the level the zoom needs is not loaded yet, and that level's; the files whose images loaded, among those drawn.
   const [tiles, setTiles] = useState<PlacedTile[]>([]);
   const wanted = useRef<{ under: PlacedTile[]; level: PlacedTile[] }>({ under: [], level: [] });
@@ -133,28 +142,28 @@ export function WorldMap({
         : next;
     });
   }, []);
-  const drawn = useRef(new Set<string>());
-  // A file no longer drawn loads again when it comes back, as a new image.
-  useEffect(() => {
-    drawn.current = new Set(tiles.map((tile) => tile.file));
+  // A file no longer drawn loads again when it comes back, as a new image. Before the page is painted, so before an
+  // image can say it loaded.
+  useLayoutEffect(() => {
+    const drawn = new Set(tiles.map((tile) => tile.file));
     for (const file of loaded.current) {
-      if (!drawn.current.has(file)) {
+      if (!drawn.has(file)) {
         loaded.current.delete(file);
       }
     }
   }, [tiles]);
   // An image loaded, decoded where the webview can say so, or failed: it no longer waits for anything under it, unless
-  // it went before.
+  // it went before, its file perhaps drawn again by another image still loading.
   const onTile = useCallback(
     // `decode` is Chromium's and WebKit's on an SVG image too, which TypeScript's DOM types do not say yet.
-    (file: string, image: (SVGImageElement & { decode?: () => Promise<void> }) | null) => {
+    (file: string, image: SVGImageElement & { decode?: () => Promise<void> }, failed: boolean) => {
       const done = () => {
-        if (drawn.current.has(file)) {
+        if (image.isConnected) {
           loaded.current.add(file);
           settle();
         }
       };
-      if (typeof image?.decode === "function") {
+      if (!failed && typeof image.decode === "function") {
         image.decode().then(done, done);
       } else {
         done();
@@ -193,7 +202,9 @@ export function WorldMap({
     const coarsest = levelFor(world.zooms, 0);
     const shown = (zoom: typeof level) =>
       zoom === undefined ? [] : visibleTiles(zoom, now, element.clientWidth, element.clientHeight);
-    const next = { under: shown(coarsest), level: shown(level) };
+    // The coarsest level whole, a few tiles a world, so that a part coming into view is never bare.
+    const whole = coarsest === undefined ? [] : visibleTiles(coarsest, { x: 0, y: 0, scale: 1 }, Infinity, Infinity);
+    const next = { under: whole, level: shown(level) };
     const same = (a: PlacedTile[], b: PlacedTile[]) =>
       a.length === b.length && a.every((tile, index) => tile.file === b[index]?.file);
     if (
@@ -487,8 +498,8 @@ export function WorldMap({
                 width={tile.width + 1}
                 height={tile.height + 1}
                 preserveAspectRatio="none"
-                onLoad={(event) => onTile(tile.file, event.currentTarget)}
-                onError={() => onTile(tile.file, null)}
+                onLoad={(event) => onTile(tile.file, event.currentTarget, false)}
+                onError={(event) => onTile(tile.file, event.currentTarget, true)}
               />
             ))}
             {paths !== null && (
