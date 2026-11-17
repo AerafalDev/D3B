@@ -41,20 +41,26 @@ impl ItemTables {
 
 /// `text` as a search compares it: lowercase, its accents dropped.
 fn folded(text: &str) -> String {
-    text.chars()
-        .flat_map(char::to_lowercase)
-        .map(|letter| match letter {
-            'à' | 'â' | 'ä' | 'á' | 'ã' => 'a',
-            'é' | 'è' | 'ê' | 'ë' => 'e',
-            'î' | 'ï' | 'í' => 'i',
-            'ô' | 'ö' | 'ó' | 'õ' => 'o',
-            'ù' | 'û' | 'ü' | 'ú' => 'u',
-            'ç' => 'c',
-            'ñ' => 'n',
-            'ÿ' => 'y',
-            other => other,
-        })
-        .collect()
+    let mut folded = String::with_capacity(text.len());
+    for letter in text.chars().flat_map(char::to_lowercase) {
+        // A ligature is typed as its two letters: "oeuf" finds "Œuf".
+        match letter {
+            'œ' => folded.push_str("oe"),
+            'æ' => folded.push_str("ae"),
+            // The typographic apostrophe is typed as the plain one.
+            '\u{2019}' => folded.push('\''),
+            'à' | 'â' | 'ä' | 'á' | 'ã' | 'å' => folded.push('a'),
+            'é' | 'è' | 'ê' | 'ë' => folded.push('e'),
+            'î' | 'ï' | 'í' | 'ì' => folded.push('i'),
+            'ô' | 'ö' | 'ó' | 'õ' | 'ò' => folded.push('o'),
+            'ù' | 'û' | 'ü' | 'ú' => folded.push('u'),
+            'ç' => folded.push('c'),
+            'ñ' => folded.push('n'),
+            'ÿ' => folded.push('y'),
+            other => folded.push(other),
+        }
+    }
+    folded
 }
 
 #[cfg(test)]
@@ -101,6 +107,21 @@ mod tests {
         assert_eq!(ids(&tables.find("ble")), [289, 402, 400]);
         assert_eq!(ids(&tables.find("  WHEAT ")), [289], "the English name too");
         assert_eq!(ids(&tables.find("graine")), [400]);
+    }
+
+    #[test]
+    fn a_name_starting_with_the_text_comes_before_one_only_holding_it_whatever_their_levels() {
+        let mut tables = fixtures();
+        tables.items = vec![item(1, "Pain au blé", 34, 1), item(2, "Blé noir", 34, 10)];
+        assert_eq!(ids(&tables.find("ble")), [2, 1]);
+    }
+
+    #[test]
+    fn a_ligature_and_a_typographic_apostrophe_are_found_as_they_are_typed() {
+        let mut tables = fixtures();
+        tables.items = vec![item(1, "Œuf de Tofu", 34, 1), item(2, "Cœur d\u{2019}Ouginak", 34, 1)];
+        assert_eq!(ids(&tables.find("oeuf")), [1]);
+        assert_eq!(ids(&tables.find("coeur d'ouginak")), [2]);
     }
 
     #[test]

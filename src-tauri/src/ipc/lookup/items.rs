@@ -7,7 +7,7 @@ use serde::Serialize;
 use specta::Type;
 use tauri::Manager;
 
-use super::super::atlas::AtlasError;
+use super::super::atlas::{AtlasError, in_folder};
 use super::super::character::Names;
 use super::super::commands::LoadedData;
 use crate::data::{Item, ItemTables};
@@ -46,12 +46,7 @@ fn views(tables: &ItemTables, items: Vec<&Item>, folder: &Path) -> Vec<ItemView>
             },
             |it| names(&it.name),
         ),
-        icon: tables.item_icon(item).map(|file| {
-            file.split('/')
-                .fold(folder.to_path_buf(), |path, part| path.join(part))
-                .to_string_lossy()
-                .into_owned()
-        }),
+        icon: tables.item_icon(item).map(|file| in_folder(folder, &file)),
     });
     views.collect()
 }
@@ -71,9 +66,13 @@ fn found(tables: &ItemTables, folder: &Path, query: &str, ids: &[i32]) -> Vec<It
 #[tauri::command]
 #[specta::specta]
 pub async fn find_items(app: tauri::AppHandle, query: String, ids: Vec<i32>) -> Result<Vec<ItemView>, AtlasError> {
-    let data = app.state::<LoadedData>();
+    lookup(&app.state::<LoadedData>(), &query, &ids)
+}
+
+/// The items `find_items` gives from the data loaded, or why there is none.
+fn lookup(data: &LoadedData, query: &str, ids: &[i32]) -> Result<Vec<ItemView>, AtlasError> {
     match (&data.0, data.1.as_deref()) {
-        (Ok(game), Some(folder)) => Ok(found(&game.items, folder, &query, &ids)),
+        (Ok(game), Some(folder)) => Ok(found(&game.items, folder, query, ids)),
         (Err(reason), _) => Err(AtlasError::NoData { reason: reason.clone() }),
         (Ok(_), None) => Err(AtlasError::NoData {
             reason: "the game data's folder is unknown".into(),
@@ -112,6 +111,18 @@ mod tests {
         assert!(!wheat.kind.fr.is_empty(), "its type named");
         let icon = wheat.icon.as_deref().unwrap_or_default();
         assert!(icon.starts_with("data") && icon.contains("42011"), "{icon}");
+    }
+
+    #[test]
+    fn without_game_data_the_search_says_why() {
+        let none = LoadedData(Err("no data folder".into()), None);
+        let found = lookup(&none, "ble", &[]);
+        assert_eq!(
+            found,
+            Err(AtlasError::NoData {
+                reason: "no data folder".into()
+            })
+        );
     }
 
     #[test]

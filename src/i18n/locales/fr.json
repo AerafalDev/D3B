@@ -791,6 +791,9 @@
     "searchItem": "{{label}} : chercher un objet",
     "searchItemHint": "Blé, épée…",
     "itemsFound": "Objets trouvés",
+    "found_zero": "Aucun objet trouvé",
+    "found_one": "{{count}} objet trouvé, Entrée le choisit",
+    "found_other": "{{count}} objets trouvés, Entrée choisit le premier",
     "itemLevel": "{{name}} · niv. {{level}}",
     "itemKind": "{{kind}} · niv. {{level}}"
   },

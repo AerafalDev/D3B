@@ -53,13 +53,15 @@ export function ItemField({ value, onChange, label }: ItemFieldProps) {
     };
   }, [id]);
   const [query, setQuery] = useState("");
-  const [found, setFound] = useState<ItemView_Serialize[]>([]);
+  // What the search found for the text typed, `null` while it is asked: Enter never takes an earlier search's.
+  const [found, setFound] = useState<ItemView_Serialize[] | null>([]);
   useEffect(() => {
     const wanted = query.trim();
     if (wanted === "") {
       setFound([]);
       return;
     }
+    setFound(null);
     let live = true;
     const timer = setTimeout(() => {
       commands
@@ -73,11 +75,14 @@ export function ItemField({ value, onChange, label }: ItemFieldProps) {
     };
   }, [query]);
   const pick = (item: ItemView_Serialize) => {
+    const before = chosen;
     setQuery("");
     setFound([]);
     setChosen(item);
-    void onChange(String(item.id));
+    // Refused, the item saved before shows again.
+    void onChange(String(item.id)).then((kept) => kept || setChosen(before));
   };
+  const results = found ?? [];
   const name = (item: ItemView_Serialize) => named(item.name, i18n.language) ?? String(item.id);
   return (
     <div className="flex flex-col gap-1 text-xs">
@@ -96,7 +101,7 @@ export function ItemField({ value, onChange, label }: ItemFieldProps) {
         value={query}
         onChange={(event) => setQuery(event.target.value)}
         onKeyDown={(event) => {
-          const first = found[0];
+          const first = results[0];
           if (event.key === "Enter" && first !== undefined) {
             pick(first);
           } else if (event.key === "Escape") {
@@ -105,9 +110,12 @@ export function ItemField({ value, onChange, label }: ItemFieldProps) {
         }}
         className="focus:border-focus h-[26px] min-w-0 rounded border border-[#3c3c3c] bg-[#181818] px-2 text-white outline-0"
       />
-      {found.length > 0 && (
+      <span aria-live="polite" className="text-text-muted">
+        {query.trim() !== "" && found !== null && t("values.found", { count: found.length })}
+      </span>
+      {results.length > 0 && (
         <ul aria-label={t("values.itemsFound")} className="flex max-h-48 flex-col overflow-y-auto">
-          {found.map((item) => (
+          {results.map((item) => (
             <li key={item.id}>
               <button
                 type="button"

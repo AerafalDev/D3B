@@ -69,6 +69,44 @@ describe("an item's field", () => {
     expect(none).not.toHaveBeenCalled();
   });
 
+  it("asks nothing within the pause, and Enter never takes an earlier search's first", async () => {
+    const onChange = await searched("ble");
+    const box = screen.getByRole("searchbox");
+    backEnd.findItems.mockClear();
+    fireEvent.change(box, { target: { value: "bois" } });
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(100);
+    });
+    expect(backEnd.findItems).not.toHaveBeenCalled();
+    fireEvent.keyDown(box, { key: "Enter" });
+    expect(onChange).not.toHaveBeenCalled();
+  });
+
+  it("clears the search on Escape and says when nothing is found", async () => {
+    await searched("épée");
+    expect(screen.getByText("Aucun objet trouvé")).toBeTruthy();
+    const box = screen.getByRole("searchbox") as HTMLInputElement;
+    fireEvent.keyDown(box, { key: "Escape" });
+    expect(box.value).toBe("");
+  });
+
+  it("shows the item saved before when a choice is refused", async () => {
+    const onChange = vi.fn(async () => false);
+    render(<ItemField value="289" onChange={onChange} label="Objet" />);
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(0);
+    });
+    fireEvent.change(screen.getByRole("searchbox"), { target: { value: "ble" } });
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(200);
+    });
+    fireEvent.click(screen.getByRole("button", { name: /Graine de blé/ }));
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(0);
+    });
+    expect(screen.getByText("Blé · niv. 1")).toBeTruthy();
+  });
+
   it("shows the item chosen by its name and level, else by its id without the data", async () => {
     render(<ItemField value="289" onChange={vi.fn()} label="Objet" />);
     await act(async () => {

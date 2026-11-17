@@ -307,7 +307,7 @@ fn atlas((world, worlds, hints, items): Game, folder: &Path) -> Atlas {
 }
 
 /// The file of the data folder's `file`, a path relative to it, as the platform writes it.
-fn in_folder(folder: &Path, file: &str) -> String {
+pub(super) fn in_folder(folder: &Path, file: &str) -> String {
     file.split('/')
         .fold(folder.to_path_buf(), |path, part| path.join(part))
         .to_string_lossy()
