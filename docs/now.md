@@ -164,9 +164,10 @@ _Updated 2026-11-17._
     6. put a broken file in `Documents/D3B/blueprints` (a stray letter), then show the Library again (Personnages,
        then Bibliothèque): "Ignorés 1" appears folded at the bottom; open it: the file, and why in its hover.
 - **step 3, the World**, on Windows x64 from `bun run app` on `next` or the next release. Measured by the owner on
-  2026-11-17: items 1 to 11 passed; item 8 then changed at the owner's request (every kind ticked at first), and was
-  measured again with item 12 on `next` 75c2e7b the same day: both pass but for what was not tried in 8 (unticking,
-  "Tout cacher", "Tout montrer", Incarnam's list):
+  2026-11-17: items 1 to 11 pass; item 8 then changed at the owner's request (every kind ticked at first). Measured by
+  the owner on 2026-11-17, Windows x64, `bun run app` on `next` 75c2e7b: item 12 passes, and 8 but for what was not
+  tried (the pictures on the map, unticking, "Tout cacher", "Tout montrer", Incarnam's list).
+  The checklist:
     1. the activity bar has "Monde" under "Bibliothèque"; its view lists "Sous-zones du jeu" by area, folded, each
        area with its count; a click on Astrub unfolds it, its sub-areas by level, then by name;
     2. type "foret" in the search: the areas holding a matching sub-area unfold, the others go; a nonsense word says
@@ -342,8 +343,9 @@ _Updated 2026-11-17._
        automatique, its variables do not drag.
 - **step 3, renaming a blueprint of mine** (the owner's request of 2026-11-17), on Windows x64 from `bun run app` on
   `next` or the next release:
-  Measured by the owner on 2026-11-17, Windows x64, `bun run app` on `next` 75c2e7b: items 1, 3 and 4 pass, and 2 but
-  for the file, not looked at.
+  Measured by the owner on 2026-11-17, Windows x64, `bun run app` on `next` 75c2e7b: item 4 passes, and 1 to 3 but for
+  what was not tried (the description not a button, no "Renommer" in the Library's right-click on it, the file; in 3,
+  only one of "Renommer" and F2 may have been tried).
     1. open Récolte automatique: its name and description are not buttons; right-click it in the Library: no
        "Renommer", and F2 on its row does nothing;
     2. open a copy of mine, click its name: a field; type "Mes blés", Enter: the tab's title, the Library's row and
@@ -365,8 +367,9 @@ _Updated 2026-11-17._
        the file is unchanged.
 - **step 3, the Protocol panel's opening** (after (24), the owner's ask of 2026-11-17), on Windows x64 from
   `bun run app` on `next` or the next release, two clients open and Advanced tools on:
-  Measured by the owner on 2026-11-17, Windows x64, `bun run app` on `next` 75c2e7b: items 1 to 4 pass. Not measured
-  yet: item 5.
+  Measured by the owner on 2026-11-17, Windows x64, `bun run app` on `next` 75c2e7b: items 2 and 4 pass, and 1 and 3 but
+  for what was not tried (Affichage > Panneau; in 3, the blueprint's tab between the first character's tabs). Not
+  measured yet: item 5.
     1. start D3B: no panel under the editor area; Affichage > Panneau and Ctrl+J still open and close it by hand;
     2. click a character online in Personnages: its tab opens and the panel slides open on its frames; click the
        other's tab: the panel stays open on the other's frames;
