@@ -173,7 +173,7 @@ export function BlueprintTab({ api, params }: IDockviewPanelProps<BlueprintParam
                   value={blueprint.name}
                   label={t("library.name")}
                   blank={false}
-                  onSave={(named) => rename(blueprint, named, blueprint.description)}
+                  onSave={(named) => rename(blueprint, { name: named })}
                 />
               </h2>
             )}
@@ -221,7 +221,8 @@ export function BlueprintTab({ api, params }: IDockviewPanelProps<BlueprintParam
               label={t("library.descriptionLabel")}
               placeholder={t("library.describe")}
               blank
-              onSave={(described) => rename(blueprint, blueprint.name, described)}
+              multiline
+              onSave={(described) => rename(blueprint, { description: described })}
             />
           </p>
         )}

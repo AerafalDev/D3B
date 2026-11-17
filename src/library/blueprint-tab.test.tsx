@@ -267,14 +267,15 @@ describe("a blueprint's tab, its editor read-only", () => {
     fireEvent.click(screen.getByRole("button", { name: "Ma récolte" }));
     const name = screen.getByRole("textbox", { name: "Nom du blueprint" });
     fireEvent.change(name, { target: { value: "Mes blés" } });
-    fireEvent.keyDown(name, { key: "Enter" });
-    fireEvent.blur(name);
-    expect(rename).toHaveBeenLastCalledWith(mine, "Mes blés", "Harvests what grows.");
+    await act(async () => fireEvent.keyDown(name, { key: "Enter" }));
+    expect(rename).toHaveBeenLastCalledWith(mine, { name: "Mes blés" });
+    // The name takes the focus back, inside the tab, so Ctrl+Z undoes at once.
+    expect(document.activeElement).toBe(screen.getByRole("button", { name: "Ma récolte" }));
     fireEvent.click(screen.getByRole("button", { name: "Harvests what grows." }));
     const description = screen.getByRole("textbox", { name: "Description du blueprint" });
     fireEvent.change(description, { target: { value: "" } });
     fireEvent.blur(description);
-    expect(rename).toHaveBeenLastCalledWith(mine, "Ma récolte", "");
+    expect(rename).toHaveBeenLastCalledWith(mine, { description: "" });
     act(() => useLibrary.setState({ blueprints: [{ ...mine, name: "Mes blés" }] }));
     expect(titles.at(-1)).toBe("Mes blés");
     cleanup();

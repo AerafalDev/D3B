@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import i18next from "i18next";
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -148,14 +148,12 @@ describe("the Library view", () => {
     fireEvent.click(await screen.findByRole("menuitem", { name: "Renommer" }));
     const field = await screen.findByRole("textbox", { name: "Nom du blueprint" });
     fireEvent.change(field, { target: { value: " Mes bouftous " } });
-    fireEvent.keyDown(field, { key: "Enter" });
-    fireEvent.blur(field);
-    expect(rename).toHaveBeenCalledWith(
-      expect.objectContaining({ id: "ma-chasse" }),
-      "Mes bouftous",
-      "ma-chasse's description",
-    );
-    fireEvent.keyDown(screen.getByRole("button", { name: /^Ma chasse/ }), { key: "F2" });
+    await act(async () => fireEvent.keyDown(field, { key: "Enter" }));
+    expect(rename).toHaveBeenCalledWith(expect.objectContaining({ id: "ma-chasse" }), { name: "Mes bouftous" });
+    // The row takes the focus back, so F2 renames it again from the keyboard.
+    const row = screen.getByRole("button", { name: /^Ma chasse/ });
+    expect(document.activeElement).toBe(row);
+    fireEvent.keyDown(row, { key: "F2" });
     const again = screen.getByRole("textbox", { name: "Nom du blueprint" });
     fireEvent.change(again, { target: { value: "Ailleurs" } });
     fireEvent.keyDown(again, { key: "Escape" });

@@ -33,6 +33,15 @@ export function LibraryView() {
   // The blueprint of mine whose name is edited in its row (the owner, 2026-11-17: F2 or the right-click, as my zones').
   const [renaming, setRenaming] = useState<string | null>(null);
   const renameAsked = useRef(false);
+  // The row renamed, which takes the focus back once its name is no longer edited, as my zones' do.
+  const [renamed, setRenamed] = useState<string | null>(null);
+  const list = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (renamed !== null) {
+      list.current?.querySelector<HTMLElement>(`[data-blueprint="${CSS.escape(renamed)}"]`)?.focus();
+      setRenamed(null);
+    }
+  }, [renamed]);
   const forgetGraphs = useGraphs((store) => store.forget);
   const active = useEditors((store) => store.active);
   const refresh = useLibrary((store) => store.refresh);
@@ -65,8 +74,9 @@ export function LibraryView() {
             label={t("library.name")}
             done={(named) => {
               setRenaming(null);
+              setRenamed(blueprint.id);
               if (named !== null) {
-                void rename(blueprint, named, blueprint.description);
+                void rename(blueprint, { name: named });
               }
             }}
           />
@@ -80,6 +90,7 @@ export function LibraryView() {
             <button
               type="button"
               title={hover}
+              data-blueprint={blueprint.id}
               onClick={() => openBlueprint(blueprint.id, name)}
               onKeyDown={(event) => {
                 if (event.key === "F2" && !blueprint.given) {
@@ -159,7 +170,7 @@ export function LibraryView() {
   };
 
   return (
-    <div className="flex flex-col overflow-y-auto py-0.5">
+    <div ref={list} className="flex flex-col overflow-y-auto py-0.5">
       <Group title={t("library.given")}>{blueprints.filter((one) => one.given).map(row)}</Group>
       <Group title={t("library.mine")}>{blueprints.filter((one) => !one.given).map(row)}</Group>
       {kept.length > 0 && (

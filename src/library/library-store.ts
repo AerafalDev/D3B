@@ -40,7 +40,7 @@ interface LibraryStore {
    * Renames one of mine, its name and description, its id kept (the owner, 2026-11-17): saved at once and undone as
    * the editor's changes; whether it was, a refusal said in a notification.
    */
-  rename: (blueprint: BlueprintSummary, name: string, description: string) => Promise<boolean>;
+  rename: (blueprint: BlueprintSummary, texts: { name?: string; description?: string }) => Promise<boolean>;
   /** Reads the list now and when a character's file changes; returns what stops following. */
   follow: () => () => void;
 }
@@ -129,7 +129,10 @@ export const useLibrary = create<LibraryStore>((set, get) => ({
     }
   },
 
-  rename: async (blueprint, name, description) => {
+  rename: async (blueprint, texts) => {
+    // The field not edited as the list holds it now, so a rename the list read since is not put back.
+    const now = get().blueprints.find((one) => one.id === blueprint.id) ?? blueprint;
+    const { name = now.name, description = now.description } = texts;
     // The blueprint's, whichever graph shows: through the editor's queue, so it lands in its order and Ctrl+Z undoes it.
     const saved = await useGraphs.getState().edit(blueprint.id, "", { edit: "about", name, description });
     if (saved) {

@@ -353,7 +353,7 @@ value typed on an input no wire feeds (the owner's choices of 2026-11-17), in De
 node of mine is its editor by its type, a setting's (a Zone's field, a number or percentage within its bounds, a
 Set's within its variable's, a switch, a line of text, a profession; a bank and items say their value until step 5),
 saved when the field is left or Enter pressed, undone as the others, a value back at the pin's default, or a text
-cleared, dropped from the file, and a button saying the default putting it back.
+cleared, dropped from the file, and a button saying the default putting it back; the blueprint's name and description (`about`, the blueprint's whichever graph shows), a blank name refused.
 Undo and redo (the owner, 2026-11-16) are Rust's: `storage` keeps a blueprint of mine as it was before each change
 that changed it, 100 at most, for the session and across its graphs, and the IPC's `undo_blueprint` and
 `redo_blueprint` write it back whole under the lock every save takes, so the file and the editor never disagree; a

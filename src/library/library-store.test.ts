@@ -130,17 +130,18 @@ describe("Delete", () => {
     backEnd.edit.mockResolvedValueOnce({ id: "ma-chasse", graphs: [], problems: [] });
     const renamed = { ...mine, name: "Mes bouftous" };
     backEnd.blueprints.mockResolvedValue({ blueprints: [renamed], kept: [] });
-    expect(await useLibrary.getState().rename(mine, "Mes bouftous", "")).toBe(true);
-    expect(backEnd.edit).toHaveBeenCalledWith("ma-chasse", "", {
+    useLibrary.setState({ blueprints: [{ ...mine, description: "Lue depuis." }] });
+    expect(await useLibrary.getState().rename(mine, { name: "Mes bouftous" })).toBe(true);
+    expect(backEnd.edit, "the description as the list holds it now").toHaveBeenCalledWith("ma-chasse", "", {
       edit: "about",
       name: "Mes bouftous",
-      description: "",
+      description: "Lue depuis.",
     });
     expect(useLibrary.getState().blueprints).toEqual([renamed]);
     backEnd.edit.mockRejectedValueOnce({ kind: "blank" });
     backEnd.graphs.mockResolvedValue({ id: "ma-chasse", graphs: [], problems: [] });
     backEnd.blueprints.mockClear();
-    expect(await useLibrary.getState().rename(mine, " ", "")).toBe(false);
+    expect(await useLibrary.getState().rename(mine, { name: " " })).toBe(false);
     expect(backEnd.blueprints).not.toHaveBeenCalled();
   });
 
