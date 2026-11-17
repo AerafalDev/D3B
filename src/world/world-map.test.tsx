@@ -377,4 +377,81 @@ describe("the World's map", () => {
     expect(Number(document.querySelector("image")?.getAttribute("width"))).toBeCloseTo(28 / (0.5 / 1.2 ** 4));
     expect(document.querySelector("circle")).toBeNull();
   });
+
+  it("draws the coarsest level under all, and the level drawn before under a new one until that one is loaded", async () => {
+    // One tile a level, each covering the whole image: the fine one from 61 %, the middle one from 21 %.
+    const level = (percent: number, file: string) => ({
+      percent,
+      width: percent,
+      height: percent,
+      columns: 1,
+      rows: 1,
+      tiles: [file],
+    });
+    render(
+      <WorldMap
+        world={{ ...world, zooms: [level(100, "fine.jpg"), level(60, "middle.jpg"), level(20, "coarse.jpg")] }}
+        chosen={null}
+        nameAt={() => null}
+        hints={[]}
+      />,
+    );
+    const map = screen.getByRole("application");
+    Object.defineProperty(map, "clientWidth", { value: 100 });
+    Object.defineProperty(map, "clientHeight", { value: 100 });
+    const drawn = () => [...document.querySelectorAll("image")].map((image) => image.getAttribute("href"));
+    const load = (...files: string[]) =>
+      act(async () => {
+        for (const file of files) {
+          const image = document.querySelector(`image[href="asset://${file}"]`);
+          if (image !== null) {
+            fireEvent.load(image);
+          }
+        }
+      });
+    fireEvent.keyDown(map, { key: "ArrowLeft" });
+    await zoomSaid();
+    expect(drawn()).toEqual(["asset://coarse.jpg", "asset://middle.jpg"]);
+    await load("coarse.jpg", "middle.jpg");
+    fireEvent.keyDown(map, { key: "+" });
+    fireEvent.keyDown(map, { key: "+" });
+    expect(await zoomSaid()).toBe("72 %");
+    expect(drawn()).toEqual(["asset://coarse.jpg", "asset://middle.jpg", "asset://fine.jpg"]);
+    await load("fine.jpg");
+    expect(drawn()).toEqual(["asset://coarse.jpg", "asset://fine.jpg"]);
+    // Down to the bound, the coarsest level alone.
+    for (let press = 0; press < 8; press += 1) {
+      fireEvent.keyDown(map, { key: "-" });
+    }
+    expect(await zoomSaid()).toBe("20 %");
+    expect(drawn()).toEqual(["asset://coarse.jpg"]);
+  });
+
+  it("keeps none of another world's tiles under a new world's", async () => {
+    const one = (id: number, file: string): AtlasWorld => ({
+      ...world,
+      id,
+      zooms: [{ percent: 100, width: 100, height: 100, columns: 1, rows: 1, tiles: [file] }],
+    });
+    const shown = (shownWorld: AtlasWorld) => (
+      <WorldMap world={shownWorld} chosen={null} nameAt={() => null} hints={[]} />
+    );
+    const { rerender } = render(shown(one(1, "twelve.jpg")));
+    const map = screen.getByRole("application");
+    Object.defineProperty(map, "clientWidth", { value: 100 });
+    Object.defineProperty(map, "clientHeight", { value: 100 });
+    fireEvent.keyDown(map, { key: "ArrowLeft" });
+    await zoomSaid();
+    const twelve = document.querySelector("image");
+    await act(async () => {
+      if (twelve !== null) {
+        fireEvent.load(twelve);
+      }
+    });
+    rerender(shown(one(2, "incarnam.jpg")));
+    await zoomSaid();
+    expect([...document.querySelectorAll("image")].map((image) => image.getAttribute("href"))).toEqual([
+      "asset://incarnam.jpg",
+    ]);
+  });
 });

@@ -399,7 +399,10 @@ its own undo; the editor sends one change at a time, so Rust takes them in their
   shows (dungeons, houses, hidden worlds), "not on the map" (the owner, 2026-11-15), or the world it is on. The client
   parks at 0, 0 the maps it draws nowhere (1,820 on the Twelve): only those flagged with the priority on the world map
   are truly there, and on a map two sub-areas share, a click and the hover take the one with that priority (the
-  owner, 2026-11-16). The map takes the focus: the arrows move it, + and − zoom, 0 fits it again; its zoom
+  owner, 2026-11-16). The map takes the focus: the arrows move it, + and − zoom, 0 fits it again;
+  the coarsest level's tiles lie under the others, and the tiles drawn before stay under a level's still loading, so
+  zooming or moving never shows the map's background (the owner's report of 2026-11-17: black patches for a few
+  milliseconds while zooming); its zoom
   shows bottom left, its buttons bottom right; a map's sub-area and coordinates on hover. The hints (the owner's mock-up 11,
   2026-11-15): the client's pictures, 28 pixels on the screen at every zoom; where two would overlap, the more useful
   kind stays, chosen over the whole world for a zoom so that moving the map never changes it; nine kinds, the picture
