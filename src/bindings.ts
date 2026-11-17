@@ -795,8 +795,8 @@ export type GraphView_Deserialize = {
 	/**  Whether it is a function rather than an event graph. */
 	function: boolean,
 	/**  A function's inputs and outputs; none for an event graph. */
-	inputs: ParameterView[],
-	outputs: ParameterView[],
+	inputs: ParameterView_Deserialize[],
+	outputs: ParameterView_Deserialize[],
 	nodes: NodeView_Deserialize[],
 	wires: WireView[],
 	/**  What the picker may add to it (`bot::choices`), with the pins a wire dragged is checked against. */
@@ -810,8 +810,8 @@ export type GraphView_Serialize = {
 	/**  Whether it is a function rather than an event graph. */
 	function: boolean,
 	/**  A function's inputs and outputs; none for an event graph. */
-	inputs: ParameterView[],
-	outputs: ParameterView[],
+	inputs: ParameterView_Serialize[],
+	outputs: ParameterView_Serialize[],
 	nodes: NodeView_Serialize[],
 	wires: WireView[],
 	/**  What the picker may add to it (`bot::choices`), with the pins a wire dragged is checked against. */
@@ -963,12 +963,24 @@ export type NodeView_Serialize = {
 } & NodeDoes;
 
 /**  One of a function's inputs or outputs. */
-export type ParameterView = {
+export type ParameterView = ParameterView_Serialize | ParameterView_Deserialize;
+
+/**  One of a function's inputs or outputs. */
+export type ParameterView_Deserialize = {
 	id: string,
 	name: string,
 	valueType: PinCarries,
-	list: boolean,
-	ranges: boolean,
+	list?: boolean,
+	ranges?: boolean,
+};
+
+/**  One of a function's inputs or outputs. */
+export type ParameterView_Serialize = {
+	id: string,
+	name: string,
+	valueType: PinCarries,
+	list?: boolean,
+	ranges?: boolean,
 };
 
 /**  What a pin carries: the flow, a value of a type, or a wildcard whose node notes no type yet. */
@@ -985,10 +997,10 @@ export type PinView_Deserialize = {
 	id: string,
 	side: PinSide,
 	carries: PinCarries,
-	/**  A list of values (a square pin), rather than one. */
-	list: boolean,
+	/**  A list of values (a square pin), rather than one; omitted for no. */
+	list?: boolean,
 	/**  Ranges whose rows hold a value, or a list with `list`. */
-	ranges: boolean,
+	ranges?: boolean,
 	/**  The value an input no wire feeds holds by default, as JSON. */
 	default?: string | null,
 };
@@ -998,10 +1010,10 @@ export type PinView_Serialize = {
 	id: string,
 	side: PinSide,
 	carries: PinCarries,
-	/**  A list of values (a square pin), rather than one. */
-	list: boolean,
+	/**  A list of values (a square pin), rather than one; omitted for no. */
+	list?: boolean,
 	/**  Ranges whose rows hold a value, or a list with `list`. */
-	ranges: boolean,
+	ranges?: boolean,
 	/**  The value an input no wire feeds holds by default, as JSON. */
 	default: string | null,
 };
@@ -1322,10 +1334,10 @@ export type VariableChange_Deserialize = {
 	name: string,
 	/**  Its type, as the file writes it: `zone`, `percentage`, `bank`… */
 	valueType: string,
-	/**  A list of values of its type. */
-	list: boolean,
+	/**  A list of values of its type; none says no, as the file does. */
+	list?: boolean,
 	/**  Ranges of values of its type, or of lists with `list`. */
-	ranges: boolean,
+	ranges?: boolean,
 	/**  Its default as JSON; none for no default, which each character then sets. */
 	default?: string | null,
 	/**  The smallest and largest value of a number or a percentage. */
@@ -1341,10 +1353,10 @@ export type VariableChange_Serialize = {
 	name: string,
 	/**  Its type, as the file writes it: `zone`, `percentage`, `bank`… */
 	valueType: string,
-	/**  A list of values of its type. */
-	list: boolean,
+	/**  A list of values of its type; none says no, as the file does. */
+	list?: boolean,
 	/**  Ranges of values of its type, or of lists with `list`. */
-	ranges: boolean,
+	ranges?: boolean,
 	/**  Its default as JSON; none for no default, which each character then sets. */
 	default: string | null,
 	/**  The smallest and largest value of a number or a percentage. */
@@ -1370,10 +1382,10 @@ export type VariableView_Deserialize = {
 	name: string,
 	/**  Its type, as the file writes it: `zone`, `percentage`, `bank`… */
 	valueType: string,
-	/**  A list of values of its type. */
-	list: boolean,
+	/**  A list of values of its type; omitted for no, as the file does. */
+	list?: boolean,
 	/**  Ranges of values of its type, or of lists with `list`. */
-	ranges: boolean,
+	ranges?: boolean,
 	/**  Its default as JSON, which the interface reads by its type; `None` when the blueprint gives none. */
 	default?: string | null,
 	/**  The smallest and largest value of a number or a percentage. */
@@ -1390,10 +1402,10 @@ export type VariableView_Serialize = {
 	name: string,
 	/**  Its type, as the file writes it: `zone`, `percentage`, `bank`… */
 	valueType: string,
-	/**  A list of values of its type. */
-	list: boolean,
+	/**  A list of values of its type; omitted for no, as the file does. */
+	list?: boolean,
 	/**  Ranges of values of its type, or of lists with `list`. */
-	ranges: boolean,
+	ranges?: boolean,
 	/**  Its default as JSON, which the interface reads by its type; `None` when the blueprint gives none. */
 	default: string | null,
 	/**  The smallest and largest value of a number or a percentage. */

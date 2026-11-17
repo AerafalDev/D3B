@@ -44,8 +44,6 @@ const harvest = {
       name: "Zone",
       valueType: "zone",
       default: null,
-      list: false,
-      ranges: false,
       perCharacter: true,
       memory: false,
       bounds: null,

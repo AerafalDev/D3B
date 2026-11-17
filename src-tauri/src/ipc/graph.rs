@@ -179,7 +179,11 @@ pub struct ParameterView {
     pub id: String,
     pub name: String,
     pub value_type: PinCarries,
+    #[serde(skip_serializing_if = "std::ops::Not::not")]
+    #[specta(optional)]
     pub list: bool,
+    #[serde(skip_serializing_if = "std::ops::Not::not")]
+    #[specta(optional)]
     pub ranges: bool,
 }
 
@@ -257,9 +261,13 @@ pub struct PinView {
     pub id: String,
     pub side: PinSide,
     pub carries: PinCarries,
-    /// A list of values (a square pin), rather than one.
+    /// A list of values (a square pin), rather than one; omitted for no.
+    #[serde(skip_serializing_if = "std::ops::Not::not")]
+    #[specta(optional)]
     pub list: bool,
     /// Ranges whose rows hold a value, or a list with `list`.
+    #[serde(skip_serializing_if = "std::ops::Not::not")]
+    #[specta(optional)]
     pub ranges: bool,
     /// The value an input no wire feeds holds by default, as JSON.
     pub default: Option<String>,

@@ -12,8 +12,6 @@ const variable = {
   valueType: "zone",
   default: null,
   bounds: null,
-  list: false,
-  ranges: false,
   perCharacter: true,
   memory: false,
   help: "Où récolter.",

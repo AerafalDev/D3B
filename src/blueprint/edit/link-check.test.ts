@@ -4,7 +4,7 @@ import type { PinCarries, PinSide } from "@/bindings.ts";
 import { type LinkEnd, linkRefusal } from "./link-check.ts";
 
 function end(node: string, side: PinSide, carries: PinCarries): LinkEnd {
-  return { node, pin: { id: "pin", side, carries, list: false, ranges: false, default: null } };
+  return { node, pin: { id: "pin", side, carries, default: null } };
 }
 
 describe("linkRefusal", () => {

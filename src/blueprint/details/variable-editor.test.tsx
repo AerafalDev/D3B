@@ -12,8 +12,6 @@ const pods: BlueprintSummary["variables"][number] = {
   valueType: "percentage",
   default: "90",
   bounds: [10, 100],
-  list: false,
-  ranges: false,
   perCharacter: true,
   memory: false,
   help: "",

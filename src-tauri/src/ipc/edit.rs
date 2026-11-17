@@ -59,9 +59,13 @@ pub struct VariableChange {
     pub name: String,
     /// Its type, as the file writes it: `zone`, `percentage`, `bank`…
     pub value_type: String,
-    /// A list of values of its type.
+    /// A list of values of its type; none says no, as the file does.
+    #[serde(default)]
+    #[specta(optional)]
     pub list: bool,
     /// Ranges of values of its type, or of lists with `list`.
+    #[serde(default)]
+    #[specta(optional)]
     pub ranges: bool,
     /// Its default as JSON; none for no default, which each character then sets.
     pub default: Option<String>,
@@ -392,7 +396,7 @@ mod tests {
         assert_eq!(variables()[3].id.0, "objectif");
         let goal = parsed(
             r#"{"edit": "variable", "variable": {"id": "objectif", "name": "Objectif", "valueType": "number",
-                "default": "5000", "bounds": [0, 10000], "list": false, "ranges": false, "perCharacter": true, "memory": false, "help": "Récoltes"}}"#,
+                "default": "5000", "bounds": [0, 10000], "perCharacter": true, "memory": false, "help": "Récoltes"}}"#,
         );
         assert!(changed(&store, "my-harvest", "events", goal).is_ok());
         let made = &variables()[3];
@@ -402,7 +406,7 @@ mod tests {
         );
         let wrong = parsed(
             r#"{"edit": "variable", "variable": {"id": "objectif", "name": "Objectif", "valueType": "colour",
-                "default": null, "bounds": null, "list": false, "ranges": false, "perCharacter": false, "memory": false, "help": ""}}"#,
+                "default": null, "bounds": null, "perCharacter": false, "memory": false, "help": ""}}"#,
         );
         assert_eq!(
             changed(&store, "my-harvest", "events", wrong),
@@ -440,7 +444,7 @@ mod tests {
         let own = || store.played().read[0].settings.clone();
         let text = parsed(
             r#"{"edit": "variable", "variable": {"id": "pods", "name": "Empty pods at", "valueType": "text",
-                "default": null, "bounds": null, "list": false, "ranges": false, "perCharacter": true, "memory": false, "help": ""}}"#,
+                "default": null, "bounds": null, "perCharacter": true, "memory": false, "help": ""}}"#,
         );
         let followed = change(&store, "my-harvest", "events", text).map(|(_, carried)| carried);
         assert_eq!(followed, Ok(true));

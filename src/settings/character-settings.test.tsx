@@ -37,8 +37,6 @@ const variable = (id: string, valueType: string, value: string | null, bounds: [
     valueType,
     default: value,
     bounds,
-    list: false,
-    ranges: false,
     perCharacter: true,
     memory: false,
     help: "",

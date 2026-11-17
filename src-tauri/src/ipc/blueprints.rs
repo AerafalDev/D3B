@@ -72,9 +72,13 @@ pub struct VariableView {
     pub name: String,
     /// Its type, as the file writes it: `zone`, `percentage`, `bank`…
     pub value_type: String,
-    /// A list of values of its type.
+    /// A list of values of its type; omitted for no, as the file does.
+    #[serde(skip_serializing_if = "std::ops::Not::not")]
+    #[specta(optional)]
     pub list: bool,
     /// Ranges of values of its type, or of lists with `list`.
+    #[serde(skip_serializing_if = "std::ops::Not::not")]
+    #[specta(optional)]
     pub ranges: bool,
     /// Its default as JSON, which the interface reads by its type; `None` when the blueprint gives none.
     pub default: Option<String>,

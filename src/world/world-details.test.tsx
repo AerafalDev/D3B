@@ -88,17 +88,7 @@ describe("the World tab's Details", () => {
   });
 
   it("says whose Zone the sub-area is, and nothing when it is no one's", () => {
-    const zone = {
-      id: "zone",
-      name: "Zone",
-      valueType: "zone",
-      list: false,
-      ranges: false,
-      default: null,
-      bounds: null,
-      memory: false,
-      help: "",
-    };
+    const zone = { id: "zone", name: "Zone", valueType: "zone", default: null, bounds: null, memory: false, help: "" };
     const harvest = { id: "harvest", name: "Harvest", description: "", given: false, version: 1, basedOn: null };
     useLibrary.setState({ blueprints: [{ ...harvest, problems: 0, variables: [{ ...zone, perCharacter: true }] }] });
     const character = { level: 1, breedName: null, head: null, sex: null, lastSeen: 0, place: null };
