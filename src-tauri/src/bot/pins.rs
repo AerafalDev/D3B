@@ -138,7 +138,11 @@ pub(crate) fn holes(template: &str) -> Vec<Id> {
 /// Whether a wire or a value typed uses one of `node`'s wildcards, from its kind: what its type is noted for.
 pub(crate) fn uses_wildcards(graph: &Graph, node: &Node) -> bool {
     let at = |end: &End, pin: &str| end.0 == node.id && end.1.0 == pin;
-    !node.options.cases.is_empty()
+    let cases = match &node.does {
+        Does::Kind(kind) => catalogue::kind(&kind.0).is_some_and(|kind| kind.takes.contains(&Takes::Cases)),
+        _ => false,
+    };
+    (cases && !node.options.cases.is_empty())
         || wildcards(node).any(|pin| {
             node.inputs.keys().any(|id| id.0 == pin)
                 || graph.wires.iter().any(|wire| at(&wire.from, pin) || at(&wire.to, pin))

@@ -8,7 +8,8 @@ use std::collections::HashSet;
 use serde_json::Value;
 
 use super::Refusal;
-use crate::bot::blueprint::{Blueprint, Does, End, Id};
+use crate::bot::blueprint::{Blueprint, Does, End, Id, Node};
+use crate::bot::catalogue::Carries;
 use crate::bot::copy::id_for;
 use crate::bot::pins::pins;
 use crate::bot::variable::{Shape, ValueType, Variable};
@@ -83,19 +84,18 @@ pub(super) fn change(blueprint: &mut Blueprint, mut changed: Variable) -> Result
     Ok(())
 }
 
-/// Drops, from the nodes reading or writing `variable`, the wires its type no longer fits and the values typed on a
-/// Set that it refuses.
+/// Drops, from the nodes reading or writing `variable`, or naming it in their options, the wires its type no longer fits
+/// and the values typed that their pins, a Set's within its bounds, refuse.
 fn fit(blueprint: &mut Blueprint, variable: &Id) {
     let Some(it) = blueprint.variables.iter().find(|it| &it.id == variable).cloned() else {
         return;
     };
     for at in 0..blueprint.graphs.len() {
         let graph = &blueprint.graphs[at];
-        let on = |does: &Does| matches!(does, Does::Get(id) | Does::Set(id) if id == variable);
         let nodes: Vec<Id> = graph
             .nodes
             .iter()
-            .filter(|node| on(&node.does))
+            .filter(|node| on(node, variable))
             .map(|node| node.id.clone())
             .collect();
         let carries = |end: &End, out: bool| {
@@ -120,17 +120,45 @@ fn fit(blueprint: &mut Blueprint, variable: &Id) {
             })
             .cloned()
             .collect();
+        let unheld: Vec<(Id, Id)> = graph
+            .nodes
+            .iter()
+            .filter(|node| nodes.contains(&node.id))
+            .flat_map(|node| {
+                let pins = pins(blueprint, graph, node).unwrap_or_default();
+                let held = |pin: &Id, value: &Value| {
+                    let typed = pins.iter().find(|it| it.side == crate::bot::Side::In && it.id == pin.0);
+                    match (&node.does, typed.map(|it| it.carries)) {
+                        (Does::Set(_), _) => it.accepts(value),
+                        (_, Some(Carries::Value(typed))) => typed.holds(value),
+                        _ => false,
+                    }
+                };
+                let unheld = node.inputs.iter().filter(|(pin, value)| !held(pin, value));
+                unheld
+                    .map(|(pin, _)| (node.id.clone(), pin.clone()))
+                    .collect::<Vec<_>>()
+            })
+            .collect();
         let graph = &mut blueprint.graphs[at];
         graph.wires.retain(|wire| !unfit.contains(wire));
-        for node in graph.nodes.iter_mut().filter(|node| nodes.contains(&node.id)) {
-            node.inputs.retain(|_, value| it.accepts(value));
+        for (node, pin) in &unheld {
+            if let Some(node) = graph.nodes.iter_mut().find(|it| &it.id == node) {
+                node.inputs.remove(pin);
+            }
         }
         // A wildcard whose last wire went no longer has a type.
         super::untype(graph);
     }
 }
 
-/// The variable `id` gone, with every node reading or writing it, their wires and places.
+/// Whether `node` reads or writes `variable`, or names it in its options: Add to, a list's Add…
+fn on(node: &Node, variable: &Id) -> bool {
+    matches!(&node.does, Does::Get(id) | Does::Set(id) if id == variable)
+        || node.options.variable.as_ref() == Some(variable)
+}
+
+/// The variable `id` gone, with every node reading or writing it or naming it, their wires and places.
 pub(super) fn delete(blueprint: &mut Blueprint, id: &Id) -> Result<(), Refusal> {
     let before = blueprint.variables.len();
     blueprint.variables.retain(|it| &it.id != id);
@@ -138,11 +166,10 @@ pub(super) fn delete(blueprint: &mut Blueprint, id: &Id) -> Result<(), Refusal> 
         return Err(Refusal::NoSuchVariable);
     }
     for graph in &mut blueprint.graphs {
-        let on = |does: &Does| matches!(does, Does::Get(it) | Does::Set(it) if it == id);
         let gone: Vec<Id> = graph
             .nodes
             .iter()
-            .filter(|node| on(&node.does))
+            .filter(|node| on(node, id))
             .map(|node| node.id.clone())
             .collect();
         graph.nodes.retain(|node| !gone.contains(&node.id));

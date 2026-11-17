@@ -7,7 +7,8 @@ use serde_json::Value;
 use super::{Refusal, node, pin_of};
 use crate::bot::blueprint::{Blueprint, Does, Id};
 use crate::bot::catalogue::{Carries, Side};
-use crate::bot::variable::{Type, ValueType};
+use crate::bot::pins::has_wildcards;
+use crate::bot::variable::{Shape, Type, ValueType};
 
 /// Types `value` on the input `pin` of `node` in the graph at `at`, or drops the one typed there for `None`.
 pub(super) fn typed(
@@ -24,8 +25,10 @@ pub(super) fn typed(
     // A wildcard of a node with no type takes the type its first value is given as, of its own shape.
     let (value_type, typing) = match input.carries {
         Carries::Value(typed) => (Some(typed), None),
-        // A Text's hole holds any value.
-        Carries::Any => (None, None),
+        // A Text's hole is fed any value by a wire; one typed there is text, which says how it reads.
+        Carries::Any => (Some(Type::new(ValueType::Text, Shape::ONE)), None),
+        // A kind that changes a variable takes its type from it alone.
+        Carries::Wildcard(_) if !has_wildcards(found) => (None, None),
         Carries::Wildcard(shape) => (of.map(|of| Type::new(of, shape)), of),
         Carries::Exec => return Err(Refusal::NotItsType),
     };
@@ -40,10 +43,7 @@ pub(super) fn typed(
     let value = value.filter(|value| Some(value) != input.default.as_ref());
     if let Some(value) = &value {
         let holds = variable.map_or_else(
-            || {
-                let any = input.carries == Carries::Any;
-                !value.is_null() && (any || value_type.is_some_and(|typed| typed.holds(value)))
-            },
+            || !value.is_null() && value_type.is_some_and(|typed| typed.holds(value)),
             |variable| variable.accepts(value),
         );
         if !holds {

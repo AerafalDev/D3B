@@ -74,7 +74,8 @@ pub(crate) fn of_graph(blueprint: &Blueprint, graph: &Graph, found: &mut Vec<Pro
                 Some(Carries::Value(typed)) if typed.overlaps(value) => {
                     found.push(Problem::RangesOverlap { graph, node, pin });
                 }
-                Some(Carries::Any) if value.is_null() => found.push(Problem::ValueNotOfType { graph, node, pin }),
+                // Typed there, a hole's value is text; any other comes by a wire.
+                Some(Carries::Any) if !value.is_string() => found.push(Problem::ValueNotOfType { graph, node, pin }),
                 // A value on a wildcard of no type is its node's problem, said above.
                 Some(Carries::Value(_) | Carries::Wildcard(_) | Carries::Any) => {}
             }
@@ -521,6 +522,7 @@ mod tests {
                 r#"{"id": "a2", "kind": "test_add_to", "options": {"variable": "nothing"}}"#,
                 r#"{"id": "a3", "kind": "test_add_to", "options": {"variable": "harvests"}, "inputs": {"amount": 1}}"#,
                 r#"{"id": "x", "kind": "test_expression"}"#,
+                r#"{"id": "q", "kind": "level", "options": {"cases": [1], "text": "", "expression": "", "variable": "pods"}}"#,
             ];
             graph.nodes.extend(more.map(node));
         });
@@ -545,6 +547,10 @@ mod tests {
             option("a1", "variable", true),
             Problem::NoSuchVariable { graph, node, variable },
             option("x", "expression", true),
+            option("q", "cases", false),
+            option("q", "text", false),
+            option("q", "expression", false),
+            option("q", "variable", false),
             without("a1"),
             without("a2"),
         ];
@@ -580,7 +586,7 @@ mod tests {
     #[test]
     fn a_hole_takes_any_value_but_none() {
         let found = after(|blueprint| {
-            let text = r#"{"id": "tx", "kind": "test_text", "options": {"text": "{count} in {zone}"}, "inputs": {"zone": null}}"#;
+            let text = r#"{"id": "tx", "kind": "test_text", "options": {"text": "{count} in {zone} by {who}"}, "inputs": {"zone": 445, "who": "Bob"}}"#;
             blueprint.graphs[0].nodes.push(node(text));
             blueprint.graphs[0].wires.push(wire("n2", "value", "tx", "count"));
         });
