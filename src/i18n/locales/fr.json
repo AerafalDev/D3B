@@ -460,7 +460,14 @@
       "noItem": "Rien",
       "items_one": "{{count}} objet",
       "items_other": "{{count}} objets",
-      "zone": "Une zone choisie"
+      "zone": "Une zone choisie",
+      "map": "Carte {{id}}",
+      "item": "Objet {{id}}",
+      "npc": "PNJ {{id}}",
+      "list_one": "{{count}} valeur",
+      "list_other": "{{count}} valeurs",
+      "ranges_one": "{{count}} tranche",
+      "ranges_other": "{{count}} tranches"
     },
     "rename": "Renommer",
     "name": "Nom du blueprint",
@@ -550,6 +557,7 @@
       "memory": "Mémoire : gardée par personnage entre les séances",
       "oneRun": "Le temps d'un lancement",
       "reset": "Revenir à la valeur par défaut ({{value}})",
+      "typeOf": "Type de {{pin}}",
       "usedBy": "Utilisée par",
       "nodes_one": "{{count}} nœud",
       "nodes_other": "{{count}} nœuds",

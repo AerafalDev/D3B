@@ -29,7 +29,7 @@ interface BlueprintDetailsProps {
    * Types a value on the input `pin` of the node `node` of the graph shown, as JSON, or none for its default; given for
    * a blueprint of mine only (the owner, 2026-11-17). Whether it was saved.
    */
-  onValue?: (node: string, pin: string, value: string | null) => Promise<boolean>;
+  onValue?: (node: string, pin: string, value: string | null, of?: string) => Promise<boolean>;
   /** Changes a variable of mine, whole, saved at once (step 3's (14)); given for a blueprint of mine only. */
   onVariable?: (change: VariableChange) => Promise<boolean>;
   /** Deletes a variable of mine with its nodes. */
@@ -71,7 +71,7 @@ export function BlueprintDetails({
           problems={problems.filter((one) => one.node === node.id && one.graph === graph.id)}
           names={names}
           variables={blueprint.variables}
-          onValue={onValue === undefined ? undefined : (pin, value) => onValue(node.id, pin, value)}
+          onValue={onValue === undefined ? undefined : (pin, value, of) => onValue(node.id, pin, value, of)}
         />
       ) : variable !== undefined ? (
         onVariable !== undefined ? (
@@ -142,8 +142,25 @@ interface NodeDetailsProps {
   names: ReadonlyMap<string, string>;
   /** The blueprint's variables, whose bounds a Set's value keeps. */
   variables: BlueprintSummary["variables"];
-  onValue: ((pin: string, value: string | null) => Promise<boolean>) | undefined;
+  onValue: ((pin: string, value: string | null, of?: string) => Promise<boolean>) | undefined;
 }
+
+/** The types a wildcard of a kind that lists none may take: every type a value is typed as, the NPC at step 4. */
+const ANY_TYPE = [
+  "bool",
+  "number",
+  "percentage",
+  "text",
+  "zone",
+  "route",
+  "bank",
+  "items",
+  "job",
+  "map",
+  "item",
+  "duration",
+  "time",
+];
 
 function NodeDetails({ node, graph, problems, names, variables, onValue }: NodeDetailsProps) {
   const { t, i18n } = useTranslation();
@@ -192,7 +209,15 @@ function NodeDetails({ node, graph, problems, names, variables, onValue }: NodeD
                       node.does === "set" ? (variables.find((one) => one.id === node.variable)?.bounds ?? null) : null,
                   }}
                   who={title}
-                  onValue={(value) => onValue(pin.id, value)}
+                  // A wildcard its node notes no type for offers the types it may take (the owner, 2026-11-17).
+                  open={
+                    pin.carries === "wildcard" || (pin.wildcard === true && (node.options?.valueType ?? null) === null)
+                      ? (node.types ?? []).length > 0
+                        ? (node.types ?? [])
+                        : ANY_TYPE
+                      : undefined
+                  }
+                  onValue={(value, of) => onValue(pin.id, value, of)}
                 />
               ),
             )}

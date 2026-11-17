@@ -53,6 +53,8 @@ export function SettingEditor({ variable, value, onChange, who, label }: Setting
       return <TextEditor value={value} onChange={onChange} label={label} />;
     case "duration":
       return <DurationEditor value={value} onChange={onChange} label={label} />;
+    case "time":
+      return <TimeEditor value={value} onChange={onChange} label={label} />;
     case "job":
       return <JobSelect value={jobValue(value)} onChange={(job) => void onChange(JSON.stringify(job))} label={label} />;
     default:
@@ -185,6 +187,41 @@ function DurationEditor({ value, onChange, label }: Omit<SettingEditorProps, "wh
         }
       }}
       className={`${FIELD} w-[96px] tabular-nums`}
+    />
+  );
+}
+
+/** A time of day "HH:MM", from 00:00 to 23:59, sent when the field is left or Enter is pressed; another is marked. */
+function TimeEditor({ value, onChange, label }: Omit<SettingEditorProps, "who" | "variable">) {
+  const current = typeof parse(value) === "string" ? String(parse(value)) : "";
+  const [draft, setDraft] = useState(current);
+  useEffect(() => setDraft(current), [current]);
+  const valid = /^([01]\d|2[0-3]):[0-5]\d$/.test(draft.trim());
+  const commit = () => {
+    if (valid && draft.trim() !== current) {
+      void onChange(JSON.stringify(draft.trim())).then((kept) => kept || setDraft(current));
+    } else if (!valid) {
+      setDraft(current);
+    }
+  };
+  return (
+    <input
+      type="text"
+      inputMode="numeric"
+      placeholder="23:00"
+      aria-label={label}
+      aria-invalid={!valid && !(draft.trim() === "" && value === null)}
+      value={draft}
+      onChange={(event) => setDraft(event.target.value)}
+      onBlur={commit}
+      onKeyDown={(event) => {
+        if (event.key === "Enter") {
+          commit();
+        } else if (event.key === "Escape") {
+          setDraft(current);
+        }
+      }}
+      className={`${FIELD} w-[64px] tabular-nums`}
     />
   );
 }

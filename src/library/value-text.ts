@@ -13,6 +13,34 @@ function duration(seconds: number): string {
 
 /** A value as the player reads it, by its type (`bot::variable`'s shapes); a shape its type does not hold, as JSON. */
 export function valueText(valueType: string, json: string | null, language: string): string {
+  return shapedText({ valueType, list: false, ranges: false }, json, language);
+}
+
+/** A value of a type and shape: a list or ranges said by how many values or rows they hold, one value by its type. */
+export function shapedText(
+  typed: { valueType: string; list?: boolean; ranges?: boolean },
+  json: string | null,
+  language: string,
+): string {
+  const held = json === null ? null : parsed(json);
+  if (typed.ranges === true && Array.isArray(held)) {
+    return i18next.t("library.value.ranges", { count: held.length });
+  }
+  if (typed.list === true && Array.isArray(held)) {
+    return i18next.t("library.value.list", { count: held.length });
+  }
+  return oneText(typed.valueType, json, language);
+}
+
+function parsed(json: string): unknown {
+  try {
+    return JSON.parse(json);
+  } catch {
+    return undefined;
+  }
+}
+
+function oneText(valueType: string, json: string | null, language: string): string {
   if (json === null) {
     return i18next.t("library.value.none");
   }
@@ -46,6 +74,14 @@ export function valueText(valueType: string, json: string | null, language: stri
       return Array.isArray(value) ? i18next.t("library.value.items", { count: value.length }) : json;
     case "zone":
       return i18next.t("library.value.zone");
+    case "time":
+      return typeof value === "string" ? value : json;
+    case "map":
+      return typeof value === "number" ? i18next.t("library.value.map", { id: value }) : json;
+    case "item":
+      return typeof value === "number" ? i18next.t("library.value.item", { id: value }) : json;
+    case "npc":
+      return typeof value === "number" ? i18next.t("library.value.npc", { id: value }) : json;
     case "duration":
       return typeof value === "number" && Number.isInteger(value) && value >= 0 ? duration(value) : json;
     default:
