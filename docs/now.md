@@ -164,8 +164,8 @@ _Updated 2026-11-17._
     6. put a broken file in `Documents/D3B/blueprints` (a stray letter), then show the Library again (Personnages,
        then Bibliothèque): "Ignorés 1" appears folded at the bottom; open it: the file, and why in its hover.
 - **step 3, the World**, on Windows x64 from `bun run app` on `next` or the next release. Measured by the owner on
-  2026-11-17: items 1 to 11 pass; item 8 changed since at the owner's request (every kind ticked at first), to measure
-  again:
+  2026-11-17: items 1 to 11 passed; item 8 has changed since at the owner's request (every kind ticked at first) and
+  is to be measured again:
     1. the activity bar has "Monde" under "Bibliothèque"; its view lists "Sous-zones du jeu" by area, folded, each
        area with its count; a click on Astrub unfolds it, its sub-areas by level, then by name;
     2. type "foret" in the search: the areas holding a matching sub-area unfold, the others go; a nonsense word says
@@ -410,8 +410,8 @@ _Updated 2026-11-17._
   pictures of 395 KB, graphic 475's missing one counted, an archive of 105 MB in 28 s); format 3 is then never
   published: `client-3.7.13.17-format4.tar.gz` replaces it, published on 2026-11-16 (under "Published"); (9c) the hints on the World's map (the owner's mock-up 11, 2026-11-15): pictures 28 px on screen, those that would
   overlap thinned out by kind over the whole world, a switch per kind behind "Indices" in the tab's editor action, nine
-  kinds told apart by picture before category, the other places and passages off by default, all shown at first since
-  the owner's change of 2026-11-17 (done in code; the nearest
+  kinds told apart by picture before category, all shown at first (the owner, 2026-11-17, in place of the other
+  places and passages off by default of 2026-11-15) (done in code; the nearest
   bank waits for step 4, measured by path with going to the bank);
   (10) sub-areas as zones, a Zone chosen in a list or on the map (the owner's mock-up 12, 2026-11-15: the field's list
   unfolding under it and its target, one click on the map choosing and going back, Details on the World tab's right),
