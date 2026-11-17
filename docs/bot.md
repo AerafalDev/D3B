@@ -522,6 +522,59 @@ flowchart LR
   with their wires and Ctrl+Z; Switch's cases typed by its type, a case twice a problem; Leave the loop's problem; the
   Summary's lines; a run on the captures that never blocks "runs without pause".
 
+### The values (v2.4)
+
+Designed with the owner on 2026-11-17: the values are pure nodes, read when the node that uses them runs, drawn
+compact as Unreal's, read in place in the sentences; started before (v2.2) and (v2.3) are measured, their measures
+alongside (the owner, 2026-11-17).
+
+```mermaid
+flowchart LR
+    file["the file: kind, options type, count, text"] --> pull["run: values pulled when read, each once per node at work"]
+    seed["a fresh seed per run"] --> random["run/random.rs"] --> kinds["kinds/values/: compare, logic, arithmetic, random, lists, text"]
+    pull --> kinds -->|"value, traced; a draw at any depth"| trace["the trace"]
+    kinds -->|"÷ 0, out of the list, empty"| block["blocked, on the value's node"]
+    file --> view["ipc: family Value, options text"] --> node["React Flow 'value': ValueNode"] --> sentence["sentences in place, the Summary"]
+```
+
+- **The kinds** (a family **Value** of its own, the picker's "Conditions et calculs", `≥`, N minutes and `+` moving
+  into it), the owner's choices of 2026-11-17:
+  - `=` and `≠` of any one type, two lists by their order; `<`, `≤`, `>` and between (both ends, reversed numbers
+    swapped, times from 23:00 to 08:00 past midnight) of numbers, percentages, durations and times;
+  - AND and OR of N inputs, at least 2, "+" adding one, read in order and stopping at the first that decides; NOT;
+    Choose of any one type, reading only the side it takes, so a ÷ 0 or a draw on the other side neither blocks nor
+    draws;
+  - `+`, `−`, `×`, `÷`, remainder, min, max, clamp and "N % of X" of whole numbers only, two inputs each; ÷ and % of
+    round down and a remainder is never negative (settled alone); a duration by N seconds and N minutes;
+  - a random number between two bounds (both included, reversed swapped), "true N % of the time" and a random
+    element of a list; numbers only, no random duration node, which would look like the humanlike timings
+    `CLAUDE.md` refuses (a draw may still feed N seconds); a fresh seed per run, kept with it so a run replays;
+  - Text, its template's `{holes}` inputs of any value, typed in one field in Details, a hole becoming a pin once the
+    field is left, a game thing read by its name in the app's language; Join, its separator an input, ", " by
+    default;
+  - a list of its N inputs (at least 1, "+"), its length, contains, element n° (from 1), first, and position of
+    (0 when absent).
+- **Faults** blocking on the value's node: ÷ or remainder by 0, an element out of the list, the first or a random
+  element of an empty list; a 0 typed on a divisor and an index typed below 1 are problems in the editor.
+- **Drawn compact** (the owner, 2026-11-17, from a mock-up, as Unreal's pure nodes): no head, the operator in the
+  middle (`<`, `+`, `ET`, a die), the inputs on the left without labels unless their roles differ (between, clamp,
+  Choose, % of), a value typed shown as a chip beside its pin, one output; the whole sentence as its name and hover
+  text; the family's colour that of the queries (settled alone). A second React Flow node type, its handles the same
+  ids, so the checks, edits and undo do not change.
+- **Sentences** read nested values in place, "Tant que Pods % < 80", "(Récoltes + 5) × 2", a node of N inputs
+  joined by its word, a Text by its template filled; the Summary reads them so.
+- **Translations** (the owner, 2026-11-17): the nodes' sentences, descriptions and pin labels move to their own
+  i18next namespace `nodes`, read dynamically already, so the typed keys stop growing with the kinds.
+- **Out**: the Expression (v2.8); the queries and the run's counts (v2.5), so between times compares typed times
+  until then; Add to, Reset and a list's Add, Remove and Empty (v2.7, (14)); pure functions' calls (15); the
+  debugger's display (step 4); "Advanced" and the picker by intent (v2.9); decimal numbers; sort, sum, last, filter.
+- **Eight PRs**: the namespace `nodes`; comparisons, logic and Choose; arithmetic and N seconds; randomness; lists;
+  Text and Join; drawn compact; sentences in place, the Summary, a run on the captures and the checklist. Each kind
+  replaces the catalogue's test kinds (`test_equal`, `test_list`, `test_text`) as it comes.
+- **Measured** (nothing acts in the game before step 4): the picker's group; a compact `<` with a chip; "Tant que Pods
+  % < 80" and parentheses read; a ÷ 0 problem; a list's "+" and Remove; a Text's holes; Choose typed by a wire;
+  D3B's blueprints read-only; English; a run on the captures blocking only on a death.
+
 ## In the app
 
 The shell's parts (`docs/shell.md`); no information is shown twice:

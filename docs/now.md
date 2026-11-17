@@ -592,7 +592,12 @@ _Updated 2026-11-17._
   Switch in Rust with the options' edits (done in code); a node's options in the editor (done in code); the Summary by pin roles (done in code); the loops (done in code); the
   kinds that remember (done in code); the waits and stops, in two PRs: Wait until, Block, and Pause and notify (done
   in code), then Retry and a run on the captures (done in code; (v2.3)'s checklist under "Not measured"); (v2.4)
-  the values: comparisons, logic, arithmetic, randomness, text, durations, lists, drawn compact; (v2.5) the queries
+  the values: comparisons, logic, arithmetic, randomness, text, durations, lists, drawn compact
+  ([bot.md](bot.md#the-values-v24), the owner's choices of 2026-11-17: started before (v2.2) and (v2.3) are measured,
+  their measures alongside; drawn compact as Unreal from a mock-up; AND and OR of N inputs; whole numbers; a fresh
+  seed per run and no random duration; Text in one field; Choose reading the side it takes; the nodes' words in their
+  own namespace), in eight PRs: the namespace `nodes`; comparisons, logic and Choose; arithmetic and N seconds;
+  randomness; lists; Text and Join; drawn compact; sentences in place and the checklist; (v2.5) the queries
   over `game::Live`, and those marked with their study and step; (v2.6) the events: When, Every, At, the game's new
   ones, mine and Trigger with its timers; (v2.7) the actions of steps 4 to 7, marked (the haven bag, zaaps, doors,
   NPCs and their replies, equipment, resource bags, the experience received), and the variables' nodes (Add to, Reset,
