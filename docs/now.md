@@ -31,7 +31,7 @@ _Updated 2026-11-17._
 - **Not measured**, by the owner:
   - _Format 5_: from the monsters' PR on, `next` reads format 5 only, published on 2026-11-17 (from the PR's
     b9412ad, the owner's go). A checklist below that says "with format 4's data" runs on `next` before that PR or
-    from the last release, or on a later `next` with format 5's: `bun run data:fetch 3.7.13.17`;
+    from the last release, or on a later `next` with format 5's: `bun run data:fetch <build>`, the client's build (3.7.14.18 since 2026-11-16);
   - v0.10.0 on macOS, Linux and ARM64: built by CI, run by nobody yet. The owner has none of them and no tester yet; the README says so, and a round starts when a tester comes ([docs/testing.md](testing.md));
   - **step 1, the extractor**, on the installed client (Windows). Measured by the owner on 2026-11-11, Windows x64:
     items 1, 2 (every count as below, in 27.8 s) and 4 pass; on 2026-11-13, `bun run app` on `next` 3454d38, item 5
@@ -46,7 +46,7 @@ _Updated 2026-11-17._
     4. `tar -xzf artifacts/data/client-3.7.13.17.tar.gz -C data`, then `bun run app`: the status bar's right item says
        "Client 3.7.13.17", and its hover names no error;
     5. with `"format": 2` in `data/manifest.json`, the status bar says there is no data and its hover names the format.
-  - **step 2, the relay** ([relay.md](relay.md)), on Windows x64 with client 3.7.13.17, from `bun run app` or the
+  - **step 2, the relay** ([relay.md](relay.md)), on Windows x64 with client 3.7.13.17 (or 3.7.14.18, the bar then naming it), from `bun run app` or the
     next release. Never paste a capture or a log line holding a ticket. Measured by the owner on 2026-11-11, Windows
     x64, `bun run app` on `next` 4fa724f: items 1 to 9 and 12 pass; on 2026-11-12, item 10's close (v0.12.0 to
     v0.13.0); on 2026-11-13, `bun run app` on `next` 3454d38, items 1, 2, 4, 7, 8 and 9 pass again in the new
@@ -87,7 +87,7 @@ _Updated 2026-11-17._
     "Protocol" view under the character's tab (Ctrl+J shows the panel), its counts on its header's line. Since step 3's
     PR 24, items 1, 3, 7, 8 and 9 begin by turning on Advanced tools: Affichage > Outils avancés (or "Afficher ou
     masquer les outils avancés" in the palette), which the next starts remember.
-    1. With 3.7.13.17's data in `data/` (the extractor's item 4), start D3B, then a client; enter the game and open the
+    1. With the data of the client's build in `data/` (the extractor's item 4, or `bun run data:fetch <build>`), start D3B, then a client; enter the game and open the
        character from the Characters view: its tab names the coordinates the game shows for its map, and the panel's
        Protocol header says "non fiables 0" and "perdus 0";
     2. walk to the next map: within about a second the tab names the new coordinates;
@@ -440,7 +440,7 @@ _Updated 2026-11-17._
   an account is at hand; the protocol's item 7 now, with v0.14.0 on client 3.7.14.18, before the release that carries
   its pins: 3.7.14.18's schema is 3.7.13.17's, so its pins are copied ([protocol.md](protocol.md#on-the-wire)), and its
   data packed (`.github/game-data.json`), without which a character's map and breed would not show, the data's build
-  having to be the connection's ([data.md](data.md#the-folder)); Q17,
+  having to be the connection's ([game.md](game.md#in-the-app)); Q17,
   a build that changes the schema, waits for a later patch (`GameAssembly.dll`,
   `global-metadata.dat` and `version` of 3.7.13.17 copied into `artifacts/` for Q17 on 2026-11-13). Step 2's next feature is designed below. The
   protocol's code was a stack of seven PRs against `next`, all merged (#155 to #171): (1) the game connection split into

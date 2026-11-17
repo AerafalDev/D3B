@@ -81,7 +81,7 @@ flowchart LR
 | `monster-races.json` | `id`, `name`, `superRaceId` | `MonsterRaceData`, 266 records, 265 written |
 | `monster-super-races.json` | `id`, `name` | `MonsterSuperRaceData`, 35 records |
 
-**3.7.14.18** (built 2026-11-16, extracted on 2026-11-17 by `next` 220473d): every file holds the same bytes as
+**3.7.14.18** (built 2026-11-16, extracted on 2026-11-17 by `next` 220473d): every table holds the same bytes as
 3.7.13.17's but the world graph's two (verified, the manifests' SHA-256 compared). The graph gains 42 vertices and 85
 transitions (55 scrolls, 27 interactive, 3 scroll actions) and loses none, compared by map, zone and transition since
 the vertices' `uid`s are numbered again: the maps of area 104, La Source (35 vertices in sub-area 1137, Lac originel, 7
