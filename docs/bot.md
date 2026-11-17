@@ -255,6 +255,26 @@ flowchart LR
   the setting says, and the History notes each), and from step 6 the fight profile, the class's by default. Every
   resource of the profession is taken where the character is (only the place follows its level), and Combat attacks every group its size and the monsters left out allow, no bound of level by
   default, one optional under "Advanced" (the C# version's D387: the zone chosen for the level bounds the risk).
+- **The ranges computed from the data** (`bot::places`, (v2.10)'s second PR, done in code; the owner's choices of
+  2026-11-17): a table by level, from 1 to 200, rows "from level N to M: these sub-areas", consecutive levels of the
+  same sub-areas in one row, as a player's ranges of a list of zones are written, so that the player can read them
+  and start from them. Each row holds the sub-areas worth most, the richest first, then the one whose level is
+  nearest, then by id: at most 10, each worth at least a quarter of the richest (the C# version's rotation, D391). A
+  profession's table follows its level: each resource of that profession a sub-area lists counts once, worth 1 at the
+  profession's level, halved every 20 levels below, smoothly, nothing above (the data says which resources a sub-area
+  holds, not on how many maps: the maps come with the graphics learned, step 5). Combat's follows the character's:
+  each monster a sub-area lists counts once, whole when one of its grades reaches the level, nothing when even its
+  lowest is above, else halved every 20 levels below from its highest grade (the C# version's D166 and D245), in the
+  sub-areas not above the level drawing at least 10 maps on a world map, else, at a level where none holds a monster
+  worth fighting, those drawing at least one. A sub-area of no map that the world graph reaches on a world map is
+  never taken: on 3.7.13.17 they are dungeons, a mine of one resource ("Mine", 778), the tutorial and a convention's
+  test zone listing 85 resources, which topped every profession from level 100. As the bot plays, a sub-area above
+  the character's level, or closed to a basic account when its account is not subscribed, is left out (`fits`).
+  Measured on 3.7.13.17's data: every level from 1 to 200 has a row, Combat in 126 rows, from the Route des âmes of
+  Incarnam at levels 1 to 4 (no sub-area of 10 maps shown holds a monster there) to Osavane at 200; the five
+  professions in 34 to 53 rows, a lumberjack of 100 first to the Bois de Litneg as the C# version measured at 80, a
+  miner of 1 to 5 to the Souterrains, whose maps the C# version found isolated (D264): the tours of step 5 leave
+  those out. All six tables in under 20 ms.
 - **What the C# version measured**, carried into the actions of steps 5 and 6, its values starting points to measure
   again (the owner, 2026-11-16): the **rotation** over the N richest sub-areas of the level, the one left longest ago
   first (D391, D392); **regrowth learned** by skill while playing, a tour waiting on the longest seen and stopping on
