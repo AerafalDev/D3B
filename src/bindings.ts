@@ -37,7 +37,10 @@ export const commands = {
 	importShared: (path: string) => __TAURI_INVOKE<string>("import_shared", { path }),
 	/**  The graphs of the blueprint `id`, or why not. */
 	blueprintGraphs: (id: string) => __TAURI_INVOKE<BlueprintGraphs_Serialize>("blueprint_graphs", { id }),
-	/**  Makes `edit` in the graph `graph` of my blueprint `id`, saved at once; the blueprint's graphs and problems then. */
+	/**
+	 *  Makes `edit` in the graph `graph` of my blueprint `id`, saved at once; the blueprint's graphs and problems then. A
+	 *  variable's edit is the blueprint's, whichever graph shows.
+	 */
 	editBlueprint: (id: string, graph: string, edit: GraphEdit_Deserialize) => __TAURI_INVOKE<BlueprintGraphs_Serialize>("edit_blueprint", { id, graph, edit }),
 	/**
 	 *  Undo: my blueprint `id` as it was before its last change, in any of its graphs, saved at once (the owner,
@@ -597,6 +600,10 @@ export type EditError = { kind: "noFolder" } |
 { kind: "wired" } | 
 /**  Not JSON, not of the input's type, or out of its bounds. */
 { kind: "notItsType" } | 
+/**  The blueprint has no variable of this id. */
+{ kind: "noSuchVariable" } | 
+/**  A name of nothing but spaces. */
+{ kind: "blank" } | 
 /**  The system could not read or write its file, or it no longer reads and is kept as it is: the reason, in words. */
 { kind: "notSaved"; reason: string };
 
@@ -737,7 +744,13 @@ export type GraphEdit_Deserialize =
 /**  Nodes, with every wire to or from them, and wires, chosen together. */
 { edit: "delete"; nodes: string[]; wires: WireEnds[] } | 
 /**  A value typed on the input `pin` of `node`, as JSON, which no wire feeds; none, or the pin's default, drops it. */
-{ edit: "value"; node: string; pin: string; value?: string | null };
+{ edit: "value"; node: string; pin: string; value?: string | null } | 
+/**  A variable of mine named so, yes or no, under an id made from its name. */
+{ edit: "newVariable"; name: string } | 
+/**  The variable of its id made this one, whole; a new type drops what it no longer fits. */
+{ edit: "variable"; variable: VariableChange_Deserialize } | 
+/**  The variable `variable` gone, with the nodes that read or write it. */
+{ edit: "deleteVariable"; variable: string };
 
 /**  One change to a graph. */
 export type GraphEdit_Serialize = 
@@ -753,7 +766,13 @@ export type GraphEdit_Serialize =
 /**  Nodes, with every wire to or from them, and wires, chosen together. */
 { edit: "delete"; nodes: string[]; wires: WireEnds[] } | 
 /**  A value typed on the input `pin` of `node`, as JSON, which no wire feeds; none, or the pin's default, drops it. */
-{ edit: "value"; node: string; pin: string; value: string | null };
+{ edit: "value"; node: string; pin: string; value: string | null } | 
+/**  A variable of mine named so, yes or no, under an id made from its name. */
+{ edit: "newVariable"; name: string } | 
+/**  The variable of its id made this one, whole; a new type drops what it no longer fits. */
+{ edit: "variable"; variable: VariableChange_Serialize } | 
+/**  The variable `variable` gone, with the nodes that read or write it. */
+{ edit: "deleteVariable"; variable: string };
 
 /**  An event graph, or a function when it has a signature. */
 export type GraphView = GraphView_Serialize | GraphView_Deserialize;
@@ -1271,6 +1290,39 @@ export type StatedSeen_Serialize = {
 export type Stroke = {
 	maps: ([number, number])[],
 	erase: boolean,
+};
+
+/**  A variable of mine as the editor changes it, whole. */
+export type VariableChange = VariableChange_Serialize | VariableChange_Deserialize;
+
+/**  A variable of mine as the editor changes it, whole. */
+export type VariableChange_Deserialize = {
+	id: string,
+	name: string,
+	/**  Its type, as the file writes it: `zone`, `percentage`, `bank`… */
+	valueType: string,
+	/**  Its default as JSON; none for no default, which each character then sets. */
+	default?: string | null,
+	/**  The smallest and largest value of a number or a percentage. */
+	bounds?: [number, number] | null,
+	perCharacter: boolean,
+	memory: boolean,
+	help: string,
+};
+
+/**  A variable of mine as the editor changes it, whole. */
+export type VariableChange_Serialize = {
+	id: string,
+	name: string,
+	/**  Its type, as the file writes it: `zone`, `percentage`, `bank`… */
+	valueType: string,
+	/**  Its default as JSON; none for no default, which each character then sets. */
+	default: string | null,
+	/**  The smallest and largest value of a number or a percentage. */
+	bounds: [number, number] | null,
+	perCharacter: boolean,
+	memory: boolean,
+	help: string,
 };
 
 /**  A variable's name and help line. */

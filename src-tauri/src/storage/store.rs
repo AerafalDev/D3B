@@ -229,6 +229,11 @@ impl Store {
         }
     }
 
+    /// My blueprint `id` as its file holds it now; written whole by a rename, it never reads half written.
+    pub(crate) fn read_blueprint(&self, id: &str) -> Result<Blueprint, StorageError> {
+        self.read_mine(&Self::mine(id)?)
+    }
+
     /// Duplicate: a copy of the blueprint `id`, D3B's or mine, saved among mine with `texts`, under an id made from its
     /// name that no blueprint and no file of the folder holds, in any case; the copy's id. The id is chosen and the
     /// file written under one lock, so two copies at once never share a file.
