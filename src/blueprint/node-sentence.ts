@@ -1,6 +1,7 @@
 import i18next from "i18next";
 
 import type { GraphView_Serialize, NodeView_Serialize } from "@/bindings.ts";
+import { nodeWord } from "@/i18n/node-words.ts";
 import { valueText } from "@/library/value-text.ts";
 import { pinLabel } from "./pin-label.ts";
 
@@ -11,7 +12,7 @@ export type SentencePart = { text: string } | { chip: string; valueType: string 
 export type GraphNode = NodeView_Serialize;
 
 /**
- * A node's sentence (`node.kinds.<kind>.sentence`), its holes filled with what feeds each: what a wire brings, said by
+ * A node's sentence (`kinds.<kind>.sentence` of the nodes' words), its holes filled with what feeds each: what a wire brings, said by
  * `wired` (a variable's name, or its source pin's label), the value typed on the pin, or the pin's default; a get, a set or a call says its variable or
  * function by `names`. A kind this version does not know says so with its id.
  */
@@ -37,9 +38,8 @@ export function nodeSentence(
   if (once && node.family !== null) {
     return [{ text: i18next.t("blueprint.doOnce") }];
   }
-  const key = `node.kinds.${node.kind}.sentence`;
-  const raw = i18next.getResource(language, "translation", key) ?? i18next.getResource("en", "translation", key);
-  if (node.family === null || typeof raw !== "string") {
+  const raw = nodeWord(`kinds.${node.kind}.sentence`);
+  if (node.family === null || raw === null) {
     return [{ text: i18next.t("blueprint.unknownKind", { kind: node.kind }) }];
   }
   const sentence = raw;

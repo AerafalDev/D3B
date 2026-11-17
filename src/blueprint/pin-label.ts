@@ -1,11 +1,12 @@
 import i18next from "i18next";
 
 import type { NodeView_Serialize } from "@/bindings.ts";
+import { nodeWord } from "@/i18n/node-words.ts";
 import { valueText } from "@/library/value-text.ts";
 import { nameOf } from "@/values/value-words.ts";
 
 /**
- * A pin's label in the player's language (`node.pins.<pin>`), or its id when the translations have none: a function's
+ * A pin's label in the player's language (`pins.<pin>` of the nodes' words), or its id when the translations have none: a function's
  * input or output, whose id the player chose. Of `node`, a numbered output is said with its number, "Alors 2", and a
  * Switch's case by its value, a profession or a zone by its name (`docs/bot.md`, "The flow's kinds (v2.3)"), and a
  * call's named exit by its name.
@@ -28,9 +29,7 @@ export function pinLabel(pin: string, node?: NodeView_Serialize): string {
       return caseText(valueType, json);
     }
   }
-  const key = `node.pins.${pin}`;
-  // The pins' ids are data, so their keys are checked at run time rather than typed.
-  return i18next.exists(key) ? String(i18next.t(key as never)) : pin;
+  return nodeWord(`pins.${pin}`) ?? pin;
 }
 
 /** A case by its value: a profession or a zone by its name, as Details shows it, anything else as the player reads it. */

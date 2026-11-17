@@ -45,7 +45,8 @@ needed to measure a change in game, not to build or test: tests that need real g
 ## Conventions
 
 - **Language**: everything in the repository is in English. The app speaks English and French: every visible string
-  lives in `src/i18n/locales/en.json` and `fr.json`.
+  lives in `src/i18n/locales/en.json` and `fr.json`, but the nodes' sentences, descriptions and pin labels, in
+  `nodes.en.json` and `nodes.fr.json`, read through `nodeWord`.
 - **Rust** (`src-tauri/`): one crate, one folder per domain; only `ipc/` talks to Tauri. `cargo fmt`, and
   `cargo clippy` with the pedantic lints and no warning. Errors are `thiserror` enums; no `unsafe`.
 - **TypeScript** (`src/`): strict TypeScript 7, formatted and linted by Biome; kebab-case file names, one exported

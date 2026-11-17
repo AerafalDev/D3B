@@ -1010,7 +1010,7 @@ export type Names = {
 
 /**  What a node does. */
 export type NodeDoes = 
-/**  One of the catalogue's kinds, by id; its sentence is the interface's `node.kinds.<kind>`. */
+/**  One of the catalogue's kinds, by id; its sentence is the interface's `kinds.<kind>` of the nodes' words. */
 { does: "kind"; kind: string } | { does: "get"; variable: string } | { does: "set"; variable: string } | { does: "call"; function: string };
 
 /**  A node's family, which colours its icon; a get or a set is a `variable`, a call a `call`. */
