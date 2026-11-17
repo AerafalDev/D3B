@@ -31,7 +31,12 @@ export function nodeSentence(
     case "kind":
       break;
   }
-  // The sentence as written, its holes kept: the player's language, else English.
+  // The sentence as written, its holes kept: the player's language, else English. Do N times of 1 is Do once (the
+  // owner, 2026-11-17): "Une seule fois".
+  const once = node.kind === "do_n_times" && !wired.has("times") && (node.inputs["times"] ?? "1") === "1";
+  if (once && node.family !== null) {
+    return [{ text: i18next.t("blueprint.doOnce") }];
+  }
   const key = `node.kinds.${node.kind}.sentence`;
   const raw = i18next.getResource(language, "translation", key) ?? i18next.getResource("en", "translation", key);
   if (node.family === null || typeof raw !== "string") {

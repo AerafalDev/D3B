@@ -28,7 +28,7 @@ pub(crate) use values::Trace;
 use super::Blueprint;
 use super::catalogue::{DONE, FAILED, REASON};
 use crate::game::View;
-use frame::{Call, Chain};
+use frame::{Call, Chain, Slot};
 use program::{Doing, Program, compile};
 use variables::Variables;
 
@@ -87,6 +87,8 @@ pub(crate) struct Run {
     wake: Option<Instant>,
     /// Whether the node at work must start over at the next advance: the character was away, or the run paused.
     again: bool,
+    /// What the nodes that remember keep for the whole run, by graph and node: Do N times', Alternate's, Pick's.
+    kept: HashMap<(usize, usize), Slot>,
 }
 
 /// What the run does after a step.
@@ -129,6 +131,7 @@ impl Run {
             state: State::Ready,
             wake: None,
             again: false,
+            kept: HashMap::new(),
         }
     }
 
@@ -246,6 +249,7 @@ impl Run {
             failed_at: None,
             call,
             variables: &mut self.variables,
+            kept: &mut self.kept,
             trace: &mut self.trace,
             notices: &mut self.notices,
             view,

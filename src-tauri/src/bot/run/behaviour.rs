@@ -121,6 +121,8 @@ pub(crate) enum Fault {
     Refused { variable: String },
     #[error("the {what} is not seen yet")]
     NotSeen { what: String },
+    #[error("the list {pin} is empty")]
+    Empty { pin: String },
 }
 
 /// What a node may use while it runs.
@@ -136,6 +138,7 @@ pub(crate) struct Cx<'a> {
     pub(super) failed_at: Option<usize>,
     pub(super) call: &'a mut Call,
     pub(super) variables: &'a mut Variables,
+    pub(super) kept: &'a mut HashMap<(usize, usize), Slot>,
     pub(super) trace: &'a mut Trace,
     pub(super) notices: &'a mut Vec<Notice>,
     pub(super) view: &'a View,
@@ -197,6 +200,12 @@ impl Cx<'_> {
     /// The node's own counter, kept for this call (the whole run in an event graph), empty at first.
     pub(crate) fn slot(&mut self) -> &mut Slot {
         self.call.slots.entry(self.node).or_default()
+    }
+
+    /// What the node keeps for the whole run, in a function called many times too (the owner, 2026-11-17), empty at
+    /// first.
+    pub(crate) fn kept(&mut self) -> &mut Slot {
+        self.kept.entry((self.graph, self.node)).or_default()
     }
 
     pub(crate) fn now(&self) -> Instant {

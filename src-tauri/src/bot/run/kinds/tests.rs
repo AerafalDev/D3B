@@ -511,6 +511,114 @@ fn for_each_runs_its_body_per_element_of_the_list_read_once_as_it_enters() {
     assert_eq!(told_by(&for_each("[]", "element", 6)).0, ["done"]);
 }
 
+/// Repeat 4 → Sequence: 1 → At most 2 times → "a"; 2 → a Switch on the index, 3 → the At most's Reset when `reset`.
+fn at_most(reset: bool) -> Blueprint {
+    let nodes = format!(
+        r#"{{"id": "rep", "kind": "repeat", "inputs": {{"times": 4}}}}, {{"id": "seq", "kind": "sequence"}},
+           {{"id": "most", "kind": "do_n_times", "inputs": {{"times": 2}}}},
+           {{"id": "sw", "kind": "switch", "options": {{"type": "number", "cases": [3]}}}}, {}"#,
+        said("a")
+    );
+    let mut wires = vec![
+        wire("start", "then", "rep", "run"),
+        wire("rep", "body", "seq", "run"),
+        wire("seq", "then_1", "most", "run"),
+        wire("most", "then", "a", "run"),
+        wire("seq", "then_2", "sw", "run"),
+        wire("rep", "index", "sw", "value"),
+    ];
+    if reset {
+        wires.push(wire("sw", "case_1", "most", "reset"));
+    }
+    graph("", &nodes, &wires.join(", "))
+}
+
+#[test]
+fn do_n_times_goes_on_its_first_times_until_its_reset_rearms_it() {
+    assert_eq!(told_by(&at_most(false)).0, ["a", "a"]);
+    assert_eq!(
+        told_by(&at_most(true)).0,
+        ["a", "a", "a"],
+        "re-armed at the third pass, on at the fourth"
+    );
+}
+
+#[test]
+fn a_nodes_memory_lasts_the_run_in_a_function_called_again() {
+    // Repeat 3 → a call of `f`, whose Do once says "f".
+    let text = r#"{"schema": 2, "id": "m", "name": "M", "version": 1, "graphs": [
+      {"id": "events", "name": "Events",
+       "nodes": [{"id": "start", "kind": "on_start"}, {"id": "rep", "kind": "repeat"}, {"id": "c", "call": "f"}],
+       "wires": [{"from": ["start", "then"], "to": ["rep", "run"]}, {"from": ["rep", "body"], "to": ["c", "run"]}]},
+      {"id": "f", "name": "F", "function": {},
+       "nodes": [{"id": "in", "kind": "entry"}, {"id": "once", "kind": "do_n_times"},
+                 {"id": "say", "kind": "notify", "inputs": {"text": "f"}}],
+       "wires": [{"from": ["in", "then"], "to": ["once", "run"]}, {"from": ["once", "then"], "to": ["say", "run"]}]}]}"#;
+    let blueprint = read(text).unwrap_or_else(|error| panic!("{error}"));
+    assert_eq!(told_by(&blueprint).0, ["f"]);
+}
+
+#[test]
+fn alternate_goes_first_then_second_then_first() {
+    let nodes = format!(
+        r#"{{"id": "rep", "kind": "repeat"}}, {{"id": "alt", "kind": "alternate"}}, {}, {}"#,
+        said("first"),
+        said("second")
+    );
+    let wires = [
+        wire("start", "then", "rep", "run"),
+        wire("rep", "body", "alt", "run"),
+        wire("alt", "first", "first", "run"),
+        wire("alt", "second", "second", "run"),
+    ];
+    assert_eq!(
+        told_by(&graph("", &nodes, &wires.join(", "))).0,
+        ["first", "second", "first"]
+    );
+}
+
+/// Repeat `times` → Pick of the list variable `banks`, its element into a Switch: 2 → "two", else "other".
+fn pick(banks: &str, times: i64) -> Blueprint {
+    let variables =
+        format!(r#"{{"id": "banks", "name": "Banks", "type": "number", "list": true, "default": {banks}}}"#);
+    let nodes = format!(
+        r#"{{"id": "rep", "kind": "repeat", "inputs": {{"times": {times}}}}}, {{"id": "get", "get": "banks"}},
+           {{"id": "pick", "kind": "pick", "options": {{"type": "number"}}}},
+           {{"id": "sw", "kind": "switch", "options": {{"type": "number", "cases": [2]}}}}, {}, {}"#,
+        said("two"),
+        said("other")
+    );
+    let wires = [
+        wire("start", "then", "rep", "run"),
+        wire("rep", "body", "pick", "run"),
+        wire("get", "value", "pick", "list"),
+        wire("pick", "then", "sw", "run"),
+        wire("pick", "element", "sw", "value"),
+        wire("sw", "case_1", "two", "run"),
+        wire("sw", "otherwise", "other", "run"),
+    ];
+    graph(&variables, &nodes, &wires.join(", "))
+}
+
+#[test]
+fn pick_takes_the_least_recently_picked_in_turn_and_an_empty_list_blocks() {
+    assert_eq!(
+        told_by(&pick("[1, 2, 3]", 5)).0,
+        ["other", "two", "other", "other", "two"]
+    );
+    assert_eq!(
+        told_by(&pick("[2, 2, 3]", 4)).0,
+        ["two", "two", "other", "two"],
+        "listed twice, two turns"
+    );
+    let mut empty = run(&pick("[]", 1));
+    empty.advance(Some(&view(1, 200, 0)), &Map1, Instant::now());
+    assert_eq!(
+        failed(&empty),
+        Some(&Reason::Fault(Fault::Empty { pin: "list".to_owned() }))
+    );
+}
+
 /// On start → Switch on numbers of `cases`, its value `value`: case 1 → Notify one, case 2 → Notify two,
 /// Otherwise → Notify other.
 fn switch(cases: &str, value: &str) -> Run {

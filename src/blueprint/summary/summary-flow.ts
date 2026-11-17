@@ -16,8 +16,12 @@ export interface SummaryBranch {
   flow: SummaryFlow;
 }
 
-/** Where a flow goes after its steps: to a step already said, back or forward, or nowhere. */
-export type SummaryJump = { to: string; back: boolean } | null;
+/**
+ * Where a flow goes after its steps: to a step already said, back or forward, or nowhere; or into a node's Reset
+ * (`rearm`, the node's id), which re-arms it and is no step (Do N times'), `to` its number, empty when this flow
+ * numbers it nowhere: another event's, or reached by its Reset alone.
+ */
+export type SummaryJump = { to: string; back: boolean; rearm?: string } | null;
 
 /** A flow read as steps, then where it goes. */
 export interface SummaryFlow {
@@ -46,19 +50,34 @@ function order(a: string, b: string): number {
  */
 export function summaryFlow(graph: GraphView_Serialize, node: string, pin: string): SummaryFlow {
   const byId = new Map(graph.nodes.map((one) => [one.id, one]));
+  // The node and its flow input a flow output leads to.
   const next = (from: string, out: string) => {
     const wire = graph.wires.find((one) => one.from[0] === from && one.from[1] === out);
-    return wire === undefined ? undefined : byId.get(wire.to[0]);
+    const node = wire === undefined ? undefined : byId.get(wire.to[0]);
+    return node === undefined || wire === undefined ? undefined : { node, input: wire.to[1] };
   };
   const numbered = new Map<string, string>();
+  // Each re-arm said, its node numbered once every chain is.
+  const rearms: { jump: { to: string }; node: string }[] = [];
 
   // A chain of steps from `first`, numbered under `prefix` from `start`; its branches are read once every chain above
   // them is.
-  const chain = (first: GraphNode | undefined, prefix: string, from: string, start = 1): SummaryFlow => {
+  const chain = (
+    first: { node: GraphNode; input: string } | undefined,
+    prefix: string,
+    from: string,
+    start = 1,
+  ): SummaryFlow => {
     const steps: SummaryStep[] = [];
-    let current = first;
+    let into = first;
     let at = from;
-    while (current !== undefined) {
+    while (into !== undefined) {
+      const current = into.node;
+      if (into.input === "reset") {
+        const jump = { to: "", back: false, rearm: current.id };
+        rearms.push({ jump, node: current.id });
+        return { steps, jump };
+      }
       const known = numbered.get(current.id);
       if (known !== undefined) {
         return { steps, jump: { to: known, back: order(known, at) <= 0 } };
@@ -68,7 +87,7 @@ export function summaryFlow(graph: GraphView_Serialize, node: string, pin: strin
       steps.push({ label, node: current, branches: [] });
       at = label;
       const on = onPin(current);
-      current = on === undefined ? undefined : next(current.id, on);
+      into = on === undefined ? undefined : next(current.id, on);
     }
     return { steps, jump: null };
   };
@@ -95,5 +114,8 @@ export function summaryFlow(graph: GraphView_Serialize, node: string, pin: strin
   };
   const flow = chain(next(node, pin), "", "0");
   branch(flow);
+  for (const rearm of rearms) {
+    rearm.jump.to = numbered.get(rearm.node) ?? "";
+  }
   return flow;
 }

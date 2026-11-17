@@ -10,8 +10,9 @@ export type PinRole = "titled" | "untitled" | "listed";
 /** The outputs a step goes on by, the first of them its node has: a loop's Completed is what follows it. */
 const ON = ["then", "done", "completed"];
 
-/** The outputs said on one line under their step, by kind of pin, beyond a Switch's cases. */
+/** The outputs said on one line under their step: a Switch's Otherwise beside its cases, Alternate's two. */
 const LISTED = new Set(["otherwise"]);
+const ALTERNATE = new Set(["first", "second"]);
 
 function numbered(pin: string, prefix: string): boolean {
   return new RegExp(`^${prefix}_[1-9][0-9]*$`).test(pin);
@@ -39,6 +40,9 @@ export function pinRole(node: GraphNode, pin: string): PinRole {
     return "untitled";
   }
   if (node.takesCases === true && (numbered(pin, "case") || LISTED.has(pin))) {
+    return "listed";
+  }
+  if (node.does === "kind" && node.kind === "alternate" && ALTERNATE.has(pin)) {
     return "listed";
   }
   return "titled";

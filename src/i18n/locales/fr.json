@@ -281,6 +281,18 @@
         "sentence": "Sortir de la boucle",
         "description": "Arrête le corps de la boucle la plus proche, qui continue par son Terminé."
       },
+      "do_n_times": {
+        "sentence": "Au plus {{times}} fois",
+        "description": "Continue ses N premières fois, puis plus jusqu'à ce que Réarmer le remette à zéro ; sa mémoire dure tout le lancement."
+      },
+      "alternate": {
+        "sentence": "Alterner",
+        "description": "Sort par D'abord, puis par Ensuite, puis par D'abord, à chaque passage ; sa mémoire dure tout le lancement."
+      },
+      "pick": {
+        "sentence": "Prendre le suivant de {{list}}",
+        "description": "Donne l'élément de la liste pris le moins récemment, à tour de rôle tant que la liste ne change pas ; sa mémoire dure tout le lancement."
+      },
       "life_percent": {
         "sentence": "Vie %",
         "description": "La vie, en pourcentage du maximum."
@@ -365,6 +377,9 @@
       "completed": "Terminé",
       "list": "Liste",
       "element": "Élément",
+      "reset": "Réarmer",
+      "first": "D'abord",
+      "second": "Ensuite",
       "job": "Métier"
     }
   },
@@ -693,7 +708,11 @@
       "nowhere": "rien",
       "branchOf": "Si {{pin}} :",
       "outTo": "{{pin}} : aller à {{step}}.",
-      "afterLoop": "Puis (terminé) : aller à {{step}}."
+      "afterLoop": "Puis (terminé) : aller à {{step}}.",
+      "rearm": "Réarmer {{step}}.",
+      "rearmTo": "réarmer {{step}}",
+      "outRearm": "{{pin}} : réarmer {{step}}.",
+      "quoted": "« {{text}} »"
     },
     "view": {
       "label": "Vue du blueprint",
@@ -728,6 +747,7 @@
     "editRefused": "La modification n'est pas enregistrée : le blueprint est relu.",
     "delete": "Supprimer",
     "deleteKey": "Suppr",
+    "doOnce": "Une seule fois",
     "addOutput": "Ajouter une sortie",
     "removePin": "Retirer",
     "pin": {
