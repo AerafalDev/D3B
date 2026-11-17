@@ -272,6 +272,245 @@ fn a_sequences_last_output_runs_in_its_place_so_a_flow_back_into_it_grows_no_sta
     );
 }
 
+/// A blueprint of one event graph: On start `start`, then `nodes` and `wires` as the file writes them, and `variables`.
+fn graph(variables: &str, nodes: &str, wires: &str) -> Blueprint {
+    read(&format!(
+        r#"{{"schema": 2, "id": "l", "name": "L", "version": 1, "variables": [{variables}],
+  "graphs": [{{"id": "events", "name": "Events", "nodes": [{{"id": "start", "kind": "on_start"}}, {nodes}], "wires": [{wires}]}}]}}"#
+    ))
+    .unwrap_or_else(|error| panic!("{error}"))
+}
+
+fn said(text: &str) -> String {
+    format!(r#"{{"id": "{text}", "kind": "notify", "inputs": {{"text": "{text}"}}}}"#)
+}
+
+fn wire(from: &str, pin: &str, to: &str, input: &str) -> String {
+    format!(r#"{{"from": ["{from}", "{pin}"], "to": ["{to}", "{input}"]}}"#)
+}
+
+/// What a run of `blueprint` tells until it stops, and how it stopped.
+fn told_by(blueprint: &Blueprint) -> (Vec<String>, State) {
+    let mut run = run(blueprint);
+    let state = run.advance(Some(&view(1, 200, 0)), &Map1, Instant::now()).clone();
+    (told(&mut run), state)
+}
+
+/// Repeat `times` → its body a Switch on its index, case 2 → "two", Otherwise → "other"; Completed → "done".
+fn repeat(times: i64) -> Blueprint {
+    let nodes = format!(
+        r#"{{"id": "rep", "kind": "repeat", "inputs": {{"times": {times}}}}},
+           {{"id": "sw", "kind": "switch", "options": {{"type": "number", "cases": [2]}}}}, {}, {}, {}"#,
+        said("two"),
+        said("other"),
+        said("done")
+    );
+    let wires = [
+        wire("start", "then", "rep", "run"),
+        wire("rep", "body", "sw", "run"),
+        wire("rep", "index", "sw", "value"),
+        wire("sw", "case_1", "two", "run"),
+        wire("sw", "otherwise", "other", "run"),
+        wire("rep", "completed", "done", "run"),
+    ];
+    graph("", &nodes, &wires.join(", "))
+}
+
+#[test]
+fn repeat_runs_its_body_times_its_index_from_one_then_completed_and_none_for_zero() {
+    let (said, state) = told_by(&repeat(3));
+    assert_eq!(
+        (said, state),
+        (
+            vec!["other".into(), "two".into(), "other".into(), "done".into()],
+            State::Finished
+        )
+    );
+    assert_eq!(told_by(&repeat(0)).0, ["done"]);
+}
+
+#[test]
+fn leave_the_loop_ends_its_body_through_a_sequence_and_goes_on_out_of_completed() {
+    let nodes = format!(
+        r#"{{"id": "rep", "kind": "repeat", "inputs": {{"times": 5}}}}, {{"id": "seq", "kind": "sequence"}},
+           {{"id": "out", "kind": "leave_loop"}}, {}, {}"#,
+        said("a"),
+        said("done")
+    );
+    let wires = [
+        wire("start", "then", "rep", "run"),
+        wire("rep", "body", "seq", "run"),
+        wire("seq", "then_1", "a", "run"),
+        wire("seq", "then_2", "out", "run"),
+        wire("rep", "completed", "done", "run"),
+    ];
+    assert_eq!(told_by(&graph("", &nodes, &wires.join(", "))).0, ["a", "done"]);
+}
+
+#[test]
+fn while_reads_its_condition_before_each_pass_and_one_that_never_waits_blocks() {
+    // n from 0: while 2 ≥ n, n + 1 then "a"; three passes, then "done".
+    let variables = r#"{"id": "n", "name": "N", "type": "number", "default": 0}"#;
+    let nodes = format!(
+        r#"{{"id": "w", "kind": "while"}}, {{"id": "ge", "kind": "greater_or_equal", "inputs": {{"a": 2}}}},
+           {{"id": "get", "get": "n"}}, {{"id": "plus", "kind": "add", "inputs": {{"b": 1}}}}, {{"id": "set", "set": "n"}},
+           {}, {}"#,
+        said("a"),
+        said("done")
+    );
+    let wires = [
+        wire("start", "then", "w", "run"),
+        wire("get", "value", "ge", "b"),
+        wire("ge", "value", "w", "condition"),
+        wire("w", "body", "set", "run"),
+        wire("get", "value", "plus", "a"),
+        wire("plus", "value", "set", "value"),
+        wire("set", "then", "a", "run"),
+        wire("w", "completed", "done", "run"),
+    ];
+    assert_eq!(
+        told_by(&graph(variables, &nodes, &wires.join(", "))).0,
+        ["a", "a", "a", "done"]
+    );
+    let looping = |condition: bool| {
+        let nodes = format!(
+            r#"{{"id": "w", "kind": "while", "inputs": {{"condition": {condition}}}}}, {}, {}"#,
+            said("a"),
+            said("done")
+        );
+        let wires = [
+            wire("start", "then", "w", "run"),
+            wire("w", "body", "a", "run"),
+            wire("w", "completed", "done", "run"),
+        ];
+        graph("", &nodes, &wires.join(", "))
+    };
+    assert_eq!(told_by(&looping(false)).0, ["done"]);
+    let mut forever = run(&looping(true));
+    forever.advance(Some(&view(1, 200, 0)), &Map1, Instant::now());
+    assert_eq!(failed(&forever), Some(&Reason::WithoutPause));
+}
+
+#[test]
+fn leave_the_loop_ends_the_nearest_loop_only() {
+    // Repeat 2 → Repeat 5 → Sequence: "in", then Leave; the inner Completed → "inner"; the outer → "done".
+    let nodes = format!(
+        r#"{{"id": "outer", "kind": "repeat", "inputs": {{"times": 2}}}}, {{"id": "inner", "kind": "repeat", "inputs": {{"times": 5}}}},
+           {{"id": "seq", "kind": "sequence"}}, {{"id": "out", "kind": "leave_loop"}}, {}, {}, {}"#,
+        said("in"),
+        said("between"),
+        said("done")
+    );
+    let wires = [
+        wire("start", "then", "outer", "run"),
+        wire("outer", "body", "inner", "run"),
+        wire("inner", "body", "seq", "run"),
+        wire("seq", "then_1", "in", "run"),
+        wire("seq", "then_2", "out", "run"),
+        wire("inner", "completed", "between", "run"),
+        wire("outer", "completed", "done", "run"),
+    ];
+    let said_all = told_by(&graph("", &nodes, &wires.join(", "))).0;
+    assert_eq!(said_all, ["in", "between", "in", "between", "done"]);
+}
+
+#[test]
+fn repeat_reads_its_count_once_and_none_below_zero() {
+    // n from 2: Repeat n, its body setting n to 10, then "a": two passes.
+    let variables = r#"{"id": "n", "name": "N", "type": "number", "default": 2}"#;
+    let nodes = format!(
+        r#"{{"id": "rep", "kind": "repeat"}}, {{"id": "get", "get": "n"}},
+           {{"id": "set", "set": "n", "inputs": {{"value": 10}}}}, {}, {}"#,
+        said("a"),
+        said("done")
+    );
+    let wires = [
+        wire("start", "then", "rep", "run"),
+        wire("get", "value", "rep", "times"),
+        wire("rep", "body", "set", "run"),
+        wire("set", "then", "a", "run"),
+        wire("rep", "completed", "done", "run"),
+    ];
+    assert_eq!(
+        told_by(&graph(variables, &nodes, &wires.join(", "))).0,
+        ["a", "a", "done"]
+    );
+    assert_eq!(told_by(&repeat(-2)).0, ["done"]);
+}
+
+#[test]
+fn an_interrupted_body_goes_on_with_its_index() {
+    // Repeat 3 → Wait 60 s → a Switch on its index: 2 → "two", else "other".
+    let nodes = format!(
+        r#"{{"id": "rep", "kind": "repeat", "inputs": {{"times": 3}}}}, {{"id": "w", "kind": "wait"}},
+           {{"id": "sw", "kind": "switch", "options": {{"type": "number", "cases": [2]}}}}, {}, {}"#,
+        said("two"),
+        said("other")
+    );
+    let wires = [
+        wire("start", "then", "rep", "run"),
+        wire("rep", "body", "w", "run"),
+        wire("w", "then", "sw", "run"),
+        wire("rep", "index", "sw", "value"),
+        wire("sw", "case_1", "two", "run"),
+        wire("sw", "otherwise", "other", "run"),
+    ];
+    let mut run = run(&graph("", &nodes, &wires.join(", ")));
+    let (seen, at) = (view(1, 200, 0), Instant::now());
+    let second = |seconds| at + Duration::from_secs(seconds);
+    run.advance(Some(&seen), &Map1, at);
+    run.advance(Some(&seen), &Map1, second(60));
+    assert_eq!(
+        run.advance(None, &Map1, second(90)),
+        &State::Running,
+        "away during the second pass"
+    );
+    run.advance(Some(&seen), &Map1, second(100));
+    run.advance(Some(&seen), &Map1, second(160));
+    assert_eq!(run.advance(Some(&seen), &Map1, second(220)), &State::Finished);
+    assert_eq!(told(&mut run), ["other", "two", "other"]);
+}
+
+/// For each of the list variable `nums`, its body a Switch on its `by` output (`case` → "hit", Otherwise → "other")
+/// then a Set of `nums` to an empty list; Completed → "done".
+fn for_each(nums: &str, by: &str, case: i64) -> Blueprint {
+    let variables = format!(r#"{{"id": "nums", "name": "Nums", "type": "number", "list": true, "default": {nums}}}"#);
+    let nodes = format!(
+        r#"{{"id": "each", "kind": "for_each", "options": {{"type": "number"}}}}, {{"id": "get", "get": "nums"}},
+           {{"id": "sw", "kind": "switch", "options": {{"type": "number", "cases": [{case}]}}}},
+           {{"id": "set", "set": "nums", "inputs": {{"value": []}}}}, {}, {}, {}"#,
+        said("hit"),
+        said("other"),
+        said("done")
+    );
+    let wires = [
+        wire("start", "then", "each", "run"),
+        wire("get", "value", "each", "list"),
+        wire("each", "body", "sw", "run"),
+        wire("each", by, "sw", "value"),
+        wire("sw", "case_1", "hit", "run"),
+        wire("sw", "otherwise", "other", "run"),
+        wire("hit", "done", "set", "run"),
+        wire("other", "done", "set", "run"),
+        wire("each", "completed", "done", "run"),
+    ];
+    graph(&variables, &nodes, &wires.join(", "))
+}
+
+#[test]
+fn for_each_runs_its_body_per_element_of_the_list_read_once_as_it_enters() {
+    assert_eq!(
+        told_by(&for_each("[5, 6, 7]", "element", 6)).0,
+        ["other", "hit", "other", "done"]
+    );
+    assert_eq!(
+        told_by(&for_each("[5, 6, 7]", "index", 3)).0,
+        ["other", "other", "hit", "done"],
+        "indexes from 1"
+    );
+    assert_eq!(told_by(&for_each("[]", "element", 6)).0, ["done"]);
+}
+
 /// On start → Switch on numbers of `cases`, its value `value`: case 1 → Notify one, case 2 → Notify two,
 /// Otherwise → Notify other.
 fn switch(cases: &str, value: &str) -> Run {

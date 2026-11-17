@@ -493,7 +493,11 @@ flowchart LR
   the Summary by pin roles, after its mock-up (done in code: `summary-pins.ts`, a Switch's outputs said on one line,
   an unwired one "→ rien", a function's named exit a branch "Si Plein :" by its name, which the IPC now gives a call
   (`NodeView.exits`) and its node draws too; an output of a kind the table does not know yet titled by its label);
-  the loops; the kinds that remember; the waits and stops (Wait until,
+  the loops (done in code: `bot/run/kinds/loops.rs`, a loop's chain the one Leave the loop ends, its pass counted in
+  its slot, so an interrupted body keeps its index; Repeat's count read once as the flow enters, as For each's list
+  (settled alone); the problem found by following the flow from where it starts, every output but a loop's `body`, a
+  function's on its own; a body's title by its kind, "À chaque tour :", and a
+  jump out of a loop's Completed "Puis (terminé) : aller à 1."); the kinds that remember; the waits and stops (Wait until,
   Retry, Block, Pause) with a run on the captures. Each kind replaces the tests' own (`test_sequence`, `test_switch`,
   `test_for_each`).
 - **Measured** (nothing acts in the game before step 4): the picker's "boucle" finding the loops; "+" and "Remove"

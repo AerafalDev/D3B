@@ -5,6 +5,7 @@ mod actions;
 mod events;
 mod flow;
 mod functions;
+mod loops;
 mod queries;
 mod values;
 mod waits;
@@ -30,6 +31,10 @@ pub(super) fn behaviour(kind: &str) -> Option<&'static dyn Behaviour> {
         "finish" => &flow::Finish,
         "sequence" => &flow::Sequence,
         "switch" => &flow::Switch,
+        "repeat" => &loops::Repeat,
+        "while" => &loops::While,
+        "for_each" => &loops::ForEach,
+        "leave_loop" => &loops::Leave,
         "life_percent" => &queries::LifePercent,
         "pods_percent" => &queries::PodsPercent,
         "job_resources" => &queries::JobResources,

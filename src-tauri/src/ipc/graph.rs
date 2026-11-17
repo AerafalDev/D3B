@@ -73,6 +73,7 @@ pub enum ProblemKind {
     NoSuchEvent,
     NoSuchExit,
     NotPure,
+    LeaveOutsideLoop,
 }
 
 impl From<&Problem> for ProblemView {
@@ -151,6 +152,7 @@ impl From<&Problem> for ProblemView {
             Problem::NoSuchEvent { graph, node, event } => (K::NoSuchEvent, text(graph), text(node), None, text(event)),
             Problem::NoSuchExit { graph, node, exit } => (K::NoSuchExit, text(graph), text(node), None, text(exit)),
             Problem::NotPure { graph, node } => (K::NotPure, text(graph), text(node), None, None),
+            Problem::LeaveOutsideLoop { graph, node } => (K::LeaveOutsideLoop, text(graph), text(node), None, None),
         };
         Self {
             kind,
@@ -788,7 +790,7 @@ mod tests {
         if let Some(zone) = zone {
             zone.list = true;
         }
-        let each = r#"{"id": "each", "kind": "test_for_each"}"#;
+        let each = r#"{"id": "each", "kind": "for_each"}"#;
         blueprint.graphs[0]
             .nodes
             .push(serde_json::from_str(each).unwrap_or_else(|error| panic!("{error}")));
@@ -1200,6 +1202,10 @@ mod tests {
                 (K::NotPure, some("g"), some("n"), None, None),
             ),
             (
+                Problem::LeaveOutsideLoop { graph: g(), node: n() },
+                (K::LeaveOutsideLoop, some("g"), some("n"), None, None),
+            ),
+            (
                 Problem::DefaultRangesOverlap { variable: x() },
                 (K::DefaultRangesOverlap, None, None, None, some("x")),
             ),
@@ -1273,7 +1279,7 @@ mod tests {
                 "{problem:?}: a kind's name twice"
             );
         }
-        assert_eq!(kinds.len(), 37, "every problem");
+        assert_eq!(kinds.len(), 38, "every problem");
     }
 
     #[test]
