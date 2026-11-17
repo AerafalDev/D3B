@@ -597,9 +597,8 @@ mod tests {
     fn a_case_of_another_type_or_given_twice_is_a_problem() {
         let switch = |options: &str| {
             after(|blueprint| {
-                let text = format!(
-                    r#"{{"id": "sw", "kind": "test_switch", "options": {options}, "inputs": {{"value": 24}}}}"#
-                );
+                let text =
+                    format!(r#"{{"id": "sw", "kind": "switch", "options": {options}, "inputs": {{"value": 24}}}}"#);
                 blueprint.graphs[0].nodes.push(node(&text));
             })
         };

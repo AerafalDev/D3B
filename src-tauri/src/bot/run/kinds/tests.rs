@@ -206,6 +206,105 @@ fn notify_tells_its_text_and_goes_on() {
     assert_eq!(looped.notices().len(), crate::bot::run::Notice::KEPT);
 }
 
+fn told(run: &mut Run) -> Vec<String> {
+    run.notices().into_iter().map(|notice| notice.text).collect()
+}
+
+/// On start → a Sequence of three: 1 → Notify a; 2 → Wait 60 s → Notify b; 3 → Notify c → Finish.
+fn sequence() -> Run {
+    run(&read(
+        r#"{"schema": 2, "id": "s", "name": "S", "version": 1, "graphs": [{"id": "events", "name": "Events",
+  "nodes": [{"id": "start", "kind": "on_start"}, {"id": "seq", "kind": "sequence", "options": {"count": 3}},
+            {"id": "a", "kind": "notify", "inputs": {"text": "a"}}, {"id": "w", "kind": "wait"},
+            {"id": "b", "kind": "notify", "inputs": {"text": "b"}}, {"id": "c", "kind": "notify", "inputs": {"text": "c"}},
+            {"id": "end", "kind": "finish"}],
+  "wires": [{"from": ["start", "then"], "to": ["seq", "run"]}, {"from": ["seq", "then_1"], "to": ["a", "run"]},
+            {"from": ["seq", "then_2"], "to": ["w", "run"]}, {"from": ["w", "then"], "to": ["b", "run"]},
+            {"from": ["seq", "then_3"], "to": ["c", "run"]}, {"from": ["c", "done"], "to": ["end", "run"]}]}]}"#,
+    )
+    .unwrap_or_else(|error| panic!("{error}")))
+}
+
+#[test]
+fn a_sequence_runs_each_output_once_the_one_before_ended_its_last_the_rest_of_the_flow() {
+    let at = Instant::now();
+    let seen = view(1, 200, 0);
+    let mut seq = sequence();
+    assert_eq!(seq.advance(Some(&seen), &Map1, at), &State::Running);
+    assert_eq!(told(&mut seq), ["a"], "the second output waits before c");
+    let later = at + Duration::from_secs(60);
+    assert_eq!(
+        seq.advance(Some(&seen), &Map1, later),
+        &State::Finished,
+        "the last output goes on to Finish"
+    );
+    assert_eq!(told(&mut seq), ["b", "c"]);
+}
+
+/// On start → a Sequence of two: 1 → Notify a; 2 → Wait 60 s → back into the Sequence.
+#[test]
+fn a_sequences_last_output_runs_in_its_place_so_a_flow_back_into_it_grows_no_stack() {
+    let mut looped = run(&read(
+        r#"{"schema": 2, "id": "s", "name": "S", "version": 1, "graphs": [{"id": "events", "name": "Events",
+  "nodes": [{"id": "start", "kind": "on_start"}, {"id": "seq", "kind": "sequence"},
+            {"id": "a", "kind": "notify", "inputs": {"text": "a"}}, {"id": "w", "kind": "wait"}],
+  "wires": [{"from": ["start", "then"], "to": ["seq", "run"]}, {"from": ["seq", "then_1"], "to": ["a", "run"]},
+            {"from": ["seq", "then_2"], "to": ["w", "run"]}, {"from": ["w", "then"], "to": ["seq", "run"]}]}]}"#,
+    )
+    .unwrap_or_else(|error| panic!("{error}")));
+    let seen = view(1, 200, 0);
+    let at = Instant::now();
+    let mut depths = Vec::new();
+    for turn in 0..3 {
+        looped.advance(Some(&seen), &Map1, at + Duration::from_secs(60 * turn));
+        let chains = looped
+            .flows
+            .last()
+            .and_then(|flow| flow.last())
+            .map(|call| call.chains.len());
+        depths.push(chains);
+    }
+    assert_eq!(told(&mut looped), ["a", "a", "a"]);
+    assert_eq!(
+        depths,
+        [Some(1); 3],
+        "the wait in the last output is on the call's own chain"
+    );
+}
+
+/// On start → Switch on numbers of `cases`, its value `value`: case 1 → Notify one, case 2 → Notify two,
+/// Otherwise → Notify other.
+fn switch(cases: &str, value: &str) -> Run {
+    run(&read(&format!(
+        r#"{{"schema": 2, "id": "w", "name": "W", "version": 1, "graphs": [{{"id": "events", "name": "Events",
+  "nodes": [{{"id": "start", "kind": "on_start"}},
+            {{"id": "sw", "kind": "switch", "options": {{"type": "number", "cases": {cases}}}, "inputs": {{"value": {value}}}}},
+            {{"id": "one", "kind": "notify", "inputs": {{"text": "one"}}}}, {{"id": "two", "kind": "notify", "inputs": {{"text": "two"}}}},
+            {{"id": "other", "kind": "notify", "inputs": {{"text": "other"}}}}],
+  "wires": [{{"from": ["start", "then"], "to": ["sw", "run"]}}, {{"from": ["sw", "case_1"], "to": ["one", "run"]}},
+            {{"from": ["sw", "case_2"], "to": ["two", "run"]}}, {{"from": ["sw", "otherwise"], "to": ["other", "run"]}}]}}]}}"#
+    ))
+    .unwrap_or_else(|error| panic!("{error}")))
+}
+
+#[test]
+fn a_switch_follows_the_case_its_value_is_or_otherwise() {
+    let at = Instant::now();
+    for (cases, value, said) in [
+        ("[24, 28]", "28", "two"),
+        ("[24, 28]", "24", "one"),
+        ("[24, 28]", "5", "other"),
+    ] {
+        let mut sw = switch(cases, value);
+        assert_eq!(
+            sw.advance(Some(&view(1, 200, 0)), &Map1, at),
+            &State::Finished,
+            "{value}"
+        );
+        assert_eq!(told(&mut sw), [said], "{value}");
+    }
+}
+
 /// On start → If [`≥` of its `options`, `a` from N minutes of `minutes`, `b` typed] → True: Finish.
 fn at_least(options: &str, minutes: i64, b: &str) -> Run {
     run(&read(&format!(

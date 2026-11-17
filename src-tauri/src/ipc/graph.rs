@@ -353,6 +353,37 @@ pub struct NodeView {
     #[serde(skip_serializing_if = "Vec::is_empty")]
     #[specta(optional)]
     pub types: Vec<String>,
+    /// The pins "+" adds, Sequence's outputs; omitted for a kind that numbers none.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[specta(optional)]
+    pub adds: Option<AddsView>,
+}
+
+/// The numbered pins a node's "+" adds: `<pin>_1` to `<pin>_<count>`, at least `least` of them.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Type)]
+pub struct AddsView {
+    pub pin: String,
+    pub side: PinSide,
+    pub least: u8,
+}
+
+/// The pins `does`'s kind numbers, if any.
+fn adds(does: &Does) -> Option<AddsView> {
+    let Does::Kind(kind) = does else {
+        return None;
+    };
+    bot::kind(&kind.0)?.takes.iter().find_map(|takes| match *takes {
+        bot::Takes::Count { pin, least } => Some(AddsView {
+            pin: pin.id.to_owned(),
+            side: if pin.side == bot::Side::In {
+                PinSide::In
+            } else {
+                PinSide::Out
+            },
+            least,
+        }),
+        _ => None,
+    })
 }
 
 /// A pin of a node.
@@ -599,6 +630,7 @@ pub(crate) fn graphs(blueprint: &Blueprint) -> BlueprintGraphs {
                 pins: pin_views(pins, &node.does),
                 options: (&node.options).into(),
                 types: kind_types(&node.does),
+                adds: adds(&node.does),
                 inputs: node
                     .inputs
                     .iter()

@@ -173,6 +173,16 @@ impl Cx<'_> {
         self.program.graphs[self.graph].nodes[self.node].named.clone()
     }
 
+    /// The node's flow outputs, in its pins' order.
+    pub(crate) fn outs(&self) -> &[String] {
+        &self.program.graphs[self.graph].nodes[self.node].outs
+    }
+
+    /// The node's cases, Switch's.
+    pub(crate) fn cases(&self) -> &[Value] {
+        &self.program.graphs[self.graph].nodes[self.node].cases
+    }
+
     /// The node's value inputs, in its pins' order.
     pub(crate) fn inputs(&self) -> Vec<String> {
         let code = &self.program.graphs[self.graph].nodes[self.node];
