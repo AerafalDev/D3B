@@ -68,6 +68,10 @@ pub enum ProblemKind {
     InputFedTwice,
     InputWithoutValue,
     EventTwice,
+    OwnEventTwice,
+    NoSuchEvent,
+    NoSuchExit,
+    NotPure,
 }
 
 impl From<&Problem> for ProblemView {
@@ -141,6 +145,10 @@ impl From<&Problem> for ProblemView {
                 (K::InputWithoutValue, text(graph), text(node), text(pin), None)
             }
             Problem::EventTwice { graph, node } => (K::EventTwice, text(graph), text(node), None, None),
+            Problem::OwnEventTwice { event } => (K::OwnEventTwice, None, None, None, text(event)),
+            Problem::NoSuchEvent { graph, node, event } => (K::NoSuchEvent, text(graph), text(node), None, text(event)),
+            Problem::NoSuchExit { graph, node, exit } => (K::NoSuchExit, text(graph), text(node), None, text(exit)),
+            Problem::NotPure { graph, node } => (K::NotPure, text(graph), text(node), None, None),
         };
         Self {
             kind,

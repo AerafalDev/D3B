@@ -57,6 +57,9 @@ pub(crate) struct Blueprint {
     pub(crate) based_on: Option<BasedOn>,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub(crate) variables: Vec<Variable>,
+    /// Events of the player's own (ADR 0016), each a node of the event graph, fired by Trigger at once or by a timer.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub(crate) events: Vec<OwnEvent>,
     pub(crate) graphs: Vec<Graph>,
     #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
     pub(crate) layout: Layout,
@@ -95,6 +98,33 @@ pub(crate) struct Signature {
     pub(crate) inputs: Vec<Parameter>,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub(crate) outputs: Vec<Parameter>,
+    /// Exits beside Done and Failed ("Full", "Empty"), each a flow output of its calls, by its id.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub(crate) exits: Vec<NamedExit>,
+    /// Its own variables, from their defaults at each call and gone at its return.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub(crate) locals: Vec<Variable>,
+    /// It computes values without flow, actions or waits, so its call is a value node, read when used.
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    pub(crate) pure: bool,
+}
+
+/// A named exit of a function.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub(crate) struct NamedExit {
+    pub(crate) id: Id,
+    pub(crate) name: String,
+}
+
+/// An event of the player's own: its id, its name and the inputs its node gives, which Trigger passes.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub(crate) struct OwnEvent {
+    pub(crate) id: Id,
+    pub(crate) name: String,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub(crate) inputs: Vec<Parameter>,
 }
 
 /// One of a function's inputs or outputs.
@@ -357,6 +387,26 @@ mod tests {
             let text = format!(r#"{{"id": "n1", "kind": "k", "options": {refused}}}"#);
             assert!(serde_json::from_str::<Node>(&text).is_err(), "{refused}");
         }
+    }
+
+    #[test]
+    fn a_blueprint_reads_its_own_events_and_a_functions_exits_locals_and_purity() {
+        let text = r#"{"schema": 1, "id": "b", "name": "B", "version": 1,
+          "events": [{"id": "empty", "name": "Zone empty", "inputs": [{"id": "zone", "name": "Zone", "type": "zone"}]}],
+          "graphs": [{"id": "full", "name": "Full", "function": {"exits": [{"id": "full", "name": "Full"}],
+            "locals": [{"id": "tries", "name": "Tries", "type": "number", "default": 0}], "pure": true}}]}"#;
+        let blueprint: Blueprint = serde_json::from_str(text).unwrap_or_else(|error| panic!("{error}"));
+        assert_eq!(blueprint.events[0].inputs[0].id, id("zone"));
+        let signature = blueprint.graphs[0]
+            .function
+            .clone()
+            .unwrap_or_else(|| panic!("a function"));
+        assert!(signature.pure && signature.exits[0].id == id("full") && signature.locals[0].id == id("tries"));
+        let written = serde_json::to_string(&Signature {
+            pure: false,
+            ..signature
+        });
+        assert!(written.is_ok_and(|it| !it.contains("pure")), "not pure, not written");
     }
 
     #[test]

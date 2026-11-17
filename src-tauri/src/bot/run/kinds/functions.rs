@@ -35,6 +35,31 @@ impl Behaviour for ReturnDone {
     }
 }
 
+/// By a named exit: the call goes on out of that exit, with the function's outputs, as Done does.
+pub(super) struct ReturnExit;
+
+impl Behaviour for ReturnExit {
+    fn run(&self, cx: &mut Cx<'_>, _: Resume) -> Result<Step, Fault> {
+        // A blueprint without problems names an exit of its function here.
+        let exit = cx.named().ok_or(Fault::NoFlow)?;
+        let mut outputs = BTreeMap::new();
+        for pin in cx.inputs() {
+            let value = cx.input(&pin)?;
+            outputs.insert(pin, value);
+        }
+        Ok(Step::Return {
+            exit: Exit::Named(exit),
+            outputs,
+        })
+    }
+}
+
+/// A pure function's result: its outputs, read when its call is. The engine reads no pure call yet, so a blueprint
+/// calling one is refused (`program`), and this has nothing to do.
+pub(super) struct PureResult;
+
+impl Behaviour for PureResult {}
+
 /// Failed: the call goes on out of its Failed with this reason, or blocks the character.
 pub(super) struct ReturnFailed;
 

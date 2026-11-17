@@ -292,6 +292,18 @@
       "return_failed": {
         "sentence": "Retour : échec",
         "description": "La fonction finit en échec, avec la raison."
+      },
+      "my_event": {
+        "sentence": "Quand mon événement arrive",
+        "description": "Démarre quand Déclencher lance cet événement à moi, avec ses entrées."
+      },
+      "return_exit": {
+        "sentence": "Retour par une sortie",
+        "description": "La fonction finit par une de ses sorties nommées, avec ses sorties."
+      },
+      "result": {
+        "sentence": "Résultat",
+        "description": "Ce que rend une fonction pure : ses sorties."
       }
     },
     "pins": {
@@ -571,7 +583,11 @@
       "outputWiredTwice": "La sortie {{pin}} part vers deux suites.",
       "inputFedTwice": "L'entrée {{pin}} reçoit deux valeurs.",
       "inputWithoutValue": "L'entrée {{pin}} n'a pas de valeur.",
-      "eventTwice": "Cet événement est déjà dans le blueprint."
+      "eventTwice": "Cet événement est déjà dans le blueprint.",
+      "ownEventTwice": "Deux événements s'appellent « {{subject}} ».",
+      "noSuchEvent": "Ce nœud nomme l'événement {{subject}}, que ce blueprint n'a pas.",
+      "noSuchExit": "Ce nœud sort par {{subject}}, que cette fonction n'a pas.",
+      "notPure": "Une fonction pure ne calcule que des valeurs : ce nœud a un flux."
     },
     "type": {
       "bool": "Oui / non",

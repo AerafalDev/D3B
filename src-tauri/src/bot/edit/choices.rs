@@ -6,11 +6,12 @@
 use std::collections::HashSet;
 
 use super::super::blueprint::{Blueprint, Does, Graph, Id};
-use super::super::catalogue::{Family, KINDS};
+use super::super::catalogue::{Family, KINDS, Takes};
 
 /// What may be added to `graph`, in the catalogue's order, then the gets and sets, then the calls.
 pub(crate) fn choices(blueprint: &Blueprint, graph: &Graph) -> Vec<Does> {
     let in_function = graph.function.is_some();
+    let pure = graph.function.as_ref().is_some_and(|signature| signature.pure);
     // Held once at most across the blueprint's event graphs, as `wiring::once_twice` counts them.
     let held: HashSet<&str> = blueprint
         .graphs
@@ -30,7 +31,10 @@ pub(crate) fn choices(blueprint: &Blueprint, graph: &Graph) -> Vec<Does> {
         .iter()
         .filter(|kind| match kind.family {
             Family::Event if in_function => false,
+            // An event of mine and a return by an exit name theirs: the editor adds them from My Blueprint ((15), (16)).
+            _ if kind.takes.iter().any(|it| matches!(it, Takes::Event | Takes::Exit)) => false,
             Family::Event => !(kind.event.is_some_and(|role| role.once) && held.contains(kind.id)),
+            Family::Function if kind.id == "result" => pure,
             Family::Function => in_function && !(kind.id == "entry" && has_entry),
             Family::Action | Family::Flow | Family::Query => true,
         })

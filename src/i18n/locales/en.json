@@ -292,6 +292,18 @@
       "return_failed": {
         "sentence": "Return: failed",
         "description": "The function ends Failed, with the reason."
+      },
+      "my_event": {
+        "sentence": "When my event happens",
+        "description": "Starts when Trigger fires this event of mine, with its inputs."
+      },
+      "return_exit": {
+        "sentence": "Return by an exit",
+        "description": "The function ends by one of its named exits, with its outputs."
+      },
+      "result": {
+        "sentence": "Result",
+        "description": "What a pure function gives back: its outputs."
       }
     },
     "pins": {
@@ -571,7 +583,11 @@
       "outputWiredTwice": "The output {{pin}} leads to two next steps.",
       "inputFedTwice": "The input {{pin}} gets two values.",
       "inputWithoutValue": "The input {{pin}} has no value.",
-      "eventTwice": "This event is already in the blueprint."
+      "eventTwice": "This event is already in the blueprint.",
+      "ownEventTwice": "Two events are named \"{{subject}}\".",
+      "noSuchEvent": "This node names the event {{subject}}, which this blueprint does not have.",
+      "noSuchExit": "This node returns by {{subject}}, which this function does not have.",
+      "notPure": "A pure function computes values only: this node has a flow."
     },
     "type": {
       "bool": "Yes / no",

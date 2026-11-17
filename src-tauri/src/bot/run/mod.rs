@@ -375,6 +375,12 @@ impl Run {
         };
         let mut call = Call::new(graph, Some(node), entry);
         call.outputs = inputs.into_iter().map(|(pin, value)| ((entry, pin), value)).collect();
+        // A local without default has none until set: read before, it cannot be had.
+        let locals = self.program.graphs[graph].locals.iter();
+        call.locals = locals
+            .filter(|it| !it.default.is_null())
+            .map(|it| (it.id.0.clone(), it.default.clone()))
+            .collect();
         flow.push(call);
         Then::Runs
     }
@@ -445,7 +451,18 @@ impl Run {
 /// Set: the variable takes its input's value, refused when out of its bounds, and gives it on.
 fn set(cx: &mut Cx<'_>, variable: &str) -> Result<Step, Fault> {
     let value = cx.input("value")?;
-    cx.variables.set(variable, value.clone())?;
+    let local = cx.program.graphs[cx.graph].locals.iter().find(|it| it.id.0 == variable);
+    match local {
+        Some(local) if !local.accepts(&value) => {
+            return Err(Fault::Refused {
+                variable: variable.to_owned(),
+            });
+        }
+        Some(_) => {
+            cx.call.locals.insert(variable.to_owned(), value.clone());
+        }
+        None => cx.variables.set(variable, value.clone())?,
+    }
     cx.give("value", value);
     Ok(Step::go("then"))
 }

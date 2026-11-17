@@ -4,9 +4,10 @@
 use serde_json::Value;
 
 use super::blueprint::{Blueprint, Does, End, Graph, Node, Parameter};
-use super::blueprint::{Id, Options};
+use super::blueprint::{Id, Options, Signature};
 use super::catalogue::{self, Carries, DONE, FAILED, Pin, REASON, RUN, Side, THEN, Takes};
 use super::variable::Type;
+use super::variable::Variable;
 
 /// A pin of a node of a blueprint.
 #[derive(Debug, Clone, PartialEq)]
@@ -71,15 +72,24 @@ pub(crate) fn pins(blueprint: &Blueprint, graph: &Graph, node: &Node) -> Option<
             let signature = graph.function.as_ref();
             let parameters = match kind.id {
                 "entry" => signature.map(|signature| (&signature.inputs, Side::Out)),
-                "return_done" => signature.map(|signature| (&signature.outputs, Side::In)),
+                "return_done" | "return_exit" | "result" => signature.map(|signature| (&signature.outputs, Side::In)),
+                "my_event" => {
+                    let named = node.options.event.as_ref();
+                    let event = named.and_then(|id| blueprint.events.iter().find(|it| &it.id == id));
+                    event.map(|event| (&event.inputs, Side::Out))
+                }
                 _ => None,
             };
+            // A pure function's entry starts no flow.
+            if kind.id == "entry" && signature.is_some_and(|signature| signature.pure) {
+                pins.retain(|pin| pin.carries != Carries::Exec);
+            }
             if let Some((parameters, side)) = parameters {
                 pins.extend(usable(parameters).map(|it| value(&it.id.0, side, Carries::Value(it.of_type()))));
             }
         }
         Does::Get(variable) | Does::Set(variable) => {
-            let variable = blueprint.variables.iter().find(|known| &known.id == variable)?;
+            let variable = variable_of(blueprint, graph, variable)?;
             let carries = Carries::Value(variable.of_type());
             pins = vec![value("value", Side::Out, carries)];
             if matches!(node.does, Does::Set(_)) {
@@ -89,13 +99,38 @@ pub(crate) fn pins(blueprint: &Blueprint, graph: &Graph, node: &Node) -> Option<
         Does::Call(function) => {
             let graph = blueprint.graphs.iter().find(|known| &known.id == function)?;
             let signature = graph.function.as_ref()?;
-            pins = [RUN, DONE, FAILED, REASON].iter().map(NodePin::from).collect();
+            // A pure function's call has no flow: a value node, read when used.
+            pins = if signature.pure {
+                Vec::new()
+            } else {
+                [RUN, DONE, FAILED, REASON].iter().map(NodePin::from).collect()
+            };
+            if !signature.pure {
+                pins.extend(exits(signature).map(|it| value(&it.0, Side::Out, Carries::Exec)));
+            }
             let typed = |it: &Parameter| Carries::Value(it.of_type());
             pins.extend(usable(&signature.inputs).map(|it| value(&it.id.0, Side::In, typed(it))));
             pins.extend(usable(&signature.outputs).map(|it| value(&it.id.0, Side::Out, typed(it))));
         }
     }
     Some(pins)
+}
+
+/// The variable `id` that a node of `graph` reads or writes: the blueprint's, or a local of its function.
+pub(crate) fn variable_of<'b>(blueprint: &'b Blueprint, graph: &'b Graph, id: &Id) -> Option<&'b Variable> {
+    let locals = graph.function.iter().flat_map(|signature| &signature.locals);
+    blueprint.variables.iter().chain(locals).find(|it| &it.id == id)
+}
+
+/// The ids of a function's exits that become its calls' flow outputs: the first of an id, none with a reserved one or
+/// an output's, each already a problem.
+pub(crate) fn exits(signature: &Signature) -> impl Iterator<Item = &Id> {
+    let mut ids = std::collections::HashSet::new();
+    signature.exits.iter().map(|exit| &exit.id).filter(move |id| {
+        !catalogue::RESERVED.contains(&id.0.as_str())
+            && !signature.outputs.iter().any(|it| &it.id == *id)
+            && ids.insert(*id)
+    })
 }
 
 /// The pins `takes` makes from a node's `options`.
@@ -116,7 +151,8 @@ fn optioned(takes: Takes, options: &Options) -> Vec<NodePin> {
             .iter()
             .map(|hole| value(&hole.0, Side::In, Carries::Any))
             .collect(),
-        Takes::Expression | Takes::Variable => Vec::new(),
+        // What they name is the blueprint's: `pins` reads it.
+        Takes::Expression | Takes::Variable | Takes::Event | Takes::Exit => Vec::new(),
     }
 }
 
@@ -259,6 +295,56 @@ mod tests {
             amount(r#"{"type": "zone"}"#),
             Some(Carries::Wildcard(Shape::ONE)),
             "its type is its variable's"
+        );
+    }
+
+    #[test]
+    fn an_event_of_mine_gives_its_inputs_and_a_call_has_its_functions_exits_and_none_when_pure() {
+        let text = r#"{"schema": 1, "id": "b", "name": "B", "version": 1,
+          "events": [{"id": "empty", "name": "Empty", "inputs": [{"id": "zone", "name": "Zone", "type": "zone"}]}],
+          "graphs": [{"id": "events", "name": "Events", "nodes": [{"id": "e", "kind": "my_event", "options": {"event": "empty"}},
+                       {"id": "c", "call": "f"}, {"id": "p", "call": "half"}]},
+            {"id": "f", "name": "F", "function": {"exits": [{"id": "full", "name": "Full"}],
+               "locals": [{"id": "tries", "name": "Tries", "type": "map"}]},
+             "nodes": [{"id": "t", "get": "tries"}, {"id": "x", "kind": "return_exit", "options": {"exit": "full"}}]},
+            {"id": "half", "name": "Half", "function": {"inputs": [{"id": "a", "name": "A", "type": "number"}],
+               "outputs": [{"id": "b", "name": "B", "type": "number"}], "pure": true},
+             "nodes": [{"id": "in", "kind": "entry"}]}]}"#;
+        let blueprint = read(text).unwrap_or_else(|error| panic!("{error}"));
+        let ids = |graph: usize, node: usize| {
+            let graph = &blueprint.graphs[graph];
+            let pins = pins(&blueprint, graph, &graph.nodes[node]).unwrap_or_default();
+            pins.into_iter()
+                .map(|pin| (pin.id, pin.side, pin.carries))
+                .collect::<Vec<_>>()
+        };
+        let exec = |id: &str, side| (id.to_owned(), side, Carries::Exec);
+        let one = |id: &str, side, of| (id.to_owned(), side, Carries::one(of));
+        assert_eq!(
+            ids(0, 0),
+            [exec("then", Side::Out), one("zone", Side::Out, ValueType::Zone)]
+        );
+        assert!(
+            ids(0, 1).contains(&exec("full", Side::Out)),
+            "the exit, a flow output of its call"
+        );
+        assert_eq!(
+            ids(0, 2),
+            [
+                one("a", Side::In, ValueType::Number),
+                one("b", Side::Out, ValueType::Number)
+            ]
+        );
+        assert_eq!(
+            ids(1, 0),
+            [one("value", Side::Out, ValueType::Map)],
+            "a local, read in its function"
+        );
+        assert_eq!(ids(1, 1), [exec("run", Side::In)]);
+        assert_eq!(
+            ids(2, 0),
+            [one("a", Side::Out, ValueType::Number)],
+            "a pure function's entry starts no flow"
         );
     }
 

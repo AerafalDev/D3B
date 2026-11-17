@@ -38,8 +38,11 @@ pub(crate) fn of_graph(blueprint: &Blueprint, graph: &Graph, found: &mut Vec<Pro
                 }
                 Some(kind) => {
                     let in_function = graph.function.is_some();
+                    let pure = graph.function.as_ref().is_some_and(|signature| signature.pure);
+                    // A pure function's result is its own, in no other graph.
                     if (kind.family == Family::Event && in_function)
                         || (kind.family == Family::Function && !in_function)
+                        || (kind.id == "result" && !pure)
                     {
                         let (graph, node) = at(&node.id);
                         found.push(Problem::OutOfPlace { graph, node });
@@ -56,7 +59,13 @@ pub(crate) fn of_graph(blueprint: &Blueprint, graph: &Graph, found: &mut Vec<Pro
         let Some(node_pins) = pins(blueprint, graph, node).filter(|_| !twice.contains(&node.id)) else {
             continue;
         };
-        of_options(blueprint, &graph.id, node, found);
+        of_options(blueprint, graph, node, found);
+        // A pure function computes values only: no node of it has a flow pin, as no action or wait has none.
+        let pure = graph.function.as_ref().is_some_and(|signature| signature.pure);
+        if pure && node_pins.iter().any(|pin| pin.carries == Carries::Exec) {
+            let (graph, node) = at(&node.id);
+            found.push(Problem::NotPure { graph, node });
+        }
         // Wired or given a value, an untyped wildcard is said once for its node; its wires are not looked at.
         if node.options.value_type.is_none() && uses_wildcards(graph, node) {
             let (graph, node) = at(&node.id);
@@ -102,7 +111,8 @@ pub(crate) fn of_graph(blueprint: &Blueprint, graph: &Graph, found: &mut Vec<Pro
 
 /// The problems of `node`'s options: one its kind does not take, a variable it lacks or does not name, a case of
 /// another type than the node's or given twice. A wildcard's type missing is said with its wires.
-fn of_options(blueprint: &Blueprint, graph: &Id, node: &Node, found: &mut Vec<Problem>) {
+fn of_options(blueprint: &Blueprint, of_graph: &Graph, node: &Node, found: &mut Vec<Problem>) {
+    let graph = &of_graph.id;
     let kind = match &node.does {
         Does::Kind(id) => catalogue::kind(&id.0),
         _ => None,
@@ -128,9 +138,8 @@ fn of_options(blueprint: &Blueprint, graph: &Id, node: &Node, found: &mut Vec<Pr
             options.variable.is_some(),
             takes(|it| *it == Takes::Variable),
         ),
-        // The events of mine and the functions' exits come with their nodes.
-        ("event", options.event.is_some(), false),
-        ("exit", options.exit.is_some(), false),
+        ("event", options.event.is_some(), takes(|it| *it == Takes::Event)),
+        ("exit", options.exit.is_some(), takes(|it| *it == Takes::Exit)),
     ];
     let at = || (graph.clone(), node.id.clone());
     for (option, present, taken) in given {
@@ -138,7 +147,7 @@ fn of_options(blueprint: &Blueprint, graph: &Id, node: &Node, found: &mut Vec<Pr
         let (graph, node) = at();
         if present && !taken {
             found.push(Problem::NoSuchOption { graph, node, option });
-        } else if !present && taken && matches!(option.0.as_str(), "variable" | "expression") {
+        } else if !present && taken && matches!(option.0.as_str(), "variable" | "expression" | "event" | "exit") {
             found.push(Problem::OptionMissing { graph, node, option });
         }
     }
@@ -148,6 +157,21 @@ fn of_options(blueprint: &Blueprint, graph: &Id, node: &Node, found: &mut Vec<Pr
         let (graph, node) = at();
         let variable = variable.clone();
         found.push(Problem::NoSuchVariable { graph, node, variable });
+    }
+    if let Some(event) = options.event.as_ref().filter(|_| takes(|it| *it == Takes::Event))
+        && !blueprint.events.iter().any(|it| &it.id == event)
+    {
+        let (graph, node) = at();
+        let event = event.clone();
+        found.push(Problem::NoSuchEvent { graph, node, event });
+    }
+    let exits = of_graph.function.iter().flat_map(|signature| &signature.exits);
+    if let Some(exit) = options.exit.as_ref().filter(|_| takes(|it| *it == Takes::Exit))
+        && !exits.into_iter().any(|it| &it.id == exit)
+    {
+        let (graph, node) = at();
+        let exit = exit.clone();
+        found.push(Problem::NoSuchExit { graph, node, exit });
     }
     let Some(of) = options.value_type.filter(|_| takes(|it| *it == Takes::Cases)) else {
         return;
@@ -242,7 +266,10 @@ pub(crate) fn once_twice(blueprint: &Blueprint, found: &mut Vec<Problem>) {
             let once = catalogue::kind(&id.0)
                 .and_then(|kind| kind.event)
                 .is_some_and(|role| role.once);
-            if once && !seen.insert(&id.0) {
+            // An event of mine is held once per event it names; one naming none is a problem of its own.
+            let mine = (id.0 == "my_event").then_some(node.options.event.as_ref()).flatten();
+            let held = mine.map_or(id, |event| event);
+            if (once || mine.is_some()) && !seen.insert((id, held)) {
                 found.push(Problem::EventTwice {
                     graph: graph.id.clone(),
                     node: node.id.clone(),

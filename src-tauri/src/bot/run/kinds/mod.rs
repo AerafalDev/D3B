@@ -18,7 +18,7 @@ use super::behaviour::Behaviour;
 pub(super) fn behaviour(kind: &str) -> Option<&'static dyn Behaviour> {
     Some(match kind {
         "on_start" => &events::OnStart,
-        "life_below" | "pods_above" | "fight_starts" | "died" | "action_failed" => &events::Event,
+        "life_below" | "pods_above" | "fight_starts" | "died" | "action_failed" | "my_event" => &events::Event,
         "go_to_zone" => &actions::GoToZone,
         "harvest_until" | "hunt_until" => &actions::UntilPods,
         "go_to_bank" => &actions::GoToBank,
@@ -35,6 +35,8 @@ pub(super) fn behaviour(kind: &str) -> Option<&'static dyn Behaviour> {
         "entry" => &functions::Entry,
         "return_done" => &functions::ReturnDone,
         "return_failed" => &functions::ReturnFailed,
+        "return_exit" => &functions::ReturnExit,
+        "result" => &functions::PureResult,
         "at_least" => &values::AtLeast,
         "add" => &values::Add,
         _ => return None,

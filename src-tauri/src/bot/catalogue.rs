@@ -176,6 +176,10 @@ pub(crate) enum Takes {
     Expression,
     /// `variable`: the variable it changes, whose type its wildcards take, rather than `type`.
     Variable,
+    /// `event`: the event of mine it is, its inputs its outputs.
+    Event,
+    /// `exit`: the function's exit it returns by.
+    Exit,
 }
 
 /// A kind of node.
@@ -233,6 +237,12 @@ const BLOCKS: EventRole = EventRole {
     once: true,
     forced: Some(Fallback::Block),
 };
+/// An event of mine: once per event it names, which `wiring::once_twice` counts.
+const MINE: EventRole = EventRole {
+    settings: true,
+    once: false,
+    forced: None,
+};
 
 use Family::{Action, Flow, Function, Query};
 use ValueType::{Bank, Bool, Items, Job, Number, Percentage, Text, Zone};
@@ -268,6 +278,10 @@ pub(crate) const KINDS: &[Kind] = &[
     of("entry", Function, &[THEN], None),
     of("return_done", Function, &[RUN], None),
     of("return_failed", Function, &[RUN, input("reason", Text, Some("\"\""))], None),
+    // v2's (ADR 0016): an event of mine, a return by a named exit, and a pure function's result, its outputs its inputs.
+    Kind { takes: &[Takes::Event], ..event("my_event", &[THEN], MINE) },
+    Kind { takes: &[Takes::Exit], ..of("return_exit", Function, &[RUN], None) },
+    of("result", Function, &[], None),
 ];
 
 /// The kind of this id, if this version knows it.

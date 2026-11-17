@@ -298,7 +298,13 @@ braces, `{count}`, each once; other braces are text; a wire of any value feeds a
 text), `expression` (the formula (v2.8) parses), `variable` (a kind
 that changes it, Add to or a list's Add, types its wildcards by it rather than by `type`), `event` and `exit` (with
 their nodes, step 3 of (v2.1)); each kind says which it takes; the blueprint's own `events`
-beside its `graphs`, each with its id, name and inputs; a function's signature gains `exits`, `locals` and `pure`. A
+beside its `graphs`, each with its id, name and inputs, its node `my_event` naming it in `options.event`, held once
+per event, its inputs that node's outputs; a function's signature gains `exits` (an id and a name each), `locals`
+(variables, each from its default at a call, a Get or Set in its function reading it) and `pure`, its returns by
+an exit `return_exit` naming it in `options.exit` and a pure function's `result` (step 3 of (v2.1), done in code: a
+return by an exit and the locals run; an event of mine starts nothing before (26), and a blueprint calling a pure
+function is refused, "result" not running, until the engine reads pure calls; the picker offers neither an event of
+mine nor a return by an exit, which (15) and (16) add from My Blueprint). A
 schema 1 file reads migrated ("at least" to `≥`, Wait's minutes to a duration) and is written as 2 at its next change;
 D3B's blueprints ship as 2. A node still does one thing (`kind`, `get`, `set` or `call`), with `options` beside;
 the pins its options make are numbered from 1: Sequence's `then_1` to `then_n`, Switch's `case_1` to `case_n` (the
@@ -306,13 +312,15 @@ cases' values in `options.cases`) and `otherwise`, a list's inputs `in_1` to `in
 names (`{count}` is the pin `count`), each of any value, a hole renamed or removed dropping its wire. A call has a flow
 output per exit of its function, the exit's id its pin's, beside `done`, `failed` and `reason`; a function's locals
 live in its call's frame. A pure function's call has no flow pin and is read on demand, as a query is, its value kept
-for the debugger. New problems: an exit named as a built-in pin (`run`, `done`, `failed`, `reason`); a wildcard wired or given a value
+for the debugger. New problems: an exit named as a built-in pin (`run`, `done`, `failed`, `reason`) or as an output,
+an exit, a local or an event's input given twice, a local named as a variable, two events of mine of one id (step 3);
+a wildcard wired or given a value
 before its node has a type, and a type on a node without wildcards (`options` it does not take); a list or ranges
 into a pin of another shape (step 1 of (v2.1), done in code; a wire of another type into a typed wildcard is v1's);
 an option the node's kind does not take, and one it needs and lacks (the variable it changes, an Expression's
 formula); a Switch's case not of its type or given twice, its cases using its wildcard as a wire does (step 2); an
-option naming a variable the blueprint lacks (step 2), an event or an exit (step 3); Leave the loop
-outside a loop's body; a flow, action or wait in a pure function; a time not "HH:MM"; an Expression that does not
+option naming a variable the blueprint lacks (step 2), an event or an exit (step 3); a flow pin in a pure function,
+an action, a wait, a Set or a return, and its result elsewhere (step 3); Leave the loop outside a loop's body; a time not "HH:MM"; an Expression that does not
 parse, names what the blueprint lacks or is not of its pin's type; ranges whose rows overlap.
 
 ## In the app
