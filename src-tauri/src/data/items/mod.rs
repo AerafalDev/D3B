@@ -7,6 +7,7 @@
 
 mod icons;
 mod jobs;
+mod search;
 
 use std::collections::HashSet;
 use std::path::Path;

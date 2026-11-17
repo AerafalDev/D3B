@@ -399,7 +399,9 @@ flowchart LR
   and a click taking the one the world map draws there, Escape cancelling; "5,-18" may be typed; "Where is
   <character>" takes the map a character online stands on, an inside too, which shares its street's coordinates.
 - **An item** (the owner, 2026-11-17): every item but the invisible (type 203), searched by name in Rust (accents
-  ignored, 50 at most), each with its icon, level and type.
+  ignored, 50 at most), each with its icon, level and type (`find_items`; those starting with the text first, then by
+  level); a click, or Enter for the first, chooses it, the one chosen shown by its icon, name and level, by its id
+  without the game data (step 5 of (v2.2), done in code).
 - **Ranges** (the owner, 2026-11-17): a table "From level", "To level" and the value in its type's editor, sorted
   when a field is left, overlaps marked on their rows, a gap a faint row "levels 50 to 59: nothing", + and ×, levels 1
   to 200; a text pasted, lines `1-49: value` or columns separated by tabs (a spreadsheet's), each value as it is

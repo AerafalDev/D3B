@@ -40,7 +40,7 @@ mod world_maps;
 
 pub use breeds::{Breed, head_file};
 pub use game_data::GameData;
-pub use items::ItemTables;
+pub use items::{Item, ItemTables};
 pub use manifest::{DataError, Manifest};
 pub use map_flag::MapFlag;
 pub use maps::{MapData, read_map};

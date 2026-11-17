@@ -787,7 +787,15 @@
   "values": {
     "row": "{{label}}, value {{row}}",
     "remove": "Remove value {{row}}",
-    "add": "{{label}}: add a value"
+    "add": "{{label}}: add a value",
+    "searchItem": "{{label}}: search an item",
+    "searchItemHint": "Wheat, sword…",
+    "itemsFound": "Items found",
+    "found_zero": "No item found",
+    "found_one": "{{count}} item found, Enter chooses it",
+    "found_other": "{{count}} items found, Enter chooses the first",
+    "itemLevel": "{{name}} · lv. {{level}}",
+    "itemKind": "{{kind}} · lv. {{level}}"
   },
   "settings": {
     "title": "Blueprint and settings",
