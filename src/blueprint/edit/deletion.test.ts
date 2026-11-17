@@ -35,6 +35,10 @@ describe("deletion", () => {
 });
 
 describe("menuDeletion", () => {
+  it("deletes nothing from a pin's menu, which removes the pin", () => {
+    expect(menuDeletion({ kind: "pin", id: "n1", pin: "then_2" }, [{ id: "n1" }], [])).toBeNull();
+  });
+
   const nodes = [
     { id: "n1", selected: true },
     { id: "n2", selected: true },

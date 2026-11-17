@@ -595,7 +595,11 @@ mod tests {
             (switch.options.value_type.as_deref(), switch.options.cases.len()),
             (Some("job"), 2)
         );
-        assert!(switch.adds.is_none(), "its cases are added in Details");
+        assert!(
+            switch.adds.is_none() && switch.takes_cases,
+            "its cases are added in Details"
+        );
+        assert!(!node(&drawn, "sequence").takes_cases);
         let not_json = edit(r#"{"edit": "options", "node": "switch", "cases": ["bûcheron"]}"#);
         assert_eq!(not_json.err(), Some(EditError::NotItsType));
     }

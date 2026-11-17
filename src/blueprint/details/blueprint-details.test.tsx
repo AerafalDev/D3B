@@ -367,4 +367,83 @@ describe("the editor's Details", () => {
     fireEvent.blur(value);
     expect(onValue).toHaveBeenLastCalledWith("set", "value", "50", undefined);
   });
+
+  it("edits a Switch's cases and a Sequence's outputs in a blueprint of mine, and lists the cases in D3B's", () => {
+    const exec = (id: string) => pin(id, "out", "exec");
+    const flows = {
+      ...graph,
+      nodes: [
+        node("sw", {
+          kind: "switch",
+          family: "flow",
+          pins: [pin("run", "in", "exec"), exec("case_1"), exec("case_2"), exec("otherwise")],
+          options: { valueType: "number", cases: ["24", "28"] },
+          takesCases: true,
+        }),
+        node("seq", {
+          kind: "sequence",
+          family: "flow",
+          pins: [pin("run", "in", "exec"), exec("then_1"), exec("then_2"), exec("then_3")],
+          options: { count: 3 },
+          adds: { pin: "then", side: "out", least: 2 },
+        }),
+      ],
+      wires: [],
+    } as unknown as GraphView_Serialize;
+    const shown = (id: string, onEdit?: () => Promise<boolean>) =>
+      render(
+        <BlueprintDetails
+          blueprint={{ ...blueprint, given: onEdit === undefined }}
+          graphs={[flows]}
+          graph={flows}
+          problems={[]}
+          selection={{ kind: "node", id }}
+          names={names}
+          onEdit={onEdit}
+        />,
+      );
+    shown(
+      "sw",
+      vi.fn(async () => true),
+    );
+    expect(screen.getByRole("textbox", { name: "Cas 2" })).toBeTruthy();
+    cleanup();
+    shown(
+      "seq",
+      vi.fn(async () => true),
+    );
+    expect(screen.getByRole("button", { name: "Retirer Alors 3" })).toBeTruthy();
+    cleanup();
+    const { container } = shown("sw");
+    expect(screen.queryByRole("textbox", { name: "Cas 1" })).toBeNull();
+    expect([...container.querySelectorAll("li")].map((one) => one.textContent)).toEqual(["24", "28"]);
+  });
+
+  it("says a problem's pin as its node draws it", () => {
+    const twice = { ...problem, kind: "caseTwice", node: "sw", pin: "case_2" } as ProblemView;
+    const switched = {
+      ...graph,
+      nodes: [
+        node("sw", {
+          kind: "switch",
+          family: "flow",
+          pins: [],
+          options: { valueType: "number", cases: ["24", "24"] },
+          takesCases: true,
+        }),
+      ],
+      wires: [],
+    } as unknown as GraphView_Serialize;
+    render(
+      <BlueprintDetails
+        blueprint={blueprint}
+        graphs={[switched]}
+        graph={switched}
+        problems={[twice]}
+        selection={{ kind: "node", id: "sw" }}
+        names={names}
+      />,
+    );
+    expect(screen.getByText("Le cas 24 est donné deux fois.")).toBeTruthy();
+  });
 });

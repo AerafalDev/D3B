@@ -81,7 +81,7 @@ export function graphSentences(
     const wired = new Map<string, string>();
     for (const wire of graph.wires.filter((one) => one.to[0] === node.id)) {
       const source = byId.get(wire.from[0]);
-      const label = pinLabel(wire.from[1]);
+      const label = pinLabel(wire.from[1], source);
       if (source?.does === "get") {
         wired.set(wire.to[1], names.get(source.variable) ?? source.variable);
       } else if (source?.family === "query" && !reading.has(source.id)) {

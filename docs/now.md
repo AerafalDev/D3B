@@ -41,7 +41,13 @@ _Updated 2026-11-17._
     with a character online, "Où est <perso>" picks its map, an inside too; (5) a Zone variable "Par niveau": paste
     `1-49: Forêt d'Astrub` and `40-80: Champs d'Astrub`: two rows, the overlap marked and the variable with a problem;
     change 40 to 50: the problem goes; "Copier en texte" then paste it back: the same table; (6) in Récolte
-    automatique (D3B's), nothing editable, the pins drawn the same;
+    automatique (D3B's), nothing editable, the pins drawn the same; (7) add a Séquence: "Alors 1", "Alors 2"; "+
+    Ajouter une sortie": "Alors 3"; wire all three, right-click "Alors 2", "Retirer": the third's wire moves up to
+    "Alors 2", Ctrl+Z puts it back; in Details, the Séquence's outputs, × on "Alors 2" by the keyboard alone (Tab,
+    Enter) does the same; add a Selon, choose Métier as its cases' type in Details and add Bûcheron and Mineur: two
+    outputs "Bûcheron" and "Mineur", then Sinon; add Bûcheron again: marked and the blueprint with a problem; × on a
+    case removes it with its wire; a right-click on "Alors 1" of a Séquence of two offers "Retirer", greyed, never
+    "Supprimer"; on D3B's blueprints, no "+", the cases listed;
   - v0.10.0 on macOS, Linux and ARM64: built by CI, run by nobody yet. The owner has none of them and no tester yet; the README says so, and a round starts when a tester comes ([docs/testing.md](testing.md));
   - **step 1, the extractor**, on the installed client (Windows). Measured by the owner on 2026-11-11, Windows x64:
     items 1, 2 (every count as below, in 27.8 s) and 4 pass; on 2026-11-13, `bun run app` on `next` 3454d38, item 5
@@ -562,7 +568,7 @@ _Updated 2026-11-17._
   functions and events and the runtime are written once, on the final model, in sixteen PRs: (v2.1) the model in Rust (done in code), in four PRs (the owner, 2026-11-17: the second split in two): the new types (an NPC, ranges), lists and wildcard
   pins in the wiring's check (the owner's choice of 2026-11-17: a wildcard's type noted on its node; done in code); then a node's `options` and the pins they make (done in code); then the blueprint's own events, functions' exits, locals and pure (done in code);
   then the file's schema 2 and its migration from 1 (in `bot/schema/`, the folder holding ten files), D3B's
-  blueprints in 2, with `≥` and N minutes brought before v2.4 for "at least" and Wait's minutes (done in code); each kind's problems come with the PR that brings the kind; (v2.2) the editor reads it (done in code but a node's options, with v2.3; its checklist under "Not measured";
+  blueprints in 2, with `≥` and N minutes brought before v2.4 for "at least" and Wait's minutes (done in code); each kind's problems come with the PR that brings the kind; (v2.2) the editor reads it (done in code, a node's options with v2.3's second PR; its checklist under "Not measured";
   [bot.md](bot.md#the-editor-reads-it-v22), the owner's
   choices of 2026-11-17: pins and colours from a mock-up, a map picked on the World or where a character stands, an
   item searched among all, ranges pasted as `1-49: value` replacing the table, my variables taking the new types and
@@ -573,7 +579,7 @@ _Updated 2026-11-17._
   ([bot.md](bot.md#the-flows-kinds-v23), the owner's choices of 2026-11-17: started before (v2.2) is measured, its
   measures alongside; Sequence without Completed, Retry a node with a body, a node's memory for the run, Do once as Do
   N times, Pick of one mode, Trigger with (v2.6), the French names on a mock-up of the Summary), in six PRs: Sequence and
-  Switch in Rust with the options' edits (done in code); a node's options in the editor; the Summary by pin roles; the loops; the
+  Switch in Rust with the options' edits (done in code); a node's options in the editor (done in code); the Summary by pin roles; the loops; the
   kinds that remember; the waits and stops; (v2.4)
   the values: comparisons, logic, arithmetic, randomness, text, durations, lists, drawn compact; (v2.5) the queries
   over `game::Live`, and those marked with their study and step; (v2.6) the events: When, Every, At, the game's new

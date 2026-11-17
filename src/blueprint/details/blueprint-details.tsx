@@ -1,15 +1,17 @@
 import { useTranslation } from "react-i18next";
 
-import type { GraphView_Serialize, ProblemView, VariableChange } from "@/bindings.ts";
+import type { GraphEdit_Deserialize, GraphView_Serialize, ProblemView, VariableChange } from "@/bindings.ts";
 import { cn } from "@/lib/utils.ts";
 import { givenText } from "@/library/given-text.ts";
 import type { BlueprintSummary } from "@/library/library-store.ts";
 import { shapedText, typeText, valueText } from "@/library/value-text.ts";
 import { type GraphNode, graphSentences } from "../node-sentence.ts";
 import { pinLabel } from "../pin-label.ts";
+import { CasesEditor } from "./cases-editor.tsx";
 import { DetailRow } from "./detail-row.tsx";
 import { EventDetails } from "./event-details.tsx";
 import { InputRow } from "./input-row.tsx";
+import { OutputsEditor } from "./outputs-editor.tsx";
 import { problemText } from "./problem-text.ts";
 import { VariableEditor } from "./variable-editor.tsx";
 
@@ -30,6 +32,8 @@ interface BlueprintDetailsProps {
    * a blueprint of mine only (the owner, 2026-11-17). Whether it was saved.
    */
   onValue?: (node: string, pin: string, value: string | null, of?: string) => Promise<boolean>;
+  /** Another edit of the graph shown, a Switch's cases; given for a blueprint of mine only. Whether it was saved. */
+  onEdit?: (edit: GraphEdit_Deserialize) => Promise<boolean>;
   /** Changes a variable of mine, whole, saved at once (step 3's (14)); given for a blueprint of mine only. */
   onVariable?: (change: VariableChange) => Promise<boolean>;
   /** Deletes a variable of mine with its nodes. */
@@ -48,6 +52,7 @@ export function BlueprintDetails({
   selection,
   names,
   onValue,
+  onEdit,
   onVariable,
   onDeleteVariable,
 }: BlueprintDetailsProps) {
@@ -72,6 +77,7 @@ export function BlueprintDetails({
           names={names}
           variables={blueprint.variables}
           onValue={onValue === undefined ? undefined : (pin, value, of) => onValue(node.id, pin, value, of)}
+          onEdit={onEdit}
         />
       ) : variable !== undefined ? (
         onVariable !== undefined ? (
@@ -101,9 +107,16 @@ interface ProblemsProps {
   names: ReadonlyMap<string, string>;
   /** When given, a node's problem is said after its node's sentence, so the player finds it. */
   graphs?: readonly GraphView_Serialize[];
+  /** The node whose problems they are, which labels their pins. */
+  node?: GraphNode;
 }
 
-function Problems({ problems, names, graphs }: ProblemsProps) {
+function problemNode(graphs: readonly GraphView_Serialize[] | undefined, problem: ProblemView) {
+  const graph = graphs?.find((one) => one.id === problem.graph);
+  return graph?.nodes.find((one) => one.id === problem.node);
+}
+
+function Problems({ problems, names, graphs, node }: ProblemsProps) {
   const { t } = useTranslation();
   if (problems.length === 0) {
     return null;
@@ -115,7 +128,10 @@ function Problems({ problems, names, graphs }: ProblemsProps) {
           // A problem has no id of its own; the list is never reordered.
           // biome-ignore lint/suspicious/noArrayIndexKey: the problems' order is the file's
           <li key={index}>
-            {[graphs === undefined ? null : nodeTitle(graphs, problem, names), problemText(problem, names)]
+            {[
+              graphs === undefined ? null : nodeTitle(graphs, problem, names),
+              problemText(problem, names, node ?? problemNode(graphs, problem)),
+            ]
               .filter(Boolean)
               .join(" : ")}
           </li>
@@ -143,6 +159,7 @@ interface NodeDetailsProps {
   /** The blueprint's variables, whose bounds a Set's value keeps. */
   variables: BlueprintSummary["variables"];
   onValue: ((pin: string, value: string | null, of?: string) => Promise<boolean>) | undefined;
+  onEdit: ((edit: GraphEdit_Deserialize) => Promise<boolean>) | undefined;
 }
 
 /** The types a wildcard of a kind that lists none may take: every type a value is typed as, the NPC at step 4. */
@@ -187,7 +204,7 @@ function openTo(node: GraphNode, pin: string, graph: GraphView_Serialize): reado
   }
   return (node.types ?? []).length > 0 ? (node.types ?? []) : ANY_TYPE;
 }
-function NodeDetails({ node, graph, problems, names, variables, onValue }: NodeDetailsProps) {
+function NodeDetails({ node, graph, problems, names, variables, onValue, onEdit }: NodeDetailsProps) {
   const { t, i18n } = useTranslation();
   const kind = node.does === "kind" ? node.kind : null;
   const description =
@@ -260,11 +277,38 @@ function NodeDetails({ node, graph, problems, names, variables, onValue }: NodeD
           </dl>
         </DetailRow>
       )}
+      {(node.adds ?? null) !== null && onEdit !== undefined && (
+        <DetailRow label={t("blueprint.details.outputs")}>
+          <OutputsEditor node={node} onEdit={onEdit} />
+        </DetailRow>
+      )}
+      {node.takesCases === true && onEdit === undefined && (node.options?.cases ?? []).length > 0 && (
+        <DetailRow label={t("blueprint.details.cases")}>
+          <ul className="flex flex-col gap-1">
+            {(node.options?.cases ?? []).map((_, at) => (
+              // biome-ignore lint/suspicious/noArrayIndexKey: a case's place is its output's number
+              <li key={at}>{pinLabel(`case_${at + 1}`, node)}</li>
+            ))}
+          </ul>
+        </DetailRow>
+      )}
+      {node.takesCases === true && onEdit !== undefined && (
+        <DetailRow label={t("blueprint.details.cases")}>
+          <CasesEditor
+            // Another Switch chosen keeps no draft of the one before.
+            key={node.id}
+            node={node}
+            types={(node.types ?? []).length > 0 ? (node.types ?? []) : ANY_TYPE}
+            who={title}
+            onEdit={onEdit}
+          />
+        </DetailRow>
+      )}
       {failedFree && (
         <DetailRow label={t("blueprint.details.ifFailed")}>{t("blueprint.details.failedBlocks")}</DetailRow>
       )}
       {node.family === "event" && <EventDetails event={node.event} />}
-      <Problems problems={problems} names={names} />
+      <Problems problems={problems} names={names} node={node} />
     </>
   );
 }

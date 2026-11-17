@@ -423,7 +423,8 @@ flowchart LR
   "Durée · liste" or "Zone · par niveau"). (14) keeps the locals and the variables' nodes.
 - **A node's options** ("+" a case or an output, the owner, 2026-11-17) come with v2.3's Sequence and Switch, their
   first kinds: "+ Add an output" on the node for Sequence's outputs and a list's inputs, Switch's cases typed in
-  Details a row each with + and ×, and a pin's right-click "Remove" dropping its wire.
+  Details a row each with + and ×, and a pin's right-click "Remove" dropping its wire (step 2 of (v2.3), done in
+  code, below).
 
 ### The flow's kinds (v2.3)
 
@@ -483,7 +484,11 @@ flowchart LR
   essais échouent", "Trop long", and a loop's Completed reads as what follows, "Puis (terminé) : aller à 3" (the owner,
   2026-11-17, on the mock-up).
 - **Six PRs**: Sequence and Switch in Rust with the options' edits; a node's options in the editor (closing (v2.2)),
-  with the numbered pins' labels ("Alors 2", a case by its value);
+  with the numbered pins' labels ("Alors 2", a case by its value; done in code: a node's numbered outputs and cases
+  are its rows, none on its head, the "+" absent on D3B's blueprints, the cases' type chosen in Details while the
+  Switch notes none and given with the first case, a profession's or a zone's case named, and a pin's row offering
+  "Retirer" in place of "Supprimer", greyed at the kind's least; a Sequence's outputs listed in Details, a × each,
+  the keyboard's way to remove one (the owner, 2026-11-17), the cases listed there on D3B's blueprints);
   the Summary by pin roles, after its mock-up; the loops; the kinds that remember; the waits and stops (Wait until,
   Retry, Block, Pause) with a run on the captures. Each kind replaces the tests' own (`test_sequence`, `test_switch`,
   `test_for_each`).

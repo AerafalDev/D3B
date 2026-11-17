@@ -1,10 +1,11 @@
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { ReactFlowProvider } from "@xyflow/react";
 import i18next from "i18next";
-import { afterEach, beforeAll, describe, expect, it } from "vitest";
-
+import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
+import type { GraphEdit_Deserialize } from "@/bindings.ts";
 import { initI18n } from "@/i18n/i18n.ts";
 import { BlueprintNode } from "./blueprint-node.tsx";
+import { NodeEdit } from "./edit/node-options.ts";
 import type { GraphNode } from "./node-sentence.ts";
 
 const pin = (id: string, side: "in" | "out", carries: string) =>
@@ -22,17 +23,32 @@ const harvest = {
   event: null,
 } as GraphNode;
 
-function node(data: GraphNode) {
+function node(data: GraphNode, onEdit?: (edit: GraphEdit_Deserialize) => void) {
   // A node renders its pins through React Flow's handles, which need its provider; the rest of its props play no part.
   const props = { data: { node: data, sentence: [{ text: "Récolter" }] }, selected: false } as unknown as Parameters<
     typeof BlueprintNode
   >[0];
   return render(
     <ReactFlowProvider>
-      <BlueprintNode {...props} />
+      <NodeEdit value={onEdit}>
+        <BlueprintNode {...props} />
+      </NodeEdit>
     </ReactFlowProvider>,
   );
 }
+
+const sequence = {
+  ...harvest,
+  id: "seq",
+  kind: "sequence",
+  family: "flow",
+  fromStep: null,
+  pins: [pin("run", "in", "exec"), pin("then_1", "out", "exec"), pin("then_2", "out", "exec")],
+  adds: { pin: "then", side: "out", least: 2 },
+} as GraphNode;
+
+const rows = (container: HTMLElement) =>
+  [...container.querySelectorAll(".blueprint-row")].map((row) => row.textContent);
 
 describe("a node of the graph", () => {
   beforeAll(async () => {
@@ -72,6 +88,54 @@ describe("a node of the graph", () => {
     const typed = node({ ...ge, options: { valueType: "time" }, pins: [shaped({ carries: "time", wildcard: true })] });
     expect(typed.container.querySelector(".blueprint-open")).toBeNull();
     expect(typed.container.querySelector(".blueprint-type-time")).not.toBeNull();
+  });
+
+  it("says a Sequence's outputs by their number, each a row, and its '+' adds the next one", () => {
+    const onEdit = vi.fn();
+    const { container } = node(sequence, onEdit);
+    expect(rows(container)).toEqual(["Alors 1", "Alors 2"]);
+    fireEvent.click(screen.getByRole("button", { name: "Ajouter une sortie" }));
+    expect(onEdit).toHaveBeenCalledWith({ edit: "options", node: "seq", count: 3 });
+  });
+
+  it("draws no '+' on a blueprint of D3B's, read-only", () => {
+    node(sequence);
+    expect(screen.queryByRole("button", { name: "Ajouter une sortie" })).toBeNull();
+  });
+
+  it("says a Switch's cases by their values, Otherwise last", () => {
+    const switched = {
+      ...sequence,
+      kind: "switch",
+      pins: [
+        pin("run", "in", "exec"),
+        pin("case_1", "out", "exec"),
+        pin("case_2", "out", "exec"),
+        pin("otherwise", "out", "exec"),
+      ],
+      options: { valueType: "number", cases: ["24", "1500"] },
+      adds: null,
+      takesCases: true,
+    } as unknown as GraphNode;
+    const { container } = node(switched, vi.fn());
+    expect(rows(container)).toEqual(["24", "1 500", "Sinon"]);
+    expect(screen.queryByRole("button", { name: "Ajouter une sortie" })).toBeNull();
+  });
+
+  it("says a case of a zone by its name, and a case its node no longer holds by its id", async () => {
+    const { useZones } = await import("@/zone/zones-store.ts");
+    useZones.setState({ zones: [{ id: "ma-foret", name: "Ma forêt", world: 1, maps: [] }] as never });
+    const zoned = {
+      ...sequence,
+      kind: "switch",
+      pins: [pin("run", "in", "exec"), pin("case_1", "out", "exec"), pin("case_2", "out", "exec")],
+      options: { valueType: "zone", cases: ['{"zone":"ma-foret"}'] },
+      adds: null,
+      takesCases: true,
+    } as unknown as GraphNode;
+    const { container } = node(zoned, vi.fn());
+    expect(rows(container)).toEqual(["Ma forêt", "case_2"]);
+    useZones.setState({ zones: [] });
   });
 
   it("has no tag once the bot does it, and marks a kind this version does not know", () => {
