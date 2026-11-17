@@ -30,7 +30,10 @@ VS Code's, part for part (`src/shell/`):
   "Protocol" ([protocol.md](protocol.md#the-inspector)): its counts and tools share the header's one line. It shows
   only with **Advanced tools** on (below); off, the panel has no view until step 4's History, so the panel itself, its
   toggle in the title bar, View's Panel, Ctrl+J and its command in the palette are gone (Ctrl+J is still taken from
-  the webview, whose own opens its downloads), and the panel starts hidden.
+  the webview, whose own opens its downloads), and the panel starts hidden. On, the panel still starts closed and
+  opens as a connected character's tab becomes active (a click on its row in the Characters view, or on its tab):
+  closed by hand, it stays closed while tabs change, until a click on a character online in the Characters view; a
+  character whose client is closed never opens it (the owner, 2026-11-17).
 - **Editor area**: tabs and splits by `dockview-react`. An editor opens by `openEditor` (one tab per id; opening it
   again brings its tab forward). With no editor open it shows the app's mark in relief and the main shortcuts, these
   only when it is at least 480 px wide. At the right of a group's tabs, VS Code's **editor actions**: those of the
@@ -65,7 +68,8 @@ that cannot be saved holds for the session, and a notification says why. The fro
 end reads them once at start (`app_settings`, `src/settings/app-settings.ts`); the browser preview keeps the defaults.
 
 - **Advanced tools** ("Outils avancés"), off by default: the Protocol view and its panel (above). Turned on, the panel
-  slides open; off, it closes. The inspector follows the frames even while off, so turning them on shows the
+  slides open only if a connected character's tab is active (the owner, 2026-11-17); off, it closes, which is no close
+  by hand. The inspector follows the frames even while off, so turning them on shows the
   session's frames (the owner, 2026-11-16).
 
 ## Look
@@ -104,12 +108,16 @@ their labels per platform and language, a part's hide button, the title bar (the
 restore once maximised, no menus on macOS, each toggle pressed while its part shows, the command centre, File > Exit
 through the close request, View's checked parts, no panel toggle nor View's Panel without Advanced tools, View's
 Advanced tools turning them on and off and saved), the app's settings (off and the panel hidden at start, read at
-start showing the panel, the browser preview asking nothing, a save failed holding for the session and saying why,
+start leaving the panel closed, on leaving it closed and off closing it, the browser preview asking nothing, a save failed holding for the session and saying why,
 no folder, saves sent one after another, a file kept said at start, a read ending after a change dropped, a read
 failed), `settings.json` (no file, read back with its schema,
 a missing setting's default, a newer or malformed file kept and never written over), the Windows window's config against the main one, the palette (its
 commands, filtering, running one, the panel's left out without Advanced tools), the shortcuts (Ctrl+J doing nothing
-without Advanced tools but still taken from the webview), the activity bar (its pressed entry, hiding and showing the side bar), an
+without Advanced tools but still taken from the webview), the Protocol panel's opening (closed at start, opened by
+a connected character's tab and not without Advanced tools, nor by a closed client's, another editor or none, a close
+by hand holding while tabs change, a click on a character online reopening it and an offline one not, Advanced tools
+turned on opening it only with such a tab, turning them off forgetting a close by hand, a client connecting under its
+tab), the activity bar (its pressed entry, hiding and showing the side bar), an
 editor's tab (its title followed, its close), the status bar (the name alone before the back end answers, the
 version and the data's build without a hover, no data and its reason in the hover, the relay after the version), the
 relay's item (nothing before its status, grey arrows, red once off, its hover from the keyboard) and its hover's lines, the

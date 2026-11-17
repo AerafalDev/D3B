@@ -34,11 +34,11 @@ describe("the app's settings", () => {
     expect(layout.useLayout.getState().visible.panel).toBe(false);
   });
 
-  it("read Advanced tools from the player's folder at start, which shows the panel", async () => {
+  it("read Advanced tools from the player's folder at start, the panel staying closed until a character's tab", async () => {
     backEnd.read.mockResolvedValue({ settings: { advancedTools: true }, kept: null });
     await useAppSettings.getState().load();
     expect(useAppSettings.getState().advancedTools).toBe(true);
-    expect(useLayout.getState().visible.panel).toBe(true);
+    expect(useLayout.getState().visible.panel).toBe(false);
   });
 
   it("keep the panel hidden when the file says off", async () => {
@@ -56,10 +56,11 @@ describe("the app's settings", () => {
     expect(useAppSettings.getState().advancedTools).toBe(true);
   });
 
-  it("save Advanced tools turned on or off, showing or hiding the panel with them", async () => {
+  it("save Advanced tools turned on or off, leaving the panel closed when on and closing it when off", async () => {
     backEnd.save.mockResolvedValue(null);
     useAppSettings.getState().setAdvancedTools(true);
-    expect(useLayout.getState().visible.panel).toBe(true);
+    expect(useLayout.getState().visible.panel).toBe(false);
+    useLayout.getState().setVisible("panel", true);
     useAppSettings.getState().setAdvancedTools(false);
     expect(useLayout.getState().visible.panel).toBe(false);
     await vi.waitFor(() =>
@@ -114,7 +115,6 @@ describe("the app's settings", () => {
     answer({ settings: { advancedTools: false }, kept: null });
     await loading;
     expect(useAppSettings.getState().advancedTools).toBe(true);
-    expect(useLayout.getState().visible.panel).toBe(true);
   });
 
   it("keep the defaults when the read fails", async () => {

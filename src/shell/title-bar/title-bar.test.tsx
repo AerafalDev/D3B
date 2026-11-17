@@ -158,14 +158,15 @@ describe("the title bar", () => {
     expect(screen.getByRole("menuitemcheckbox", { name: "Advanced tools" }).getAttribute("aria-checked")).toBe("false");
   });
 
-  it("turns Advanced tools on from View, which shows and saves them", async () => {
+  it("turns Advanced tools on from View, which saves them and brings the panel's toggle back", async () => {
     useAppSettings.setState({ advancedTools: false });
     useLayout.setState({ visible: { ...shown, panel: false } });
     renderBar();
     openMenu("View");
     fireEvent.click(screen.getByRole("menuitemcheckbox", { name: "Advanced tools" }));
     expect(useAppSettings.getState().advancedTools).toBe(true);
-    expect(useLayout.getState().visible.panel).toBe(true);
+    // The panel opens with a connected character's tab (`src/inspector/use-panel-opening.ts`), none here.
+    expect(useLayout.getState().visible.panel).toBe(false);
     await vi.waitFor(() => expect(saved.settings).toEqual([{ advancedTools: true }]));
     expect(screen.getByRole("button", { name: "Toggle the panel" })).toBeTruthy();
   });

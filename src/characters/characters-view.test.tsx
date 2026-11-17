@@ -5,6 +5,9 @@ import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vite
 import type { GameConnectionStatus, RelayStatus } from "@/bindings.ts";
 import { initI18n } from "@/i18n/i18n.ts";
 import { useRelay } from "@/relay/relay-store.ts";
+import { useAppSettings } from "@/settings/app-settings.ts";
+import { useLayout } from "@/shell/layout-store.ts";
+import { useProtocolPanel } from "@/shell/protocol-panel.ts";
 import { type CharacterView, useCharacters } from "./character-store.ts";
 import { type PlayedCharacter, usePlayed } from "./played/played-store.ts";
 
@@ -126,6 +129,17 @@ describe("the characters view", () => {
     ]);
   });
 
+  it("opens the Protocol panel at a click on a character online, even once closed by hand", () => {
+    relay([connection(1)]);
+    useAppSettings.setState({ advancedTools: true });
+    useLayout.setState({ visible: { primarySideBar: true, panel: false, secondarySideBar: false } });
+    useProtocolPanel.setState({ dismissed: true });
+    render(<CharactersView />);
+    fireEvent.click(screen.getByRole("button"));
+    expect(useLayout.getState().visible.panel).toBe(true);
+    expect(useProtocolPanel.getState().dismissed).toBe(false);
+  });
+
   it("tells the connection a character's editor shows, and none for another editor", () => {
     expect(characterOf("character:12")).toBe(12);
     expect(characterOf("character:x")).toBeNull();
@@ -177,6 +191,15 @@ describe("the characters view", () => {
       { id: "played:294-2", component: "played", title: "Kalyx", params: { icon: "user", key: "294-2" } },
     ]);
     expect(screen.getByRole("button").textContent).toContain("Seen just now");
+  });
+
+  it("leaves the Protocol panel closed at a click on a character whose client is closed", () => {
+    usePlayed.setState({ played: [played("294-2", "Kalyx", 0)] });
+    useAppSettings.setState({ advancedTools: true });
+    useLayout.setState({ visible: { primarySideBar: true, panel: false, secondarySideBar: false } });
+    render(<CharactersView />);
+    fireEvent.click(screen.getByRole("button"));
+    expect(useLayout.getState().visible.panel).toBe(false);
   });
 
   it("keeps saying how long ago as the minutes pass", () => {

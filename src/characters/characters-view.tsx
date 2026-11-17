@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 import type { GameConnectionStatus } from "@/bindings.ts";
 import { useRelay } from "@/relay/relay-store.ts";
 import { openEditor, useEditors } from "@/shell/parts/editor-store.ts";
+import { revealProtocolPanel } from "@/shell/protocol-panel.ts";
 import { CharacterRow } from "./character-row.tsx";
 import { useCharacters } from "./character-store.ts";
 import { PlayedRow } from "./played/played-row.tsx";
@@ -35,9 +36,13 @@ export function openPlayed(key: string, title: string): void {
   openEditor({ id: `${PLAYED}${key}`, component: "played", title, params: { icon: "user", key } });
 }
 
-/** Chooses a connection's character and opens it in its editor tab, or brings that tab forward. */
+/**
+ * Chooses a connection's character and opens it in its editor tab, or brings that tab forward, with the Protocol panel
+ * when Advanced tools are on, even once closed by hand (the owner, 2026-11-17).
+ */
 export function openCharacter(connection: number, title: string): void {
   useCharacters.getState().select(connection);
+  revealProtocolPanel();
   openEditor({ id: editorId(connection), component: "character", title, params: { icon: "user", connection } });
 }
 
