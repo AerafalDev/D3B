@@ -42,6 +42,22 @@ describe("a Sequence's outputs in Details", () => {
     expect(onEdit).toHaveBeenLastCalledWith({ edit: "options", node: "seq", count: 4 });
   });
 
+  it("lists AND's numbered inputs, each removed by its ×, and adds one on the inputs' side", () => {
+    const onEdit = vi.fn(async () => true);
+    const and = {
+      ...sequenceOf(3),
+      id: "and",
+      kind: "and",
+      pins: ["in_1", "in_2", "in_3"].map((id) => ({ id, side: "in", carries: "bool", default: null })),
+      options: { count: 3 },
+      adds: { pin: "in", side: "in", least: 2 },
+    } as unknown as GraphNode;
+    render(<OutputsEditor node={and} onEdit={onEdit} />);
+    fireEvent.click(screen.getByRole("button", { name: "Retirer Entrée 3" }));
+    expect(onEdit).toHaveBeenLastCalledWith({ edit: "removePin", node: "and", pin: "in_3" });
+    expect(screen.getByRole("button", { name: "Ajouter une entrée" })).toBeTruthy();
+  });
+
   it("has no × at its kind's least", () => {
     render(<OutputsEditor node={sequenceOf(2)} onEdit={vi.fn(async () => true)} />);
     expect(screen.queryByRole("button", { name: /^Retirer/ })).toBeNull();

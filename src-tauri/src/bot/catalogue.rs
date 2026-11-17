@@ -15,8 +15,10 @@ pub(crate) enum Family {
     Action,
     /// Where the flow goes.
     Flow,
-    /// A value read when the node that uses it runs.
+    /// What the game is, read when the node that uses it runs.
     Query,
+    /// A value computed from its inputs when read, drawn compact (`docs/bot.md`, "The values (v2.4)").
+    Value,
     /// A function's entry and returns; only in a function.
     Function,
 }
@@ -244,8 +246,12 @@ const MINE: EventRole = EventRole {
     forced: None,
 };
 
-use Family::{Action, Flow, Function, Query};
+use Family::{Action, Flow, Function, Query, Value};
 use ValueType::{Bank, Bool, Duration, Items, Job, Number, Percentage, Text, Zone};
+
+/// The types compared by their order: numbers, percentages, durations, and times through the day; the first while a
+/// node notes none (the owner, 2026-11-17: as "at least" read numbers).
+const ORDERED: &[ValueType] = &[Number, Percentage, Duration, ValueType::Time];
 
 /// Every kind, the owner's v1 list of 2026-11-13: what D3B's blueprints and the six scenarios need, the rest later.
 #[rustfmt::skip] // One kind per line reads as a table.
@@ -297,9 +303,21 @@ pub(crate) const KINDS: &[Kind] = &[
     of("job_resources", Query, &[input("job", Job, None), output("value", Items)], None),
     of("level", Query, &[output("value", Number)], None),
     // v1's "at least", now any two values compared in order (ADR 0016): numbers, percentages, durations, times.
-    Kind { types: &[Number, Percentage, Duration, ValueType::Time], ..of("greater_or_equal", Query, &[wildcard("a", Side::In, false), wildcard("b", Side::In, false), output("value", Bool)], None) },
-    of("minutes", Query, &[input("minutes", Number, Some("1")), output("value", Duration)], None),
-    of("add", Query, &[input("a", Number, None), input("b", Number, None), output("value", Number)], None),
+    Kind { types: ORDERED, ..of("greater_or_equal", Value, &[wildcard("a", Side::In, false), wildcard("b", Side::In, false), output("value", Bool)], None) },
+    of("minutes", Value, &[input("minutes", Number, Some("1")), output("value", Duration)], None),
+    of("add", Value, &[input("a", Number, None), input("b", Number, None), output("value", Number)], None),
+    // The comparisons, logic and Choose (the owner, 2026-11-17): `=` and `≠` of any one type; the order of numbers,
+    // percentages, durations and times; AND and OR of N inputs; Choose reading only the side it takes.
+    of("equal", Value, &[wildcard("a", Side::In, false), wildcard("b", Side::In, false), output("value", Bool)], None),
+    of("not_equal", Value, &[wildcard("a", Side::In, false), wildcard("b", Side::In, false), output("value", Bool)], None),
+    Kind { types: ORDERED, ..of("less", Value, &[wildcard("a", Side::In, false), wildcard("b", Side::In, false), output("value", Bool)], None) },
+    Kind { types: ORDERED, ..of("less_or_equal", Value, &[wildcard("a", Side::In, false), wildcard("b", Side::In, false), output("value", Bool)], None) },
+    Kind { types: ORDERED, ..of("greater", Value, &[wildcard("a", Side::In, false), wildcard("b", Side::In, false), output("value", Bool)], None) },
+    Kind { types: ORDERED, ..of("between", Value, &[wildcard("value", Side::In, false), wildcard("low", Side::In, false), wildcard("high", Side::In, false), output("value", Bool)], None) },
+    Kind { takes: &[Takes::Count { pin: input("in", Bool, None), least: 2 }], ..of("and", Value, &[output("value", Bool)], None) },
+    Kind { takes: &[Takes::Count { pin: input("in", Bool, None), least: 2 }], ..of("or", Value, &[output("value", Bool)], None) },
+    of("not", Value, &[input("value", Bool, None), output("value", Bool)], None),
+    of("choose", Value, &[input("condition", Bool, None), wildcard("if_true", Side::In, false), wildcard("if_false", Side::In, false), wildcard("value", Side::Out, false)], None),
     of("entry", Function, &[THEN], None),
     of("return_done", Function, &[RUN], None),
     of("return_failed", Function, &[RUN, input("reason", Text, Some("\"\""))], None),
@@ -328,11 +346,10 @@ pub(crate) mod tests {
         Kind { takes, ..kind }
     }
 
-    /// Kinds for the tests, until v2's values bring theirs: `=` of two values of one type, a list of its numbered
-    /// inputs, Text, Add to a variable and an Expression.
+    /// Kinds for the tests, until v2's values bring theirs: a list of its numbered inputs, Text, Add to a variable and an
+    /// Expression.
     #[rustfmt::skip]
     pub(crate) const WILDCARDS: &[Kind] = &[
-        of("test_equal", Query, &[wildcard("a", Side::In, false), wildcard("b", Side::In, false), output("value", Bool)], None),
         taking(of("test_list", Query, &[output("value", Number)], None), &[Takes::Count { pin: input("in", Number, None), least: 1 }]),
         taking(of("test_text", Query, &[output("value", Text)], None), &[Takes::Text]),
         taking(of("test_add_to", Flow, &[RUN, THEN, wildcard("amount", Side::In, false)], None), &[Takes::Variable]),

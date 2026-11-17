@@ -167,6 +167,46 @@
     "result": {
       "sentence": "Result",
       "description": "What a pure function gives back: its outputs."
+    },
+    "equal": {
+      "sentence": "{{a}} = {{b}}",
+      "description": "True when both values are the same, of any type."
+    },
+    "not_equal": {
+      "sentence": "{{a}} ≠ {{b}}",
+      "description": "True when the two values differ."
+    },
+    "less": {
+      "sentence": "{{a}} < {{b}}",
+      "description": "True when A is less than B: numbers, percentages, durations or times."
+    },
+    "less_or_equal": {
+      "sentence": "{{a}} ≤ {{b}}",
+      "description": "True when A is less than or equal to B."
+    },
+    "greater": {
+      "sentence": "{{a}} > {{b}}",
+      "description": "True when A is greater than B."
+    },
+    "between": {
+      "sentence": "{{value}} between {{low}} and {{high}}",
+      "description": "True when the value lies between both bounds, included; 23:00 to 08:00 goes past midnight."
+    },
+    "and": {
+      "sentence": "AND",
+      "description": "True when all its conditions hold, read in order up to the first false."
+    },
+    "or": {
+      "sentence": "OR",
+      "description": "True when one of its conditions holds, read in order up to the first true."
+    },
+    "not": {
+      "sentence": "NOT {{value}}",
+      "description": "The opposite of the condition."
+    },
+    "choose": {
+      "sentence": "If {{condition}}: {{if_true}}, else {{if_false}}",
+      "description": "Gives one value when the condition holds, another otherwise; only the side taken is read."
     }
   },
   "pins": {
@@ -206,6 +246,10 @@
     "longest": "At most",
     "too_long": "Too long",
     "try": "Try",
-    "job": "Profession"
+    "job": "Profession",
+    "low": "From",
+    "high": "To",
+    "if_true": "If true",
+    "if_false": "If false"
   }
 }

@@ -440,7 +440,7 @@ mod tests {
             .variables
             .push(serde_json::from_str(zones).unwrap_or_else(|error| panic!("{error}")));
         let more = [
-            r#"{"id": "eq", "kind": "test_equal"}"#,
+            r#"{"id": "eq", "kind": "equal"}"#,
             r#"{"id": "each", "kind": "for_each"}"#,
             r#"{"id": "q", "kind": "pods_percent"}"#,
             r#"{"id": "g", "get": "zones"}"#,

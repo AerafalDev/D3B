@@ -415,6 +415,7 @@
       "reset": "Revenir à la valeur par défaut ({{value}})",
       "typeOf": "Type de {{pin}}",
       "outputs": "Sorties",
+      "numberedInputs": "Entrées",
       "outputRemove": "Retirer {{output}}",
       "cases": "Cas",
       "casesType": "Type des cas",
@@ -544,6 +545,7 @@
         "action": "Actions",
         "flow": "Déroulement",
         "query": "Valeurs",
+        "value": "Conditions et calculs",
         "variable": "Variables",
         "call": "Fonctions",
         "function": "Cette fonction"
@@ -561,9 +563,11 @@
     "doOnce": "Une seule fois",
     "atMostOf": " (au plus {{longest}})",
     "addOutput": "Ajouter une sortie",
+    "addInput": "Ajouter une entrée",
     "removePin": "Retirer",
     "pin": {
-      "then": "Alors {{number}}"
+      "then": "Alors {{number}}",
+      "in": "Entrée {{number}}"
     },
     "newVariable": "Nouvelle variable",
     "addVariable": "Ajouter une variable",

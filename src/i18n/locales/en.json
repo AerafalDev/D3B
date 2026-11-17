@@ -415,6 +415,7 @@
       "reset": "Back to the default ({{value}})",
       "typeOf": "Type of {{pin}}",
       "outputs": "Outputs",
+      "numberedInputs": "Inputs",
       "outputRemove": "Remove {{output}}",
       "cases": "Cases",
       "casesType": "Cases' type",
@@ -544,6 +545,7 @@
         "action": "Actions",
         "flow": "Flow",
         "query": "Values",
+        "value": "Conditions and calculations",
         "variable": "Variables",
         "call": "Functions",
         "function": "This function"
@@ -561,9 +563,11 @@
     "doOnce": "Only once",
     "atMostOf": " (at most {{longest}})",
     "addOutput": "Add an output",
+    "addInput": "Add an input",
     "removePin": "Remove",
     "pin": {
-      "then": "Then {{number}}"
+      "then": "Then {{number}}",
+      "in": "Input {{number}}"
     },
     "newVariable": "New variable",
     "addVariable": "Add a variable",

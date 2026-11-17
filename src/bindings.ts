@@ -1014,7 +1014,9 @@ export type NodeDoes =
 { does: "kind"; kind: string } | { does: "get"; variable: string } | { does: "set"; variable: string } | { does: "call"; function: string };
 
 /**  A node's family, which colours its icon; a get or a set is a `variable`, a call a `call`. */
-export type NodeFamily = "event" | "action" | "flow" | "query" | "function" | "variable" | "call";
+export type NodeFamily = "event" | "action" | "flow" | "query" | 
+/**  A value computed from its inputs, drawn compact. */
+"value" | "function" | "variable" | "call";
 
 /**  A node of a graph. */
 export type NodeView = NodeView_Serialize | NodeView_Deserialize;

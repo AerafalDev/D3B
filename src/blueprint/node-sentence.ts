@@ -103,7 +103,7 @@ export function graphSentences(
       const label = pinLabel(wire.from[1], source);
       if (source?.does === "get") {
         wired.set(wire.to[1], names.get(source.variable) ?? source.variable);
-      } else if (source?.family === "query" && !reading.has(source.id)) {
+      } else if ((source?.family === "query" || source?.family === "value") && !reading.has(source.id)) {
         wired.set(wire.to[1], plain(sentence(source)));
       } else {
         wired.set(wire.to[1], label);

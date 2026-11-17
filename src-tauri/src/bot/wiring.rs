@@ -549,7 +549,7 @@ mod tests {
             let graph = &mut blueprint.graphs[0];
             graph
                 .nodes
-                .push(node(&format!(r#"{{"id": "eq", "kind": "test_equal"{options}}}"#)));
+                .push(node(&format!(r#"{{"id": "eq", "kind": "equal"{options}}}"#)));
             edit(blueprint);
         })
     }

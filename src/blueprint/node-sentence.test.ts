@@ -130,7 +130,7 @@ describe("a node's sentence", () => {
         ...harvest,
         id,
         kind: "add",
-        family: "query",
+        family: "value",
         fromStep: null,
         pins: [pin("a", "number"), pin("b", "number")],
         inputs: {},

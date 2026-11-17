@@ -19,12 +19,12 @@ function numberOf(pin: string, prefix: string): number | null {
 }
 
 /**
- * The edit "+ Add an output" makes (`docs/bot.md`, "The flow's kinds (v2.3)"): one more of the outputs its kind numbers,
- * Sequence's; `null` on a node that numbers none, or holds the most already.
+ * The edit "+" makes (`docs/bot.md`, "The flow's kinds (v2.3)"): one more of the pins its kind numbers, Sequence's
+ * outputs, AND's and OR's inputs; `null` on a node that numbers none, or holds the most already.
  */
 export function addedPin(node: GraphNode): GraphEdit_Deserialize | null {
   const adds = node.adds;
-  if (adds === undefined || adds === null || adds.side !== "out") {
+  if (adds === undefined || adds === null) {
     return null;
   }
   const count = node.options?.count ?? adds.least;

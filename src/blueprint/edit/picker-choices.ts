@@ -8,7 +8,7 @@ export interface PickerList {
 }
 
 // The order of "All", as the catalogue reads: what starts a flow, what the character does, then the rest.
-const FAMILIES: NodeFamily[] = ["event", "action", "flow", "query", "variable", "call", "function"];
+const FAMILIES: NodeFamily[] = ["event", "action", "flow", "query", "value", "variable", "call", "function"];
 
 // What often comes after a flow output, the owner's fixed table of 2026-11-16: after a failure, warn, wait or finish;
 // after another flow, choose, warn or wait.

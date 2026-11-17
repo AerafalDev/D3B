@@ -17,11 +17,14 @@ export function pinLabel(pin: string, node?: NodeView_Serialize): string {
   if (exit !== undefined) {
     return exit.name;
   }
-  const numbered = /^(then|case)_([1-9][0-9]*)$/.exec(pin);
+  const numbered = /^(then|case|in)_([1-9][0-9]*)$/.exec(pin);
   if (node !== undefined && numbered !== null) {
     const [, prefix, number] = numbered;
     if (prefix === "then" && node.adds?.pin === "then") {
       return i18next.t("blueprint.pin.then", { number });
+    }
+    if (prefix === "in" && node.adds?.pin === "in") {
+      return i18next.t("blueprint.pin.in", { number });
     }
     const json = node.options?.cases?.[Number(number) - 1];
     if (prefix === "case" && node.takesCases === true && json !== undefined) {

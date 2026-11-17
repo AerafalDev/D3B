@@ -452,6 +452,8 @@ pub enum NodeFamily {
     Action,
     Flow,
     Query,
+    /// A value computed from its inputs, drawn compact.
+    Value,
     Function,
     Variable,
     Call,
@@ -549,6 +551,7 @@ fn family(node: &bot::Node) -> (Option<NodeFamily>, Option<u8>) {
                     Family::Action => NodeFamily::Action,
                     Family::Flow => NodeFamily::Flow,
                     Family::Query => NodeFamily::Query,
+                    Family::Value => NodeFamily::Value,
                     Family::Function => NodeFamily::Function,
                 };
                 (Some(family), kind.from_step)
