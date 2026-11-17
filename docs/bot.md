@@ -359,7 +359,14 @@ Unreal's; the keys act with the keyboard in that graph only. Ctrl+Z undoes and C
 the letter typed whatever the keyboard's layout, while the keyboard is in the blueprint's tab, a text field keeping
 its own undo; the editor sends one change at a time, so Rust takes them in their order. The Library's right-click offers Delete on mine, which closes its tab. Each graph gives the picker its **choices** (`bot::choices`) with their pins: the catalogue's
   kinds in their place, an event held once never again and a function's entry once, then the blueprint's variables,
-  read and written, and its functions called; creating a variable comes with PR 14. In a graph of mine, a wire
+  read and written, and its functions called. **My variables** (step 3's (14), the owner's choices of 2026-11-17)
+  go through `edit_blueprint` too, the blueprint's whichever graph shows: one created, yes or no and false, under an
+  id made from its name that stays when it is renamed ("Nouvelle variable" is `nouvelle-variable`); one changed whole,
+  its name, type, default, bounds, help, set per character and memory, a new type dropping the wires of its nodes it
+  no longer fits, a default or a Set's value it refuses and bounds it cannot have, bounds changed bringing the default
+  within them; one deleted with its Get and Set nodes, without a question; each undone as the others. The characters
+  running the blueprint keep the values of their settings that still fit (`bot::carried`), after an undo too, a value
+  lost staying lost. The editor's "+", Details and the drag onto the graph come with (14)'s second PR. In a graph of mine, a wire
   dragged from a pin is checked by type as it goes: a pin that refuses it says why beside the pointer (another type,
   two ends of one side, a node to itself); dropped on a pin, it is made; dropped on the ground, it opens the picker
   there, as Space (at the pointer) and a right-click do: a search, "Often here" after a Failed (Notify, Wait, Finish),

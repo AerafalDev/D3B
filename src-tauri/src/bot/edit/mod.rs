@@ -1,11 +1,13 @@
 //! The editor's changes to a blueprint (`docs/bot.md`, "In the app"), the owner's choices of 2026-11-16: a wire checked
 //! by what its pins carry, which replaces the wire that fed its input or left its flow output, an input having one
 //! value and a flow one way on; a node the picker offers, under an id of its own, wired to the pin it came from; nodes
-//! moved; nodes and wires deleted, a node's wires with it (step 3's PR 13); a value typed on an input (`value`). Each
-//! is done whole or refused with nothing changed; `storage` saves it at once and keeps what it replaced, for undo.
+//! moved; nodes and wires deleted, a node's wires with it (step 3's PR 13); a value typed on an input (`value`); my
+//! variables created, changed and deleted (`variable`). Each is done whole or refused with nothing changed; `storage`
+//! saves it at once and keeps what it replaced, for undo.
 
 mod choices;
 mod value;
+mod variable;
 
 use std::collections::BTreeMap;
 
@@ -14,6 +16,7 @@ pub(crate) use choices::choices;
 use super::blueprint::{Blueprint, Does, End, Graph, Id, Node, Wire};
 use super::catalogue::{Carries, Side};
 use super::pins::{NodePin, pins};
+use super::variable::Variable;
 
 /// One change the editor makes to a graph.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -36,6 +39,12 @@ pub(crate) enum Edit {
         pin: Id,
         value: Option<serde_json::Value>,
     },
+    /// A variable of mine named so, under an id made from its name; the graph it is sent from does not matter.
+    NewVariable { name: String },
+    /// The variable of its id made this one, whole: its name, type, default, bounds, help, set per character, memory.
+    Variable(Variable),
+    /// A variable gone, with the nodes that read or write it.
+    DeleteVariable { id: Id },
 }
 
 /// Why an edit is refused. The editor offers none of these; a refusal says the webview and the file disagree.
@@ -61,10 +70,21 @@ pub(crate) enum Refusal {
     Wired,
     #[error("the value is not of the input's type, or out of its bounds")]
     NotItsType,
+    #[error("the blueprint has no such variable")]
+    NoSuchVariable,
+    #[error("a name holds more than spaces")]
+    Blank,
 }
 
 /// Makes `edit` in `blueprint`'s graph `graph`, or refuses it and changes nothing.
 pub(crate) fn edit(blueprint: &mut Blueprint, graph: &Id, edit: Edit) -> Result<(), Refusal> {
+    // A variable is the blueprint's, whichever graph shows.
+    match edit {
+        Edit::NewVariable { name } => return variable::create(blueprint, &name).map(drop),
+        Edit::Variable(changed) => return variable::change(blueprint, changed),
+        Edit::DeleteVariable { id } => return variable::delete(blueprint, &id),
+        _ => {}
+    }
     let at = blueprint
         .graphs
         .iter()
@@ -133,6 +153,7 @@ pub(crate) fn edit(blueprint: &mut Blueprint, graph: &Id, edit: Edit) -> Result<
             }
         }
         Edit::Value { node, pin, value } => value::typed(blueprint, at, &node, &pin, value)?,
+        Edit::NewVariable { .. } | Edit::Variable(_) | Edit::DeleteVariable { .. } => {}
     }
     Ok(())
 }

@@ -11,7 +11,7 @@ use serde_json::Value;
 use super::blueprint::Id;
 
 /// A variable of a blueprint.
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub(crate) struct Variable {
     pub(crate) id: Id,

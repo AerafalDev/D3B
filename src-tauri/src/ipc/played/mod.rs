@@ -3,6 +3,7 @@
 //! once its client is closed, and forgotten into the system's trash; with the blueprint each runs and its settings,
 //! which `settings` changes and `update` brings to a given blueprint's new version.
 
+pub(super) mod follow;
 pub(super) mod settings;
 pub(super) mod update;
 

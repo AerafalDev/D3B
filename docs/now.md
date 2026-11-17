@@ -482,7 +482,9 @@ _Updated 2026-11-17._
   through the IPC (done in code), then Delete, Backspace and a context menu in the graph, Ctrl+Z and Ctrl+Y, and
   Delete in the Library (done in code; its checklist under "Not measured"); the owner's requests of 2026-11-17, before
   v2 (the owner's choices of that day): values typed on a node's inputs in Details (done in code; its checklist under
-  "Not measured"), then my variables, (14)'s first PR, then renaming a blueprint of mine; then **blueprints v2**
+  "Not measured"), then my variables, (14)'s first PR, in two PRs: created, changed and deleted through
+  `edit_blueprint`, the characters' settings following (done in code), then My Blueprint's "+", Details and the drag
+  onto the graph; then renaming a blueprint of mine; then **blueprints v2**
   ([bot.md](bot.md#the-language-v2), ADR 0016; the owner, 2026-11-16, after trying (12): "much more complete", "as
   practical as a Lua script"), from a mock-up of the catalogue and the Summary and an analysis of the reference Lua
   scripts: compact value nodes and a typed Expression, wildcards, lists and level ranges, flow for a bot, "When …
