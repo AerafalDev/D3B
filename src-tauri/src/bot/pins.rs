@@ -52,13 +52,7 @@ pub(crate) fn pins(blueprint: &Blueprint, graph: &Graph, node: &Node) -> Option<
             // A kind that changes a variable types its wildcards by it, else by the type the node notes.
             let typed = if kind.takes.contains(&Takes::Variable) {
                 let named = node.options.variable.as_ref();
-                named.and_then(|id| {
-                    blueprint
-                        .variables
-                        .iter()
-                        .find(|it| &it.id == id)
-                        .map(|it| it.value_type)
-                })
+                named.and_then(|id| variable_of(blueprint, graph, id).map(|it| it.value_type))
             } else {
                 node.options.value_type
             };
@@ -118,8 +112,9 @@ pub(crate) fn pins(blueprint: &Blueprint, graph: &Graph, node: &Node) -> Option<
 
 /// The variable `id` that a node of `graph` reads or writes: the blueprint's, or a local of its function.
 pub(crate) fn variable_of<'b>(blueprint: &'b Blueprint, graph: &'b Graph, id: &Id) -> Option<&'b Variable> {
+    // A local first, as the runtime reads it; no id is both, which is a problem of its own.
     let locals = graph.function.iter().flat_map(|signature| &signature.locals);
-    blueprint.variables.iter().chain(locals).find(|it| &it.id == id)
+    locals.chain(&blueprint.variables).find(|it| &it.id == id)
 }
 
 /// The ids of a function's exits that become its calls' flow outputs: the first of an id, none with a reserved one or

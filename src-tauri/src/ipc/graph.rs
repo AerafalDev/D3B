@@ -955,6 +955,86 @@ mod tests {
                 Problem::EventTwice { graph: g(), node: n() },
                 (K::EventTwice, some("g"), some("n"), None, None),
             ),
+            (
+                Problem::OwnEventTwice { event: x() },
+                (K::OwnEventTwice, None, None, None, some("x")),
+            ),
+            (
+                Problem::NoSuchEvent {
+                    graph: g(),
+                    node: n(),
+                    event: x(),
+                },
+                (K::NoSuchEvent, some("g"), some("n"), None, some("x")),
+            ),
+            (
+                Problem::NoSuchExit {
+                    graph: g(),
+                    node: n(),
+                    exit: x(),
+                },
+                (K::NoSuchExit, some("g"), some("n"), None, some("x")),
+            ),
+            (
+                Problem::NotPure { graph: g(), node: n() },
+                (K::NotPure, some("g"), some("n"), None, None),
+            ),
+            (
+                Problem::DefaultRangesOverlap { variable: x() },
+                (K::DefaultRangesOverlap, None, None, None, some("x")),
+            ),
+            (
+                Problem::RangesOverlap {
+                    graph: g(),
+                    node: n(),
+                    pin: p(),
+                },
+                (K::RangesOverlap, some("g"), some("n"), some("p"), None),
+            ),
+            (
+                Problem::NoSuchOption {
+                    graph: g(),
+                    node: n(),
+                    option: x(),
+                },
+                (K::NoSuchOption, some("g"), some("n"), None, some("x")),
+            ),
+            (
+                Problem::OptionMissing {
+                    graph: g(),
+                    node: n(),
+                    option: x(),
+                },
+                (K::OptionMissing, some("g"), some("n"), None, some("x")),
+            ),
+            (
+                Problem::CaseNotOfType {
+                    graph: g(),
+                    node: n(),
+                    pin: p(),
+                },
+                (K::CaseNotOfType, some("g"), some("n"), some("p"), None),
+            ),
+            (
+                Problem::CaseTwice {
+                    graph: g(),
+                    node: n(),
+                    pin: p(),
+                },
+                (K::CaseTwice, some("g"), some("n"), some("p"), None),
+            ),
+            (
+                Problem::WildcardWithoutType { graph: g(), node: n() },
+                (K::WildcardWithoutType, some("g"), some("n"), None, None),
+            ),
+            (
+                Problem::WireOfAnotherShape {
+                    graph: g(),
+                    from: bot::End(n(), p()),
+                    to: bot::End(x(), p()),
+                },
+                (K::WireOfAnotherShape, some("g"), some("n"), some("p"), some("x")),
+            ),
         ];
         let mut kinds = std::collections::HashSet::new();
         for (problem, expected) in cases {
@@ -969,7 +1049,7 @@ mod tests {
                 "{problem:?}: a kind's name twice"
             );
         }
-        assert_eq!(kinds.len(), 24);
+        assert_eq!(kinds.len(), 36, "every problem");
     }
 
     #[test]

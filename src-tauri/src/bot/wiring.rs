@@ -152,7 +152,7 @@ fn of_options(blueprint: &Blueprint, of_graph: &Graph, node: &Node, found: &mut 
         }
     }
     if let Some(variable) = options.variable.as_ref().filter(|_| takes(|it| *it == Takes::Variable))
-        && !blueprint.variables.iter().any(|it| &it.id == variable)
+        && super::pins::variable_of(blueprint, of_graph, variable).is_none()
     {
         let (graph, node) = at();
         let variable = variable.clone();

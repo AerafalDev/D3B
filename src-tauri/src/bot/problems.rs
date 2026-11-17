@@ -111,7 +111,8 @@ pub(crate) fn problems(blueprint: &Blueprint) -> Vec<Problem> {
                 event: event.id.clone(),
             });
         }
-        parameters(&event.id, [ids(&event.inputs)], &[], &mut found);
+        // Its inputs are its node's outputs, beside its `then` only.
+        parameters(&event.id, [ids(&event.inputs)], &[], &["then"], &mut found);
     }
     let mut graphs = HashSet::new();
     for graph in &blueprint.graphs {
@@ -135,18 +136,20 @@ fn ids(parameters: &[super::blueprint::Parameter]) -> Vec<&Id> {
     parameters.iter().map(|it| &it.id).collect()
 }
 
-/// The problems of each list of ids in `lists`: malformed, twice in its list, reserved, or among `taken`.
+/// The problems of each list of ids in `lists`: malformed, twice in its list, a pin's that it would clash with
+/// (`reserved`), or among `taken`.
 fn parameters<'a>(
     graph: &Id,
     lists: impl IntoIterator<Item = impl IntoIterator<Item = &'a Id>>,
     taken: &[&Id],
+    reserved: &[&str],
     found: &mut Vec<Problem>,
 ) {
     for list in lists {
         let mut seen = HashSet::new();
         for id in list {
             well_formed(id, found);
-            if !seen.insert(id) || RESERVED.contains(&id.0.as_str()) || taken.contains(&id) {
+            if !seen.insert(id) || reserved.contains(&id.0.as_str()) || taken.contains(&id) {
                 found.push(Problem::ParameterTwice {
                     graph: graph.clone(),
                     parameter: id.clone(),
@@ -187,13 +190,20 @@ fn of_variable(variable: &Variable) -> Option<Problem> {
 fn of_graph(blueprint: &Blueprint, graph: &Graph, found: &mut Vec<Problem>) {
     let at = || graph.id.clone();
     if let Some(signature) = &graph.function {
-        parameters(&graph.id, [ids(&signature.inputs), ids(&signature.outputs)], &[], found);
+        parameters(
+            &graph.id,
+            [ids(&signature.inputs), ids(&signature.outputs)],
+            &[],
+            &RESERVED,
+            found,
+        );
         // An exit is a flow output of its calls, beside their outputs.
         let exits: Vec<&Id> = signature.exits.iter().map(|it| &it.id).collect();
-        parameters(&graph.id, [exits], &ids(&signature.outputs), found);
+        parameters(&graph.id, [exits], &ids(&signature.outputs), &RESERVED, found);
         let variables: Vec<&Id> = blueprint.variables.iter().map(|it| &it.id).collect();
         let locals: Vec<&Id> = signature.locals.iter().map(|it| &it.id).collect();
-        parameters(&graph.id, [locals], &variables, found);
+        // A local is no pin: only a variable's id would make a Get mean two things.
+        parameters(&graph.id, [locals], &variables, &[], found);
         found.extend(signature.locals.iter().filter_map(of_variable));
     }
     let mut nodes = HashSet::new();
@@ -310,19 +320,23 @@ mod tests {
     const MINE: &str = r#"{"schema": 1, "id": "b", "name": "B", "version": 1,
       "variables": [{"id": "n", "name": "N", "type": "number", "default": 0}],
       "events": [{"id": "empty", "name": "Empty", "inputs": [{"id": "zone", "name": "Zone", "type": "zone"},
-                                                             {"id": "zone", "name": "Zone", "type": "zone"}]},
-                 {"id": "empty", "name": "Empty again"}],
+                                                             {"id": "zone", "name": "Zone", "type": "zone"},
+                                                             {"id": "failed", "name": "Failed", "type": "bool"},
+                                                             {"id": "then", "name": "Then", "type": "bool"}]},
+                 {"id": "empty", "name": "Empty again"}, {"id": "full", "name": "Full"}],
       "graphs": [
         {"id": "events", "name": "Events", "nodes": [
           {"id": "e1", "kind": "my_event", "options": {"event": "empty"}},
           {"id": "e2", "kind": "my_event", "options": {"event": "empty"}},
           {"id": "e3", "kind": "my_event", "options": {"event": "gone"}}, {"id": "e4", "kind": "my_event"},
+          {"id": "e5", "kind": "my_event", "options": {"event": "full"}},
           {"id": "g", "get": "tries"}]},
         {"id": "f", "name": "F", "function": {"outputs": [{"id": "y", "name": "Y", "type": "number"}],
           "exits": [{"id": "full", "name": "Full"}, {"id": "full", "name": "Full"}, {"id": "done", "name": "Done"},
                     {"id": "y", "name": "Y"}],
           "locals": [{"id": "tries", "name": "Tries", "type": "number", "default": "x"},
-                     {"id": "n", "name": "N", "type": "number"}], "pure": true},
+                     {"id": "n", "name": "N", "type": "number"}, {"id": "done", "name": "Done", "type": "bool"}],
+          "pure": true},
          "nodes": [{"id": "in", "kind": "entry"}, {"id": "r", "kind": "result", "inputs": {"y": 1}},
                    {"id": "say", "kind": "notify", "inputs": {"text": ""}},
                    {"id": "x1", "kind": "return_exit", "options": {"exit": "gone"}}, {"id": "t", "get": "tries"}]},
@@ -390,6 +404,29 @@ mod tests {
         ];
         found_in(&blueprint, expected);
         let found = problems(&blueprint);
+        let not = [
+            twice("empty", "failed"),
+            twice("f", "done"),
+            Problem::EventTwice {
+                graph: id("events"),
+                node: id("e3"),
+            },
+            Problem::EventTwice {
+                graph: id("events"),
+                node: id("e5"),
+            },
+        ];
+        // An event's input clashes with its node's `then` only, a local with no pin; each event is held once.
+        assert_eq!(
+            found.iter().filter(|it| not[1..].contains(it)).count(),
+            1,
+            "the exit `done`, not the local"
+        );
+        assert!(
+            !found.contains(&not[0]) && !found.contains(&not[2]) && !found.contains(&not[3]),
+            "{found:?}"
+        );
+        assert!(found.contains(&twice("empty", "then")));
         let (graph, node) = on("f", "in");
         assert!(
             !found.contains(&Problem::NotPure { graph, node }),

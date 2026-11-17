@@ -168,12 +168,12 @@ impl Cx<'_> {
         value.as_bool().ok_or_else(|| Fault::NotOfType { pin: pin.to_owned() })
     }
 
-    /// The node's value inputs, in its pins' order.
     /// The exit the node at work returns by, as its options name it.
     pub(crate) fn named(&self) -> Option<String> {
         self.program.graphs[self.graph].nodes[self.node].named.clone()
     }
 
+    /// The node's value inputs, in its pins' order.
     pub(crate) fn inputs(&self) -> Vec<String> {
         let code = &self.program.graphs[self.graph].nodes[self.node];
         code.inputs.iter().map(|(pin, _)| pin.clone()).collect()

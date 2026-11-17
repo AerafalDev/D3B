@@ -37,7 +37,7 @@ pub(super) fn typed(
     }
     // A Set out of its variable's bounds would block the run, and memory would lose it at the next.
     let variable = match &found.does {
-        Does::Set(variable) => blueprint.variables.iter().find(|it| &it.id == variable),
+        Does::Set(variable) => crate::bot::pins::variable_of(blueprint, graph, variable),
         _ => None,
     };
     let value = value.filter(|value| Some(value) != input.default.as_ref());

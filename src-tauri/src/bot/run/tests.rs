@@ -194,13 +194,15 @@ const EXITS: &str = r#"[{"id": "events", "name": "Events",
 
 #[test]
 fn a_return_by_an_exit_goes_on_out_of_it_and_locals_start_from_their_defaults_at_each_call() {
-    let mut run = run_of(&blueprint(VARIABLES, EXITS), &BTreeMap::new());
+    let memory = BTreeMap::from([("n".to_owned(), json!(3))]);
+    let run = Run::new(&blueprint(VARIABLES, EXITS), &BTreeMap::new(), &memory);
+    let mut run = run.unwrap_or_else(|error| panic!("{error:?}"));
     assert_eq!(
         run.advance(Some(&View::default()), &Nothing, Instant::now()),
         &State::Finished
     );
-    // 10 + 0, then 10 + 10: the second call's local starts again from 10.
-    assert_eq!(n(&mut run), Some(json!(20)));
+    // 10 + 3, then 10 + 13: the second call's local starts again from 10, else it would be 13 + 13.
+    assert_eq!(n(&mut run), Some(json!(23)));
 }
 
 #[test]
