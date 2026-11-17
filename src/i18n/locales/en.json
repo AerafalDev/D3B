@@ -448,6 +448,9 @@
     },
     "value": {
       "percent": "{{value}}%",
+      "seconds": "{{seconds}} s",
+      "minutes": "{{minutes}} min",
+      "minutesSeconds": "{{minutes}} min {{seconds}} s",
       "none": "to choose",
       "yes": "Yes",
       "no": "No",
@@ -580,6 +583,7 @@
       "optionMissing": "This node needs its {{subject}}.",
       "caseNotOfType": "The case {{pin}} is not of the type compared.",
       "caseTwice": "The case {{pin}} is given twice.",
+      "typeNotTaken": "This node does not take this type.",
       "wildcardWithoutType": "This node is wired or given a value before it has a type.",
       "wireToNoPin": "A wire goes to {{pin}}, which this node does not have.",
       "wireTheWrongWay": "A wire is drawn the wrong way on {{pin}}.",

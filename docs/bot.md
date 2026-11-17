@@ -109,7 +109,7 @@ flowchart LR
   see this before step N", its reason the id `unseen_before_step_<N>` the interface words (settled alone). Go to a zone
   is done on a map of the zone; Harvest until and Hunt until once the pods reach their share, their harvests' count
   not given before step 5 (a node reading it blocks); Go to the bank on the bank's map, the nearest one failing until
-  step 4's paths; Deposit all but failing until step 5. Wait counts its minutes from when the flow came in, Wait for
+  step 4's paths; Deposit all but failing until step 5. Wait counts its duration from when the flow came in, Wait for
   life waits for the life's share, read each second since it rises with no message; Notify's texts wait in the run, the last 100, for step 4's History. The queries
   read the view when used, one not seen yet (no life read since the connection opened) blocking with what is missing.
 - **What it knows beyond the view** (whether a map is in a zone, a profession's resources) it asks of a `Knows` that
@@ -311,8 +311,11 @@ schema 1 file reads migrated in memory by `bot::schema` ("at least" to `≥` of 
 its seconds, ×60, and a Wait whose minutes a wire fed to a node "N minutes" fed by that wire, left of the Wait where
 it is placed; a value no whole minutes held stays and says its problem), and is written as 2 at its next change, so
 a file only read stays as it is (step 4 of (v2.1), done in code: `≥` and N minutes come before v2.4's other values,
-`≥` comparing numbers, percentages and durations by their value and times "HH:MM" by their order, and Wait's input
-is `duration`, 60 s by default);
+`≥` comparing numbers, percentages and durations by their value and times "HH:MM" by their order, another type
+noted on it a problem, and reading numbers while its node notes no type (the owner, 2026-11-17: as "at least" did,
+so the editor keeps working until (v2.2) types it), a kind's types with the first by default; Wait's input is
+`duration`, 60 s by default, typed in Details as "1 min 30", "5 min" or "90 s", a bare number refused (the owner,
+2026-11-17: v2.2's duration editor brought forward, so a Wait's time stays typed));
 D3B's blueprints ship as 2. A node still does one thing (`kind`, `get`, `set` or `call`), with `options` beside;
 the pins its options make are numbered from 1: Sequence's `then_1` to `then_n`, Switch's `case_1` to `case_n` (the
 cases' values in `options.cases`) and `otherwise`, a list's inputs `in_1` to `in_n`; Text's inputs are its holes'
@@ -571,11 +574,12 @@ schema, not JSON, or not of its shape (a field missing, unknown or given twice, 
 twice, a wire to no node, a default its type or bounds refuse, a node on a variable or function the blueprint lacks)
 opens with its **problems** and cannot run; a node kind this version does not know is one of them.
 
-The **catalogue** (`bot::catalogue`, the owner's v1 list of 2026-11-13) holds 25 kinds by family: the events on start,
+The **catalogue** (`bot::catalogue`, the owner's v1 list of 2026-11-13) holds 25 kinds by family (v1's; v2.1 adds an event of mine, a return by an exit, a pure function's result and N
+minutes, and makes "at least" `≥`, `greater_or_equal`): the events on start,
 life below, pods above, a fight starts (forced: the default fight, then resume), died and an action fails (forced:
 blocked with the reason); the actions go to a zone (step 4), harvest until, go to the bank and deposit
 all but (step 5), hunt until (step 6), and notify; If, Wait, Wait for life (sitting no longer gives life back
-faster: the owner, 2026-11-14) and Finish; the queries life %, pods %, level, at least (`≥` from (v2.1)),
+faster: the owner, 2026-11-14) and Finish; the queries life %, pods %, level, at least (`greater_or_equal` from (v2.1)),
 add and the resources of a profession; a function's entry, done return and failed return. Flow pins are `run` in, `then` out, an action's `done`
 and `failed` with its `reason`; a get has `value`, a set and a call their variable's or function's. Rust holds ids
 only: sentences, descriptions and icons are the interface's. A wire carries one type, but a percentage feeds a number.

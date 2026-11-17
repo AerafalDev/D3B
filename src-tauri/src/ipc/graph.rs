@@ -59,6 +59,7 @@ pub enum ProblemKind {
     OptionMissing,
     CaseNotOfType,
     CaseTwice,
+    TypeNotTaken,
     WildcardWithoutType,
     WireToNoPin,
     WireTheWrongWay,
@@ -116,6 +117,7 @@ impl From<&Problem> for ProblemView {
             }
             Problem::CaseNotOfType { graph, node, pin } => (K::CaseNotOfType, text(graph), text(node), text(pin), None),
             Problem::CaseTwice { graph, node, pin } => (K::CaseTwice, text(graph), text(node), text(pin), None),
+            Problem::TypeNotTaken { graph, node } => (K::TypeNotTaken, text(graph), text(node), None, None),
             Problem::WildcardWithoutType { graph, node } => {
                 (K::WildcardWithoutType, text(graph), text(node), None, None)
             }
@@ -1024,6 +1026,10 @@ mod tests {
                 (K::CaseTwice, some("g"), some("n"), some("p"), None),
             ),
             (
+                Problem::TypeNotTaken { graph: g(), node: n() },
+                (K::TypeNotTaken, some("g"), some("n"), None, None),
+            ),
+            (
                 Problem::WildcardWithoutType { graph: g(), node: n() },
                 (K::WildcardWithoutType, some("g"), some("n"), None, None),
             ),
@@ -1049,7 +1055,7 @@ mod tests {
                 "{problem:?}: a kind's name twice"
             );
         }
-        assert_eq!(kinds.len(), 36, "every problem");
+        assert_eq!(kinds.len(), 37, "every problem");
     }
 
     #[test]

@@ -4,9 +4,11 @@ import i18next from "i18next";
 function duration(seconds: number): string {
   const [minutes, rest] = [Math.floor(seconds / 60), seconds % 60];
   if (minutes === 0) {
-    return `${rest} s`;
+    return i18next.t("library.value.seconds", { seconds: rest });
   }
-  return rest === 0 ? `${minutes} min` : `${minutes} min ${rest}`;
+  return rest === 0
+    ? i18next.t("library.value.minutes", { minutes })
+    : i18next.t("library.value.minutesSeconds", { minutes, seconds: rest });
 }
 
 /** A value as the player reads it, by its type (`bot::variable`'s shapes); a shape its type does not hold, as JSON. */

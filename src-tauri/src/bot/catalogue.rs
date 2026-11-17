@@ -195,6 +195,9 @@ pub(crate) struct Kind {
     pub(crate) from_step: Option<u8>,
     /// The options it takes beyond its wildcards' type.
     pub(crate) takes: &'static [Takes],
+    /// The types its wildcards may take, the first while its node notes none (the owner, 2026-11-17: `≥` reads numbers
+    /// as "at least" did until the editor types it, (v2.2)); empty for any type and none by default.
+    pub(crate) types: &'static [ValueType],
 }
 
 const fn event(id: &'static str, pins: &'static [Pin], role: EventRole) -> Kind {
@@ -205,6 +208,7 @@ const fn event(id: &'static str, pins: &'static [Pin], role: EventRole) -> Kind 
         event: Some(role),
         from_step: None,
         takes: &[],
+        types: &[],
     }
 }
 
@@ -216,6 +220,7 @@ const fn of(id: &'static str, family: Family, pins: &'static [Pin], from_step: O
         event: None,
         from_step,
         takes: &[],
+        types: &[],
     }
 }
 
@@ -276,7 +281,7 @@ pub(crate) const KINDS: &[Kind] = &[
     of("job_resources", Query, &[input("job", Job, None), output("value", Items)], None),
     of("level", Query, &[output("value", Number)], None),
     // v1's "at least", now any two values compared in order (ADR 0016): numbers, percentages, durations, times.
-    of("greater_or_equal", Query, &[wildcard("a", Side::In, false), wildcard("b", Side::In, false), output("value", Bool)], None),
+    Kind { types: &[Number, Percentage, Duration, ValueType::Time], ..of("greater_or_equal", Query, &[wildcard("a", Side::In, false), wildcard("b", Side::In, false), output("value", Bool)], None) },
     of("minutes", Query, &[input("minutes", Number, Some("1")), output("value", Duration)], None),
     of("add", Query, &[input("a", Number, None), input("b", Number, None), output("value", Number)], None),
     of("entry", Function, &[THEN], None),
