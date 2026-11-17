@@ -525,6 +525,7 @@
       "duration": "Durée",
       "memory": "Mémoire : gardée par personnage entre les séances",
       "oneRun": "Le temps d'un lancement",
+      "reset": "Revenir à la valeur par défaut ({{value}})",
       "usedBy": "Utilisée par",
       "nodes_one": "{{count}} nœud",
       "nodes_other": "{{count}} nœuds"

@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 
-import type { VariableView_Serialize as VariableView } from "@/bindings.ts";
 import { Switch } from "@/components/ui/switch.tsx";
 import { valueText } from "@/library/value-text.ts";
 import { ZoneField, type ZoneValue } from "@/zone/zone-field.tsx";
@@ -10,8 +9,14 @@ import { JobSelect } from "./job-select.tsx";
 /** The step of the roadmap whose actions use a bank and items, which brings their editors (the owner, 2026-11-16). */
 const LATER = 5;
 
+/** What a value is edited by: its type, as the file writes it, and a number's bounds. */
+export interface Typed {
+  valueType: string;
+  bounds: [number, number] | null;
+}
+
 interface SettingEditorProps {
-  variable: VariableView;
+  variable: Typed;
   /** The value shown as JSON: the character's own, else the default; `null` when neither is set. */
   value: string | null;
   /** A new value as JSON, which the back end checks against the setting's type and bounds; whether it was kept. */
@@ -24,7 +29,8 @@ interface SettingEditorProps {
 
 /**
  * A setting's editor by its type (the owner, 2026-11-16): a Zone's field, a bounded number, a switch, a line of text, a
- * profession; a bank and items say their value only until step 5 brings their editors.
+ * profession; a bank and items say their value only until step 5 brings their editors. A node's input typed in Details
+ * takes the same (the owner, 2026-11-17).
  */
 export function SettingEditor({ variable, value, onChange, who, label }: SettingEditorProps) {
   const { t, i18n } = useTranslation();

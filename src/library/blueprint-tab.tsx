@@ -237,6 +237,17 @@ export function BlueprintTab({ api, params }: IDockviewPanelProps<BlueprintParam
               problems={read_.graphs.problems}
               selection={selection}
               names={names}
+              onValue={
+                blueprint.given || shownGraph === undefined
+                  ? undefined
+                  : (node, pin, value) =>
+                      edit(blueprint.id, shownGraph.id, { edit: "value", node, pin, value }).then((saved) => {
+                        if (saved) {
+                          void refresh();
+                        }
+                        return saved;
+                      })
+              }
             />
           </>
         )}
