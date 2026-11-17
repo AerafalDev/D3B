@@ -185,10 +185,14 @@ function Graph({ graph, names, faulty, chosen = null, onChoose, onEdit }: Bluepr
     }
   };
   const pinOf = useMemo<PinOf>(() => {
-    const byNode = new Map(graph.nodes.map((node) => [node.id, node.pins]));
+    const byNode = new Map(graph.nodes.map((node) => [node.id, node]));
     return (node, pin, side) => {
-      const found = byNode.get(node)?.find((one) => one.id === pin && one.side === side);
-      return found === undefined ? null : { node, pin: found };
+      const drawn = byNode.get(node);
+      const found = drawn?.pins.find((one) => one.id === pin && one.side === side);
+      if (drawn === undefined || found === undefined) {
+        return null;
+      }
+      return { node, pin: found, types: drawn.types ?? [], typed: drawn.options?.valueType ?? null };
     };
   }, [graph]);
   // React Flow's own words, in the player's language.

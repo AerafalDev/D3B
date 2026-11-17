@@ -112,6 +112,18 @@
   width: 9px;
   height: 9px;
 }
+.blueprint-list.react-flow__handle,
+.blueprint-ranges.react-flow__handle {
+  border-radius: 0;
+}
+.blueprint-ranges.react-flow__handle {
+  background: transparent;
+  box-shadow: inset 0 0 0 2px var(--type);
+}
+.blueprint-open.react-flow__handle {
+  background: transparent;
+  box-shadow: inset 0 0 0 2px var(--type-open);
+}
 .blueprint-pill {
   position: relative;
   height: 24px;
@@ -171,6 +183,30 @@
 }
 .blueprint-type-text {
   --type: #cfcfcf;
+}
+/* v2's types, by family (the owner, 2026-11-17): a map beside the zone and the route, an item beside Items, a
+   duration and a time beside the numbers they are compared with. */
+.blueprint-type-map {
+  --type: #5fb3a1;
+}
+.blueprint-type-item {
+  --type: #e0a46b;
+}
+.blueprint-type-duration {
+  --type: #b5a7ff;
+}
+.blueprint-type-time {
+  --type: #d6a8ff;
+}
+.blueprint-type-npc {
+  --type: #dcdcaa;
+}
+.blueprint-type-wildcard,
+.blueprint-type-any {
+  --type: #9a9a9a;
+}
+.blueprint-pin {
+  --type-open: #9a9a9a;
 }
 .blueprint-flow .react-flow__edge[class*="blueprint-type-"] .react-flow__edge-path {
   stroke: var(--type);

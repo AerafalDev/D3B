@@ -50,6 +50,29 @@ describe("a node of the graph", () => {
     expect(container.querySelector(".blueprint-value.blueprint-type-zone")).not.toBeNull();
   });
 
+  it("draws a list as a square, ranges hollow, and a wildcard of no type grey until its node notes one", () => {
+    const shaped = (more: Partial<GraphNode["pins"][number]>) => ({ ...pin("a", "in", "number"), ...more });
+    const ge = {
+      ...harvest,
+      kind: "greater_or_equal",
+      family: "query",
+      fromStep: null,
+      pins: [
+        shaped({ id: "a", wildcard: true }),
+        shaped({ id: "z", carries: "zone", list: true }),
+        shaped({ id: "r", carries: "zone", ranges: true }),
+      ],
+    } as GraphNode;
+    const { container } = node(ge);
+    expect(container.querySelector(".blueprint-open.blueprint-type-number")).not.toBeNull();
+    expect(container.querySelector(".blueprint-list.blueprint-type-zone")).not.toBeNull();
+    expect(container.querySelector(".blueprint-ranges.blueprint-type-zone")).not.toBeNull();
+    cleanup();
+    const typed = node({ ...ge, options: { valueType: "time" }, pins: [shaped({ carries: "time", wildcard: true })] });
+    expect(typed.container.querySelector(".blueprint-open")).toBeNull();
+    expect(typed.container.querySelector(".blueprint-type-time")).not.toBeNull();
+  });
+
   it("has no tag once the bot does it, and marks a kind this version does not know", () => {
     const { container } = node({ ...harvest, fromStep: null, family: null });
     expect(screen.queryByText(/étape/)).toBeNull();
