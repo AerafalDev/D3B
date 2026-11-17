@@ -315,18 +315,23 @@ _Updated 2026-11-17._
        a Prévenir's text and press Enter: its value goes and its problem comes back.
 - **step 3, Advanced tools** ((24)), on Windows x64 from `bun run app` on `next` or the next release:
   Measured by the owner on 2026-11-17, Windows x64, `bun run app` on `next` 60cf228: items 1, 2, 3 and 5 pass, and 4 but
-  for the palette's command, not tried. Not measured yet: item 6. The owner then asked for the panel closed by default
-  and opened by a character online (2026-11-17), the next PR's work.
-    1. with no `Documents/D3B/settings.json`, start D3B: no panel under the editor area, no panel toggle in the title
-       bar, no Panneau in Affichage, Ctrl+J does nothing, and the palette has no "Afficher ou masquer le panneau";
-    2. Affichage > Outils avancés: the panel slides open on the Protocol view, the toggle, Panneau and Ctrl+J come
-       back, and `settings.json` says `"advancedTools": true`;
-    3. restart D3B: the panel shows the Protocol view at once;
-    4. "Afficher ou masquer les outils avancés" in the palette: the panel closes; restart: it stays hidden;
-    5. Advanced tools off, play a character for a minute, then turn them on: its tab's frames of that minute are listed;
+  for the palette's command, not tried. The owner then asked for the panel closed by default and opened by a character
+  online (2026-11-17), measured below. Not measured yet:
+    4. "Afficher ou masquer les outils avancés" in the palette: Advanced tools turn off and the panel closes; restart:
+       they stay off;
     6. write `{"schema": 9}` in `settings.json` and restart: a notification says the file is kept as it is and why,
        and Advanced tools are off; turn them on: a notification says the setting holds until D3B closes and why, and
        the file is unchanged.
+- **step 3, the Protocol panel's opening** (after (24), the owner's ask of 2026-11-17), on Windows x64 from
+  `bun run app` on `next` or the next release, two clients open and Advanced tools on:
+    1. start D3B: no panel under the editor area; Affichage > Panneau and Ctrl+J still open and close it by hand;
+    2. click a character online in Personnages: its tab opens and the panel slides open on its frames; click the
+       other's tab: the panel stays open on the other's frames;
+    3. close the panel with Ctrl+J, then click the first character's tab, a blueprint's tab, then the first's again:
+       it stays closed; click a character online in Personnages: it opens;
+    4. click a character whose client is closed (under the line in Personnages): the panel does not open;
+    5. with a blueprint's tab active, turn Advanced tools off then on: the panel stays closed; with a character
+       online's tab active, turn them off then on: it slides open, even after a close by hand.
 - **step 3, a given blueprint's update** ((23)), on Windows x64 from `bun run app` on `next` or the next release:
     1. give a character Récolte automatique and set Banque à to 80; quit D3B; in its file
        `Documents/D3B/characters/<server>-<id>.json`, set `"blueprintVersion": 0` and add `"gone": 1` to `"settings"`;
@@ -507,7 +512,8 @@ _Updated 2026-11-17._
   update (the owner's choices of 2026-11-16: a notice in the character's tab until closed, a value kept when the new
   version accepts it, a copy saying its original is newer with a blue arrow in the Library and nothing more yet; done
   in code, its checklist under "Not measured"); (24) the "Advanced tools" setting (the owner's choices of 2026-11-16: in the palette and View, no Settings
-  view yet; `settings.json` in the player's folder; the panel gone while off; the frames followed even then; done in
+  view yet; `settings.json` in the player's folder; the panel gone while off; the frames followed even then; measured by
+  the owner on 2026-11-17, who then asked for the panel closed at start and opened by a connected character: done in
   code, its checklist under "Not measured"); (25) the runtime: the flow, outcomes, variables, blocked, finished, on the
   captures, with v2's loops, Switch, lists, randomness, pure functions and the loop guard (designed with the owner on
   2026-11-16, [bot.md](bot.md#the-runtime), ADR 0017: the engine alone, wired by step 4's Play; an action before its

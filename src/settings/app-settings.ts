@@ -13,7 +13,7 @@ interface AppSettingsStore extends Settings {
   load: () => Promise<void>;
   /**
    * Shows or hides the Protocol view and its panel, the panel's only view until step 4's History; saved at once, and
-   * kept for the session when it cannot be.
+   * kept for the session when it cannot be. Off closes the panel; on leaves its opening to the active tab.
    */
   setAdvancedTools: (on: boolean) => void;
 }
@@ -51,7 +51,6 @@ export const useAppSettings = create<AppSettingsStore>((set, get) => ({
       }
       if (!get().changed) {
         set(settings);
-        useLayout.getState().setVisible("panel", settings.advancedTools);
       }
     } catch (error) {
       console.error("the app's settings could not be read", error);
@@ -60,7 +59,10 @@ export const useAppSettings = create<AppSettingsStore>((set, get) => ({
 
   setAdvancedTools: (advancedTools) => {
     set({ advancedTools, changed: true });
-    useLayout.getState().setVisible("panel", advancedTools);
+    // On, the panel opens only with a connected character's tab active (`src/inspector/use-panel-opening.ts`).
+    if (!advancedTools) {
+      useLayout.getState().setVisible("panel", false);
+    }
     if (isTauri()) {
       // The file is written whole: every setting, today this one.
       saving = saving.then(() =>
