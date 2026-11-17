@@ -371,7 +371,8 @@ its own undo; the editor sends one change at a time, so Rust takes them in their
   number or a percentage (both emptied for none), whether each character sets it, its help and memory, each field
   saved when left, and "Supprimer la variable". A variable dragged from My Blueprint onto the graph opens a small
   menu at the pointer, "Lire …" or "Écrire …", Ctrl (Cmd) reading it at once and Alt writing it (the owner's choice
-  of 2026-11-17, Unreal's). In a graph of mine, a wire
+  of 2026-11-17, Unreal's); the drag is `@dnd-kit`'s, by the pointer, since the window keeps Tauri's own drop for a
+  `.d3b` file, and the picker reads and writes a variable by keyboard. In a graph of mine, a wire
   dragged from a pin is checked by type as it goes: a pin that refuses it says why beside the pointer (another type,
   two ends of one side, a node to itself); dropped on a pin, it is made; dropped on the ground, it opens the picker
   there, as Space (at the pointer) and a right-click do: a search, "Often here" after a Failed (Notify, Wait, Finish),
