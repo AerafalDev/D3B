@@ -138,6 +138,18 @@ describe("a node of the graph", () => {
     useZones.setState({ zones: [] });
   });
 
+  it("draws a second flow input, Reset, as a row", () => {
+    const once = {
+      ...sequence,
+      kind: "do_n_times",
+      pins: [pin("run", "in", "exec"), pin("reset", "in", "exec"), pin("then", "out", "exec")],
+      adds: null,
+    } as unknown as GraphNode;
+    const { container } = node(once);
+    expect(rows(container)).toEqual(["Réarmer"]);
+    expect(container.querySelectorAll(".blueprint-exec")).toHaveLength(3);
+  });
+
   it("has no tag once the bot does it, and marks a kind this version does not know", () => {
     const { container } = node({ ...harvest, fromStep: null, family: null });
     expect(screen.queryByText(/étape/)).toBeNull();

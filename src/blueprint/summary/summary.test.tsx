@@ -302,6 +302,90 @@ describe("the blueprint's Summary", () => {
     expect(read()[0]).toEqual(["Au lancement", "1. Vider à la banque", "Revenir à 1."]);
   });
 
+  it("reads Do once by its name, a wire into its Reset as a re-arm, and Alternate's outputs on one line", () => {
+    const flows = {
+      ...events,
+      nodes: [
+        node("start", "on_start", { family: "event", pins: [pin("then", "out")] }),
+        node("once", "do_n_times", {
+          family: "flow",
+          pins: [pin("run", "in"), pin("reset", "in"), pin("times", "in", "number", "1"), pin("then", "out")],
+        }),
+        node("alt", "alternate", {
+          family: "flow",
+          pins: [pin("run", "in"), pin("first", "out"), pin("second", "out")],
+        }),
+        node("a", "notify"),
+        node("b", "notify"),
+      ],
+      wires: [
+        { from: ["start", "then"], to: ["once", "run"] },
+        { from: ["once", "then"], to: ["alt", "run"] },
+        { from: ["alt", "first"], to: ["a", "run"] },
+        { from: ["alt", "second"], to: ["b", "run"] },
+        { from: ["b", "done"], to: ["once", "reset"] },
+      ],
+    };
+    render(
+      <Summary graphs={[flows] as unknown as GraphView_Serialize[]} names={names} chosen={null} onChoose={() => {}} />,
+    );
+    expect(read()[0]).toEqual([
+      "Au lancement",
+      "1. Une seule fois",
+      "2. Alterner",
+      "D'abord → 2.1 · Ensuite → 2.2",
+      "2.1. Prévenir : à choisir",
+      "2.2. Prévenir : à choisir",
+      "Réarmer 1.",
+    ]);
+  });
+
+  it("says a re-arm as a branch's target, and one of a node numbered nowhere by its sentence", () => {
+    const once = (id: string, times?: string) =>
+      node(id, "do_n_times", {
+        family: "flow",
+        pins: [pin("run", "in"), pin("reset", "in"), pin("times", "in", "number", "1"), pin("then", "out")],
+        inputs: times === undefined ? {} : { times },
+      });
+    const flows = {
+      ...events,
+      nodes: [
+        node("start", "on_start", { family: "event", pins: [pin("then", "out")] }),
+        once("once"),
+        once("other", "2"),
+        node("alt", "alternate", {
+          family: "flow",
+          pins: [pin("run", "in"), pin("first", "out"), pin("second", "out")],
+        }),
+        node("seq", "sequence", {
+          family: "flow",
+          pins: [pin("run", "in"), pin("then_1", "out"), pin("then_2", "out")],
+          adds: { pin: "then", side: "out", least: 2 },
+        }),
+      ],
+      wires: [
+        { from: ["start", "then"], to: ["once", "run"] },
+        { from: ["once", "then"], to: ["alt", "run"] },
+        { from: ["alt", "second"], to: ["once", "reset"] },
+        { from: ["alt", "first"], to: ["seq", "run"] },
+        { from: ["seq", "then_1"], to: ["once", "reset"] },
+        { from: ["seq", "then_2"], to: ["other", "reset"] },
+      ],
+    };
+    render(
+      <Summary graphs={[flows] as unknown as GraphView_Serialize[]} names={names} chosen={null} onChoose={() => {}} />,
+    );
+    expect(read()[0]).toEqual([
+      "Au lancement",
+      "1. Une seule fois",
+      "2. Alterner",
+      "D'abord → 2.1 · Ensuite → réarmer 1",
+      "2.1. Séquence",
+      "Alors 1 : réarmer 1.",
+      "Réarmer « Au plus 2 fois ».",
+    ]);
+  });
+
   it("chooses a step's node, in its graph", () => {
     const onChoose = vi.fn();
     render(<Summary graphs={graphs} names={names} chosen={null} onChoose={onChoose} />);

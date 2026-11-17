@@ -281,6 +281,18 @@
         "sentence": "Leave the loop",
         "description": "Ends the nearest loop's body, which goes on out of its Completed."
       },
+      "do_n_times": {
+        "sentence": "At most {{times}} times",
+        "description": "Goes on its first N times, then no more until Reset re-arms it; its memory lasts the whole run."
+      },
+      "alternate": {
+        "sentence": "Alternate",
+        "description": "Goes out of First, then Second, then First, each time the flow comes in; its memory lasts the whole run."
+      },
+      "pick": {
+        "sentence": "Pick the next of {{list}}",
+        "description": "Gives the list's element picked least recently, in turn while the list does not change; its memory lasts the whole run."
+      },
       "life_percent": {
         "sentence": "Life %",
         "description": "Life, as a percentage of its maximum."
@@ -365,6 +377,9 @@
       "completed": "Completed",
       "list": "List",
       "element": "Element",
+      "reset": "Reset",
+      "first": "First",
+      "second": "Second",
       "job": "Profession"
     }
   },
@@ -693,7 +708,11 @@
       "nowhere": "nothing",
       "branchOf": "If {{pin}}:",
       "outTo": "{{pin}}: go to {{step}}.",
-      "afterLoop": "Then (completed): go to {{step}}."
+      "afterLoop": "Then (completed): go to {{step}}.",
+      "rearm": "Re-arm {{step}}.",
+      "rearmTo": "re-arm {{step}}",
+      "outRearm": "{{pin}}: re-arm {{step}}.",
+      "quoted": "\"{{text}}\""
     },
     "view": {
       "label": "Blueprint view",
@@ -728,6 +747,7 @@
     "editRefused": "The change was not saved: the blueprint is read again.",
     "delete": "Delete",
     "deleteKey": "Del",
+    "doOnce": "Only once",
     "addOutput": "Add an output",
     "removePin": "Remove",
     "pin": {

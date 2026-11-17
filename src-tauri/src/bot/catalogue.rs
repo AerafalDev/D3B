@@ -277,6 +277,11 @@ pub(crate) const KINDS: &[Kind] = &[
     of("while", Flow, &[RUN, input("condition", Bool, None), exec("body", Side::Out), exec("completed", Side::Out)], None),
     of("for_each", Flow, &[RUN, wildcard("list", Side::In, true), exec("body", Side::Out), wildcard("element", Side::Out, false), output("index", Number), exec("completed", Side::Out)], None),
     of("leave_loop", Flow, &[RUN], None),
+    // The kinds that remember, each its memory for the whole run (the owner, 2026-11-17): Do N times, 1 by default for
+    // Do once, re-armed by its second flow input; Alternate, first then second; Pick the least recently picked.
+    of("do_n_times", Flow, &[RUN, exec("reset", Side::In), input("times", Number, Some("1")), THEN], None),
+    of("alternate", Flow, &[RUN, exec("first", Side::Out), exec("second", Side::Out)], None),
+    of("pick", Flow, &[RUN, wildcard("list", Side::In, true), THEN, wildcard("element", Side::Out, false)], None),
     of("life_percent", Query, &[output("value", Percentage)], None),
     of("pods_percent", Query, &[output("value", Percentage)], None),
     // The items a profession harvests, from the data's skills (3.7.13.17, `artifacts/studies/items.md`, verified):

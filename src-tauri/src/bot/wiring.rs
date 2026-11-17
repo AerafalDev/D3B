@@ -147,7 +147,8 @@ fn leaves_outside_loops(graph: &Graph, known: &HashMap<&Id, Vec<NodePin>>, found
                 pins.iter()
                     .any(|pin| pin.id == wire.from.1.0 && pin.side == Side::Out && pin.carries == Carries::Exec)
             });
-            if exec && seen.insert(&wire.to.0) {
+            // Into a Reset, the flow re-arms its node and goes nowhere (Do N times').
+            if exec && wire.to.1.0 != "reset" && seen.insert(&wire.to.0) {
                 reached.push(&wire.to.0);
             }
         }
@@ -761,6 +762,23 @@ mod tests {
                 ]
                 .map(node),
             );
+            // A loop's Completed into the Reset of a Do N times inside its body: Reset goes nowhere, the Leave after
+            // that Do N times stays inside.
+            events.nodes.extend(
+                [
+                    r#"{"id": "fight", "kind": "fight_starts"}"#,
+                    r#"{"id": "rep2", "kind": "repeat"}"#,
+                    r#"{"id": "most", "kind": "do_n_times"}"#,
+                    r#"{"id": "kept", "kind": "leave_loop"}"#,
+                ]
+                .map(node),
+            );
+            events.wires.extend([
+                wire("fight", "then", "rep2", "run"),
+                wire("rep2", "body", "most", "run"),
+                wire("most", "then", "kept", "run"),
+                wire("rep2", "completed", "most", "reset"),
+            ]);
             events.wires.extend([
                 wire("n3", "done", "out", "run"),
                 wire("n3", "failed", "rep", "run"),

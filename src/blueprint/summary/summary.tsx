@@ -169,9 +169,26 @@ function lastOn(flow: SummaryFlow): string | undefined {
   return last === undefined ? undefined : onPin(last.node);
 }
 
-/** Where a listed output leads: its first step, the step it jumps to, or nowhere. */
-function target(flow: SummaryFlow): string {
-  return flow.steps[0]?.label ?? flow.jump?.to ?? i18next.t("blueprint.summary.nowhere");
+/** The node a re-arm names: its number, or its sentence where this flow numbers it nowhere. */
+function rearmed(jump: { to: string; rearm?: string }, sentences: ReadonlyMap<string, SentencePart[]>): string {
+  if (jump.to !== "") {
+    return jump.to;
+  }
+  const parts = sentences.get(jump.rearm ?? "") ?? [];
+  const text = parts.map((part) => ("text" in part ? part.text : part.chip)).join("");
+  return i18next.t("blueprint.summary.quoted", { text });
+}
+
+/** Where a listed output leads: its first step, the node it re-arms, the step it jumps to, or nowhere. */
+function target(flow: SummaryFlow, sentences: ReadonlyMap<string, SentencePart[]>): string {
+  const first = flow.steps[0]?.label;
+  if (first !== undefined) {
+    return first;
+  }
+  if (flow.jump?.rearm !== undefined) {
+    return i18next.t("blueprint.summary.rearmTo", { step: rearmed(flow.jump, sentences) });
+  }
+  return flow.jump?.to ?? i18next.t("blueprint.summary.nowhere");
 }
 
 /** A branch's title, "Si ça échoue :", or for a function's named exit, its name: "Si Plein :". */
@@ -232,7 +249,10 @@ function Flow({ flow, sentences, chosen, onChoose }: FlowProps) {
               {step.branches
                 .filter((branch) => branch.role === "listed")
                 .map((branch) =>
-                  t("blueprint.summary.to", { pin: pinLabel(branch.pin, step.node), step: target(branch.flow) }),
+                  t("blueprint.summary.to", {
+                    pin: pinLabel(branch.pin, step.node),
+                    step: target(branch.flow, sentences),
+                  }),
                 )
                 .join(" · ")}
             </p>
@@ -248,7 +268,15 @@ function Flow({ flow, sentences, chosen, onChoose }: FlowProps) {
                 {branch.role === "untitled" && branch.flow.steps.length === 0 ? (
                   // A Sequence's output wired straight to a step said already names its output.
                   <p className="text-text-muted m-0 pl-1">
-                    {t("blueprint.summary.outTo", { pin: pinLabel(branch.pin, step.node), step: target(branch.flow) })}
+                    {branch.flow.jump?.rearm === undefined
+                      ? t("blueprint.summary.outTo", {
+                          pin: pinLabel(branch.pin, step.node),
+                          step: target(branch.flow, sentences),
+                        })
+                      : t("blueprint.summary.outRearm", {
+                          pin: pinLabel(branch.pin, step.node),
+                          step: rearmed(branch.flow.jump, sentences),
+                        })}
                   </p>
                 ) : (
                   <Flow flow={branch.flow} sentences={sentences} chosen={chosen} onChoose={onChoose} />
@@ -260,9 +288,11 @@ function Flow({ flow, sentences, chosen, onChoose }: FlowProps) {
       {flow.jump !== null && (
         <li className="text-text-muted px-1 pl-11">
           {/* Out of a loop's Completed, the jump says what follows it (the owner, 2026-11-17, on the mock-up). */}
-          {lastOn(flow) === "completed"
-            ? t("blueprint.summary.afterLoop", { step: flow.jump.to })
-            : t(flow.jump.back ? "blueprint.summary.back" : "blueprint.summary.on", { step: flow.jump.to })}
+          {flow.jump.rearm !== undefined
+            ? t("blueprint.summary.rearm", { step: rearmed(flow.jump, sentences) })
+            : lastOn(flow) === "completed"
+              ? t("blueprint.summary.afterLoop", { step: flow.jump.to })
+              : t(flow.jump.back ? "blueprint.summary.back" : "blueprint.summary.on", { step: flow.jump.to })}
         </li>
       )}
     </ol>

@@ -52,6 +52,14 @@ describe("a node's sentence", () => {
     );
   });
 
+  it("says Do N times of 1 as Do once, but not of 2 nor of a number wired", () => {
+    const most = (inputs: object) =>
+      ({ ...harvest, kind: "do_n_times", family: "flow", pins: [pin("times", "number", "1")], inputs }) as GraphNode;
+    expect(plain(nodeSentence(most({}), new Map(), names))).toBe("Une seule fois");
+    expect(plain(nodeSentence(most({ times: "2" }), new Map(), names))).toBe("Au plus [2] fois");
+    expect(plain(nodeSentence(most({}), new Map([["times", "Tours"]]), names))).toBe("Au plus [Tours] fois");
+  });
+
   it("says a kind this version does not know, with its id", () => {
     const unknown = { ...harvest, kind: "teleport", family: null, pins: [] } as GraphNode;
     expect(plain(nodeSentence(unknown, new Map(), names))).toBe("Nœud inconnu de cette version : teleport");

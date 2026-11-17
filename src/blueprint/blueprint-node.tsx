@@ -49,7 +49,8 @@ export function BlueprintNode({ data, selected }: NodeProps<BoxNode>) {
   const head = numbered ? undefined : flowOuts[0];
   const onEdit = useContext(NodeEdit);
   const added = onEdit === undefined ? null : addedPin(node);
-  const ins = node.pins.filter((pin) => pin.side === "in" && pin.carries !== "exec");
+  // A second flow input, Do N times' Reset, is a row with the values.
+  const ins = node.pins.filter((pin) => pin.side === "in" && pin !== flowIn);
   const outs = node.pins.filter((pin) => pin.side === "out" && pin !== head);
   // A kind that changes a variable is typed by it, never open (`bot::pins`).
   const open = (node.options?.valueType ?? null) === null && node.options?.variable === undefined;

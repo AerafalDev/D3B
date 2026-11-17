@@ -1,3 +1,4 @@
+import i18next from "i18next";
 import { ArrowUp, ChevronDown, ChevronRight } from "lucide-react";
 import { type ReactNode, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -177,13 +178,10 @@ export function LibraryView() {
         <Group title={t("library.kept")} count={kept.length} folded>
           {kept.map((file) => (
             <li key={file.path}>
-              <span
-                title={keptWhy(file, t)}
-                className="mx-1 flex items-center gap-2 rounded-[5px] px-2 py-1 opacity-70"
-              >
+              <span title={keptWhy(file)} className="mx-1 flex items-center gap-2 rounded-[5px] px-2 py-1 opacity-70">
                 <Icon name="fileWarning" className="text-[#d29922]" />
                 <span className="min-w-0 flex-1 truncate">{fileName(file.path)}</span>
-                <span className="sr-only">{keptWhy(file, t)}</span>
+                <span className="sr-only">{keptWhy(file)}</span>
               </span>
             </li>
           ))}
@@ -265,7 +263,9 @@ function fileName(path: string): string {
 }
 
 /** Why a file is kept, in the player's language. */
-function keptWhy(file: KeptFile, t: ReturnType<typeof useTranslation>["t"]): string {
+// Read through i18next itself: the hook's `t` taken as a parameter is a type too deep for TypeScript past ~670 keys.
+function keptWhy(file: KeptFile): string {
+  const t = i18next.t;
   const why = file.why;
   switch (why.kind) {
     case "unreadable":

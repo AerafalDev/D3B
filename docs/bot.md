@@ -497,7 +497,14 @@ flowchart LR
   its slot, so an interrupted body keeps its index; Repeat's count read once as the flow enters, as For each's list
   (settled alone); the problem found by following the flow from where it starts, every output but a loop's `body`, a
   function's on its own; a body's title by its kind, "À chaque tour :", and a
-  jump out of a loop's Completed "Puis (terminé) : aller à 1."); the kinds that remember; the waits and stops (Wait until,
+  jump out of a loop's Completed "Puis (terminé) : aller à 1."); the kinds that remember (done in code: `bot/run/kinds/memory.rs`, the
+  run's `kept` by graph and node, so a function called again keeps it; Do N times of 1 read "Une seule fois", a wire
+  into its Reset said "Réarmer 1." (one this flow numbers nowhere by its sentence, "Réarmer « Une seule fois »")
+  and drawn as a row, a wire into it ending its flow for the problem of Leave the loop too; its count read as the flow
+  comes in, so a Reset is what re-arms it; Alternate's outputs on one line; Pick by each element's JSON and which of
+  its copies it is, so one listed twice takes two turns, the memory forgetting what left the list, an empty list
+  blocking the character; kept through "restart from the start" once (26) brings restarts, the memory being the
+  run's); the waits and stops (Wait until,
   Retry, Block, Pause) with a run on the captures. Each kind replaces the tests' own (`test_sequence`, `test_switch`,
   `test_for_each`).
 - **Measured** (nothing acts in the game before step 4): the picker's "boucle" finding the loops; "+" and "Remove"
