@@ -20,7 +20,17 @@ pub(super) fn create(blueprint: &mut Blueprint, name: &str) -> Result<Id, Refusa
     if name.is_empty() {
         return Err(Refusal::Blank);
     }
-    let taken: HashSet<Id> = blueprint.variables.iter().map(|it| it.id.clone()).collect();
+    // Nor a local's, which a Get in its function would then mean too.
+    let locals = blueprint
+        .graphs
+        .iter()
+        .flat_map(|it| it.function.iter().flat_map(|it| &it.locals));
+    let taken: HashSet<Id> = blueprint
+        .variables
+        .iter()
+        .chain(locals)
+        .map(|it| it.id.clone())
+        .collect();
     let id = id_for(name, "variable", &taken);
     blueprint.variables.push(Variable {
         id: id.clone(),

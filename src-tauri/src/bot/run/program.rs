@@ -8,7 +8,7 @@ use serde_json::Value;
 
 use super::behaviour::{Behaviour, Starts};
 use super::kinds;
-use crate::bot::{Blueprint, Carries, Does, Id, Problem, Side, pins, problems};
+use crate::bot::{Blueprint, Carries, Does, Id, Problem, Side, Variable, pins, problems};
 
 /// A blueprint ready to run.
 pub(crate) struct Program {
@@ -23,6 +23,8 @@ pub(super) struct Code {
     pub(super) nodes: Vec<NodeCode>,
     /// A function's entry, where its calls start.
     pub(super) entry: Option<usize>,
+    /// A function's locals, each from its default at a call.
+    pub(super) locals: Vec<Variable>,
 }
 
 /// A node compiled.
@@ -35,6 +37,8 @@ pub(super) struct NodeCode {
     pub(super) inputs: Vec<(String, Source)>,
     /// Without flow: its outputs are computed when read.
     pub(super) pure: bool,
+    /// The exit it returns by.
+    pub(super) named: Option<String>,
 }
 
 /// What a node does: a kind's behaviour, or the engine's own Get, Set and Call.
@@ -78,6 +82,31 @@ impl Program {
     }
 }
 
+/// What a node doing `does` is at run time, refused for a kind that cannot run yet.
+fn doing(blueprint: &Blueprint, functions: &HashMap<&Id, usize>, does: &Does) -> Result<Doing, Refused> {
+    Ok(match does {
+        Does::Kind(kind) => {
+            Doing::Kind(kinds::behaviour(&kind.0).ok_or_else(|| Refused::NotRunnable { kind: kind.0.clone() })?)
+        }
+        Does::Get(variable) => Doing::Get(variable.0.clone()),
+        Does::Set(variable) => Doing::Set(variable.0.clone()),
+        Does::Call(function) => {
+            let at = functions.get(function).copied().unwrap_or_default();
+            // The engine reads no pure call yet: its result cannot run.
+            if blueprint.graphs[at]
+                .function
+                .as_ref()
+                .is_some_and(|signature| signature.pure)
+            {
+                return Err(Refused::NotRunnable {
+                    kind: "result".to_owned(),
+                });
+            }
+            Doing::Call(at)
+        }
+    })
+}
+
 /// `blueprint` compiled, refused when it has a problem or holds a kind that cannot run yet.
 pub(crate) fn compile(blueprint: &Blueprint) -> Result<Program, Refused> {
     let found = problems(blueprint);
@@ -107,14 +136,7 @@ pub(crate) fn compile(blueprint: &Blueprint) -> Result<Program, Refused> {
             .collect();
         let mut nodes = Vec::new();
         for (node, its) in graph.nodes.iter().zip(&all) {
-            let doing = match &node.does {
-                Does::Kind(kind) => {
-                    Doing::Kind(kinds::behaviour(&kind.0).ok_or_else(|| Refused::NotRunnable { kind: kind.0.clone() })?)
-                }
-                Does::Get(variable) => Doing::Get(variable.0.clone()),
-                Does::Set(variable) => Doing::Set(variable.0.clone()),
-                Does::Call(function) => Doing::Call(functions.get(function).copied().unwrap_or_default()),
-            };
+            let doing = doing(blueprint, &functions, &node.does)?;
             let source = |pin: &str| {
                 let wire = graph
                     .wires
@@ -159,6 +181,7 @@ pub(crate) fn compile(blueprint: &Blueprint) -> Result<Program, Refused> {
                 flows,
                 inputs,
                 pure,
+                named: node.options.exit.as_ref().map(|exit| exit.0.clone()),
             });
         }
         let starting = |starts| {
@@ -174,6 +197,7 @@ pub(crate) fn compile(blueprint: &Blueprint) -> Result<Program, Refused> {
             id: graph.id.clone(),
             nodes,
             entry,
+            locals: graph.function.iter().flat_map(|it| it.locals.clone()).collect(),
         });
     }
     Ok(Program {

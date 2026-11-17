@@ -20,6 +20,8 @@ pub(super) struct Call {
     pub(super) slots: HashMap<usize, Slot>,
     /// What its nodes gave, by node and pin.
     pub(super) outputs: HashMap<(usize, String), Value>,
+    /// Its function's locals, gone at its return.
+    pub(super) locals: HashMap<String, Value>,
 }
 
 impl Call {
@@ -31,6 +33,7 @@ impl Call {
             chains: vec![Chain::new(None, false, start, String::new())],
             slots: HashMap::new(),
             outputs: HashMap::new(),
+            locals: HashMap::new(),
         }
     }
 }

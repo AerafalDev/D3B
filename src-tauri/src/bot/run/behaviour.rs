@@ -95,10 +95,6 @@ pub(crate) enum Exit {
     Done,
     Failed(String),
     /// One of its named exits.
-    #[cfg_attr(
-        test,
-        expect(dead_code, reason = "v2's functions bring their named exits (ADR 0016)")
-    )]
     Named(String),
 }
 
@@ -170,6 +166,11 @@ impl Cx<'_> {
     pub(crate) fn condition(&mut self, pin: &str) -> Result<bool, Fault> {
         let value = self.input(pin)?;
         value.as_bool().ok_or_else(|| Fault::NotOfType { pin: pin.to_owned() })
+    }
+
+    /// The exit the node at work returns by, as its options name it.
+    pub(crate) fn named(&self) -> Option<String> {
+        self.program.graphs[self.graph].nodes[self.node].named.clone()
     }
 
     /// The node's value inputs, in its pins' order.

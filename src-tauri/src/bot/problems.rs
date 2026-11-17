@@ -19,8 +19,9 @@ pub(crate) enum Problem {
     GraphTwice { graph: Id },
     /// Two nodes of a graph with the same id.
     NodeTwice { graph: Id, node: Id },
-    /// Two inputs, or two outputs, of a function with the same id, or one with the id of a pin its entry, returns and
-    /// calls have (`run`, `then`, `done`, `failed`, `reason`).
+    /// Two inputs, outputs, exits or locals of a function with the same id, or two inputs of an event of mine (its id
+    /// as `graph`); one with the id of a pin its entry, returns and calls have (`run`, `then`, `done`, `failed`,
+    /// `reason`); an exit with an output's id; a local with a variable's.
     ParameterTwice { graph: Id, parameter: Id },
     /// A variable's default that its type does not hold.
     DefaultNotOfType { variable: Id },
@@ -75,8 +76,16 @@ pub(crate) enum Problem {
     InputFedTwice { graph: Id, node: Id, pin: Id },
     /// A value input that no wire feeds, with no value typed and no default.
     InputWithoutValue { graph: Id, node: Id, pin: Id },
-    /// An event a blueprint holds once at most (on start, a forced one) held again.
+    /// An event a blueprint holds once at most (on start, a forced one, each event of mine) held again.
     EventTwice { graph: Id, node: Id },
+    /// Two events of mine with the same id.
+    OwnEventTwice { event: Id },
+    /// A node naming an event of mine the blueprint does not have.
+    NoSuchEvent { graph: Id, node: Id, event: Id },
+    /// A return by an exit its function does not have.
+    NoSuchExit { graph: Id, node: Id, exit: Id },
+    /// A node with a flow pin in a pure function: an action, a wait, a Set, a return, a call of a function not pure.
+    NotPure { graph: Id, node: Id },
 }
 
 /// Every problem of `blueprint`: its own in the order of its file, then each graph's nodes and wires, then the events
@@ -94,6 +103,17 @@ pub(crate) fn problems(blueprint: &Blueprint) -> Vec<Problem> {
         }
         found.extend(of_variable(variable));
     }
+    let mut events = HashSet::new();
+    for event in &blueprint.events {
+        well_formed(&event.id, &mut found);
+        if !events.insert(&event.id) {
+            found.push(Problem::OwnEventTwice {
+                event: event.id.clone(),
+            });
+        }
+        // Its inputs are its node's outputs, beside its `then` only.
+        parameters(&event.id, [ids(&event.inputs)], &[], &["then"], &mut found);
+    }
     let mut graphs = HashSet::new();
     for graph in &blueprint.graphs {
         well_formed(&graph.id, &mut found);
@@ -109,6 +129,34 @@ pub(crate) fn problems(blueprint: &Blueprint) -> Vec<Problem> {
     }
     super::wiring::once_twice(blueprint, &mut found);
     found
+}
+
+/// The ids of `parameters`.
+fn ids(parameters: &[super::blueprint::Parameter]) -> Vec<&Id> {
+    parameters.iter().map(|it| &it.id).collect()
+}
+
+/// The problems of each list of ids in `lists`: malformed, twice in its list, a pin's that it would clash with
+/// (`reserved`), or among `taken`.
+fn parameters<'a>(
+    graph: &Id,
+    lists: impl IntoIterator<Item = impl IntoIterator<Item = &'a Id>>,
+    taken: &[&Id],
+    reserved: &[&str],
+    found: &mut Vec<Problem>,
+) {
+    for list in lists {
+        let mut seen = HashSet::new();
+        for id in list {
+            well_formed(id, found);
+            if !seen.insert(id) || reserved.contains(&id.0.as_str()) || taken.contains(&id) {
+                found.push(Problem::ParameterTwice {
+                    graph: graph.clone(),
+                    parameter: id.clone(),
+                });
+            }
+        }
+    }
 }
 
 fn well_formed(id: &Id, found: &mut Vec<Problem>) {
@@ -142,18 +190,21 @@ fn of_variable(variable: &Variable) -> Option<Problem> {
 fn of_graph(blueprint: &Blueprint, graph: &Graph, found: &mut Vec<Problem>) {
     let at = || graph.id.clone();
     if let Some(signature) = &graph.function {
-        for side in [&signature.inputs, &signature.outputs] {
-            let mut parameters = HashSet::new();
-            for parameter in side {
-                well_formed(&parameter.id, found);
-                if !parameters.insert(&parameter.id) || RESERVED.contains(&parameter.id.0.as_str()) {
-                    found.push(Problem::ParameterTwice {
-                        graph: at(),
-                        parameter: parameter.id.clone(),
-                    });
-                }
-            }
-        }
+        parameters(
+            &graph.id,
+            [ids(&signature.inputs), ids(&signature.outputs)],
+            &[],
+            &RESERVED,
+            found,
+        );
+        // An exit is a flow output of its calls, beside their outputs.
+        let exits: Vec<&Id> = signature.exits.iter().map(|it| &it.id).collect();
+        parameters(&graph.id, [exits], &ids(&signature.outputs), &RESERVED, found);
+        let variables: Vec<&Id> = blueprint.variables.iter().map(|it| &it.id).collect();
+        let locals: Vec<&Id> = signature.locals.iter().map(|it| &it.id).collect();
+        // A local is no pin: only a variable's id would make a Get mean two things.
+        parameters(&graph.id, [locals], &variables, &[], found);
+        found.extend(signature.locals.iter().filter_map(of_variable));
     }
     let mut nodes = HashSet::new();
     for node in &graph.nodes {
@@ -166,7 +217,7 @@ fn of_graph(blueprint: &Blueprint, graph: &Graph, found: &mut Vec<Problem>) {
         }
         match &node.does {
             Does::Get(variable) | Does::Set(variable)
-                if !blueprint.variables.iter().any(|known| &known.id == variable) =>
+                if super::pins::variable_of(blueprint, graph, variable).is_none() =>
             {
                 found.push(Problem::NoSuchVariable {
                     graph: at(),
@@ -262,6 +313,130 @@ mod tests {
         found_in(
             &blueprint,
             [Problem::VariableTwice { variable: id("zone") }, graph, node],
+        );
+    }
+
+    /// Events of mine, a pure function with exits and locals, and another function, each with problems.
+    const MINE: &str = r#"{"schema": 1, "id": "b", "name": "B", "version": 1,
+      "variables": [{"id": "n", "name": "N", "type": "number", "default": 0}],
+      "events": [{"id": "empty", "name": "Empty", "inputs": [{"id": "zone", "name": "Zone", "type": "zone"},
+                                                             {"id": "zone", "name": "Zone", "type": "zone"},
+                                                             {"id": "failed", "name": "Failed", "type": "bool"},
+                                                             {"id": "then", "name": "Then", "type": "bool"}]},
+                 {"id": "empty", "name": "Empty again"}, {"id": "full", "name": "Full"}],
+      "graphs": [
+        {"id": "events", "name": "Events", "nodes": [
+          {"id": "e1", "kind": "my_event", "options": {"event": "empty"}},
+          {"id": "e2", "kind": "my_event", "options": {"event": "empty"}},
+          {"id": "e3", "kind": "my_event", "options": {"event": "gone"}}, {"id": "e4", "kind": "my_event"},
+          {"id": "e5", "kind": "my_event", "options": {"event": "full"}},
+          {"id": "g", "get": "tries"}]},
+        {"id": "f", "name": "F", "function": {"outputs": [{"id": "y", "name": "Y", "type": "number"}],
+          "exits": [{"id": "full", "name": "Full"}, {"id": "full", "name": "Full"}, {"id": "done", "name": "Done"},
+                    {"id": "y", "name": "Y"}],
+          "locals": [{"id": "tries", "name": "Tries", "type": "number", "default": "x"},
+                     {"id": "n", "name": "N", "type": "number"}, {"id": "done", "name": "Done", "type": "bool"}],
+          "pure": true},
+         "nodes": [{"id": "in", "kind": "entry"}, {"id": "r", "kind": "result", "inputs": {"y": 1}},
+                   {"id": "say", "kind": "notify", "inputs": {"text": ""}},
+                   {"id": "x1", "kind": "return_exit", "options": {"exit": "gone"}}, {"id": "t", "get": "tries"}]},
+        {"id": "f2", "name": "F2", "function": {}, "nodes": [{"id": "r2", "kind": "result"}, {"id": "x2", "kind": "return_exit"}]}
+      ]}"#;
+
+    #[test]
+    fn events_of_mine_exits_locals_and_pure_functions_have_their_problems() {
+        let blueprint = read(MINE).unwrap_or_else(|error| panic!("{error}"));
+        let twice = |graph: &str, parameter: &str| Problem::ParameterTwice {
+            graph: id(graph),
+            parameter: id(parameter),
+        };
+        let on = |graph: &str, node: &str| (id(graph), id(node));
+        let ((g1, e2), (g2, e3), (g3, e4), (g4, g), (g5, say), (g6, x1), (g7, r2), (g8, x2)) = (
+            on("events", "e2"),
+            on("events", "e3"),
+            on("events", "e4"),
+            on("events", "g"),
+            on("f", "say"),
+            on("f", "x1"),
+            on("f2", "r2"),
+            on("f2", "x2"),
+        );
+        let expected = [
+            twice("empty", "zone"),
+            Problem::OwnEventTwice { event: id("empty") },
+            twice("f", "full"),
+            twice("f", "done"),
+            twice("f", "y"),
+            twice("f", "n"),
+            Problem::DefaultNotOfType { variable: id("tries") },
+            Problem::EventTwice { graph: g1, node: e2 },
+            Problem::NoSuchEvent {
+                graph: g2,
+                node: e3,
+                event: id("gone"),
+            },
+            Problem::OptionMissing {
+                graph: g3,
+                node: e4,
+                option: id("event"),
+            },
+            Problem::NoSuchVariable {
+                graph: g4,
+                node: g,
+                variable: id("tries"),
+            },
+            Problem::NotPure { graph: g5, node: say },
+            Problem::NotPure {
+                graph: g6.clone(),
+                node: x1.clone(),
+            },
+            Problem::NoSuchExit {
+                graph: g6,
+                node: x1,
+                exit: id("gone"),
+            },
+            Problem::OutOfPlace { graph: g7, node: r2 },
+            Problem::OptionMissing {
+                graph: g8,
+                node: x2,
+                option: id("exit"),
+            },
+        ];
+        found_in(&blueprint, expected);
+        let found = problems(&blueprint);
+        let not = [
+            twice("empty", "failed"),
+            twice("f", "done"),
+            Problem::EventTwice {
+                graph: id("events"),
+                node: id("e3"),
+            },
+            Problem::EventTwice {
+                graph: id("events"),
+                node: id("e5"),
+            },
+        ];
+        // An event's input clashes with its node's `then` only, a local with no pin; each event is held once.
+        assert_eq!(
+            found.iter().filter(|it| not[1..].contains(it)).count(),
+            1,
+            "the exit `done`, not the local"
+        );
+        assert!(
+            !found.contains(&not[0]) && !found.contains(&not[2]) && !found.contains(&not[3]),
+            "{found:?}"
+        );
+        assert!(found.contains(&twice("empty", "then")));
+        let (graph, node) = on("f", "in");
+        assert!(
+            !found.contains(&Problem::NotPure { graph, node }),
+            "a pure function's entry has no flow"
+        );
+        let (graph, node) = on("f", "t");
+        let variable = id("tries");
+        assert!(
+            !found.contains(&Problem::NoSuchVariable { graph, node, variable }),
+            "its own local"
         );
     }
 

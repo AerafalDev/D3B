@@ -47,9 +47,12 @@ fn given(cx: &mut Cx<'_>, node: usize, pin: &str) -> Result<Value, Fault> {
         return Ok(value.clone());
     }
     let value = match &code.doing {
+        // A local of the function at work, else a variable of the blueprint: no id is both.
         Doing::Get(variable) => cx
-            .variables
+            .call
+            .locals
             .get(variable)
+            .or_else(|| cx.variables.get(variable))
             .cloned()
             .ok_or_else(|| Fault::Missing { pin: variable.clone() }),
         Doing::Kind(behaviour) if cx.depth < DEEPEST => {

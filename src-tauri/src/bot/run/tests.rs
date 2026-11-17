@@ -171,6 +171,54 @@ fn a_function_failed_follows_its_calls_failed_or_blocks_there() {
     assert_eq!(blocked(&run), Some((Reason::Failed("no bank".to_owned()), "call")));
 }
 
+/// On start, two calls of `full` each going on out of its exit `full`, n ← their y in turn; `full` adds its x to its
+/// local `tries`, 10 at each call, and returns by `full` with it.
+const EXITS: &str = r#"[{"id": "events", "name": "Events",
+  "nodes": [{"id": "start", "kind": "on_start"}, {"id": "g1", "get": "n"}, {"id": "c1", "call": "full"},
+            {"id": "s1", "set": "n"}, {"id": "c2", "call": "full"}, {"id": "g2", "get": "n"}, {"id": "s2", "set": "n"},
+            {"id": "end", "kind": "finish"}],
+  "wires": [{"from": ["start", "then"], "to": ["c1", "run"]}, {"from": ["g1", "value"], "to": ["c1", "x"]},
+            {"from": ["c1", "full"], "to": ["s1", "run"]}, {"from": ["c1", "y"], "to": ["s1", "value"]},
+            {"from": ["s1", "then"], "to": ["c2", "run"]}, {"from": ["g2", "value"], "to": ["c2", "x"]},
+            {"from": ["c2", "full"], "to": ["s2", "run"]}, {"from": ["c2", "y"], "to": ["s2", "value"]},
+            {"from": ["s2", "then"], "to": ["end", "run"]}]},
+ {"id": "full", "name": "Full", "function": {"inputs": [{"id": "x", "name": "X", "type": "number"}],
+   "outputs": [{"id": "y", "name": "Y", "type": "number"}], "exits": [{"id": "full", "name": "Full"}],
+   "locals": [{"id": "tries", "name": "Tries", "type": "number", "default": 10}]},
+  "nodes": [{"id": "in", "kind": "entry"}, {"id": "gt", "get": "tries"}, {"id": "add", "kind": "add"},
+            {"id": "st", "set": "tries"}, {"id": "gt2", "get": "tries"},
+            {"id": "out", "kind": "return_exit", "options": {"exit": "full"}}],
+  "wires": [{"from": ["in", "then"], "to": ["st", "run"]}, {"from": ["gt", "value"], "to": ["add", "a"]},
+            {"from": ["in", "x"], "to": ["add", "b"]}, {"from": ["add", "value"], "to": ["st", "value"]},
+            {"from": ["st", "then"], "to": ["out", "run"]}, {"from": ["gt2", "value"], "to": ["out", "y"]}]}]"#;
+
+#[test]
+fn a_return_by_an_exit_goes_on_out_of_it_and_locals_start_from_their_defaults_at_each_call() {
+    let memory = BTreeMap::from([("n".to_owned(), json!(3))]);
+    let run = Run::new(&blueprint(VARIABLES, EXITS), &BTreeMap::new(), &memory);
+    let mut run = run.unwrap_or_else(|error| panic!("{error:?}"));
+    assert_eq!(
+        run.advance(Some(&View::default()), &Nothing, Instant::now()),
+        &State::Finished
+    );
+    // 10 + 3, then 10 + 13: the second call's local starts again from 10, else it would be 13 + 13.
+    assert_eq!(n(&mut run), Some(json!(23)));
+}
+
+#[test]
+fn a_blueprint_calling_a_pure_function_is_refused_until_the_engine_reads_one() {
+    let graphs = r#"[{"id": "events", "name": "Events",
+      "nodes": [{"id": "start", "kind": "on_start"}, {"id": "h", "call": "half", "inputs": {"a": 2}}]},
+     {"id": "half", "name": "Half", "function": {"inputs": [{"id": "a", "name": "A", "type": "number"}], "pure": true},
+      "nodes": [{"id": "in", "kind": "entry"}]}]"#;
+    let refused = Run::new(&blueprint(VARIABLES, graphs), &BTreeMap::new(), &BTreeMap::new()).err();
+    let kind = match refused {
+        Some(super::program::Refused::NotRunnable { kind }) => Some(kind),
+        _ => None,
+    };
+    assert_eq!(kind.as_deref(), Some("result"));
+}
+
 #[test]
 fn a_function_calling_itself_without_end_blocks_past_the_deepest_call() {
     // Each call counts itself, then calls again.
@@ -356,6 +404,7 @@ impl Built {
             flows: Vec::new(),
             inputs: Vec::new(),
             pure,
+            named: None,
         });
         self
     }
@@ -387,6 +436,7 @@ impl Built {
                 id: Id("events".to_owned()),
                 nodes: self.0,
                 entry: None,
+                locals: Vec::new(),
             }],
             main: (0, 0),
         };
