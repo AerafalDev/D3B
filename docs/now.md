@@ -32,6 +32,16 @@ _Updated 2026-11-17._
   - _Format 5_: from the monsters' PR on, `next` reads format 5 only, published on 2026-11-17 (from the PR's
     b9412ad, the owner's go). A checklist below that says "with format 4's data" runs on `next` before that PR or
     from the last release, or on a later `next` with format 5's: `bun run data:fetch <build>`, the client's build (3.7.14.18 since 2026-11-16);
+  - **Blueprints v2's (v2.2), the editor reads it** ([bot.md](bot.md#the-editor-reads-it-v22)), on Windows x64, in a
+    copy of mine: (1) add "≥": its pins hollow grey; drag "N minutes"' output onto A: accepted, the pins turn violet;
+    drag Life % onto B: refused while dragging; (2) delete that wire: "≥" untyped again; in Details choose Heure on B
+    and type 23:00: the node turns the time's violet, its file holds `"options": {"type": "time"}`, Ctrl+Z undoes it;
+    (3) a variable "Mes objets", Objet, Liste: its pill square; search "ble", add two items with their icons; (4) a
+    Carte variable: its target opens the World, a hover outlines one map, a click picks it, "5,-18 · Champs d'Astrub";
+    with a character online, "Où est <perso>" picks its map, an inside too; (5) a Zone variable "Par niveau": paste
+    `1-49: Forêt d'Astrub` and `40-80: Champs d'Astrub`: two rows, the overlap marked and the variable with a problem;
+    change 40 to 50: the problem goes; "Copier en texte" then paste it back: the same table; (6) in Récolte
+    automatique (D3B's), nothing editable, the pins drawn the same;
   - v0.10.0 on macOS, Linux and ARM64: built by CI, run by nobody yet. The owner has none of them and no tester yet; the README says so, and a round starts when a tester comes ([docs/testing.md](testing.md));
   - **step 1, the extractor**, on the installed client (Windows). Measured by the owner on 2026-11-11, Windows x64:
     items 1, 2 (every count as below, in 27.8 s) and 4 pass; on 2026-11-13, `bun run app` on `next` 3454d38, item 5
@@ -552,7 +562,8 @@ _Updated 2026-11-17._
   functions and events and the runtime are written once, on the final model, in sixteen PRs: (v2.1) the model in Rust (done in code), in four PRs (the owner, 2026-11-17: the second split in two): the new types (an NPC, ranges), lists and wildcard
   pins in the wiring's check (the owner's choice of 2026-11-17: a wildcard's type noted on its node; done in code); then a node's `options` and the pins they make (done in code); then the blueprint's own events, functions' exits, locals and pure (done in code);
   then the file's schema 2 and its migration from 1 (in `bot/schema/`, the folder holding ten files), D3B's
-  blueprints in 2, with `≥` and N minutes brought before v2.4 for "at least" and Wait's minutes (done in code); each kind's problems come with the PR that brings the kind; (v2.2) the editor reads it ([bot.md](bot.md#the-editor-reads-it-v22), the owner's
+  blueprints in 2, with `≥` and N minutes brought before v2.4 for "at least" and Wait's minutes (done in code); each kind's problems come with the PR that brings the kind; (v2.2) the editor reads it (done in code but a node's options, with v2.3; its checklist under "Not measured";
+  [bot.md](bot.md#the-editor-reads-it-v22), the owner's
   choices of 2026-11-17: pins and colours from a mock-up, a map picked on the World or where a character stands, an
   item searched among all, ranges pasted as `1-49: value` replacing the table, my variables taking the new types and
   "List" and "By level" so each editor is used now), in seven PRs: the Rust and the IPC (an untyped `≥` open to its
