@@ -7,7 +7,7 @@ import { Icon } from "@/icons/icon.tsx";
 import { cn } from "@/lib/utils.ts";
 import { givenText } from "@/library/given-text.ts";
 import type { BlueprintSummary } from "@/library/library-store.ts";
-import { valueText } from "@/library/value-text.ts";
+import { shapedText } from "@/library/value-text.ts";
 import type { VariableDrag } from "./edit/variable-drop.ts";
 
 interface MyBlueprintProps {
@@ -87,7 +87,7 @@ export function MyBlueprint({
         {blueprint.variables.map((variable) => {
           const name = read(`variables.${variable.id}.name`, variable.name);
           const help = read(`variables.${variable.id}.help`, variable.help);
-          const value = valueText(variable.valueType, variable.default, i18n.language);
+          const value = shapedText(variable, variable.default, i18n.language);
           const hover = [help, t("blueprint.default", { value })].filter(Boolean).join("\n");
           return (
             <VariableRow

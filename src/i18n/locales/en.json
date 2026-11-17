@@ -563,6 +563,8 @@
       "nodes_other": "{{count}} nodes",
       "name": "Name",
       "memoryToggle": "Memory: kept across sessions",
+      "list": "List",
+      "ranges": "By level",
       "deleteVariable": "Delete the variable",
       "smallest": "Smallest value",
       "largest": "Largest value"
@@ -779,6 +781,11 @@
       "empty": "None: paint its maps.",
       "share": "{{inZone}}/{{all}}"
     }
+  },
+  "values": {
+    "row": "{{label}}, value {{row}}",
+    "remove": "Remove value {{row}}",
+    "add": "{{label}}: add a value"
   },
   "settings": {
     "title": "Blueprint and settings",

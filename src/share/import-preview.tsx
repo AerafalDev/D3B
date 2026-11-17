@@ -15,7 +15,7 @@ import {
 import { Icon } from "@/icons/icon.tsx";
 import { isTauri } from "@/lib/tauri.ts";
 import { givenText } from "@/library/given-text.ts";
-import { valueText } from "@/library/value-text.ts";
+import { shapedText } from "@/library/value-text.ts";
 import { useShare } from "./share-store.ts";
 
 /**
@@ -65,7 +65,7 @@ export function ImportPreview() {
     <li key={one.id} className="flex gap-2" title={one.help || undefined}>
       <span className="min-w-0 flex-1 truncate">{one.name}</span>
       <span className="text-text-muted">{t(`blueprint.type.${one.valueType}` as never)}</span>
-      <span className="text-text-muted">{valueText(one.valueType, one.default, i18n.language)}</span>
+      <span className="text-text-muted">{shapedText(one, one.default, i18n.language)}</span>
     </li>
   );
 

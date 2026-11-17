@@ -13,7 +13,21 @@ import { DetailRow } from "./detail-row.tsx";
 type Variable = BlueprintSummary["variables"][number];
 
 /** The types a variable of mine takes, in the order the picker of types lists them. */
-const TYPES = ["bool", "number", "percentage", "text", "zone", "route", "bank", "items", "job"] as const;
+const TYPES = [
+  "bool",
+  "number",
+  "percentage",
+  "text",
+  "zone",
+  "route",
+  "bank",
+  "items",
+  "job",
+  "map",
+  "item",
+  "duration",
+  "time",
+] as const;
 
 interface VariableEditorProps {
   variable: Variable;
@@ -53,7 +67,11 @@ function changed(variable: Variable, fields: Partial<VariableChange>): VariableC
 export function VariableEditor({ variable, usedBy, onChange, onDelete }: VariableEditorProps) {
   const { t } = useTranslation();
   const save = (fields: Partial<VariableChange>) => onChange(changed(variable, fields));
-  const numeric = variable.valueType === "number" || variable.valueType === "percentage";
+  // Bounds hold for a single number or percentage only.
+  const numeric =
+    (variable.valueType === "number" || variable.valueType === "percentage") &&
+    variable.list !== true &&
+    variable.ranges !== true;
   return (
     <>
       <TextField
@@ -78,6 +96,16 @@ export function VariableEditor({ variable, usedBy, onChange, onDelete }: Variabl
           </SelectContent>
         </Select>
       </DetailRow>
+      <Toggle
+        label={t("blueprint.details.list")}
+        checked={variable.list === true}
+        onChange={(list) => void save({ list })}
+      />
+      <Toggle
+        label={t("blueprint.details.ranges")}
+        checked={variable.ranges === true}
+        onChange={(ranges) => void save({ ranges })}
+      />
       <DetailRow label={t("blueprint.details.default")}>
         <SettingEditor
           variable={variable}
