@@ -392,7 +392,9 @@ its own undo; the editor sends one change at a time, so Rust takes them in their
   owner's choices of 2026-11-17): one history for all my zones, kept by Rust for the session, 100 changes, each written
   at once as the blueprint's (`storage::history`, the IPC's `undo_zone` and `redo_zone`): a stroke of the brush or the
   eraser, a whole sub-area, a rename, a creation (undone to the system's trash) and a deletion (undone by writing the
-  zone again from what it held, its copy in the trash staying there); a change that changes nothing is no step. An
+  zone again from what it held, its copy in the trash staying there); a change that changes nothing is no step, and a
+  `.d3b` imported with zones ends the history, so that no step writes over a zone it brought. A step whose zone's file
+  is kept as it is (a stray letter) is refused and stays, the changes before it waiting until the file reads again. An
   undo or a redo opens the zone it changed on the World tab, on its world, and closes it once it is gone; the changes
   reach Rust one after the other, so an undo always finds the stroke made before it. The **World tab** shows the world map
   from the data's tiles, at the level the zoom needs, with the client's **hints** as on the C# version (the owner,

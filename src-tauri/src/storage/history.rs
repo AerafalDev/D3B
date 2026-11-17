@@ -380,6 +380,22 @@ mod tests {
     }
 
     #[test]
+    fn a_creation_undone_once_its_file_is_gone_by_hand_discards_nothing_nor_does_its_redo() {
+        let folder = Folder::new("history-zones-gone");
+        let store = Store::new(folder.path().to_path_buf());
+        store.create_zone("Bois", 1).unwrap_or_else(|error| panic!("{error}"));
+        let path = folder.path().join("zones/bois.json");
+        std::fs::remove_file(&path).unwrap_or_else(|error| panic!("{error}"));
+        let undone = store.undo_zone(|_| panic!("nothing is left to discard"));
+        assert_eq!(stepped(undone), Some(("bois".into(), false)));
+        // Redo brings back what undo found: no file, so nothing is written nor discarded.
+        let redone = store.redo_zone(|_| panic!("nothing is left to discard"));
+        assert_eq!(stepped(redone), Some(("bois".into(), false)));
+        assert_eq!(zones(&store), []);
+        assert!(!path.exists());
+    }
+
+    #[test]
     fn a_zone_change_that_changes_nothing_is_no_step_and_writes_nothing() {
         let folder = Folder::new("history-zones-same");
         let store = Store::new(folder.path().to_path_buf());
