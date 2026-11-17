@@ -387,7 +387,14 @@ its own undo; the editor sends one change at a time, so Rust takes them in their
   maps, the sub-areas it touches with how many of their maps are its, by that share then by name (the floors of one
   map's coordinates may belong to two sub-areas, and the zone holds them all, so such a map counts in both), whose
   Zone it is, those sub-areas' resources
-  together by profession, and Delete, to the system's trash. The **World tab** shows the world map
+  together by profession, and Delete, to the system's trash. Ctrl+Z undoes my zones' changes and Ctrl+Y or
+  Ctrl+Shift+Z redo them, wherever the focus is in the World tab or the World view but in a field being typed in (the
+  owner's choices of 2026-11-17): one history for all my zones, kept by Rust for the session, 100 changes, each written
+  at once as the blueprint's (`storage::history`, the IPC's `undo_zone` and `redo_zone`): a stroke of the brush or the
+  eraser, a whole sub-area, a rename, a creation (undone to the system's trash) and a deletion (undone by writing the
+  zone again from what it held, its copy in the trash staying there); a change that changes nothing is no step. An
+  undo or a redo opens the zone it changed on the World tab, on its world, and closes it once it is gone; the changes
+  reach Rust one after the other, so an undo always finds the stroke made before it. The **World tab** shows the world map
   from the data's tiles, at the level the zoom needs, with the client's **hints** as on the C# version (the owner,
   2026-11-13): zaaps, dungeons, auction houses, workshops, banks, class places and transports, each with the client's
   picture, at the zooms that have room for them, one switch per kind, the name on hover. Its tools: select, brush,

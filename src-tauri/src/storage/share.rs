@@ -192,7 +192,7 @@ impl Store {
         }
         self.save_while_locked(&blueprint)?;
         // A blueprint deleted by hand may have left its id free, never its undo history to the one imported.
-        writing.remove(&blueprint.id);
+        writing.blueprints.remove(&blueprint.id);
         Ok(blueprint.id)
     }
 }

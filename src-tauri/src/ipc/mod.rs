@@ -54,6 +54,8 @@ pub fn builder() -> Builder<tauri::Wry> {
             zones::rename_zone,
             zones::paint_zone,
             zones::delete_zone,
+            zones::undo_zone,
+            zones::redo_zone,
             inspector::inspector_watch,
             inspector::inspector_frame
         ])

@@ -6,9 +6,9 @@ import type { Atlas_Serialize } from "@/bindings.ts";
 import { initI18n } from "@/i18n/i18n.ts";
 
 // The back end, faked: the atlas the view reads.
-const backEnd = vi.hoisted(() => ({ atlas: vi.fn() }));
+const backEnd = vi.hoisted(() => ({ atlas: vi.fn(), undo: vi.fn() }));
 vi.mock("@/bindings.ts", () => ({
-  commands: { worldAtlas: backEnd.atlas, zones: async () => ({ zones: [], kept: [] }) },
+  commands: { worldAtlas: backEnd.atlas, zones: async () => ({ zones: [], kept: [] }), undoZone: backEnd.undo },
 }));
 // The editor area, faked: the editors opened.
 const opened = vi.hoisted(() => ({ editors: [] as { id: string }[] }));
@@ -57,6 +57,24 @@ describe("the World view", () => {
     opened.editors.length = 0;
   });
   afterEach(cleanup);
+
+  it("undoes my zones' last change on Ctrl+Z anywhere in the view, not in its search", async () => {
+    backEnd.undo.mockReset().mockResolvedValue(null);
+    await shown();
+    const press = (target: Element) =>
+      act(async () => {
+        fireEvent.keyDown(target, { key: "z", code: "KeyW", ctrlKey: true });
+        fireEvent.keyUp(target, { key: "z", code: "KeyW", ctrlKey: true });
+      });
+    const search = screen.getByRole("searchbox");
+    search.focus();
+    await press(search);
+    expect(backEnd.undo).not.toHaveBeenCalled();
+    const view = search.closest("[tabindex]") as HTMLElement;
+    view.focus();
+    await press(view);
+    expect(backEnd.undo).toHaveBeenCalledTimes(1);
+  });
 
   it("lists the areas folded, unfolds one by level, and greys a sub-area not on the map", async () => {
     await shown();

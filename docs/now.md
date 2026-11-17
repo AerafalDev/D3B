@@ -219,6 +219,20 @@ _Updated 2026-11-17._
     7. right-click the row, Supprimer: it goes to the system's trash, the map closes it, the character's Zone says
        "Zone nouvelle-zone introuvable"; put it back from the trash and restart D3B: everything is back;
     8. put a stray letter in a zone's file: the Library's "Ignorés" lists it, and it is never written over.
+- **step 3, undo and redo of my zones** (the owner's request of 2026-11-17), on Windows x64 from `bun run app` on
+  `next` or the next release, with format 4's data:
+    1. "+" makes "Nouvelle zone"; paint two strokes with the brush, then a whole sub-area with S: Ctrl+Z three times
+       undoes the sub-area, then each stroke, one stroke a step; Ctrl+Y twice and Ctrl+Shift+Z once bring them back;
+    2. rename it in Details, then Ctrl+Z on the map: the old name is back in the row, the top left and Details; while
+       typing in the name's field, Ctrl+Z undoes the typing only;
+    3. click a row of "Mes zones" in the World view, then Ctrl+Z there: the change is undone the same way;
+    4. delete the zone from its row: Ctrl+Z brings it back, open on the map with its maps, its file in
+       `Documents/D3B/zones` again (its copy stays in the system's trash); Ctrl+Y deletes it again;
+    5. make a second zone on Incarnam and paint a stroke, then open the first zone on the Twelve: Ctrl+Z undoes the
+       stroke, the map going to Incarnam with the second zone open; Ctrl+Z again removes it, sent to the trash, and
+       the map closes it;
+    6. a stroke then Ctrl+Z at once, quickly: the stroke is undone, never the change before it; restart D3B: Ctrl+Z
+       undoes nothing (the history lasts the session).
 - **step 3, a character's blueprint and settings** ((10)'s Zone field and (11)), on Windows x64 from `bun run app` on
   `next` or the next release, with format 4's data:
   Measured by the owner on 2026-11-17, Windows x64, `bun run app` on `next` 60cf228: items 1, 3, 4, 6 and 8 pass, and 2,
@@ -488,7 +502,7 @@ _Updated 2026-11-17._
   [bot.md](bot.md#measure)'s items 6 and 7, is taken once (16) declares variables and events of mine. Then (14) variables, with locals, lists and the new types' editors; (15)
   functions opened in place, with their exits and the pure ones; (16) events: priority, re-arming, modes, the
   defaults, and the events of mine declared; (17) comments and reroutes; (18) Align, copy and paste,
-  search; (19) editing by keyboard; (20) my zones painted (the owner's choices of 2026-11-16: coordinates on one world, a floating toolbar of four tools, "+" in the World view and the name in Details, amber), in PRs: `zones/<id>.json` and the IPC that lists, creates, paints, renames and deletes them (done in code), then my zones in the World view and the Zone field (done in code), then the map's tools and Details (done in code; its checklist under "Not measured"); (21) routes, with an action and a forced exit per anchor, Follow the route resuming from
+  search; (19) editing by keyboard; (20) my zones painted (the owner's choices of 2026-11-16: coordinates on one world, a floating toolbar of four tools, "+" in the World view and the name in Details, amber), in PRs: `zones/<id>.json` and the IPC that lists, creates, paints, renames and deletes them (done in code), then my zones in the World view and the Zone field (done in code), then the map's tools and Details (done in code; its checklist under "Not measured"), then their undo and redo (the owner's request and choices of 2026-11-17: one history for all my zones, kept by Rust; done in code, its checklist under "Not measured"); (21) routes, with an action and a forced exit per anchor, Follow the route resuming from
   the map the character is on, the recorder and the text import and export; (22) the `.d3b` file (the owner's choices of 2026-11-16, ADR 0018: one readable JSON, its zones and routes joining it with (20) and (21), a preview dialog, Export in the Library's menu and the tab, Import in its header and by a drop), in PRs: the file, its export, preview and import through the IPC (done in code), then the Library's Export and Import, the preview and the drop (done in code; its checklist under "Not measured"), then the zones it names joining it (done in code, item 6 of its checklist); (23) a given blueprint's
   update (the owner's choices of 2026-11-16: a notice in the character's tab until closed, a value kept when the new
   version accepts it, a copy saying its original is newer with a blue arrow in the Library and nothing more yet; done

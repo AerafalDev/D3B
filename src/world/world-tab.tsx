@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button.tsx";
 import { Kbd } from "@/components/ui/kbd.tsx";
 import { ZoneDetails } from "@/zone/zone-details.tsx";
 import { ZoneTools } from "@/zone/zone-tools.tsx";
+import { useZoneUndo } from "@/zone/zone-undo.ts";
 import { type MyZone, useZones } from "@/zone/zones-store.ts";
 import { drawable } from "./map-geometry.ts";
 import { WorldDetails } from "./world-details.tsx";
@@ -22,6 +23,7 @@ import { findSubArea, useWorld } from "./world-store.ts";
  * click chooses it and brings back the tab the choice began in; Escape cancels. A zone of mine open shows in amber
  * with its tools (the owner's choices of 2026-11-16): the brush and the eraser paint it map by map, the whole sub-area
  * tool adds a sub-area, or takes it away when the zone holds it all, and Select chooses a sub-area as without a zone.
+ * Ctrl+Z and Ctrl+Y undo and redo my zones' changes (the owner, 2026-11-17).
  */
 export function WorldTab() {
   const { t, i18n } = useTranslation();
@@ -39,6 +41,7 @@ export function WorldTab() {
   const zones = useZones((store) => store.zones);
   const refreshZones = useZones((store) => store.refresh);
   const paintZone = useZones((store) => store.paint);
+  const undoBox = useZoneUndo<HTMLDivElement>();
   const atlas = read?.state === "read" ? read.atlas : null;
   const shown = atlas?.worlds.find((one) => one.id === worldId) ?? atlas?.worlds[0];
   // Memoised so the map refits only when the world changes.
@@ -173,7 +176,8 @@ export function WorldTab() {
   };
 
   return (
-    <div className="grid h-full min-h-0 grid-cols-[minmax(0,1fr)_300px]">
+    // Focusable, so that a click anywhere in the tab takes its shortcuts there.
+    <div ref={undoBox} tabIndex={-1} className="grid h-full min-h-0 grid-cols-[minmax(0,1fr)_300px] outline-none">
       <div className="relative min-h-0">
         <WorldMap
           world={world}

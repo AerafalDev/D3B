@@ -2,7 +2,7 @@ import i18next from "i18next";
 import { toast } from "sonner";
 import { create } from "zustand";
 
-import { commands, type KeptFile, type ZoneError, type ZoneView } from "@/bindings.ts";
+import { commands, type KeptFile, type ZoneError, type ZoneStepped, type ZoneView } from "@/bindings.ts";
 
 /** A zone of mine (`docs/bot.md`, "Storage"): its maps' coordinates on its one world. */
 export type MyZone = ZoneView;
@@ -24,6 +24,10 @@ interface ZonesStore {
   paint: (id: string, maps: readonly (readonly [number, number])[], erase: boolean) => Promise<void>;
   /** Sends the zone `id` to the system's trash; whether it went. */
   remove: (id: string) => Promise<boolean>;
+  /** Undoes my zones' last change, or redoes the last undone (the owner, 2026-11-17: Rust keeps one history for them
+   * all), the zone changed shown as it now is; what changed, or `null` when nothing did or it failed, said in a
+   * notification. */
+  step: (back: boolean) => Promise<ZoneStepped | null>;
 }
 
 /** The words of a rejection that is no `ZoneError`, a bug said as it came. */
@@ -73,6 +77,15 @@ export function stroked(zone: MyZone, maps: readonly (readonly [number, number])
 let reads = 0;
 const strokes = new Map<string, number>();
 
+// Each change reaches Rust once the one before it answered: two at once may be run in either order, and an undo must
+// find the stroke made before it.
+let changes: Promise<unknown> = Promise.resolve();
+function inTurn<T>(change: () => Promise<T>): Promise<T> {
+  const done = changes.then(change, change);
+  changes = done.catch(() => undefined);
+  return done;
+}
+
 export const useZones = create<ZonesStore>((set, get) => {
   // A change shown here at once: the reads under way are older than it.
   const changed = (zones: MyZone[]) => {
@@ -101,7 +114,7 @@ export const useZones = create<ZonesStore>((set, get) => {
 
     create: async (world) => {
       try {
-        const zone = await commands.createZone(i18next.t("zone.newName"), world);
+        const zone = await inTurn(() => commands.createZone(i18next.t("zone.newName"), world));
         changed([...get().zones, zone].sort((a, b) => a.id.localeCompare(b.id)));
         // The zones a read dropped by it lists come back.
         void get().refresh();
@@ -117,7 +130,7 @@ export const useZones = create<ZonesStore>((set, get) => {
         return false;
       }
       try {
-        replace(await commands.renameZone(id, name));
+        replace(await inTurn(() => commands.renameZone(id, name)));
         return true;
       } catch (error) {
         toast.error(failure(error));
@@ -135,7 +148,7 @@ export const useZones = create<ZonesStore>((set, get) => {
       strokes.set(id, number);
       replace(stroked(zone, maps, erase));
       try {
-        const saved = await commands.paintZone(id, { maps: maps.map(([x, y]) => [x, y]), erase });
+        const saved = await inTurn(() => commands.paintZone(id, { maps: maps.map(([x, y]) => [x, y]), erase }));
         if (strokes.get(id) === number) {
           replace(saved);
         }
@@ -147,12 +160,28 @@ export const useZones = create<ZonesStore>((set, get) => {
 
     remove: async (id) => {
       try {
-        await commands.deleteZone(id);
+        await inTurn(() => commands.deleteZone(id));
         changed(get().zones.filter((one) => one.id !== id));
         return true;
       } catch (error) {
         toast.error(failure(error));
         return false;
+      }
+    },
+
+    step: async (back) => {
+      try {
+        const stepped = await inTurn(() => (back ? commands.undoZone() : commands.redoZone()));
+        if (stepped !== null) {
+          const others = get().zones.filter((one) => one.id !== stepped.id);
+          const zone = stepped.zone ?? null;
+          changed(zone === null ? others : [...others, zone].sort((a, b) => a.id.localeCompare(b.id)));
+        }
+        return stepped;
+      } catch (error) {
+        toast.error(failure(error));
+        await get().refresh();
+        return null;
       }
     },
   };
