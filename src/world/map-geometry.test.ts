@@ -1,6 +1,16 @@
 import { describe, expect, it } from "vitest";
 
-import { type AtlasWorld, fitView, levelFor, mapAt, mapsPaths, visibleTiles, zoomAbout } from "./map-geometry.ts";
+import {
+  type AtlasWorld,
+  fitView,
+  levelFor,
+  mapAt,
+  mapsPaths,
+  type PlacedTile,
+  tilesDrawn,
+  visibleTiles,
+  zoomAbout,
+} from "./map-geometry.ts";
 
 const zoom = (percent: number, width: number, height: number, columns: number, rows: number) => ({
   percent,
@@ -58,6 +68,56 @@ describe("the World's map geometry", () => {
       ["t/50/1.jpg", 0, 0, 2048, 1100],
       ["t/50/2.jpg", 2048, 0, 452, 1100],
     ]);
+  });
+
+  describe("the tiles drawn", () => {
+    const tile = (file: string, left: number, top: number, side: number): PlacedTile => ({
+      file,
+      left,
+      top,
+      width: side,
+      height: side,
+    });
+    // One tile of the coarse level covers the four of the fine one, and the coarse level's second tile lies past them.
+    const coarse = [tile("c/1", 0, 0, 2048), tile("c/2", 2048, 0, 2048)];
+    const fine = [tile("f/1", 0, 0, 1024), tile("f/2", 1024, 0, 1024), tile("f/3", 0, 1024, 1024)];
+    const coarsest = [tile("z/1", 0, 0, 4096)];
+    const files = (tiles: readonly PlacedTile[]) => tiles.map((one) => one.file);
+
+    it("keeps a tile drawn before under a new level's not loaded yet, not one past them", () => {
+      expect(files(tilesDrawn([], fine, coarse, new Set(["c/1", "c/2"])))).toEqual(["c/1", "f/1", "f/2", "f/3"]);
+    });
+
+    it("keeps it while one tile over it is still loading", () => {
+      expect(files(tilesDrawn([], fine, coarse, new Set(["c/1", "f/1", "f/2"])))).toEqual(["c/1", "f/1", "f/2", "f/3"]);
+    });
+
+    it("drops it once all the tiles over it are loaded", () => {
+      expect(files(tilesDrawn([], fine, coarse, new Set(["c/1", "f/1", "f/2", "f/3"])))).toEqual(["f/1", "f/2", "f/3"]);
+    });
+
+    it("keeps no tile that never loaded, nor one only touching an edge", () => {
+      const edge = [tile("e/1", 0, 2048, 1024), tile("e/2", 1024, 1024, 1024)];
+      expect(files(tilesDrawn([], [tile("f/3", 0, 1024, 1024)], edge, new Set(["e/1"])))).toEqual(["f/3"]);
+    });
+
+    it("draws a tile wanted again once, on top", () => {
+      expect(files(tilesDrawn([], coarse, [...coarse, ...fine], new Set(["f/1"])))).toEqual(["f/1", "c/1", "c/2"]);
+    });
+
+    it("lays the coarsest level under all, the tiles kept above it as sharper", () => {
+      expect(files(tilesDrawn(coarsest, fine, [...coarsest, ...coarse], new Set(["z/1", "c/1"])))).toEqual([
+        "z/1",
+        "c/1",
+        "f/1",
+        "f/2",
+        "f/3",
+      ]);
+    });
+
+    it("draws the coarsest level once when it is the one wanted", () => {
+      expect(files(tilesDrawn(coarsest, coarsest, fine, new Set(["f/1"])))).toEqual(["z/1", "f/1"]);
+    });
   });
 
   it("finds the map under a point, west and north of the origin too", () => {

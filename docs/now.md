@@ -194,6 +194,9 @@ _Updated 2026-11-17._
        and hovering 0, 0 no longer says Dofus Games, which is greyed "Pas sur la carte" with the Taverne and Beta; a
        dungeon of the Twelve (Donjon des Bworks) is greyed too, and no longer frames Village d'Amakna; "Indices" and the
        worlds' menu are the same height.
+    12. (the owner's report of 2026-11-17, fixed) zoom in and out with the wheel from 20 % to 100 % and back, quickly,
+       then drag the map far at 100 %: no part of it ever shows black, even for an instant; a part not loaded yet shows
+       blurred, then sharp.
 - **step 3, my zones painted** ((20)), on Windows x64 from `bun run app` on `next` or the next release, with format 4's
   data:
   Measured by the owner on 2026-11-17, Windows x64, `bun run app` on `next` 60cf228: item 1 passes, and 2 to 5 but for

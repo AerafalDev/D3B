@@ -1,6 +1,15 @@
 import { convertFileSrc } from "@tauri-apps/api/core";
 import { Maximize, Minus, Plus } from "lucide-react";
-import { type KeyboardEvent, type PointerEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  type KeyboardEvent,
+  type PointerEvent,
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { flushSync } from "react-dom";
 import { useTranslation } from "react-i18next";
 
@@ -15,6 +24,7 @@ import {
   mapAt,
   mapsPaths,
   type PlacedTile,
+  tilesDrawn,
   type View,
   visibleTiles,
   zoomAbout,
@@ -117,7 +127,50 @@ export function WorldMap({
   // A choice made by a click here: the view stays where the player clicked rather than fitting it.
   const stay = useRef(false);
   const unfitted = useRef(false);
+  // The tiles drawn (`tilesDrawn`): the coarsest level's whole under all, those drawn before that still hide the background
+  // where the level the zoom needs is not loaded yet, and that level's; the files whose images loaded, among those drawn.
   const [tiles, setTiles] = useState<PlacedTile[]>([]);
+  const wanted = useRef<{ under: PlacedTile[]; level: PlacedTile[] }>({ under: [], level: [] });
+  const loaded = useRef(new Set<string>());
+  // The world whose tiles are drawn: another world's lie elsewhere on its image, so none is kept under this one's.
+  const tilesOf = useRef(world);
+  const settle = useCallback((fresh = false) => {
+    setTiles((shown) => {
+      const next = tilesDrawn(wanted.current.under, wanted.current.level, fresh ? [] : shown, loaded.current);
+      return next.length === shown.length && next.every((tile, index) => tile.file === shown[index]?.file)
+        ? shown
+        : next;
+    });
+  }, []);
+  // A file no longer drawn loads again when it comes back, as a new image. Before the page is painted, so before an
+  // image can say it loaded.
+  useLayoutEffect(() => {
+    const drawn = new Set(tiles.map((tile) => tile.file));
+    for (const file of loaded.current) {
+      if (!drawn.has(file)) {
+        loaded.current.delete(file);
+      }
+    }
+  }, [tiles]);
+  // An image loaded, decoded where the webview can say so, or failed: it no longer waits for anything under it, unless
+  // it went before, its file perhaps drawn again by another image still loading.
+  const onTile = useCallback(
+    // `decode` is Chromium's and WebKit's on an SVG image too, which TypeScript's DOM types do not say yet.
+    (file: string, image: SVGImageElement & { decode?: () => Promise<void> }, failed: boolean) => {
+      const done = () => {
+        if (image.isConnected) {
+          loaded.current.add(file);
+          settle();
+        }
+      };
+      if (!failed && typeof image.decode === "function") {
+        image.decode().then(done, done);
+      } else {
+        done();
+      }
+    },
+    [settle],
+  );
   // The hints placed for a zoom, which a new zoom or new hints place again.
   const given = useRef(hints);
   const placed = useRef<{ scale: number; list: PlacedHint[] }>({ scale: Number.NaN, list: [] });
@@ -146,16 +199,29 @@ export function WorldMap({
     }
     // The screen's own pixels: a HiDPI screen needs a level as many times finer.
     const level = levelFor(world.zooms, now.scale * (globalThis.devicePixelRatio || 1));
-    const next = level === undefined ? [] : visibleTiles(level, now, element.clientWidth, element.clientHeight);
-    setTiles((shown) =>
-      shown.length === next.length && shown.every((tile, index) => tile.file === next[index]?.file) ? shown : next,
-    );
+    const coarsest = levelFor(world.zooms, 0);
+    const shown = (zoom: typeof level) =>
+      zoom === undefined ? [] : visibleTiles(zoom, now, element.clientWidth, element.clientHeight);
+    // The coarsest level whole, a few tiles a world, so that a part coming into view is never bare.
+    const whole = coarsest === undefined ? [] : visibleTiles(coarsest, { x: 0, y: 0, scale: 1 }, Infinity, Infinity);
+    const next = { under: whole, level: shown(level) };
+    const same = (a: PlacedTile[], b: PlacedTile[]) =>
+      a.length === b.length && a.every((tile, index) => tile.file === b[index]?.file);
+    if (
+      tilesOf.current !== world ||
+      !same(next.under, wanted.current.under) ||
+      !same(next.level, wanted.current.level)
+    ) {
+      wanted.current = next;
+      settle(tilesOf.current !== world);
+      tilesOf.current = world;
+    }
     if (placed.current.scale !== now.scale) {
       placed.current = { scale: now.scale, list: placeHints(world, given.current, now.scale) };
       // At once, so the pictures never show for a frame at the zoom before.
       flushSync(() => setPins(placed.current));
     }
-  }, [world, i18n.language]);
+  }, [world, i18n.language, settle]);
 
   const redraw = useCallback(() => {
     cancelAnimationFrame(frame.current);
@@ -432,6 +498,8 @@ export function WorldMap({
                 width={tile.width + 1}
                 height={tile.height + 1}
                 preserveAspectRatio="none"
+                onLoad={(event) => onTile(tile.file, event.currentTarget, false)}
+                onError={(event) => onTile(tile.file, event.currentTarget, true)}
               />
             ))}
             {paths !== null && (

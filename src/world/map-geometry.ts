@@ -66,6 +66,31 @@ export function visibleTiles(zoom: AtlasZoom, view: View, width: number, height:
   return tiles;
 }
 
+/** Whether two tiles cover some of the same image, not only an edge. */
+function overlap(a: PlacedTile, b: PlacedTile): boolean {
+  return a.left < b.left + b.width && b.left < a.left + a.width && a.top < b.top + b.height && b.top < a.top + a.height;
+}
+
+/**
+ * The tiles to draw, bottom first: those `under` all, the coarsest level's whole, which once loaded leave no part of the
+ * map bare where the view never was; then, of the tiles drawn `before`, those `loaded` that a tile `wanted` not loaded yet
+ * overlaps, sharper than those under; then those wanted. So a level's tiles still loading never leave the map's
+ * background showing (the owner's report of 2026-11-17: black patches for a few milliseconds while zooming).
+ */
+export function tilesDrawn(
+  under: readonly PlacedTile[],
+  wanted: readonly PlacedTile[],
+  before: readonly PlacedTile[],
+  loaded: ReadonlySet<string>,
+): PlacedTile[] {
+  const bare = wanted.filter((tile) => !loaded.has(tile.file));
+  const files = new Set([...under, ...wanted].map((tile) => tile.file));
+  const kept = before.filter(
+    (tile) => !files.has(tile.file) && loaded.has(tile.file) && bare.some((over) => overlap(tile, over)),
+  );
+  return [...under, ...kept, ...wanted.filter((tile) => !under.some((one) => one.file === tile.file))];
+}
+
 /** Where map `x, y` begins on the image at zoom 100 (`ipc::atlas`). */
 function corner(world: AtlasWorld, x: number, y: number): [number, number] {
   return [world.origin[0] + x * world.mapSize[0], world.origin[1] + y * world.mapSize[1]];
