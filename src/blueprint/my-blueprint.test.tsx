@@ -11,6 +11,8 @@ const variable = (id: string, valueType: string, json: string | null, perCharact
   name: id,
   valueType,
   default: json,
+  list: false,
+  ranges: false,
   perCharacter,
   memory: false,
   bounds: null,

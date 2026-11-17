@@ -25,6 +25,8 @@ pub(super) fn create(blueprint: &mut Blueprint, name: &str) -> Result<Id, Refusa
         id: id.clone(),
         name: name.to_owned(),
         value_type: ValueType::Bool,
+        list: false,
+        ranges: false,
         default: Value::Bool(false),
         bounds: None,
         per_character: false,

@@ -1,10 +1,11 @@
-//! A node's pins: its kind's from the catalogue, a variable's for a get or a set, a function's inputs and outputs for
-//! a call, and those a function's entry and done return take from its signature.
+//! A node's pins: its kind's from the catalogue, its wildcards of the type it notes, a variable's for a get or a set, a
+//! function's inputs and outputs for a call, and those a function's entry and done return take from its signature.
 
 use serde_json::Value;
 
-use super::blueprint::{Blueprint, Does, Graph, Node, Parameter};
+use super::blueprint::{Blueprint, Does, End, Graph, Node, Parameter};
 use super::catalogue::{self, Carries, DONE, FAILED, Pin, REASON, RUN, Side, THEN};
+use super::variable::Type;
 
 /// A pin of a node of a blueprint.
 #[derive(Debug, Clone, PartialEq)]
@@ -45,6 +46,13 @@ pub(crate) fn pins(blueprint: &Blueprint, graph: &Graph, node: &Node) -> Option<
         Does::Kind(kind) => {
             let kind = catalogue::kind(&kind.0)?;
             pins = kind.pins.iter().map(NodePin::from).collect();
+            if let Some(of) = node.options.value_type {
+                for pin in &mut pins {
+                    if let Carries::Wildcard(shape) = pin.carries {
+                        pin.carries = Carries::Value(Type::new(of, shape));
+                    }
+                }
+            }
             let signature = graph.function.as_ref();
             let parameters = match kind.id {
                 "entry" => signature.map(|signature| (&signature.inputs, Side::Out)),
@@ -52,12 +60,12 @@ pub(crate) fn pins(blueprint: &Blueprint, graph: &Graph, node: &Node) -> Option<
                 _ => None,
             };
             if let Some((parameters, side)) = parameters {
-                pins.extend(usable(parameters).map(|it| value(&it.id.0, side, Carries::Value(it.value_type))));
+                pins.extend(usable(parameters).map(|it| value(&it.id.0, side, Carries::Value(it.of_type()))));
             }
         }
         Does::Get(variable) | Does::Set(variable) => {
             let variable = blueprint.variables.iter().find(|known| &known.id == variable)?;
-            let carries = Carries::Value(variable.value_type);
+            let carries = Carries::Value(variable.of_type());
             pins = vec![value("value", Side::Out, carries)];
             if matches!(node.does, Does::Set(_)) {
                 pins.extend([(&RUN).into(), (&THEN).into(), value("value", Side::In, carries)]);
@@ -67,12 +75,37 @@ pub(crate) fn pins(blueprint: &Blueprint, graph: &Graph, node: &Node) -> Option<
             let graph = blueprint.graphs.iter().find(|known| &known.id == function)?;
             let signature = graph.function.as_ref()?;
             pins = [RUN, DONE, FAILED, REASON].iter().map(NodePin::from).collect();
-            let typed = |it: &Parameter| Carries::Value(it.value_type);
+            let typed = |it: &Parameter| Carries::Value(it.of_type());
             pins.extend(usable(&signature.inputs).map(|it| value(&it.id.0, Side::In, typed(it))));
             pins.extend(usable(&signature.outputs).map(|it| value(&it.id.0, Side::Out, typed(it))));
         }
     }
     Some(pins)
+}
+
+/// Whether a wire or a value typed uses one of `node`'s wildcards, from its kind: what its type is noted for.
+pub(crate) fn uses_wildcards(graph: &Graph, node: &Node) -> bool {
+    let at = |end: &End, pin: &str| end.0 == node.id && end.1.0 == pin;
+    wildcards(node).any(|pin| {
+        node.inputs.keys().any(|id| id.0 == pin)
+            || graph.wires.iter().any(|wire| at(&wire.from, pin) || at(&wire.to, pin))
+    })
+}
+
+/// Whether `node`'s kind has a wildcard pin, which a type noted on it is for.
+pub(crate) fn has_wildcards(node: &Node) -> bool {
+    wildcards(node).next().is_some()
+}
+
+/// The ids of the wildcard pins of `node`'s kind.
+fn wildcards(node: &Node) -> impl Iterator<Item = &'static str> {
+    let kind = match &node.does {
+        Does::Kind(kind) => catalogue::kind(&kind.0),
+        _ => None,
+    };
+    let pins = kind.into_iter().flat_map(|kind| kind.pins);
+    pins.filter(|pin| matches!(pin.carries, Carries::Wildcard(_)))
+        .map(|pin| pin.id)
 }
 
 /// A function's parameters that become pins: the first of an id, none with a reserved one, each already a problem.
@@ -88,7 +121,7 @@ mod tests {
     use super::*;
     use crate::bot::blueprint::Id;
     use crate::bot::json::{read, tests::HARVEST};
-    use crate::bot::variable::ValueType;
+    use crate::bot::variable::{Shape, ValueType};
 
     fn pins_of(node: usize) -> Vec<(String, Side, Carries)> {
         let blueprint = read(HARVEST).unwrap_or_else(|error| panic!("{error}"));
@@ -111,8 +144,47 @@ mod tests {
     }
 
     #[test]
+    fn a_wildcard_takes_the_type_its_node_notes_in_its_shape_and_none_until_then() {
+        let blueprint = read(HARVEST).unwrap_or_else(|error| panic!("{error}"));
+        let graph = &blueprint.graphs[0];
+        let mut each: Node =
+            serde_json::from_str(r#"{"id": "e", "kind": "test_for_each"}"#).unwrap_or_else(|error| panic!("{error}"));
+        let carried = |node: &Node| {
+            let pins = pins(&blueprint, graph, node).unwrap_or_default();
+            let of = |id: &str| pins.iter().find(|pin| pin.id == id).map(|pin| pin.carries);
+            (of("list"), of("element"), of("body"))
+        };
+        let (one, list) = (Shape::ONE, Shape::new(true, false));
+        let exec = Some(Carries::Exec);
+        assert_eq!(
+            carried(&each),
+            (Some(Carries::Wildcard(list)), Some(Carries::Wildcard(one)), exec)
+        );
+        each.options.value_type = Some(ValueType::Map);
+        let map = |shape| Some(Carries::Value(Type::new(ValueType::Map, shape)));
+        assert_eq!(carried(&each), (map(list), map(one), exec));
+    }
+
+    #[test]
+    fn a_list_variable_and_parameter_carry_lists() {
+        let mut blueprint = read(HARVEST).unwrap_or_else(|error| panic!("{error}"));
+        blueprint.variables[0].list = true;
+        if let Some(signature) = blueprint.graphs[1].function.as_mut() {
+            signature.inputs[0].ranges = true;
+        }
+        let graph = &blueprint.graphs[0];
+        let carried = |node: usize, pin: &str| {
+            let pins = pins(&blueprint, graph, &graph.nodes[node]).unwrap_or_default();
+            pins.into_iter().find(|it| it.id == pin).map(|it| it.carries)
+        };
+        let zones = Carries::Value(Type::new(ValueType::Zone, Shape::new(true, false)));
+        let banks = Carries::Value(Type::new(ValueType::Bank, Shape::new(false, true)));
+        assert_eq!((carried(1, "value"), carried(3, "bank")), (Some(zones), Some(banks)));
+    }
+
+    #[test]
     fn a_get_reads_its_variable_and_a_set_writes_it() {
-        let zone = Carries::Value(ValueType::Zone);
+        let zone = Carries::one(ValueType::Zone);
         assert_eq!(pins_of(1), [("value".to_owned(), Side::Out, zone)]);
         let mut blueprint = read(HARVEST).unwrap_or_else(|error| panic!("{error}"));
         blueprint.graphs[0].nodes[1].does = Does::Set(Id("zone".to_owned()));
@@ -132,7 +204,7 @@ mod tests {
 
     #[test]
     fn a_call_has_its_functions_inputs_and_outputs() {
-        let bank = ("bank".to_owned(), Side::In, Carries::Value(ValueType::Bank));
+        let bank = ("bank".to_owned(), Side::In, Carries::one(ValueType::Bank));
         let pins = pins_of(3);
         assert_eq!(pins.len(), 5);
         assert!(pins.contains(&bank) && pins.iter().any(|pin| pin.0 == "failed"));
@@ -149,6 +221,8 @@ mod tests {
             id: Id("deposited".into()),
             name: String::new(),
             value_type: ValueType::Number,
+            list: false,
+            ranges: false,
         };
         // A reserved id and an id given twice are problems of their own, never pins.
         let reserved = Parameter {

@@ -10,6 +10,8 @@ const pin = (id: string, side: "in" | "out", carries: PinView_Serialize["carries
   id,
   side,
   carries,
+  list: false,
+  ranges: false,
   default: null,
 });
 

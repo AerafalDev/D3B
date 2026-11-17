@@ -34,6 +34,8 @@ function changed(variable: Variable, fields: Partial<VariableChange>): VariableC
     id: variable.id,
     name: variable.name,
     valueType: variable.valueType,
+    list: variable.list,
+    ranges: variable.ranges,
     default: variable.default,
     bounds: variable.bounds,
     perCharacter: variable.perCharacter,

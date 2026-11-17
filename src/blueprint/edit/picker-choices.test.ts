@@ -5,7 +5,7 @@ import type { LinkEnd } from "./link-check.ts";
 import { pickerChoices } from "./picker-choices.ts";
 
 function pin(id: string, side: PinSide, carries: PinCarries): PinView_Serialize {
-  return { id, side, carries, default: null };
+  return { id, side, carries, list: false, ranges: false, default: null };
 }
 
 const RUN = pin("run", "in", "exec");

@@ -9,6 +9,8 @@ const zone = (id: string, value: string | null, perCharacter = true) => ({
   valueType: "zone",
   default: value,
   bounds: null,
+  list: false,
+  ranges: false,
   perCharacter,
   memory: false,
   help: "",

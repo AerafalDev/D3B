@@ -4,7 +4,7 @@
 //! across every kind, and the interface its icon. The bot's actions are listed before the step that makes them run,
 //! marked with it, so that D3B's blueprints ship whole (the owner, 2026-11-13).
 
-use super::variable::ValueType;
+use super::variable::{Shape, Type, ValueType};
 
 /// A node's family, which colours its icon.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -28,24 +28,58 @@ pub(crate) enum Side {
     Out,
 }
 
-/// What a pin carries: the flow (a triangle) or a value of a type (a circle).
+/// What a pin carries: the flow (a triangle), a value of a type (a circle, a square for a list), or a wildcard of a
+/// shape, which takes the type its node notes (ADR 0016; `Options`'s `type`) and carries nothing until it does.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub(crate) enum Carries {
     Exec,
-    Value(ValueType),
+    Value(Type),
+    #[cfg_attr(
+        not(test),
+        expect(
+            dead_code,
+            reason = "v2's flow and values bring the first kinds of wildcards (docs/now.md)"
+        )
+    )]
+    Wildcard(Shape),
 }
 
 impl Carries {
-    /// Whether a wire may carry this output into `input`: the flow into the flow, a value into a pin of its type, and
-    /// a percentage into a number, so a goal compares percentages without a conversion (the owner, 2026-11-13).
+    /// One value of `of`.
+    pub(crate) const fn one(of: ValueType) -> Self {
+        Self::Value(Type::new(of, Shape::ONE))
+    }
+
+    /// Whether a wire may carry this output into `input`: the flow into the flow, a value into a pin of its type and
+    /// shape, a percentage into a number, so a goal compares percentages without a conversion (the owner,
+    /// 2026-11-13), and a list of items into the items actions take (ADR 0016). A wildcard carries nothing yet.
     pub(crate) fn feeds(self, input: Self) -> bool {
         match (self, input) {
             (Self::Exec, Self::Exec) => true,
             (Self::Value(from), Self::Value(to)) => {
-                from == to || (from == ValueType::Percentage && to == ValueType::Number)
+                let items = from == Type::new(ValueType::Item, Shape::new(true, false))
+                    && to == Type::new(ValueType::Items, Shape::ONE);
+                let percentage = from.of == ValueType::Percentage && to.of == ValueType::Number;
+                items || (from.shape == to.shape && (from.of == to.of || percentage))
             }
             _ => false,
         }
+    }
+
+    /// The type a wire between this output and `input` gives the wildcard at one of its ends: that of the other end,
+    /// of the same shape. `None` when neither end is a wildcard, both are, or the shapes differ.
+    pub(crate) fn types(self, input: Self) -> Option<ValueType> {
+        match (self, input) {
+            (Self::Wildcard(shape), Self::Value(typed)) | (Self::Value(typed), Self::Wildcard(shape)) => {
+                (typed.shape == shape).then_some(typed.of)
+            }
+            _ => None,
+        }
+    }
+
+    /// Whether it carries a value, or will once its wildcard is typed.
+    pub(crate) fn is_value(self) -> bool {
+        self != Self::Exec
     }
 }
 
@@ -72,7 +106,7 @@ const fn input(id: &'static str, value_type: ValueType, default: Option<&'static
     Pin {
         id,
         side: Side::In,
-        carries: Carries::Value(value_type),
+        carries: Carries::one(value_type),
         default,
     }
 }
@@ -81,7 +115,7 @@ const fn output(id: &'static str, value_type: ValueType) -> Pin {
     Pin {
         id,
         side: Side::Out,
-        carries: Carries::Value(value_type),
+        carries: Carries::one(value_type),
         default: None,
     }
 }
@@ -210,15 +244,35 @@ pub(crate) const KINDS: &[Kind] = &[
 
 /// The kind of this id, if this version knows it.
 pub(crate) fn kind(id: &str) -> Option<&'static Kind> {
-    KINDS.iter().find(|kind| kind.id == id)
+    let kinds = KINDS.iter();
+    #[cfg(test)]
+    let kinds = kinds.chain(tests::WILDCARDS);
+    kinds.into_iter().find(|kind| kind.id == id)
 }
 
 #[cfg(test)]
-mod tests {
+pub(crate) mod tests {
     use std::collections::HashSet;
 
     use super::*;
     use crate::bot::blueprint::Id;
+
+    const fn wildcard(id: &'static str, side: Side, list: bool) -> Pin {
+        Pin {
+            id,
+            side,
+            carries: Carries::Wildcard(Shape::new(list, false)),
+            default: None,
+        }
+    }
+
+    /// Kinds of wildcards for the tests, until v2's flow and values bring theirs: `=` of two values of one type, and
+    /// For each element of a list.
+    #[rustfmt::skip]
+    pub(crate) const WILDCARDS: &[Kind] = &[
+        of("test_equal", Query, &[wildcard("a", Side::In, false), wildcard("b", Side::In, false), output("value", Bool)], None),
+        of("test_for_each", Flow, &[RUN, wildcard("list", Side::In, true), exec("body", Side::Out), wildcard("element", Side::Out, false), exec("completed", Side::Out)], None),
+    ];
 
     #[test]
     fn every_kind_and_pin_has_a_well_formed_id_unique_where_it_is() {
@@ -246,7 +300,7 @@ mod tests {
             let Some(default) = pin.default else { continue };
             let value = serde_json::from_str(default).unwrap_or_else(|error| panic!("{}: {error}", pin.id));
             assert!(
-                matches!(pin.carries, Carries::Value(value_type) if value_type.holds(&value)),
+                matches!(pin.carries, Carries::Value(typed) if typed.holds(&value)),
                 "{}",
                 pin.id
             );
@@ -286,8 +340,46 @@ mod tests {
     }
 
     #[test]
+    fn a_wire_carries_a_list_into_a_list_and_a_list_of_items_into_items() {
+        let (one, list, ranges) = (Shape::ONE, Shape::new(true, false), Shape::new(false, true));
+        let of = |value_type, shape| Carries::Value(Type::new(value_type, shape));
+        assert!(of(Zone, list).feeds(of(Zone, list)));
+        assert!(of(Percentage, list).feeds(of(Number, list)));
+        assert!(!of(Zone, list).feeds(of(Zone, one)), "a list into one value");
+        assert!(!of(Zone, one).feeds(of(Zone, list)), "one value into a list");
+        assert!(!of(Zone, ranges).feeds(of(Zone, one)));
+        assert!(
+            of(ValueType::Item, list).feeds(of(Items, one)),
+            "a list of items is items"
+        );
+        assert!(
+            !of(Items, one).feeds(of(ValueType::Item, list)),
+            "not the other way: all is no list"
+        );
+    }
+
+    #[test]
+    fn a_wildcard_carries_nothing_and_takes_the_type_of_a_wire_of_its_shape() {
+        let (one, list) = (Shape::ONE, Shape::new(true, false));
+        let of = |value_type, shape| Carries::Value(Type::new(value_type, shape));
+        let (any, any_list) = (Carries::Wildcard(one), Carries::Wildcard(list));
+        assert!(!any.feeds(any) && !of(Zone, one).feeds(any) && !any.feeds(of(Zone, one)));
+        assert_eq!(of(Percentage, one).types(any), Some(Percentage));
+        assert_eq!(any.types(of(Bank, one)), Some(Bank));
+        assert_eq!(of(Zone, list).types(any_list), Some(Zone));
+        assert_eq!(of(Zone, list).types(any), None, "a list into one value");
+        let none = (
+            any.types(any),
+            Carries::Exec.types(any),
+            of(Zone, one).types(of(Zone, one)),
+        );
+        assert_eq!(none, (None, None, None));
+        assert!(any.is_value() && !Carries::Exec.is_value());
+    }
+
+    #[test]
     fn a_wire_carries_the_flow_into_the_flow_and_a_value_into_its_type() {
-        let value = Carries::Value;
+        let value = Carries::one;
         assert!(Carries::Exec.feeds(Carries::Exec));
         assert!(value(Zone).feeds(value(Zone)));
         assert!(value(Percentage).feeds(value(Number)), "a percentage feeds a number");
@@ -327,7 +419,7 @@ mod tests {
                     let input = kind
                         .pins
                         .iter()
-                        .any(|pin| pin.id == hole && pin.side == Side::In && matches!(pin.carries, Carries::Value(_)));
+                        .any(|pin| pin.id == hole && pin.side == Side::In && pin.carries.is_value());
                     assert!(input, "{}: {hole}", kind.id);
                     holes.push((kind.id, hole.to_owned()));
                 }

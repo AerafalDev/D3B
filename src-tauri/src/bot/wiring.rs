@@ -1,13 +1,13 @@
 //! The problems of a graph's nodes against the catalogue and their pins: a kind unknown or out of its place, values
-//! typed on pins that do not take them, wires between pins that do not exist, go the wrong way or carry another type,
-//! an input fed twice or by nothing, a flow output wired twice. A node whose pins are unknown is reported once, never
-//! again through its wires.
+//! typed on pins that do not take them, wires between pins that do not exist, go the wrong way or carry another type or
+//! shape, a wildcard used before its node notes its type, an input fed twice or by nothing, a flow output wired twice.
+//! A node whose pins are unknown is reported once, never again through its wires.
 
 use std::collections::{HashMap, HashSet};
 
 use super::blueprint::{Blueprint, Does, End, Graph, Id};
 use super::catalogue::{self, Carries, Family, Side};
-use super::pins::{NodePin, pins};
+use super::pins::{NodePin, has_wildcards, pins, uses_wildcards};
 use super::problems::Problem;
 
 /// The problems of `graph`'s nodes and wires, after those `problems` finds itself.
@@ -54,27 +54,30 @@ pub(crate) fn of_graph(blueprint: &Blueprint, graph: &Graph, found: &mut Vec<Pro
         let Some(node_pins) = pins(blueprint, graph, node).filter(|_| !twice.contains(&node.id)) else {
             continue;
         };
-        for (pin, value) in &node.inputs {
-            let typed = find(&node_pins, pin, Side::In).and_then(|found| match found.carries {
-                Carries::Value(value_type) => Some(value_type),
-                Carries::Exec => None,
-            });
+        if node.options.value_type.is_some() && !has_wildcards(node) {
             let (graph, node) = at(&node.id);
-            match typed {
-                None => found.push(Problem::NoSuchInput {
-                    graph,
-                    node,
-                    pin: pin.clone(),
-                }),
+            let option = Id("type".to_owned());
+            found.push(Problem::NoSuchOption { graph, node, option });
+        }
+        // Wired or given a value, an untyped wildcard is said once for its node; its wires are not looked at.
+        if node.options.value_type.is_none() && uses_wildcards(graph, node) {
+            let (graph, node) = at(&node.id);
+            found.push(Problem::WildcardWithoutType { graph, node });
+        }
+        for (pin, value) in &node.inputs {
+            let (graph, node) = at(&node.id);
+            let pin = pin.clone();
+            match find(&node_pins, &pin, Side::In).map(|found| found.carries) {
+                None | Some(Carries::Exec) => found.push(Problem::NoSuchInput { graph, node, pin }),
                 // No value, `null`, is a variable's default only: a node's input has a value or says none.
-                Some(value_type) if value.is_null() || !value_type.holds(value) => {
-                    found.push(Problem::ValueNotOfType {
-                        graph,
-                        node,
-                        pin: pin.clone(),
-                    });
+                Some(Carries::Value(typed)) if value.is_null() || !typed.holds(value) => {
+                    found.push(Problem::ValueNotOfType { graph, node, pin });
                 }
-                Some(_) => {}
+                Some(Carries::Value(typed)) if typed.overlaps(value) => {
+                    found.push(Problem::RangesOverlap { graph, node, pin });
+                }
+                // A value on a wildcard of no type is its node's problem, said above.
+                Some(Carries::Value(_) | Carries::Wildcard(_)) => {}
             }
         }
         known.insert(&node.id, node_pins);
@@ -84,7 +87,7 @@ pub(crate) fn of_graph(blueprint: &Blueprint, graph: &Graph, found: &mut Vec<Pro
         let Some(node_pins) = known.get(&node.id) else { continue };
         for pin in node_pins
             .iter()
-            .filter(|pin| pin.side == Side::In && matches!(pin.carries, Carries::Value(_)))
+            .filter(|pin| pin.side == Side::In && pin.carries.is_value())
         {
             let id = Id(pin.id.clone());
             // Fed by any wire, even one whose other end is a problem of its own.
@@ -115,19 +118,24 @@ fn wires(graph: &Graph, known: &HashMap<&Id, Vec<NodePin>>, found: &mut Vec<Prob
         let Some(to) = end(graph, to_pins, &wire.to, Side::In, found) else {
             continue;
         };
-        if !from.carries.feeds(to.carries) {
-            let problem = Problem::WireOfAnotherType {
-                graph: graph.id.clone(),
-                from: wire.from.clone(),
-                to: wire.to.clone(),
+        let wildcard = |carries| matches!(carries, Carries::Wildcard(_));
+        if !wildcard(from.carries) && !wildcard(to.carries) && !from.carries.feeds(to.carries) {
+            let shapes = match (from.carries, to.carries) {
+                (Carries::Value(out), Carries::Value(input)) => out.shape != input.shape,
+                _ => false,
             };
-            found.push(problem);
+            let (graph, from, to) = (graph.id.clone(), wire.from.clone(), wire.to.clone());
+            found.push(if shapes {
+                Problem::WireOfAnotherShape { graph, from, to }
+            } else {
+                Problem::WireOfAnotherType { graph, from, to }
+            });
         }
         if from.carries == Carries::Exec && !flows.insert(&wire.from) {
             let (graph, node, pin) = (graph.id.clone(), wire.from.0.clone(), wire.from.1.clone());
             found.push(Problem::OutputWiredTwice { graph, node, pin });
         }
-        if matches!(to.carries, Carries::Value(_)) {
+        if to.carries.is_value() {
             let typed = graph
                 .nodes
                 .iter()
@@ -350,6 +358,93 @@ mod tests {
                 to
             }]
         );
+    }
+
+    #[test]
+    fn a_list_into_a_pin_of_one_value_is_a_wire_of_another_shape() {
+        let found = after(|blueprint| blueprint.variables[0].list = true);
+        let (from, to) = (End(id("n2"), id("value")), End(id("n3"), id("zone")));
+        assert_eq!(
+            found,
+            [Problem::WireOfAnotherShape {
+                graph: id("events"),
+                from,
+                to
+            }]
+        );
+    }
+
+    #[test]
+    fn ranges_typed_whose_rows_overlap_are_a_problem() {
+        let found = after(|blueprint| {
+            let signature = blueprint.graphs[1].function.as_mut();
+            if let Some(signature) = signature {
+                signature.inputs[0].ranges = true;
+            }
+            let row = |from, to| json!({"from": from, "to": to, "value": "nearest"});
+            let inputs = &mut blueprint.graphs[0].nodes[3].inputs;
+            inputs.insert(id("bank"), json!([row(1, 100), row(100, 200)]));
+        });
+        let (graph, node, pin) = at("n4", "bank");
+        assert_eq!(found, [Problem::RangesOverlap { graph, node, pin }]);
+    }
+
+    /// The harvest with an `=`, noting the type `typed` when given.
+    fn with_wildcards(typed: Option<&str>, edit: impl FnOnce(&mut Blueprint)) -> Vec<Problem> {
+        after(|blueprint| {
+            let options = typed
+                .map(|it| format!(r#", "options": {{"type": "{it}"}}"#))
+                .unwrap_or_default();
+            let graph = &mut blueprint.graphs[0];
+            graph
+                .nodes
+                .push(node(&format!(r#"{{"id": "eq", "kind": "test_equal"{options}}}"#)));
+            edit(blueprint);
+        })
+    }
+
+    #[test]
+    fn a_wildcard_carries_the_type_its_node_notes_its_wires_and_values_checked_against_it() {
+        let wired = |blueprint: &mut Blueprint| {
+            let graph = &mut blueprint.graphs[0];
+            graph.wires.push(wire("n2", "value", "eq", "a"));
+            graph.nodes[5].inputs.insert(id("b"), json!({"sub_area": 445}));
+        };
+        assert_eq!(with_wildcards(Some("zone"), wired), []);
+        let found = with_wildcards(Some("bank"), |blueprint| {
+            wired(blueprint);
+            blueprint.graphs[0].nodes[5].inputs.insert(id("b"), json!("nearest"));
+        });
+        let (from, to) = (End(id("n2"), id("value")), End(id("eq"), id("a")));
+        let other = Problem::WireOfAnotherType {
+            graph: id("events"),
+            from,
+            to,
+        };
+        assert_eq!(found, [other]);
+    }
+
+    #[test]
+    fn a_wildcard_used_before_its_node_has_a_type_is_said_once_and_a_type_on_no_wildcard_is_no_option() {
+        let found = with_wildcards(None, |blueprint| {
+            let graph = &mut blueprint.graphs[0];
+            graph.wires.push(wire("n2", "value", "eq", "a"));
+            graph.nodes[5].inputs.insert(id("b"), json!({"sub_area": 445}));
+            graph.nodes[2].options.value_type = Some(crate::bot::ValueType::Zone);
+        });
+        let (graph, node, option) = at("n3", "type");
+        let no = Problem::NoSuchOption { graph, node, option };
+        let untyped = Problem::WildcardWithoutType {
+            graph: id("events"),
+            node: id("eq"),
+        };
+        assert_eq!(found, [no, untyped]);
+        // Neither wired nor given a value, a wildcard needs no type: its inputs need a value, as any input.
+        let (graph, node, pin) = at("eq", "a");
+        let without = Problem::InputWithoutValue { graph, node, pin };
+        let (graph, node, pin) = at("eq", "b");
+        let alone = with_wildcards(None, |_| {});
+        assert_eq!(alone, [without, Problem::InputWithoutValue { graph, node, pin }]);
     }
 
     #[test]
