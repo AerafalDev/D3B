@@ -62,8 +62,8 @@ flowchart LR
 | `worlds.json` | `id`, `name`, `originX`, `originY`, `mapWidth`, `mapHeight`, `minScale`, `maxScale`, `startScale`, `width`, `height`, `visible`, `zooms` (`percent`, `width`, `height`, `columns`, `rows`) | `WorldMapsDataRoot`, 40 worlds, 161 zooms |
 | `tiles/<world>/<percent>/<n>.jpg` | one tile, JPEG 75 | 1,250 BC7 textures, 79.7 MB |
 | `maps/<id % 100>.json` | `id`, `top`, `bottom`, `left`, `right`; `flags` and `linkedZone`, 560 values each; `mapChange`, `floor`, `moveZone`, `arrow`, `speed` as `{cell: value}` where not zero; `elements` (`id`, `cellId` or -1, `gfxId`) | `ClientMapData` and `MapMetadata`, 17,623 maps, 46,490 elements, 63 MB |
-| `world-graph-vertices.json` | `uid`, `mapId`, `zone` | `PathFindingData`, 11,331 vertices |
-| `world-graph-edges.json` | `from`, `to` (uids), `transitions` (`type`: `scroll`, `scrollAction`, `mapAction` or `interactive`; `direction`, `cellId`, `skillId`, `mapId`, `elementId`, `criterion`) | 30,917 edges, 31,337 transitions |
+| `world-graph-vertices.json` | `uid`, `mapId`, `zone` | `PathFindingData`, 11,331 vertices (11,373 on 3.7.14.18) |
+| `world-graph-edges.json` | `from`, `to` (uids), `transitions` (`type`: `scroll`, `scrollAction`, `mapAction` or `interactive`; `direction`, `cellId`, `skillId`, `mapId`, `elementId`, `criterion`) | 30,917 edges, 31,337 transitions (31,001 and 31,422 on 3.7.14.18) |
 | `areas.json` | `id`, `name` (a text, or `null`), `superAreaId`, `worldmapId`, `hasWorldMap` | `AreaData`, 70 records |
 | `zaaps.json` | `id`, `mapId`, `subAreaId`, `activated` | `WaypointData`, 63 records |
 | `breeds.json` | `id`, `name` (the text its `shortNameId` names, a string holding the text's number: its only name) | `BreedData`, 19 records, 1 to 18 and 20 |
@@ -80,6 +80,13 @@ flowchart LR
 | `monsters.json` | `id`, `name`, `raceId`, `flags` (`MonsterFlags`), `levels` (each grade's, grade 1 first), `drops` (`itemId`, `chances`: five percentages for grades 1 to 5, `criterion`: the client's text, or `null`) | `MonsterData`, 5,135 records, 5,129 written, 26,821 grades, 13,567 drops, 2.9 MB |
 | `monster-races.json` | `id`, `name`, `superRaceId` | `MonsterRaceData`, 266 records, 265 written |
 | `monster-super-races.json` | `id`, `name` | `MonsterSuperRaceData`, 35 records |
+
+**3.7.14.18** (built 2026-11-16, extracted on 2026-11-17 by `next` 220473d): every table holds the same bytes as
+3.7.13.17's but the world graph's two (verified, the manifests' SHA-256 compared). The graph gains 42 vertices and 85
+transitions (55 scrolls, 27 interactive, 3 scroll actions) and loses none, compared by map, zone and transition since
+the vertices' `uid`s are numbered again: the maps of area 104, La Source (35 vertices in sub-area 1137, Lac originel, 7
+in 1163, Souvenirs de Tiama), which 3.7.13.17 held with their positions but off the graph; zaap 81, on Lac originel,
+now stands on it. A `uid` is no identity from one build to the next.
 
 A cell's `flags` pack its booleans, bit 0 first: `mov` (walkable), `los` (line of sight), `nonWalkableDuringFight`,
 `nonWalkableDuringRP`, `farmCell`, `visible`, `havenbagCell`, `roleplayMonstersMovementBlocked`, `red`, `blue`: fields
