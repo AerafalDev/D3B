@@ -409,12 +409,15 @@ flowchart LR
   when a field is left, overlaps marked on their rows, a gap a faint row "levels 50 to 59: nothing", + and ×, levels 1
   to 200; a text pasted, lines `1-49: value` or columns separated by tabs (a spreadsheet's), each value as it is
   typed (a name, "5,-18", "1 min 30", an id), replaces the table, undone by Ctrl+Z, a line not read said by its
-  number with nothing changed; "Copy as text" gives it back.
+  number with nothing changed; "Copy as text" gives it back (step 7 of (v2.2), done in code: a value's words are its
+  editor's, a sub-area's, zone's, profession's or item's name or an id, a map's coordinates on the world the World tab shows, a list's
+  separated by ";"; a map inside a building, which shares its street's coordinates, is copied as those coordinates
+  and so pasted back as the street's).
 - **My variables** (the owner, 2026-11-17: before (14), so the editors are used): the variable editor offers a map,
   an item, a duration and a time (the NPC at step 4), and two switches, "List" and "By level" (ranges), its default
   and a character's setting typed with the editors above, a list a row per value in its type's editor, × to remove one
   and a last row adding the value typed there (step 4 of (v2.2), done in code; ranges said by their rows until their
-  table, step 7; a type its editor waits for, a route or a bank, shows its rows and takes no new one yet; a type read
+  table, step 7, done in code; a type its editor waits for, a route or a bank, shows its rows and takes no new one yet; a type read
   "Durée · liste" or "Zone · par niveau"). (14) keeps the locals and the variables' nodes.
 - **A node's options** ("+" a case or an output, the owner, 2026-11-17) come with v2.3's Sequence and Switch, their
   first kinds: "+ Add an output" on the node for Sequence's outputs and a list's inputs, Switch's cases typed in
