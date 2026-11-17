@@ -76,7 +76,7 @@ _Updated 2026-11-17._
         it says "Installation de <version>…", then the new D3B says ready and a client plays;
     11. if a Windows account with a space or an accent in its name is at hand: steps 1 and 2 there;
     12. after a disconnection in game (Wi-Fi off and on), the client reconnects through D3B.
-  - **step 2, the protocol** ([protocol.md](protocol.md)), on Windows x64 with client 3.7.13.17, from `bun run app` on
+  - **step 2, the protocol** ([protocol.md](protocol.md)), on Windows x64 with client 3.7.13.17 or 3.7.14.18, from `bun run app` on
     `next` or the next release. Never paste a capture. Measured by the owner on 2026-11-12, Windows x64, `bun run app`
     on `next` b200248: items 1 to 6 pass; its two captures replayed through the relay byte for byte and through the
     protocol with no frame not trusted; on 2026-11-13, `bun run app` on `next` d978253, items 1 and 3's counts in the
@@ -95,7 +95,7 @@ _Updated 2026-11-17._
        "non fiables" and "perdus" stay at 0;
     4. play a second account at once: two connections, each with its own map;
     5. close one client's window: its character leaves the Characters view, the other stays;
-    6. with `D3B_RECORD` set to an absolute folder, play a minute: the capture is named `3.7.13.17-<ms>-<n>.d3bcap`;
+    6. with `D3B_RECORD` set to an absolute folder, play a minute: the capture is named `<build>-<ms>-<n>.d3bcap`, its client's build;
     7. after the next client patch, before its pins: the Characters view says "Protocole non lu", the character's tab
        that its build has no pins, the Protocol panel "Aucune trame gardée." without counts, and the game plays as before;
     8. the inspector, while playing: its frames scroll in, newest last; scroll up: the list stands still while frames
@@ -418,7 +418,9 @@ _Updated 2026-11-17._
   but the maps, which it reads one file at a time. The readers of maps, of the world graph and of the tiles have their
   checks tested in CI on objects built by hand (`TestMap`, `TestGraph`, `TestTiles`), the debt of step 1's review; only
   the checks of a bundle itself (one container, unique identifiers, its stream files) need the installed client.
-- **Published**: `client-3.7.13.17.tar.gz`, from `next` f3104e9 (SHA-256 `74cfd3c3…`), added to the C# version's
+- **Published**: `client-3.7.14.18-format5.tar.gz`, from `next` 220473d (SHA-256 `331fe578…`, 105,692,906 bytes), in
+  the C# version's `client-3.7.14.18` release on the owner's go on 2026-11-17, which `.github/game-data.json` names.
+  `client-3.7.13.17.tar.gz`, from `next` f3104e9 (SHA-256 `74cfd3c3…`), added to the C# version's
   `client-3.7.13.17` release on the owner's go. v0.11.0 shipped without data, named before. Format 2 (the breeds):
   `client-3.7.13.17-format2.tar.gz`, from `next` 2b0577c (SHA-256 `2e3ac196…`, 84,146,484 bytes), added to the same
   release on the owner's go on 2026-11-13; `.github/game-data.json` named it until format 3 (step 3's (3b)), then
@@ -436,7 +438,9 @@ _Updated 2026-11-17._
   status-bar indicator and the restore before an update.
 - **Next**: the owner measures the relay's item 10's status-bar offer with the release after v0.14.0, and item 11 when
   an account is at hand; the protocol's item 7 now, with v0.14.0 on client 3.7.14.18, before the release that carries
-  its pins: 3.7.14.18's schema is 3.7.13.17's, so its pins are copied ([protocol.md](protocol.md#on-the-wire)), and Q17,
+  its pins: 3.7.14.18's schema is 3.7.13.17's, so its pins are copied ([protocol.md](protocol.md#on-the-wire)), and its
+  data packed (`.github/game-data.json`), without which a character's map and breed would not show, the data's build
+  having to be the connection's ([data.md](data.md#the-folder)); Q17,
   a build that changes the schema, waits for a later patch (`GameAssembly.dll`,
   `global-metadata.dat` and `version` of 3.7.13.17 copied into `artifacts/` for Q17 on 2026-11-13). Step 2's next feature is designed below. The
   protocol's code was a stack of seven PRs against `next`, all merged (#155 to #171): (1) the game connection split into
