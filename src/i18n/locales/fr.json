@@ -741,6 +741,7 @@
     },
     "choosing": {
       "banner": "{{who}} : clique une sous-zone pour en faire sa Zone.",
+      "bannerMap": "{{who}} : clique une carte pour la choisir.",
       "cancel": "Annuler",
       "escape": "Échap"
     }
@@ -795,7 +796,12 @@
     "found_one": "{{count}} objet trouvé, Entrée le choisit",
     "found_other": "{{count}} objets trouvés, Entrée choisit le premier",
     "itemLevel": "{{name}} · niv. {{level}}",
-    "itemKind": "{{kind}} · niv. {{level}}"
+    "itemKind": "{{kind}} · niv. {{level}}",
+    "mapAt": "{{x}},{{y}} · {{subArea}}",
+    "mapCoordinates": "{{x}},{{y}}",
+    "mapTyped": "{{label}} : coordonnées",
+    "chooseOnWorld": "Choisir {{label}} sur le Monde",
+    "whereIs": "Où est {{name}}"
   },
   "settings": {
     "title": "Blueprint et réglages",

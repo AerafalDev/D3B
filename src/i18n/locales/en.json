@@ -741,6 +741,7 @@
     },
     "choosing": {
       "banner": "{{who}}: click a sub-area to make it their Zone.",
+      "bannerMap": "{{who}}: click a map to choose it.",
       "cancel": "Cancel",
       "escape": "Esc"
     }
@@ -795,7 +796,12 @@
     "found_one": "{{count}} item found, Enter chooses it",
     "found_other": "{{count}} items found, Enter chooses the first",
     "itemLevel": "{{name}} · lv. {{level}}",
-    "itemKind": "{{kind}} · lv. {{level}}"
+    "itemKind": "{{kind}} · lv. {{level}}",
+    "mapAt": "{{x}},{{y}} · {{subArea}}",
+    "mapCoordinates": "{{x}},{{y}}",
+    "mapTyped": "{{label}}: coordinates",
+    "chooseOnWorld": "Choose {{label}} on the World",
+    "whereIs": "Where is {{name}}"
   },
   "settings": {
     "title": "Blueprint and settings",

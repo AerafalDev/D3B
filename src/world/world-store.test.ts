@@ -12,6 +12,21 @@ describe("the World store's hints", () => {
   });
 });
 
+describe("the World store's choice on the map", () => {
+  it("shows a sub-area chosen for a Zone, and takes a map without choosing a sub-area", () => {
+    const zone = vi.fn();
+    useWorld.setState({ picked: null });
+    useWorld.getState().startChoosing("Lyra", zone);
+    useWorld.getState().endChoosing(3);
+    expect([zone.mock.calls, useWorld.getState().picked]).toEqual([[[3]], 3]);
+    const map = vi.fn();
+    useWorld.setState({ picked: null });
+    useWorld.getState().startChoosing("Lyra", map, "map");
+    useWorld.getState().endChoosing(88_080_385);
+    expect([map.mock.calls, useWorld.getState().picked]).toEqual([[[88_080_385]], null]);
+  });
+});
+
 describe("the World store's zone of mine", () => {
   beforeEach(() => useWorld.setState({ read: null, picked: 3, world: 1, zone: null, tool: "eraser" }));
 

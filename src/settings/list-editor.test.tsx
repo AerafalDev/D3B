@@ -57,8 +57,8 @@ describe("a list's editor", () => {
     expect(screen.queryByRole("button", { name: /Retirer/ })).toBeNull();
     cleanup();
     const onChange = vi.fn(async () => true);
-    const maps = { valueType: "map", list: true, bounds: null };
-    render(<SettingEditor variable={maps} value="[1]" onChange={onChange} who="Lyra" label="Cartes" />);
+    const maps = { valueType: "route", list: true, bounds: null };
+    render(<SettingEditor variable={maps} value='["loop"]' onChange={onChange} who="Lyra" label="Cartes" />);
     expect(screen.queryByRole("textbox", { name: /ajouter/ })).toBeNull();
     expect(screen.getByRole("button", { name: "Retirer la valeur 1" })).toBeTruthy();
   });

@@ -51,6 +51,8 @@ pub fn builder() -> Builder<tauri::Wry> {
             map::map_cells,
             atlas::world_atlas,
             lookup::items::find_items,
+            lookup::maps::map_at,
+            lookup::maps::find_maps,
             zones::zones,
             zones::create_zone,
             zones::rename_zone,
