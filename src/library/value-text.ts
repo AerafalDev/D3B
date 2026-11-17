@@ -1,5 +1,14 @@
 import i18next from "i18next";
 
+/** Whole seconds as the player types them (docs/bot.md, "Types"): "5 min", "1 min 30", "45 s". */
+function duration(seconds: number): string {
+  const [minutes, rest] = [Math.floor(seconds / 60), seconds % 60];
+  if (minutes === 0) {
+    return `${rest} s`;
+  }
+  return rest === 0 ? `${minutes} min` : `${minutes} min ${rest}`;
+}
+
 /** A value as the player reads it, by its type (`bot::variable`'s shapes); a shape its type does not hold, as JSON. */
 export function valueText(valueType: string, json: string | null, language: string): string {
   if (json === null) {
@@ -35,6 +44,8 @@ export function valueText(valueType: string, json: string | null, language: stri
       return Array.isArray(value) ? i18next.t("library.value.items", { count: value.length }) : json;
     case "zone":
       return i18next.t("library.value.zone");
+    case "duration":
+      return typeof value === "number" && Number.isInteger(value) && value >= 0 ? duration(value) : json;
     default:
       return json;
   }

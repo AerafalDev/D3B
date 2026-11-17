@@ -44,7 +44,7 @@ const events = {
     node("bank", "call", { does: "call", function: "bank", family: "call" }),
     node("wait", "wait", {
       family: "flow",
-      pins: [pin("run", "in"), pin("then", "out"), pin("minutes", "in", "number", "5")],
+      pins: [pin("run", "in"), pin("then", "out"), pin("duration", "in", "duration", "300")],
     }),
   ],
   wires: [
