@@ -82,6 +82,31 @@ impl Program {
     }
 }
 
+/// What a node doing `does` is at run time, refused for a kind that cannot run yet.
+fn doing(blueprint: &Blueprint, functions: &HashMap<&Id, usize>, does: &Does) -> Result<Doing, Refused> {
+    Ok(match does {
+        Does::Kind(kind) => {
+            Doing::Kind(kinds::behaviour(&kind.0).ok_or_else(|| Refused::NotRunnable { kind: kind.0.clone() })?)
+        }
+        Does::Get(variable) => Doing::Get(variable.0.clone()),
+        Does::Set(variable) => Doing::Set(variable.0.clone()),
+        Does::Call(function) => {
+            let at = functions.get(function).copied().unwrap_or_default();
+            // The engine reads no pure call yet: its result cannot run.
+            if blueprint.graphs[at]
+                .function
+                .as_ref()
+                .is_some_and(|signature| signature.pure)
+            {
+                return Err(Refused::NotRunnable {
+                    kind: "result".to_owned(),
+                });
+            }
+            Doing::Call(at)
+        }
+    })
+}
+
 /// `blueprint` compiled, refused when it has a problem or holds a kind that cannot run yet.
 pub(crate) fn compile(blueprint: &Blueprint) -> Result<Program, Refused> {
     let found = problems(blueprint);
@@ -111,27 +136,7 @@ pub(crate) fn compile(blueprint: &Blueprint) -> Result<Program, Refused> {
             .collect();
         let mut nodes = Vec::new();
         for (node, its) in graph.nodes.iter().zip(&all) {
-            let doing = match &node.does {
-                Does::Kind(kind) => {
-                    Doing::Kind(kinds::behaviour(&kind.0).ok_or_else(|| Refused::NotRunnable { kind: kind.0.clone() })?)
-                }
-                Does::Get(variable) => Doing::Get(variable.0.clone()),
-                Does::Set(variable) => Doing::Set(variable.0.clone()),
-                Does::Call(function) => {
-                    let at = functions.get(function).copied().unwrap_or_default();
-                    // The engine reads no pure call yet: its result cannot run.
-                    if blueprint.graphs[at]
-                        .function
-                        .as_ref()
-                        .is_some_and(|signature| signature.pure)
-                    {
-                        return Err(Refused::NotRunnable {
-                            kind: "result".to_owned(),
-                        });
-                    }
-                    Doing::Call(at)
-                }
-            };
+            let doing = doing(blueprint, &functions, &node.does)?;
             let source = |pin: &str| {
                 let wire = graph
                     .wires
