@@ -237,37 +237,67 @@ fn checked(blueprint: &Blueprint, graph: &Graph, from: End, to: End) -> Result<L
     if from.0 == to.0 {
         return Err(Refusal::SameNode);
     }
-    let link = link(Wire { from, to }, out.carries, input.carries).ok_or(Refusal::OtherType)?;
+    let (out_open, in_open) = (
+        open_of(blueprint, graph, &from, Side::Out).unwrap_or(out.carries),
+        open_of(blueprint, graph, &to, Side::In).unwrap_or(input.carries),
+    );
+    let wire = Wire { from, to };
+    let link = link(wire.clone(), out_open, in_open)
+        .or_else(|| link(wire, out.carries, input.carries))
+        .ok_or(Refusal::OtherType)?;
     typeable(graph, &link)?;
     Ok(link)
 }
 
-/// Refuses a link that would type a kind that changes a variable, which takes its type from it alone.
+/// What the pin at `end` carries as the editor's check sees it (`open_pins`).
+fn open_of(blueprint: &Blueprint, graph: &Graph, end: &End, side: Side) -> Option<Carries> {
+    let node = graph.nodes.iter().find(|it| it.id == end.0)?;
+    let pins = super::pins::open_pins(blueprint, graph, node)?;
+    pins.into_iter()
+        .find(|it| it.side == side && it.id == end.1.0)
+        .map(|it| it.carries)
+}
+
+/// Refuses a link that would type a kind that changes a variable, which takes its type from it alone, or give a kind's
+/// wildcards a type it does not take: `≥` of zones.
 fn typeable(graph: &Graph, link: &Link) -> Result<(), Refusal> {
-    let Some((id, _)) = &link.typed else { return Ok(()) };
+    let Some((id, of)) = &link.typed else { return Ok(()) };
     match graph.nodes.iter().find(|it| &it.id == id) {
-        Some(node) if !has_wildcards(node) => Err(Refusal::OtherType),
+        Some(node) if !has_wildcards(node) || !super::pins::takes_type(node, *of) => Err(Refusal::OtherType),
         _ => Ok(()),
     }
 }
 
 /// The wire between the pin a wire dropped on the ground came from and `new`'s first pin that fits it.
 fn to_new(blueprint: &Blueprint, graph: &Graph, new: &Node, end: End, side: Side) -> Result<Link, Refusal> {
-    let dragged = pin_of(blueprint, graph, node(graph, &end.0)?, &end.1, side)?;
-    let theirs = pins(blueprint, graph, new).unwrap_or_default();
+    let resolved = pin_of(blueprint, graph, node(graph, &end.0)?, &end.1, side)?.carries;
+    let dragged = open_of(blueprint, graph, &end, side).unwrap_or(resolved);
+    let theirs = super::pins::open_pins(blueprint, graph, new).unwrap_or_default();
     let at = |pin: &NodePin| End(new.id.clone(), Id(pin.id.clone()));
+    // A link that types the new node gives it a type its kind takes; one typing the dragged node is checked as a wire.
+    let fit = |out: Carries, input: Carries, new_is_out: bool| {
+        let typed_new = matches!(if new_is_out { out } else { input }, Carries::Wildcard(_));
+        fits(out, input)
+            && out
+                .types(input)
+                .is_none_or(|of| !typed_new || super::pins::takes_type(new, of))
+    };
     let made = if side == Side::Out {
         let pin = theirs
             .iter()
-            .find(|it| it.side == Side::In && fits(dragged.carries, it.carries));
-        pin.and_then(|pin| link(Wire { from: end, to: at(pin) }, dragged.carries, pin.carries))
+            .find(|it| it.side == Side::In && fit(dragged, it.carries, false));
+        pin.and_then(|pin| link(Wire { from: end, to: at(pin) }, dragged, pin.carries))
     } else {
         let pin = theirs
             .iter()
-            .find(|it| it.side == Side::Out && fits(it.carries, dragged.carries));
-        pin.and_then(|pin| link(Wire { from: at(pin), to: end }, pin.carries, dragged.carries))
+            .find(|it| it.side == Side::Out && fit(it.carries, dragged, true));
+        pin.and_then(|pin| link(Wire { from: at(pin), to: end }, pin.carries, dragged))
     };
-    made.ok_or(Refusal::OtherType)
+    let made = made.ok_or(Refusal::OtherType)?;
+    if made.typed.as_ref().is_some_and(|(id, _)| id != &new.id) {
+        typeable(graph, &made)?;
+    }
+    Ok(made)
 }
 
 /// Adds `link`'s wire in place of the one that fed its input, with the value typed there, or that left its flow output;
@@ -568,6 +598,67 @@ mod tests {
         assert_eq!(add.map(|it| it.inputs.len()), Some(0), "5 is no zone");
         done(&mut blueprint, Edit::DeleteVariable { id: id("pods") });
         assert!(blueprint.graphs[0].nodes.iter().all(|it| !it.id.0.starts_with("add")));
+    }
+
+    /// The harvest with an untyped `≥`, N minutes and a query of the pods.
+    fn with_comparison() -> Blueprint {
+        let mut blueprint = harvest();
+        let more = [
+            r#"{"id": "ge", "kind": "greater_or_equal"}"#,
+            r#"{"id": "m", "kind": "minutes"}"#,
+            r#"{"id": "q", "kind": "pods_percent"}"#,
+        ];
+        for node in more {
+            let node = serde_json::from_str(node).unwrap_or_else(|error| panic!("{error}"));
+            blueprint.graphs[0].nodes.push(node);
+        }
+        blueprint
+    }
+
+    #[test]
+    fn an_untyped_comparison_takes_the_type_of_a_wire_it_compares_and_refuses_one_it_does_not() {
+        let mut blueprint = with_comparison();
+        // A zone has no order: refused, not taken.
+        refused(
+            &mut blueprint,
+            vec![(wire(("n2", "value"), ("ge", "a")), Refusal::OtherType)],
+        );
+        done(&mut blueprint, wire(("m", "value"), ("ge", "a")));
+        assert_eq!(typed(&blueprint, "ge"), Some(ValueType::Duration));
+        let mut percentages = with_comparison();
+        done(&mut percentages, wire(("q", "value"), ("ge", "b")));
+        assert_eq!(typed(&percentages, "ge"), Some(ValueType::Percentage));
+    }
+
+    #[test]
+    fn an_untyped_comparison_takes_a_values_type_or_reads_it_as_its_number() {
+        let typed_as = |of| Edit::Value {
+            node: id("ge"),
+            pin: id("b"),
+            value: Some(serde_json::json!(90)),
+            of,
+        };
+        let mut blueprint = with_comparison();
+        refused(
+            &mut blueprint,
+            vec![(typed_as(Some(ValueType::Zone)), Refusal::NotItsType)],
+        );
+        done(&mut blueprint, typed_as(Some(ValueType::Duration)));
+        assert_eq!(typed(&blueprint, "ge"), Some(ValueType::Duration));
+        let mut numbers = with_comparison();
+        done(&mut numbers, typed_as(None));
+        assert_eq!(typed(&numbers, "ge"), None, "read as its number, no type noted");
+    }
+
+    #[test]
+    fn a_comparison_added_from_a_duration_takes_its_type() {
+        let mut blueprint = with_comparison();
+        done(
+            &mut blueprint,
+            add(Does::Kind(id("greater_or_equal")), Some(("m", "value", Side::Out))),
+        );
+        assert_eq!(typed(&blueprint, "greater_or_equal"), Some(ValueType::Duration));
+        assert!(has(&blueprint, "m.value", "greater_or_equal.a"));
     }
 
     #[test]

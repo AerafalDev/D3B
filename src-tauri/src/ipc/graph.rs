@@ -230,6 +230,80 @@ pub struct ChoiceView {
     pub family: Option<NodeFamily>,
     pub from_step: Option<u8>,
     pub pins: Vec<PinView>,
+    /// The types its wildcards may take, the first while its node notes none; omitted for any type.
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    #[specta(optional)]
+    pub types: Vec<String>,
+}
+
+/// What a node holds beyond its inputs (`bot::Options`): the type its wildcards take, the pins its options make and what
+/// of the blueprint it names; each omitted when not given.
+#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Type)]
+#[serde(rename_all = "camelCase")]
+pub struct OptionsView {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[specta(optional)]
+    pub value_type: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[specta(optional)]
+    pub count: Option<u8>,
+    /// Switch's cases, each as JSON.
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    #[specta(optional)]
+    pub cases: Vec<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[specta(optional)]
+    pub text: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[specta(optional)]
+    pub expression: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[specta(optional)]
+    pub event: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[specta(optional)]
+    pub variable: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[specta(optional)]
+    pub exit: Option<String>,
+}
+
+impl OptionsView {
+    fn is_empty(&self) -> bool {
+        self == &Self::default()
+    }
+}
+
+impl From<&bot::Options> for OptionsView {
+    fn from(options: &bot::Options) -> Self {
+        let id = |id: &Option<bot::Id>| id.as_ref().map(|it| it.0.clone());
+        Self {
+            value_type: options.value_type.map(type_name),
+            count: options.count.map(std::num::NonZeroU8::get),
+            cases: options.cases.iter().map(ToString::to_string).collect(),
+            text: options.text.clone(),
+            expression: options.expression.clone(),
+            event: id(&options.event),
+            variable: id(&options.variable),
+            exit: id(&options.exit),
+        }
+    }
+}
+
+/// A type as the file writes it: `zone`, `duration`…
+fn type_name(value_type: ValueType) -> String {
+    serde_json::to_value(value_type)
+        .ok()
+        .and_then(|value| value.as_str().map(str::to_owned))
+        .unwrap_or_default()
+}
+
+/// The types `does`'s kind lets its wildcards take, by name.
+fn kind_types(does: &Does) -> Vec<String> {
+    let Does::Kind(kind) = does else {
+        return Vec::new();
+    };
+    bot::kind(&kind.0).map_or_else(Vec::new, |kind| kind.types.iter().copied().map(type_name).collect())
 }
 
 /// What a node does.
@@ -271,6 +345,14 @@ pub struct NodeView {
     pub position: Option<[i32; 2]>,
     /// An event's priority and mode, as the file sets them.
     pub event: Option<EventView>,
+    /// What it holds beyond its inputs; omitted when nothing.
+    #[serde(skip_serializing_if = "OptionsView::is_empty")]
+    #[specta(optional)]
+    pub options: OptionsView,
+    /// The types its wildcards may take, the first while it notes none; omitted for any type.
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    #[specta(optional)]
+    pub types: Vec<String>,
 }
 
 /// A pin of a node.
@@ -283,6 +365,10 @@ pub struct PinView {
     #[serde(skip_serializing_if = "std::ops::Not::not")]
     #[specta(optional)]
     pub list: bool,
+    /// One of its kind's wildcards, typed or not: the editor checks a wire into it by its kind's types.
+    #[serde(skip_serializing_if = "std::ops::Not::not")]
+    #[specta(optional)]
+    pub wildcard: bool,
     /// Ranges whose rows hold a value, or a list with `list`.
     #[serde(skip_serializing_if = "std::ops::Not::not")]
     #[specta(optional)]
@@ -436,10 +522,20 @@ impl From<NodeDoes> for Does {
     }
 }
 
-fn pin_views(pins: Vec<bot::NodePin>) -> Vec<PinView> {
+fn pin_views(pins: Vec<bot::NodePin>, does: &Does) -> Vec<PinView> {
+    let kind = match does {
+        Does::Kind(kind) => bot::kind(&kind.0),
+        _ => None,
+    };
     let views = pins.into_iter().map(|pin| {
         let (list, ranges) = shape(pin.carries);
+        let wildcard = kind.is_some_and(|kind| {
+            kind.pins
+                .iter()
+                .any(|it| it.id == pin.id && it.side == pin.side && matches!(it.carries, Carries::Wildcard(_)))
+        });
         PinView {
+            wildcard,
             id: pin.id,
             side: if pin.side == Side::In {
                 PinSide::In
@@ -470,7 +566,8 @@ fn choices(blueprint: &Blueprint, graph: &bot::Graph) -> Vec<ChoiceView> {
             does: (&node.does).into(),
             family,
             from_step,
-            pins: pin_views(bot::pins(blueprint, graph, &node).unwrap_or_default()),
+            pins: pin_views(bot::pins(blueprint, graph, &node).unwrap_or_default(), &node.does),
+            types: kind_types(&node.does),
         }
     });
     choices.collect()
@@ -499,7 +596,9 @@ pub(crate) fn graphs(blueprint: &Blueprint) -> BlueprintGraphs {
                 does: (&node.does).into(),
                 family,
                 from_step,
-                pins: pin_views(pins),
+                pins: pin_views(pins, &node.does),
+                options: (&node.options).into(),
+                types: kind_types(&node.does),
                 inputs: node
                     .inputs
                     .iter()
@@ -575,6 +674,42 @@ mod tests {
             .into_iter()
             .next()
             .unwrap_or_else(|| panic!("no given blueprint"))
+    }
+
+    #[test]
+    fn a_comparison_is_drawn_with_the_types_it_takes_its_wildcards_marked_and_its_options() {
+        let mut blueprint = harvest();
+        let ge = r#"{"id": "ge", "kind": "greater_or_equal", "options": {"type": "time"}}"#;
+        blueprint.graphs[0]
+            .nodes
+            .push(serde_json::from_str(ge).unwrap_or_else(|error| panic!("{error}")));
+        let drawn = graphs(&blueprint);
+        let ge = drawn.graphs[0].nodes.iter().find(|it| it.id == "ge");
+        let ge = ge.unwrap_or_else(|| panic!("ge"));
+        assert_eq!(ge.types, ["number", "percentage", "duration", "time"]);
+        assert_eq!(ge.options.value_type.as_deref(), Some("time"));
+        let marked: Vec<_> = ge
+            .pins
+            .iter()
+            .map(|pin| (pin.id.as_str(), pin.wildcard, pin.carries))
+            .collect();
+        assert_eq!(
+            marked,
+            [
+                ("a", true, PinCarries::Time),
+                ("b", true, PinCarries::Time),
+                ("value", false, PinCarries::Bool)
+            ]
+        );
+        let choice = drawn.graphs[0].choices.iter().find(|it| {
+            it.does
+                == NodeDoes::Kind {
+                    kind: "greater_or_equal".into(),
+                }
+        });
+        assert_eq!(choice.map(|it| it.types.len()), Some(4));
+        let serialized = serde_json::to_string(&drawn.graphs[0].nodes[0]).unwrap_or_default();
+        assert!(!serialized.contains("options") && !serialized.contains("types") && !serialized.contains("wildcard"));
     }
 
     #[test]

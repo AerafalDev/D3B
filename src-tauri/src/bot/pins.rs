@@ -43,6 +43,24 @@ fn value(id: &str, side: Side, carries: Carries) -> NodePin {
 /// The pins of `node` in `graph`, or `None` when what it does is unknown: a kind this version lacks, or a variable or a
 /// function the blueprint lacks, each its own problem.
 pub(crate) fn pins(blueprint: &Blueprint, graph: &Graph, node: &Node) -> Option<Vec<NodePin>> {
+    built(blueprint, graph, node, true)
+}
+
+/// `node`'s pins as the editor's check sees them: an untyped wildcard stays one, though its kind reads its first type
+/// meanwhile (`≥`'s numbers), so a wire or a value of another type it takes can still type it.
+pub(crate) fn open_pins(blueprint: &Blueprint, graph: &Graph, node: &Node) -> Option<Vec<NodePin>> {
+    built(blueprint, graph, node, false)
+}
+
+/// Whether `node`'s kind lets its wildcards take `of`: any type, unless it lists those it takes.
+pub(crate) fn takes_type(node: &Node, of: super::variable::ValueType) -> bool {
+    let Does::Kind(kind) = &node.does else {
+        return true;
+    };
+    catalogue::kind(&kind.0).is_none_or(|kind| kind.types.is_empty() || kind.types.contains(&of))
+}
+
+fn built(blueprint: &Blueprint, graph: &Graph, node: &Node, defaulted: bool) -> Option<Vec<NodePin>> {
     let mut pins: Vec<NodePin>;
     match &node.does {
         Does::Kind(kind) => {
@@ -54,7 +72,9 @@ pub(crate) fn pins(blueprint: &Blueprint, graph: &Graph, node: &Node) -> Option<
                 let named = node.options.variable.as_ref();
                 named.and_then(|id| variable_of(blueprint, graph, id).map(|it| it.value_type))
             } else {
-                node.options.value_type.or(kind.types.first().copied())
+                node.options
+                    .value_type
+                    .or(kind.types.first().copied().filter(|_| defaulted))
             };
             if let Some(of) = typed {
                 for pin in &mut pins {

@@ -22,15 +22,26 @@ pub(super) fn typed(
     let graph = &blueprint.graphs[at];
     let found = node(graph, id)?;
     let input = pin_of(blueprint, graph, found, pin, Side::In)?;
-    // A wildcard of a node with no type takes the type its first value is given as, of its own shape.
-    let (value_type, typing) = match input.carries {
-        Carries::Value(typed) => (Some(typed), None),
-        // A Text's hole is fed any value by a wire; one typed there is text, which says how it reads.
-        Carries::Any => (Some(Type::new(ValueType::Text, Shape::ONE)), None),
-        // A kind that changes a variable takes its type from it alone.
-        Carries::Wildcard(_) if !has_wildcards(found) => (None, None),
-        Carries::Wildcard(shape) => (of.map(|of| Type::new(of, shape)), of),
-        Carries::Exec => return Err(Refusal::NotItsType),
+    let open = crate::bot::pins::open_pins(blueprint, graph, found)
+        .and_then(|pins| pins.into_iter().find(|it| it.side == Side::In && it.id == pin.0))
+        .map_or(input.carries, |it| it.carries);
+    // A wildcard of a node with no type takes the type its first value is given as, of its own shape and among those
+    // its kind takes; given none, one its kind reads by default holds the value as that.
+    let (value_type, typing) = match (open, input.carries) {
+        (Carries::Wildcard(shape), Carries::Value(read)) => match of {
+            Some(of) if crate::bot::pins::takes_type(found, of) => (Some(Type::new(of, shape)), Some(of)),
+            Some(_) => (None, None),
+            None => (Some(read), None),
+        },
+        (_, carries) => match carries {
+            Carries::Value(typed) => (Some(typed), None),
+            // A Text's hole is fed any value by a wire; one typed there is text, which says how it reads.
+            Carries::Any => (Some(Type::new(ValueType::Text, Shape::ONE)), None),
+            // A kind that changes a variable takes its type from it alone.
+            Carries::Wildcard(_) if !has_wildcards(found) => (None, None),
+            Carries::Wildcard(shape) => (of.map(|of| Type::new(of, shape)), of),
+            Carries::Exec => return Err(Refusal::NotItsType),
+        },
     };
     if graph.wires.iter().any(|wire| &wire.to.0 == id && &wire.to.1 == pin) {
         return Err(Refusal::Wired);
