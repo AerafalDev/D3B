@@ -366,7 +366,12 @@ its own undo; the editor sends one change at a time, so Rust takes them in their
   no longer fits, a default or a Set's value it refuses and bounds it cannot have, bounds changed bringing the default
   within them; one deleted with its Get and Set nodes, without a question; each undone as the others. The characters
   running the blueprint keep the values of their settings that still fit (`bot::carried`), after an undo too, a value
-  lost staying lost. The editor's "+", Details and the drag onto the graph come with (14)'s second PR. In a graph of mine, a wire
+  lost staying lost. "+" on My Blueprint's Variables, in a blueprint of mine, creates "Nouvelle variable"
+  and chooses it; Details then edits it, its name, type among the nine, default by its type's editor, bounds for a
+  number or a percentage (both emptied for none), whether each character sets it, its help and memory, each field
+  saved when left, and "Supprimer la variable". A variable dragged from My Blueprint onto the graph opens a small
+  menu at the pointer, "Lire …" or "Écrire …", Ctrl (Cmd) reading it at once and Alt writing it (the owner's choice
+  of 2026-11-17, Unreal's). In a graph of mine, a wire
   dragged from a pin is checked by type as it goes: a pin that refuses it says why beside the pointer (another type,
   two ends of one side, a node to itself); dropped on a pin, it is made; dropped on the ground, it opens the picker
   there, as Space (at the pointer) and a right-click do: a search, "Often here" after a Failed (Notify, Wait, Finish),
