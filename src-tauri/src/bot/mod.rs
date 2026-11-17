@@ -20,6 +20,7 @@ mod problems;
     )
 )]
 pub(crate) mod run;
+mod schema;
 mod variable;
 mod wiring;
 

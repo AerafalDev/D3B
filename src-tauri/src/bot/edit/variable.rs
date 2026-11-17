@@ -307,7 +307,7 @@ mod tests {
         done(
             &mut blueprint,
             Edit::Add {
-                does: Does::Kind(id("wait")),
+                does: Does::Kind(id("minutes")),
                 position: [0, 0],
                 wired_to: None,
             },
@@ -316,7 +316,7 @@ mod tests {
             &mut blueprint,
             Edit::Wire {
                 from: End(id("get_pods"), id("value")),
-                to: End(id("wait"), id("minutes")),
+                to: End(id("minutes"), id("minutes")),
             },
         );
         // A number: its percentage's bounds and value still fit, and so do the flow and the wire into a number.
@@ -332,7 +332,7 @@ mod tests {
         assert_eq!(set_inputs(&blueprint), 1, "50 still holds");
         let kept = [
             "n4.done>set_pods.run".to_owned(),
-            "get_pods.value>wait.minutes".to_owned(),
+            "get_pods.value>minutes.minutes".to_owned(),
         ];
         assert!(
             kept.iter().all(|wire| wires(&blueprint).contains(wire)),

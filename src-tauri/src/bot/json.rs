@@ -9,12 +9,13 @@ use super::blueprint::{Blueprint, SCHEMA};
 pub(crate) enum ReadError {
     #[error("written by a newer D3B: schema {found}, and this version reads up to {SCHEMA}")]
     Newer { found: u64 },
-    #[error("not a blueprint of schema {SCHEMA}: {0}")]
+    #[error("not a blueprint of schema 1 to {SCHEMA}: {0}")]
     NotABlueprint(#[from] serde_json::Error),
 }
 
 /// The blueprint `text` holds. The schema is read first, then the whole text again into the blueprint, so that a key
-/// given twice is refused and an error says its line and column.
+/// given twice is refused and an error says its line and column; one of an older schema is then migrated
+/// (`schema`), its file written as the newest at its next change only.
 pub(crate) fn read(text: &str) -> Result<Blueprint, ReadError> {
     #[derive(serde::Deserialize)]
     struct Head {
@@ -23,9 +24,13 @@ pub(crate) fn read(text: &str) -> Result<Blueprint, ReadError> {
     let head: Head = serde_json::from_str(text)?;
     match head.schema.as_ref().and_then(serde_json::Value::as_u64) {
         Some(found) if found > u64::from(SCHEMA) => Err(ReadError::Newer { found }),
-        Some(found) if found == u64::from(SCHEMA) => Ok(serde_json::from_str(text)?),
+        Some(1..) => {
+            let mut blueprint: Blueprint = serde_json::from_str(text)?;
+            super::schema::migrate(&mut blueprint);
+            Ok(blueprint)
+        }
         _ => Err(ReadError::NotABlueprint(serde::de::Error::custom(format!(
-            "its schema must be {SCHEMA}"
+            "its schema must be 1 to {SCHEMA}"
         )))),
     }
 }
@@ -47,7 +52,7 @@ pub(crate) mod tests {
 
     /// A blueprint written by hand, shaped as D3B's automatic harvest will be: every kind of node, wire and variable.
     pub(crate) const HARVEST: &str = r#"{
-  "schema": 1, "id": "automatic-harvest", "name": "Automatic harvest", "version": 1,
+  "schema": 2, "id": "automatic-harvest", "name": "Automatic harvest", "version": 1,
   "description": "Harvests what grows in a zone and empties its pods at the bank.",
   "variables": [
     {"id": "zone", "name": "Zone", "type": "zone", "per_character": true, "help": "Where to harvest."},
@@ -100,7 +105,7 @@ pub(crate) mod tests {
         assert!(
             written.starts_with(
                 "{
-  \"schema\": 1,
+  \"schema\": 2,
   \"id\": \"automatic-harvest\","
             ),
             "{written}"
@@ -145,18 +150,18 @@ pub(crate) mod tests {
 
     #[test]
     fn a_newer_schema_is_refused_with_its_number() {
-        let newer = HARVEST.replacen("\"schema\": 1", "\"schema\": 2", 1);
-        assert!(matches!(read(&newer), Err(ReadError::Newer { found: 2 })));
+        let newer = HARVEST.replacen("\"schema\": 2", "\"schema\": 3", 1);
+        assert!(matches!(read(&newer), Err(ReadError::Newer { found: 3 })));
     }
 
     #[test]
     fn a_file_without_its_schema_is_not_a_blueprint() {
         for text in [
-            HARVEST.replacen("\"schema\": 1", "\"schema\": 0", 1),
-            HARVEST.replacen("\"schema\": 1, ", "", 1),
+            HARVEST.replacen("\"schema\": 2", "\"schema\": 0", 1),
+            HARVEST.replacen("\"schema\": 2, ", "", 1),
         ] {
             let error = read(&text).err().map(|error| error.to_string()).unwrap_or_default();
-            assert!(error.contains("its schema must be 1"), "{error}");
+            assert!(error.contains("its schema must be 1 to 2"), "{error}");
         }
     }
 
@@ -182,7 +187,7 @@ pub(crate) mod tests {
 
     #[test]
     fn text_that_is_no_json_is_not_a_blueprint() {
-        assert!(matches!(read("{\"schema\": 1,"), Err(ReadError::NotABlueprint(_))));
+        assert!(matches!(read("{\"schema\": 2,"), Err(ReadError::NotABlueprint(_))));
         assert!(matches!(read(""), Err(ReadError::NotABlueprint(_))));
     }
 }

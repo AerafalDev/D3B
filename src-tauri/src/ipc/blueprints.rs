@@ -815,10 +815,10 @@ mod tests {
         let (_, text) = exported(Some(&store), "hunt", None).unwrap_or_else(|error| panic!("{error:?}"));
         let newer = put("newer.d3b", &text.replacen("\"d3b\": 1", "\"d3b\": 3", 1));
         assert_eq!(preview(&newer), Err(ShareFailure::Newer { found: 3 }));
-        let schema = put("schema.d3b", &text.replacen("\"schema\": 1", "\"schema\": 2", 1));
+        let schema = put("schema.d3b", &text.replacen("\"schema\": 2", "\"schema\": 3", 1));
         assert_eq!(
             import(Some(&store), &schema),
-            Err(ShareFailure::NewerSchema { found: 2 })
+            Err(ShareFailure::NewerSchema { found: 3 })
         );
         let broken = put("broken.d3b", "{\"d3b\": 1,");
         assert!(

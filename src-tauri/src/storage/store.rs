@@ -416,7 +416,7 @@ mod tests {
         let newer = put(
             &folder,
             "newer.json",
-            &text().replacen("\"schema\": 1", "\"schema\": 2", 1),
+            &text().replacen("\"schema\": 2", "\"schema\": 3", 1),
         );
         let broken = put(&folder, "broken.json", "{\"schema\": 1,");
         let copied = put(&folder, "copy.json", &text());
@@ -431,7 +431,7 @@ mod tests {
         );
         assert!(matches!(kept[1], (path, Why::NameIsNotId { id }) if *path == copied && id.0 == "my-harvest"));
         assert!(
-            matches!(kept[2], (path, Why::NotRead(ReadError::Newer { found: 2 })) if *path == newer),
+            matches!(kept[2], (path, Why::NotRead(ReadError::Newer { found: 3 })) if *path == newer),
             "{kept:?}"
         );
         assert_eq!(kept.len(), 3);
@@ -441,7 +441,7 @@ mod tests {
     fn a_file_that_does_not_read_is_never_written_over() {
         let folder = Folder::new("store-never");
         let store = Store::new(folder.path().to_path_buf());
-        let newer = text().replacen("\"schema\": 1", "\"schema\": 2", 1);
+        let newer = text().replacen("\"schema\": 2", "\"schema\": 3", 1);
         let path = put(&folder, "my-harvest.json", &newer);
         let error = store
             .save_blueprint(&harvest())
@@ -528,7 +528,7 @@ mod tests {
         let folder = Folder::new("store-duplicate");
         let store = Store::new(folder.path().to_path_buf());
         // A newer D3B's file, and one in another case, under the names the copy's name gives.
-        let newer = text().replacen("\"schema\": 1", "\"schema\": 2", 1);
+        let newer = text().replacen("\"schema\": 2", "\"schema\": 3", 1);
         put(&folder, "chasse-copie.json", &newer);
         put(&folder, "Chasse-Copie-2.JSON", "{");
         let copied = store.duplicate("hunt", copy_texts("Chasse (copie)"));
@@ -604,7 +604,7 @@ mod tests {
         });
         assert!(refused.is_err());
         assert_eq!(store.blueprints().read[0].name, "Renamed", "nothing written");
-        let newer = text().replacen("\"schema\": 1", "\"schema\": 2", 1);
+        let newer = text().replacen("\"schema\": 2", "\"schema\": 3", 1);
         let path = put(&folder, "my-harvest.json", &newer);
         let kept = store.change_blueprint("my-harvest", |_| Ok::<_, StorageError>(()));
         assert!(matches!(kept, Err(StorageError::Kept { .. })), "{kept:?}");

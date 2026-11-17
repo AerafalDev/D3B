@@ -246,7 +246,7 @@
         "description": "Chooses what follows by the condition."
       },
       "wait": {
-        "sentence": "Wait {{minutes}} min",
+        "sentence": "Wait {{duration}}",
         "description": "Waits, then what follows."
       },
       "wait_for_life": {
@@ -273,9 +273,13 @@
         "sentence": "Level",
         "description": "The character's level."
       },
-      "at_least": {
+      "greater_or_equal": {
         "sentence": "{{a}} ≥ {{b}}",
         "description": "True when the first value reaches the second."
+      },
+      "minutes": {
+        "sentence": "{{minutes}} min",
+        "description": "A duration of so many minutes."
       },
       "add": {
         "sentence": "{{a}} + {{b}}",
@@ -327,6 +331,7 @@
       "true": "True",
       "false": "False",
       "minutes": "Minutes",
+      "duration": "Duration",
       "a": "A",
       "b": "B",
       "job": "Profession"

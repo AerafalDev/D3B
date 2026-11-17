@@ -9,17 +9,17 @@ use super::queries::life_percent;
 /// How often what rises with no message is read again.
 const AGAIN: Duration = Duration::from_secs(1);
 
-/// Wait: `minutes` from when the flow came in; 0 does not wait.
+/// Wait: its `duration`, in seconds, from when the flow came in; 0 does not wait.
 pub(super) struct Wait;
 
 impl Behaviour for Wait {
     fn run(&self, cx: &mut Cx<'_>, resume: Resume) -> Result<Step, Fault> {
         let now = cx.now();
         if matches!(resume, Resume::Enter { .. }) {
-            let minutes = u64::try_from(cx.number("minutes")?).map_err(|_| Fault::NotOfType {
-                pin: "minutes".to_owned(),
+            let seconds = u64::try_from(cx.number("duration")?).map_err(|_| Fault::NotOfType {
+                pin: "duration".to_owned(),
             })?;
-            let wait = Duration::from_secs(minutes.checked_mul(60).ok_or(Fault::TooLarge)?);
+            let wait = Duration::from_secs(seconds);
             cx.slot().at = Some(now.checked_add(wait).ok_or(Fault::TooLarge)?);
         }
         let until = cx.slot().at.unwrap_or(now);

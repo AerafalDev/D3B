@@ -281,10 +281,10 @@ mod tests {
             read(&newer_zone),
             Err(ShareError::Zone(Why::NewerZone { found: 9 }))
         ));
-        let schema = text.replacen("\"schema\": 1", "\"schema\": 2", 1);
+        let schema = text.replacen("\"schema\": 2", "\"schema\": 3", 1);
         assert!(matches!(
             read(&schema),
-            Err(ShareError::Blueprint(ReadError::Newer { found: 2 }))
+            Err(ShareError::Blueprint(ReadError::Newer { found: 3 }))
         ));
         let shape = text.replacen("\"name\": \"Automatic harvest\"", "\"nom\": \"x\"", 1);
         assert!(matches!(

@@ -11,7 +11,7 @@ use super::variable::{Shape, Type, ValueType, Variable};
 
 /// The `schema` this version writes and the newest it reads. A change to the file's shape bumps it, with a migration
 /// and a test that reads the former shape (ADR 0015).
-pub(crate) const SCHEMA: u32 = 1;
+pub(crate) const SCHEMA: u32 = 2;
 
 /// The id of something a blueprint names: itself, a variable, a graph, a node, a function's parameter, a node's kind or
 /// pin. Ids stay as they are when the player renames what they name, so nothing that refers to them moves.
