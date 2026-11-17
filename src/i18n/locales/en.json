@@ -441,7 +441,11 @@
       "items_one": "{{count}} item",
       "items_other": "{{count}} items",
       "zone": "A chosen zone"
-    }
+    },
+    "rename": "Rename",
+    "name": "Blueprint name",
+    "descriptionLabel": "Blueprint description",
+    "describe": "Add a description"
   },
   "share": {
     "export": "Export…",

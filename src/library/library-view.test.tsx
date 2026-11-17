@@ -134,6 +134,38 @@ describe("the Library view", () => {
     expect(useGraphs.getState().read["ma-chasse"]).toBeUndefined();
   });
 
+  it("renames one of mine in its row, by its right-click or F2, Enter saving and Escape or a blank leaving it", async () => {
+    const rename = vi.fn().mockResolvedValue(true);
+    useLibrary.setState({ rename });
+    render(<LibraryView />);
+    fireEvent.contextMenu(screen.getByRole("button", { name: /^Chasse/ }));
+    await screen.findByRole("menuitem", { name: "Dupliquer" });
+    expect(screen.queryByRole("menuitem", { name: "Renommer" }), "none on D3B's").toBeNull();
+    fireEvent.keyDown(document.activeElement ?? document.body, { key: "Escape" });
+    fireEvent.keyDown(screen.getByRole("button", { name: /^Chasse/ }), { key: "F2" });
+    expect(screen.queryByRole("textbox"), "F2 renames none of D3B's").toBeNull();
+    fireEvent.contextMenu(screen.getByRole("button", { name: /^Ma chasse/ }));
+    fireEvent.click(await screen.findByRole("menuitem", { name: "Renommer" }));
+    const field = await screen.findByRole("textbox", { name: "Nom du blueprint" });
+    fireEvent.change(field, { target: { value: " Mes bouftous " } });
+    fireEvent.keyDown(field, { key: "Enter" });
+    fireEvent.blur(field);
+    expect(rename).toHaveBeenCalledWith(
+      expect.objectContaining({ id: "ma-chasse" }),
+      "Mes bouftous",
+      "ma-chasse's description",
+    );
+    fireEvent.keyDown(screen.getByRole("button", { name: /^Ma chasse/ }), { key: "F2" });
+    const again = screen.getByRole("textbox", { name: "Nom du blueprint" });
+    fireEvent.change(again, { target: { value: "Ailleurs" } });
+    fireEvent.keyDown(again, { key: "Escape" });
+    fireEvent.keyDown(screen.getByRole("button", { name: /^Ma chasse/ }), { key: "F2" });
+    const blank = screen.getByRole("textbox", { name: "Nom du blueprint" });
+    fireEvent.change(blank, { target: { value: "  " } });
+    fireEvent.blur(blank);
+    expect(rename).toHaveBeenCalledOnce();
+  });
+
   it("keeps the tab and its graphs when Delete failed", async () => {
     const remove = vi.fn().mockResolvedValue(false);
     useLibrary.setState({ remove });

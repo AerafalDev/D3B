@@ -331,6 +331,18 @@ _Updated 2026-11-17._
        "Écrire Objectif" opens where it is dropped; Escape closes it; drag again with Ctrl held: a Lire node at once,
        where it was dropped; with Alt: an Écrire node; a click on "Objectif" still only chooses it; in Récolte
        automatique, its variables do not drag.
+- **step 3, renaming a blueprint of mine** (the owner's request of 2026-11-17), on Windows x64 from `bun run app` on
+  `next` or the next release:
+    1. open Récolte automatique: its name and description are not buttons; right-click it in the Library: no
+       "Renommer", and F2 on its row does nothing;
+    2. open a copy of mine, click its name: a field; type "Mes blés", Enter: the tab's title, the Library's row and
+       `Documents/D3B/blueprints/<id>.json`'s `"name"` follow, the file keeping its name and `"id"`; click the
+       description, empty it, leave: "Ajouter une description" shows, and the file holds no `"description"`;
+       Ctrl+Z (outside a field) puts the description back, then the name;
+    3. in the Library, right-click it, "Renommer": its row becomes a field, its name chosen; type "Mes bouftous",
+       Enter: renamed; F2 on its row, type, Escape: unchanged; F2, empty it, Enter: unchanged;
+    4. a character running it keeps running it, its tab naming it "Mes bouftous"; export it: the `.d3b` is named
+       "Mes bouftous.d3b".
 - **step 3, Advanced tools** ((24)), on Windows x64 from `bun run app` on `next` or the next release:
   Measured by the owner on 2026-11-17, Windows x64, `bun run app` on `next` 60cf228: items 1, 2, 3 and 5 pass, and 4 but
   for the palette's command, not tried. The owner then asked for the panel closed by default and opened by a character
@@ -503,7 +515,7 @@ _Updated 2026-11-17._
   "Not measured"), then my variables, (14)'s first PR, in three PRs: created, changed and deleted through
   `edit_blueprint`, the characters' settings following (done in code), then My Blueprint's "+" and Details (done in
   code; its checklist under "Not measured"), then a variable dragged onto the graph (done in code, item 6 of
-  that checklist); then renaming a blueprint of mine; then
+  that checklist); then renaming a blueprint of mine (done in code; its checklist under "Not measured"); then
   **blueprints v2**
   ([bot.md](bot.md#the-language-v2), ADR 0016; the owner, 2026-11-16, after trying (12): "much more complete", "as
   practical as a Lua script"), from a mock-up of the catalogue and the Summary and an analysis of the reference Lua

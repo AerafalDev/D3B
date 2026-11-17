@@ -43,6 +43,8 @@ pub enum GraphEdit {
     Variable { variable: VariableChange },
     /// The variable `variable` gone, with the nodes that read or write it.
     DeleteVariable { variable: String },
+    /// The blueprint named and described so, its id and file kept.
+    About { name: String, description: String },
 }
 
 /// A variable of mine as the editor changes it, whole.
@@ -222,6 +224,7 @@ impl TryFrom<GraphEdit> for bot::Edit {
             GraphEdit::NewVariable { name } => Self::NewVariable { name },
             GraphEdit::Variable { variable } => Self::Variable(variable.try_into()?),
             GraphEdit::DeleteVariable { variable } => Self::DeleteVariable { id: Id(variable) },
+            GraphEdit::About { name, description } => Self::About { name, description },
         })
     }
 }
@@ -444,6 +447,25 @@ mod tests {
             change(&store, "my-harvest", "events", moved).map(|(_, carried)| carried),
             Ok(false)
         );
+    }
+
+    #[test]
+    fn a_blueprint_of_mine_is_renamed_under_its_id_and_one_of_d3bs_is_not() {
+        let (folder, store) = mine("ipc-edit-about");
+        let about = || parsed(r#"{"edit": "about", "name": "Mes blés", "description": "Le blé d'Astrub."}"#);
+        assert!(changed(&store, "my-harvest", "", about()).is_ok());
+        let read = &store.blueprints().read[0];
+        assert_eq!((read.id.0.as_str(), read.name.as_str()), ("my-harvest", "Mes blés"));
+        assert!(
+            folder.path().join("blueprints/my-harvest.json").exists(),
+            "the same file"
+        );
+        assert_eq!(
+            changed(&store, "automatic-harvest", "", about()),
+            Err(EditError::Locked)
+        );
+        let blank = parsed(r#"{"edit": "about", "name": " ", "description": ""}"#);
+        assert_eq!(changed(&store, "my-harvest", "", blank), Err(EditError::Blank));
     }
 
     #[test]

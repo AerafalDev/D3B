@@ -11,6 +11,7 @@ import {
   events,
   type KeptFile,
 } from "@/bindings.ts";
+import { useGraphs } from "@/blueprint/graph-store.ts";
 import { isTauri } from "@/lib/tauri.ts";
 import { givenText } from "./given-text.ts";
 
@@ -35,6 +36,11 @@ interface LibraryStore {
    * went, a failure said in a notification.
    */
   remove: (blueprint: BlueprintSummary) => Promise<boolean>;
+  /**
+   * Renames one of mine, its name and description, its id kept (the owner, 2026-11-17): saved at once and undone as
+   * the editor's changes; whether it was, a refusal said in a notification.
+   */
+  rename: (blueprint: BlueprintSummary, name: string, description: string) => Promise<boolean>;
   /** Reads the list now and when a character's file changes; returns what stops following. */
   follow: () => () => void;
 }
@@ -121,6 +127,15 @@ export const useLibrary = create<LibraryStore>((set, get) => ({
       toast.error(typeof failure?.kind === "string" ? duplicateFailure(failure, name) : String(error));
       return null;
     }
+  },
+
+  rename: async (blueprint, name, description) => {
+    // The blueprint's, whichever graph shows: through the editor's queue, so it lands in its order and Ctrl+Z undoes it.
+    const saved = await useGraphs.getState().edit(blueprint.id, "", { edit: "about", name, description });
+    if (saved) {
+      await get().refresh();
+    }
+    return saved;
   },
 
   remove: async (blueprint) => {

@@ -15,6 +15,7 @@ import { useShare } from "@/share/share-store.ts";
 import type { EditorParams } from "@/shell/parts/editor-store.ts";
 import { useBlueprintView } from "./blueprint-view.ts";
 import { givenText } from "./given-text.ts";
+import { InPlace } from "./in-place.tsx";
 import { useLibrary } from "./library-store.ts";
 import { blueprintName, openBlueprint } from "./open-blueprint.ts";
 
@@ -40,6 +41,7 @@ export function BlueprintTab({ api, params }: IDockviewPanelProps<BlueprintParam
   const { t, i18n } = useTranslation();
   const blueprint = useLibrary((store) => store.blueprints.find((one) => one.id === params.id));
   const duplicate = useLibrary((store) => store.duplicate);
+  const rename = useLibrary((store) => store.rename);
   const exportBlueprint = useShare((store) => store.exportBlueprint);
   const name = blueprint === undefined ? null : blueprintName(blueprint);
   // One copy at a time: a second click while the first is made does nothing.
@@ -163,7 +165,18 @@ export function BlueprintTab({ api, params }: IDockviewPanelProps<BlueprintParam
         <header className="flex items-center gap-2.5">
           <Icon name="blueprint" className="size-[22px]" />
           <div className="min-w-0 flex-1">
-            <h2 className="truncate text-[15px] font-medium text-white">{name}</h2>
+            {blueprint.given ? (
+              <h2 className="truncate text-[15px] font-medium text-white">{name}</h2>
+            ) : (
+              <h2 className="flex text-[15px] font-medium text-white">
+                <InPlace
+                  value={blueprint.name}
+                  label={t("library.name")}
+                  blank={false}
+                  onSave={(named) => rename(blueprint, named, blueprint.description)}
+                />
+              </h2>
+            )}
             <p className="text-text-muted text-xs">
               {whose}
               {blueprint.problems > 0 && (
@@ -197,9 +210,21 @@ export function BlueprintTab({ api, params }: IDockviewPanelProps<BlueprintParam
             {t("share.export")}
           </button>
         </header>
-        <p className="text-text-muted truncate text-xs" title={read("description", blueprint.description)}>
-          {read("description", blueprint.description)}
-        </p>
+        {blueprint.given ? (
+          <p className="text-text-muted truncate text-xs" title={read("description", blueprint.description)}>
+            {read("description", blueprint.description)}
+          </p>
+        ) : (
+          <p className="text-text-muted flex text-xs">
+            <InPlace
+              value={blueprint.description}
+              label={t("library.descriptionLabel")}
+              placeholder={t("library.describe")}
+              blank
+              onSave={(described) => rename(blueprint, blueprint.name, described)}
+            />
+          </p>
+        )}
       </div>
       <DndContext
         sensors={sensors}

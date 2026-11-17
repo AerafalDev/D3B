@@ -258,6 +258,31 @@ describe("a blueprint's tab, its editor read-only", () => {
     useLibrary.setState({ refresh });
   });
 
+  it("renames mine and describes it in place, its tab's title following, and offers nothing on D3B's", async () => {
+    const mine = { ...harvest, id: "mine", name: "Ma récolte", given: false };
+    const rename = vi.fn().mockResolvedValue(true);
+    useLibrary.setState({ blueprints: [mine], rename });
+    tab("mine");
+    await screen.findByText(/graphe events/);
+    fireEvent.click(screen.getByRole("button", { name: "Ma récolte" }));
+    const name = screen.getByRole("textbox", { name: "Nom du blueprint" });
+    fireEvent.change(name, { target: { value: "Mes blés" } });
+    fireEvent.keyDown(name, { key: "Enter" });
+    fireEvent.blur(name);
+    expect(rename).toHaveBeenLastCalledWith(mine, "Mes blés", "Harvests what grows.");
+    fireEvent.click(screen.getByRole("button", { name: "Harvests what grows." }));
+    const description = screen.getByRole("textbox", { name: "Description du blueprint" });
+    fireEvent.change(description, { target: { value: "" } });
+    fireEvent.blur(description);
+    expect(rename).toHaveBeenLastCalledWith(mine, "Ma récolte", "");
+    act(() => useLibrary.setState({ blueprints: [{ ...mine, name: "Mes blés" }] }));
+    expect(titles.at(-1)).toBe("Mes blés");
+    cleanup();
+    useLibrary.setState({ blueprints: [harvest] });
+    tab("automatic-harvest");
+    expect(screen.queryByRole("button", { name: "Récolte automatique" })).toBeNull();
+  });
+
   it("says the blueprint is gone once its file is", () => {
     useLibrary.setState({ blueprints: [] });
     tab("automatic-harvest");

@@ -1,5 +1,5 @@
 import { ArrowUp, ChevronDown, ChevronRight } from "lucide-react";
-import { type ReactNode, useEffect, useState } from "react";
+import { type ReactNode, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import type { KeptFile } from "@/bindings.ts";
@@ -29,6 +29,10 @@ export function LibraryView() {
   const duplicate = useLibrary((store) => store.duplicate);
   const exportBlueprint = useShare((store) => store.exportBlueprint);
   const remove = useLibrary((store) => store.remove);
+  const rename = useLibrary((store) => store.rename);
+  // The blueprint of mine whose name is edited in its row (the owner, 2026-11-17: F2 or the right-click, as my zones').
+  const [renaming, setRenaming] = useState<string | null>(null);
+  const renameAsked = useRef(false);
   const forgetGraphs = useGraphs((store) => store.forget);
   const active = useEditors((store) => store.active);
   const refresh = useLibrary((store) => store.refresh);
@@ -53,6 +57,22 @@ export function LibraryView() {
     ]
       .filter(Boolean)
       .join("\n");
+    if (renaming === blueprint.id) {
+      return (
+        <li key={blueprint.id}>
+          <RowName
+            name={blueprint.name}
+            label={t("library.name")}
+            done={(named) => {
+              setRenaming(null);
+              if (named !== null) {
+                void rename(blueprint, named, blueprint.description);
+              }
+            }}
+          />
+        </li>
+      );
+    }
     return (
       <li key={blueprint.id}>
         <ContextMenu>
@@ -61,6 +81,12 @@ export function LibraryView() {
               type="button"
               title={hover}
               onClick={() => openBlueprint(blueprint.id, name)}
+              onKeyDown={(event) => {
+                if (event.key === "F2" && !blueprint.given) {
+                  event.preventDefault();
+                  setRenaming(blueprint.id);
+                }
+              }}
               aria-current={active === `${BLUEPRINT_EDITOR}${blueprint.id}` ? "true" : undefined}
               className="hover:bg-hover focus-visible:outline-focus mx-1 flex w-[calc(100%-0.5rem)] items-center gap-2 rounded-[5px] px-2 py-1 text-left focus-visible:outline-1 aria-[current=true]:bg-[#2a2c30] aria-[current=true]:text-white"
             >
@@ -81,7 +107,15 @@ export function LibraryView() {
               )}
             </button>
           </ContextMenuTrigger>
-          <ContextMenuContent>
+          <ContextMenuContent
+            // The menu gives the focus back to its row as it closes, which would end the name just opened there.
+            onCloseAutoFocus={(event) => {
+              if (renameAsked.current) {
+                renameAsked.current = false;
+                event.preventDefault();
+              }
+            }}
+          >
             <ContextMenuItem
               onSelect={() =>
                 void duplicate(blueprint).then((id) => {
@@ -94,6 +128,16 @@ export function LibraryView() {
               {t("library.duplicate")}
             </ContextMenuItem>
             <ContextMenuItem onSelect={() => void exportBlueprint(blueprint)}>{t("share.export")}</ContextMenuItem>
+            {!blueprint.given && (
+              <ContextMenuItem
+                onSelect={() => {
+                  renameAsked.current = true;
+                  setRenaming(blueprint.id);
+                }}
+              >
+                {t("library.rename")}
+              </ContextMenuItem>
+            )}
             {!blueprint.given && (
               <ContextMenuItem
                 onSelect={() =>
@@ -135,6 +179,44 @@ export function LibraryView() {
         </Group>
       )}
     </div>
+  );
+}
+
+interface RowNameProps {
+  name: string;
+  label: string;
+  /** The name typed, without the spaces around it, or `null` when Escape, a blank or the same name leaves it. */
+  done: (name: string | null) => void;
+}
+
+/** A blueprint's name edited in its row: Enter or leaving saves it, Escape or a blank one leaves it as it was. */
+function RowName({ name, label, done }: RowNameProps) {
+  const [draft, setDraft] = useState(name);
+  // Escape ends it without saving, even when the field's removal blurs it after.
+  const cancelled = useRef(false);
+  return (
+    <input
+      // biome-ignore lint/a11y/noAutofocus: F2 or the menu asked to type the name now
+      autoFocus
+      aria-label={label}
+      value={draft}
+      onChange={(event) => setDraft(event.target.value)}
+      onFocus={(event) => event.currentTarget.select()}
+      onBlur={() => {
+        const trimmed = draft.trim();
+        done(cancelled.current || trimmed === "" || trimmed === name ? null : trimmed);
+      }}
+      onKeyDown={(event) => {
+        if (event.key === "Enter") {
+          event.currentTarget.blur();
+        } else if (event.key === "Escape") {
+          event.preventDefault();
+          cancelled.current = true;
+          event.currentTarget.blur();
+        }
+      }}
+      className="border-focus mx-1 h-6 w-[calc(100%-0.5rem)] rounded-[5px] border bg-[#181818] px-2 text-[13px] outline-0"
+    />
   );
 }
 

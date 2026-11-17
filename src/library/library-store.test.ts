@@ -10,6 +10,8 @@ const backEnd = vi.hoisted(() => ({
   blueprints: vi.fn(),
   played: vi.fn(),
   zones: vi.fn(),
+  edit: vi.fn(),
+  graphs: vi.fn(),
   toasts: [] as string[],
 }));
 vi.mock("@/bindings.ts", () => ({
@@ -19,6 +21,8 @@ vi.mock("@/bindings.ts", () => ({
     blueprints: backEnd.blueprints,
     playedCharacters: backEnd.played,
     zones: backEnd.zones,
+    editBlueprint: backEnd.edit,
+    blueprintGraphs: backEnd.graphs,
   },
   events: {},
 }));
@@ -120,6 +124,24 @@ describe("Delete", () => {
     expect(await useLibrary.getState().remove(mine)).toBe(true);
     expect(backEnd.delete).toHaveBeenCalledWith("ma-chasse");
     expect(useLibrary.getState().blueprints).toEqual([]);
+  });
+
+  it("renames one of mine through the editor's edits and reads the list again, or reads nothing when refused", async () => {
+    backEnd.edit.mockResolvedValueOnce({ id: "ma-chasse", graphs: [], problems: [] });
+    const renamed = { ...mine, name: "Mes bouftous" };
+    backEnd.blueprints.mockResolvedValue({ blueprints: [renamed], kept: [] });
+    expect(await useLibrary.getState().rename(mine, "Mes bouftous", "")).toBe(true);
+    expect(backEnd.edit).toHaveBeenCalledWith("ma-chasse", "", {
+      edit: "about",
+      name: "Mes bouftous",
+      description: "",
+    });
+    expect(useLibrary.getState().blueprints).toEqual([renamed]);
+    backEnd.edit.mockRejectedValueOnce({ kind: "blank" });
+    backEnd.graphs.mockResolvedValue({ id: "ma-chasse", graphs: [], problems: [] });
+    backEnd.blueprints.mockClear();
+    expect(await useLibrary.getState().rename(mine, " ", "")).toBe(false);
+    expect(backEnd.blueprints).not.toHaveBeenCalled();
   });
 
   it("says why in a notification when it was not deleted", async () => {

@@ -2,9 +2,10 @@
 //! by what its pins carry, which replaces the wire that fed its input or left its flow output, an input having one
 //! value and a flow one way on; a node the picker offers, under an id of its own, wired to the pin it came from; nodes
 //! moved; nodes and wires deleted, a node's wires with it (step 3's PR 13); a value typed on an input (`value`); my
-//! variables created, changed and deleted (`variable`). Each is done whole or refused with nothing changed; `storage`
-//! saves it at once and keeps what it replaced, for undo.
+//! variables created, changed and deleted (`variable`); the blueprint renamed (`about`). Each is done whole or refused
+//! with nothing changed; `storage` saves it at once and keeps what it replaced, for undo.
 
+mod about;
 mod choices;
 mod value;
 mod variable;
@@ -45,6 +46,8 @@ pub(crate) enum Edit {
     Variable(Variable),
     /// A variable gone, with the nodes that read or write it.
     DeleteVariable { id: Id },
+    /// The blueprint named and described so, its id kept.
+    About { name: String, description: String },
 }
 
 /// Why an edit is refused. The editor offers none of these; a refusal says the webview and the file disagree.
@@ -83,6 +86,7 @@ pub(crate) fn edit(blueprint: &mut Blueprint, graph: &Id, edit: Edit) -> Result<
         Edit::NewVariable { name } => return variable::create(blueprint, &name).map(drop),
         Edit::Variable(changed) => return variable::change(blueprint, changed),
         Edit::DeleteVariable { id } => return variable::delete(blueprint, &id),
+        Edit::About { name, description } => return about::rename(blueprint, &name, &description),
         _ => {}
     }
     let at = blueprint
@@ -153,7 +157,7 @@ pub(crate) fn edit(blueprint: &mut Blueprint, graph: &Id, edit: Edit) -> Result<
             }
         }
         Edit::Value { node, pin, value } => value::typed(blueprint, at, &node, &pin, value)?,
-        Edit::NewVariable { .. } | Edit::Variable(_) | Edit::DeleteVariable { .. } => {}
+        Edit::NewVariable { .. } | Edit::Variable(_) | Edit::DeleteVariable { .. } | Edit::About { .. } => {}
     }
     Ok(())
 }
