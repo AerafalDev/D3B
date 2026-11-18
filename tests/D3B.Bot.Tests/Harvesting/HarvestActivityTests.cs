@@ -122,6 +122,58 @@ public sealed class HarvestActivityTests : IAsyncDisposable
         Assert.Equal(ActivityOutcome.Stopped, await run.Completion);
     }
 
+    // The zone holds the north and east maps only: the middle map, which holds the tree, is out of it, crossed on the way east.
+    private async Task<(TestConnection Connection, HarvestActivity Activity, ActivityRun Run)> CrossingTheMiddleMapOutOfTheZoneAsync()
+    {
+        var (connection, bot) = await _play.EnterAsync(300, TestPlay.NorthMapId);
+        var zones = new TestPlaceZones().Add("woods", TestPlay.NorthMapId, TestPlay.EastMapId);
+        var activity = Activity(new HarvestSettings { Resources = [TestPlay.Ash], Place = HarvestPlace.Zone, Zone = "woods" }, zones: zones);
+        var run = bot.StartActivity(activity);
+
+        Assert.True(await TestWalks.WalkedAsync(_play, connection, 1) >= 532);
+        Assert.Equal(new MapChangeRequest { MapId = (int)TestPlay.MapId }, await TestWalks.SentAsync(_play, connection, 2));
+        TestWalks.Arrive(connection, TestPlay.MapId, 20);
+
+        return (connection, activity, run);
+    }
+
+    [Fact]
+    public async Task AJourneyCrossingAMapOutOfTheZoneHoldingAWantedElementStopsThereAndHarvestsIt()
+    {
+        var (connection, activity, run) = await CrossingTheMiddleMapOutOfTheZoneAsync();
+
+        // The character walks to the tree, not to the cell leading east, then harvests it, though the map is not of the zone.
+        Assert.NotEqual(TestPlay.ActionCell, await TestWalks.WalkedAsync(_play, connection, 3));
+        Assert.Equal(new InteractiveUseRequest { SkillInstanceId = TestPlay.TreeInstanceId, ElementId = TestPlay.TreeElementId }, await TestWalks.SentAsync(_play, connection, 4));
+        Assert.Equal(TestPlay.MapId, activity.Report!.Focus!.MapId);
+
+        run.Stop();
+
+        Assert.Equal(ActivityOutcome.Stopped, await run.Completion);
+    }
+
+    [Fact]
+    public async Task AnElementRefusedOnAMapOutOfTheZoneIsLeftAndTheJourneyGoesOnToTheZone()
+    {
+        var (connection, activity, run) = await CrossingTheMiddleMapOutOfTheZoneAsync();
+
+        // The tree is refused: the map is left for the tour, and the journey goes on east instead of stopping on it again.
+        Assert.NotEqual(TestPlay.ActionCell, await TestWalks.WalkedAsync(_play, connection, 3));
+        Assert.IsType<InteractiveUseRequest>(await TestWalks.SentAsync(_play, connection, 4));
+        connection.Server(new InteractiveUseErrorEvent { ElementId = TestPlay.TreeElementId });
+
+        Assert.Equal(TestPlay.ActionCell, await TestWalks.WalkedAsync(_play, connection, 5));
+
+        // A map out of the zone is no map of the tour: the maps gone through are the zone's north map alone, the crossed one would make 2.
+        var report = await ReportedAsync(activity, report => report.Progress is not null);
+
+        Assert.Equal(1, report.Progress!.Done);
+
+        run.Stop();
+
+        Assert.Equal(ActivityOutcome.Stopped, await run.Completion);
+    }
+
     [Fact]
     public async Task AnElementTheServerRefusesIsLeftAndTheTourGoesOnToTheEastMap()
     {
