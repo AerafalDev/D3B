@@ -4,6 +4,7 @@ using D3B.Bot.Activities;
 using D3B.Bot.Banks;
 using D3B.Bot.Characters;
 using D3B.Bot.Fights;
+using D3B.Bot.Groups;
 using D3B.Bot.Journal;
 using D3B.Bot.Network;
 using D3B.Data.Maps;
@@ -75,12 +76,14 @@ public sealed class BotActor : IAsyncDisposable, IRequestWithholder
     private volatile bool _fightsAlone;
     private volatile ActivityRun? _activity;
     private volatile FightEnd? _lastFightEnd;
+    private volatile IReadOnlyList<MissingMember> _waitingFor = [];
     private ImmutableHashSet<long> _noTeleportFrom = [];
     private ImmutableHashSet<int> _noNpcWays = [];
     private int _fightsBegun;
     private int _lastEndedFight;
     private int _inactiveFight = -1;
     private long _placedAt;
+    private long _invitedAt = NeverEnded;
     private long _useEndedAt = NeverEnded;
     private long _fightBeganAt = NeverEnded;
     private long _regeneratingSince = NeverEnded;
@@ -133,6 +136,12 @@ public sealed class BotActor : IAsyncDisposable, IRequestWithholder
     /// <summary>Gets the activity the bot runs, or ran last, if any.</summary>
     public ActivityRun? Activity => _activity;
 
+    /// <summary>Gets the members of its group a master waits for before it acts, in the chain's order: none while it waits for nobody (D432, D437).</summary>
+    public IReadOnlyList<MissingMember> WaitingFor => _waitingFor;
+
+    /// <summary>Gets or sets what holds the bot's requests until other bots are ready, such as a master's followers (D437).</summary>
+    internal IActionGate? Gate { get; set; }
+
     /// <summary>Gets what the bot did and met, its actions once over, for the app (D112).</summary>
     public RecentItems<JournalEntry> Journal { get; } = new(JournalCapacity);
 
@@ -157,6 +166,9 @@ public sealed class BotActor : IAsyncDisposable, IRequestWithholder
     /// <summary>Gets when the client has drawn the map the server last placed the character on.</summary>
     /// <remarks>Reckoned from the display time now: raised, it holds the requests to come on a map placed before.</remarks>
     internal DateTimeOffset DrawnAt => new DateTimeOffset(Volatile.Read(ref _placedAt), TimeSpan.Zero) + Delays.Display;
+
+    /// <summary>Gets when the server last invited the character into a party, if it ever did: the client shows its window for it after (D437).</summary>
+    internal DateTimeOffset? InvitedAt => Volatile.Read(ref _invitedAt) is var ticks and not NeverEnded ? new DateTimeOffset(ticks, TimeSpan.Zero) : null;
 
     /// <summary>Gets when the server last ended a use of the character's own, if it ever did.</summary>
     internal DateTimeOffset? UseEndedAt => Volatile.Read(ref _useEndedAt) is var ticks and not NeverEnded ? new DateTimeOffset(ticks, TimeSpan.Zero) : null;
@@ -234,6 +246,13 @@ public sealed class BotActor : IAsyncDisposable, IRequestWithholder
     internal void RefuseNpcWay(int way)
     {
         ImmutableInterlocked.Update(ref _noNpcWays, (ways, refused) => ways.Add(refused), way);
+    }
+
+    /// <summary>Says whom of its group the bot waits for before it acts, none once it goes on (D437).</summary>
+    /// <param name="missing">The members missing, in the chain's order.</param>
+    internal void WaitFor(IReadOnlyList<MissingMember> missing)
+    {
+        _waitingFor = missing;
     }
 
     /// <summary>Pauses the bot from the app, as the player's hand does: the behavior running is cut, and it starts nothing until <see cref="Resume"/> (D322).</summary>
@@ -486,6 +505,9 @@ public sealed class BotActor : IAsyncDisposable, IRequestWithholder
             Volatile.Write(ref _lastEndedFight, Volatile.Read(ref _fightsBegun));
             Journal.Add(new FightEndEntry(Time.GetUtcNow(), end.Outcome, end.Experience, end.Kamas, end.Items.Values.Sum()));
         }
+
+        if (side is RelayDirection.FromServer && message is PartyInvitationEvent)
+            Volatile.Write(ref _invitedAt, Time.GetUtcNow().UtcTicks);
 
         if (side is RelayDirection.FromServer && message is LifeRegenStartEvent)
             Volatile.Write(ref _regeneratingSince, Time.GetUtcNow().UtcTicks);

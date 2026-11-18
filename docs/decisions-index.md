@@ -587,3 +587,8 @@ or refines another says so in its own entry. Add a line here with every new deci
 
 - [D436](decisions/d436-bug-reports-zaaps.md#d436-a-profile-that-takes-no-zaap-takes-none-on-any-of-its-journeys-to-its-place-back-and-to-the-bank) A profile that takes no zaap takes none on any of its journeys, to its place, back and to the bank (2026-11-18)
   - D405's meaning kept, two flags, "never" as a number of maps.
+
+## Step 10, 10b: the party by the bot and the chain (D437)
+
+- [D437](decisions/d437-step-10-the-chain.md#d437-10b-the-party-by-the-bot-the-follow-activity-and-the-group-moving-in-a-chain) 10b, the party by the bot, the "Follow" activity, and the group moving in a chain (2026-11-18)
+  - The wait in each activity, replaying the master's exact transition, the master's own haven bag, the party not waited for.

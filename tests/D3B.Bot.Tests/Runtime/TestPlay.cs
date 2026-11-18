@@ -199,19 +199,19 @@ internal sealed class TestPlay : IAsyncDisposable
     }
 
     /// <summary>The character as the server's confirmation of the choice describes it.</summary>
-    public static CharacterSelectionEvent Chosen(long characterId = CharacterId)
+    public static CharacterSelectionEvent Chosen(long characterId = CharacterId, string name = "Character")
     {
         return new CharacterSelectionEvent
         {
             Success = new CharacterSelectionEvent.Types.Success
             {
-                Character = new Character { Id = characterId, Basics = new CharacterBasics { Name = "Character", Level = 200 } },
+                Character = new Character { Id = characterId, Basics = new CharacterBasics { Name = name, Level = 200 } },
             },
         };
     }
 
     /// <summary>What is on the map, the character on a cell; on <see cref="MapId"/>, the tree and the door; in <see cref="InsideMapId"/>, the banker and another NPC.</summary>
-    public static MapInformationEvent Information(int cell, long mapId = MapId)
+    public static MapInformationEvent Information(int cell, long mapId = MapId, long characterId = CharacterId)
     {
         var information = new MapInformationEvent
         {
@@ -220,7 +220,7 @@ internal sealed class TestPlay : IAsyncDisposable
             Actors =
             {
                 new Actor { Id = -1, Disposition = new ActorDisposition { CellId = 101 } },
-                new Actor { Id = CharacterId, Disposition = new ActorDisposition { CellId = cell } },
+                new Actor { Id = characterId, Disposition = new ActorDisposition { CellId = cell } },
             },
         };
 
@@ -475,6 +475,23 @@ internal sealed class TestPlay : IAsyncDisposable
         await bot.ProcessedAsync();
 
         // The client has drawn the map: the bot's requests go at once.
+        Time.Advance(BotDelays.Measured.Display);
+
+        return (connection, bot);
+    }
+
+    /// <summary>A connection of another account, choosing another character, on a map, standing on a cell, the map drawn: the bot playing it, as a group's members are (D437).</summary>
+    public async Task<(TestConnection Connection, BotActor Bot)> EnterAsync(int cell, long mapId, GameAccount account, long characterId, string name)
+    {
+        ArgumentNullException.ThrowIfNull(account);
+
+        var connection = Connect(account);
+
+        connection.Server(Chosen(characterId, name));
+        Assert.True(Bots.TryGet(new CharacterKey(account.Id, characterId), out var bot));
+        connection.Server(new MapCurrentEvent { MapId = mapId });
+        connection.Server(Information(cell, mapId, characterId));
+        await bot.ProcessedAsync();
         Time.Advance(BotDelays.Measured.Display);
 
         return (connection, bot);

@@ -3497,4 +3497,25 @@
   <data name="ReportSendUnreachable" xml:space="preserve">
     <value>The report could not be sent: the channel could not be reached. It is saved: hand the file over on Discord with the code {0}.</value>
   </data>
+  <data name="CharacterChoose" xml:space="preserve">
+    <value>choose a character</value>
+  </data>
+  <data name="CharacterPickerTitle" xml:space="preserve">
+    <value>Choose a character</value>
+  </data>
+  <data name="CharacterPickerNone" xml:space="preserve">
+    <value>D3B knows no character yet: start the game through D3B once with each account, then choose here.</value>
+  </data>
+  <data name="CharacterClear" xml:space="preserve">
+    <value>Remove the character</value>
+  </data>
+  <data name="CharacterGone" xml:space="preserve">
+    <value>{0} (unknown)</value>
+  </data>
+  <data name="CharacterNotKnown" xml:space="preserve">
+    <value>D3B no longer knows this character.</value>
+  </data>
+  <data name="CharacterPickerDetail" xml:space="preserve">
+    <value>Level {0} · {1}</value>
+  </data>
 </root>

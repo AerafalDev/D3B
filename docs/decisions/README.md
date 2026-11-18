@@ -58,3 +58,4 @@ Each file holds the decisions of one group of [the index](../decisions-index.md)
 - [Client 3.7.14.18 (D427, D428)](d427-d428-client-3-7-14-18.md): 2 decisions, 4 KB.
 - [Step 10, groups (D429 to D435)](d429-d435-step-10-groups.md): 7 decisions, 9 KB.
 - [Bug reports, the profile's zaaps (D436)](d436-bug-reports-zaaps.md): 1 decision, 2 KB.
+- [Step 10, 10b: the party by the bot and the chain (D437)](d437-step-10-the-chain.md): 1 decision, 5 KB.

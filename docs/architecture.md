@@ -297,6 +297,19 @@ The bots run in `D3B.Bot`: what each part does today, with the decisions that ma
   fight" says, a lost fight as "After a lost fight" says, resumed once its life is regained, three in a row ending it. The
   character's state keeps every characteristic the server gives out of fights (`CharacterState.Characteristics`,
   `CharacteristicTotals`, D263). The strategies of 9g, a profile each character played, are gone (D244).
+- **Groups** (D430 to D432, D437), in `D3B.Bot.Groups`, registered by `GroupsModule`: `FollowActivity`, the "Follow"
+  activity, its one setting the master (`FollowSettings.Master`, `SettingKind.Character`, a character of the accounts page
+  by `CharacterKey.ToId`). A follower is in its master's group while its activity runs (`GroupDirectory`, `Bots.Groups`, at
+  most seven, no follower leading). Each bot has a gate (`IActionGate`, `BotActor.Gate`), which `BotContext.SendAsync` goes
+  through: the master's, `GroupGate`, holds the requests that start an action out of a fight while a bot follows it,
+  leaving a party another leads, inviting its followers by name, and waiting with no delay until each is connected, not
+  paused, out of a fight, on its map and in its party (`GroupChain.Missing`), the card saying whom for
+  (`BotActor.WaitingFor`); its own requests go past it (`BotContext.SendNowAsync`). So every profile leads unchanged. The
+  follower's steps keep the party (its master's invitation accepted, others refused, another party left, the automatic
+  options turned off at each party joined, D437's measure), then follow the chain (`GroupChain.Order`: the master's
+  party's order, then names): with its master it waits, behind the one before it it waits, else it travels to the master's
+  map, each in its own haven bag as the master is in his (`GroupChain.Together`). A wait reads the bots it waits on before
+  deciding (`BotSeen`), so that no change made between the decision and the wait is missed (`GroupWaits`).
 - **Fighting** (D236, D241, D245 to D249, D259), in `D3B.Bot.Fighting`, registered by `FightingModule`: `FightActivity`, its
   settings `FightSettings`. Each step heals, then on a map of the zone walks onto the cell of the nearest group the
   settings allow, monsters or families of monsters chosen, a family a race (`ChosenMonsters`), with no judgement of its
@@ -947,7 +960,7 @@ The target:
   - **A list of steps** (D386), in `D3B.Studio.Behaviors`: `BehaviorSequences` reads a behavior as a list when it is one state of actions
     chained by their way on, and writes a list into one (`BehaviorSequence`: the steps as `NodeCall`s and whether it repeats); the
     behavior's file is the same the canvas of 7e opens. `BehaviorSequences.Offered` are the nodes a step may be: `route.follow`,
-    `route.harvest`, `route.fight`, `route.bag`, `wait`, `note`, `pause`, `stop`. `SettingKind.Zone`, a zone's id picked as a route's is (D415, `ZoneFieldViewModel`, which says in words what the zone does and how many maps it holds, and blocks the profile when the zone holds none or is gone). `SettingKind.Route`, a route's id picked in
+    `route.harvest`, `route.fight`, `route.bag`, `wait`, `note`, `pause`, `stop`. `SettingKind.Zone`, a zone's id picked as a route's is (D415, `ZoneFieldViewModel`, which says in words what the zone does and how many maps it holds, and blocks the profile when the zone holds none or is gone). `SettingKind.Character`, a character of the accounts page picked in the same dialog among those `AccountBook` holds (D437, `CharacterFieldViewModel`, which blocks the profile when D3B no longer knows the character). `SettingKind.Route`, a route's id picked in
     `RoutePickerViewModel` through `RouteFieldViewModel` (an `IPickingField`), is the value of `route.follow`; `BehaviorAsset.Uses`
     lists the routes a behavior follows. `SequencesViewModel` holds the editors open, `SequenceEditorViewModel` and `SequenceView` are a
     list's tab, its steps `RouteActionViewModel`s drawn by `ActionCardView`; the new-profile dialog (`NewProfileViewModel`) and the

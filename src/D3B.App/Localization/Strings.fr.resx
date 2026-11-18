@@ -3497,4 +3497,25 @@
   <data name="ReportSendUnreachable" xml:space="preserve">
     <value>Le rapport n’a pas pu être envoyé : le canal n’a pas pu être joint. Il est enregistré : remets le fichier sur Discord avec le code {0}.</value>
   </data>
+  <data name="CharacterChoose" xml:space="preserve">
+    <value>choisir un personnage</value>
+  </data>
+  <data name="CharacterPickerTitle" xml:space="preserve">
+    <value>Choisir un personnage</value>
+  </data>
+  <data name="CharacterPickerNone" xml:space="preserve">
+    <value>D3B ne connaît encore aucun personnage : lance le jeu une fois par D3B avec chaque compte, puis choisis ici.</value>
+  </data>
+  <data name="CharacterClear" xml:space="preserve">
+    <value>Retirer le personnage</value>
+  </data>
+  <data name="CharacterGone" xml:space="preserve">
+    <value>{0} (inconnu)</value>
+  </data>
+  <data name="CharacterNotKnown" xml:space="preserve">
+    <value>D3B ne connaît plus ce personnage.</value>
+  </data>
+  <data name="CharacterPickerDetail" xml:space="preserve">
+    <value>Niveau {0} · {1}</value>
+  </data>
 </root>
