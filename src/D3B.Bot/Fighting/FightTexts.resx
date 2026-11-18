@@ -170,6 +170,21 @@
   <data name="DepositAllButWorn" xml:space="preserve">
     <value>All but what is worn</value>
   </data>
+  <data name="ChallengeReward" xml:space="preserve">
+    <value>Challenges' bonus</value>
+  </data>
+  <data name="ChallengeRewardHelp" xml:space="preserve">
+    <value>What the fight's challenges won give. The bot sets it during the placement of each fight its AI plays; in a group, the master's counts. As the client sets it, nothing is sent.</value>
+  </data>
+  <data name="ChallengeRewardDrop" xml:space="preserve">
+    <value>Drops</value>
+  </data>
+  <data name="ChallengeRewardExperience" xml:space="preserve">
+    <value>Experience</value>
+  </data>
+  <data name="ChallengeRewardClient" xml:space="preserve">
+    <value>As the client sets it</value>
+  </data>
   <data name="AfterLostFight" xml:space="preserve">
     <value>After a lost fight</value>
   </data>

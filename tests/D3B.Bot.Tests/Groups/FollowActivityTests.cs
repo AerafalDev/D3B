@@ -1,5 +1,6 @@
 using D3B.Bot.Activities;
 using D3B.Bot.Characters;
+using D3B.Bot.Fights;
 using D3B.Bot.Groups;
 using D3B.Bot.Journal;
 using D3B.Bot.Movement;
@@ -19,6 +20,17 @@ public sealed class FollowActivityTests
     private static string Doing(ActivityRun run)
     {
         return TestGroup.Say(run.Activity.Report?.Doing);
+    }
+
+    [Fact]
+    public async Task AFollowerFightsItsFightsAndLeavesTheChallengesBonusToItsMaster()
+    {
+        // D438: the master's choice counts, so a follower sends none.
+        await using var play = new TestPlay();
+        var follow = new FollowActivity(new FollowSettings { Master = TestGroup.Master.ToId() }, play.Bots);
+
+        Assert.True(follow.FightsItsFights);
+        Assert.Equal(ChallengeReward.Client, follow.ChallengeReward);
     }
 
     [Fact]

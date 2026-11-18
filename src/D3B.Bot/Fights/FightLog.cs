@@ -1,5 +1,6 @@
 using D3B.Bot.Runtime;
 using D3B.Engine.Tactics;
+using D3B.Protocol.Game;
 using Microsoft.Extensions.Logging;
 
 namespace D3B.Bot.Fights;
@@ -9,6 +10,9 @@ internal static partial class FightLog
 {
     [LoggerMessage(Level = LogLevel.Information, Message = "Bot {Character}: plays its fight, {TurnsToWin:F1} turns to win against {TurnsToLose:F1} to lose, prudent {Prudent}")]
     public static partial void Judged(ILogger logger, long character, double turnsToWin, double turnsToLose, bool prudent);
+
+    [LoggerMessage(Level = LogLevel.Information, Message = "Bot {Character}: chooses the challenges' bonus {Bonus}, {Outcome}")]
+    public static partial void BonusChosen(ILogger logger, long character, ChallengeBonus bonus, string outcome);
 
     [LoggerMessage(Level = LogLevel.Information, Message = "Bot {Character}: placed on cell {Cell}")]
     public static partial void Placed(ILogger logger, long character, int cell);

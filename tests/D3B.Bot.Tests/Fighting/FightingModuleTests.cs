@@ -33,7 +33,7 @@ public sealed class FightingModuleTests
             ["AfterLostFight", "Excluded", "Food", "FullAt", "IsolatedMaps", "LeastMonsters", "MostMonsters", "OwnBanking", "Rotation", "UseZaaps", "ZaapSaving"],
             [.. settings.Where(setting => setting.IsAdvanced).Select(setting => setting.Key).Order()]);
         Assert.Equal(
-            ["Area", "Deposit", "Families", "Heal", "HealBelow", "Mode", "Monsters", "Place", "SubAreas", "Zone"],
+            ["Area", "ChallengeReward", "Deposit", "Families", "Heal", "HealBelow", "Mode", "Monsters", "Place", "SubAreas", "Zone"],
             [.. settings.Where(setting => !setting.IsAdvanced).Select(setting => setting.Key).Order()]);
     }
 }

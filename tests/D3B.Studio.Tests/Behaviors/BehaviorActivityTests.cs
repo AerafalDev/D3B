@@ -1,5 +1,6 @@
 using System.Text.Json.Nodes;
 using D3B.Bot.Activities;
+using D3B.Bot.Fights;
 using D3B.Bot.Runtime;
 using D3B.Bot.Tests.Runtime;
 using D3B.Bot.Tests.Settings;
@@ -419,6 +420,23 @@ public sealed class BehaviorActivityTests : IAsyncDisposable
 
         Assert.Equal(ActivityOutcome.Done, await run.Completion);
         Assert.Equal(["a", "b"], Notes(bot));
+    }
+
+    [Fact]
+    public async Task AListOnAStepThatIsNoActivityLeavesTheChallengesBonusToTheClient()
+    {
+        // A list's choice is its step's activity's (D438): a wait has none, so no request is sent.
+        var (_, bot) = await _behaviors.Play.EnterAsync(300);
+        var run = await _behaviors.StartAsync(bot, Behavior(
+            new BehaviorState("only", "Only") { Actions = Chain(Node("w", "wait", ("Seconds", 60))) }));
+
+        await UntilAsync(() => run.Status is ActivityStatus.Stepping);
+
+        Assert.Equal(ChallengeReward.Client, run.Activity.ChallengeReward);
+
+        _behaviors.Play.Time.Advance(TimeSpan.FromSeconds(60));
+
+        Assert.Equal(ActivityOutcome.Done, await run.Completion);
     }
 
     [Fact]

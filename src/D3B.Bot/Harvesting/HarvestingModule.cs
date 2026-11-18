@@ -123,6 +123,9 @@ public sealed class HarvestingModule : IModule
             .VisibleWhen(s => s.Heal);
 
         settings.Flag(s => s.AiFights, HarvestTexts.Text("AiFights")).Help(HarvestTexts.Text("AiFightsHelp"));
+        settings.Choice(s => s.ChallengeReward, HarvestTexts.Text("ChallengeReward"), reward => HarvestTexts.Text($"ChallengeReward{reward}"))
+            .Help(HarvestTexts.Text("ChallengeRewardHelp"))
+            .VisibleWhen(s => s.AiFights);
         settings.Choice(s => s.AfterFight, HarvestTexts.Text("AfterFight"), after => HarvestTexts.Text($"AfterFight{after}"))
             .Help(HarvestTexts.Text("AfterFightHelp"))
             .Advanced();

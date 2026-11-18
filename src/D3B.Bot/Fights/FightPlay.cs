@@ -159,6 +159,8 @@ public static class FightPlay
             await set.WaitAsync(context.Delays.Answer, cancellationToken).ConfigureAwait(false);
         }
 
+        await ChooseBonusAsync(context, cancellationToken).ConfigureAwait(false);
+
         var cell = tactics.Place(imagined.Fight, fight.OwnCells, imagined.Knowledge, weights);
 
         if (!await PacedAsync(context, Placing, cancellationToken).ConfigureAwait(false))
@@ -181,6 +183,42 @@ public static class FightPlay
 
         await context.SendAsync(new FightReadyRequest { Ready = true }, cancellationToken).ConfigureAwait(false);
         await ready.WaitAsync(context.Delays.Answer, cancellationToken).ConfigureAwait(false);
+    }
+
+    private static async Task ChooseBonusAsync(BotContext context, CancellationToken cancellationToken)
+    {
+        // The profile's choice, its step's in a list (D438), only for a fight its activity has the AI play: none out of one, nor
+        // with the host's Fights:Alone over a harvest whose AI does not fight, whose hidden choice the player cannot see.
+        ChallengeBonus? wanted = context.Actor.Activity is { IsOver: false, Activity: { FightsItsFights: true } activity } ? BonusOf(activity.ChallengeReward) : null;
+
+        if (wanted is not { } bonus)
+            return;
+
+        // Measured (D438): the client sends its player's last choice by itself as the placement starts, the server answering
+        // at once; sent before it, the bot's would be undone by it.
+        await context.WaitUntilAsync(state => state.Fight is not { ChallengeBonus: null } || !Placing(state.Fight), context.Delays.Answer, cancellationToken).ConfigureAwait(false);
+
+        if (context.State.Fight?.ChallengeBonus == bonus || !await PacedAsync(context, Placing, cancellationToken).ConfigureAwait(false))
+            return;
+
+        var chosen = context.Expect((side, message, _) => side is RelayDirection.FromServer && message is ChallengeBonusChoiceSelectedEvent selected && selected.Bonus == bonus);
+
+        await context.SendAsync(new ChallengeBonusChoiceRequest { Bonus = bonus }, cancellationToken).ConfigureAwait(false);
+
+        // Not measured: whether the server answers a member who does not lead its team; unanswered, the placement goes on.
+        var answer = await chosen.WaitAsync(context.Delays.Answer, cancellationToken).ConfigureAwait(false);
+
+        FightLog.BonusChosen(context.Log, context.State.Key.CharacterId, bonus, answer is null ? "unanswered" : "set");
+    }
+
+    private static ChallengeBonus? BonusOf(ChallengeReward reward)
+    {
+        return reward switch
+        {
+            ChallengeReward.Drop => ChallengeBonus.Drop,
+            ChallengeReward.Experience => ChallengeBonus.Experience,
+            _ => null,
+        };
     }
 
     private static async Task PlayTurnAsync(BotContext context, FightTactics tactics, GameTables tables, FightMap map, TacticWeights weights, HashSet<int> refusedSpells, CancellationToken cancellationToken)

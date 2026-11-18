@@ -170,6 +170,21 @@
   <data name="DepositAllButWorn" xml:space="preserve">
     <value>Tout sauf l'équipement</value>
   </data>
+  <data name="ChallengeReward" xml:space="preserve">
+    <value>Bonus des challenges</value>
+  </data>
+  <data name="ChallengeRewardHelp" xml:space="preserve">
+    <value>Ce que rapportent les challenges réussis. Le bot le règle pendant le placement de chaque combat que joue son IA ; en groupe, c'est celui du meneur qui compte. Comme le client : rien n'est envoyé.</value>
+  </data>
+  <data name="ChallengeRewardDrop" xml:space="preserve">
+    <value>Butin</value>
+  </data>
+  <data name="ChallengeRewardExperience" xml:space="preserve">
+    <value>Expérience</value>
+  </data>
+  <data name="ChallengeRewardClient" xml:space="preserve">
+    <value>Comme le client</value>
+  </data>
   <data name="AfterLostFight" xml:space="preserve">
     <value>Après un combat perdu</value>
   </data>

@@ -121,7 +121,9 @@
     { "readable": "d3b.game.ExchangeAcceptRequest", "obfuscated": "kax" },
     { "readable": "d3b.game.ExchangeStartedWithPlayerEvent", "obfuscated": "kbc" },
     { "readable": "d3b.game.ExchangeReadyRequest", "obfuscated": "kba" },
-    { "readable": "d3b.game.ExchangeReadyEvent", "obfuscated": "kec" }
+    { "readable": "d3b.game.ExchangeReadyEvent", "obfuscated": "kec" },
+    { "readable": "d3b.game.ChallengeBonusChoiceRequest", "obfuscated": "kua" },
+    { "readable": "d3b.game.ChallengeBonusChoiceSelectedEvent", "obfuscated": "ktx" }
   ],
   "enums": []
 }

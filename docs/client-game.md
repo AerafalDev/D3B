@@ -1403,3 +1403,24 @@ events of an invitation, a party joined, a new member, a member removed, a party
 member's fight; the request to join a fight; and the exchange between two characters. Format 18, 251 messages paired, no
 failure; without the captures, the pins and the structure pair the same.
 
+
+## The game, the challenges' bonus
+
+One game connection of 3.7.14.18 recorded through the app on 2026-11-18 (D438), 3 min 39 s, three fights alone against
+monsters, the owner choosing the drops in the first and the experience in the third and leaving the second alone.
+Described with `scripts/capture.cs`, by structure and type URLs, each value compared on the machine by a tool of the
+session and never written down.
+
+- **The client's own choice**: 7 to 103 ms after each placement starts, the client sends the challenges' bonus with the
+  one its player made last: the experience in the first fight, which the owner had never set, twice in the same
+  millisecond; the drops in the second and the third, from the owner's click in the first. It does so in a fight whose
+  bonus the player leaves alone. Another request follows it in the same millisecond, with no value set, not mapped.
+- **The player's click**: one request each, the drops 1, the experience 0, as the references name them; the build's enum
+  has these two values alone. The request's second field, a message, was never set.
+- **The server's answer**: an event of the bonus, 27 to 29 ms after each request, with the value sent. Its three other
+  fields were never set.
+- **Not measured**: a group. Whether the server answers or refuses a member who does not lead its team, and whether it
+  tells the members of their leader's choice, waits for the measure in game (D438).
+
+**Mapped** (D438): the request and the event of the bonus, and its enum. Format 19, 253 messages paired, no failure;
+without the captures, the pins and the structure pair the same.

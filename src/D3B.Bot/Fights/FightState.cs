@@ -66,6 +66,10 @@ public sealed record FightState
     /// <summary>Gets the options of the character's team's fight the server said are set, or not, by option (D203).</summary>
     public ImmutableSortedDictionary<FightOption, bool> Options { get; init; } = ImmutableSortedDictionary<FightOption, bool>.Empty;
 
+    /// <summary>Gets what the team's challenges give, as the server last said it, or null until it says (D438).</summary>
+    /// <remarks>Measured: the client sends its player's last choice as the placement starts, and the server answers it at once.</remarks>
+    public ChallengeBonus? ChallengeBonus { get; init; }
+
     /// <summary>Gets how the fight ended for the character, once the server sent the results.</summary>
     public FightEnd? End { get; init; }
 }
