@@ -17,9 +17,10 @@ two, as the lead recommended it. Supersedes D438's follower sending none. Builds
   follower's client sent its own choice too, the experience, as it joined, and the server answered each follower; the
   master was told nothing of theirs. So the bonus is each character's own, and the enum's values are not swapped: the
   followers fought for the experience, their clients' default.
-- **Made**: a follower's challenges' bonus is its master's profile's (`FollowActivity.ChallengeReward`), the client's
-  while the master runs no profile; the AI sends it as for any profile, once the server answered the follower's client
-  (D438).
+- **Made**: a follower's challenges' bonus is its master's profile's (`FollowActivity.ChallengeReward`); the client's
+  while the master runs no profile, one whose AI does not fight (its choice hidden, as D438 keeps it), or follows itself
+  (no follower leads, D432, and two followers naming each other would ask each other for ever, the review found). The AI
+  sends it as for any profile, once the server answered the follower's client (D438).
 - **Not measured**: which reward the fight's end gave each character with its own bonus; the owner looks at it again in
   game.
 - **Rejected.**

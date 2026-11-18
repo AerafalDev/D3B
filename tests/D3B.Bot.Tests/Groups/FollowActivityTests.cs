@@ -46,6 +46,32 @@ public sealed class FollowActivityTests
     }
 
     [Fact]
+    public async Task AFollowerLeavesTheBonusToItsClientUnderAMasterWhoseAIDoesNotFightOrWhoFollows()
+    {
+        // D438: a profile whose AI does not fight sends no bonus, its choice hidden; and two followers naming each other,
+        // before the directory refuses the second, must not ask each other for ever.
+        await using var play = new TestPlay();
+        var (_, master) = await TestGroup.MasterAsync(play, 300);
+        var (_, follower) = await TestGroup.FollowerAsync(play, 301);
+        var follow = new FollowActivity(new FollowSettings { Master = TestGroup.Master.ToId() }, play.Bots, play.Tables);
+        var harvesting = master.StartActivity(new RewardActivity { Reward = ChallengeReward.Drop, Fights = false });
+
+        Assert.Equal(ChallengeReward.Client, follow.ChallengeReward);
+
+        harvesting.Stop();
+        await harvesting.Completion;
+
+        var back = new FollowActivity(new FollowSettings { Master = TestGroup.Follower.ToId() }, play.Bots, play.Tables);
+        var masterFollows = master.StartActivity(back);
+        var followerFollows = follower.StartActivity(follow);
+
+        Assert.Equal(ChallengeReward.Client, follow.ChallengeReward);
+        Assert.Equal(ChallengeReward.Client, back.ChallengeReward);
+        masterFollows.Stop();
+        followerFollows.Stop();
+    }
+
+    [Fact]
     public async Task AFollowerRefusesAStrangersInvitationOnceAndAcceptsItsMasters()
     {
         await using var play = new TestPlay();
