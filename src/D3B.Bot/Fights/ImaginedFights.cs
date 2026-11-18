@@ -11,11 +11,11 @@ namespace D3B.Bot.Fights;
 /// <summary>The character's fight as the AI imagines it from what the server said: the fighters, and what the AI knows of them (D201).</summary>
 /// <remarks>
 /// The fighters come from the fight's state (<see cref="FightCombatants"/>). The character's spells come from the server's
-/// list and its level, its worn sword's blow among them (<see cref="CharacterSpells"/>), a monster's and a summon's from the pack at its grade; the
-/// character's cooldowns from the server (D193). Every fighter but the one playing holds the AP and MP it starts its next
-/// turn with: a monster's grade's, else what the server last gave it; the one playing holds what it has left, and starts its
-/// turns with what it had as its last began. The one playing is the character, or a summon of its the client plays (9f2),
-/// with its own cooldowns and casts. The glyphs and traps on the cells are the server's, each striking as the spell that set
+/// list and its level, its worn sword's blow among them (<see cref="CharacterSpells"/>), a monster's and a summon's from the
+/// pack at its grade, a companion's from the server's list of them (D443); the character's cooldowns from the server (D193).
+/// Every fighter but the one playing holds the AP and MP it starts its next turn with: a monster's grade's, else what the
+/// server last gave it; the one playing holds what it has left, and starts its turns with what it had as its last began. The
+/// one playing is the character, or a summon or a companion of its the client plays (9f2), with its own cooldowns and casts. The glyphs and traps on the cells are the server's, each striking as the spell that set
 /// it says (9f4); a bombs' wall is the bombs' own, which the engine finds again from them.
 /// </remarks>
 public static class ImaginedFights
@@ -70,6 +70,19 @@ public static class ImaginedFights
 
                 if (fighter.Id != actor.Id)
                     combatant = combatant with { ActionPoints = found.Characteristics.ActionPoints, MovementPoints = Math.Max(0, (int)found.Characteristics.MovementPoints) };
+            }
+            else if (fight.ListedSpells.TryGetValue(fighter.Id, out var listed))
+            {
+                // A companion's spells: the pack has none of it, the server lists them at their grade.
+                var levels = ImmutableArray.CreateBuilder<SpellLevel>(listed.Count);
+
+                foreach (var (spellId, spellGrade) in listed)
+                {
+                    if (tables.Spells.TryGetLevel(spellId, spellGrade, out var level))
+                        levels.Add(level);
+                }
+
+                spells[fighter.Id] = levels.DrainToImmutable();
             }
 
             points[fighter.Id] = fighter.Id == actor.Id ? turnPoints ?? (combatant.ActionPoints, combatant.MovementPoints) : (combatant.ActionPoints, combatant.MovementPoints);

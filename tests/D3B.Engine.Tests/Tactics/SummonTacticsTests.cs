@@ -85,6 +85,21 @@ public sealed class SummonTacticsTests
     }
 
     [Fact]
+    public void ACompanionPlayingProtectsItsMasterAsASummonPlayingProtectsItsSummoner()
+    {
+        // D443: the character's companion, such as the Astrub Knight, is played as a summon, for its master's sake.
+        var companion = new Combatant { Id = -3, Team = 0, Cell = Off(2, 0), ActionPoints = 6, MovementPoints = 3, Life = 100, MaxLife = 100, MasterId = 1 };
+        var enemy = Enemy(-1, Off(8, 0));
+        var fight = new ImaginedFight { Map = Open(), Fighters = [Caster(), companion, enemy], ActorId = companion.Id, Round = 1 };
+        var judge = _tactics.JudgeOf(fight, Knowledge(enemy) with { Spells = Knowledge(enemy).Spells.Add(companion.Id, []) }, TacticWeights.Default);
+
+        var masterHurt = judge.AlliesWorth(fight with { Fighters = [Caster() with { Life = 50 }, companion, enemy] });
+        var companionHurt = judge.AlliesWorth(fight with { Fighters = [Caster(), companion with { Life = 50 }, enemy] });
+
+        Assert.True(masterHurt < companionHurt, $"The master's 50 life lost leaves {masterHurt}, the companion's {companionHurt}.");
+    }
+
+    [Fact]
     public void ASummonComesWithItsShareOfItsSummonersLifeAndItsGradesPoints()
     {
         var fight = new ImaginedFight { Map = Open(), Fighters = [Summoner(), Enemy(-1, Off(8, 0))], ActorId = 1, Round = 1 };

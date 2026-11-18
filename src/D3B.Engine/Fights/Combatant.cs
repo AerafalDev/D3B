@@ -68,6 +68,10 @@ public sealed record Combatant
     /// <summary>Gets who summoned the fighter, or null when it is no summon.</summary>
     public long? SummonerId { get; init; }
 
+    /// <summary>Gets the character whose companion the fighter is, such as the Astrub Knight, or null when it is none.</summary>
+    /// <remarks>A companion is no summon: its master's client plays it, for its master's sake (D443).</remarks>
+    public long? MasterId { get; init; }
+
     /// <summary>Gets the states the fighter is in.</summary>
     public ImmutableArray<int> States { get; init; } = [];
 

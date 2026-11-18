@@ -1432,3 +1432,20 @@ session and never written down.
 
 **Mapped** (D438): the request and the event of the bonus, and its enum. Format 19, 253 messages paired, no failure;
 without the captures, the pins and the structure pair the same.
+
+## The game, a companion
+
+Read on 2026-11-18 from the schema of 3.7.14.18 alone (D443), by structure, for a player's report that the bot did not
+play the Astrub Knight: no capture holds a companion.
+
+- **The fighter's kind**: `FightFighter`'s kind is one of three, a character (5), a monster (6), and a third (11) of a
+  string, an int64 and two int32, which D3B did not read: the companion. Its int64 is taken for its master, as a summon's
+  summoner is an int64; the string and the two int32, one most likely its level, are not read.
+- **Not in the pack**: no monster of the pack is the Astrub Knight, and the pack has no companion table; its spells are
+  those `FightSpellsContextEvent` lists for it, as it lists those of a summon the client controls (D279).
+- **Not measured**: whether the server lets the client play the companion's turn, lists its spells, and takes the
+  character's requests as the companion's, as it does a summon's (9f2). The owner's fight with the companion, captured,
+  measures it.
+
+**Mapped** (D443): the companion's kind and its master. Format 21, 255 messages and 556 fields paired, no failure, the
+same bytes twice; without the captures, the pins and the structure pair the same 255.

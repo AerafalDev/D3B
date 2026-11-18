@@ -46,6 +46,9 @@ public sealed record Fighter
     /// <summary>Gets who summoned the fighter, when it is a summon.</summary>
     public long? SummonerId { get; init; }
 
+    /// <summary>Gets the character whose companion the fighter is, when it is a companion, such as the Astrub Knight.</summary>
+    public long? MasterId { get; init; }
+
     /// <summary>Gets the fighter carrying this one, while it is carried: it stands on no cell.</summary>
     public long? CarrierId { get; init; }
 

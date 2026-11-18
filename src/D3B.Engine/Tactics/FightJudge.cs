@@ -119,7 +119,7 @@ public sealed class FightJudge
         ArgumentNullException.ThrowIfNull(summons);
 
         _actorId = start.ActorId;
-        _protectedId = start.Actor.SummonerId ?? start.ActorId;
+        _protectedId = start.Actor.SummonerId ?? start.Actor.MasterId ?? start.ActorId;
         _team = start.Actor.Team;
         _weights = weights;
         _bombs = bombs;
@@ -402,7 +402,7 @@ public sealed class FightJudge
 
     private double Weight(Combatant ally)
     {
-        // A summon playing protects its summoner, as the character playing protects itself.
+        // A summon playing protects its summoner, a companion its master (D443), as the character playing protects itself.
         return ally.Id == _protectedId ? _weights.Survival : ally.IsSummon ? SummonLife : 1;
     }
 

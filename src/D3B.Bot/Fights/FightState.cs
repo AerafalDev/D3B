@@ -60,6 +60,10 @@ public sealed record FightState
     /// <remarks>Measured: in the 55 fights whose context listed the character's spells, its 300 casts were of them, at their grade; a transformed character's are its form's.</remarks>
     public ImmutableSortedDictionary<int, int> Spells { get; init; } = ImmutableSortedDictionary<int, int>.Empty;
 
+    /// <summary>Gets the spells the server's context listed for a fighter other than the character, each with its grade, by fighter then spell.</summary>
+    /// <remarks>A companion's spells are these alone: the pack has no companion. A summon's are its monster's in the pack (D193).</remarks>
+    public ImmutableSortedDictionary<long, ImmutableSortedDictionary<int, int>> ListedSpells { get; init; } = ImmutableSortedDictionary<long, ImmutableSortedDictionary<int, int>>.Empty;
+
     /// <summary>Gets the marks on the fight's cells, glyphs, traps and bombs' walls, by id, as the server set and took them back (9f4).</summary>
     public ImmutableSortedDictionary<int, GroundMark> Marks { get; init; } = ImmutableSortedDictionary<int, GroundMark>.Empty;
 

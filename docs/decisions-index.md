@@ -617,6 +617,11 @@ or refines another says so in its own entry. Add a line here with every new deci
 - [D442](decisions/d442-step-10-the-groups-bank.md#d442-10c3-a-full-member-takes-the-group-to-the-bank-each-follower-gives-the-master-what-it-carries-by-an-exchange-mapping-format-20) 10c3, a full member takes the group to the bank, each follower gives the master what it carries by an exchange, mapping format 20 (2026-11-18)
   - All the master does not wear, two openings of the bank, the step counted from requests, one transfer of every stack.
 
+## Fights, the companions (D443)
+
+- [D443](decisions/d443-fights-companions.md#d443-the-bot-plays-the-characters-companion-such-as-the-astrub-knight-with-the-spells-the-server-lists-for-it-mapping-format-21) The bot plays the character's companion, such as the Astrub Knight, with the spells the server lists for it, mapping format 21 (2026-11-18)
+  - Ending its turn at once, measuring first, a companion table in the pack.
+
 ## The harvest, the mines (D444)
 
 - [D444](decisions/d444-harvest-the-mines.md#d444-the-harvests-tour-goes-into-an-interior-while-its-sub-area-lists-a-resource-no-map-of-it-showed-so-that-it-finds-the-mines) The harvest's tour goes into an interior while its sub-area lists a resource no map of it showed, so that it finds the mines (2026-11-18)

@@ -13,6 +13,9 @@ public sealed class FightEventsTests
     private const long Self = TestPlay.CharacterId;
     private const long Monster = -1;
     private const long Turret = -2;
+    private const long Knight = -3;
+    private const long OtherPlayer = 7_000_001;
+    private const long OthersKnight = -4;
     private const long FightMapId = 191_104_008;
 
     private static readonly CharacterState _chosen = CharacterState.Chosen(TestPlay.Key, TestPlay.Chosen().Success.Character);
@@ -83,6 +86,25 @@ public sealed class FightEventsTests
                     Ai = new AiFighter { Monster = new MonsterFighter { MonsterId = 3_271, Grade = 3, Level = 3 } },
                     Stats = new FightCharacteristics { Characteristics = { Value(1, 2), Value(23, 3), Value(0, life) } },
                     Spawn = new FighterSpawn { Alive = true, Team = FightTeam.Defender },
+                },
+            },
+        };
+    }
+
+    private static Actor CompanionActor(long id, long masterId, int cell)
+    {
+        // As the client's schema describes a fighter of its third kind, the companion, its master named (not measured).
+        return new Actor
+        {
+            Id = id,
+            Disposition = new ActorDisposition { CellId = cell },
+            Information = new ActorInformation
+            {
+                Fighter = new FightFighter
+                {
+                    Companion = new CompanionFighter { MasterId = masterId },
+                    Stats = new FightCharacteristics { Characteristics = { Value(1, 6), Value(23, 3), Value(0, 90) } },
+                    Spawn = new FighterSpawn { Alive = true, Team = FightTeam.Challenger },
                 },
             },
         };
@@ -283,6 +305,35 @@ public sealed class FightEventsTests
         var free = Apply(summoned, new FightTurnEvent { FighterId = Turret, Duration = 150, Round = 1 });
 
         Assert.Equal((Turret, false), (free.Fight!.PlayingId, free.Fight.IsOwnTurn));
+    }
+
+    [Fact]
+    public void ACompanionComesIntoTheFightWithItsMasterOnTheCharactersTeam()
+    {
+        var shown = Apply(Placed(), new FightFighterShowEvent { Fighter = CompanionActor(Knight, Self, 300) });
+
+        var knight = shown.Fight!.Fighters[Knight];
+
+        Assert.Equal((FightTeam.Challenger, 300, 90, 6, Self, (int?)null, (long?)null), (knight.Team, knight.Cell, knight.Life, knight.ActionPoints, knight.MasterId, knight.MonsterId, knight.SummonerId));
+    }
+
+    [Fact]
+    public void TheClientPlaysTheTurnOfTheCharactersCompanionAndNotAnotherPlayers()
+    {
+        // Reported by a player (the Astrub Knight): the bot left its companion's turns to their time, never played.
+        var shown = Apply(
+            Playing(),
+            new FightFighterShowEvent { Fighter = CompanionActor(Knight, Self, 300) },
+            new FightFighterShowEvent { Fighter = CompanionActor(OthersKnight, OtherPlayer, 301) },
+            new FightTurnEndEvent { FighterId = Self });
+
+        var own = Apply(shown, new FightTurnEvent { FighterId = Knight, Duration = 300, Round = 1 }, new FightTurnStartPlayingEvent());
+
+        Assert.Equal((Knight, true), (own.Fight!.PlayingId, own.Fight.IsOwnTurn));
+
+        var theirs = Apply(shown, new FightTurnEvent { FighterId = OthersKnight, Duration = 300, Round = 1 }, new FightTurnStartPlayingEvent());
+
+        Assert.Equal((OthersKnight, false), (theirs.Fight!.PlayingId, theirs.Fight.IsOwnTurn));
     }
 
     [Fact]
@@ -559,6 +610,20 @@ public sealed class FightEventsTests
             new FightSpellsContextEvent { CharacterId = Self, FighterId = Monster, Spells = { new SpellItem { SpellId = 5, Grade = 1 } } });
 
         Assert.Equal([KeyValuePair.Create(202, 2), KeyValuePair.Create(8_703, 1)], listed.Fight!.Spells.ToArray());
+    }
+
+    [Fact]
+    public void TheFightsContextGivesAnotherFightersSpellsApartFromTheCharacters()
+    {
+        // A companion's spells come from the server's list alone: the pack has no companion.
+        var listed = Apply(
+            Playing(),
+            new FightSpellsContextEvent { CharacterId = Self, FighterId = Self, Spells = { new SpellItem { SpellId = 202, Grade = 2 } } },
+            new FightSpellsContextEvent { CharacterId = Self, FighterId = Knight, Spells = { new SpellItem { SpellId = 5, Grade = 1 }, new SpellItem { SpellId = 5, Grade = 3 } } });
+
+        Assert.Equal([KeyValuePair.Create(202, 2)], listed.Fight!.Spells.ToArray());
+        Assert.Equal([KeyValuePair.Create(5, 3)], listed.Fight.ListedSpells[Knight].ToArray());
+        Assert.False(listed.Fight.ListedSpells.ContainsKey(Self));
     }
 
     [Fact]

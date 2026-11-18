@@ -290,7 +290,9 @@ The bots run in `D3B.Bot`: what each part does today, with the decisions that ma
   it (`ImaginedFights`, `CharacterSpells`), its sword's blow among its casts (D220), sends the plan's first walk or cast,
   waits for the server's answer and the client's acknowledgement, plans again, and ends its turn as soon as the plan is
   empty. A summon of the character's the client controls plays its turns the same, the fight imagined from its view, its
-  spells its grade's (`FightState.IsOwnTurn`, D271). Every request waits `BotDelays.FightAction` first, the owner's
+  spells its grade's (`FightState.IsOwnTurn`, D271), and so does a companion of the character's, such as the Astrub Knight
+  (`Fighter.MasterId`), its spells those the server lists for it (`FightState.ListedSpells`, D443), protecting its master
+  as a summon protects its summoner (`Combatant.MasterId`). Every request waits `BotDelays.FightAction` first, the owner's
   0.8 s (D368), and every wait ends with the fight. A cast the server refuses with an error text is not weighed again that turn
   on that cell, and the next turn weighs it anew, since what the server refuses depends on what it sees (D407); one it
   leaves unanswered is not cast again that fight. The player's placement, readiness, casts, walks and turn's ends pause the bot
