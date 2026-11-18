@@ -66,6 +66,24 @@ enum FightType {
   FIGHT_TYPE_VALUE_10 = 10;
 }
 
+// Joins a fight shown on the character's map, on the side of a fighter of it: the follower, its leader's fight, by a
+// click on the fight's sword in the captures (D435). The server answers as when the character attacks: the context
+// destroyed and created again for the fight, then the placement.
+message FightJoinRequest {
+  // No capture sets it.
+  Unmeasured unmeasured_1 = 1;
+
+  // The fight, as the party's event and the map name it.
+  int32 fight_id = 2;
+
+  // The fighter whose side the character joins: the leader.
+  int64 fighter_id = 3;
+
+  message Unmeasured {
+    string text_1 = 1;
+  }
+}
+
 // The character joins the fight's placement.
 message FightJoinEvent {
   option (d3b.readable.partial) = true;
@@ -112,11 +130,11 @@ message FightOptionToggleRequest {
 
 // An option of a team's fight, during the placement. Measured (D203, corrected by D216): the owner saw the AI's first
 // toggle, 0, refuse spectators, the server answering with text 40, and its second, 2, close the fight, with text 95; the
-// server keeps 0 from one fight to the next. The group's, which the owner, in no group, could not set, and the other are
-// not measured.
+// server keeps 0 from one fight to the next. The party's, 1, measured on 3.7.14.18 (D435): the server sets it by itself
+// as a party's leader attacks, and its follower joined the fight so locked. The other is not measured.
 enum FightOption {
   FIGHT_OPTION_NO_SPECTATORS = 0;
-  FIGHT_OPTION_VALUE_1 = 1;
+  FIGHT_OPTION_PARTY_ONLY = 1;
   FIGHT_OPTION_CLOSED = 2;
   FIGHT_OPTION_VALUE_3 = 3;
 }

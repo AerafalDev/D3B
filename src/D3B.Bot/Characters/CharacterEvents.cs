@@ -86,8 +86,15 @@ public static class CharacterEvents
         return message switch
         {
             MapMovementCancelRequest cancel when IsCell(cancel.CellId) => state with { Cell = cancel.CellId, Path = [] },
+            PartyInvitationRefuseRequest refused when state.Invitation?.PartyId == refused.PartyId => state with { Invitation = null },
             _ => state,
         };
+    }
+
+    // The party's end, whichever way: its fights are no longer the character's to join.
+    private static CharacterState Unparty(CharacterState state)
+    {
+        return state with { Party = null, PartyFight = null };
     }
 
     private static CharacterState FromServer(CharacterState state, IMessage message)
@@ -116,7 +123,7 @@ public static class CharacterEvents
                 HavenBagOwnerId = null,
                 IsWalkHeld = false,
             },
-            ContextCreationEvent created => state with { Fight = created.Context is ContextCreationEvent.Types.GameContext.Fight ? new FightState() : null },
+            ContextCreationEvent created => state with { Fight = created.Context is ContextCreationEvent.Types.GameContext.Fight ? new FightState() : null, PartyFight = null },
             MapInformationEvent information when information.MapId == state.MapId => Placed(state, information),
             InteractiveElementUpdatedEvent { Element: { } element } when state.Elements.ContainsKey(element.ElementId) => state with
             {
@@ -183,6 +190,25 @@ public static class CharacterEvents
             {
                 Spells = spells.Spells.GroupBy(spell => spell.SpellId).ToImmutableSortedDictionary(group => group.Key, group => group.Last().Grade),
                 TransformedSpells = spells.TransformedSpells.GroupBy(spell => spell.SpellId).ToImmutableSortedDictionary(group => group.Key, group => group.Last().Grade),
+            },
+            PartyInvitationEvent invited when invited.ToId == self => state with { Invitation = new PartyInvitation(invited.PartyId, invited.FromId, invited.FromName) },
+            PartyJoinEvent joined => state with
+            {
+                Party = new CharacterParty(joined.PartyId, joined.LeaderId, [.. joined.Members.Select(member => member.Id)]),
+                Invitation = state.Invitation?.PartyId == joined.PartyId ? null : state.Invitation,
+            },
+            PartyNewMemberEvent { Member: { } member } added when state.Party is { } party && party.Id == added.PartyId && !party.Members.Contains(member.Id) => state with
+            {
+                Party = party with { Members = party.Members.Add(member.Id) },
+            },
+            PartyMemberRemoveEvent removed when removed.LeavingId == self && state.Party?.Id == removed.PartyId => Unparty(state),
+            PartyMemberRemoveEvent removed when state.Party is { } party && party.Id == removed.PartyId => state with { Party = party with { Members = party.Members.Remove(removed.LeavingId) } },
+            PartyDeletedEvent deleted when state.Party?.Id == deleted.PartyId => Unparty(state),
+            PartyLeaveEvent left when state.Party?.Id == left.PartyId => Unparty(state),
+            PartyKickedByEvent kicked when state.Party?.Id == kicked.PartyId => Unparty(state),
+            PartyMemberInFightEvent { Map: { } map } fighting when state.Party?.Id == fighting.PartyId => state with
+            {
+                PartyFight = new PartyMemberFight(fighting.MemberId, fighting.FightId, map.MapId),
             },
             _ => state,
         };

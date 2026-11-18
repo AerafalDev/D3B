@@ -155,6 +155,16 @@ public sealed record CharacterState
     /// <summary>Gets when the account's subscription ends, as the connection phase's identification said, or <see langword="null"/> when it gave no date (D72).</summary>
     public DateTimeOffset? SubscriptionEnd { get; init; }
 
+    /// <summary>Gets the party the character is in, from the server's giving it to the character's leaving it, being excluded or the party's end (D435).</summary>
+    public CharacterParty? Party { get; init; }
+
+    /// <summary>Gets the invitation into a party the character received, until it joins that party or refuses it (D435).</summary>
+    public PartyInvitation? Invitation { get; init; }
+
+    /// <summary>Gets the last fight the server said a member of the character's party is in, until the character's next fight or roleplay context, or it leaves the party (D435).</summary>
+    /// <remarks>No end of that fight is measured: a fight the member finished stays until then.</remarks>
+    public PartyMemberFight? PartyFight { get; init; }
+
     /// <summary>Gets the state of a character the client just chose, as the server's confirmation describes it.</summary>
     /// <param name="key">Who the bot plays.</param>
     /// <param name="character">The character, as the server's confirmation gives it.</param>

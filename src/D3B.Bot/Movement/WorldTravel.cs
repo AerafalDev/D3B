@@ -121,7 +121,7 @@ public static class WorldTravel
     /// <param name="context">The behavior's context.</param>
     /// <returns>
     /// The rules, with what the character's criteria are answered on (<see cref="FactsOf"/>), the zaaps it knows, none when the
-    /// running activity takes none (D429), the kamas it carries, what a teleport counts as for the running activity (D167), and
+    /// running activity takes none (D436), the kamas it carries, what a teleport counts as for the running activity (D167), and
     /// the teleports and NPCs' ways it was refused (D248, D253).
     /// </returns>
     public static WorldPathRules RulesOf(BotContext context)

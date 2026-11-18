@@ -1,8 +1,8 @@
-# Bug reports, the profile's zaaps (D429)
+# Bug reports, the profile's zaaps (D436)
 
 A part of [the decisions](README.md); each decision has one line in [the index](../decisions-index.md).
 
-## D429: A profile that takes no zaap takes none on any of its journeys, to its place, back and to the bank
+## D436: A profile that takes no zaap takes none on any of its journeys, to its place, back and to the bank
 
 *2026-11-18, outside the roadmap's steps, the owner's report; the meaning chosen by the owner, as the lead recommended it.
 Supersedes D405's "`UseZaaps` concerns the journey to the bank only"; builds D167 and D405.*

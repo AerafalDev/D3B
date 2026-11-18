@@ -8,7 +8,7 @@ namespace D3B.Bot.Banks;
 /// Kept as the host's configuration names them, <c>Banking:FullAt</c> and <c>Banking:UseZaaps</c>, and changed at once from the
 /// app's settings: the activities read it at each step, so a share set while a bot plays applies to its next step. A profile
 /// that asks for its own banking (<c>OwnBanking</c> in its settings) ignores it, and one that takes no zaap takes none to the
-/// bank either, whatever it says (D429).
+/// bank either, whatever it says (D436).
 /// </remarks>
 public sealed class BankingPreferences
 {
@@ -101,7 +101,7 @@ public sealed class BankingPreferences
 
     /// <summary>Gets whether a profile's characters may take a zaap to the bank.</summary>
     /// <param name="own">Whether the profile asks for its own banking.</param>
-    /// <param name="profile">Whether the profile takes zaaps, on every journey of its own (D429).</param>
+    /// <param name="profile">Whether the profile takes zaaps, on every journey of its own (D436).</param>
     /// <returns>No when the profile takes none; else yes when it asks for its own banking, and the general answer when not.</returns>
     public bool UseZaapsOf(bool own, bool profile)
     {

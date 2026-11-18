@@ -45,7 +45,7 @@ public abstract class BotActivity
     /// <remarks>1 by default: a zaap as soon as it saves a change, as before.</remarks>
     public virtual int TeleportChanges => 1;
 
-    /// <summary>Gets whether the activity's journeys may teleport to a zaap at all, its banking's included; else every one walks, whatever the zaaps the character knows (D429).</summary>
+    /// <summary>Gets whether the activity's journeys may teleport to a zaap at all, its banking's included; else every one walks, whatever the zaaps the character knows (D436).</summary>
     /// <remarks>Yes by default, as before.</remarks>
     public virtual bool UsesTeleports => true;
 

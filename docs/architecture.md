@@ -113,7 +113,8 @@ The bots run in `D3B.Bot`: what each part does today, with the decisions that ma
   it knows, a zaap's dialog with its costs and the haven bag it is in (D83), the map's monster groups, each its cell and
   its monsters at their grades and levels (`MonsterGroups`, `MapMonsterGroup`, D239), whether it fights (D88), whether the server
   may still hold a walk the client did not follow (D89), inventory, kamas, weight, how full it is, and professions, and
-  when its account's subscription ends, which the connection phase's identification said (D72), and its fight (D179).
+  when its account's subscription ends, which the connection phase's identification said (D72), its fight (D179), and
+  its party, an invitation it has not answered and the last fight a member of its party is in (D435).
   `IsBusy` gathers what makes every behavior answer `Busy`: a walk, a use, a dialog or exchange, a fight.
   `CharacterEvents` turns each message into the next snapshot, pure functions; logic code reads snapshots.
 - **Behaviors** are async methods given a `BotContext`, the state, the pack's maps, world paths and banks, the clock and
@@ -159,7 +160,7 @@ The bots run in `D3B.Bot`: what each part does today, with the decisions that ma
   character's haven bag leaves it first. An activity may end a journey on a map it reaches where it has work, its
   information received (D259). The criteria are answered on the state (`WorldTravel.FactsOf`), and teleports
   on the zaaps it knows and the kamas it carries (`WorldTravel.RulesOf`, D83), none when the running activity takes no zaap
-  (`BotActivity.UsesTeleports`, the profile's `UseZaaps`, D429). A teleport counts as as many map changes as
+  (`BotActivity.UsesTeleports`, the profile's `UseZaaps`, D436). A teleport counts as as many map changes as
   the running activity says (`BotActivity.TeleportChanges`, `WorldPathRules.TeleportChanges`), so that a zaap is taken only
   when it saves that many, and never on a tie with a walk (D167). A journey may also seek zones of maps, vertices of the world graph
   (`TravelAsync(maps, zones, ...)`, D425): the character has arrived when its vertex, found from its cell, is one of them, so another zone
@@ -173,7 +174,7 @@ The bots run in `D3B.Bot`: what each part does today, with the decisions that ma
   Whether the journey to the bank may teleport, and the share of pods at which a bot banks, are the host's general settings
   (`BankingPreferences`, `Banking:FullAt` and `Banking:UseZaaps`, D405), which a profile answers with its own (`OwnBanking`,
   `FullAt` in `HarvestSettings` and `FightSettings`); a profile that takes no zaap takes none to the bank either
-  (`BankingPreferences.UseZaapsOf`, D429); a journey makes the changes it may again from the path on
+  (`BankingPreferences.UseZaapsOf`, D436); a journey makes the changes it may again from the path on
   foot once a teleport failed (`JourneyBudget`).
 - **Activities** (D87), in `D3B.Bot.Activities`: a `BotActivity`, written by a module, chooses each step
   from the state, a behavior's worth of work; its other hooks have defaults: when the character is full and how it is
@@ -237,7 +238,7 @@ The bots run in `D3B.Bot`: what each part does today, with the decisions that ma
   halving a resource's worth, not above the character's level, the isolated maps the tour leaves out counting for
   nothing (`HarvestPlace`, `AutomaticPlace`, D166, D264), its name before
   the tour on the card; a zaap only when it saves the profile's number of maps, 5 by default (`HarvestSettings.ZaapSaving`,
-  D167), and none on any journey when the profile takes none (`HarvestSettings.UseZaaps`, D429). The module reads a profile stored before as it harvested, and gives six presets (D168).
+  D167), and none on any journey when the profile takes none (`HarvestSettings.UseZaaps`, D436). The module reads a profile stored before as it harvested, and gives six presets (D168).
 - **Harvesting, rotating** (D391): a place the activity chooses is several sub-areas in turn, not one (`HarvestSettings.Rotation`, 10
   by default). `AutomaticPlace.Reckon` ranks the sub-areas and gives each profession's top, the sub-area drawing its highest-level
   resource on the most maps; `PlaceRotation.Draw`, shared with the fight, draws the rotation from the ten richest the character
@@ -416,7 +417,7 @@ Built in session 3b (D35 to D38): the relay of the connection phase, in `D3B.Net
   in its `game` directory, with the messages the game's frames carry), pairs every readable message and enum with its
   counterpart (`ProtocolMatcher`: pins, anchors, fields, then structural scores; `google.protobuf.Any` is its own
   counterpart), audits the result (`ContractAudit`, which counts what partial messages leave out apart from its notes),
-  and writes it beside the pack, `mapping-17.binpb` (`MappingFile`, D342, D383), only when it holds. For what is left open it
+  and writes it beside the pack, `mapping-18.binpb` (`MappingFile`, D342, D383), only when it holds. For what is left open it
   lists the build's messages that fit, which the maintainer pins (D54). The mapping records the schema's SHA-256 and the
   readable protocol's digest (`ProtocolDigest`); `MappingFile.FormatVersion` changes with `mapping.proto` or that
   digest.

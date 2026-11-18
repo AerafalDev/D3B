@@ -566,7 +566,24 @@ or refines another says so in its own entry. Add a line here with every new deci
 - [D428](decisions/d427-d428-client-3-7-14-18.md#d428-371418-mapped-from-371317s-pins-without-its-own-captures-and-released) 3.7.14.18 mapped from 3.7.13.17's pins without its own captures, and released (2026-11-17)
   - Capturing first, as D364 did; 3.7.13.17's mapping file renamed for the new build.
 
-## Bug reports, the profile's zaaps (D429)
+## Step 10, groups (D429 to D435)
 
-- [D429](decisions/d429-bug-reports-zaaps.md#d429-a-profile-that-takes-no-zaap-takes-none-on-any-of-its-journeys-to-its-place-back-and-to-the-bank) A profile that takes no zaap takes none on any of its journeys, to its place, back and to the bank (2026-11-18)
+- [D429](decisions/d429-d435-step-10-groups.md#d429-step-10-starts-now-on-the-c-version-in-four-sessions) Step 10 starts now, on the C# version, in four sessions (2026-11-18)
+  - Coding after step 7's measure in game, six sessions, the fights first with a party made by hand.
+- [D430](decisions/d429-d435-step-10-groups.md#d430-a-follower-plays-a-follow-profile-which-names-its-master) A follower plays a "Follow" profile, which names its master (2026-11-18)
+  - A group as a record of the accounts page, a group as an asset of the studio.
+- [D431](decisions/d429-d435-step-10-groups.md#d431-the-party-is-the-bots-the-games-own-following-off-a-fight-joined-by-request) The party is the bot's, the game's own following off, a fight joined by request (2026-11-18)
+  - The party made by hand, no party in game, the game joining the follower by itself.
+- [D432](decisions/d429-d435-step-10-groups.md#d432-the-group-moves-in-a-chain-and-waits-for-anyone-missing) The group moves in a chain, and waits for anyone missing (2026-11-18)
+  - Waiting only before an attack, each by its own path, going on without the missing, a follower leading.
+- [D433](decisions/d429-d435-step-10-groups.md#d433-a-full-member-takes-the-whole-group-to-the-masters-bank) A full member takes the whole group to the master's bank (2026-11-18)
+  - Each at its own bank, the kamas given too, a setting of the profile.
+- [D434](decisions/d429-d435-step-10-groups.md#d434-the-ai-unchanged-in-a-group-then-measured) The AI unchanged in a group, then measured (2026-11-18)
+  - A shared target from the first version.
+- [D435](decisions/d429-d435-step-10-groups.md#d435-10a-the-partys-protocol-read-from-the-owners-captures-mapping-format-18) 10a, the party's protocol read from the owner's captures, mapping format 18 (2026-11-18)
+  - The two options named from the references' order, every party message mapped.
+
+## Bug reports, the profile's zaaps (D436)
+
+- [D436](decisions/d436-bug-reports-zaaps.md#d436-a-profile-that-takes-no-zaap-takes-none-on-any-of-its-journeys-to-its-place-back-and-to-the-bank) A profile that takes no zaap takes none on any of its journeys, to its place, back and to the bank (2026-11-18)
   - D405's meaning kept, two flags, "never" as a number of maps.
