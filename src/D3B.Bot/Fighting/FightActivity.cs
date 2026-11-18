@@ -90,6 +90,9 @@ public sealed class FightActivity : BotActivity
     public override int TeleportChanges => _settings.ZaapSaving;
 
     /// <inheritdoc/>
+    public override bool UsesTeleports => _settings.UseZaaps;
+
+    /// <inheritdoc/>
     public override bool FightsItsFights => true;
 
     /// <summary>Initializes a new instance of the <see cref="FightActivity"/> class.</summary>

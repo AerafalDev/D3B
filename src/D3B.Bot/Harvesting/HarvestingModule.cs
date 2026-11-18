@@ -93,15 +93,16 @@ public sealed class HarvestingModule : IModule
             .Help(HarvestTexts.Text("ZoneHelp"))
             .VisibleWhen(s => s.Place is HarvestPlace.Zone);
         settings.Flag(s => s.IsolatedMaps, HarvestTexts.Text("IsolatedMaps")).Help(HarvestTexts.Text("IsolatedMapsHelp")).Advanced();
+        settings.Flag(s => s.UseZaaps, HarvestTexts.Text("UseZaaps")).Help(HarvestTexts.Text("UseZaapsHelp")).Advanced();
         settings.Number(s => s.ZaapSaving, HarvestTexts.Text("ZaapSaving"), 1, 30)
             .Unit(HarvestTexts.Text("ZaapSavingUnit"))
             .Help(HarvestTexts.Text("ZaapSavingHelp"))
-            .Advanced();
+            .Advanced()
+            .VisibleWhen(s => s.UseZaaps);
 
         settings.Section(HarvestTexts.Text("SectionBank"));
         settings.Flag(s => s.OwnBanking, HarvestTexts.Text("OwnBanking")).Help(HarvestTexts.Text("OwnBankingHelp")).Advanced();
         settings.Number(s => s.FullAt, HarvestTexts.Text("FullAt"), 50, 100).Percent().Advanced().VisibleWhen(s => s.OwnBanking);
-        settings.Flag(s => s.UseZaaps, HarvestTexts.Text("UseZaaps")).Help(HarvestTexts.Text("UseZaapsHelp")).Advanced().VisibleWhen(s => s.OwnBanking);
         settings.Choice(s => s.Deposit, HarvestTexts.Text("Deposit"), deposit => HarvestTexts.Text(deposit is HarvestDeposit.Harvest ? "DepositHarvest" : "DepositAll"));
 
         settings.Choice(s => s.DepositTo, HarvestTexts.Text("DepositTo"), place => HarvestTexts.Text($"DepositTo{place}"))

@@ -2124,7 +2124,7 @@
     <value>Prendre un zaap pour aller à la banque</value>
   </data>
   <data name="SettingBankZaapsRowDetail" xml:space="preserve">
-    <value>Désactivé, les bots vont toujours à pied à la banque. Activé, ils prennent un zaap s'il évite assez de cartes et s'ils peuvent le payer ; sinon ils marchent.</value>
+    <value>Désactivé, les bots vont toujours à pied à la banque. Activé, ils prennent un zaap s'il évite assez de cartes et s'ils peuvent le payer ; sinon ils marchent. Un profil dont les zaaps sont désactivés marche quoi que dise ce réglage.</value>
   </data>
   <data name="GroupBotDelays" xml:space="preserve">
     <value>Délais minimums des bots</value>

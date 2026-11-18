@@ -582,3 +582,8 @@ or refines another says so in its own entry. Add a line here with every new deci
   - A shared target from the first version.
 - [D435](decisions/d429-d435-step-10-groups.md#d435-10a-the-partys-protocol-read-from-the-owners-captures-mapping-format-18) 10a, the party's protocol read from the owner's captures, mapping format 18 (2026-11-18)
   - The two options named from the references' order, every party message mapped.
+
+## Bug reports, the profile's zaaps (D436)
+
+- [D436](decisions/d436-bug-reports-zaaps.md#d436-a-profile-that-takes-no-zaap-takes-none-on-any-of-its-journeys-to-its-place-back-and-to-the-bank) A profile that takes no zaap takes none on any of its journeys, to its place, back and to the bank (2026-11-18)
+  - D405's meaning kept, two flags, "never" as a number of maps.

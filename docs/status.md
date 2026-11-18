@@ -5,7 +5,7 @@ owed. The reasons are in [the decisions](decisions/README.md), found through [de
 their sessions are in [roadmap.md](roadmap.md); how the code is built is in [architecture.md](architecture.md). Whoever closes
 a session updates this page, the roadmap and the index.
 
-As of 2026-11-18, after D435 (10a, the party's protocol read from the owner's captures, mapping format 18) and D429 to D434 (step 10 begun ahead of step 7's measure in game, the owner's choice: groups designed in four sessions), D427 and D428 (client 3.7.14.18, its files released from 3.7.13.17's pins, the app's 0.9.2), D425 (the harvest's tour goes into another zone of a map, out and back through the world graph), D424 (a resource in another zone of its map is out of reach, no longer used from afar), D421 (7r6, a step of a list repeats and plays another list), D420 (the Pandawa no longer swaps Sobre and Saoul instead of striking), D419 (7r4, following a run), D418 (7r5b, the profile as an asset editor), D415 (7r5 part 1, the zones read by the harvest and the hunt), D417 (the harvest's tour weighs the character's level) and D416 (it leaves the houses of a town alone), D414 (hints on the world map), D413 (7r3, the Sequencer) and D408 (the fight AI after the players' reports, D407, summons a last resort; the home page, D406; banking by general settings, D405; D394, session 7d4, merged into 7r2's branch). App 0.9.2, client build 3.7.14.18, pack format 12, mapping format 18 (17 for the published app 0.9.2).
+As of 2026-11-18, after D436 (a profile that takes no zaap takes none on any of its journeys, the owner's report), D435 (10a, the party's protocol read from the owner's captures, mapping format 18) and D429 to D434 (step 10 begun ahead of step 7's measure in game, the owner's choice: groups designed in four sessions), D427 and D428 (client 3.7.14.18, its files released from 3.7.13.17's pins, the app's 0.9.2), D425 (the harvest's tour goes into another zone of a map, out and back through the world graph), D424 (a resource in another zone of its map is out of reach, no longer used from afar), D421 (7r6, a step of a list repeats and plays another list), D420 (the Pandawa no longer swaps Sobre and Saoul instead of striking), D419 (7r4, following a run), D418 (7r5b, the profile as an asset editor), D415 (7r5 part 1, the zones read by the harvest and the hunt), D417 (the harvest's tour weighs the character's level) and D416 (it leaves the houses of a town alone), D414 (hints on the world map), D413 (7r3, the Sequencer) and D408 (the fight AI after the players' reports, D407, summons a last resort; the home page, D406; banking by general settings, D405; D394, session 7d4, merged into 7r2's branch). App 0.9.2, client build 3.7.14.18, pack format 12, mapping format 18 (17 for the published app 0.9.2).
 
 ## What exists
 
@@ -35,6 +35,8 @@ As of 2026-11-18, after D435 (10a, the party's protocol read from the owner's ca
 
 ## Not measured in game
 
+- The profile's zaaps (D436): a profile with "Take zaaps" off walking to its place, back and to the bank, tested on the fake
+  game only, not yet seen in game.
 - Client 3.7.14.18 (D428): its mapping made from pins alone, equal pair by pair to 3.7.13.17's from captures, not yet read on a
   capture of this build; the client following D3B's actions (D60) not measured again on it.
 - The harvest and the zones of a map (D424): a player's report ("it tries but cannot, unless it stands in front of the resource or comes back from

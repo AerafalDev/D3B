@@ -176,7 +176,7 @@ public sealed class HarvestViewsTests : IAsyncDisposable
         Assert.Contains("to the nearest bank", english);
         Assert.Contains("90%", english);
         Assert.Contains("Own banking rules", english);
-        Assert.Contains("Take a zaap to the bank", english);
+        Assert.Contains("Take zaaps", english);
         Assert.Contains("What harvesting brings", english);
         Assert.Contains("Everything but what is worn", english);
         Assert.DoesNotContain(english, text => text.StartsWith('[') && text.EndsWith(']'));

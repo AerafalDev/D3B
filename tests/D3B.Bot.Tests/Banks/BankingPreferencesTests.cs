@@ -63,4 +63,14 @@ public sealed class BankingPreferencesTests
         Assert.False(preferences.UseZaapsOf(false, true));
         Assert.True(preferences.UseZaapsOf(true, true));
     }
+
+    [Fact]
+    public void AProfileThatTakesNoZaapTakesNoneToTheBankWhateverTheGeneralSettingsSay()
+    {
+        var preferences = new BankingPreferences();
+
+        Assert.True(preferences.UseZaapsOf(false, true));
+        Assert.False(preferences.UseZaapsOf(false, false));
+        Assert.False(preferences.UseZaapsOf(true, false));
+    }
 }

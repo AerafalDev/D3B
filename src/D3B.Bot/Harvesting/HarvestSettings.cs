@@ -39,16 +39,17 @@ public sealed class HarvestSettings
     /// <summary>Gets or sets whether to go through the zone's isolated maps too, last, those reached only far round (D149).</summary>
     public bool IsolatedMaps { get; set; }
 
-    /// <summary>Gets or sets how many map changes a zaap must save to be taken, on every journey (D167).</summary>
+    /// <summary>Gets or sets how many map changes a zaap must save to be taken, when <see cref="UseZaaps"/> is on, on every journey (D167).</summary>
     public int ZaapSaving { get; set; } = 5;
 
-    /// <summary>Gets or sets whether the profile banks by its own rules, <see cref="FullAt"/> and <see cref="UseZaaps"/>, rather than by the general settings' (D405).</summary>
+    /// <summary>Gets or sets whether the profile banks by its own rules, <see cref="FullAt"/> and its zaaps to the bank, rather than by the general settings' (D405); <see cref="UseZaaps"/> is the profile's whatever this says (D436).</summary>
     public bool OwnBanking { get; set; }
 
     /// <summary>Gets or sets how full the character is, in percent of its pods, once it banks, when <see cref="OwnBanking"/> is on.</summary>
     public int FullAt { get; set; } = 90;
 
-    /// <summary>Gets or sets whether the character may take a zaap to the bank, when <see cref="OwnBanking"/> is on; else it walks (D405).</summary>
+    /// <summary>Gets or sets whether the character may take a zaap on the profile's journeys, to its place, back and to the bank; else it walks on every one (D436).</summary>
+    /// <remarks>On, the journey to the bank also follows the general settings unless <see cref="OwnBanking"/> is on (D405).</remarks>
     public bool UseZaaps { get; set; } = true;
 
     /// <summary>Gets or sets what goes to the bank.</summary>

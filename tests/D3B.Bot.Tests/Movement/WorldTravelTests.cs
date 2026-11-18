@@ -276,6 +276,21 @@ public sealed class WorldTravelTests
     }
 
     [Fact]
+    public async Task AnActivityThatTakesNoZaapWalksEvenWhereAZaapWouldSaveChanges()
+    {
+        // The east map's zaap saves one change of two, enough for an activity asking one: the activity takes none.
+        await using var play = new TestPlay();
+        var (connection, bot) = await KnowingTheEastZaapAsync(play);
+        var run = bot.StartActivity(new JourneyActivity(TestPlay.EastMapId, 1, usesTeleports: false));
+
+        Assert.True(await TestWalks.WalkedAsync(play, connection, 1) >= 532);
+        Assert.DoesNotContain(connection.Sent, request => request is TeleportRequest);
+
+        run.Stop();
+        await run.Completion;
+    }
+
+    [Fact]
     public async Task ARefusedTeleportLeavesTeleportsOutOfTheJourney()
     {
         await using var play = new TestPlay();
