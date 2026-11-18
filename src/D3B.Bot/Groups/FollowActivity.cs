@@ -24,7 +24,7 @@ namespace D3B.Bot.Groups;
 /// lets the client's display time pass, then turns both off, at each party joined.</item>
 /// <item>The master missing, disconnected or paused, the follower waits where it stands: no follower leads (D432).</item>
 /// <item>With its master, under the share of life its master's profile heals under, it heals: it eats until its life is
-/// whole the food it carries that only heals, else regenerates up to the share, its master waiting to attack (D440).</item>
+/// whole the food it carries that only heals, else regenerates up to the share, its master waiting to attack (D441).</item>
 /// <item>With its master, it waits for the master to move.</item>
 /// <item>Else it follows the chain: the member before it on its map, it waits for that one to go; once the master is
 /// placed on its new map, it changes maps towards it, one change a step by the world's paths, which from the map the

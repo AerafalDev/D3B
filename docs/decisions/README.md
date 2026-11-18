@@ -60,5 +60,5 @@ Each file holds the decisions of one group of [the index](../decisions-index.md)
 - [Bug reports, the profile's zaaps (D436)](d436-bug-reports-zaaps.md): 1 decision, 2 KB.
 - [Step 10, 10b: the party by the bot and the chain (D437)](d437-step-10-the-chain.md): 1 decision, 5 KB.
 - [Fights, the challenges' bonus (D438)](d438-fights-challenges-bonus.md): 1 decision, 3 KB.
-- [Step 10, 10c1: the group's fights (D439)](d439-step-10-the-groups-fights.md): 1 decision, 4 KB.
-- [Step 10, 10c2: the group's life before an attack (D440)](d440-step-10-the-groups-life.md): 1 decision, 2 KB.
+- [Step 10, 10c1: the group's fights (D440)](d440-step-10-the-groups-fights.md): 1 decision, 4 KB.
+- [Step 10, 10c2: the group's life before an attack (D441)](d441-step-10-the-groups-life.md): 1 decision, 2 KB.

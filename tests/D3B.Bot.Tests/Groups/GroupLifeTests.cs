@@ -117,7 +117,7 @@ public sealed class GroupLifeTests
     [Fact]
     public async Task AMasterWaitsForItsFollowersLifeBeforeAWalkToo()
     {
-        // As an activity heals before its step (D440): held only before the attack, the master would wait on the group's
+        // As an activity heals before its step (D441): held only before the attack, the master would wait on the group's
         // cell, which the group leaves meanwhile.
         await using var play = new TestPlay();
         var (masterConnection, master, _, _, run) = await GroupAsync(play, 600);

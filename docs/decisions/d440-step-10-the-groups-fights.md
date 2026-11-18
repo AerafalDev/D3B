@@ -1,9 +1,9 @@
-# Step 10, 10c1: the group's fights (D439)
+# Step 10, 10c1: the group's fights (D440)
 
 A part of [the decisions](README.md); each decision has one line in [the index](../decisions-index.md). The step's design
 is in [D429 to D435](d429-d435-step-10-groups.md), the chain in [D437](d437-step-10-the-chain.md).
 
-## D439: 10c1, a follower joins its master's fight by request, the master ready once its followers are placed
+## D440: 10c1, a follower joins its master's fight by request, the master ready once its followers are placed
 
 *2026-11-18, step 10, session 10c; 10c in three stacked pull requests the owner's choice among three, as the lead
 recommended it; the measure in game at the very end the owner's choice; the rest the lead's, local and reversible, within
