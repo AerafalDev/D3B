@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="Name" xml:space="preserve">
+    <value>Suivre</value>
+  </data>
+  <data name="Master" xml:space="preserve">
+    <value>Maître</value>
+  </data>
+  <data name="MasterHelp" xml:space="preserve">
+    <value>Le personnage que celui-ci suit, carte après carte, dans le groupe qu'il mène : le maître joue son propre profil et mène dès que ce bot le suit.</value>
+  </data>
+  <data name="RuleMaster" xml:space="preserve">
+    <value>Choisis le maître.</value>
+  </data>
+  <data name="DoingStart" xml:space="preserve">
+    <value>Commence à suivre</value>
+  </data>
+  <data name="DoingNoMaster" xml:space="preserve">
+    <value>Attend que son maître se connecte</value>
+  </data>
+  <data name="DoingMasterDisconnected" xml:space="preserve">
+    <value>Attend {0}, déconnecté</value>
+  </data>
+  <data name="DoingMasterPaused" xml:space="preserve">
+    <value>Attend {0}, en pause</value>
+  </data>
+  <data name="DoingFollows" xml:space="preserve">
+    <value>Suit {0}</value>
+  </data>
+  <data name="DoingJoins" xml:space="preserve">
+    <value>Rejoint {0}</value>
+  </data>
+  <data name="DoingBehind" xml:space="preserve">
+    <value>Attend que {0} passe devant</value>
+  </data>
+  <data name="DoingStuck" xml:space="preserve">
+    <value>Ne trouve pas de chemin vers {0}, réessaie</value>
+  </data>
+  <data name="DoingParty" xml:space="preserve">
+    <value>Rejoint le groupe de {0}</value>
+  </data>
+  <data name="DoingLeaves" xml:space="preserve">
+    <value>Quitte un groupe que son maître ne mène pas</value>
+  </data>
+  <data name="WaitingDisconnected" xml:space="preserve">
+    <value>Attend {0}, déconnecté</value>
+  </data>
+  <data name="WaitingPaused" xml:space="preserve">
+    <value>Attend {0}, en pause</value>
+  </data>
+  <data name="WaitingFighting" xml:space="preserve">
+    <value>Attend {0}, en combat</value>
+  </data>
+  <data name="WaitingAway" xml:space="preserve">
+    <value>Attend {0}, en route</value>
+  </data>
+  <data name="WaitingOutOfParty" xml:space="preserve">
+    <value>Attend que {0} rejoigne le groupe</value>
+  </data>
+  <data name="WaitingSeveral" xml:space="preserve">
+    <value>Attend {0}</value>
+  </data>
+  <data name="FailItself" xml:space="preserve">
+    <value>Un personnage ne peut pas se suivre lui-même.</value>
+  </data>
+  <data name="FailMasterFollows" xml:space="preserve">
+    <value>Son maître suit un autre personnage : un suiveur ne mène jamais.</value>
+  </data>
+  <data name="FailLeads" xml:space="preserve">
+    <value>Ce personnage mène ses propres suiveurs : il ne peut pas en suivre un autre.</value>
+  </data>
+  <data name="FailFull" xml:space="preserve">
+    <value>Son maître mène déjà sept suiveurs, autant qu'un groupe en tient à côté de lui.</value>
+  </data>
+  <data name="FailFollows" xml:space="preserve">
+    <value>Ce personnage suit déjà un maître.</value>
+  </data>
+  <data name="FailNoMaster" xml:space="preserve">
+    <value>Aucun maître n'est choisi.</value>
+  </data>
+</root>

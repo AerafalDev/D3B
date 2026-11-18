@@ -231,6 +231,15 @@ public sealed class ActivitySettingsBuilder<TSettings>
         return Add(property, SettingKind.Sequence, false, name);
     }
 
+    /// <summary>Declares a character of the accounts page, by its key's text, picked among the characters D3B knows (D436).</summary>
+    /// <param name="property">The property, such as <c>s =&gt; s.Master</c>.</param>
+    /// <param name="name">The setting's name, as the app shows it.</param>
+    /// <returns>The setting's builder.</returns>
+    public SettingBuilder<TSettings> Character(Expression<Func<TSettings, string?>> property, LocalizedText name)
+    {
+        return Add(property, SettingKind.Character, false, name);
+    }
+
     /// <summary>Declares the replies given to an NPC, in order, the n-th to the n-th question (D384).</summary>
     /// <param name="property">The property, such as <c>s =&gt; s.Replies</c>.</param>
     /// <param name="name">The setting's name, as the app shows it.</param>

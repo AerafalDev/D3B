@@ -56,4 +56,7 @@ public enum SettingKind
 
     /// <summary>A list of steps of the project, played as a step of another, by its behavior's id, picked among the project's lists and never typed (D421); an empty text when none is picked.</summary>
     Sequence,
+
+    /// <summary>A character of the accounts page, by its account's id and its own (<see cref="Characters.CharacterKey.ToId"/>), picked among the characters D3B knows and never typed, such as a follower's master (D436); an empty text when none is picked.</summary>
+    Character,
 }

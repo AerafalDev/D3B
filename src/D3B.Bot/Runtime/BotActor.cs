@@ -4,6 +4,7 @@ using D3B.Bot.Activities;
 using D3B.Bot.Banks;
 using D3B.Bot.Characters;
 using D3B.Bot.Fights;
+using D3B.Bot.Groups;
 using D3B.Bot.Journal;
 using D3B.Bot.Network;
 using D3B.Data.Maps;
@@ -75,6 +76,7 @@ public sealed class BotActor : IAsyncDisposable, IRequestWithholder
     private volatile bool _fightsAlone;
     private volatile ActivityRun? _activity;
     private volatile FightEnd? _lastFightEnd;
+    private volatile IReadOnlyList<MissingMember> _waitingFor = [];
     private ImmutableHashSet<long> _noTeleportFrom = [];
     private ImmutableHashSet<int> _noNpcWays = [];
     private int _fightsBegun;
@@ -132,6 +134,12 @@ public sealed class BotActor : IAsyncDisposable, IRequestWithholder
 
     /// <summary>Gets the activity the bot runs, or ran last, if any.</summary>
     public ActivityRun? Activity => _activity;
+
+    /// <summary>Gets the members of its group a master waits for before it acts, in the chain's order: none while it waits for nobody (D432, D436).</summary>
+    public IReadOnlyList<MissingMember> WaitingFor => _waitingFor;
+
+    /// <summary>Gets or sets what holds the bot's requests until other bots are ready, such as a master's followers (D436).</summary>
+    internal IActionGate? Gate { get; set; }
 
     /// <summary>Gets what the bot did and met, its actions once over, for the app (D112).</summary>
     public RecentItems<JournalEntry> Journal { get; } = new(JournalCapacity);
@@ -234,6 +242,13 @@ public sealed class BotActor : IAsyncDisposable, IRequestWithholder
     internal void RefuseNpcWay(int way)
     {
         ImmutableInterlocked.Update(ref _noNpcWays, (ways, refused) => ways.Add(refused), way);
+    }
+
+    /// <summary>Says whom of its group the bot waits for before it acts, none once it goes on (D436).</summary>
+    /// <param name="missing">The members missing, in the chain's order.</param>
+    internal void WaitFor(IReadOnlyList<MissingMember> missing)
+    {
+        _waitingFor = missing;
     }
 
     /// <summary>Pauses the bot from the app, as the player's hand does: the behavior running is cut, and it starts nothing until <see cref="Resume"/> (D322).</summary>

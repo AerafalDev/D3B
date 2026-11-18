@@ -295,6 +295,31 @@
                     TextWrapping="Wrap" />
             </StackPanel>
         </DataTemplate>
+        <DataTemplate x:DataType="s:CharacterFieldViewModel">
+            <StackPanel Spacing="4">
+                <StackPanel Orientation="Horizontal" Spacing="6">
+                    <Button
+                        AutomationProperties.Name="{Binding Label}"
+                        Classes="Outline"
+                        Command="{Binding PickCommand}"
+                        Content="{Binding Text}"
+                        IsEnabled="{Binding CanPick}" />
+                    <Button
+                        AutomationProperties.Name="{l:Tr CharacterClear}"
+                        Classes="Tool Small"
+                        Command="{Binding ClearCommand}"
+                        IsVisible="{Binding HasValue}"
+                        ToolTip.Tip="{l:Tr CharacterClear}">
+                        <c:Icon Drawing="{StaticResource General.Close}" />
+                    </Button>
+                </StackPanel>
+                <TextBlock
+                    Classes="Muted"
+                    MaxWidth="420"
+                    Text="{Binding Detail}"
+                    TextWrapping="Wrap" />
+            </StackPanel>
+        </DataTemplate>
         <DataTemplate x:DataType="s:NpcRepliesFieldViewModel">
             <StackPanel Orientation="Horizontal" Spacing="6">
                 <Button

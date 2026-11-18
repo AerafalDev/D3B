@@ -140,6 +140,18 @@ public sealed class BotContext
     /// </remarks>
     public async Task SendAsync(IMessage request, CancellationToken cancellationToken)
     {
+        ArgumentNullException.ThrowIfNull(request);
+
+        // A master waits for its followers before it acts (D432): the gate holds the request until they are with it.
+        if (_bot.Gate is { } gate)
+            await gate.PassAsync(this, request, cancellationToken).ConfigureAwait(false);
+
+        await SendNowAsync(request, cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <summary>Sends a request past the bot's gate, once the client drew the map: the gate's own, such as a party's invitation.</summary>
+    internal async Task SendNowAsync(IMessage request, CancellationToken cancellationToken)
+    {
         // Again once waited: the display time raised meanwhile, or a new map placed, holds the request longer.
         for (var wait = _bot.DrawnAt - _bot.Time.GetUtcNow(); wait > TimeSpan.Zero; wait = _bot.DrawnAt - _bot.Time.GetUtcNow())
             await Task.Delay(wait, _bot.Time, cancellationToken).ConfigureAwait(false);

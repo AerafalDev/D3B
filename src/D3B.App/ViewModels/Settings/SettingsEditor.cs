@@ -11,6 +11,7 @@ using D3B.Data.Maps;
 using D3B.Data.Monsters;
 using D3B.Data.Texts;
 using D3B.Data.World;
+using D3B.Storage.Accounts;
 using D3B.Studio.Assets;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -56,6 +57,9 @@ internal sealed partial class SettingsEditor : ObservableObject
 
     /// <summary>Gets the project's zones, which a zone setting reads the maps of (D415).</summary>
     public IPlaceZones? Zones => Services?.GetService<IPlaceZones>();
+
+    /// <summary>Gets the accounts and characters D3B knows, which a character's setting is picked among (D436); none when the editor is not given the host's services.</summary>
+    public AccountBook? Accounts => Services?.GetService<AccountBook>();
 
     /// <summary>Gets or sets what names the NPCs and reads their questions and replies; without it they are named by their ids (D385).</summary>
     public NpcNames? NpcNames { get; set; }
@@ -512,6 +516,7 @@ internal sealed partial class SettingsEditor : ObservableObject
             (SettingKind.Route, _) => new RouteFieldViewModel(setting, this),
             (SettingKind.Zone, _) => new ZoneFieldViewModel(setting, this),
             (SettingKind.Sequence, _) => new SequenceFieldViewModel(setting, this),
+            (SettingKind.Character, _) => new CharacterFieldViewModel(setting, this),
             (SettingKind.NpcReply, _) => new NpcRepliesFieldViewModel(setting, this),
             (SettingKind.Number, _) => new NumberFieldViewModel(setting, this),
             (SettingKind.Text, _) => new TextFieldViewModel(setting, this),

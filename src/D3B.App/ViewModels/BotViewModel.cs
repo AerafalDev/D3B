@@ -8,6 +8,7 @@ using D3B.App.ViewModels.Characters;
 using D3B.Bot.Activities;
 using D3B.Bot.Characters;
 using D3B.Bot.Fighting;
+using D3B.Bot.Groups;
 using D3B.Bot.Harvesting;
 using D3B.Bot.Runtime;
 using D3B.Bot.Settings;
@@ -58,6 +59,7 @@ internal sealed partial class BotViewModel : ObservableObject
     private ActivityRun? _startedRun;
     private ActivityChoiceViewModel? _startedChoice;
     private ActivityReport? _shownReport;
+    private IReadOnlyList<MissingMember>? _shownWaiting;
     private CultureInfo? _shownCulture;
     private bool _seen;
     private bool _wasPaused;
@@ -825,14 +827,20 @@ internal sealed partial class BotViewModel : ObservableObject
     {
         Elapsed = run is null ? "" : ElapsedOf((run.EndedAt ?? _time.GetUtcNow()) - run.StartedAt);
 
-        if (ReferenceEquals(report, _shownReport) && _localizer.Culture.Equals(_shownCulture))
+        var waiting = Bot.WaitingFor;
+
+        if (ReferenceEquals(report, _shownReport) && ReferenceEquals(waiting, _shownWaiting) && _localizer.Culture.Equals(_shownCulture))
             return;
 
         _shownReport = report;
+        _shownWaiting = waiting;
         _shownCulture = _localizer.Culture;
 
-        // An activity over says how it ended: what it said it did is no longer true.
-        ActivityDoing = report is null || run is { IsOver: true } ? "" : _says.Say(report.Doing);
+        // A master waiting for its followers says for whom, whatever its activity said before it waited (D432). An
+        // activity over says how it ended: what it said it did is no longer true.
+        ActivityDoing = GroupTexts.Waiting(waiting) is { } wait ? _says.Say(wait)
+            : report is null || run is { IsOver: true } ? ""
+            : _says.Say(report.Doing);
         ProgressText = report?.Progress is { } progress && run is { IsOver: false } ? _says.Say(progress.Text) : "";
         ProgressPercent = report?.Progress is { Total: > 0 } shown ? Math.Clamp(100.0 * shown.Done / shown.Total, 0, 100) : 0;
         Counts = report is null ? [] : [.. report.Counts.Select(count => new ActivityCountViewModel(_says.Say(count.Text), count.ItemId is not null, count.ItemId is { } item ? _icons?.Item(item) : null))];

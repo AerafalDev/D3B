@@ -56,4 +56,4 @@ Each file holds the decisions of one group of [the index](../decisions-index.md)
 - [Bug reports, the cleaner (D423)](d423-bug-reports-cleaner.md): 1 decision, 3 KB.
 - [Step 9, the harvest and the zones of a map (D424, D425)](d424-step-9-the-harvests-zones.md): 2 decisions, 9 KB.
 - [Client 3.7.14.18 (D427, D428)](d427-d428-client-3-7-14-18.md): 2 decisions, 4 KB.
-- [Step 10, groups (D429 to D435)](d429-d435-step-10-groups.md): 7 decisions, 9 KB.
+- [Step 10, groups (D429 to D436)](d429-d436-step-10-groups.md): 8 decisions, 17 KB.
