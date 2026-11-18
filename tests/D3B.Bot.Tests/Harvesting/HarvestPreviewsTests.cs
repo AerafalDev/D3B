@@ -55,13 +55,14 @@ public sealed class HarvestPreviewsTests : IAsyncDisposable
     {
         var preview = Previews().Of(new HarvestSettings { Resources = [TestPlay.Chestnut, TestPlay.Ash, 9_999], Area = 1 })!;
 
-        // The interiors, the one without elements and the one nothing says holds a resource, are left out (D416).
+        // The interior without elements is left out (D416); the other is counted while no map of the sub-area showed the ash and the
+        // chestnut it lists (D444).
         Assert.Equal(
-            ["3: maps to go through", "0: probable maps", "2 of 3: resources present", "1 map: to the nearest bank"],
+            ["4: maps to go through", "0: probable maps", "2 of 3: resources present", "1 map: to the nearest bank"],
             preview.Figures.Select(figure => $"{Say(figure.Value)}: {Say(figure.Label)}"));
         Assert.Equal(5, preview.Zone.Length);
-        Assert.Equal(3, preview.Zone.Count(map => map.State is ZoneMapState.ToVisit));
-        Assert.All(new[] { TestPlay.InsideMapId, TestPlay.OtherInsideMapId }, inside => Assert.Contains(preview.Zone, map => map.MapId == inside && map.State is ZoneMapState.Empty));
+        Assert.Equal(4, preview.Zone.Count(map => map.State is ZoneMapState.ToVisit));
+        Assert.Contains(preview.Zone, map => map.MapId == TestPlay.OtherInsideMapId && map.State is ZoneMapState.Empty);
         Assert.Equal(TestPlay.MapId, preview.LandmarkMapId);
     }
 

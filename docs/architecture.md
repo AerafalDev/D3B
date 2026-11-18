@@ -202,7 +202,8 @@ The bots run in `D3B.Bot`: what each part does today, with the decisions that ma
   foretold by its elements' graphics (`HarvestZone.Foresee`, D138), and a tour leaves out the maps seen empty, those
   whose graphics all offer none of its skills, and those without elements; an interior of a sub-area that also holds maps on a
   world map (`SubAreaInteriors`, `HarvestZone.Interiors`, the houses of a town, shared with `HuntingGround`) is gone through only
-  once seen holding a wanted resource or foretold by a graphic (D416), and a map is probable only for what the character's level may
+  once seen holding a wanted resource or foretold by a graphic (D416), or, last, while its sub-area lists a wanted resource no map of it
+  showed nor is foretold to hold, as the ore of a mine (`HarvestZone.Listed`, D444), and a map is probable only for what the character's level may
   harvest (`HarvestTour.Know`, given at each step, D417). An element beside cells of another zone of its map only is out of reach from the
   character's zone (`ElementCells.UsedFrom`, D424): once the map is done the tour wants that zone, a vertex of the graph, as one more place
   (`MapHarvest.OtherZones`, `HarvestTour.OtherZones`, once per tour, a way of six map changes at most, D425), the visited, regrowth and sighting

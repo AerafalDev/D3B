@@ -50,8 +50,11 @@ public sealed class HarvestZone
     /// <summary>Gets the zone's maps on no world map, such as houses and mines, which a tour goes through last (D128).</summary>
     public FrozenSet<long> Insides { get; }
 
-    /// <summary>Gets the zone's interiors of a sub-area that also holds maps on a world map, such as the houses of a town: a tour goes through one only when something says it holds a resource (D416).</summary>
+    /// <summary>Gets the zone's interiors of a sub-area that also holds maps on a world map, such as the houses of a town: a tour goes through one only when something says it holds a resource (D416), or while its sub-area lists one no map of it showed, as a mine's ore (D444).</summary>
     public FrozenSet<long> Interiors { get; }
+
+    /// <summary>Gets the resources asked for that each sub-area lists among its harvestables, by the index of the sub-area in <see cref="SubAreas"/>: while no map of a sub-area showed one, a tour looks for it in its interiors too (D444).</summary>
+    public FrozenDictionary<int, FrozenSet<int>> Listed { get; }
 
     /// <summary>Gets the graphics of each map's interactive elements, as the pack draws them, each once.</summary>
     public FrozenDictionary<long, ImmutableArray<int>> Graphics { get; }
@@ -62,7 +65,7 @@ public sealed class HarvestZone
     /// <summary>Gets whether a tour goes through the isolated maps too, last, rather than leave them out.</summary>
     public bool IncludesIsolated { get; }
 
-    private HarvestZone(FrozenDictionary<int, HarvestTarget> targets, FrozenDictionary<int, int> harvests, FrozenSet<int> wanted, IReadOnlyList<int> subAreas, FrozenDictionary<long, int> maps, FrozenSet<long> insides, FrozenSet<long> interiors, FrozenDictionary<long, ImmutableArray<int>> graphics, FrozenSet<long> isolated, bool includesIsolated)
+    private HarvestZone(FrozenDictionary<int, HarvestTarget> targets, FrozenDictionary<int, int> harvests, FrozenSet<int> wanted, IReadOnlyList<int> subAreas, FrozenDictionary<long, int> maps, FrozenSet<long> insides, FrozenSet<long> interiors, FrozenDictionary<int, FrozenSet<int>> listed, FrozenDictionary<long, ImmutableArray<int>> graphics, FrozenSet<long> isolated, bool includesIsolated)
     {
         Targets = targets;
         Harvests = harvests;
@@ -71,6 +74,7 @@ public sealed class HarvestZone
         Maps = maps;
         Insides = insides;
         Interiors = interiors;
+        Listed = listed;
         Graphics = graphics;
         Isolated = isolated;
         IncludesIsolated = includesIsolated;
@@ -128,6 +132,7 @@ public sealed class HarvestZone
             maps.ToFrozenDictionary(),
             insides.ToFrozenSet(),
             SubAreaInteriors.Of(reached),
+            ListedOf(subAreas, atlas, wanted),
             graphics.ToFrozenDictionary(),
             within is not null ? FrozenSet<long>.Empty : IsolatedMaps.Of(graph, maps),
             settings.IsolatedMaps);
@@ -184,6 +189,24 @@ public sealed class HarvestZone
         HashSet<int> skills = [.. TargetsOf(settings, jobs).Values.Where(target => target.JobId == Job.Base).Select(target => target.SkillId)];
 
         return skills.Count is 0 ? null : places.MapsOffering(skills, graphics);
+    }
+
+    private static FrozenDictionary<int, FrozenSet<int>> ListedOf(List<int> subAreas, WorldAtlas atlas, FrozenSet<int> wanted)
+    {
+        var listed = new Dictionary<int, FrozenSet<int>>();
+
+        for (var index = 0; index < subAreas.Count; index++)
+        {
+            if (!atlas.TryGetSubArea(subAreas[index], out var subArea))
+                continue;
+
+            var items = atlas.HarvestablesOf(subArea).ToArray().Where(wanted.Contains).ToFrozenSet();
+
+            if (items.Count > 0)
+                listed[index] = items;
+        }
+
+        return listed.ToFrozenDictionary();
     }
 
     private static List<int> SubAreasHolding(IReadOnlySet<long> maps, WorldAtlas atlas, WorldGraph graph)

@@ -616,3 +616,8 @@ or refines another says so in its own entry. Add a line here with every new deci
 
 - [D442](decisions/d442-step-10-the-groups-bank.md#d442-10c3-a-full-member-takes-the-group-to-the-bank-each-follower-gives-the-master-what-it-carries-by-an-exchange-mapping-format-20) 10c3, a full member takes the group to the bank, each follower gives the master what it carries by an exchange, mapping format 20 (2026-11-18)
   - All the master does not wear, two openings of the bank, the step counted from requests, one transfer of every stack.
+
+## The harvest, the mines (D444)
+
+- [D444](decisions/d444-harvest-the-mines.md#d444-the-harvests-tour-goes-into-an-interior-while-its-sub-area-lists-a-resource-no-map-of-it-showed-so-that-it-finds-the-mines) The harvest's tour goes into an interior while its sub-area lists a resource no map of it showed, so that it finds the mines (2026-11-18)
+  - The interiors whenever the zone wants ore, learned graphics shipped with the app, D416 kept as it is.

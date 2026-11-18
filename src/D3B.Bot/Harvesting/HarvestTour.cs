@@ -74,7 +74,9 @@ internal sealed class HarvestTour
     /// <returns>How many.</returns>
     public int Total(HarvestZone zone)
     {
-        return zone.Maps.Keys.Count(map => !IsLeftOut(map, zone));
+        var toFind = ToFind(zone);
+
+        return zone.Maps.Keys.Count(map => !IsLeftOut(map, zone, toFind));
     }
 
     /// <summary>Gets how many maps of the zone are probable.</summary>
@@ -96,7 +98,8 @@ internal sealed class HarvestTour
     public HashSet<long> Remaining(HarvestZone zone)
     {
         var now = _time.GetUtcNow();
-        HashSet<long> remaining = [.. zone.Maps.Keys.Where(map => !_visited.Contains(map) && !_unreachable.Contains(map) && !IsLeftOut(map, zone) && !(ReadyAt(map, zone) > now))];
+        var toFind = ToFind(zone);
+        HashSet<long> remaining = [.. zone.Maps.Keys.Where(map => !_visited.Contains(map) && !_unreachable.Contains(map) && !IsLeftOut(map, zone, toFind) && !(ReadyAt(map, zone) > now))];
 
         // The isolated maps a tour goes through come last, whatever they hold: the way there is long (D149).
         HashSet<long> near = [.. remaining.Where(map => !zone.Isolated.Contains(map))];
@@ -118,8 +121,9 @@ internal sealed class HarvestTour
     public int Growing(HarvestZone zone)
     {
         var now = _time.GetUtcNow();
+        var toFind = ToFind(zone);
 
-        return zone.Maps.Keys.Count(map => !IsLeftOut(map, zone) && ReadyAt(map, zone) > now);
+        return zone.Maps.Keys.Count(map => !IsLeftOut(map, zone, toFind) && ReadyAt(map, zone) > now);
     }
 
     /// <summary>Gets when the first map this tour still goes through should have grown back, while every one still grows back.</summary>
@@ -128,11 +132,12 @@ internal sealed class HarvestTour
     public DateTimeOffset? NextReady(HarvestZone zone)
     {
         var now = _time.GetUtcNow();
+        var toFind = ToFind(zone);
         DateTimeOffset? first = null;
 
         foreach (var map in zone.Maps.Keys)
         {
-            if (_visited.Contains(map) || _unreachable.Contains(map) || IsLeftOut(map, zone) || ReadyAt(map, zone) is not { } ready || ready <= now)
+            if (_visited.Contains(map) || _unreachable.Contains(map) || IsLeftOut(map, zone, toFind) || ReadyAt(map, zone) is not { } ready || ready <= now)
                 continue;
 
             if (first is null || ready < first)
@@ -250,21 +255,23 @@ internal sealed class HarvestTour
     /// <returns>The maps, for the app's map.</returns>
     public ImmutableArray<ZoneMap> Maps(HarvestZone zone)
     {
-        return [.. zone.Maps.Select(map => new ZoneMap(map.Key, StateOf(map.Key, zone), map.Value))];
+        var toFind = ToFind(zone);
+
+        return [.. zone.Maps.Select(map => new ZoneMap(map.Key, StateOf(map.Key, zone, toFind), map.Value))];
     }
 
-    private ZoneMapState StateOf(long mapId, HarvestZone zone)
+    private ZoneMapState StateOf(long mapId, HarvestZone zone, HashSet<int> toFind)
     {
         if (zone.Isolated.Contains(mapId) && !zone.IncludesIsolated)
             return ZoneMapState.Isolated;
 
-        if (!IsLeftOut(mapId, zone) && ReadyAt(mapId, zone) > _time.GetUtcNow())
+        if (!IsLeftOut(mapId, zone, toFind) && ReadyAt(mapId, zone) > _time.GetUtcNow())
             return ZoneMapState.Growing;
 
         if (_visited.Contains(mapId))
             return ZoneMapState.Visited;
 
-        if (IsLeftOut(mapId, zone))
+        if (IsLeftOut(mapId, zone, toFind))
             return ZoneMapState.Empty;
 
         if (_unreachable.Contains(mapId))
@@ -301,7 +308,7 @@ internal sealed class HarvestTour
         return first;
     }
     // What a bot saw of a map wins over what its graphics foretell: it is the server's word for that map.
-    private bool IsLeftOut(long mapId, HarvestZone zone)
+    private bool IsLeftOut(long mapId, HarvestZone zone, HashSet<int> toFind)
     {
         if (zone.Isolated.Contains(mapId) && !zone.IncludesIsolated)
             return true;
@@ -310,10 +317,69 @@ internal sealed class HarvestTour
             return zone.Interiors.Contains(mapId) ? !HoldsAResource(sighting, zone) : !sighting.Resources.Overlaps(zone.Wanted);
 
         // An outdoor map never seen is gone to, to learn what it holds; a house of a town is not: a player's report is that the bot went
-        // into all of Astrub's, and a graphic nothing taught is a door or a piece of furniture more often than a resource (D416).
-        return zone.Interiors.Contains(mapId)
-            ? zone.Foresee(mapId, _graphics, _levelOf) is not MapForecast.Probable
-            : zone.Foresee(mapId, _graphics, _levelOf) is MapForecast.Without;
+        // into all of Astrub's, and a graphic nothing taught is a door or a piece of furniture more often than a resource (D416). But a
+        // mine is an interior too, and its ore is learned only by entering: while its sub-area lists a resource no map of it showed, an
+        // interior whose graphics are not all known is gone into, last (D444).
+        if (!zone.Interiors.Contains(mapId))
+            return zone.Foresee(mapId, _graphics, _levelOf) is MapForecast.Without;
+
+        return zone.Foresee(mapId, _graphics, _levelOf) switch
+        {
+            MapForecast.Probable => false,
+            MapForecast.Unknown => !toFind.Contains(zone.Maps[mapId]),
+            _ => true,
+        };
+    }
+
+    // The sub-areas of the zone, by index, that list a resource asked for, at the character's level, which no map of theirs was seen
+    // holding nor is foretold to hold by a graphic learned elsewhere (D444). Measured on the pack of 3.7.14.18: 42 maps of Amakna's mines
+    // are interiors of sub-areas that also hold maps on a world map, which D416 left out until a bot had learned their ore.
+    private HashSet<int> ToFind(HarvestZone zone)
+    {
+        if (zone.Interiors.Count is 0)
+            return [];
+
+        var pending = new Dictionary<int, HashSet<int>>();
+
+        foreach (var (index, items) in zone.Listed)
+        {
+            HashSet<int> usable = [.. items.Where(item => zone.Targets.Values.Any(target => target.ItemId == item && zone.CanUse(target.SkillId, _levelOf)))];
+
+            if (usable.Count > 0)
+                pending[index] = usable;
+        }
+
+        foreach (var (map, index) in zone.Maps)
+        {
+            // A map the tour leaves out for its way finds nothing: ore seen beyond it would keep the mine out while nothing reached holds it.
+            if (!pending.TryGetValue(index, out var items) || items.Count is 0 || (zone.Isolated.Contains(map) && !zone.IncludesIsolated))
+                continue;
+
+            // What a bot saw of a map is the server's word for it; a map never seen is foretold by its graphics.
+            if (_sightings.TryGet(map, out var sighting))
+            {
+                items.ExceptWith(sighting.Resources);
+
+                continue;
+            }
+
+            if (!zone.Graphics.TryGetValue(map, out var drawn))
+                continue;
+
+            foreach (var gfxId in drawn)
+            {
+                if (!_graphics.TryGet(gfxId, out var skills))
+                    continue;
+
+                foreach (var skill in skills)
+                {
+                    if (zone.Targets.TryGetValue(skill, out var target))
+                        items.Remove(target.ItemId);
+                }
+            }
+        }
+
+        return [.. pending.Where(pair => pair.Value.Count > 0).Select(pair => pair.Key)];
     }
 
     private bool IsProbable(long mapId, HarvestZone zone)
