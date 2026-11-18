@@ -117,8 +117,8 @@ public sealed class GroupLifeTests
     [Fact]
     public async Task AMasterWaitsForItsFollowersLifeBeforeAUseToo()
     {
-        // As an activity heals before its step (D441): held only before the attack, the master would wait on the group's
-        // cell, which the group leaves meanwhile. A use, such as a harvest or a door, is held as the attack is.
+        // As an activity heals before its step (D441): a use, such as a harvest or a door, is held as the attack is; the
+        // attack is waited for before the walk to the group of monsters (D447), which leaves its cell meanwhile.
         await using var play = new TestPlay();
         var (masterConnection, master, _, _, run) = await GroupAsync(play, 600);
         var started = play.Time.GetUtcNow();

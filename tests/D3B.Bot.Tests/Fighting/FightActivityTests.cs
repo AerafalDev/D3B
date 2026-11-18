@@ -5,6 +5,7 @@ using D3B.Bot.Characters;
 using D3B.Bot.Fighting;
 using D3B.Bot.Fights;
 using D3B.Bot.Tests.Activities;
+using D3B.Bot.Tests.Groups;
 using D3B.Bot.Tests.Movement;
 using D3B.Bot.Tests.Runtime;
 using D3B.Data.Breeds;
@@ -519,6 +520,34 @@ public sealed class FightActivityTests : IAsyncDisposable
         run.Stop();
 
         Assert.Equal(ActivityOutcome.Stopped, await run.Completion);
+    }
+
+    [Fact]
+    public async Task AMasterWaitsForItsFollowerBeforeItWalksToAGroupNotOnItsCell()
+    {
+        // The owner's choice (D447): its walks no longer held, a master waits for its group before the walk to the group of
+        // monsters, which would leave its cell while the master waited on it (9g).
+        var (connection, bot) = await _play.EnterAsync(433);
+        var (followerConnection, follower) = await TestGroup.FollowerAsync(_play, 301, TestPlay.NorthMapId);
+
+        connection.Server(TestGroup.Party(TestGroup.PartyId, TestGroup.MasterId, TestGroup.MasterId));
+        connection.Server(new PartyNewMemberEvent { PartyId = TestGroup.PartyId, Member = new Character { Id = TestGroup.FollowerId } });
+        followerConnection.Server(TestGroup.Party(TestGroup.PartyId, TestGroup.MasterId, TestGroup.MasterId, TestGroup.FollowerId));
+        connection.Server(new MapActorShownEvent { Actors = { GroupActor(GroupId, GroupCell, (Larva, 20)) } });
+        await bot.ProcessedAsync();
+
+        using var membership = _play.Bots.Groups.Follow(follower, TestGroup.Master, out _);
+        var run = bot.StartActivity(Activity(new FightSettings { Place = FightPlace.Chosen, SubAreas = [TestPlay.SubAreaId], Heal = false }));
+
+        await TestGroup.UntilAsync(_play, () => bot.WaitingFor.Count > 0, "the master waiting");
+        await TestGroup.SettleAsync(bot, follower);
+
+        Assert.Empty(connection.Sent);
+
+        TestGroup.Arrive(followerConnection, TestGroup.FollowerId, TestPlay.MapId, 301);
+
+        Assert.Equal(GroupCell, await TestWalks.WalkedAsync(_play, connection, 1));
+        run.Stop();
     }
 
     [Fact]

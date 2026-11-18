@@ -74,10 +74,8 @@ internal sealed class GroupGate : IActionGate
         return Holds(request) ? GatherAsync(context, cancellationToken) : Task.CompletedTask;
     }
 
-    /// <summary>Waits until every follower is with the master, in its party and its life over the share, as before an action it holds.</summary>
-    /// <param name="context">The master's behavior, through which it sends its party's requests.</param>
-    /// <param name="cancellationToken">The behavior's token.</param>
-    /// <returns>A task that completes at once for a master in a fight or followed by nobody, else once they are.</returns>
+    /// <inheritdoc/>
+    /// <remarks>Until every follower is with the master, in its party and its life over the share; at once for a master in a fight or followed by nobody.</remarks>
     public async Task GatherAsync(BotContext context, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(context);
@@ -106,8 +104,8 @@ internal sealed class GroupGate : IActionGate
                 var healed = (DateTimeOffset?)null;
 
                 // Each follower's life over the share the master's profile heals under, before any action, as an activity heals
-                // before its step (D433, D441): held only before the attack, the master would wait on the group's cell, which
-                // the group leaves meanwhile.
+                // before its step (D433, D441); before an attack, the master waits before its walk to the group of monsters,
+                // which leaves its cell meanwhile (D447).
                 if (missing.Count is 0 && GroupLife.ShareOf(_bot) is { } share)
                     (missing, healed) = Healing(state, followers, share);
 

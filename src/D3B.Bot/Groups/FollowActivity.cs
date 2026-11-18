@@ -69,7 +69,7 @@ public sealed class FollowActivity : BotActivity, IDisposable
     private int? _over;
     private (string? Connection, int Round)? _giving;
     private ImmutableArray<int> _copied;
-    private int? _copiedTo;
+    private (long Map, int Cell)? _copiedTo;
     private int _failedChanges;
     private bool _healing;
 
@@ -128,16 +128,13 @@ public sealed class FollowActivity : BotActivity, IDisposable
             await Task.Delay(wait, context.Time, cancellationToken).ConfigureAwait(false);
     }
 
-    // Until the master or the one before it moves, connects, pauses or resumes, the follower's own party or map changes, or the group does.
-    private static Task WaitAsync(BotContext context, Task changed, BotSeen mine, BotSeen? leader, BotSeen? before, CancellationToken cancellationToken)
+    // Until the master moves, walks, connects, pauses or resumes, the follower's own party or map changes, or the group does.
+    private static Task WaitAsync(BotContext context, Task changed, BotSeen mine, BotSeen? leader, CancellationToken cancellationToken)
     {
         var conditions = new List<(BotActor, Func<BotActor, bool>)> { (mine.Bot, mine.Moved) };
 
         if (leader is not null)
             conditions.Add((leader.Bot, leader.Moved));
-
-        if (before is not null)
-            conditions.Add((before.Bot, before.Moved));
 
         return GroupWaits.AnyAsync(conditions, changed, context.Time, _lookAgain, cancellationToken);
     }
@@ -164,7 +161,7 @@ public sealed class FollowActivity : BotActivity, IDisposable
         {
             Publish(known is null ? GameText.Of(GroupTexts.Text("DoingNoMaster"))
                 : GameText.Of(GroupTexts.Text(known.IsConnected ? "DoingMasterPaused" : "DoingMasterDisconnected"), GameTextValue.Of(known.State.Name)));
-            await WaitAsync(context, changed, mine, known, null, cancellationToken).ConfigureAwait(false);
+            await WaitAsync(context, changed, mine, known, cancellationToken).ConfigureAwait(false);
 
             return true;
         }
@@ -181,16 +178,19 @@ public sealed class FollowActivity : BotActivity, IDisposable
             if (await GiveAsync(context, seen, cancellationToken).ConfigureAwait(false))
                 return true;
 
-            // Its life over the share its master's profile heals under, before its master attacks (D433).
-            if (GroupLife.ShareOf(seen.Bot) is { } share && await HealAsync(context, share, changed, mine, seen, cancellationToken).ConfigureAwait(false))
-                return true;
-
+            // In real time first (D447): a follower healing would fall a map behind its master, who walks on.
             Publish(GameText.Of(GroupTexts.Text("DoingFollows"), name));
 
             if (await CopyAsync(context, theirs, cancellationToken).ConfigureAwait(false))
                 return true;
 
-            await WaitAsync(context, changed, mine, seen, null, cancellationToken).ConfigureAwait(false);
+            // Its life over the share its master's profile heals under, before its master's next action (D433, D441).
+            if (GroupLife.ShareOf(seen.Bot) is { } share && await HealAsync(context, share, changed, mine, seen, cancellationToken).ConfigureAwait(false))
+                return true;
+
+            Publish(GameText.Of(GroupTexts.Text("DoingFollows"), name));
+
+            await WaitAsync(context, changed, mine, seen, cancellationToken).ConfigureAwait(false);
 
             return true;
         }
@@ -199,10 +199,10 @@ public sealed class FollowActivity : BotActivity, IDisposable
         // while its client still showed the master there, and its client did not follow that walk. One that copied its
         // master's walk stands on its master's exit and changes maps at once (D447); another leaves once the master is
         // placed on its new map.
-        if (theirs.Cell is null && (_copiedTo is null || state.Cell != _copiedTo))
+        if (theirs.Cell is null && !OnMastersExit(state, theirs))
         {
             Publish(GameText.Of(GroupTexts.Text("DoingFollows"), name));
-            await WaitAsync(context, changed, mine, seen, null, cancellationToken).ConfigureAwait(false);
+            await WaitAsync(context, changed, mine, seen, cancellationToken).ConfigureAwait(false);
 
             return true;
         }
@@ -231,7 +231,7 @@ public sealed class FollowActivity : BotActivity, IDisposable
 
         if (theirs.MapId is not { } map)
         {
-            await WaitAsync(context, changed, mine, seen, null, cancellationToken).ConfigureAwait(false);
+            await WaitAsync(context, changed, mine, seen, cancellationToken).ConfigureAwait(false);
 
             return true;
         }
@@ -322,6 +322,12 @@ public sealed class FollowActivity : BotActivity, IDisposable
         return false;
     }
 
+    // Whether the follower stands where it copied its master's last walk to, on the map its master just left: its exit.
+    private bool OnMastersExit(CharacterState state, CharacterState master)
+    {
+        return _copiedTo is { } copied && copied.Map == state.MapId && copied.Cell == state.Cell && master.LastWalkEnd == copied.Cell;
+    }
+
     // Whether it copied its master's walk, in real time (D447, the owner's choice): as the master walks, to the cell it walks
     // to, once a walk; a walk it cannot make is left, and the follower joins its master's map by its own paths once the
     // master left it.
@@ -330,8 +336,10 @@ public sealed class FollowActivity : BotActivity, IDisposable
         if (!master.IsWalking || master.Path == _copied || master.Path[^1] is var end && end == context.State.Cell)
             return false;
 
+        var map = context.State.MapId ?? 0;
+
         _copied = master.Path;
-        _copiedTo = end;
+        _copiedTo = (map, end);
         GroupLog.Copying(context.Log, context.Actor.Key.CharacterId, master.Key.CharacterId, end);
 
         if (await context.WalkAsync(end, cancellationToken).ConfigureAwait(false) is not WalkOutcome.Arrived)
@@ -516,7 +524,7 @@ public sealed class FollowActivity : BotActivity, IDisposable
     {
         Publish(GameText.Of(GroupTexts.Text("DoingStuck"), name));
 
-        return WaitAsync(context, _bots.Groups.Changed, BotSeen.Of(context.Actor), master, null, cancellationToken);
+        return WaitAsync(context, _bots.Groups.Changed, BotSeen.Of(context.Actor), master, cancellationToken);
     }
 
     private void Publish(GameText doing)

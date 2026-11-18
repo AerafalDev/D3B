@@ -379,6 +379,9 @@ public sealed class FightActivity : BotActivity
     {
         Publish(GameText.Of(FightTexts.Text("DoingAttack"), GameTextValue.Number(group.Monsters.Length)));
 
+        // A master's group with it before the walk to the group of monsters, which leaves its cell meanwhile (D447).
+        await context.GatherAsync(cancellationToken).ConfigureAwait(false);
+
         for (var walk = 0; walk < MostWalksToAGroup; walk++)
         {
             // Measured (9g): a group walks 1 to 4 cells at a time; the server answered nothing to an attack from 3 cells away.

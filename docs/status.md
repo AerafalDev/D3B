@@ -68,7 +68,8 @@ As of 2026-11-19, after D447 (the followers copy their master's walks as they co
   follower's join once spectators are refused, and how long a placement with followers lasts.
 - 10c2, the life before an attack (D441): tested on the fake game only. To look at: a follower under the master's share
   ("Heal under") eating the food it carries that only heals, or regenerating, the master's card saying "who regains its
-  life" before any action (a walk, a map change, the attack) until the follower's life is over the share.
+  life" before an action (a harvest, a door, the bank, a zaap, the haven bag, and before the walk to a group it attacks,
+  D447) until the follower's life is over the share; its walks and map changes no longer wait.
 - 10c3, the group's bank (D442): tested on the fake game only. To look at: a follower full taking the group to the bank,
   its exchange with the master (asked, accepted, each stack moved, both ready), the step the server takes (3 after 3 moves
   in 10a's capture, the lead's reading), a master whose pods fill depositing between two exchanges, the master's deposit of
