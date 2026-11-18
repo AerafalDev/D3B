@@ -3,7 +3,7 @@ using D3B.Bot.Runtime;
 
 namespace D3B.Bot.Groups;
 
-/// <summary>The group's chain: its followers' order, who is with the master, and who is missing (D430, D432, D436).</summary>
+/// <summary>The group's chain: its followers' order, who is with the master, and who is missing (D430, D432, D437).</summary>
 /// <remarks>Pure functions of the bots' states, so that the master's gate and its followers read the same chain.</remarks>
 public static class GroupChain
 {
@@ -27,7 +27,7 @@ public static class GroupChain
         ];
     }
 
-    /// <summary>Tells whether a member stands with the master: placed on its map, or each in its own haven bag (D436).</summary>
+    /// <summary>Tells whether a member stands with the master: placed on its map, or each in its own haven bag (D437).</summary>
     /// <param name="master">The master's state.</param>
     /// <param name="member">The member's state.</param>
     /// <returns>Whether they are together.</returns>
@@ -76,7 +76,7 @@ public static class GroupChain
         if (!Together(master, state))
             return MemberAbsence.Away;
 
-        // The owner's choice: in the party too, which the fights locked to it need (D431, D436).
+        // The owner's choice: in the party too, which the fights locked to it need (D431, D437).
         return master.Party is { } party && party.LeaderId == master.Key.CharacterId && party.Members.Contains(follower.Key.CharacterId)
             ? null
             : MemberAbsence.OutOfParty;

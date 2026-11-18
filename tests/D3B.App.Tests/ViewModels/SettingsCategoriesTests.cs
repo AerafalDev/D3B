@@ -41,7 +41,7 @@ public sealed class SettingsCategoriesTests
         Assert.Equal(["Mode", "Resources"], Keys(what.InView));
         Assert.False(what.HasAdvanced);
         Assert.Equal(["Place", "Area", "SubAreas"], Keys(where.InView));
-        Assert.Equal(["IsolatedMaps", "ZaapSaving"], Keys(where.Advanced));
+        Assert.Equal(["IsolatedMaps", "UseZaaps", "ZaapSaving"], Keys(where.Advanced));
         Assert.Equal(["Deposit"], Keys(bank.InView));
         Assert.Equal(["OwnBanking", "DepositTo"], Keys(bank.Advanced));
         Assert.Contains("AiFights", Keys(care.InView));
@@ -92,6 +92,17 @@ public sealed class SettingsCategoriesTests
         // The share of pods hides with the rule it belongs to and is no longer counted; the rule itself now differs from the model.
         Assert.Equal(["OwnBanking", "DepositTo"], Keys(bank.Advanced));
         Assert.Equal("Avancé · 1 changé", bank.AdvancedText);
+    }
+
+    [Fact]
+    public void TheMapsAZaapMustSaveHideWithTheZaapsAndTheZaapsShowWhateverTheBanking()
+    {
+        var editor = Edit(new HarvestSettings { Mode = HarvestMode.List, Resources = [TestReferences.Ash] });
+        var where = editor.Sections[1];
+
+        ((FlagFieldViewModel)editor.FieldOf("UseZaaps")!).Value = false;
+
+        Assert.Equal(["IsolatedMaps", "UseZaaps"], Keys(where.Advanced));
     }
 
     [Fact]

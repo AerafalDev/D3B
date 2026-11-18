@@ -6,7 +6,7 @@ using Microsoft.Extensions.Logging;
 
 namespace D3B.Bot.Groups;
 
-/// <summary>A master's gate: before it acts, every follower with it and in its party; until then it invites them and waits (D431, D432, D436).</summary>
+/// <summary>A master's gate: before it acts, every follower with it and in its party; until then it invites them and waits (D431, D432, D437).</summary>
 /// <remarks>
 /// <para>
 /// One per bot, which holds nothing while nobody follows it. The requests it holds are those that start an action out of a
@@ -26,7 +26,7 @@ namespace D3B.Bot.Groups;
 /// </remarks>
 internal sealed class GroupGate : IActionGate
 {
-    /// <summary>How long an invitation goes unanswered before the master sends it again, the owner's choice (D436).</summary>
+    /// <summary>How long an invitation goes unanswered before the master sends it again, the owner's choice (D437).</summary>
     public static readonly TimeSpan InviteAgainAfter = TimeSpan.FromSeconds(10);
 
     private readonly BotActor _bot;

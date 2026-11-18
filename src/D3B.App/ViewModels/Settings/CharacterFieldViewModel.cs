@@ -7,7 +7,7 @@ using D3B.Storage.Accounts;
 
 namespace D3B.App.ViewModels.Settings;
 
-/// <summary>A character of the accounts page, picked among the characters D3B knows in a dialog, never typed, such as a follower's master (D436).</summary>
+/// <summary>A character of the accounts page, picked among the characters D3B knows in a dialog, never typed, such as a follower's master (D437).</summary>
 /// <remarks>The dialog is the route's, with the characters' words: each its name, its level and its account's nickname. A character D3B no longer knows is a problem that blocks the profile.</remarks>
 internal sealed partial class CharacterFieldViewModel : SettingFieldViewModel, IPickingField
 {

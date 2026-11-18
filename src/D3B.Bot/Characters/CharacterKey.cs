@@ -8,7 +8,7 @@ namespace D3B.Bot.Characters;
 /// <param name="CharacterId">The character's id, as the character choice names it.</param>
 public readonly record struct CharacterKey(long AccountId, long CharacterId)
 {
-    /// <summary>Reads a character as a setting names it (<see cref="ToId"/>), such as a follower's master (D436).</summary>
+    /// <summary>Reads a character as a setting names it (<see cref="ToId"/>), such as a follower's master (D437).</summary>
     /// <param name="id">The text: the account's id and the character's, a colon between them.</param>
     /// <param name="key">The character, when the text names one.</param>
     /// <returns>Whether it does.</returns>
@@ -28,7 +28,7 @@ public readonly record struct CharacterKey(long AccountId, long CharacterId)
         return true;
     }
 
-    /// <summary>Gets the character as a setting names it: the account's id and the character's, a colon between them (D436).</summary>
+    /// <summary>Gets the character as a setting names it: the account's id and the character's, a colon between them (D437).</summary>
     /// <returns>The text, which <see cref="TryParseId"/> reads back.</returns>
     public string ToId()
     {

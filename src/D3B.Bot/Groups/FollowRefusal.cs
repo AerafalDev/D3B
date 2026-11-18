@@ -1,6 +1,6 @@
 namespace D3B.Bot.Groups;
 
-/// <summary>Why a character cannot follow the master it names (D436).</summary>
+/// <summary>Why a character cannot follow the master it names (D437).</summary>
 public enum FollowRefusal
 {
     /// <summary>It names itself.</summary>

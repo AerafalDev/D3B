@@ -17,7 +17,7 @@ public static class GroupTexts
         return LocalizedText.From(Resources, key);
     }
 
-    /// <summary>Says whom a master waits for before it acts, as its card shows it (D436).</summary>
+    /// <summary>Says whom a master waits for before it acts, as its card shows it (D437).</summary>
     /// <param name="missing">The members missing, in the chain's order.</param>
     /// <returns>The text, or <see langword="null"/> when it waits for nobody.</returns>
     public static GameText? Waiting(IReadOnlyList<MissingMember> missing)

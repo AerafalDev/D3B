@@ -7,7 +7,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace D3B.App.Tests.ViewModels;
 
-/// <summary>The bot's card of a master waiting for its followers: it says whom for (D432, D436).</summary>
+/// <summary>The bot's card of a master waiting for its followers: it says whom for (D432, D437).</summary>
 [UiThread]
 public sealed class BotCardWaitingTests
 {

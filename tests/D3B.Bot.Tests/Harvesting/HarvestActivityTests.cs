@@ -263,6 +263,23 @@ public sealed class HarvestActivityTests : IAsyncDisposable
     }
 
     [Fact]
+    public async Task AProfileThatTakesNoZaapWalksToTheBankWhateverTheGeneralSettingsSay()
+    {
+        var connection = await FullAtTheEastMapAsync(new BankingPreferences { FullAt = 98 }, new HarvestSettings { Resources = [TestPlay.Ash], Area = 1, ZaapSaving = 1, UseZaaps = false });
+
+        Assert.IsType<MapMovementRequest>(await TestWalks.SentAsync(_play, connection, 1));
+        Assert.DoesNotContain(connection.Sent, request => request is TeleportRequest);
+    }
+
+    [Fact]
+    public void AProfileThatTakesNoZaapTakesNoneOnAnyOfItsJourneys()
+    {
+        Assert.True(Activity(new HarvestSettings()).UsesTeleports);
+        Assert.False(Activity(new HarvestSettings { UseZaaps = false }).UsesTeleports);
+        Assert.False(Activity(new HarvestSettings { OwnBanking = true, UseZaaps = false }).UsesTeleports);
+    }
+
+    [Fact]
     public async Task ThePlaceTheActivityChoosesIsTheSubAreaRichestInWhatTheCharacterCanHarvestNamedFirst()
     {
         var (connection, bot) = await _play.EnterAsync(433);

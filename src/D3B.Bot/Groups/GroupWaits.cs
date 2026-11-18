@@ -2,7 +2,7 @@ using D3B.Bot.Runtime;
 
 namespace D3B.Bot.Groups;
 
-/// <summary>Waiting on several bots at once: until one of them changes as said, the group changes, or a delay passes (D87, D436).</summary>
+/// <summary>Waiting on several bots at once: until one of them changes as said, the group changes, or a delay passes (D87, D437).</summary>
 internal static class GroupWaits
 {
     /// <summary>Waits until a bot's condition holds, the groups change, or the delay passes.</summary>

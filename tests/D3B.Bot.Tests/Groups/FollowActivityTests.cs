@@ -1,6 +1,8 @@
 using D3B.Bot.Activities;
 using D3B.Bot.Characters;
 using D3B.Bot.Groups;
+using D3B.Bot.Journal;
+using D3B.Bot.Movement;
 using D3B.Bot.Runtime;
 using D3B.Bot.Tests.Runtime;
 using D3B.Protocol.Game;
@@ -34,10 +36,13 @@ public sealed class FollowActivityTests
         Assert.Equal(new PartyInvitationRefuseRequest { PartyId = TestGroup.OtherPartyId }, await TestGroup.SentAsync(play, connection, 1));
 
         connection.Server(new PartyInvitationEvent { PartyId = TestGroup.PartyId, FromId = TestGroup.MasterId, FromName = "Master", ToId = TestGroup.FollowerId, Type = PartyType.Classical });
+        var invited = play.Time.GetUtcNow();
 
+        // The owner's choice (D437): no sooner than the owner's own fastest answer in 10a's captures.
         Assert.Equal(new PartyInvitationAcceptRequest { PartyId = TestGroup.PartyId }, await TestGroup.SentAsync(play, connection, 2));
+        Assert.True(play.Time.GetUtcNow() - invited >= TimeSpan.FromSeconds(1.3));
 
-        // Measured (D436): the client turns both options on as the party is joined; the follower turns them off after it.
+        // Measured (D437): the client turns both options on as the party is joined; the follower turns them off after it.
         connection.Server(TestGroup.Party(TestGroup.PartyId, TestGroup.MasterId, TestGroup.MasterId, TestGroup.FollowerId));
         var joined = play.Time.GetUtcNow();
 
@@ -161,6 +166,64 @@ public sealed class FollowActivityTests
         TestGroup.Arrive(connection, TestGroup.FollowerId, TestPlay.NorthMapId, 530);
 
         await TestGroup.UntilAsync(play, () => Doing(run) == "Follows Master", "following again");
+        run.Stop();
+    }
+
+    [Fact]
+    public async Task AFollowerLeavesOnceItsMasterIsPlacedOnItsNewMap()
+    {
+        await using var play = new TestPlay();
+        var (masterConnection, master) = await TestGroup.MasterAsync(play, 300);
+        var (connection, follower) = await TestGroup.FollowerAsync(play, 301);
+        var run = Follow(play, follower, TestGroup.Master);
+
+        await TestGroup.UntilAsync(play, () => Doing(run) == "Follows Master", "following");
+
+        // Measured in game (D437): leaving as the new map is named, the follower walked where its client still showed its master.
+        masterConnection.Server(new MapCurrentEvent { MapId = TestPlay.NorthMapId });
+        await master.ProcessedAsync();
+        play.Time.Advance(TimeSpan.FromSeconds(10));
+        await TestGroup.SettleAsync(follower, master);
+
+        Assert.Empty(connection.Sent);
+
+        masterConnection.Server(TestPlay.Information(500, TestPlay.NorthMapId, TestGroup.MasterId));
+
+        Assert.IsType<MapMovementRequest>(await TestGroup.SentAsync(play, connection, 1));
+        run.Stop();
+    }
+
+    [Fact]
+    public async Task AFollowerWhoseWalkTheClientDidNotFollowTriesTheSameWayAgain()
+    {
+        await using var play = new TestPlay();
+        var (masterConnection, _) = await TestGroup.MasterAsync(play, 300);
+        var (connection, follower) = await TestGroup.FollowerAsync(play, 301);
+        var run = Follow(play, follower, TestGroup.Master);
+
+        await TestGroup.UntilAsync(play, () => Doing(run) == "Follows Master", "following");
+        TestGroup.Arrive(masterConnection, TestGroup.MasterId, TestPlay.NorthMapId, 500);
+
+        // The first walk to the edge goes unanswered, as measured in game (D437): the change fails.
+        Assert.IsType<MapMovementRequest>(await TestGroup.SentAsync(play, connection, 1));
+
+        // The next steps take the scroll north again, not the map action round it a journey would leave the scroll for.
+        for (var count = 2; ; count++)
+        {
+            if (await TestGroup.SentAsync(play, connection, count) is MapChangeRequest change)
+            {
+                Assert.Equal((int)TestPlay.NorthMapId, change.MapId);
+
+                break;
+            }
+
+            if (connection.Sent[count - 1] is MapMovementRequest)
+                await TestGroup.WalkedAsync(play, connection, TestGroup.FollowerId, count);
+        }
+
+        // One change a step, none a journey's: a journey leaves the way that failed out and goes round where the world allows (D74).
+        Assert.Empty(follower.Journal.All().OfType<TravelEntry>());
+        Assert.Contains(follower.Journal.All().OfType<MapChangeEntry>(), entry => entry.Outcome is MapChangeOutcome.NotWalked);
         run.Stop();
     }
 

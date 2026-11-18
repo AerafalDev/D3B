@@ -5,7 +5,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace D3B.Bot.Groups;
 
-/// <summary>Groups: a master and its followers, each follower playing the "Follow" activity, which names its master (D430, D436).</summary>
+/// <summary>Groups: a master and its followers, each follower playing the "Follow" activity, which names its master (D430, D437).</summary>
 /// <remarks>Registers <see cref="FollowActivity"/> as <c>follow</c>, with no preset: a profile names its master. The masters' gates and the host's groups are the bots module's (<see cref="Bots.Groups"/>), so that any profile leads. Requires the bots module.</remarks>
 public sealed class GroupsModule : IModule
 {

@@ -4,7 +4,7 @@ using D3B.Bot.Runtime;
 
 namespace D3B.Bot.Groups;
 
-/// <summary>The host's groups: which bot follows which master, while its "Follow" activity runs (D430, D436).</summary>
+/// <summary>The host's groups: which bot follows which master, while its "Follow" activity runs (D430, D437).</summary>
 /// <remarks>
 /// <para>
 /// A follower joins its master's group as its activity starts and leaves it once the activity is over: a master leads as

@@ -480,7 +480,7 @@ internal sealed class TestPlay : IAsyncDisposable
         return (connection, bot);
     }
 
-    /// <summary>A connection of another account, choosing another character, on a map, standing on a cell, the map drawn: the bot playing it, as a group's members are (D436).</summary>
+    /// <summary>A connection of another account, choosing another character, on a map, standing on a cell, the map drawn: the bot playing it, as a group's members are (D437).</summary>
     public async Task<(TestConnection Connection, BotActor Bot)> EnterAsync(int cell, long mapId, GameAccount account, long characterId, string name)
     {
         ArgumentNullException.ThrowIfNull(account);

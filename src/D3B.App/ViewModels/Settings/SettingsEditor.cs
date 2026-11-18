@@ -58,7 +58,7 @@ internal sealed partial class SettingsEditor : ObservableObject
     /// <summary>Gets the project's zones, which a zone setting reads the maps of (D415).</summary>
     public IPlaceZones? Zones => Services?.GetService<IPlaceZones>();
 
-    /// <summary>Gets the accounts and characters D3B knows, which a character's setting is picked among (D436); none when the editor is not given the host's services.</summary>
+    /// <summary>Gets the accounts and characters D3B knows, which a character's setting is picked among (D437); none when the editor is not given the host's services.</summary>
     public AccountBook? Accounts => Services?.GetService<AccountBook>();
 
     /// <summary>Gets or sets what names the NPCs and reads their questions and replies; without it they are named by their ids (D385).</summary>

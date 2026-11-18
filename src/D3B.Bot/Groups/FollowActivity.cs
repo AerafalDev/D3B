@@ -8,7 +8,7 @@ using D3B.Protocol.Game;
 
 namespace D3B.Bot.Groups;
 
-/// <summary>Following a master: in its party, map after map, in the chain's order (D430, D431, D432, D436).</summary>
+/// <summary>Following a master: in its party, map after map, in the chain's order (D430, D431, D432, D437).</summary>
 /// <remarks>
 /// <para>
 /// The follower joins its master's group as it starts (<see cref="GroupDirectory"/>), so that the master, whatever its
@@ -16,14 +16,15 @@ namespace D3B.Bot.Groups;
 /// </para>
 /// <list type="number">
 /// <item>The party first (D431): a party another leads is left, the master's invitation accepted and any other refused,
-/// and once in the master's party, the game's two automatic options turned off. Measured on 3.7.14.18 (D436): the client
+/// and once in the master's party, the game's two automatic options turned off. Measured on 3.7.14.18 (D437): the client
 /// turns them on by itself 3 to 22 ms after each party it joins, as long as its own window has them on, so the follower
 /// lets the client's display time pass, then turns both off, at each party joined.</item>
 /// <item>The master missing, disconnected or paused, the follower waits where it stands: no follower leads (D432).</item>
 /// <item>With its master, it waits for the master to move.</item>
-/// <item>Else it follows the chain: the member before it on its map, it waits for that one to go; then it goes to the
-/// master's map by the world's paths, which from the map the master left is the way the master took, and from afar its
-/// own journey. As the master enters its haven bag, each follower enters its own, and leaves it as the master leaves
+/// <item>Else it follows the chain: the member before it on its map, it waits for that one to go; once the master is
+/// placed on its new map, it changes maps towards it, one change a step by the world's paths, which from the map the
+/// master left is the way the master took; a change failing is tried again by the same way, a journey going round only
+/// after several. As the master enters its haven bag, each follower enters its own, and leaves it as the master leaves
 /// his, the owner's choice.</item>
 /// </list>
 /// <para>
@@ -32,8 +33,16 @@ namespace D3B.Bot.Groups;
 /// </remarks>
 public sealed class FollowActivity : BotActivity, IDisposable
 {
+    // The changes failed in a row by the way to the master's map before a whole journey goes round, as one does (D74).
+    private const int MostFailedChanges = 3;
+
     // A wait no message ends, such as a master never connected, looks again at least this often.
     private static readonly TimeSpan _lookAgain = TimeSpan.FromSeconds(5);
+
+    // The owner's choice (D437): an answer no sooner than the owner's own fastest in 10a's captures, 1.28 s. Measured in
+    // game, it does not close the client's window for the invitation, which an answer 0.51 s after did not either: the
+    // client closes it on the player's click alone.
+    private static readonly TimeSpan _answerAfter = TimeSpan.FromSeconds(1.3);
 
     private readonly Bots _bots;
     private readonly string _masterId;
@@ -42,6 +51,7 @@ public sealed class FollowActivity : BotActivity, IDisposable
     // Only the activity's steps, one at a time, read and write them.
     private readonly HashSet<int> _refused = [];
     private (string? Connection, int Party)? _optionsOff;
+    private int _failedChanges;
 
     private volatile IDisposable? _membership;
     private volatile ActivityReport _report = new() { Doing = GameText.Of(GroupTexts.Text("DoingStart")) };
@@ -97,6 +107,15 @@ public sealed class FollowActivity : BotActivity, IDisposable
         return new ActivityException($"The character cannot follow its master: {refusal}.", GameText.Of(GroupTexts.Text($"Fail{refusal}")));
     }
 
+    // The answer waits, the owner's choice, whatever the client's window for the invitation does.
+    private static async Task ShownAsync(BotContext context, CancellationToken cancellationToken)
+    {
+        var after = _answerAfter > context.Delays.Display ? _answerAfter : context.Delays.Display;
+
+        if (context.Actor.InvitedAt is { } invited && invited + after - context.Time.GetUtcNow() is { } wait && wait > TimeSpan.Zero)
+            await Task.Delay(wait, context.Time, cancellationToken).ConfigureAwait(false);
+    }
+
     // Until the master or the one before it moves, connects, pauses or resumes, the follower's own party or map changes, or the group does.
     private static Task WaitAsync(BotContext context, Task changed, BotSeen mine, BotSeen? leader, BotSeen? before, CancellationToken cancellationToken)
     {
@@ -149,6 +168,17 @@ public sealed class FollowActivity : BotActivity, IDisposable
             return true;
         }
 
+        // Measured in game (D437): a follower leaving as soon as the server named its master's new map walked to the exit
+        // while its client still showed the master there, and its client did not follow that walk. It leaves once the
+        // master is placed on its new map.
+        if (theirs.Cell is null)
+        {
+            Publish(GameText.Of(GroupTexts.Text("DoingFollows"), name));
+            await WaitAsync(context, changed, mine, seen, null, cancellationToken).ConfigureAwait(false);
+
+            return true;
+        }
+
         // The master out of its haven bag, the follower leaves its own, back where it entered it, as the master did.
         if (GroupChain.IsInOwnHavenBag(state))
         {
@@ -192,7 +222,7 @@ public sealed class FollowActivity : BotActivity, IDisposable
 
         Publish(GameText.Of(GroupTexts.Text("DoingJoins"), name));
 
-        if (await context.TravelAsync(FrozenSet.Create(map), cancellationToken).ConfigureAwait(false) is not TravelOutcome.Arrived)
+        if (!await TowardsAsync(context, map, cancellationToken).ConfigureAwait(false))
             await StuckAsync(context, seen, name, cancellationToken).ConfigureAwait(false);
 
         return true;
@@ -242,6 +272,8 @@ public sealed class FollowActivity : BotActivity, IDisposable
         // D3B's own answer is no message its bot sees (D62): a refused invitation stays in the state, which it refuses once.
         if (state.Invitation is { } invitation && !_refused.Contains(invitation.PartyId) && state.Party?.Id != invitation.PartyId)
         {
+            await ShownAsync(context, cancellationToken).ConfigureAwait(false);
+
             if (invitation.FromId == masterId)
             {
                 Publish(GameText.Of(GroupTexts.Text("DoingParty"), GameTextValue.Of(invitation.FromName)));
@@ -261,7 +293,7 @@ public sealed class FollowActivity : BotActivity, IDisposable
 
         if (state.Party is { } party && party.LeaderId == masterId && _optionsOff != (me.ConnectionId, party.Id))
         {
-            // Measured (D436): the client turns both on 3 to 22 ms after the party's join, which its display time leaves behind.
+            // Measured (D437): the client turns both on 3 to 22 ms after the party's join, which its display time leaves behind.
             await Task.Delay(context.Delays.Display, context.Time, cancellationToken).ConfigureAwait(false);
             GroupLog.OptionsOff(context.Log, me.Key.CharacterId, party.Id);
             await context.SendAsync(new PartyAutoOptionOneOffRequest(), cancellationToken).ConfigureAwait(false);
@@ -272,6 +304,36 @@ public sealed class FollowActivity : BotActivity, IDisposable
         }
 
         return false;
+    }
+
+    // One change towards the master's map a step, so that a change failing tries the same way again at the next step: a
+    // journey would leave that way out and go round (D74), as measured in game (D437) after a walk the client did not
+    // follow. Only after several in a row does a whole journey find another way.
+    private async Task<bool> TowardsAsync(BotContext context, long map, CancellationToken cancellationToken)
+    {
+        var maps = FrozenSet.Create(map);
+
+        if (_failedChanges >= MostFailedChanges)
+        {
+            _failedChanges = 0;
+
+            return await context.TravelAsync(maps, cancellationToken).ConfigureAwait(false) is TravelOutcome.Arrived;
+        }
+
+        var state = context.State;
+        var rules = WorldTravel.RulesOf(context);
+
+        if (state is not { MapId: { } here, Cell: { } cell } || !context.Maps.TryGet(here, out var data) || !context.World.TryGetVertex(data, cell, out var vertex)
+            || !context.World.TryFind(vertex, maps, rules, out var path) || path.Steps.Count is 0)
+        {
+            return await context.TravelAsync(maps, cancellationToken).ConfigureAwait(false) is TravelOutcome.Arrived;
+        }
+
+        var changed = await context.ChangeMapAsync(path.Steps[0], rules, cancellationToken).ConfigureAwait(false) is MapChangeOutcome.Changed or MapChangeOutcome.Elsewhere;
+
+        _failedChanges = changed ? 0 : _failedChanges + 1;
+
+        return changed;
     }
 
     // Stuck: the group waits for it (D432), and it tries again once its master moved, or after a while.

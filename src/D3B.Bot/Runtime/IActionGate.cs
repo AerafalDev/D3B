@@ -2,7 +2,7 @@ using Google.Protobuf;
 
 namespace D3B.Bot.Runtime;
 
-/// <summary>Holds a bot's requests until what they need of other bots holds, such as a master waiting for its followers (D432, D436).</summary>
+/// <summary>Holds a bot's requests until what they need of other bots holds, such as a master waiting for its followers (D432, D437).</summary>
 /// <remarks>Every request a behavior sends goes through it first (<see cref="BotContext.SendAsync"/>); a gate lets at once what it does not hold.</remarks>
 internal interface IActionGate
 {

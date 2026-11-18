@@ -1375,7 +1375,7 @@ within one is to the millisecond.
   response, and the leader is told of each, by the guest's id. Which of the two is which is not measured. Following the
   leader, the third option, asks level 10 and a subscription, which the follower lacked. The owner turned the two off,
   on and off again: six requests, each answered by an empty response.
-- **The options, again at each party** (D436): the two requests turning them on come 3 to 22 ms after the party's
+- **The options, again at each party** (D437): the two requests turning them on come 3 to 22 ms after the party's
   event, each answered 27 ms later, at every party joined while the client's own window has them on; after the owner
   turned them off in the window, the next party joined brought none. So the window keeps its own state, which D3B's
   requests do not go through: the lead's reading, not measured, is that it turns them on again at the next party.

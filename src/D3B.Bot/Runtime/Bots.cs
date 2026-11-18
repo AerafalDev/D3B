@@ -51,7 +51,7 @@ public sealed class Bots : IGameObserver, IAsyncDisposable
     /// <summary>Gets every bot, those whose game connection closed included.</summary>
     public IReadOnlyCollection<BotActor> All => [.. _bots.Values];
 
-    /// <summary>Gets the host's groups: which bot follows which master (D430, D436).</summary>
+    /// <summary>Gets the host's groups: which bot follows which master (D430, D437).</summary>
     public GroupDirectory Groups { get; } = new();
 
     /// <summary>Gets or sets how long every bot's behaviors wait: set, the next wait of each bot reads it, those running included (D151).</summary>
@@ -175,7 +175,7 @@ public sealed class Bots : IGameObserver, IAsyncDisposable
             {
                 bot = new BotActor(state, _maps, _world, _banks, () => _delays, _time, _logs.CreateLogger<BotActor>()) { FightsAlone = _fightsAlone };
 
-                // Every bot may lead: its gate holds nothing while nobody follows it (D436).
+                // Every bot may lead: its gate holds nothing while nobody follows it (D437).
                 bot.Gate = new GroupGate(bot, Groups);
                 _bots[key] = bot;
                 _pilots[key] = new FightPilot(bot, _tactics, _tables);

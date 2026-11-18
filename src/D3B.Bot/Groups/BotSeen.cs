@@ -3,7 +3,7 @@ using D3B.Bot.Runtime;
 
 namespace D3B.Bot.Groups;
 
-/// <summary>A bot as it was seen when a decision was made, so that a wait begun after the decision misses no change made since (D436).</summary>
+/// <summary>A bot as it was seen when a decision was made, so that a wait begun after the decision misses no change made since (D437).</summary>
 /// <param name="Bot">The bot.</param>
 /// <param name="State">Its state then.</param>
 /// <param name="IsConnected">Whether a game connection played it then.</param>

@@ -8,7 +8,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace D3B.App.Tests.ViewModels;
 
-/// <summary>The field that picks a character of the accounts page, a follower's master (D436).</summary>
+/// <summary>The field that picks a character of the accounts page, a follower's master (D437).</summary>
 [UiThread]
 public sealed class CharacterFieldTests
 {

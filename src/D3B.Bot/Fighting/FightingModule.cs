@@ -61,12 +61,12 @@ public sealed class FightingModule : IModule
             .Help(FightTexts.Text("ZoneHelp"))
             .VisibleWhen(s => s.Place is FightPlace.Zone);
         settings.Flag(s => s.IsolatedMaps, FightTexts.Text("IsolatedMaps")).Help(FightTexts.Text("IsolatedMapsHelp")).Advanced();
-        settings.Number(s => s.ZaapSaving, FightTexts.Text("ZaapSaving"), 1, 30).Unit(FightTexts.Text("ZaapSavingUnit")).Advanced();
+        settings.Flag(s => s.UseZaaps, FightTexts.Text("UseZaaps")).Help(FightTexts.Text("UseZaapsHelp")).Advanced();
+        settings.Number(s => s.ZaapSaving, FightTexts.Text("ZaapSaving"), 1, 30).Unit(FightTexts.Text("ZaapSavingUnit")).Advanced().VisibleWhen(s => s.UseZaaps);
 
         settings.Section(FightTexts.Text("SectionBank"));
         settings.Flag(s => s.OwnBanking, FightTexts.Text("OwnBanking")).Help(FightTexts.Text("OwnBankingHelp")).Advanced();
         settings.Number(s => s.FullAt, FightTexts.Text("FullAt"), 50, 100).Percent().Advanced().VisibleWhen(s => s.OwnBanking);
-        settings.Flag(s => s.UseZaaps, FightTexts.Text("UseZaaps")).Help(FightTexts.Text("UseZaapsHelp")).Advanced().VisibleWhen(s => s.OwnBanking);
         settings.Choice(s => s.Deposit, FightTexts.Text("Deposit"), deposit => FightTexts.Text($"Deposit{deposit}"));
 
         settings.Section(FightTexts.Text("SectionCare"));

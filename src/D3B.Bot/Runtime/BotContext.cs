@@ -75,6 +75,9 @@ public sealed class BotContext
     /// <summary>Gets how many map changes a teleport counts as on a journey: as the running activity says, 1 without one (D167).</summary>
     public int TeleportChanges => _bot.Activity?.Activity.TeleportChanges ?? 1;
 
+    /// <summary>Gets whether a journey may teleport to a zaap at all: as the running activity says, yes without one (D436).</summary>
+    public bool UsesTeleports => _bot.Activity?.Activity.UsesTeleports ?? true;
+
     /// <summary>Gets the bot's log.</summary>
     public ILogger Log => _bot.Log;
 

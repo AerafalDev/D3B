@@ -9,7 +9,7 @@ using D3B.Protocol.Game;
 
 namespace D3B.Bot.Tests.Groups;
 
-/// <summary>A master and its followers as a test plays them, each its own account and connection (D436).</summary>
+/// <summary>A master and its followers as a test plays them, each its own account and connection (D437).</summary>
 internal static class TestGroup
 {
     public const long MasterId = TestPlay.CharacterId;
