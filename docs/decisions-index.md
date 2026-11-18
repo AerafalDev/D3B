@@ -597,3 +597,7 @@ or refines another says so in its own entry. Add a line here with every new deci
 
 - [D438](decisions/d438-fights-challenges-bonus.md#d438-a-profile-chooses-the-challenges-bonus-of-its-fights-the-drops-by-default-mapping-format-19) A profile chooses the challenges' bonus of its fights, the drops by default, mapping format 19 (2026-11-18)
   - Two values, one box, another default, under "Advanced" or a section of its own, a general setting.
+
+## Bug reports, the harvest on the way (D439)
+
+- [D439](decisions/d439-harvest-on-the-way.md#d439-the-harvests-journey-stops-on-any-map-it-crosses-where-the-server-offers-a-resource-of-the-profile-of-the-zone-or-not) The harvest's journey stops on any map it crosses where the server offers a resource of the profile, of the zone or not (2026-11-18)

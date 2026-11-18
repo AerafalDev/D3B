@@ -25,6 +25,7 @@ namespace D3B.Bot.Harvesting;
 internal sealed class HarvestTour
 {
     private readonly HashSet<long> _visited = [];
+    private readonly HashSet<long> _crossed = [];
     private readonly HashSet<long> _unreachable = [];
     private readonly HashSet<int> _wanted = [];
     private readonly HashSet<int> _entered = [];
@@ -165,6 +166,22 @@ internal sealed class HarvestTour
         return _visited.Contains(mapId);
     }
 
+    /// <summary>Marks a map out of the zone harvested on the way: the journeys of this tour no longer stop on it (D439).</summary>
+    /// <param name="mapId">The map.</param>
+    /// <remarks>Kept apart from the maps gone through, which count the tour's progress: a map out of the zone is no map of the tour.</remarks>
+    public void Cross(long mapId)
+    {
+        _crossed.Add(mapId);
+    }
+
+    /// <summary>Gets whether a map out of the zone was harvested on the way in this tour.</summary>
+    /// <param name="mapId">The map.</param>
+    /// <returns>Whether it was.</returns>
+    public bool IsCrossed(long mapId)
+    {
+        return _crossed.Contains(mapId);
+    }
+
     /// <summary>Marks a map the way to failed: left out of the rest of the tour.</summary>
     /// <param name="mapId">The map.</param>
     public void Unreach(long mapId)
@@ -218,6 +235,7 @@ internal sealed class HarvestTour
             return false;
 
         _visited.Clear();
+        _crossed.Clear();
         _unreachable.Clear();
         _wanted.Clear();
         _entered.Clear();
