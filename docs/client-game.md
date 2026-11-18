@@ -1403,6 +1403,10 @@ events of an invitation, a party joined, a new member, a member removed, a party
 member's fight; the request to join a fight; and the exchange between two characters. Format 18, 251 messages paired, no
 failure; without the captures, the pins and the structure pair the same.
 
+- **The follower's readiness taken back** (D445), on the owner's test of 2026-11-18 (four connections, a master and three
+  followers, described with `scripts/capture.cs --messages`): from the second fight on, each follower's client sent by
+  itself an empty `FightReadyRequest`, not ready, about 0.5 s after the bot's request to join its master's fight and
+  before the server's answer, the character not in the fight yet. Not in the first fight; why, not measured.
 - **The exchange's moves, read again** (D442): of the follower's three moves, two were `ExchangeObjectMoveRequest` and one
   `ExchangeTransferFromInventoryRequest` of one stack; each was told to both, 28 to 29 ms later, by one event listing the
   stacks moved, each with its object and a number. Both sides then said they were ready with step 3, as many as those
