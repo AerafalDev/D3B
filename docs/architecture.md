@@ -248,8 +248,10 @@ The bots run in `D3B.Bot`: what each part does today, with the decisions that ma
   that has maps to go through, and the activity waits only when none has (`WakeAt`); once every zone was left, the rotation is
   drawn again at the character's levels. The preset of every profession sets `HarvestOrder.Balanced`: the tops are taken in the
   order of the professions harvested least lately and `HarvestBalance`, which counts the last 50 harvests by profession, gives
-  the resources of a map their priority. The journey to the tour's next map stops on the first map of the zone it crosses, not
-  yet gone through, where the server offers a wanted element, even one the tour holds back as growing (D392).
+  the resources of a map their priority. The journey to the tour's next map stops on the first map it crosses, not yet gone
+  through, where the server offers a wanted element, even one the tour holds back as growing (D392), and even out of the zone
+  (D439): there the step takes the profile's resources once a tour and marks the map `HarvestTour.Cross`, apart from the maps
+  gone through, so the tour's progress and `HasHarvested` stay the zone's. The journey to the bank stops nowhere.
 - **A zone as the place** (D415): `HarvestPlace.Zone` and `FightPlace.Zone`, beside Automatic and Chosen (the sub-areas, stored as before), with a
   `Zone` setting, a zone's id (`SettingKind.Zone`, `ActivitySettingsBuilder.Zone`, a rule asking one). The zone is the studio's file, which `D3B.Bot`
   does not see (D393), so the activities read it through `IPlaceZones` (`D3B.Bot.Activities`), an optional parameter of their constructors as

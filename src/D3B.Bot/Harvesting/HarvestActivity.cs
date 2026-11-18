@@ -23,9 +23,10 @@ namespace D3B.Bot.Harvesting;
 /// wanted resource's skill on, at the character's level, the resource asked for first, then the nearest; an element taken
 /// by another, refused or out of reach is left for the rest of the visit. A map with nothing left is gone through, and the
 /// step travels to the nearest map of the tour still to go through (<see cref="HarvestTour"/>), the probable ones first,
-/// stopping on the first such map of the way. The journey also stops on a map of the zone it crosses, not yet gone through in the tour,
-/// where the server offers a wanted element, even when the tour holds the map back as growing (D392). Off the zone, after banking or a
-/// fight, it travels back the same way.
+/// stopping on the first such map of the way. The journey also stops on a map it crosses, not yet gone through in the tour, where the
+/// server offers a wanted element, even when the tour holds the map back as growing (D392), and even out of the zone, where the step
+/// takes what the server offers once a tour without counting the map in it (D439). Off the zone, after banking or a fight, it travels
+/// back the same way; the journey to the bank stops nowhere.
 /// </para>
 /// <para>
 /// When the activity chooses the place, it goes through several sub-areas in turn (<see cref="PlaceRotation"/>, D391): a tour done, it
@@ -221,11 +222,19 @@ public sealed class HarvestActivity : BotActivity
             if (VertexOf(context, state) is { } standing)
                 current.Tour.Enter(standing);
 
-            if (await HarvestAsync(context, zone, cancellationToken).ConfigureAwait(false))
+            if (await HarvestAsync(context, zone, true, cancellationToken).ConfigureAwait(false))
                 return true;
 
             current.Tour.Visit(mapId);
             WantOtherZones(context, zone, current.Tour);
+        }
+        else if (!state.IsInHavenBag && !current.Tour.IsCrossed(mapId))
+        {
+            // Out of the zone, the profile's resources the server offers are taken on the way, once a tour (D439).
+            if (await HarvestAsync(context, zone, false, cancellationToken).ConfigureAwait(false))
+                return true;
+
+            current.Tour.Cross(mapId);
         }
 
         await GoOnAsync(context, current, cancellationToken).ConfigureAwait(false);
@@ -536,7 +545,7 @@ public sealed class HarvestActivity : BotActivity
         _sightings.SeenElements(mapId, elements, now);
     }
 
-    private async Task<bool> HarvestAsync(BotContext context, HarvestZone zone, CancellationToken cancellationToken)
+    private async Task<bool> HarvestAsync(BotContext context, HarvestZone zone, bool inZone, CancellationToken cancellationToken)
     {
         var state = context.State;
 
@@ -572,7 +581,10 @@ public sealed class HarvestActivity : BotActivity
 
             _reporter.Harvested(target.ItemId, Math.Max(0, Carried(context.State, target.ItemId) - before));
             _balance.Record(target.JobId);
-            _current?.Tour.Harvested();
+
+            // Only the zone's own harvests keep it from being swept for nothing: what the way gave says nothing of it (D128).
+            if (inZone)
+                _current?.Tour.Harvested();
         }
         else if (outcome is not UseOutcome.Busy)
         {
@@ -615,12 +627,13 @@ public sealed class HarvestActivity : BotActivity
 
         Publish(state, GameText.Of(HarvestTexts.Text(inZone ? "DoingTravel" : "DoingReturn")), next: next);
 
-        // A map of the zone the journey crosses, not yet gone through in this tour, is harvested if the server offers a wanted element
-        // on it, whether the tour holds it back as growing or not: the reckoned time is only a guess (D392). The journey asks it of the
-        // map's own information, with a list of its own, so that nothing is left skipped for the map the character stands on.
+        // A map the journey crosses, not yet gone through in this tour, is harvested if the server offers a wanted element on it,
+        // whether the tour holds it back as growing or not, the reckoned time being only a guess (D392), and whether it is of the
+        // zone or not, the profile's resources being wanted anywhere (D439). The journey asks it of the map's own information, with a
+        // list of its own, so that nothing is left skipped for the map the character stands on.
         bool Harvestable(CharacterState crossed)
         {
-            return crossed.MapId is { } crossedId && zone.Maps.ContainsKey(crossedId) && !tour.IsVisited(crossedId)
+            return crossed.MapId is { } crossedId && !tour.IsVisited(crossedId) && !tour.IsCrossed(crossedId)
                 && MapHarvest.Candidates(context, TargetsOf(zone), crossed, []).Count > 0;
         }
 
