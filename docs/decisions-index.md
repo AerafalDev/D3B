@@ -621,3 +621,8 @@ or refines another says so in its own entry. Add a line here with every new deci
 
 - [D443](decisions/d443-fights-companions.md#d443-the-bot-plays-the-characters-companion-such-as-the-astrub-knight-with-the-spells-the-server-lists-for-it-mapping-format-21) The bot plays the character's companion, such as the Astrub Knight, with the spells the server lists for it, mapping format 21 (2026-11-18)
   - Ending its turn at once, measuring first, a companion table in the pack.
+
+## The harvest, the mines (D444)
+
+- [D444](decisions/d444-harvest-the-mines.md#d444-the-harvests-tour-goes-into-an-interior-while-its-sub-area-lists-a-resource-no-map-of-it-showed-so-that-it-finds-the-mines) The harvest's tour goes into an interior while its sub-area lists a resource no map of it showed, so that it finds the mines (2026-11-18)
+  - The interiors whenever the zone wants ore, learned graphics shipped with the app, D416 kept as it is.
