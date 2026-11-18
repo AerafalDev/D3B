@@ -148,13 +148,16 @@ owner's choice ("plus tard") to a capture that would tell them apart. Builds D42
 - **The exchange between two characters**: asked by one, told to both, accepted by the other, opened for both; the
   objects go in by the bank's requests (D80), each says it is ready, and the exchange concludes once both are, its
   objects moved and the exchange left in the same millisecond. Its type is 1.
-- **Made**: `parties.proto` (14 messages, 3 enums), `FightJoinRequest`, five messages of the exchange, option 1 and the
+- **Made**: `parties.proto` (17 messages and 2 nested, 2 enums and 2 nested), `FightJoinRequest`, six messages of the exchange, option 1 and the
   exchange's type 1 named; 22 pairs pinned for 3.7.14.18; mapping format 18, 251 messages paired, no failure, the same
   bytes twice, and pairing with the pins and the structure alone without the captures. `CharacterState` keeps the party,
   an invitation not answered, and the last fight a member is in (`CharacterParty`, `PartyInvitation`,
   `PartyMemberFight`, D9).
+- **Left to 10b**: the state of a member's automatic options, which no event read here gives, so 10b sends both requests
+  turning them off without knowing it; following the leader, which the follower captured could not turn on, neither
+  measured nor mapped: a follower of level 10 and subscribed that has it on is not yet turned off (D431).
 - **Left to 10c**: the fight shown on a map and its teams, which a follower arriving late reads; the end of a member's
-  fight, which no message measured says; the exchange in the state.
+  fight, which no message measured says; the exchange in the state, which neither a dialog nor busy covers yet.
 - **Needs**: the mapping of format 18 published with the release `client-3.7.14.18` before an app that reads it, on the
   owner's go (D24).
 - **Rejected.**

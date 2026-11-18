@@ -548,7 +548,7 @@ public sealed class CharacterEventsTests
     {
         var inside = Apply(_chosen, Server(new MapCurrentEvent { MapId = TestPlay.InsideMapId }), Server(TestPlay.Information(396, TestPlay.InsideMapId)));
 
-        Assert.False(Apply(inside, Server(new ExchangeStartedWithStorageEvent { Type = ExchangeType.Player })).IsInDialog);
+        Assert.False(Apply(inside, Server(new ExchangeStartedWithStorageEvent { Type = ExchangeType.Value0 })).IsInDialog);
         Assert.False(Apply(inside, Server(new NpcDialogCreationEvent { MapId = TestPlay.MapId, NpcActorId = -1 })).IsInDialog);
         Assert.Null(Apply(inside, Server(new NpcDialogQuestionEvent { MessageId = 1 })).Dialog);
     }
@@ -786,7 +786,47 @@ public sealed class CharacterEventsTests
         Assert.Same(party, Apply(party, Server(new PartyMemberInFightEvent { PartyId = 3, FightId = 11, MemberId = 900, Map = new MapLocation { MapId = 191_105_026 } })));
     }
 
-    /// <summary>Compares parties by their members' order too, which a record's equality of arrays does not.</summary>
+    [Fact]
+    public void AnInvitationIsKeptWhenAnotherPartyIsJoinedOrRefused()
+    {
+        var self = TestPlay.Key.CharacterId;
+        var invited = Apply(_chosen, Server(new PartyInvitationEvent { PartyId = 7, FromId = 900, FromName = "Leader", ToId = self }));
+
+        Assert.Equal(invited.Invitation, Apply(invited, Server(Joined(8, 901, 901, self))).Invitation);
+        Assert.Same(invited, Apply(invited, Client(new PartyInvitationRefuseRequest { PartyId = 8 })));
+    }
+
+    [Fact]
+    public void AMemberShownTwiceIsListedOnce()
+    {
+        var self = TestPlay.Key.CharacterId;
+        var party = Apply(_chosen, Server(Joined(4, self, self, 901)));
+
+        Assert.Same(party, Apply(party, Server(new PartyNewMemberEvent { PartyId = 4, Member = Member(901) })));
+    }
+
+    [Fact]
+    public void AMembersFightWithoutItsMapIsNotKept()
+    {
+        var self = TestPlay.Key.CharacterId;
+        var party = Apply(_chosen, Server(Joined(4, 900, 900, self)));
+
+        Assert.Same(party, Apply(party, Server(new PartyMemberInFightEvent { PartyId = 4, FightId = 11, MemberId = 900 })));
+    }
+
+    [Fact]
+    public void TheRoleplaysContextForgetsAMembersFight()
+    {
+        var self = TestPlay.Key.CharacterId;
+        var told = Apply(
+            _chosen,
+            Server(Joined(4, 900, 900, self)),
+            Server(new PartyMemberInFightEvent { PartyId = 4, FightId = 11, MemberId = 900, Map = new MapLocation { MapId = 191_105_026 } }));
+
+        Assert.Null(Apply(told, Server(new ContextCreationEvent { Context = ContextCreationEvent.Types.GameContext.Roleplay })).PartyFight);
+    }
+
+    /// <summary>Compares parties by their members, in order: a record compares an <see cref="System.Collections.Immutable.ImmutableArray{T}"/> by its reference.</summary>
     private sealed class PartyComparer : IEqualityComparer<CharacterParty?>
     {
         public static PartyComparer Instance { get; } = new();
