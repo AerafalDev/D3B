@@ -9,7 +9,7 @@ using Google.Protobuf;
 
 namespace D3B.Bot.Tests.Fights;
 
-/// <summary>Where the AI takes each fighter's spells from, as it imagines the fight (D193, D442).</summary>
+/// <summary>Where the AI takes each fighter's spells from, as it imagines the fight (D193, D443).</summary>
 public sealed class ImaginedFightsTests : IAsyncDisposable
 {
     private const long Self = TestPlay.CharacterId;

@@ -87,7 +87,7 @@ public sealed class SummonTacticsTests
     [Fact]
     public void ACompanionPlayingProtectsItsMasterAsASummonPlayingProtectsItsSummoner()
     {
-        // D442: the character's companion, such as the Astrub Knight, is played as a summon, for its master's sake.
+        // D443: the character's companion, such as the Astrub Knight, is played as a summon, for its master's sake.
         var companion = new Combatant { Id = -3, Team = 0, Cell = Off(2, 0), ActionPoints = 6, MovementPoints = 3, Life = 100, MaxLife = 100, MasterId = 1 };
         var enemy = Enemy(-1, Off(8, 0));
         var fight = new ImaginedFight { Map = Open(), Fighters = [Caster(), companion, enemy], ActorId = companion.Id, Round = 1 };

@@ -12,7 +12,7 @@ namespace D3B.Bot.Fights;
 /// <remarks>
 /// The fighters come from the fight's state (<see cref="FightCombatants"/>). The character's spells come from the server's
 /// list and its level, its worn sword's blow among them (<see cref="CharacterSpells"/>), a monster's and a summon's from the
-/// pack at its grade, a companion's from the server's list of them (D442); the character's cooldowns from the server (D193).
+/// pack at its grade, a companion's from the server's list of them (D443); the character's cooldowns from the server (D193).
 /// Every fighter but the one playing holds the AP and MP it starts its next turn with: a monster's grade's, else what the
 /// server last gave it; the one playing holds what it has left, and starts its turns with what it had as its last began. The
 /// one playing is the character, or a summon or a companion of its the client plays (9f2), with its own cooldowns and casts. The glyphs and traps on the cells are the server's, each striking as the spell that set

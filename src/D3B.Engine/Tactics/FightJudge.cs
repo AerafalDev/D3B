@@ -402,7 +402,7 @@ public sealed class FightJudge
 
     private double Weight(Combatant ally)
     {
-        // A summon playing protects its summoner, a companion its master (D442), as the character playing protects itself.
+        // A summon playing protects its summoner, a companion its master (D443), as the character playing protects itself.
         return ally.Id == _protectedId ? _weights.Survival : ally.IsSummon ? SummonLife : 1;
     }
 
