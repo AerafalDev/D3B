@@ -26,6 +26,9 @@ internal static partial class GroupLog
     [LoggerMessage(Level = LogLevel.Information, Message = "Bot {Character}: turns off its automatic options in party {Party}")]
     public static partial void OptionsOff(ILogger logger, long character, int party);
 
+    [LoggerMessage(Level = LogLevel.Information, Message = "Bot {Character}: walks with its master {Master} to cell {Cell}")]
+    public static partial void Copying(ILogger logger, long character, long master, int cell);
+
     [LoggerMessage(Level = LogLevel.Information, Message = "Bot {Character}: joins its master {Master}'s fight {Fight}")]
     public static partial void JoiningFight(ILogger logger, long character, long master, int fight);
 

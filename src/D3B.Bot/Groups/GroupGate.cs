@@ -10,9 +10,9 @@ namespace D3B.Bot.Groups;
 /// <remarks>
 /// <para>
 /// One per bot, which holds nothing while nobody follows it. The requests it holds are those that start an action out of a
-/// fight, the kinds the player's own pause the bot for (<see cref="PlayerActions"/>) and the attack D3B sends: a walk, a
-/// map change, a use, an NPC talked to, a zaap, the haven bag. So the master waits after each map change, before an
-/// attack, a harvest, a zaap, the haven bag or a door, whatever its profile, and, a member missing, where it stands.
+/// fight, but its walks and map changes, which its followers copy as they come (D447, the owner's choice): a use, an NPC
+/// talked to, a zaap, the haven bag and the attack D3B sends. So the master moves on at once, and waits before an attack,
+/// a harvest, a zaap, the haven bag or a door, whatever its profile, and, a member missing, where it stands.
 /// </para>
 /// <para>
 /// It waits too for each follower's life to be over the share its own profile heals under, before any action it holds, as
@@ -51,8 +51,7 @@ internal sealed class GroupGate : IActionGate
     /// <returns>Whether the gate holds it.</returns>
     public static bool Holds(IMessage request)
     {
-        return request is MapMovementRequest or MapChangeRequest or InteractiveUseRequest or NpcActionRequest or TeleportRequest
-            or HavenBagEnterRequest or AttackMonsterRequest;
+        return request is InteractiveUseRequest or NpcActionRequest or TeleportRequest or HavenBagEnterRequest or AttackMonsterRequest;
     }
 
     private static PartyInvitationRequest Invite(string name)

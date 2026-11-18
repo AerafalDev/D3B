@@ -626,3 +626,8 @@ or refines another says so in its own entry. Add a line here with every new deci
 
 - [D444](decisions/d444-harvest-the-mines.md#d444-the-harvests-tour-goes-into-an-interior-while-its-sub-area-lists-a-resource-no-map-of-it-showed-so-that-it-finds-the-mines) The harvest's tour goes into an interior while its sub-area lists a resource no map of it showed, so that it finds the mines (2026-11-18)
   - The interiors whenever the zone wants ore, learned graphics shipped with the app, D416 kept as it is.
+
+## Groups, following in real time (D447)
+
+- [D447](decisions/d447-groups-following-in-real-time.md#d447-the-followers-copy-their-masters-walks-as-they-come-and-the-master-no-longer-waits-after-each-map-change) The followers copy their master's walks as they come, and the master no longer waits after each map change (2026-11-19)
+  - Leaving together, walking to the exit only, copying only the exits, a follower that missed a walk waiting.

@@ -8,7 +8,8 @@ namespace D3B.Bot.Tests.Groups;
 
 public sealed class GroupGateTests
 {
-    private static readonly MapChangeRequest _act = new() { MapId = 1 };
+    // An action the master waits for its followers before: its walks and map changes no longer (D447).
+    private static readonly AttackMonsterRequest _act = new() { MonsterGroupId = -1 };
 
     private static Task<bool> Act(BotActor bot, IMessage request)
     {
@@ -167,6 +168,24 @@ public sealed class GroupGateTests
         Assert.Equal(new PartyLeaveRequest { PartyId = TestGroup.OtherPartyId }, await TestGroup.SentAsync(play, masterConnection, 2));
         Assert.True(play.Time.GetUtcNow() - left >= GroupGate.InviteAgainAfter - TimeSpan.FromMilliseconds(200));
         Assert.False(acting.IsCompleted);
+    }
+
+    [Fact]
+    public async Task AMasterWalksAndChangesMapsAtOnceWhileItsFollowersAreAway()
+    {
+        // The owner's choice (D447): the followers copy their master's walks as they come, so it waits for them only before an action.
+        await using var play = new TestPlay();
+        var (masterConnection, master) = await TestGroup.MasterAsync(play, 300);
+        var (_, follower) = await TestGroup.FollowerAsync(play, 300, TestPlay.NorthMapId);
+
+        using var membership = play.Bots.Groups.Follow(follower, TestGroup.Master, out _);
+        var change = new MapChangeRequest { MapId = (int)TestPlay.NorthMapId };
+
+        await Act(master, new MapMovementRequest { MapId = TestPlay.MapId });
+        await Act(master, change);
+
+        Assert.Equal(change, masterConnection.Sent[^1]);
+        Assert.Empty(master.WaitingFor);
     }
 
     [Fact]

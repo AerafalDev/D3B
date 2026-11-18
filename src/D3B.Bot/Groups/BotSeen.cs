@@ -22,14 +22,14 @@ internal sealed record BotSeen(BotActor Bot, CharacterState State, bool IsConnec
         return !ReferenceEquals(now.State, State) || now.IsConnected != IsConnected || now.IsPaused != IsPaused;
     }
 
-    /// <summary>Tells whether the bot moved or its group's part changed since it was seen: its map, its placing, its haven bag, its party, a member's fight, its fighting, its connection or its pause.</summary>
+    /// <summary>Tells whether the bot moved or its group's part changed since it was seen: its map, its placing, its walk, its haven bag, its party, a member's fight, its fighting, its connection or its pause.</summary>
     public bool Moved(BotActor now)
     {
         var state = now.State;
 
         return state.MapId != State.MapId || state.Cell is null != State.Cell is null || state.HavenBagOwnerId != State.HavenBagOwnerId
             || state.Party != State.Party || state.Invitation != State.Invitation || state.IsFighting != State.IsFighting
-            || state.PartyFight != State.PartyFight
+            || state.PartyFight != State.PartyFight || state.Path != State.Path
             || now.IsConnected != IsConnected || now.IsPaused != IsPaused;
     }
 }
