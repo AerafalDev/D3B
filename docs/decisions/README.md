@@ -67,4 +67,5 @@ Each file holds the decisions of one group of [the index](../decisions-index.md)
 - [Fights, the companions (D443)](d443-fights-companions.md): 1 decision, 3 KB.
 - [The harvest, the mines (D444)](d444-harvest-the-mines.md): 1 decision, 4 KB.
 - [Groups, the followers paused in a fight (D445)](d445-groups-followers-not-ready.md): 1 decision, 2 KB.
+- [Groups, the challenges' bonus of the followers (D446)](d446-groups-challenges-bonus.md): 1 decision, 2 KB.
 - [Groups, following in real time (D447)](d447-groups-following-in-real-time.md): 1 decision, 3 KB.

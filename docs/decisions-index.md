@@ -632,6 +632,11 @@ or refines another says so in its own entry. Add a line here with every new deci
 - [D445](decisions/d445-groups-followers-not-ready.md#d445-a-readiness-taken-back-while-the-character-is-not-ready-is-the-clients-own-not-the-players) A readiness taken back while the character is not ready is the client's own, not the player's (2026-11-18)
   - Every readiness of a follower ignored, a follower resumed by itself after its fight.
 
+## Groups, the challenges' bonus of the followers (D446)
+
+- [D446](decisions/d446-groups-challenges-bonus.md#d446-a-follower-chooses-the-challenges-bonus-its-masters-profile-chooses) A follower chooses the challenges' bonus its master's profile chooses (2026-11-18)
+  - A bonus of its own in "Follow".
+
 ## Groups, following in real time (D447)
 
 - [D447](decisions/d447-groups-following-in-real-time.md#d447-the-followers-copy-their-masters-walks-as-they-come-and-the-master-no-longer-waits-after-each-map-change) The followers copy their master's walks as they come, and the master no longer waits after each map change (2026-11-19)
