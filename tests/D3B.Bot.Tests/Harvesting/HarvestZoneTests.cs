@@ -87,6 +87,10 @@ public sealed class HarvestZoneTests : IAsyncDisposable
 
         Assert.Equal(new[] { TestPlay.InsideMapId, TestPlay.OtherInsideMapId }.Order(), zone.Interiors.Order());
         Assert.Equal(new[] { TestPlay.NorthMapId, TestPlay.MapId, TestPlay.EastMapId }.Order(), tour.Remaining(zone).Order());
+
+        // The town's ash is seen outdoors, so that nothing the sub-area lists is still to find (D444).
+        sightings.Seen(TestPlay.NorthMapId, [TestPlay.Ash], DateTimeOffset.UnixEpoch);
+
         Assert.Equal(3, tour.Total(zone));
 
         tour.Visit(TestPlay.NorthMapId);
@@ -97,6 +101,114 @@ public sealed class HarvestZoneTests : IAsyncDisposable
         // nothing, and a player's report is that the bot went into all of them (D416).
         Assert.Empty(tour.Remaining(zone));
         Assert.Equal(ZoneMapState.Empty, tour.Maps(zone).Single(map => map.MapId == TestPlay.InsideMapId).State);
+    }
+
+    [Fact]
+    public void AnInteriorNeverSeenIsGoneThroughLastWhileItsSubAreaListsAResourceNoMapOfItShowedYet()
+    {
+        var zone = ZoneOf(new HarvestSettings { Resources = [TestPlay.Ash], SubAreas = [TestPlay.SubAreaId] });
+        var sightings = new HarvestSightings();
+        var tour = new HarvestTour(sightings, new GraphicSkills());
+
+        // Measured on the pack of 3.7.14.18 (D444): 42 maps of Amakna's mines are interiors of sub-areas that also hold maps on a world
+        // map, the Mine Hable the Carrière d'Astrub's; their ore is learned only once a bot enters, which D416 kept it from.
+        Assert.Equal(new[] { TestPlay.NorthMapId, TestPlay.MapId, TestPlay.EastMapId }.Order(), tour.Remaining(zone).Order());
+        Assert.Equal(4, tour.Total(zone));
+
+        sightings.Seen(TestPlay.NorthMapId, [], DateTimeOffset.UnixEpoch);
+        sightings.Seen(TestPlay.MapId, [], DateTimeOffset.UnixEpoch);
+        sightings.Seen(TestPlay.EastMapId, [], DateTimeOffset.UnixEpoch);
+
+        // The sub-area lists ash and no map of it showed any: its interior is gone into, last. The one that draws no element holds no
+        // resource, whatever is still to find.
+        Assert.Equal([TestPlay.InsideMapId], tour.Remaining(zone));
+        Assert.Equal(ZoneMapState.ToVisit, tour.Maps(zone).Single(map => map.MapId == TestPlay.InsideMapId).State);
+        Assert.Equal(ZoneMapState.Empty, tour.Maps(zone).Single(map => map.MapId == TestPlay.OtherInsideMapId).State);
+
+        sightings.Seen(TestPlay.NorthMapId, [TestPlay.Ash], DateTimeOffset.UnixEpoch.AddMinutes(1));
+
+        // The ash found outdoors, the building is left alone again, as D416 has it.
+        Assert.DoesNotContain(TestPlay.InsideMapId, tour.Remaining(zone));
+        Assert.Equal(ZoneMapState.Empty, tour.Maps(zone).Single(map => map.MapId == TestPlay.InsideMapId).State);
+    }
+
+    [Fact]
+    public void EachSubAreaLooksForItsOwnResourceAndAnIsolatedMapTheTourLeavesOutFindsNothing()
+    {
+        const int quarry = 50;
+        const int hills = 51;
+
+        // The quarry: 1 outdoors, 2 its mine. The hills: 3 outdoors, 4 its mine, 5 outdoors and joined to nothing, so isolated (D149).
+        long[] ids = [1, 2, 3, 4, 5];
+        var graph = new WorldGraph(
+            ids.Select(id => new WorldVertex(id, 1)).ToArray(),
+            new[] { new WorldEdge(0, 1, 0, 1), new WorldEdge(0, 2, 1, 1), new WorldEdge(2, 3, 2, 1) },
+            new[]
+            {
+                new WorldTransition(WorldTransitionType.Scroll, 0, 0, WorldTransition.None, 2, WorldTransition.None, WorldTransition.None),
+                new WorldTransition(WorldTransitionType.Scroll, 0, 0, WorldTransition.None, 3, WorldTransition.None, WorldTransition.None),
+                new WorldTransition(WorldTransitionType.Scroll, 0, 0, WorldTransition.None, 4, WorldTransition.None, WorldTransition.None),
+            },
+            Array.Empty<string>());
+        var atlas = new WorldAtlas(
+            new[]
+            {
+                new MapPosition(1, 0, 0, quarry, 1, 0, 0),
+                new MapPosition(2, 0, 0, quarry, -1, 0, 0),
+                new MapPosition(3, 1, 0, hills, 1, 0, 0),
+                new MapPosition(4, 1, 0, hills, -1, 0, 0),
+                new MapPosition(5, 9, 9, hills, 1, 0, 0),
+            },
+            new[] { new SubArea(quarry, 0, 1, 1, SubArea.NoZaap, true, 0, 1, 0, 0), new SubArea(hills, 0, 1, 1, SubArea.NoZaap, true, 1, 1, 0, 0) },
+            new[] { new Area(1, 0, 0) },
+            Array.Empty<Waypoint>(),
+            new[] { TestPlay.Ash, TestPlay.Ash },
+            Array.Empty<int>());
+        var zone = HarvestZone.Of(new HarvestSettings { Resources = [TestPlay.Ash], SubAreas = [quarry, hills] }, atlas, graph, _play.Tables.Jobs, _play.Maps);
+        var sightings = new HarvestSightings();
+        var tour = new HarvestTour(sightings, new GraphicSkills());
+
+        Assert.Equal([5L], zone.Isolated);
+
+        // The ash seen in the quarry leaves its mine alone, not the hills'; the ash seen on the isolated map, which the tour does not
+        // go to, finds none for the hills.
+        sightings.Seen(1, [TestPlay.Ash], DateTimeOffset.UnixEpoch);
+        sightings.Seen(3, [], DateTimeOffset.UnixEpoch);
+        sightings.Seen(5, [TestPlay.Ash], DateTimeOffset.UnixEpoch);
+        tour.Visit(1);
+
+        Assert.Equal([4L], tour.Remaining(zone));
+    }
+
+    [Fact]
+    public void AResourceFoundByAGraphicOrListedAboveTheCharactersLevelBringsNoInteriorBack()
+    {
+        var zone = ZoneOf(new HarvestSettings { Resources = [TestPlay.Chestnut], SubAreas = [TestPlay.SubAreaId] });
+        var sightings = new HarvestSightings();
+        var graphics = new GraphicSkills();
+        var tour = new HarvestTour(sightings, graphics);
+
+        sightings.Seen(TestPlay.NorthMapId, [], DateTimeOffset.UnixEpoch);
+        sightings.Seen(TestPlay.MapId, [], DateTimeOffset.UnixEpoch);
+        sightings.Seen(TestPlay.EastMapId, [], DateTimeOffset.UnixEpoch);
+        tour.Know(Lumberjack(19));
+
+        // The chestnut asks level 20: a lumberjack of 19 has nothing to find, so no building is entered for it.
+        Assert.Empty(tour.Remaining(zone));
+
+        tour.Know(Lumberjack(20));
+
+        Assert.Equal([TestPlay.InsideMapId], tour.Remaining(zone));
+
+        // A graphic learned elsewhere that a map of the sub-area draws foretells the chestnut there: found, without a bot seeing it.
+        graphics.Learn(TestPlay.BushGfxId, [TestPlay.ChestnutSkillId]);
+        sightings = new HarvestSightings();
+        tour = new HarvestTour(sightings, graphics);
+        tour.Visit(TestPlay.NorthMapId);
+        tour.Visit(TestPlay.MapId);
+        tour.Visit(TestPlay.EastMapId);
+
+        Assert.Empty(tour.Remaining(zone));
     }
 
     [Fact]

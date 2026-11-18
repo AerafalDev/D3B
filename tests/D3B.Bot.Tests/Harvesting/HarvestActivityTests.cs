@@ -348,7 +348,8 @@ public sealed class HarvestActivityTests : IAsyncDisposable
         await TestWalks.WalkedAsync(_play, connection, 1);
 
         Assert.Equal(new InteractiveUseRequest { SkillInstanceId = TestPlay.TreeInstanceId, ElementId = TestPlay.TreeElementId }, await connection.SentAsync(2));
-        Assert.Equal($"{TestPlay.SubAreaId}, tour 1, map 1 of 3", Say(activity.Report!.Progress!.Text));
+        // The interior with elements counts: the sub-area lists the chestnut, which no map showed, and no level weighs it yet (D444).
+        Assert.Equal($"{TestPlay.SubAreaId}, tour 1, map 1 of 4", Say(activity.Report!.Progress!.Text));
         Assert.Equal(5, activity.TeleportChanges);
 
         run.Stop();

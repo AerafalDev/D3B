@@ -103,6 +103,8 @@ public sealed class HarvestTourZonesTests : IAsyncDisposable
         Assert.True(tour.IsVisited(TestPlay.MapId));
         Assert.Equal(1, tour.Visited);
         Assert.DoesNotContain(TestPlay.MapId, tour.Remaining(zone));
-        Assert.Equal(3, tour.Total(zone));
+
+        // The three maps of the world map and the interior with elements, while no map showed the ash the sub-area lists (D444).
+        Assert.Equal(4, tour.Total(zone));
     }
 }
