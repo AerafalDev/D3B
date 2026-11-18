@@ -23,7 +23,9 @@ namespace D3B.Bot.Runtime;
 /// <para>
 /// In a fight, the player's are the placement's move and readiness, a cast, a walk and the turn's end: the client sends by
 /// itself only its acknowledgements of the sequences and its readiness for the next turn (client.md), so that the player's
-/// hand in a fight the AI plays pauses the bot, and the fight is the player's (D202).
+/// hand in a fight the AI plays pauses the bot, and the fight is the player's (D202). A readiness taken back while the
+/// character is not ready changes nothing: measured on the owner's test of 2026-11-18 (D445), each follower's client sent
+/// one by itself as it joined its master's fight, from the second fight on, and the bot paused.
 /// </para>
 /// <para>
 /// The client also ends a turn by itself, along its inactivity popup, and marks that end as its own: it cut the AI's
@@ -43,8 +45,9 @@ public static class PlayerActions
 
         return request is MapMovementRequest or MapMovementCancelRequest or MapChangeRequest or InteractiveUseRequest or NpcActionRequest
             or NpcDialogReplyRequest or ExchangeTransferFromInventoryRequest or ExchangeKamasRequest or TeleportRequest
-            or HavenBagEnterRequest or FightPlacementPositionRequest or FightReadyRequest or GameActionFightCastRequest
+            or HavenBagEnterRequest or FightPlacementPositionRequest or FightReadyRequest { Ready: true } or GameActionFightCastRequest
             or FightTurnFinishRequest { Automatic: false }
+            || (request is FightReadyRequest { Ready: false } && state.Fight is { IsReady: true })
             || (request is DialogLeaveRequest && state.IsInDialog && !OffersNoReply(state));
     }
 

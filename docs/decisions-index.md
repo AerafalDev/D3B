@@ -627,6 +627,11 @@ or refines another says so in its own entry. Add a line here with every new deci
 - [D444](decisions/d444-harvest-the-mines.md#d444-the-harvests-tour-goes-into-an-interior-while-its-sub-area-lists-a-resource-no-map-of-it-showed-so-that-it-finds-the-mines) The harvest's tour goes into an interior while its sub-area lists a resource no map of it showed, so that it finds the mines (2026-11-18)
   - The interiors whenever the zone wants ore, learned graphics shipped with the app, D416 kept as it is.
 
+## Groups, the followers paused in a fight (D445)
+
+- [D445](decisions/d445-groups-followers-not-ready.md#d445-a-readiness-taken-back-while-the-character-is-not-ready-is-the-clients-own-not-the-players) A readiness taken back while the character is not ready is the client's own, not the player's (2026-11-18)
+  - Every readiness of a follower ignored, a follower resumed by itself after its fight.
+
 ## Groups, the challenges' bonus of the followers (D446)
 
 - [D446](decisions/d446-groups-challenges-bonus.md#d446-a-follower-chooses-the-challenges-bonus-its-masters-profile-chooses) A follower chooses the challenges' bonus its master's profile chooses (2026-11-18)
