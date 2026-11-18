@@ -187,7 +187,10 @@ public sealed class CharacterEventsTests
                 "13286": 2
               },
               "TransformedSpells": {},
-              "SubscriptionEnd": null
+              "SubscriptionEnd": null,
+              "Party": null,
+              "Invitation": null,
+              "PartyFight": null
             }
             """,
             JsonSerializer.Serialize(Apply(_chosen, EnteringTheGame()), _snapshot),
@@ -545,7 +548,7 @@ public sealed class CharacterEventsTests
     {
         var inside = Apply(_chosen, Server(new MapCurrentEvent { MapId = TestPlay.InsideMapId }), Server(TestPlay.Information(396, TestPlay.InsideMapId)));
 
-        Assert.False(Apply(inside, Server(new ExchangeStartedWithStorageEvent { Type = ExchangeType.Value1 })).IsInDialog);
+        Assert.False(Apply(inside, Server(new ExchangeStartedWithStorageEvent { Type = ExchangeType.Player })).IsInDialog);
         Assert.False(Apply(inside, Server(new NpcDialogCreationEvent { MapId = TestPlay.MapId, NpcActorId = -1 })).IsInDialog);
         Assert.Null(Apply(inside, Server(new NpcDialogQuestionEvent { MessageId = 1 })).Dialog);
     }
@@ -671,5 +674,131 @@ public sealed class CharacterEventsTests
     {
         Assert.Equal(0, _chosen.Load);
         Assert.Equal(0.5, Apply(_chosen, Server(new InventoryWeightEvent { Weight = 3_795, MaxWeight = 7_590 })).Load);
+    }
+
+    /// <summary>A member of a party, as the server lists one.</summary>
+    private static Character Member(long id)
+    {
+        return new Character { Id = id };
+    }
+
+    private static PartyJoinEvent Joined(int partyId, long leaderId, params long[] members)
+    {
+        var joined = new PartyJoinEvent { PartyId = partyId, Type = PartyType.Classical, LeaderId = leaderId };
+
+        joined.Members.AddRange(members.Select(Member));
+
+        return joined;
+    }
+
+    [Fact]
+    public void AnInvitationIsKeptUntilTheCharacterJoinsItsParty()
+    {
+        var self = TestPlay.Key.CharacterId;
+        var invited = Apply(_chosen, Server(new PartyInvitationEvent { PartyId = 7, FromId = 900, FromName = "Leader", ToId = self, Type = PartyType.Classical }));
+
+        Assert.Equal(new PartyInvitation(7, 900, "Leader"), invited.Invitation);
+
+        var joined = Apply(invited, Client(new PartyInvitationAcceptRequest { PartyId = 7 }), Server(Joined(7, 900, 900, self)));
+
+        Assert.Null(joined.Invitation);
+        Assert.Equal(new CharacterParty(7, 900, [900, self]), joined.Party, PartyComparer.Instance);
+    }
+
+    [Fact]
+    public void AnInvitationRefusedOrForAnotherIsNotKept()
+    {
+        var self = TestPlay.Key.CharacterId;
+        var invited = Apply(_chosen, Server(new PartyInvitationEvent { PartyId = 7, FromId = 900, FromName = "Leader", ToId = self }));
+
+        Assert.Null(Apply(invited, Client(new PartyInvitationRefuseRequest { PartyId = 7 })).Invitation);
+        Assert.Null(Apply(_chosen, Server(new PartyInvitationEvent { PartyId = 7, FromId = 900, FromName = "Leader", ToId = self + 1 })).Invitation);
+    }
+
+    [Fact]
+    public void TheLeadersPartyHoldsItselfAsItInvitesThenItsGuestOnceItAccepts()
+    {
+        var self = TestPlay.Key.CharacterId;
+        var party = Apply(_chosen, Server(Joined(4, self, self)), Server(new PartyNewMemberEvent { PartyId = 4, Member = Member(901) }), Server(new PartyNewMemberEvent { PartyId = 5, Member = Member(902) }));
+
+        Assert.Equal(new CharacterParty(4, self, [self, 901]), party.Party, PartyComparer.Instance);
+    }
+
+    [Fact]
+    public void AMemberLeavingOrExcludedLeavesTheParty()
+    {
+        var self = TestPlay.Key.CharacterId;
+        var party = Apply(_chosen, Server(Joined(4, self, self, 901, 902)));
+
+        var excluded = Apply(party, Server(new PartyMemberRemoveEvent { PartyId = 4, LeavingId = 901, KickerId = self }));
+        var left = Apply(excluded, Server(new PartyMemberRemoveEvent { PartyId = 4, LeavingId = 902 }));
+
+        Assert.Equal([self, 902], excluded.Party!.Members);
+        Assert.Equal([self], left.Party!.Members);
+        Assert.Same(party, Apply(party, Server(new PartyMemberRemoveEvent { PartyId = 3, LeavingId = 901 })));
+    }
+
+    [Theory]
+    [InlineData("deleted")]
+    [InlineData("left")]
+    [InlineData("kicked")]
+    [InlineData("removed")]
+    public void ThePartyEndsForTheCharacterHoweverItLeavesIt(string how)
+    {
+        var self = TestPlay.Key.CharacterId;
+        var party = Apply(
+            _chosen,
+            Server(Joined(4, 900, 900, self)),
+            Server(new PartyMemberInFightEvent { PartyId = 4, FightId = 11, MemberId = 900, Map = new MapLocation { MapId = 191_105_026 } }));
+        IMessage end = how switch
+        {
+            "deleted" => new PartyDeletedEvent { PartyId = 4 },
+            "left" => new PartyLeaveEvent { PartyId = 4 },
+            "kicked" => new PartyKickedByEvent { PartyId = 4, KickerId = 900 },
+            _ => new PartyMemberRemoveEvent { PartyId = 4, LeavingId = self, KickerId = 900 },
+        };
+
+        var after = Apply(party, Server(end));
+
+        Assert.Null(after.Party);
+        Assert.Null(after.PartyFight);
+    }
+
+    [Fact]
+    public void AnotherPartysEndLeavesTheCharactersParty()
+    {
+        var self = TestPlay.Key.CharacterId;
+        var party = Apply(_chosen, Server(Joined(4, 900, 900, self)));
+
+        Assert.Same(party, Apply(party, Server(new PartyDeletedEvent { PartyId = 3 })));
+    }
+
+    [Fact]
+    public void AMembersFightIsKeptUntilTheCharactersNextContext()
+    {
+        var self = TestPlay.Key.CharacterId;
+        var party = Apply(_chosen, Server(Joined(4, 900, 900, self)));
+
+        var told = Apply(party, Server(new PartyMemberInFightEvent { PartyId = 4, FightId = 11, MemberId = 900, Map = new MapLocation { MapId = 191_105_026 }, Cause = PartyFightCause.Monsters }));
+
+        Assert.Equal(new PartyMemberFight(900, 11, 191_105_026), told.PartyFight);
+        Assert.Null(Apply(told, Server(new ContextCreationEvent { Context = ContextCreationEvent.Types.GameContext.Fight })).PartyFight);
+        Assert.Same(party, Apply(party, Server(new PartyMemberInFightEvent { PartyId = 3, FightId = 11, MemberId = 900, Map = new MapLocation { MapId = 191_105_026 } })));
+    }
+
+    /// <summary>Compares parties by their members' order too, which a record's equality of arrays does not.</summary>
+    private sealed class PartyComparer : IEqualityComparer<CharacterParty?>
+    {
+        public static PartyComparer Instance { get; } = new();
+
+        public bool Equals(CharacterParty? x, CharacterParty? y)
+        {
+            return x is null ? y is null : y is not null && x.Id == y.Id && x.LeaderId == y.LeaderId && x.Members.SequenceEqual(y.Members);
+        }
+
+        public int GetHashCode(CharacterParty? obj)
+        {
+            return obj?.Id ?? 0;
+        }
     }
 }

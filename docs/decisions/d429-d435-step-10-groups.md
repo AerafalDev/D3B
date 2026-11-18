@@ -1,4 +1,4 @@
-# Step 10, groups (D429 to D434)
+# Step 10, groups (D429 to D435)
 
 A part of [the decisions](README.md); each decision has one line in [the index](../decisions-index.md).
 
@@ -120,3 +120,44 @@ recommended them. Builds D87.*
 - **Rejected.**
   - A shared target from the first version: a change of the judge no fight measured, which the AI's killing first already
     does in part (D203).
+
+## D435: 10a, the party's protocol read from the owner's captures, mapping format 18
+
+*2026-11-18, step 10, session 10a, measured on the owner's captures of that day; the two options' neutral names the
+owner's choice ("plus tard") to a capture that would tell them apart. Builds D429, D431, D216.*
+
+- **The captures**: three game connections of 3.7.14.18 through the app, the leader's of 5 min 53 s and its follower's of
+  5 min 3 s, two of the owner's characters on one account each, and a third of 44 s; described with `scripts/capture.cs`,
+  each value compared on the machine with a tool of the session, never written down
+  ([client-game.md](../client-game.md#the-game-in-a-party)).
+- **The party, measured**: the leader's invitation names its guest by name; the server answers the leader with a party
+  of its own at once, a new one at each invitation of a leader without one, four in the captures; the guest is told of
+  the invitation, accepts or refuses it by the party's id, and once it accepts it has the party, the leader its new
+  member. An exclusion and a leaving tell the others which member left, with its kicker or without, and a party left with
+  its leader alone ends.
+- **The game's two options of a member**, joining the leader's fights and ready by itself, are on by default: the client
+  turns both on as its character joins a party, one after the other, each answered by an empty response, the party told.
+  Which is which is not measured: they are mapped as the first and the second, the requests turning them off only, which
+  10b sends both of (D431). Following the leader asks level 10 and a subscription.
+- **A fight joined**: as the leader attacks, its follower on the map is told that a member of its party is in a fight,
+  the fight's id, the member and the map, in the millisecond the fight is shown there; it joins by the fight's id and the
+  leader's, as the references have it, and the server answers as to an attack.
+- **The party's lock**: the server sets the fight's option 1 by itself as a party's leader attacks; the owner then closed
+  the fight, option 2, and refused spectators, option 0, as D216 measured them. So 10c's leader leaves option 2 alone,
+  which would keep its followers out (D431).
+- **The exchange between two characters**: asked by one, told to both, accepted by the other, opened for both; the
+  objects go in by the bank's requests (D80), each says it is ready, and the exchange concludes once both are, its
+  objects moved and the exchange left in the same millisecond. Its type is 1.
+- **Made**: `parties.proto` (14 messages, 3 enums), `FightJoinRequest`, five messages of the exchange, option 1 and the
+  exchange's type 1 named; 22 pairs pinned for 3.7.14.18; mapping format 18, 251 messages paired, no failure, the same
+  bytes twice, and pairing with the pins and the structure alone without the captures. `CharacterState` keeps the party,
+  an invitation not answered, and the last fight a member is in (`CharacterParty`, `PartyInvitation`,
+  `PartyMemberFight`, D9).
+- **Left to 10c**: the fight shown on a map and its teams, which a follower arriving late reads; the end of a member's
+  fight, which no message measured says; the exchange in the state.
+- **Needs**: the mapping of format 18 published with the release `client-3.7.14.18` before an app that reads it, on the
+  owner's go (D24).
+- **Rejected.**
+  - Naming the two options from the references' order: nothing measured says the client's order is theirs.
+  - Mapping every party message the captures carry (the guests, the members' positions and lives, the refusal told to the
+    leader): no step of 10b or 10c reads them yet.

@@ -5,7 +5,7 @@ owed. The reasons are in [the decisions](decisions/README.md), found through [de
 their sessions are in [roadmap.md](roadmap.md); how the code is built is in [architecture.md](architecture.md). Whoever closes
 a session updates this page, the roadmap and the index.
 
-As of 2026-11-18, after D429 to D434 (step 10 begun ahead of step 7's measure in game, the owner's choice: groups designed in four sessions, 10a waiting on the owner's captures), D427 and D428 (client 3.7.14.18, its files released from 3.7.13.17's pins, the app's 0.9.2), D425 (the harvest's tour goes into another zone of a map, out and back through the world graph), D424 (a resource in another zone of its map is out of reach, no longer used from afar), D421 (7r6, a step of a list repeats and plays another list), D420 (the Pandawa no longer swaps Sobre and Saoul instead of striking), D419 (7r4, following a run), D418 (7r5b, the profile as an asset editor), D415 (7r5 part 1, the zones read by the harvest and the hunt), D417 (the harvest's tour weighs the character's level) and D416 (it leaves the houses of a town alone), D414 (hints on the world map), D413 (7r3, the Sequencer) and D408 (the fight AI after the players' reports, D407, summons a last resort; the home page, D406; banking by general settings, D405; D394, session 7d4, merged into 7r2's branch). App 0.9.2, client build 3.7.14.18, pack format 12, mapping format 17.
+As of 2026-11-18, after D435 (10a, the party's protocol read from the owner's captures, mapping format 18) and D429 to D434 (step 10 begun ahead of step 7's measure in game, the owner's choice: groups designed in four sessions), D427 and D428 (client 3.7.14.18, its files released from 3.7.13.17's pins, the app's 0.9.2), D425 (the harvest's tour goes into another zone of a map, out and back through the world graph), D424 (a resource in another zone of its map is out of reach, no longer used from afar), D421 (7r6, a step of a list repeats and plays another list), D420 (the Pandawa no longer swaps Sobre and Saoul instead of striking), D419 (7r4, following a run), D418 (7r5b, the profile as an asset editor), D415 (7r5 part 1, the zones read by the harvest and the hunt), D417 (the harvest's tour weighs the character's level) and D416 (it leaves the houses of a town alone), D414 (hints on the world map), D413 (7r3, the Sequencer) and D408 (the fight AI after the players' reports, D407, summons a last resort; the home page, D406; banking by general settings, D405; D394, session 7d4, merged into 7r2's branch). App 0.9.2, client build 3.7.14.18, pack format 12, mapping format 18 (17 for the published app 0.9.2).
 
 ## What exists
 
@@ -113,10 +113,12 @@ As of 2026-11-18, after D429 to D434 (step 10 begun ahead of step 7's measure in
 
 ## Next
 
-0. **Step 10, several accounts and groups, comes first** (D429, the owner's choice of 2026-11-18): 10a, the party's
-   protocol read from the owner's captures ([the list](roadmap.md#10-several-accounts-and-groups)), then 10b, the party
-   by the bot, the "Follow" activity and the chain, 10c, the group's fights and bank, and 10d, measured in game. What
-   follows waits behind it.
+0. **Step 10, several accounts and groups, comes first** (D429, the owner's choice of 2026-11-18). 10a is done (D435):
+   the party, a fight joined and the exchange between two characters mapped, format 18, and the party in
+   `CharacterState`. Next, 10b, the party by the bot, the "Follow" activity and the chain, then 10c, the group's fights
+   and bank, and 10d, measured in game. The mapping 18 ships with the release `client-3.7.14.18` on the owner's go,
+   before an app that reads it. Which of the follower's two automatic options is which waits on a short capture (D435).
+   What follows waits behind it.
 0. **The harvest going to another zone of its map** (D424 (b), D425) is made in code and tests: to look at in the client with the maps listed above.
 0. **The refactoring and tidy-up session** (D399 to D401) is mostly done: `decisions.md` is cut in files by group of the index,
    `client.md` has its game connection apart, `AssetsViewModel`, `BotActor`, `HarvestActivity`, `WorldMapView` and `Imagination`

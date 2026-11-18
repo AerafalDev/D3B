@@ -1,0 +1,208 @@
+// A party: a character invites another by name, which accepts or refuses; the members, the leader, a member leaving or
+// excluded, and a member's fight its party is told of. Measured on 3.7.14.18's captures of 2026-11-18, two of the owner's
+// characters, the leader and its follower, each through its own client (D429): four invitations, one refused, two
+// exclusions, one leaving, the follower's party options turned off and on, and the leader's attack the follower joined;
+// by structure, timing, and values compared on the machine, never written down. The server sends the leader a party of
+// its own as soon as it invites, the guest not yet a member.
+syntax = "proto3";
+
+package d3b.game;
+
+import "Game/characters.proto";
+import "Readable/options.proto";
+
+option csharp_namespace = "D3B.Protocol.Game";
+
+// Invites a character into the character's party, by its name: the server answers with the party, created if the
+// character had none.
+message PartyInvitationRequest {
+  PartyType type = 1;
+  PlayerSearch target = 2;
+}
+
+// A party's kind: classical in every invitation and party captured.
+enum PartyType {
+  PARTY_TYPE_VALUE_0 = 0;
+  PARTY_TYPE_CLASSICAL = 1;
+  PARTY_TYPE_VALUE_2 = 2;
+}
+
+// Whom a request names: a character by its name, as every invitation captured did.
+message PlayerSearch {
+  oneof search {
+    // No capture sets it.
+    Unmeasured unmeasured_1 = 1;
+    ByName by_name = 2;
+  }
+
+  message ByName {
+    string name = 1;
+  }
+
+  message Unmeasured {
+    string text_1 = 1;
+    repeated string texts_2 = 2;
+    string text_3 = 3;
+    string text_4 = 4;
+  }
+}
+
+// The character is invited into a party.
+message PartyInvitationEvent {
+  option (d3b.readable.partial) = true;
+
+  PartyType type = 1;
+
+  // The name of the character that invites.
+  string from_name = 3;
+
+  int32 party_id = 5;
+
+  // The character invited: the one the connection plays.
+  int64 to_id = 6;
+
+  // The character that invites, the party's leader.
+  int64 from_id = 7;
+}
+
+// Accepts an invitation into a party.
+message PartyInvitationAcceptRequest {
+  int32 party_id = 1;
+}
+
+// Refuses an invitation into a party.
+message PartyInvitationRefuseRequest {
+  int32 party_id = 1;
+}
+
+// The character is in a party: to the leader as it invites, a party of its own whose members are itself, and to a guest
+// once it accepts. A new party at each invitation of a leader with none: four parties in the captures.
+message PartyJoinEvent {
+  option (d3b.readable.partial) = true;
+
+  int32 party_id = 2;
+  PartyType type = 3;
+  int64 leader_id = 6;
+  // Each member, as the account's character list gives a character.
+  repeated Character members = 10;
+}
+
+// A character joined the character's party, to its other members: the leader, as its guest accepts.
+message PartyNewMemberEvent {
+  option (d3b.readable.partial) = true;
+
+  Character member = 1;
+  int32 party_id = 3;
+}
+
+// A member left the character's party, or was excluded, to its other members: once with a kicker, the leader, and once
+// without, the member leaving by itself.
+message PartyMemberRemoveEvent {
+  int64 leaving_id = 1;
+  optional int64 kicker_id = 2;
+  int32 party_id = 3;
+}
+
+// The character's party is no more: after each exclusion and leaving captured, the leader alone in it, and once its
+// guest refused.
+message PartyDeletedEvent {
+  int32 party_id = 1;
+}
+
+// The character left its party, as it asked.
+message PartyLeaveEvent {
+  option (d3b.readable.partial) = true;
+
+  int32 party_id = 2;
+}
+
+// The character was excluded from its party, by its leader in the captures.
+message PartyKickedByEvent {
+  int32 party_id = 1;
+  int64 kicker_id = 2;
+}
+
+// Leaves the character's party.
+message PartyLeaveRequest {
+  // No capture sets this field, nor the next two.
+  Unmeasured value_1 = 1;
+
+  repeated int64 numbers_2 = 2;
+  int32 number_3 = 3;
+  int32 party_id = 4;
+
+  enum Unmeasured {
+    UNMEASURED_VALUE_0 = 0;
+    UNMEASURED_VALUE_1 = 1;
+    UNMEASURED_VALUE_2 = 2;
+    UNMEASURED_VALUE_3 = 3;
+    UNMEASURED_VALUE_4 = 4;
+    UNMEASURED_VALUE_5 = 5;
+    UNMEASURED_VALUE_6 = 6;
+    UNMEASURED_VALUE_7 = 7;
+    UNMEASURED_VALUE_8 = 8;
+  }
+}
+
+// Excludes a member from the character's party, which the leader may.
+message PartyKickRequest {
+  int64 member_id = 1;
+  int32 party_id = 2;
+}
+
+// Turns off the first of a member's two automatic options of its party window, joining the leader's fights and ready by
+// itself, which of the two not measured: the client turns both on as its character joins a party, each on by default,
+// this one first, and the server answers each with an empty response. Following the leader, the third, asks level 10
+// and a subscription, which the follower captured lacked.
+message PartyAutoOptionOneOffRequest {
+}
+
+// Turns off the second of the two options above.
+message PartyAutoOptionTwoOffRequest {
+  // No capture sets it.
+  Unmeasured value_1 = 1;
+
+  enum Unmeasured {
+    UNMEASURED_VALUE_0 = 0;
+    UNMEASURED_VALUE_1 = 1;
+    UNMEASURED_VALUE_2 = 2;
+    UNMEASURED_VALUE_3 = 3;
+    UNMEASURED_VALUE_4 = 4;
+    UNMEASURED_VALUE_5 = 5;
+  }
+}
+
+// A member of the character's party is in a fight: to the follower, as its leader attacked monsters on its map, in the
+// same millisecond as the fight shown there, 2.3 s before the follower asked to join it.
+message PartyMemberInFightEvent {
+  option (d3b.readable.partial) = true;
+
+  // The fight, as the request to join it names it.
+  int32 fight_id = 1;
+
+  // The member fighting.
+  int64 member_id = 5;
+
+  // Where the fight is.
+  MapLocation map = 6;
+
+  int32 party_id = 7;
+  PartyFightCause cause = 8;
+}
+
+// Where something stands in the world.
+message MapLocation {
+  option (d3b.readable.partial) = true;
+
+  // The map, as the current map's event names it.
+  int64 map_id = 6;
+}
+
+// Why a member of a party is in a fight: monsters it attacked, the one fight captured.
+enum PartyFightCause {
+  PARTY_FIGHT_CAUSE_VALUE_0 = 0;
+  PARTY_FIGHT_CAUSE_MONSTERS = 1;
+  PARTY_FIGHT_CAUSE_VALUE_2 = 2;
+  PARTY_FIGHT_CAUSE_VALUE_3 = 3;
+  PARTY_FIGHT_CAUSE_VALUE_4 = 4;
+}
