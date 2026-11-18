@@ -318,6 +318,10 @@ The bots run in `D3B.Bot`: what each part does today, with the decisions that ma
   (`FightJoinRequest`) as its party is told of it on its map, its master's own state saying the fight is in its placement.
   Before any action (D440), the gate waits too for each follower's life over the share the master's profile heals under
   (`GroupLife`, the life its activity watches), and the follower with its master eats what only heals, else regenerates.
+  A master whose activity banks unloads through its group's bank (D441, `IGroupBank`, `BotActor.Bank`, `GroupBank`), which
+  its run asks before each step: a follower full at the pods the activity watches takes the group to the bank, each
+  follower gives the master what it carries by an exchange (`CharacterState.Exchange`, `GroupGifts`, the round in
+  `GroupDirectory.Collect`), and the master deposits it with what its activity banks (`BotActivity.Deposits`).
 - **Fighting** (D236, D241, D245 to D249, D259), in `D3B.Bot.Fighting`, registered by `FightingModule`: `FightActivity`, its
   settings `FightSettings`. Each step heals, then on a map of the zone walks onto the cell of the nearest group the
   settings allow, monsters or families of monsters chosen, a family a race (`ChosenMonsters`), with no judgement of its

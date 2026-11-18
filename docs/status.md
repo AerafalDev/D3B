@@ -5,7 +5,7 @@ owed. The reasons are in [the decisions](decisions/README.md), found through [de
 their sessions are in [roadmap.md](roadmap.md); how the code is built is in [architecture.md](architecture.md). Whoever closes
 a session updates this page, the roadmap and the index.
 
-As of 2026-11-18, after D440 (10c2, the master attacks once each follower's life is over its profile's share, the follower eating what only heals, else regenerating), D439 (10c1, the group's fights: a follower joins its master's fight by request, the master ready once its followers are placed; 10c in three pull requests, measured in game with 10b at the very end, the owner's choice), D438 (a profile chooses the challenges' bonus of its fights, the drops by default, mapping format 19), D437 (10b, the party by the bot, the "Follow" activity and the group moving in a chain), D436 (a profile that takes no zaap takes none on any of its journeys, the owner's report), D435 (10a, the party's protocol read from the owner's captures, mapping format 18) and D429 to D434 (step 10 begun ahead of step 7's measure in game, the owner's choice: groups designed in four sessions), D427 and D428 (client 3.7.14.18, its files released from 3.7.13.17's pins, the app's 0.9.2), D425 (the harvest's tour goes into another zone of a map, out and back through the world graph), D424 (a resource in another zone of its map is out of reach, no longer used from afar), D421 (7r6, a step of a list repeats and plays another list), D420 (the Pandawa no longer swaps Sobre and Saoul instead of striking), D419 (7r4, following a run), D418 (7r5b, the profile as an asset editor), D415 (7r5 part 1, the zones read by the harvest and the hunt), D417 (the harvest's tour weighs the character's level) and D416 (it leaves the houses of a town alone), D414 (hints on the world map), D413 (7r3, the Sequencer) and D408 (the fight AI after the players' reports, D407, summons a last resort; the home page, D406; banking by general settings, D405; D394, session 7d4, merged into 7r2's branch). App 0.9.2, client build 3.7.14.18, pack format 12, mapping format 19 (17 for the published app 0.9.2).
+As of 2026-11-18, after D441 (10c3, the group's bank: a full member takes the group to the bank, each follower gives the master what it carries by an exchange, the master deposits it with its own loot, mapping format 20), D440 (10c2, the master attacks once each follower's life is over its profile's share, the follower eating what only heals, else regenerating), D439 (10c1, the group's fights: a follower joins its master's fight by request, the master ready once its followers are placed; 10c in three pull requests, measured in game with 10b at the very end, the owner's choice), D438 (a profile chooses the challenges' bonus of its fights, the drops by default, mapping format 19), D437 (10b, the party by the bot, the "Follow" activity and the group moving in a chain), D436 (a profile that takes no zaap takes none on any of its journeys, the owner's report), D435 (10a, the party's protocol read from the owner's captures, mapping format 18) and D429 to D434 (step 10 begun ahead of step 7's measure in game, the owner's choice: groups designed in four sessions), D427 and D428 (client 3.7.14.18, its files released from 3.7.13.17's pins, the app's 0.9.2), D425 (the harvest's tour goes into another zone of a map, out and back through the world graph), D424 (a resource in another zone of its map is out of reach, no longer used from afar), D421 (7r6, a step of a list repeats and plays another list), D420 (the Pandawa no longer swaps Sobre and Saoul instead of striking), D419 (7r4, following a run), D418 (7r5b, the profile as an asset editor), D415 (7r5 part 1, the zones read by the harvest and the hunt), D417 (the harvest's tour weighs the character's level) and D416 (it leaves the houses of a town alone), D414 (hints on the world map), D413 (7r3, the Sequencer) and D408 (the fight AI after the players' reports, D407, summons a last resort; the home page, D406; banking by general settings, D405; D394, session 7d4, merged into 7r2's branch). App 0.9.2, client build 3.7.14.18, pack format 12, mapping format 20 (17 for the published app 0.9.2).
 
 ## What exists
 
@@ -32,6 +32,8 @@ As of 2026-11-18, after D440 (10c2, the master attacks once each follower's life
   its own haven bag as the master is in his (D437). In a fight (D439), a follower joins its master's by request, the
   master's fight is left to the party the server locks it to, and the master says it is ready once its followers are placed.
   Before acting the master waits for each follower's life over its profile's share, the follower eating or regenerating (D440).
+  A member full takes the group to the bank, each follower gives the master what it carries by an exchange, and the master
+  deposits it with its own loot in one opening (D441).
 - **A versioned Claude Code setup** (D398): `.claude/` holds C# hooks that ask before a push or a `gh` write and refuse
   what the client produces, skills for C#, the studio's UI, tests, Git and the rest, and two agents. The hooks are tested in
   `tests/D3B.Hooks.Tests`; the write guard and the Git guard were seen refusing inside a session, the "ask" answers and the
@@ -45,7 +47,7 @@ As of 2026-11-18, after D440 (10c2, the master attacks once each follower's life
   placement once the server answered the client's own choice, tested on the fake game only. To look at in game: a fight alone with
   each value (the bonus shown in the challenges' panel, the log line "chooses the challenges' bonus"), and a group whose master and
   follower choose otherwise (whether the server answers or refuses the follower, and what the follower is told of the master's).
-  The mapping of format 19 ships with the release `client-3.7.14.18` on the owner's go, before an app that reads it.
+  The mapping of format 19, now 20 (D441), ships with the release `client-3.7.14.18` on the owner's go, before an app that reads it.
 - **Step 10 is measured in game only at the very end** (the owner's choice of 2026-11-18): 10b, the challenges' bonus in a
   group and 10c are looked at together once 10c is made, each tested on the fake game only until then.
 - 10c1, the group's fights (D439): tested on the fake game only. To look at with the owner's two characters: the master
@@ -56,6 +58,12 @@ As of 2026-11-18, after D440 (10c2, the master attacks once each follower's life
 - 10c2, the life before an attack (D440): tested on the fake game only. To look at: a follower under the master's share
   ("Heal under") eating the food it carries that only heals, or regenerating, the master's card saying "who regains its
   life" before any action (a walk, a map change, the attack) until the follower's life is over the share.
+- 10c3, the group's bank (D441): tested on the fake game only. To look at: a follower full taking the group to the bank,
+  its exchange with the master (asked, accepted, each stack moved, both ready), the step the server takes (3 after 3 moves
+  in 10a's capture, the lead's reading), a master whose pods fill depositing between two exchanges, the master's deposit of
+  what it was given and of its loot (a gift merged into its own stack moved in for its quantity alone, unmeasured in the
+  bank), the follower keeping its food, the exchange's windows on both screens. The mapping of format 20 ships with the
+  release `client-3.7.14.18` on the owner's go, before an app that reads it.
 - 10b, the group (D437): tested on the fake game with two and three bots, partly seen in game (below). To look at with the owner's
   two characters, each in its own client through the app: the invitation by name and its acceptance, a stranger's
   refused, the two options turned off (which of the two is which still unmeasured, and whether the client's window turns
@@ -151,8 +159,8 @@ As of 2026-11-18, after D440 (10c2, the master attacks once each follower's life
 0. **Step 10, several accounts and groups, comes first** (D429, the owner's choice of 2026-11-18). 10a is done (D435):
    the party, a fight joined and the exchange between two characters mapped, format 18, and the party in
    `CharacterState`. 10b is made in code and tests (D437): the party by the bot, the "Follow" activity and the chain,
-   to see in game. 10c is three pull requests (D439): its fights (10c1) and the life before an attack (10c2, D440) are made in
-   code and tests; next, the group's bank (10c3), then 10b and 10c measured in game together, the owner's choice, and 10d. The mapping 18 ships with the release `client-3.7.14.18` on the owner's go,
+   to see in game. 10c is three pull requests (D439): its fights (10c1), the life before an attack (10c2, D440) and the
+   group's bank (10c3, D441) are made in code and tests; next, 10b and 10c measured in game together, the owner's choice, and 10d. The mapping 20 (D441) ships with the release `client-3.7.14.18` on the owner's go,
    before an app that reads it. Which of the follower's two automatic options is which waits on a short capture (D435).
    What follows waits behind it.
 0. **The harvest going to another zone of its map** (D424 (b), D425) is made in code and tests: to look at in the client with the maps listed above.

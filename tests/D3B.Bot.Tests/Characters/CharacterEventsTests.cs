@@ -128,6 +128,7 @@ public sealed class CharacterEventsTests
               "Dialog": null,
               "Storage": null,
               "ZaapDialog": null,
+              "Exchange": null,
               "IsInDialog": false,
               "KnownZaaps": [
                 120062979,
@@ -680,6 +681,33 @@ public sealed class CharacterEventsTests
     private static Character Member(long id)
     {
         return new Character { Id = id };
+    }
+
+    [Fact]
+    public void AnExchangeWithAnotherCharacterIsAskedOpenedCountedAndLeft()
+    {
+        // As captured (D435, D441): asked, told to both; opened as the other accepts; each move told; each ready; then left.
+        const long Other = 80_001;
+        var asked = Apply(_chosen, Server(new ExchangeRequestedEvent { Type = ExchangeType.Player, SourceId = Other, TargetId = TestPlay.CharacterId }));
+
+        Assert.Equal(new PlayerExchange(Other, TestPlay.CharacterId), asked.Exchange);
+        Assert.False(asked.IsInDialog);
+
+        var open = Apply(asked, Server(new ExchangeStartedWithPlayerEvent { Type = ExchangeType.Player }), Server(new ExchangeObjectsAddedEvent()), Server(new ExchangeObjectsAddedEvent()), Server(new ExchangeReadyEvent { Ready = true, CharacterId = Other }));
+
+        Assert.Equal(new PlayerExchange(Other, TestPlay.CharacterId, IsOpen: true, Changes: 2, IsOtherReady: true), open.Exchange);
+        Assert.True(open.IsInDialog);
+        Assert.True(Apply(open, Server(new ExchangeReadyEvent { Ready = true, CharacterId = TestPlay.CharacterId })).Exchange!.IsReady);
+        Assert.Null(Apply(open, Server(new ExchangeLeaveEvent())).Exchange);
+    }
+
+    [Fact]
+    public void AnExchangeBetweenTwoOthersAndChangesOfNoneOpenAreNotTheCharacters()
+    {
+        var others = Apply(_chosen, Server(new ExchangeRequestedEvent { Type = ExchangeType.Player, SourceId = 1, TargetId = 2 }), Server(new ExchangeObjectsAddedEvent()));
+
+        Assert.Null(others.Exchange);
+        Assert.Null(Apply(_chosen, Server(new ExchangeStartedWithPlayerEvent { Type = ExchangeType.Player })).Exchange);
     }
 
     private static PartyJoinEvent Joined(int partyId, long leaderId, params long[] members)

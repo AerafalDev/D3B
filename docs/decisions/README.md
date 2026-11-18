@@ -62,3 +62,4 @@ Each file holds the decisions of one group of [the index](../decisions-index.md)
 - [Fights, the challenges' bonus (D438)](d438-fights-challenges-bonus.md): 1 decision, 3 KB.
 - [Step 10, 10c1: the group's fights (D439)](d439-step-10-the-groups-fights.md): 1 decision, 4 KB.
 - [Step 10, 10c2: the group's life before an attack (D440)](d440-step-10-the-groups-life.md): 1 decision, 2 KB.
+- [Step 10, 10c3: the group's bank (D441)](d441-step-10-the-groups-bank.md): 1 decision, 5 KB.

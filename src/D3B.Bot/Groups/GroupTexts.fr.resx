@@ -71,6 +71,9 @@
   <data name="DoingJoinsFight" xml:space="preserve">
     <value>Rejoint le combat de {0}</value>
   </data>
+  <data name="DoingGives" xml:space="preserve">
+    <value>Donne ses objets à {0}</value>
+  </data>
   <data name="DoingJoins" xml:space="preserve">
     <value>Rejoint {0}</value>
   </data>

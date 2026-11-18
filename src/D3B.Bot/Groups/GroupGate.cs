@@ -70,9 +70,20 @@ internal sealed class GroupGate : IActionGate
     }
 
     /// <inheritdoc/>
-    public async Task PassAsync(BotContext context, IMessage request, CancellationToken cancellationToken)
+    public Task PassAsync(BotContext context, IMessage request, CancellationToken cancellationToken)
     {
-        if (!Holds(request) || _bot.State.IsFighting || _groups.FollowersOf(_bot.Key).Count is 0)
+        return Holds(request) ? GatherAsync(context, cancellationToken) : Task.CompletedTask;
+    }
+
+    /// <summary>Waits until every follower is with the master, in its party and its life over the share, as before an action it holds.</summary>
+    /// <param name="context">The master's behavior, through which it sends its party's requests.</param>
+    /// <param name="cancellationToken">The behavior's token.</param>
+    /// <returns>A task that completes at once for a master in a fight or followed by nobody, else once they are.</returns>
+    public async Task GatherAsync(BotContext context, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(context);
+
+        if (_bot.State.IsFighting || _groups.FollowersOf(_bot.Key).Count is 0)
             return;
 
         IReadOnlyList<MissingMember> said = [];

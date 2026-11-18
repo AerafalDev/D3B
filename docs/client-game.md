@@ -1403,6 +1403,14 @@ events of an invitation, a party joined, a new member, a member removed, a party
 member's fight; the request to join a fight; and the exchange between two characters. Format 18, 251 messages paired, no
 failure; without the captures, the pins and the structure pair the same.
 
+- **The exchange's moves, read again** (D441): of the follower's three moves, two were `ExchangeObjectMoveRequest` and one
+  `ExchangeTransferFromInventoryRequest` of one stack; each was told to both, 28 to 29 ms later, by one event listing the
+  stacks moved, each with its object and a number. Both sides then said they were ready with step 3, as many as those
+  events: the lead's reading of the step, not measured otherwise. At the conclusion the follower saw its stacks lessened
+  and removed and the leader its own added, in the same millisecond as the two readiness events and the weights.
+- **Mapped** (D441): that event, `ExchangeObjectsAddedEvent`, no field read. Format 20, 254 messages paired, no failure;
+  without the captures, the same pairs.
+
 
 ## The game, the challenges' bonus
 

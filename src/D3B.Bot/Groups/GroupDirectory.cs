@@ -23,6 +23,8 @@ public sealed class GroupDirectory
 
     private readonly Lock _lock = new();
     private ImmutableList<Following> _following = [];
+    private ImmutableDictionary<CharacterKey, GroupCollect> _collecting = ImmutableDictionary<CharacterKey, GroupCollect>.Empty;
+    private int _rounds;
     private TaskCompletionSource _changed = new(TaskCreationOptions.RunContinuationsAsynchronously);
 
     /// <summary>Gets a task that completes at the next change of any group, a follower joining or leaving.</summary>
@@ -71,6 +73,31 @@ public sealed class GroupDirectory
         }
     }
 
+    /// <summary>Has a master take a follower's objects at the bank, until the round given back is disposed (D433, D441).</summary>
+    /// <param name="master">The master's character.</param>
+    /// <param name="follower">The follower whose turn it is.</param>
+    /// <returns>The round, which the master disposes once the exchange is over.</returns>
+    public IDisposable Collect(CharacterKey master, CharacterKey follower)
+    {
+        lock (_lock)
+        {
+            var collect = new GroupCollect(follower, ++_rounds);
+
+            _collecting = _collecting.SetItem(master, collect);
+            Raise();
+
+            return new Collecting(this, master, collect);
+        }
+    }
+
+    /// <summary>Gets whose objects a master takes at the bank now, if it takes any.</summary>
+    /// <param name="master">The master's character.</param>
+    /// <returns>The follower and the round, or <see langword="null"/>.</returns>
+    public GroupCollect? CollectingFrom(CharacterKey master)
+    {
+        return Volatile.Read(ref _collecting).GetValueOrDefault(master);
+    }
+
     /// <summary>Gets the master a character follows, if it follows one.</summary>
     /// <param name="follower">The character.</param>
     /// <returns>Its master, or <see langword="null"/>.</returns>
@@ -101,12 +128,43 @@ public sealed class GroupDirectory
         }
     }
 
+    private void EndCollect(CharacterKey master, GroupCollect collect)
+    {
+        lock (_lock)
+        {
+            if (_collecting.GetValueOrDefault(master) != collect)
+                return;
+
+            _collecting = _collecting.Remove(master);
+            Raise();
+        }
+    }
+
     private void Raise()
     {
         var changed = _changed;
 
         _changed = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
         changed.TrySetResult();
+    }
+
+    private sealed class Collecting : IDisposable
+    {
+        private readonly GroupDirectory _groups;
+        private readonly CharacterKey _master;
+        private readonly GroupCollect _collect;
+
+        public Collecting(GroupDirectory groups, CharacterKey master, GroupCollect collect)
+        {
+            _groups = groups;
+            _master = master;
+            _collect = collect;
+        }
+
+        public void Dispose()
+        {
+            _groups.EndCollect(_master, _collect);
+        }
     }
 
     private sealed class Following : IDisposable

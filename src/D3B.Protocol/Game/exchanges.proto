@@ -193,11 +193,19 @@ message ExchangeStartedWithPlayerEvent {
   ExchangeType type = 3;
 }
 
+// Objects went into the exchange between two characters: to both, 28 ms after each move of one side's, one event a move.
+// Measured on 3.7.14.18 (D441): three moves, two by ExchangeObjectMoveRequest and one by
+// ExchangeTransferFromInventoryRequest, three events to each side; each lists the stacks moved, which no step reads yet.
+message ExchangeObjectsAddedEvent {
+  option (d3b.readable.partial) = true;
+}
+
 // Says the character is ready to conclude the exchange with another character, or no longer. Each side's objects come
 // through the requests the bank's exchange uses; the exchange concludes once both are ready, the objects moved and the
 // exchange left in the same millisecond.
 message ExchangeReadyRequest {
-  // The exchange's step: 3 for both characters, the one exchange captured.
+  // The exchange's step: 3 for both characters, the one exchange captured, as many as the exchange's changes the
+  // server told each (ExchangeObjectsAddedEvent), the lead's reading of it (D441).
   int32 step = 1;
 
   bool ready = 2;

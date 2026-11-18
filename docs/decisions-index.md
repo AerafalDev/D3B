@@ -607,3 +607,8 @@ or refines another says so in its own entry. Add a line here with every new deci
 
 - [D440](decisions/d440-step-10-the-groups-life.md#d440-10c2-the-master-attacks-once-each-followers-life-is-over-its-profiles-share-each-follower-healing-by-itself) 10c2, the master attacks once each follower's life is over its profile's share, each follower healing by itself (2026-11-18)
   - Regenerating only, heal settings in "Follow", a fixed share or the follower's own, the life waited for before the attack alone.
+
+## Step 10, 10c3: the group's bank (D441)
+
+- [D441](decisions/d441-step-10-the-groups-bank.md#d441-10c3-a-full-member-takes-the-group-to-the-bank-each-follower-gives-the-master-what-it-carries-by-an-exchange-mapping-format-20) 10c3, a full member takes the group to the bank, each follower gives the master what it carries by an exchange, mapping format 20 (2026-11-18)
+  - All the master does not wear, two openings of the bank, the step counted from requests, one transfer of every stack.

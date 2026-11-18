@@ -176,8 +176,11 @@ public sealed class Bots : IGameObserver, IAsyncDisposable
                 bot = new BotActor(state, _maps, _world, _banks, () => _delays, _time, _logs.CreateLogger<BotActor>()) { FightsAlone = _fightsAlone };
 
                 // Every bot may lead: its gate holds nothing while nobody follows it (D437).
-                bot.Gate = new GroupGate(bot, Groups);
+                var gate = new GroupGate(bot, Groups);
+
+                bot.Gate = gate;
                 bot.Team = new GroupFight(bot, Groups);
+                bot.Bank = new GroupBank(bot, Groups, gate, _tables);
                 _bots[key] = bot;
                 _pilots[key] = new FightPilot(bot, _tactics, _tables);
                 made = true;
