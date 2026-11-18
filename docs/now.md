@@ -1,6 +1,6 @@
 # Now
 
-_Updated 2026-11-17._
+_Updated 2026-11-18._
 
 - **Step**: 2, Observe ([ROADMAP.md](../ROADMAP.md)); its first feature, the relay and the client's redirection, is
   designed with the owner ([docs/relay.md](relay.md), ADR 0011); its second, the protocol and its per-build mapping,
@@ -611,7 +611,7 @@ _Updated 2026-11-17._
   resources counted once by kind, monsters as the C# version measured, a sub-area above the character or closed to
   its account left out as the bot plays, the rows below read when none is left, none without a map on a world map; done in code, `bot::places`, read by the
   next two PRs, [bot.md](bot.md#the-language-v2)); Récolte and the five
-  harvest blueprints; Combat and Chasseur, after the hunting weapon's and the meats' study. Each brings its sentences in French and English and its family in the picker; its checklist,
+  harvest blueprints, which also harvest on the way (the owner, 2026-11-18); Combat and Chasseur, after the hunting weapon's and the meats' study. Each brings its sentences in French and English and its family in the picker; its checklist,
   [bot.md](bot.md#measure)'s items 6 and 7, is taken once (16) declares variables and events of mine. Then (14) variables, with locals, lists and the new types' editors; (15)
   functions opened in place, with their exits and the pure ones; (16) events: priority, re-arming, modes, the
   defaults, and the events of mine declared; (17) comments and reroutes; (18) Align, copy and paste,
