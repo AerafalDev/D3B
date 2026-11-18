@@ -256,7 +256,9 @@ flowchart LR
   optional night pause, restocking (N of an item kept on the character, taken back from the bank after a deposit,
   step 5), items to destroy now and then to free pods (step 5, none by default; destroying cannot be undone, which
   the setting says, and the History notes each), and from step 6 the fight profile, the class's by default. Every
-  resource of the profession is taken where the character is (only the place follows its level), and Combat attacks every group its size and the monsters left out allow, no bound of level by
+  resource of the profession is taken where the character is (only the place follows its level), on its place's maps and
+  on every map crossed on the way, to its place, back from the bank or from one range to the next, once a map and tour and
+  never on the way to the bank (the owner, 2026-11-18, after a player's report on the C# version, its D439), and Combat attacks every group its size and the monsters left out allow, no bound of level by
   default, one optional under "Advanced" (the C# version's D387: the zone chosen for the level bounds the risk).
 - **The ranges computed from the data** (`bot::places`, (v2.10)'s second PR, done in code; the owner's choices of
   2026-11-17): a table by level, from 1 to 200, rows "from level N to M: these sub-areas", consecutive levels of the
