@@ -85,8 +85,11 @@ public sealed record CharacterState
     /// <summary>Gets the dialog of a zaap the character used, with its destinations, from the server's listing them to the dialog's end (D83).</summary>
     public ZaapDialog? ZaapDialog { get; init; }
 
-    /// <summary>Gets whether the character is in a dialog with an NPC or a zaap, or an exchange with a storage, which a request to leave ends.</summary>
-    public bool IsInDialog => Dialog is not null || Storage is not null || ZaapDialog is not null;
+    /// <summary>Gets the exchange between the character and another character, from its asking to its end (D442).</summary>
+    public PlayerExchange? Exchange { get; init; }
+
+    /// <summary>Gets whether the character is in a dialog with an NPC or a zaap, or an exchange with a storage or an open one with another character, which a request to leave ends.</summary>
+    public bool IsInDialog => Dialog is not null || Storage is not null || ZaapDialog is not null || Exchange is { IsOpen: true };
 
     /// <summary>Gets the maps of the zaaps the character knows, as the server listed them on entering the game and each time it learnt one.</summary>
     public ImmutableSortedSet<long> KnownZaaps { get; init; } = [];

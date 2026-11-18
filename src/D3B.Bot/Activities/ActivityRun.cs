@@ -295,7 +295,10 @@ public sealed class ActivityRun
 
         var state = context.State;
 
-        if (Activity.IsFull(state))
+        // A master's group banks together (D433): a follower full takes it to the bank as the master full does.
+        var group = _bot.Bank is { } bank && bank.Takes(Activity) ? bank : null;
+
+        if (Activity.IsFull(state) || group?.IsFull(Activity) == true)
         {
             if (_unloaded)
                 return Next.StillFull;
@@ -305,7 +308,11 @@ public sealed class ActivityRun
             _bot.Journal.Add(new ActivityUnloadingEntry(_bot.Time.GetUtcNow(), Activity.Name, state.Weight, state.MaxWeight));
             _unloaded = true;
 
-            return await Activity.UnloadAsync(context, cancellationToken).ConfigureAwait(false) ? Next.Step : Next.StillFull;
+            var unloaded = group is null
+                ? await Activity.UnloadAsync(context, cancellationToken).ConfigureAwait(false)
+                : await group.UnloadAsync(context, Activity, cancellationToken).ConfigureAwait(false);
+
+            return unloaded ? Next.Step : Next.StillFull;
         }
 
         _unloaded = false;

@@ -33,8 +33,10 @@ public static class FightPlay
     private const int MostActionsATurn = 30;
     private const int MostRefusedATurn = 2;
 
-    // The owner's ask (D203, D216): the AI's fight is closed to other players, then to spectators.
+    // The owner's ask (D203, D216): the AI's fight is closed to other players, then to spectators. A master's is left to its
+    // party, which the server locks it to (D431, D435); a follower's options are its master's.
     private static readonly FightOption[] _closing = [FightOption.Closed, FightOption.NoSpectators];
+    private static readonly FightOption[] _leading = [FightOption.NoSpectators];
 
     private static readonly TimeSpan _placementWait = TimeSpan.FromSeconds(45);
     private static readonly TimeSpan _turnWait = TimeSpan.FromMinutes(5);
@@ -148,7 +150,9 @@ public static class FightPlay
         if (ImaginedFights.Of(context.State, map, tables, tactics.Blows, null) is not { } imagined || context.State.Fight is not { } fight)
             return;
 
-        foreach (var option in _closing)
+        var role = context.Actor.Team?.Role ?? FightRole.Alone;
+
+        foreach (var option in role switch { FightRole.Leads => _leading, FightRole.Follows => [], _ => _closing })
         {
             if (context.State.Fight?.Options.GetValueOrDefault(option) is true || !await PacedAsync(context, Placing, cancellationToken).ConfigureAwait(false))
                 continue;
@@ -175,6 +179,10 @@ public static class FightPlay
         }
 
         FightLog.Placed(context.Log, self, context.State.Fight?.Fighters.GetValueOrDefault(self)?.Cell ?? cell);
+
+        // A master is ready once its followers joining are placed (D434), lest the fight start without them.
+        if (role is FightRole.Leads && context.Actor.Team is { } team)
+            await team.PlacedAsync(context, _placementWait, cancellationToken).ConfigureAwait(false);
 
         if (!await PacedAsync(context, Placing, cancellationToken).ConfigureAwait(false))
             return;

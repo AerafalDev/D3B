@@ -111,6 +111,9 @@ public sealed class HarvestActivity : BotActivity
     public override bool UsesTeleports => _settings.UseZaaps;
 
     /// <inheritdoc/>
+    public override bool BanksByTeleport => _banking.UseZaapsOf(_settings.OwnBanking, _settings.UseZaaps);
+
+    /// <inheritdoc/>
     /// <remarks>The AI plays a protector's fight and an aggression instead of the player, as the profile says, then the settings answer it (D144, D198, D235).</remarks>
     public override bool FightsItsFights => _settings.AiFights;
 
@@ -245,6 +248,14 @@ public sealed class HarvestActivity : BotActivity
         ArgumentNullException.ThrowIfNull(state);
 
         return state.MaxWeight > 0 && state.Weight * 100L >= (long)FullAt * state.MaxWeight;
+    }
+
+    /// <inheritdoc/>
+    public override bool Deposits(InventoryItem stack)
+    {
+        ArgumentNullException.ThrowIfNull(stack);
+
+        return _settings.Deposit is HarvestDeposit.AllButWorn || DepositedItems().Contains(stack.ItemId);
     }
 
     /// <inheritdoc/>

@@ -74,6 +74,9 @@ internal sealed class BehaviorActivity : BotActivity, IDisposable, IBehaviorCont
     public override bool UsesTeleports => _visit?.Current?.UsesTeleports ?? true;
 
     /// <inheritdoc/>
+    public override bool BanksByTeleport => _visit?.Current?.BanksByTeleport ?? true;
+
+    /// <inheritdoc/>
     public override bool FightsItsFights => _visit?.Current?.FightsItsFights ?? true;
 
     /// <inheritdoc/>
@@ -210,6 +213,14 @@ internal sealed class BehaviorActivity : BotActivity, IDisposable, IBehaviorCont
         ArgumentNullException.ThrowIfNull(state);
 
         return _visit?.Current?.IsFull(state) ?? false;
+    }
+
+    /// <inheritdoc/>
+    public override bool Deposits(InventoryItem stack)
+    {
+        ArgumentNullException.ThrowIfNull(stack);
+
+        return _visit?.Current?.Deposits(stack) ?? false;
     }
 
     /// <inheritdoc/>

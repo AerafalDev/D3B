@@ -25,4 +25,22 @@ internal static partial class GroupLog
 
     [LoggerMessage(Level = LogLevel.Information, Message = "Bot {Character}: turns off its automatic options in party {Party}")]
     public static partial void OptionsOff(ILogger logger, long character, int party);
+
+    [LoggerMessage(Level = LogLevel.Information, Message = "Bot {Character}: joins its master {Master}'s fight {Fight}")]
+    public static partial void JoiningFight(ILogger logger, long character, long master, int fight);
+
+    [LoggerMessage(Level = LogLevel.Information, Message = "Bot {Character}: waits for its followers {Placing} to be placed before it is ready")]
+    public static partial void WaitingPlacement(ILogger logger, long character, string placing);
+
+    [LoggerMessage(Level = LogLevel.Information, Message = "Bot {Character}: its followers are placed")]
+    public static partial void FollowersPlaced(ILogger logger, long character);
+
+    [LoggerMessage(Level = LogLevel.Information, Message = "Bot {Character}: takes its group to the bank")]
+    public static partial void Banking(ILogger logger, long character);
+
+    [LoggerMessage(Level = LogLevel.Information, Message = "Bot {Character}: was given {Stacks} stacks by its follower {Follower}")]
+    public static partial void Given(ILogger logger, long character, long follower, int stacks);
+
+    [LoggerMessage(Level = LogLevel.Information, Message = "Bot {Character}: asks its master {Master} for an exchange")]
+    public static partial void AskingExchange(ILogger logger, long character, long master);
 }

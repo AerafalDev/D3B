@@ -120,6 +120,7 @@ public static class CharacterEvents
                 Dialog = null,
                 Storage = null,
                 ZaapDialog = null,
+                Exchange = null,
                 HavenBagOwnerId = null,
                 IsWalkHeld = false,
             },
@@ -166,7 +167,17 @@ public static class CharacterEvents
             ExchangeStartedWithTabbedStorageEvent { Type: ExchangeType.GuildChest } => state with { Dialog = null, Storage = new OpenStorage(0, IsGuildChest: true) },
             StorageContentEvent content when state.Storage is { } storage => state with { Storage = storage with { Kamas = content.Kamas } },
             StorageKamasUpdateEvent kamas when state.Storage is { } storage => state with { Storage = storage with { Kamas = kamas.Kamas } },
-            ExchangeLeaveEvent => state with { Storage = null },
+            ExchangeLeaveEvent => state with { Storage = null, Exchange = null },
+            ExchangeRequestedEvent { Type: ExchangeType.Player } asked when asked.SourceId == self || asked.TargetId == self => state with
+            {
+                Exchange = new PlayerExchange(asked.SourceId, asked.TargetId),
+            },
+            ExchangeStartedWithPlayerEvent { Type: ExchangeType.Player } when state.Exchange is { } asked => state with { Exchange = asked with { IsOpen = true } },
+            ExchangeObjectsAddedEvent when state.Exchange is { IsOpen: true } open => state with { Exchange = open with { Changes = open.Changes + 1 } },
+            ExchangeReadyEvent ready when state.Exchange is { IsOpen: true } open => state with
+            {
+                Exchange = ready.CharacterId == self ? open with { IsReady = ready.Ready } : open with { IsOtherReady = ready.Ready },
+            },
             InventoryContentEvent content => state with { Inventory = Stacks(content.Objects), Kamas = content.Kamas },
             ObjectAddedEvent { Object: { Item: not null } added } => state with { Inventory = state.Inventory.SetItem(added.Item.Uid, Stack(added)) },
             ObjectQuantityEvent { Object: { } changed } when state.Inventory.TryGetValue(changed.Uid, out var stack) => state with

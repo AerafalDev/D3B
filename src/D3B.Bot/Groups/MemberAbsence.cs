@@ -17,4 +17,7 @@ public enum MemberAbsence
 
     /// <summary>It is on the map, but not yet in the master's party.</summary>
     OutOfParty,
+
+    /// <summary>It is with its master, its life under the share the master's profile heals under, which it regains before an attack (D433).</summary>
+    Healing,
 }

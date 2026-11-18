@@ -68,6 +68,12 @@
   <data name="DoingFollows" xml:space="preserve">
     <value>Follows {0}</value>
   </data>
+  <data name="DoingJoinsFight" xml:space="preserve">
+    <value>Joins the fight of {0}</value>
+  </data>
+  <data name="DoingGives" xml:space="preserve">
+    <value>Gives its objects to {0}</value>
+  </data>
   <data name="DoingJoins" xml:space="preserve">
     <value>Goes to {0}</value>
   </data>
@@ -97,6 +103,15 @@
   </data>
   <data name="WaitingOutOfParty" xml:space="preserve">
     <value>Waits for {0} to join the party</value>
+  </data>
+  <data name="WaitingHealing" xml:space="preserve">
+    <value>Waits for {0}, who regains its life</value>
+  </data>
+  <data name="DoingEat" xml:space="preserve">
+    <value>Heals: eats {0}</value>
+  </data>
+  <data name="DoingRegenerate" xml:space="preserve">
+    <value>Waits for its life to regenerate, {0} s</value>
   </data>
   <data name="WaitingSeveral" xml:space="preserve">
     <value>Waits for {0}</value>

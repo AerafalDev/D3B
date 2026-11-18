@@ -1,9 +1,12 @@
 using System.Collections.Frozen;
 using D3B.Bot.Activities;
 using D3B.Bot.Characters;
+using D3B.Bot.Fights;
+using D3B.Bot.Inventory;
 using D3B.Bot.Localization;
 using D3B.Bot.Movement;
 using D3B.Bot.Runtime;
+using D3B.Data;
 using D3B.Protocol.Game;
 
 namespace D3B.Bot.Groups;
@@ -20,6 +23,9 @@ namespace D3B.Bot.Groups;
 /// turns them on by itself 3 to 22 ms after each party it joins, as long as its own window has them on, so the follower
 /// lets the client's display time pass, then turns both off, at each party joined.</item>
 /// <item>The master missing, disconnected or paused, the follower waits where it stands: no follower leads (D432).</item>
+/// <item>With its master, its master taking its objects at the bank, it gives them by an exchange (D433, D442).</item>
+/// <item>With its master, under the share of life its master's profile heals under, it heals: it eats until its life is
+/// whole the food it carries that only heals, else regenerates up to the share, its master waiting to attack (D441).</item>
 /// <item>With its master, it waits for the master to move.</item>
 /// <item>Else it follows the chain: the member before it on its map, it waits for that one to go; once the master is
 /// placed on its new map, it changes maps towards it, one change a step by the world's paths, which from the map the
@@ -28,7 +34,8 @@ namespace D3B.Bot.Groups;
 /// his, the owner's choice.</item>
 /// </list>
 /// <para>
-/// The AI plays the follower's own fights; joining its master's is 10c's (D431).
+/// As its master attacks on its map, the follower joins the fight by request (D431, D435); the AI places it and says it
+/// is ready, as it plays the follower's own fights, such as an aggression on its way.
 /// </para>
 /// </remarks>
 public sealed class FollowActivity : BotActivity, IDisposable
@@ -44,14 +51,23 @@ public sealed class FollowActivity : BotActivity, IDisposable
     // client closes it on the player's click alone.
     private static readonly TimeSpan _answerAfter = TimeSpan.FromSeconds(1.3);
 
+    // How long the follower waits for its exchange with its master to open, then to conclude, as the master waits (D442).
+    private static readonly TimeSpan _exchangeWait = TimeSpan.FromSeconds(30);
+
     private readonly Bots _bots;
+    private readonly GameTables _tables;
     private readonly string _masterId;
     private readonly Lock _joining = new();
 
     // Only the activity's steps, one at a time, read and write them.
     private readonly HashSet<int> _refused = [];
+    private readonly HashSet<int> _unusable = [];
     private (string? Connection, int Party)? _optionsOff;
+    private (string? Connection, int Fight)? _joined;
+    private int? _over;
+    private (string? Connection, int Round)? _giving;
     private int _failedChanges;
+    private bool _healing;
 
     private volatile IDisposable? _membership;
     private volatile ActivityReport _report = new() { Doing = GameText.Of(GroupTexts.Text("DoingStart")) };
@@ -63,19 +79,22 @@ public sealed class FollowActivity : BotActivity, IDisposable
     public override ActivityReport? Report => _report;
 
     /// <inheritdoc/>
-    /// <remarks>The AI plays the fights the follower meets on its way, such as an aggression; its master's are 10c's to join.</remarks>
+    /// <remarks>The AI plays its master's fights it joins, and those it meets on its way, such as an aggression.</remarks>
     public override bool FightsItsFights => true;
 
     /// <summary>Initializes a new instance of the <see cref="FollowActivity"/> class.</summary>
     /// <param name="settings">The activity's settings: the master.</param>
     /// <param name="bots">The host's bots, the master's among them, and their groups.</param>
-    public FollowActivity(FollowSettings settings, Bots bots)
+    /// <param name="tables">The installed build's tables: the items, which say what food heals.</param>
+    public FollowActivity(FollowSettings settings, Bots bots, GameTables tables)
     {
         ArgumentNullException.ThrowIfNull(settings);
         ArgumentNullException.ThrowIfNull(bots);
+        ArgumentNullException.ThrowIfNull(tables);
 
         _masterId = settings.Master;
         _bots = bots;
+        _tables = tables;
     }
 
     /// <summary>Gets the master a follower's settings name.</summary>
@@ -157,11 +176,22 @@ public sealed class FollowActivity : BotActivity, IDisposable
             return true;
         }
 
+        if (await JoinFightAsync(context, seen, cancellationToken).ConfigureAwait(false))
+            return true;
+
         var theirs = seen.State;
         var name = GameTextValue.Of(theirs.Name);
 
         if (GroupChain.Together(theirs, state))
         {
+            // Its master taking its objects at the bank (D433, D442).
+            if (await GiveAsync(context, seen, cancellationToken).ConfigureAwait(false))
+                return true;
+
+            // Its life over the share its master's profile heals under, before its master attacks (D433).
+            if (GroupLife.ShareOf(seen.Bot) is { } share && await HealAsync(context, share, changed, mine, seen, cancellationToken).ConfigureAwait(false))
+                return true;
+
             Publish(GameText.Of(GroupTexts.Text("DoingFollows"), name));
             await WaitAsync(context, changed, mine, seen, null, cancellationToken).ConfigureAwait(false);
 
@@ -304,6 +334,147 @@ public sealed class FollowActivity : BotActivity, IDisposable
         }
 
         return false;
+    }
+
+    // Whether it asked to join its master's fight: as the master attacks on its map, the server tells the party of the fight
+    // in the millisecond it shows it there (D435), and the follower joins it by its id and the master's, as the owner's
+    // click did. The end of a member's fight no message measured says: the master's own state, in the same host, says
+    // whether its fight is still in its placement, which a follower may join. Once a fight and a connection, so that a join
+    // the server answers nothing to is not sent again and again. The party's word stays until the follower's context
+    // changes: one seen while its master fights no more is over, never joined, lest the next fight on the map join it.
+    private async Task<bool> JoinFightAsync(BotContext context, BotSeen master, CancellationToken cancellationToken)
+    {
+        var state = context.State;
+        var me = context.Actor;
+
+        if (state.PartyFight is { } told && master.State.Fight is null)
+            _over = told.FightId;
+
+        if (state.IsFighting || state.PartyFight is not { } fight || fight.MemberId != master.Bot.Key.CharacterId || fight.MapId != state.MapId
+            || master.State.Fight is not { Phase: FightPhase.Placement } || _joined == (me.ConnectionId, fight.FightId) || _over == fight.FightId)
+        {
+            return false;
+        }
+
+        _joined = (me.ConnectionId, fight.FightId);
+        Publish(GameText.Of(GroupTexts.Text("DoingJoinsFight"), GameTextValue.Of(master.State.Name)));
+        GroupLog.JoiningFight(context.Log, me.Key.CharacterId, fight.MemberId, fight.FightId);
+        await context.SendAsync(new FightJoinRequest { FightId = fight.FightId, FighterId = fight.MemberId }, cancellationToken).ConfigureAwait(false);
+        await context.WaitUntilAsync(now => now.IsFighting, context.Delays.Answer, cancellationToken).ConfigureAwait(false);
+
+        return true;
+    }
+
+    // Whether it healed this step: once under its master's share, it eats until its life is whole, the food it carries that
+    // only heals, smallest first, as a profile choosing none does (D148), the owner's choice; with none, its life regenerates
+    // up to the share (9g5). The master's gate waits for it meanwhile (D433).
+    private async Task<bool> HealAsync(BotContext context, int share, Task changed, BotSeen mine, BotSeen master, CancellationToken cancellationToken)
+    {
+        var state = context.State;
+
+        if (context.Life is not { } life || state.MaxLife is not { } most || most <= 0)
+            return false;
+
+        if (life >= most || (!_healing && life >= GroupLife.PointsOf(share, most)))
+        {
+            _healing = false;
+
+            return false;
+        }
+
+        _healing = true;
+
+        if (Food.StackToEat(state, [], _tables.Items, _unusable) is { } food)
+        {
+            Publish(GameText.Of(GroupTexts.Text("DoingEat"), GameTextValue.Item(food.ItemId)));
+
+            // In one request: measured, the server eats only as much of the stack as the life lacks (D156).
+            switch (await context.UseObjectsAsync(food.Uid, food.Quantity, cancellationToken).ConfigureAwait(false))
+            {
+                case ObjectUseOutcome.Used:
+                    break;
+                case ObjectUseOutcome.Refused:
+                    // Measured: the server refuses food at full life, which it knows better than the reckoning.
+                    _healing = false;
+                    break;
+                default:
+                    _unusable.Add(food.Uid);
+                    break;
+            }
+
+            await Task.Delay(context.Delays.Display, context.Time, cancellationToken).ConfigureAwait(false);
+
+            return true;
+        }
+
+        if (GroupLife.Lacking(context.Actor, share, context.Time.GetUtcNow()) is var lacking && lacking <= TimeSpan.Zero)
+        {
+            _healing = false;
+
+            return false;
+        }
+
+        Publish(GameText.Of(GroupTexts.Text("DoingRegenerate"), GameTextValue.Number((long)Math.Ceiling(lacking.TotalSeconds))));
+        // Its master moving, or a fight told on its map, ends the wait as the follower's own waits do.
+        await GroupWaits.AnyAsync([(mine.Bot, mine.Moved), (master.Bot, master.Moved)], changed, context.Time, lacking < _lookAgain ? lacking : _lookAgain, cancellationToken).ConfigureAwait(false);
+
+        return true;
+    }
+
+    // Whether it gave this step: its master taking its objects at the bank (D433, D442), it asks the master for an exchange
+    // once a round, moves in, one by one, what the master's pods still hold of the stacks it does not wear, never its kamas,
+    // then says it is ready naming how many changes the server told it of, as the client did (D442). Its master accepts and
+    // concludes.
+    private async Task<bool> GiveAsync(BotContext context, BotSeen master, CancellationToken cancellationToken)
+    {
+        var me = context.Actor;
+        var masterId = master.Bot.Key.CharacterId;
+
+        if (_bots.Groups.CollectingFrom(master.Bot.Key) is not { } collect || collect.Follower != me.Key)
+            return false;
+
+        var state = context.State;
+
+        if (state.Exchange is not { IsOpen: true } exchange)
+        {
+            if (_giving == (me.ConnectionId, collect.Round))
+                return false;
+
+            _giving = (me.ConnectionId, collect.Round);
+            Publish(GameText.Of(GroupTexts.Text("DoingGives"), GameTextValue.Of(master.State.Name)));
+            GroupLog.AskingExchange(context.Log, me.Key.CharacterId, masterId);
+            await context.SendAsync(new ExchangePlayerRequest { TargetId = masterId }, cancellationToken).ConfigureAwait(false);
+            await context.WaitUntilAsync(now => now.Exchange is { IsOpen: true }, _exchangeWait, cancellationToken).ConfigureAwait(false);
+
+            return true;
+        }
+
+        if (exchange.IsReady || exchange.SourceId != me.Key.CharacterId)
+            return false;
+
+        foreach (var (uid, quantity) in GroupGifts.Of(state, master.Bot.State, _tables.Items))
+        {
+            // Its master gave up the exchange, or the player closed it: nothing more goes in.
+            if (context.State.Exchange is not { IsOpen: true } still)
+                return true;
+
+            var changes = still.Changes;
+
+            await context.SendAsync(new ExchangeObjectMoveRequest { Uid = uid, Quantity = quantity }, cancellationToken).ConfigureAwait(false);
+
+            // Measured (D442): each move told to both 28 ms after; one the server refuses, such as an object bound to the
+            // account (D153), changes nothing, and the next goes on.
+            await context.WaitUntilAsync(now => now.Exchange is not { IsOpen: true } open || open.Changes > changes, context.Delays.Answer, cancellationToken).ConfigureAwait(false);
+            await Task.Delay(context.Delays.Display, context.Time, cancellationToken).ConfigureAwait(false);
+        }
+
+        if (context.State.Exchange is not { IsOpen: true } moved)
+            return true;
+
+        await context.SendAsync(new ExchangeReadyRequest { Step = moved.Changes, Ready = true }, cancellationToken).ConfigureAwait(false);
+        await context.WaitUntilAsync(now => now.Exchange is null, _exchangeWait, cancellationToken).ConfigureAwait(false);
+
+        return true;
     }
 
     // One change towards the master's map a step, so that a change failing tries the same way again at the next step: a

@@ -93,6 +93,9 @@ public sealed class FightActivity : BotActivity
     public override bool UsesTeleports => _settings.UseZaaps;
 
     /// <inheritdoc/>
+    public override bool BanksByTeleport => _banking.UseZaapsOf(_settings.OwnBanking, _settings.UseZaaps);
+
+    /// <inheritdoc/>
     public override bool FightsItsFights => true;
 
     /// <inheritdoc/>
@@ -171,6 +174,14 @@ public sealed class FightActivity : BotActivity
     }
 
     /// <inheritdoc/>
+    public override bool Deposits(InventoryItem stack)
+    {
+        ArgumentNullException.ThrowIfNull(stack);
+
+        return _settings.Deposit is FightDeposit.AllButWorn || _loot.ContainsKey(stack.ItemId);
+    }
+
+    /// <inheritdoc/>
     public override async Task<bool> UnloadAsync(BotContext context, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(context);
@@ -179,7 +190,7 @@ public sealed class FightActivity : BotActivity
 
         for (var attempt = 0; attempt < MostBankings; attempt++)
         {
-            switch (await context.BankAsync(stack => _settings.Deposit is FightDeposit.AllButWorn || _loot.ContainsKey(stack.ItemId), 0, _banking.UseZaapsOf(_settings.OwnBanking, _settings.UseZaaps), cancellationToken).ConfigureAwait(false))
+            switch (await context.BankAsync(Deposits, 0, _banking.UseZaapsOf(_settings.OwnBanking, _settings.UseZaaps), cancellationToken).ConfigureAwait(false))
             {
                 case BankOutcome.Done:
                     _banks++;

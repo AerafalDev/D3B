@@ -14,7 +14,7 @@ public sealed class FollowActivityTests
 {
     private static ActivityRun Follow(TestPlay play, BotActor follower, CharacterKey master)
     {
-        return follower.StartActivity(new FollowActivity(new FollowSettings { Master = master.ToId() }, play.Bots));
+        return follower.StartActivity(new FollowActivity(new FollowSettings { Master = master.ToId() }, play.Bots, play.Tables));
     }
 
     private static string Doing(ActivityRun run)
@@ -27,7 +27,7 @@ public sealed class FollowActivityTests
     {
         // D438: the master's choice counts, so a follower sends none.
         await using var play = new TestPlay();
-        var follow = new FollowActivity(new FollowSettings { Master = TestGroup.Master.ToId() }, play.Bots);
+        var follow = new FollowActivity(new FollowSettings { Master = TestGroup.Master.ToId() }, play.Bots, play.Tables);
 
         Assert.True(follow.FightsItsFights);
         Assert.Equal(ChallengeReward.Client, follow.ChallengeReward);

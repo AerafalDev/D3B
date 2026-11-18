@@ -601,3 +601,18 @@ or refines another says so in its own entry. Add a line here with every new deci
 ## Bug reports, the harvest on the way (D439)
 
 - [D439](decisions/d439-harvest-on-the-way.md#d439-the-harvests-journey-stops-on-any-map-it-crosses-where-the-server-offers-a-resource-of-the-profile-of-the-zone-or-not) The harvest's journey stops on any map it crosses where the server offers a resource of the profile, of the zone or not (2026-11-18)
+
+## Step 10, 10c1: the group's fights (D440)
+
+- [D440](decisions/d440-step-10-the-groups-fights.md#d440-10c1-a-follower-joins-its-masters-fight-by-request-the-master-ready-once-its-followers-are-placed) 10c1, a follower joins its master's fight by request, the master ready once its followers are placed (2026-11-18)
+  - The master ready once placed, a follower setting its team's options, the fights shown on a map read.
+
+## Step 10, 10c2: the group's life before an attack (D441)
+
+- [D441](decisions/d441-step-10-the-groups-life.md#d441-10c2-the-master-attacks-once-each-followers-life-is-over-its-profiles-share-each-follower-healing-by-itself) 10c2, the master attacks once each follower's life is over its profile's share, each follower healing by itself (2026-11-18)
+  - Regenerating only, heal settings in "Follow", a fixed share or the follower's own, the life waited for before the attack alone.
+
+## Step 10, 10c3: the group's bank (D442)
+
+- [D442](decisions/d442-step-10-the-groups-bank.md#d442-10c3-a-full-member-takes-the-group-to-the-bank-each-follower-gives-the-master-what-it-carries-by-an-exchange-mapping-format-20) 10c3, a full member takes the group to the bank, each follower gives the master what it carries by an exchange, mapping format 20 (2026-11-18)
+  - All the master does not wear, two openings of the bank, the step counted from requests, one transfer of every stack.
