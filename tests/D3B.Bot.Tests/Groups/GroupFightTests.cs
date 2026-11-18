@@ -116,7 +116,7 @@ public sealed class GroupFightTests
 
     private static ActivityRun Follow(TestPlay play, BotActor follower)
     {
-        return follower.StartActivity(new FollowActivity(new FollowSettings { Master = TestGroup.Master.ToId() }, play.Bots));
+        return follower.StartActivity(new FollowActivity(new FollowSettings { Master = TestGroup.Master.ToId() }, play.Bots, play.Tables));
     }
 
     // The follower in its master's party, its options turned off: it follows.

@@ -2,9 +2,11 @@ using System.Collections.Frozen;
 using D3B.Bot.Activities;
 using D3B.Bot.Characters;
 using D3B.Bot.Fights;
+using D3B.Bot.Inventory;
 using D3B.Bot.Localization;
 using D3B.Bot.Movement;
 using D3B.Bot.Runtime;
+using D3B.Data;
 using D3B.Protocol.Game;
 
 namespace D3B.Bot.Groups;
@@ -21,6 +23,8 @@ namespace D3B.Bot.Groups;
 /// turns them on by itself 3 to 22 ms after each party it joins, as long as its own window has them on, so the follower
 /// lets the client's display time pass, then turns both off, at each party joined.</item>
 /// <item>The master missing, disconnected or paused, the follower waits where it stands: no follower leads (D432).</item>
+/// <item>With its master, under the share of life its master's profile heals under, it heals: it eats until its life is
+/// whole the food it carries that only heals, else regenerates up to the share, its master waiting to attack (D440).</item>
 /// <item>With its master, it waits for the master to move.</item>
 /// <item>Else it follows the chain: the member before it on its map, it waits for that one to go; once the master is
 /// placed on its new map, it changes maps towards it, one change a step by the world's paths, which from the map the
@@ -47,15 +51,18 @@ public sealed class FollowActivity : BotActivity, IDisposable
     private static readonly TimeSpan _answerAfter = TimeSpan.FromSeconds(1.3);
 
     private readonly Bots _bots;
+    private readonly GameTables _tables;
     private readonly string _masterId;
     private readonly Lock _joining = new();
 
     // Only the activity's steps, one at a time, read and write them.
     private readonly HashSet<int> _refused = [];
+    private readonly HashSet<int> _unusable = [];
     private (string? Connection, int Party)? _optionsOff;
     private (string? Connection, int Fight)? _joined;
     private int? _over;
     private int _failedChanges;
+    private bool _healing;
 
     private volatile IDisposable? _membership;
     private volatile ActivityReport _report = new() { Doing = GameText.Of(GroupTexts.Text("DoingStart")) };
@@ -73,13 +80,16 @@ public sealed class FollowActivity : BotActivity, IDisposable
     /// <summary>Initializes a new instance of the <see cref="FollowActivity"/> class.</summary>
     /// <param name="settings">The activity's settings: the master.</param>
     /// <param name="bots">The host's bots, the master's among them, and their groups.</param>
-    public FollowActivity(FollowSettings settings, Bots bots)
+    /// <param name="tables">The installed build's tables: the items, which say what food heals.</param>
+    public FollowActivity(FollowSettings settings, Bots bots, GameTables tables)
     {
         ArgumentNullException.ThrowIfNull(settings);
         ArgumentNullException.ThrowIfNull(bots);
+        ArgumentNullException.ThrowIfNull(tables);
 
         _masterId = settings.Master;
         _bots = bots;
+        _tables = tables;
     }
 
     /// <summary>Gets the master a follower's settings name.</summary>
@@ -169,6 +179,10 @@ public sealed class FollowActivity : BotActivity, IDisposable
 
         if (GroupChain.Together(theirs, state))
         {
+            // Its life over the share its master's profile heals under, before its master attacks (D433).
+            if (GroupLife.ShareOf(seen.Bot) is { } share && await HealAsync(context, share, changed, mine, seen, cancellationToken).ConfigureAwait(false))
+                return true;
+
             Publish(GameText.Of(GroupTexts.Text("DoingFollows"), name));
             await WaitAsync(context, changed, mine, seen, null, cancellationToken).ConfigureAwait(false);
 
@@ -338,6 +352,62 @@ public sealed class FollowActivity : BotActivity, IDisposable
         GroupLog.JoiningFight(context.Log, me.Key.CharacterId, fight.MemberId, fight.FightId);
         await context.SendAsync(new FightJoinRequest { FightId = fight.FightId, FighterId = fight.MemberId }, cancellationToken).ConfigureAwait(false);
         await context.WaitUntilAsync(now => now.IsFighting, context.Delays.Answer, cancellationToken).ConfigureAwait(false);
+
+        return true;
+    }
+
+    // Whether it healed this step: once under its master's share, it eats until its life is whole, the food it carries that
+    // only heals, smallest first, as a profile choosing none does (D148), the owner's choice; with none, its life regenerates
+    // up to the share (9g5). The master's gate waits for it meanwhile (D433).
+    private async Task<bool> HealAsync(BotContext context, int share, Task changed, BotSeen mine, BotSeen master, CancellationToken cancellationToken)
+    {
+        var state = context.State;
+
+        if (context.Life is not { } life || state.MaxLife is not { } most || most <= 0)
+            return false;
+
+        if (life >= most || (!_healing && life >= GroupLife.PointsOf(share, most)))
+        {
+            _healing = false;
+
+            return false;
+        }
+
+        _healing = true;
+
+        if (Food.StackToEat(state, [], _tables.Items, _unusable) is { } food)
+        {
+            Publish(GameText.Of(GroupTexts.Text("DoingEat"), GameTextValue.Item(food.ItemId)));
+
+            // In one request: measured, the server eats only as much of the stack as the life lacks (D156).
+            switch (await context.UseObjectsAsync(food.Uid, food.Quantity, cancellationToken).ConfigureAwait(false))
+            {
+                case ObjectUseOutcome.Used:
+                    break;
+                case ObjectUseOutcome.Refused:
+                    // Measured: the server refuses food at full life, which it knows better than the reckoning.
+                    _healing = false;
+                    break;
+                default:
+                    _unusable.Add(food.Uid);
+                    break;
+            }
+
+            await Task.Delay(context.Delays.Display, context.Time, cancellationToken).ConfigureAwait(false);
+
+            return true;
+        }
+
+        if (GroupLife.Lacking(context.Actor, share, context.Time.GetUtcNow()) is var lacking && lacking <= TimeSpan.Zero)
+        {
+            _healing = false;
+
+            return false;
+        }
+
+        Publish(GameText.Of(GroupTexts.Text("DoingRegenerate"), GameTextValue.Number((long)Math.Ceiling(lacking.TotalSeconds))));
+        // Its master moving, or a fight told on its map, ends the wait as the follower's own waits do.
+        await GroupWaits.AnyAsync([(mine.Bot, mine.Moved), (master.Bot, master.Moved)], changed, context.Time, lacking < _lookAgain ? lacking : _lookAgain, cancellationToken).ConfigureAwait(false);
 
         return true;
     }

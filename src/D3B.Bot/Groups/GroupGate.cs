@@ -15,6 +15,10 @@ namespace D3B.Bot.Groups;
 /// attack, a harvest, a zaap, the haven bag or a door, whatever its profile, and, a member missing, where it stands.
 /// </para>
 /// <para>
+/// It waits too for each follower's life to be over the share its own profile heals under, before any action it holds, as
+/// its own activity heals before each step (D433, D440); each follower heals by itself.
+/// </para>
+/// <para>
 /// It waits as long as it takes, with no delay (D87): a follower disconnected, paused, fighting, on its way or stuck. The
 /// bot's card says whom it waits for (<see cref="BotActor.WaitingFor"/>).
 /// </para>
@@ -89,6 +93,13 @@ internal sealed class GroupGate : IActionGate
                 var left = await LeaveOthersAsync(context, state, cancellationToken).ConfigureAwait(false);
                 var invited = await InviteAsync(context, state, followers, cancellationToken).ConfigureAwait(false);
                 var missing = GroupChain.Missing(state, followers);
+                var healed = (DateTimeOffset?)null;
+
+                // Each follower's life over the share the master's profile heals under, before any action, as an activity heals
+                // before its step (D433, D440): held only before the attack, the master would wait on the group's cell, which
+                // the group leaves meanwhile.
+                if (missing.Count is 0 && GroupLife.ShareOf(_bot) is { } share)
+                    (missing, healed) = Healing(state, followers, share);
 
                 if (missing.Count is 0)
                 {
@@ -111,13 +122,33 @@ internal sealed class GroupGate : IActionGate
                     }
                 }
 
-                await ChangedAsync(changed, state, seen, Earliest(invited, left), cancellationToken).ConfigureAwait(false);
+                await ChangedAsync(changed, state, seen, Earliest(Earliest(invited, left), healed), cancellationToken).ConfigureAwait(false);
             }
         }
         finally
         {
             _bot.WaitFor([]);
         }
+    }
+
+    // The followers whose life is under the share, in the chain's order, and when the first regenerates to it: its life rises
+    // with no message, by the bot's reckoning (D153), so that the wait looks again then. Each follower heals by itself.
+    private (IReadOnlyList<MissingMember> Missing, DateTimeOffset? Healed) Healing(CharacterState state, IReadOnlyList<BotActor> followers, int share)
+    {
+        var now = _bot.Time.GetUtcNow();
+        var missing = new List<MissingMember>();
+        DateTimeOffset? healed = null;
+
+        foreach (var follower in GroupChain.Order(state, followers))
+        {
+            if (GroupLife.Lacking(follower, share, now) is var lacking && lacking <= TimeSpan.Zero)
+                continue;
+
+            missing.Add(new MissingMember(follower.Key, follower.State.Name, MemberAbsence.Healing));
+            healed = Earliest(healed, now + lacking);
+        }
+
+        return (missing, healed);
     }
 
     // Gives the next time the leaving may go again, while the master is in a party another leads: a leaving the server

@@ -316,6 +316,8 @@ The bots run in `D3B.Bot`: what each part does today, with the decisions that ma
   says it is ready once each follower on its map is placed, a follower in its master's fight sets no option, and any other
   fight is closed and refused to spectators as one alone. The follower joins its master's fight by request
   (`FightJoinRequest`) as its party is told of it on its map, its master's own state saying the fight is in its placement.
+  Before any action (D440), the gate waits too for each follower's life over the share the master's profile heals under
+  (`GroupLife`, the life its activity watches), and the follower with its master eats what only heals, else regenerates.
 - **Fighting** (D236, D241, D245 to D249, D259), in `D3B.Bot.Fighting`, registered by `FightingModule`: `FightActivity`, its
   settings `FightSettings`. Each step heals, then on a map of the zone walks onto the cell of the nearest group the
   settings allow, monsters or families of monsters chosen, a family a race (`ChosenMonsters`), with no judgement of its

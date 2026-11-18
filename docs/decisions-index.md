@@ -602,3 +602,8 @@ or refines another says so in its own entry. Add a line here with every new deci
 
 - [D439](decisions/d439-step-10-the-groups-fights.md#d439-10c1-a-follower-joins-its-masters-fight-by-request-the-master-ready-once-its-followers-are-placed) 10c1, a follower joins its master's fight by request, the master ready once its followers are placed (2026-11-18)
   - The master ready once placed, a follower setting its team's options, the fights shown on a map read.
+
+## Step 10, 10c2: the group's life before an attack (D440)
+
+- [D440](decisions/d440-step-10-the-groups-life.md#d440-10c2-the-master-attacks-once-each-followers-life-is-over-its-profiles-share-each-follower-healing-by-itself) 10c2, the master attacks once each follower's life is over its profile's share, each follower healing by itself (2026-11-18)
+  - Regenerating only, heal settings in "Follow", a fixed share or the follower's own, the life waited for before the attack alone.

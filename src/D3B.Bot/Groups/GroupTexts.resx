@@ -101,6 +101,15 @@
   <data name="WaitingOutOfParty" xml:space="preserve">
     <value>Waits for {0} to join the party</value>
   </data>
+  <data name="WaitingHealing" xml:space="preserve">
+    <value>Waits for {0}, who regains its life</value>
+  </data>
+  <data name="DoingEat" xml:space="preserve">
+    <value>Heals: eats {0}</value>
+  </data>
+  <data name="DoingRegenerate" xml:space="preserve">
+    <value>Waits for its life to regenerate, {0} s</value>
+  </data>
   <data name="WaitingSeveral" xml:space="preserve">
     <value>Waits for {0}</value>
   </data>
