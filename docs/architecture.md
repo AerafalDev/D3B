@@ -311,7 +311,7 @@ The bots run in `D3B.Bot`: what each part does today, with the decisions that ma
   party's order, then names): with its master it waits, behind the one before it it waits, else it travels to the master's
   map, each in its own haven bag as the master is in his (`GroupChain.Together`). A wait reads the bots it waits on before
   deciding (`BotSeen`), so that no change made between the decision and the wait is missed (`GroupWaits`). In a fight
-  (D439), each bot has a part too (`IFightTeam`, `BotActor.Team`, `GroupFight`), which the AI asks during the placement
+  (D440), each bot has a part too (`IFightTeam`, `BotActor.Team`, `GroupFight`), which the AI asks during the placement
   (`FightPlay`), from the fight itself: a master whose fight the server locked to its party refuses spectators only and
   says it is ready once each follower on its map is placed, a follower in its master's fight sets no option, and any other
   fight is closed and refused to spectators as one alone. The follower joins its master's fight by request

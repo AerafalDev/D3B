@@ -598,7 +598,7 @@ or refines another says so in its own entry. Add a line here with every new deci
 - [D438](decisions/d438-fights-challenges-bonus.md#d438-a-profile-chooses-the-challenges-bonus-of-its-fights-the-drops-by-default-mapping-format-19) A profile chooses the challenges' bonus of its fights, the drops by default, mapping format 19 (2026-11-18)
   - Two values, one box, another default, under "Advanced" or a section of its own, a general setting.
 
-## Step 10, 10c1: the group's fights (D439)
+## Step 10, 10c1: the group's fights (D440)
 
-- [D439](decisions/d439-step-10-the-groups-fights.md#d439-10c1-a-follower-joins-its-masters-fight-by-request-the-master-ready-once-its-followers-are-placed) 10c1, a follower joins its master's fight by request, the master ready once its followers are placed (2026-11-18)
+- [D440](decisions/d440-step-10-the-groups-fights.md#d440-10c1-a-follower-joins-its-masters-fight-by-request-the-master-ready-once-its-followers-are-placed) 10c1, a follower joins its master's fight by request, the master ready once its followers are placed (2026-11-18)
   - The master ready once placed, a follower setting its team's options, the fights shown on a map read.
