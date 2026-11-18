@@ -10,10 +10,10 @@ namespace D3B.Protocol.Tests.Mapping;
 public sealed class ContractAuditTests
 {
     // The readable protocol's size, which the audit checks whole: messages, fields, enums and enum values.
-    private const int ReadableMessages = 224;
-    private const int ReadableFields = 497;
-    private const int ReadableEnums = 31;
-    private const int ReadableValues = 216;
+    private const int ReadableMessages = 251;
+    private const int ReadableFields = 552;
+    private const int ReadableEnums = 35;
+    private const int ReadableValues = 239;
 
     /// <summary>Maps the readable protocol against its obfuscation, then audits the mapping against the schema as a test changed it.</summary>
     private static AuditReport Audit(Action<Obfuscation>? change = null, Action<ProtocolMapping>? edit = null)

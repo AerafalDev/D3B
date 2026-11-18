@@ -46,6 +46,7 @@ public static class ReadableProtocol
         FightsReflection.Descriptor,
         FightActionsReflection.Descriptor,
         SpellsReflection.Descriptor,
+        PartiesReflection.Descriptor,
     ];
 
     /// <summary>Gets, for each readable package, the file of a build's schema its messages are looked for in.</summary>

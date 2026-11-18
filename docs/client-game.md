@@ -1356,3 +1356,46 @@ id among them) are not. The type codes are this build's.
 What this means for a cleaner (BR2): overwriting the ticket and the list and selection fields would leave the chosen character's name 170
 times in the capture. A name has to be found by value, wherever it occurs in a string field, and the opaque strings of the client by their
 shape or their field; which GUIDs stand for the character is the question left.
+
+## The game, in a party
+
+Three game connections of 3.7.14.18 recorded through the app on 2026-11-18 for step 10 (D429, D435): the leader's, 5 min
+53 s, and its follower's, 5 min 3 s, two of the owner's characters each on its own account and client, and a third of
+44 s. Described with `scripts/capture.cs`, by structure and type URLs, each value compared on the machine and never
+written down. The two clients' captures start on whole seconds, so a time across them is known to a second only; a time
+within one is to the millisecond.
+
+- **An invitation**: the leader names its guest by name, a classical party. The server answers the leader at once with
+  a party whose only member is itself, a new party, by its id, at each invitation of a leader without one: four parties
+  for four invitations. The guest is told of the invitation, with the leader's id and name, the party's id and its own
+  id, and answers by the party's id.
+- **Accepted**: the guest has the party, its leader and both members, in the server's order; the leader is told of its
+  new member. Then the guest's client turns on, one after the other, its two automatic options of a member, joining the
+  leader's fights and ready by itself, which were on by default on the owner's account; each is answered by an empty
+  response, and the leader is told of each, by the guest's id. Which of the two is which is not measured. Following the
+  leader, the third option, asks level 10 and a subscription, which the follower lacked. The owner turned the two off,
+  on and off again: six requests, each answered by an empty response.
+- **Refused**: the guest's refusal, by the party's id; the leader is told who refused, and its party, with itself alone,
+  ends.
+- **Leaving and excluded**: the leader excludes a member by its id and the party's; the member is told who excluded it,
+  and the leader which member left, with its kicker. A member leaving by itself is told so; the leader which member left,
+  without a kicker. A party left with its leader alone ends, both times.
+- **A fight**: the leader attacks monsters with the follower on its map. The follower is shown the fight on the map, with
+  its teams, and is told, in the same millisecond, that a member of its party is in a fight: the fight's id, the member,
+  the map, the party and the cause, monsters. 2.3 s later the owner clicked the fight's sword: the follower's request
+  names the fight's id and the leader's, and the server answers as to an attack, the context destroyed and created again
+  for the fight, then the placement with the leader already in it.
+- **The party's lock**: at the placement's start the server lists the four options of the leader's team, option 1 on,
+  by itself; the owner then turned on option 2, closing the fight, and option 0, refusing spectators, which D216 had
+  measured. The follower, joining after, saw option 1 on.
+- **An exchange**: the follower asks the leader for an exchange by its id; both are told who asks whom, 27 ms after, an
+  exchange of type 1. The leader accepts and the exchange opens for both. The follower puts two stacks in, as into the
+  bank (D80), and each side is told of the other's; the follower says it is ready, at step 3, and the leader is told,
+  then the leader. The exchange concludes in that millisecond: the objects in the leader's inventory, its weight, both
+  told neither is ready any more, and the exchange left.
+
+**Mapped** (D435): the requests to invite, accept, refuse, leave and exclude, and to turn each automatic option off; the
+events of an invitation, a party joined, a new member, a member removed, a party ended, left and excluded from, and a
+member's fight; the request to join a fight; and the exchange between two characters. Format 18, 251 messages paired, no
+failure; without the captures, the pins and the structure pair the same.
+

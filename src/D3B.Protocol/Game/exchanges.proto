@@ -21,11 +21,11 @@ message ExchangeStartedWithStorageEvent {
   int32 max_slots = 2;
 }
 
-// What kind of exchange opened. Twenty-three values in this build: 15 opened the bank and 21 the guild's chest, in the
-// captures; the others are not measured.
+// What kind of exchange opened. Twenty-three values in this build: 15 opened the bank, 21 the guild's chest and 1 an
+// exchange between two characters, in the captures; the others are not measured.
 enum ExchangeType {
   EXCHANGE_TYPE_VALUE_0 = 0;
-  EXCHANGE_TYPE_VALUE_1 = 1;
+  EXCHANGE_TYPE_PLAYER = 1;
   EXCHANGE_TYPE_VALUE_2 = 2;
   EXCHANGE_TYPE_VALUE_3 = 3;
   EXCHANGE_TYPE_VALUE_4 = 4;
@@ -163,4 +163,48 @@ message StorageObjectRemovedEvent {
   option (d3b.readable.partial) = true;
 
   int32 uid = 1;
+}
+
+// Asks a character of the map for an exchange: the follower its leader, in the captures (D435). The server tells both of
+// the request, and opens the exchange once the other accepts.
+message ExchangePlayerRequest {
+  int64 target_id = 1;
+}
+
+// A character asked another for an exchange: to both, 27 ms after the request.
+message ExchangeRequestedEvent {
+  ExchangeType type = 1;
+
+  // Who asks.
+  int64 source_id = 2;
+
+  // Who is asked.
+  int64 target_id = 3;
+}
+
+// Accepts the exchange another character asked for.
+message ExchangeAcceptRequest {
+}
+
+// An exchange with another character opened, to both, as the one asked accepts.
+message ExchangeStartedWithPlayerEvent {
+  option (d3b.readable.partial) = true;
+
+  ExchangeType type = 3;
+}
+
+// Says the character is ready to conclude the exchange with another character, or no longer. Each side's objects come
+// through the requests the bank's exchange uses; the exchange concludes once both are ready, the objects moved and the
+// exchange left in the same millisecond.
+message ExchangeReadyRequest {
+  // The exchange's step: 3 for both characters, the one exchange captured.
+  int32 step = 1;
+
+  bool ready = 2;
+}
+
+// A character of the exchange is ready, or no longer: to both.
+message ExchangeReadyEvent {
+  bool ready = 1;
+  int64 character_id = 2;
 }
