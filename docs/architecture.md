@@ -128,7 +128,8 @@ The bots run in `D3B.Bot`: what each part does today, with the decisions that ma
 - **The player wins** (D66): a request the player sends that acts on the character (`PlayerActions`) interrupts the bot's
   behavior, and the bot pauses until it is resumed. What the client sends by itself after an action is not the player's:
   a request to leave is the player's only while the character is in a dialog or an exchange (D81), but for a dialog whose
-  question offers no reply, which the client closes by itself (D253).
+  question offers no reply, which the client closes by itself (D253), and a readiness taken back from a character that is
+  not ready, which a follower's client sends by itself as it joins its master's fight (D445).
 - **Walking on a map** (D69): `MapWalk`, in `D3B.Bot.Movement`, finds the path in the pack's cells, sends its turning
   points, and is over once the server answers the client's confirmation; a refusal, no answer or no confirmation in time
   ends it too, and the character walking already makes it busy. A walk the client does not confirm leaves the character

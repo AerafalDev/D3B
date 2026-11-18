@@ -184,6 +184,9 @@ public sealed class GroupFightTests
 
         var waited = play.Time.GetUtcNow();
 
+        // Measured (D445): the follower's client says by itself it is not ready as it joins, which pauses nothing.
+        followerConnection.Client(new FightReadyRequest());
+
         // The follower in its master's fight, placed by its AI: it sets none of its team's options, which are its master's.
         Placement(followerConnection, TestGroup.FollowerId, 301, Beside(monster, -2, 1), monster, true, Character(TestGroup.MasterId, near));
         var placed = Assert.IsType<FightPlacementPositionRequest>(await TestGroup.SentAsync(play, followerConnection, 4));
@@ -199,6 +202,7 @@ public sealed class GroupFightTests
         Assert.True(Logged(play, "its followers are placed"));
         Assert.True(play.Time.GetUtcNow() - waited < TimeSpan.FromSeconds(45));
         Assert.DoesNotContain(followerConnection.Sent, request => request is FightOptionToggleRequest);
+        Assert.False(follower.IsPaused);
         run.Stop();
     }
 
