@@ -15,6 +15,7 @@ public sealed class FightEventsTests
     private const long Turret = -2;
     private const long Knight = -3;
     private const long OtherPlayer = 7_000_001;
+    private const long OthersKnight = -4;
     private const long FightMapId = 191_104_008;
 
     private static readonly CharacterState _chosen = CharacterState.Chosen(TestPlay.Key, TestPlay.Chosen().Success.Character);
@@ -323,16 +324,16 @@ public sealed class FightEventsTests
         var shown = Apply(
             Playing(),
             new FightFighterShowEvent { Fighter = CompanionActor(Knight, Self, 300) },
-            new FightFighterShowEvent { Fighter = CompanionActor(Turret, OtherPlayer, 301) },
+            new FightFighterShowEvent { Fighter = CompanionActor(OthersKnight, OtherPlayer, 301) },
             new FightTurnEndEvent { FighterId = Self });
 
         var own = Apply(shown, new FightTurnEvent { FighterId = Knight, Duration = 300, Round = 1 }, new FightTurnStartPlayingEvent());
 
         Assert.Equal((Knight, true), (own.Fight!.PlayingId, own.Fight.IsOwnTurn));
 
-        var theirs = Apply(shown, new FightTurnEvent { FighterId = Turret, Duration = 300, Round = 1 }, new FightTurnStartPlayingEvent());
+        var theirs = Apply(shown, new FightTurnEvent { FighterId = OthersKnight, Duration = 300, Round = 1 }, new FightTurnStartPlayingEvent());
 
-        Assert.Equal((Turret, false), (theirs.Fight!.PlayingId, theirs.Fight.IsOwnTurn));
+        Assert.Equal((OthersKnight, false), (theirs.Fight!.PlayingId, theirs.Fight.IsOwnTurn));
     }
 
     [Fact]

@@ -21,7 +21,8 @@ D193, D271, D279.*
   character, a summon of its or a companion of its (`FightState.IsOwnTurn`), and `FightPlay` plays it as a summon's.
   `FightState.ListedSpells` keeps the spells the server lists for a fighter other than the character, and `ImaginedFights`
   gives them to a fighter the pack does not know; a summon keeps its monster's (D193). A companion whose spells the server
-  never listed walks at most, then ends its turn at once.
+  never listed walks at most, then ends its turn at once. The engine knows the companion's master (`Combatant.MasterId`),
+  and the AI playing the companion protects its master, as a summon playing protects its summoner (`FightJudge`).
 - **Not measured**: no capture holds a companion. Whether the server lets the client play the companion's turn
   (`FightTurnStartPlayingEvent`), lists its spells, takes the character's requests as the companion's as it does a
   summon's (9f2), and what the string and the two int32 hold, are left to the owner's measure in game: a fight with the
