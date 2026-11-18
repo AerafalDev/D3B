@@ -1,3 +1,4 @@
+using D3B.Bot.Fights;
 using D3B.Bot.Runtime;
 using D3B.Bot.Tests.Runtime;
 using D3B.Engine.Maps;
@@ -388,6 +389,81 @@ public sealed class FightPlayTests : IAsyncDisposable
         await LoggedAsync($"Bot {Self}: ends its turn after 2 actions");
 
         Assert.DoesNotContain(_play.Log.GetSnapshot(), record => record.Message.Contains("did not show", StringComparison.Ordinal));
+    }
+
+    private async Task<(TestConnection Connection, int Sent, int Near)> PlacedClosedAsync(ChallengeReward reward, ChallengeBonus? told)
+    {
+        // An activity fighting its fights with the profile's choice, the client's own choice answered as the placement starts, then the fight closed.
+        var (connection, bot) = await _play.EnterAsync(Far);
+        var monster = Beside(Far, 8, 0);
+        var near = Beside(monster, -3, 0);
+
+        bot.StartActivity(new RewardActivity { Reward = reward });
+        await bot.ProcessedAsync();
+
+        var sent = connection.Sent.Count;
+
+        Placement(connection, near, monster);
+
+        if (told is { } bonus)
+            connection.Server(new ChallengeBonusChoiceSelectedEvent { Bonus = bonus });
+
+        Assert.IsType<FightOptionToggleRequest>(await SentAsync(connection, sent + 1));
+        connection.Server(new FightOptionUpdateEvent { Option = FightOption.Closed, Enabled = true });
+        Assert.IsType<FightOptionToggleRequest>(await SentAsync(connection, sent + 2));
+        connection.Server(new FightOptionUpdateEvent { Option = FightOption.NoSpectators, Enabled = true });
+
+        return (connection, sent, near);
+    }
+
+    [Fact]
+    public async Task TheAIChoosesTheProfilesBonusOverTheClientsOwnThenPlaces()
+    {
+        var (connection, sent, near) = await PlacedClosedAsync(ChallengeReward.Drop, ChallengeBonus.Experience);
+
+        Assert.Equal(ChallengeBonus.Drop, Assert.IsType<ChallengeBonusChoiceRequest>(await SentAsync(connection, sent + 3)).Bonus);
+        connection.Server(new ChallengeBonusChoiceSelectedEvent { Bonus = ChallengeBonus.Drop });
+
+        Assert.Equal(near, Assert.IsType<FightPlacementPositionRequest>(await SentAsync(connection, sent + 4)).CellId);
+        await LoggedAsync($"Bot {Self}: chooses the challenges' bonus Drop, set");
+    }
+
+    [Fact]
+    public async Task TheExperienceIsChosenToo()
+    {
+        var (connection, sent, _) = await PlacedClosedAsync(ChallengeReward.Experience, ChallengeBonus.Drop);
+
+        Assert.Equal(ChallengeBonus.Experience, Assert.IsType<ChallengeBonusChoiceRequest>(await SentAsync(connection, sent + 3)).Bonus);
+    }
+
+    [Fact]
+    public async Task ABonusTheServerAlreadyGivesIsNotSentAgain()
+    {
+        var (connection, sent, near) = await PlacedClosedAsync(ChallengeReward.Drop, ChallengeBonus.Drop);
+
+        Assert.Equal(near, Assert.IsType<FightPlacementPositionRequest>(await SentAsync(connection, sent + 3)).CellId);
+        Assert.DoesNotContain(connection.Sent, message => message is ChallengeBonusChoiceRequest);
+    }
+
+    [Fact]
+    public async Task AProfileLeavingTheBonusToTheClientSendsNone()
+    {
+        var (connection, sent, near) = await PlacedClosedAsync(ChallengeReward.Client, ChallengeBonus.Experience);
+
+        Assert.Equal(near, Assert.IsType<FightPlacementPositionRequest>(await SentAsync(connection, sent + 3)).CellId);
+        Assert.DoesNotContain(connection.Sent, message => message is ChallengeBonusChoiceRequest);
+    }
+
+    [Fact]
+    public async Task ABonusNeverToldNorAnsweredIsSentOnceAndThePlacementGoesOn()
+    {
+        // The client's own choice never answered, the bot sends its own after its wait; unanswered, it places all the same.
+        var (connection, sent, near) = await PlacedClosedAsync(ChallengeReward.Drop, told: null);
+
+        Assert.Equal(ChallengeBonus.Drop, Assert.IsType<ChallengeBonusChoiceRequest>(await SentAsync(connection, sent + 3)).Bonus);
+        Assert.Equal(near, Assert.IsType<FightPlacementPositionRequest>(await SentAsync(connection, sent + 4)).CellId);
+        await LoggedAsync($"Bot {Self}: chooses the challenges' bonus Drop, unanswered");
+        Assert.Single(connection.Sent, message => message is ChallengeBonusChoiceRequest);
     }
 
     [Fact]

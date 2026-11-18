@@ -89,6 +89,7 @@ public static class FightEvents
             },
             FightSpellsContextEvent => fight,
             FightOptionUpdateEvent update => fight with { Options = fight.Options.SetItem(update.Option, update.Enabled) },
+            ChallengeBonusChoiceSelectedEvent chosen => fight with { ChallengeBonus = chosen.Bonus },
             FightStartingEvent or FightJoinEvent => fight,
             _ => null,
         };

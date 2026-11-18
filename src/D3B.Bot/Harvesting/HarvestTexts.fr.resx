@@ -473,6 +473,21 @@
   <data name="PresetFisherman" xml:space="preserve">
     <value>Pêcheur auto</value>
   </data>
+  <data name="ChallengeReward" xml:space="preserve">
+    <value>Bonus des challenges</value>
+  </data>
+  <data name="ChallengeRewardHelp" xml:space="preserve">
+    <value>Ce que rapportent les challenges réussis. Le bot le règle pendant le placement quand son perso mène l'équipe ; en groupe, c'est celui du meneur qui compte. Comme le client : rien n'est envoyé.</value>
+  </data>
+  <data name="ChallengeRewardDrop" xml:space="preserve">
+    <value>Butin</value>
+  </data>
+  <data name="ChallengeRewardExperience" xml:space="preserve">
+    <value>Expérience</value>
+  </data>
+  <data name="ChallengeRewardClient" xml:space="preserve">
+    <value>Comme le client</value>
+  </data>
   <data name="AiFights" xml:space="preserve">
     <value>L'IA combat</value>
   </data>

@@ -602,6 +602,20 @@ public sealed class FightEventsTests
     }
 
     [Fact]
+    public void TheChallengesBonusIsTheServersLastWordAndUnknownBefore()
+    {
+        Assert.Null(Placed().Fight!.ChallengeBonus);
+
+        // Measured (D438): the client's own choice answered as the placement starts, then the player's click.
+        var chosen = Apply(
+            Placed(),
+            new ChallengeBonusChoiceSelectedEvent { Bonus = ChallengeBonus.Drop },
+            new ChallengeBonusChoiceSelectedEvent { Bonus = ChallengeBonus.Experience });
+
+        Assert.Equal(ChallengeBonus.Experience, chosen.Fight!.ChallengeBonus);
+    }
+
+    [Fact]
     public void TheCooldownsTheServerGivesAreKeptBySpell()
     {
         var cooled = Apply(

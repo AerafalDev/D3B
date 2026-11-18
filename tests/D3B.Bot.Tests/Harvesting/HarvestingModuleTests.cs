@@ -1,5 +1,6 @@
 using System.Globalization;
 using D3B.Bot.Activities;
+using D3B.Bot.Fights;
 using D3B.Bot.Harvesting;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -28,6 +29,8 @@ public sealed class HarvestingModuleTests
         Assert.Empty(reading.Reset);
         Assert.Equal(HarvestMode.List, read.Mode);
         Assert.Equal([312, 441], read.Resources);
+        // Stored before D438, the profile chooses the drops.
+        Assert.Equal(ChallengeReward.Drop, read.ChallengeReward);
         Assert.Equal(HarvestPlace.Chosen, read.Place);
         Assert.Equal(0, read.Area);
         Assert.Equal(HarvestDepositPlace.GuildChest, read.DepositTo);
@@ -51,7 +54,7 @@ public sealed class HarvestingModuleTests
             ["AfterFight", "AfterLostFight", "DepositTo", "Excluded", "Food", "FullAt", "IsolatedMaps", "Order", "OwnBanking", "Rotation", "SafeLevel", "UseZaaps", "ZaapSaving"],
             [.. settings.Where(setting => setting.IsAdvanced).Select(setting => setting.Key).Order()]);
         Assert.Equal(
-            ["AiFights", "Area", "Deposit", "Heal", "HealBelow", "Jobs", "Mode", "OpenBags", "Place", "Resources", "SubAreas", "Zone"],
+            ["AiFights", "Area", "ChallengeReward", "Deposit", "Heal", "HealBelow", "Jobs", "Mode", "OpenBags", "Place", "Resources", "SubAreas", "Zone"],
             [.. settings.Where(setting => !setting.IsAdvanced).Select(setting => setting.Key).Order()]);
     }
 

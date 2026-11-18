@@ -147,6 +147,29 @@ message FightOptionUpdateEvent {
   FightOption option = 3;
 }
 
+// Chooses what the challenges the team wins give, during the placement (D438). Measured on 3.7.14.18 (the owner's three
+// fights alone, 2026-11-18): the client sends it by itself 7 to 103 ms after the placement starts, with the choice the
+// player made last, even in a fight the player leaves it alone, then again at each of the player's clicks. Its second
+// field, a message, was never set: the bot leaves it out.
+message ChallengeBonusChoiceRequest {
+  ChallengeBonus bonus = 1;
+}
+
+// The team's challenges' bonus is set: the server's answer to each choice, 27 to 29 ms after it, with the choice sent.
+// Whether a member who does not lead the team is answered, or told of its leader's choice, is not measured.
+message ChallengeBonusChoiceSelectedEvent {
+  option (d3b.readable.partial) = true;
+
+  ChallengeBonus bonus = 1;
+}
+
+// What the challenges won give. Measured: the owner's click on the drops sent 1, on the experience 0, as the
+// references name them; the build's enum has these two values alone.
+enum ChallengeBonus {
+  CHALLENGE_BONUS_EXPERIENCE = 0;
+  CHALLENGE_BONUS_DROP = 1;
+}
+
 // The character is ready to fight, or no longer: the fight starts once every character is.
 message FightReadyRequest {
   bool ready = 1;

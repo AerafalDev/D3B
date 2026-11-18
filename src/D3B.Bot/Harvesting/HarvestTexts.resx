@@ -473,6 +473,21 @@
   <data name="PresetFisherman" xml:space="preserve">
     <value>Auto fisherman</value>
   </data>
+  <data name="ChallengeReward" xml:space="preserve">
+    <value>Challenges' bonus</value>
+  </data>
+  <data name="ChallengeRewardHelp" xml:space="preserve">
+    <value>What the fight's challenges won give. The bot sets it during the placement when its character leads its team; in a group, the master's counts. As the client sets it, nothing is sent.</value>
+  </data>
+  <data name="ChallengeRewardDrop" xml:space="preserve">
+    <value>Drops</value>
+  </data>
+  <data name="ChallengeRewardExperience" xml:space="preserve">
+    <value>Experience</value>
+  </data>
+  <data name="ChallengeRewardClient" xml:space="preserve">
+    <value>As the client sets it</value>
+  </data>
   <data name="AiFights" xml:space="preserve">
     <value>The AI fights</value>
   </data>

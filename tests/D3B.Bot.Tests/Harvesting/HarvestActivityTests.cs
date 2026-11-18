@@ -280,6 +280,13 @@ public sealed class HarvestActivityTests : IAsyncDisposable
     }
 
     [Fact]
+    public void AHarvestProfileChoosesTheDropsOfTheFightsItsAIPlaysUnlessItSaysOtherwise()
+    {
+        Assert.Equal(ChallengeReward.Drop, Activity(new HarvestSettings()).ChallengeReward);
+        Assert.Equal(ChallengeReward.Client, Activity(new HarvestSettings { ChallengeReward = ChallengeReward.Client }).ChallengeReward);
+    }
+
+    [Fact]
     public async Task ThePlaceTheActivityChoosesIsTheSubAreaRichestInWhatTheCharacterCanHarvestNamedFirst()
     {
         var (connection, bot) = await _play.EnterAsync(433);

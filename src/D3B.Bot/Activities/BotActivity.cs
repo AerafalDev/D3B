@@ -53,6 +53,10 @@ public abstract class BotActivity
     /// <remarks>None by default: the player plays them, as before step 9, unless the bot's switch has the AI play every fight.</remarks>
     public virtual bool FightsItsFights => false;
 
+    /// <summary>Gets what the challenges of the fights the AI plays give, which it sets during their placement (D438).</summary>
+    /// <remarks>The client's by default: nothing is sent, as before.</remarks>
+    public virtual ChallengeReward ChallengeReward => ChallengeReward.Client;
+
     /// <summary>Runs the next step, chosen from the character's state now.</summary>
     /// <param name="context">The step's behavior context.</param>
     /// <param name="cancellationToken">The step's token: an interruption or the activity's stop cancels it.</param>

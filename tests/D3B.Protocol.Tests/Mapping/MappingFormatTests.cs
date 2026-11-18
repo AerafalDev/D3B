@@ -35,6 +35,7 @@ public sealed class MappingFormatTests
         (16, "3a58cba58d83952a004cf0d51561611f95da3605c813a9bda11bfd9dd443599b"),
         (17, "7702533b80f45e384190302e448f1405047000d2e8507d8146f888c58bb83b32"),
         (18, "84f0ffa9fe5ecc5c034776c1b765d564a9c6bdff047822e118139d6156be97cd"),
+        (19, "087af811ddb8f8f66c652ec534c5b865bd1942c3d81e3dc0d86effc9789648d0"),
     ];
 
     private static string Contract()

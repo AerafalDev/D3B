@@ -1,3 +1,5 @@
+using D3B.Bot.Fights;
+
 namespace D3B.Bot.Fighting;
 
 /// <summary>The fighting activity's settings: which groups it attacks, where, its upkeep and its bank (D236).</summary>
@@ -64,6 +66,9 @@ public sealed class FightSettings
 
     /// <summary>Gets or sets what goes to the bank.</summary>
     public FightDeposit Deposit { get; set; } = FightDeposit.Loot;
+
+    /// <summary>Gets or sets what the challenges of each fight give, set during the placement; the drops unless the profile says otherwise (D438).</summary>
+    public ChallengeReward ChallengeReward { get; set; } = ChallengeReward.Drop;
 
     /// <summary>Gets or sets what the activity does once a fight is lost.</summary>
     public FightAfterLoss AfterLostFight { get; set; } = FightAfterLoss.Resume;

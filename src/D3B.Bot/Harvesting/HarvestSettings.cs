@@ -1,3 +1,5 @@
+using D3B.Bot.Fights;
+
 namespace D3B.Bot.Harvesting;
 
 /// <summary>The harvesting activity's settings: what it harvests, where, and when it banks (D127, D165 to D167).</summary>
@@ -60,6 +62,9 @@ public sealed class HarvestSettings
 
     /// <summary>Gets or sets whether the AI plays the fights the harvest meets; else the player does (D235).</summary>
     public bool AiFights { get; set; } = true;
+
+    /// <summary>Gets or sets what the challenges of each fight the AI plays give, set during the placement; the drops unless the profile says otherwise (D438).</summary>
+    public ChallengeReward ChallengeReward { get; set; } = ChallengeReward.Drop;
 
     /// <summary>Gets or sets what the activity does once a fight cut one of its steps (D144).</summary>
     public HarvestAfterFight AfterFight { get; set; } = HarvestAfterFight.Resume;

@@ -592,3 +592,8 @@ or refines another says so in its own entry. Add a line here with every new deci
 
 - [D437](decisions/d437-step-10-the-chain.md#d437-10b-the-party-by-the-bot-the-follow-activity-and-the-group-moving-in-a-chain) 10b, the party by the bot, the "Follow" activity, and the group moving in a chain (2026-11-18)
   - The wait in each activity, replaying the master's exact transition, the master's own haven bag, the party not waited for.
+
+## Fights, the challenges' bonus (D438)
+
+- [D438](decisions/d438-fights-challenges-bonus.md#d438-a-profile-chooses-the-challenges-bonus-of-its-fights-the-drops-by-default-mapping-format-19) A profile chooses the challenges' bonus of its fights, the drops by default, mapping format 19 (2026-11-18)
+  - Two values, one box, another default, under "Advanced" or a section of its own, a general setting.

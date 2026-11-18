@@ -366,3 +366,7 @@ follower) on the same map, the capture of every connection on; a capture's conte
   `docs/client-game.md`. (3) Tests for the sweep (an old file, an oversize set, an open file kept) and for the setting's default.
   Out of scope: the scrubber, the bundle and the app's action (BR2, BR3). Done: every check green, the docs and the index
   updated; no capture content shown or committed.
+- **The challenges' bonus** (D438), the owner's ask, made on 2026-11-18 in code and tests and mapped from the owner's capture,
+  mapping format 19: a hunt or harvest profile chooses Drops (the default), Experience or the client's choice, which the AI
+  sends during the placement of every fight it plays when the server says otherwise. Left: measured in game, in a group
+  above all (whether the server takes a follower's choice); the mapping 19 published with `client-3.7.14.18` on the owner's go.
