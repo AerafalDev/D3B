@@ -626,3 +626,8 @@ or refines another says so in its own entry. Add a line here with every new deci
 
 - [D444](decisions/d444-harvest-the-mines.md#d444-the-harvests-tour-goes-into-an-interior-while-its-sub-area-lists-a-resource-no-map-of-it-showed-so-that-it-finds-the-mines) The harvest's tour goes into an interior while its sub-area lists a resource no map of it showed, so that it finds the mines (2026-11-18)
   - The interiors whenever the zone wants ore, learned graphics shipped with the app, D416 kept as it is.
+
+## Groups, the challenges' bonus of the followers (D446)
+
+- [D446](decisions/d446-groups-challenges-bonus.md#d446-a-follower-chooses-the-challenges-bonus-its-masters-profile-chooses) A follower chooses the challenges' bonus its master's profile chooses (2026-11-18)
+  - A bonus of its own in "Follow".

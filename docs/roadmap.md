@@ -368,8 +368,8 @@ follower) on the same map, the capture of every connection on; a capture's conte
   updated; no capture content shown or committed.
 - **The challenges' bonus** (D438), the owner's ask, made on 2026-11-18 in code and tests and mapped from the owner's capture,
   mapping format 19: a hunt or harvest profile chooses Drops (the default), Experience or the client's choice, which the AI
-  sends during the placement of every fight it plays when the server says otherwise. Left: measured in game, in a group
-  above all (whether the server takes a follower's choice); the mapping 19 published with `client-3.7.14.18` on the owner's go.
+  sends during the placement of every fight it plays when the server says otherwise. Seen in game on 2026-11-18 in a group:
+  the bonus is each character's own, so a follower now sends its master's profile's choice (D446), to see again in game.
 - **The companion** (D443), a player's report relayed by the owner (the Astrub Knight left unplayed), made on 2026-11-18 in
   code and tests and mapped from the client's schema alone, mapping format 21: the bot plays the character's companion as a
   summon it controls, with the spells the server lists for it. Left: the owner's fight with the companion, captured and

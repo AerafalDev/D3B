@@ -82,6 +82,17 @@ public sealed class FollowActivity : BotActivity, IDisposable
     /// <remarks>The AI plays its master's fights it joins, and those it meets on its way, such as an aggression.</remarks>
     public override bool FightsItsFights => true;
 
+    /// <inheritdoc/>
+    /// <remarks>
+    /// Its master's profile's, the owner's choice (D446): measured on the owner's test of 2026-11-18, each character's client
+    /// sends its own choice as it joins, the bonus each character's own, so the followers got the experience their clients
+    /// chose while their master got the drops. The client's while the master runs no profile.
+    /// </remarks>
+    public override ChallengeReward ChallengeReward
+        => CharacterKey.TryParseId(_masterId, out var master) && _bots.TryGet(master, out var leader) && leader.Activity is { IsOver: false } run && run.Activity != this
+            ? run.Activity.ChallengeReward
+            : ChallengeReward.Client;
+
     /// <summary>Initializes a new instance of the <see cref="FollowActivity"/> class.</summary>
     /// <param name="settings">The activity's settings: the master.</param>
     /// <param name="bots">The host's bots, the master's among them, and their groups.</param>
