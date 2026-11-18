@@ -2124,7 +2124,7 @@
     <value>Take a zaap to the bank</value>
   </data>
   <data name="SettingBankZaapsRowDetail" xml:space="preserve">
-    <value>Off, bots always walk to the bank. On, they take a zaap when it saves enough maps and they can pay for it; else they walk.</value>
+    <value>Off, bots always walk to the bank. On, they take a zaap when it saves enough maps and they can pay for it; else they walk. A profile whose zaaps are off walks whatever this says.</value>
   </data>
   <data name="GroupBotDelays" xml:space="preserve">
     <value>Bots' minimum delays</value>

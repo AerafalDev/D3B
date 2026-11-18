@@ -89,6 +89,14 @@ public sealed class FightActivityTests : IAsyncDisposable
     }
 
     [Fact]
+    public void AFightProfileThatTakesNoZaapTakesNoneOnAnyOfItsJourneys()
+    {
+        Assert.True(Activity(new FightSettings()).UsesTeleports);
+        Assert.False(Activity(new FightSettings { UseZaaps = false }).UsesTeleports);
+        Assert.False(Activity(new FightSettings { OwnBanking = true, UseZaaps = false }).UsesTeleports);
+    }
+
+    [Fact]
     public void AGroupIsAttackedWithinItsSizeNoMonsterLeftOutAndAsTheModeSaysWhateverItsLevels()
     {
         var automatic = new FightSettings { LeastMonsters = 2, MostMonsters = 3, Excluded = [Bouftou] };
