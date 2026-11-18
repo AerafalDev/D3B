@@ -23,7 +23,8 @@ them; measured on the owner's capture of that day. Builds D203, D216, D244, D431
 - **The option**, « Bonus des challenges » (`ChallengeReward`): Drops, Experience, or As the client sets it, which sends
   nothing; Drops by default, profiles stored before included. In the hunt's profile it shows just before "After a lost
   fight"; in the harvest's under "The AI fights", while that is on; not under "Advanced". A list speaks for the step it
-  plays (`BehaviorActivity`); out of an activity's step, and with the host's `Fights:Alone` alone, the client's choice stays.
+  plays (`BehaviorActivity`); out of an activity's step, with the host's `Fights:Alone` alone, and in a harvest whose AI
+  does not fight, whose option is hidden, the client's choice stays (`FightsItsFights` gates it).
   A "Follow" profile (D430) sends none: the master's counts.
 - **When**: during the placement, after the fight is closed (D216) and before the character is placed, the bot waits for
   the server to answer the client's own choice, at most its answer delay, then sends the profile's only when it differs,

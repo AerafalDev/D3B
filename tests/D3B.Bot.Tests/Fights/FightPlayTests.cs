@@ -391,14 +391,16 @@ public sealed class FightPlayTests : IAsyncDisposable
         Assert.DoesNotContain(_play.Log.GetSnapshot(), record => record.Message.Contains("did not show", StringComparison.Ordinal));
     }
 
-    private async Task<(TestConnection Connection, int Sent, int Near)> PlacedClosedAsync(ChallengeReward reward, ChallengeBonus? told)
+    private async Task<(TestConnection Connection, int Sent, int Near)> PlacedClosedAsync(ChallengeReward reward, ChallengeBonus? told, bool fights = true)
     {
         // An activity fighting its fights with the profile's choice, the client's own choice answered as the placement starts, then the fight closed.
         var (connection, bot) = await _play.EnterAsync(Far);
         var monster = Beside(Far, 8, 0);
         var near = Beside(monster, -3, 0);
 
-        bot.StartActivity(new RewardActivity { Reward = reward });
+        // An activity whose AI does not fight plays its fights only through the host's switch.
+        bot.FightsAlone = !fights;
+        bot.StartActivity(new RewardActivity { Reward = reward, Fights = fights });
         await bot.ProcessedAsync();
 
         var sent = connection.Sent.Count;
@@ -464,6 +466,42 @@ public sealed class FightPlayTests : IAsyncDisposable
         Assert.Equal(near, Assert.IsType<FightPlacementPositionRequest>(await SentAsync(connection, sent + 4)).CellId);
         await LoggedAsync($"Bot {Self}: chooses the challenges' bonus Drop, unanswered");
         Assert.Single(connection.Sent, message => message is ChallengeBonusChoiceRequest);
+    }
+
+    [Fact]
+    public async Task AnActivityWhoseAIDoesNotFightSendsNoBonusThoughTheHostsSwitchPlaysTheFight()
+    {
+        // A harvest whose "The AI fights" is off hides its choice: the host's Fights:Alone plays the fight, the client's choice stays.
+        var (connection, sent, near) = await PlacedClosedAsync(ChallengeReward.Drop, ChallengeBonus.Experience, fights: false);
+
+        Assert.Equal(near, Assert.IsType<FightPlacementPositionRequest>(await SentAsync(connection, sent + 3)).CellId);
+        Assert.DoesNotContain(connection.Sent, message => message is ChallengeBonusChoiceRequest);
+    }
+
+    [Fact]
+    public async Task TheClientsOwnChoiceAnsweredLateIsWaitedForBeforeTheBotsIsWeighed()
+    {
+        // Answered once the fight is closed, the client's choice is the profile's: nothing is sent.
+        var (connection, sent, near) = await PlacedClosedAsync(ChallengeReward.Drop, told: null);
+
+        connection.Server(new ChallengeBonusChoiceSelectedEvent { Bonus = ChallengeBonus.Drop });
+
+        Assert.Equal(near, Assert.IsType<FightPlacementPositionRequest>(await SentAsync(connection, sent + 3)).CellId);
+        Assert.DoesNotContain(connection.Sent, message => message is ChallengeBonusChoiceRequest);
+    }
+
+    [Fact]
+    public async Task AFightStartedDuringTheWaitIsSentNoBonus()
+    {
+        var (connection, sent, _) = await PlacedClosedAsync(ChallengeReward.Drop, told: null);
+
+        Assert.True(_play.Bots.TryGet(TestPlay.Key, out var bot));
+        connection.Server(new FightStartEvent());
+        await bot.ProcessedAsync();
+        _play.Time.Advance(BotDelays.Measured.Answer + BotDelays.Measured.FightAction + BotDelays.Measured.Answer);
+        await bot.ProcessedAsync();
+
+        Assert.Equal(sent + 2, connection.Sent.Count);
     }
 
     [Fact]

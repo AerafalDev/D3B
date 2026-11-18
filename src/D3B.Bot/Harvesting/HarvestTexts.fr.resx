@@ -477,7 +477,7 @@
     <value>Bonus des challenges</value>
   </data>
   <data name="ChallengeRewardHelp" xml:space="preserve">
-    <value>Ce que rapportent les challenges réussis. Le bot le règle pendant le placement quand son perso mène l'équipe ; en groupe, c'est celui du meneur qui compte. Comme le client : rien n'est envoyé.</value>
+    <value>Ce que rapportent les challenges réussis. Le bot le règle pendant le placement de chaque combat que joue son IA ; en groupe, c'est celui du meneur qui compte. Comme le client : rien n'est envoyé.</value>
   </data>
   <data name="ChallengeRewardDrop" xml:space="preserve">
     <value>Butin</value>

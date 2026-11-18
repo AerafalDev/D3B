@@ -187,8 +187,9 @@ public static class FightPlay
 
     private static async Task ChooseBonusAsync(BotContext context, CancellationToken cancellationToken)
     {
-        // The profile's choice, its step's in a list (D438); none out of an activity, nor when the profile leaves it to the client.
-        ChallengeBonus? wanted = context.Actor.Activity is { IsOver: false } run ? BonusOf(run.Activity.ChallengeReward) : null;
+        // The profile's choice, its step's in a list (D438), only for a fight its activity has the AI play: none out of one, nor
+        // with the host's Fights:Alone over a harvest whose AI does not fight, whose hidden choice the player cannot see.
+        ChallengeBonus? wanted = context.Actor.Activity is { IsOver: false, Activity: { FightsItsFights: true } activity } ? BonusOf(activity.ChallengeReward) : null;
 
         if (wanted is not { } bonus)
             return;

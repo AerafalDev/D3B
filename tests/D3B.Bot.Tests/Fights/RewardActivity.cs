@@ -10,7 +10,10 @@ internal sealed class RewardActivity : BotActivity
     /// <summary>Gets or sets the choice the profile makes.</summary>
     public ChallengeReward Reward { get; init; }
 
-    public override bool FightsItsFights => true;
+    /// <summary>Gets or sets whether the AI plays the activity's fights, as a harvest's profile says.</summary>
+    public bool Fights { get; init; } = true;
+
+    public override bool FightsItsFights => Fights;
 
     public override ChallengeReward ChallengeReward => Reward;
 
