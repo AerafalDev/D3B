@@ -616,3 +616,8 @@ or refines another says so in its own entry. Add a line here with every new deci
 
 - [D442](decisions/d442-step-10-the-groups-bank.md#d442-10c3-a-full-member-takes-the-group-to-the-bank-each-follower-gives-the-master-what-it-carries-by-an-exchange-mapping-format-20) 10c3, a full member takes the group to the bank, each follower gives the master what it carries by an exchange, mapping format 20 (2026-11-18)
   - All the master does not wear, two openings of the bank, the step counted from requests, one transfer of every stack.
+
+## Fights, the companions (D442)
+
+- [D442](decisions/d442-fights-companions.md#d442-the-bot-plays-the-characters-companion-such-as-the-astrub-knight-with-the-spells-the-server-lists-for-it-mapping-format-20) The bot plays the character's companion, such as the Astrub Knight, with the spells the server lists for it, mapping format 20 (2026-11-18)
+  - Ending its turn at once, measuring first, a companion table in the pack.

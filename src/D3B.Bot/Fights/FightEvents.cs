@@ -87,6 +87,10 @@ public static class FightEvents
             {
                 Spells = context.Spells.GroupBy(spell => spell.SpellId).ToImmutableSortedDictionary(group => group.Key, group => group.Last().Grade),
             },
+            FightSpellsContextEvent context when context.FighterId != self && context.Spells.Count > 0 => fight with
+            {
+                ListedSpells = fight.ListedSpells.SetItem(context.FighterId, context.Spells.GroupBy(spell => spell.SpellId).ToImmutableSortedDictionary(group => group.Key, group => group.Last().Grade)),
+            },
             FightSpellsContextEvent => fight,
             FightOptionUpdateEvent update => fight with { Options = fight.Options.SetItem(update.Option, update.Enabled) },
             ChallengeBonusChoiceSelectedEvent chosen => fight with { ChallengeBonus = chosen.Bonus },
@@ -133,6 +137,7 @@ public static class FightEvents
             MonsterId = shown.Ai?.Monster?.MonsterId ?? known.MonsterId,
             Grade = shown.Ai?.Monster?.Grade ?? known.Grade,
             SummonerId = shown.Stats is { Summoned: true } summoned ? summoned.SummonerId : known.SummonerId,
+            MasterId = shown.Companion?.MasterId ?? known.MasterId,
         }, shown.Stats);
 
         return fight with
@@ -145,8 +150,13 @@ public static class FightEvents
     private static bool Controls(FightState fight, long self)
     {
         // Measured (9f2): the server lets the client play a summon of the character's it controls, as it lets the character
-        // play, and takes the same requests for it.
-        return fight.PlayingId is { } playing && (playing == self || fight.Fighters.GetValueOrDefault(playing)?.SummonerId == self);
+        // play, and takes the same requests for it. A companion of the character's is played the same (not measured).
+        if (fight.PlayingId is not { } playing)
+            return false;
+
+        var fighter = fight.Fighters.GetValueOrDefault(playing);
+
+        return playing == self || fighter?.SummonerId == self || fighter?.MasterId == self;
     }
 
     private static FightState Ordered(FightState fight, FightTurnListEvent order)

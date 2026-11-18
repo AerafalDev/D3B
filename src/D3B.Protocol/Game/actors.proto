@@ -118,7 +118,7 @@ message GroupMonster {
   int32 monster_id = 5;
 }
 
-// A fighter: a character, a monster or a summon.
+// A fighter: a character, a monster or a summon, or a companion.
 message FightFighter {
   option (d3b.readable.partial) = true;
 
@@ -128,6 +128,7 @@ message FightFighter {
   oneof kind {
     NamedFighter named = 5;
     AiFighter ai = 6;
+    CompanionFighter companion = 11;
   }
 }
 
@@ -166,6 +167,16 @@ message MonsterFighter {
 
   // The monster's id in the client's table.
   int32 monster_id = 3;
+}
+
+// A companion, such as the Astrub Knight: a fighter its master's client plays, which is neither a monster nor a summon.
+// Read from the client's schema alone (3.7.14.18): the third kind of a fighter, of a string, an int64 and two int32. Not
+// measured: what the string and the two int32 hold, one of them most likely the companion's level.
+message CompanionFighter {
+  option (d3b.readable.partial) = true;
+
+  // The character whose companion it is: the schema's only int64 of it, as a summon's summoner is one.
+  int64 master_id = 2;
 }
 
 // Where and in which team a fighter came into the fight, and whether it lives.

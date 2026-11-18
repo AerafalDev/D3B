@@ -370,3 +370,7 @@ follower) on the same map, the capture of every connection on; a capture's conte
   mapping format 19: a hunt or harvest profile chooses Drops (the default), Experience or the client's choice, which the AI
   sends during the placement of every fight it plays when the server says otherwise. Left: measured in game, in a group
   above all (whether the server takes a follower's choice); the mapping 19 published with `client-3.7.14.18` on the owner's go.
+- **The companion** (D442), a player's report relayed by the owner (the Astrub Knight left unplayed), made on 2026-11-18 in
+  code and tests and mapped from the client's schema alone, mapping format 20: the bot plays the character's companion as a
+  summon it controls, with the spells the server lists for it. Left: the owner's fight with the companion, captured and
+  measured; the mapping 20 published with `client-3.7.14.18` on the owner's go.

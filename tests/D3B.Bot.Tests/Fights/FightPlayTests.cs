@@ -12,6 +12,7 @@ public sealed class FightPlayTests : IAsyncDisposable
 {
     private const long Self = TestPlay.CharacterId;
     private const long Monster = -1;
+    private const long Knight = -2;
     private const int Far = 300;
 
     private readonly TestPlay _play = new();
@@ -78,6 +79,25 @@ public sealed class FightPlayTests : IAsyncDisposable
                     Ai = new AiFighter { Monster = new MonsterFighter { MonsterId = 31, Grade = 1, Level = 3 } },
                     Stats = new FightCharacteristics { Characteristics = { Value(1, 2), Value(23, 3), Value(0, 50) } },
                     Spawn = new FighterSpawn { Alive = true, Team = FightTeam.Defender },
+                },
+            },
+        };
+    }
+
+    private static Actor CompanionActor(int cell)
+    {
+        // The character's companion, such as the Astrub Knight, with no MP: it strikes from where it stands, or nothing.
+        return new Actor
+        {
+            Id = Knight,
+            Disposition = new ActorDisposition { CellId = cell },
+            Information = new ActorInformation
+            {
+                Fighter = new FightFighter
+                {
+                    Companion = new CompanionFighter { MasterId = Self },
+                    Stats = new FightCharacteristics { Characteristics = { Value(1, 6), Value(23, 0), Value(0, 90) } },
+                    Spawn = new FighterSpawn { Alive = true, Team = FightTeam.Challenger },
                 },
             },
         };
@@ -169,6 +189,28 @@ public sealed class FightPlayTests : IAsyncDisposable
         connection.Server(new FightStartEvent());
         connection.Server(new FightNewRoundEvent { Round = 1 });
         connection.Server(new FightTurnEvent { FighterId = Self, Duration = 300, Round = 1 });
+        connection.Server(new FightTurnStartPlayingEvent());
+
+        return sent;
+    }
+
+    private async Task<int> CompanionsTurnAsync(TestConnection connection, BotActor bot, int monster, bool listed)
+    {
+        // The character's turn played, its two blows, then its companion's turn begins, the companion beside the monster.
+        var sent = await StartTurnAsync(connection, bot, monster);
+
+        Assert.IsType<GameActionFightCastRequest>(await SentAsync(connection, sent + 5));
+        Cast(connection, monster, apLeft: 3, actionId: 1);
+        Assert.IsType<GameActionFightCastRequest>(await SentAsync(connection, sent + 6));
+        Cast(connection, monster, apLeft: 0, actionId: 2);
+        Assert.IsType<FightTurnFinishRequest>(await SentAsync(connection, sent + 7));
+        connection.Server(new FightTurnEndEvent { FighterId = Self });
+        connection.Server(new FightFighterShowEvent { Fighter = CompanionActor(Beside(monster, 0, -2)) });
+
+        if (listed)
+            connection.Server(new FightSpellsContextEvent { CharacterId = Self, FighterId = Knight, Spells = { new SpellItem { SpellId = TestPlay.BlowSpellId, Grade = 1 } } });
+
+        connection.Server(new FightTurnEvent { FighterId = Knight, Duration = 300, Round = 1 });
         connection.Server(new FightTurnStartPlayingEvent());
 
         return sent;
@@ -517,6 +559,31 @@ public sealed class FightPlayTests : IAsyncDisposable
         await bot.ProcessedAsync();
 
         Assert.Equal(sent, connection.Sent.Count);
+    }
+
+    [Fact]
+    public async Task TheAIPlaysTheCharactersCompanionWithTheSpellsTheServerListedForIt()
+    {
+        // Reported by a player: the Astrub Knight's turns were left to their time. The pack has no companion, so its
+        // spells are the server's list of them.
+        var (connection, bot) = await _play.EnterAsync(Far);
+        var monster = Beside(Far, 8, 0);
+        var sent = await CompanionsTurnAsync(connection, bot, monster, listed: true);
+
+        var cast = Assert.IsType<GameActionFightCastRequest>(await SentAsync(connection, sent + 8));
+
+        Assert.Equal((TestPlay.BlowSpellId, monster), (cast.SpellId, cast.CellId));
+    }
+
+    [Fact]
+    public async Task ACompanionWhoseSpellsTheServerNeverListedEndsItsTurnAtOnce()
+    {
+        var (connection, bot) = await _play.EnterAsync(Far);
+        var monster = Beside(Far, 8, 0);
+        var sent = await CompanionsTurnAsync(connection, bot, monster, listed: false);
+
+        Assert.IsType<FightTurnFinishRequest>(await SentAsync(connection, sent + 8));
+        Assert.DoesNotContain(connection.Sent.Skip(sent + 7), message => message is GameActionFightCastRequest);
     }
 
     [Fact]
