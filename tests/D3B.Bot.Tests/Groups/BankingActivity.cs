@@ -5,7 +5,7 @@ using D3B.Bot.Runtime;
 
 namespace D3B.Bot.Tests.Groups;
 
-/// <summary>A master's profile that banks at a share of its pods, its loot alone, and whose steps wait.</summary>
+/// <summary>A master's profile that banks at a share of its pods, its loot alone, and whose steps wait a second each.</summary>
 internal sealed class BankingActivity : BotActivity
 {
     /// <summary>Gets or sets the share of pods the profile banks at.</summary>
@@ -38,8 +38,9 @@ internal sealed class BankingActivity : BotActivity
 
     public override async Task<bool> StepAsync(BotContext context, CancellationToken cancellationToken)
     {
-        await Task.Delay(Timeout.InfiniteTimeSpan, context.Time, cancellationToken);
+        // A step that ends, so that the run asks again before the next whether a member is full, as with a real profile.
+        await Task.Delay(TimeSpan.FromSeconds(1), context.Time, cancellationToken);
 
-        return false;
+        return true;
     }
 }

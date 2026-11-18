@@ -248,6 +248,9 @@ public sealed class GroupBankTests
         connection.Server(TestGroup.Party(TestGroup.PartyId, TestGroup.MasterId, TestGroup.MasterId, TestGroup.FollowerId));
 
         using var membership = play.Bots.Groups.Follow(follower, TestGroup.Master, out _);
+
+        await TestGroup.SettleAsync(master, follower);
+
         var started = play.Time.GetUtcNow();
         var leading = master.StartActivity(new BankingActivity { Loot = new HashSet<int> { MastersLoot } });
 
