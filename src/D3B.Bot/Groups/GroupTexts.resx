@@ -68,6 +68,9 @@
   <data name="DoingFollows" xml:space="preserve">
     <value>Follows {0}</value>
   </data>
+  <data name="DoingJoinsFight" xml:space="preserve">
+    <value>Joins the fight of {0}</value>
+  </data>
   <data name="DoingJoins" xml:space="preserve">
     <value>Goes to {0}</value>
   </data>

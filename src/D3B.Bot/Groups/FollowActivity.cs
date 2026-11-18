@@ -1,6 +1,7 @@
 using System.Collections.Frozen;
 using D3B.Bot.Activities;
 using D3B.Bot.Characters;
+using D3B.Bot.Fights;
 using D3B.Bot.Localization;
 using D3B.Bot.Movement;
 using D3B.Bot.Runtime;
@@ -28,7 +29,8 @@ namespace D3B.Bot.Groups;
 /// his, the owner's choice.</item>
 /// </list>
 /// <para>
-/// The AI plays the follower's own fights; joining its master's is 10c's (D431).
+/// As its master attacks on its map, the follower joins the fight by request (D431, D435); the AI places it and says it
+/// is ready, as it plays the follower's own fights, such as an aggression on its way.
 /// </para>
 /// </remarks>
 public sealed class FollowActivity : BotActivity, IDisposable
@@ -51,6 +53,7 @@ public sealed class FollowActivity : BotActivity, IDisposable
     // Only the activity's steps, one at a time, read and write them.
     private readonly HashSet<int> _refused = [];
     private (string? Connection, int Party)? _optionsOff;
+    private (string? Connection, int Fight)? _joined;
     private int _failedChanges;
 
     private volatile IDisposable? _membership;
@@ -63,7 +66,7 @@ public sealed class FollowActivity : BotActivity, IDisposable
     public override ActivityReport? Report => _report;
 
     /// <inheritdoc/>
-    /// <remarks>The AI plays the fights the follower meets on its way, such as an aggression; its master's are 10c's to join.</remarks>
+    /// <remarks>The AI plays its master's fights it joins, and those it meets on its way, such as an aggression.</remarks>
     public override bool FightsItsFights => true;
 
     /// <summary>Initializes a new instance of the <see cref="FollowActivity"/> class.</summary>
@@ -156,6 +159,9 @@ public sealed class FollowActivity : BotActivity, IDisposable
 
             return true;
         }
+
+        if (await JoinFightAsync(context, seen, cancellationToken).ConfigureAwait(false))
+            return true;
 
         var theirs = seen.State;
         var name = GameTextValue.Of(theirs.Name);
@@ -304,6 +310,31 @@ public sealed class FollowActivity : BotActivity, IDisposable
         }
 
         return false;
+    }
+
+    // Whether it asked to join its master's fight: as the master attacks on its map, the server tells the party of the fight
+    // in the millisecond it shows it there (D435), and the follower joins it by its id and the master's, as the owner's
+    // click did. The end of a member's fight no message measured says: the master's own state, in the same host, says
+    // whether its fight is still in its placement, which a follower may join. Once a fight and a connection, so that a join
+    // the server answers nothing to is not sent again and again.
+    private async Task<bool> JoinFightAsync(BotContext context, BotSeen master, CancellationToken cancellationToken)
+    {
+        var state = context.State;
+        var me = context.Actor;
+
+        if (state.IsFighting || state.PartyFight is not { } fight || fight.MemberId != master.Bot.Key.CharacterId || fight.MapId != state.MapId
+            || master.State.Fight is not { Phase: FightPhase.Placement } || _joined == (me.ConnectionId, fight.FightId))
+        {
+            return false;
+        }
+
+        _joined = (me.ConnectionId, fight.FightId);
+        Publish(GameText.Of(GroupTexts.Text("DoingJoinsFight"), GameTextValue.Of(master.State.Name)));
+        GroupLog.JoiningFight(context.Log, me.Key.CharacterId, fight.MemberId, fight.FightId);
+        await context.SendAsync(new FightJoinRequest { FightId = fight.FightId, FighterId = fight.MemberId }, cancellationToken).ConfigureAwait(false);
+        await context.WaitUntilAsync(now => now.IsFighting, context.Delays.Answer, cancellationToken).ConfigureAwait(false);
+
+        return true;
     }
 
     // One change towards the master's map a step, so that a change failing tries the same way again at the next step: a

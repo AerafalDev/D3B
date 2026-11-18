@@ -68,6 +68,9 @@
   <data name="DoingFollows" xml:space="preserve">
     <value>Suit {0}</value>
   </data>
+  <data name="DoingJoinsFight" xml:space="preserve">
+    <value>Rejoint le combat de {0}</value>
+  </data>
   <data name="DoingJoins" xml:space="preserve">
     <value>Rejoint {0}</value>
   </data>

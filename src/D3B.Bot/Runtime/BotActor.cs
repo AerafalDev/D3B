@@ -142,6 +142,9 @@ public sealed class BotActor : IAsyncDisposable, IRequestWithholder
     /// <summary>Gets or sets what holds the bot's requests until other bots are ready, such as a master's followers (D437).</summary>
     internal IActionGate? Gate { get; set; }
 
+    /// <summary>Gets or sets the bot's part in its group's fights, which the AI asks during the placement (D431, D434).</summary>
+    internal IFightTeam? Team { get; set; }
+
     /// <summary>Gets what the bot did and met, its actions once over, for the app (D112).</summary>
     public RecentItems<JournalEntry> Journal { get; } = new(JournalCapacity);
 

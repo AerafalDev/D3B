@@ -177,6 +177,7 @@ public sealed class Bots : IGameObserver, IAsyncDisposable
 
                 // Every bot may lead: its gate holds nothing while nobody follows it (D437).
                 bot.Gate = new GroupGate(bot, Groups);
+                bot.Team = new GroupFight(bot, Groups);
                 _bots[key] = bot;
                 _pilots[key] = new FightPilot(bot, _tactics, _tables);
                 made = true;

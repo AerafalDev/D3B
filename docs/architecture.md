@@ -310,7 +310,11 @@ The bots run in `D3B.Bot`: what each part does today, with the decisions that ma
   options turned off at each party joined, D437's measure), then follow the chain (`GroupChain.Order`: the master's
   party's order, then names): with its master it waits, behind the one before it it waits, else it travels to the master's
   map, each in its own haven bag as the master is in his (`GroupChain.Together`). A wait reads the bots it waits on before
-  deciding (`BotSeen`), so that no change made between the decision and the wait is missed (`GroupWaits`).
+  deciding (`BotSeen`), so that no change made between the decision and the wait is missed (`GroupWaits`). In a fight
+  (D439), each bot has a part too (`IFightTeam`, `BotActor.Team`, `GroupFight`), which the AI asks during the placement
+  (`FightPlay`): alone it closes its fight and refuses spectators, a master refuses spectators only and says it is ready
+  once each follower on its map is placed, a follower sets no option. The follower joins its master's fight by request
+  (`FightJoinRequest`) as its party is told of it on its map, its master's own state saying the fight is in its placement.
 - **Fighting** (D236, D241, D245 to D249, D259), in `D3B.Bot.Fighting`, registered by `FightingModule`: `FightActivity`, its
   settings `FightSettings`. Each step heals, then on a map of the zone walks onto the cell of the nearest group the
   settings allow, monsters or families of monsters chosen, a family a race (`ChosenMonsters`), with no judgement of its
