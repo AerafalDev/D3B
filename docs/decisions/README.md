@@ -66,4 +66,5 @@ Each file holds the decisions of one group of [the index](../decisions-index.md)
 - [Step 10, 10c3: the group's bank (D442)](d442-step-10-the-groups-bank.md): 1 decision, 5 KB.
 - [Fights, the companions (D443)](d443-fights-companions.md): 1 decision, 3 KB.
 - [The harvest, the mines (D444)](d444-harvest-the-mines.md): 1 decision, 4 KB.
+- [Groups, the followers paused in a fight (D445)](d445-groups-followers-not-ready.md): 1 decision, 2 KB.
 - [Groups, following in real time (D447)](d447-groups-following-in-real-time.md): 1 decision, 3 KB.
