@@ -686,7 +686,7 @@ public sealed class CharacterEventsTests
     [Fact]
     public void AnExchangeWithAnotherCharacterIsAskedOpenedCountedAndLeft()
     {
-        // As captured (D435, D441): asked, told to both; opened as the other accepts; each move told; each ready; then left.
+        // As captured (D435, D442): asked, told to both; opened as the other accepts; each move told; each ready; then left.
         const long Other = 80_001;
         var asked = Apply(_chosen, Server(new ExchangeRequestedEvent { Type = ExchangeType.Player, SourceId = Other, TargetId = TestPlay.CharacterId }));
 

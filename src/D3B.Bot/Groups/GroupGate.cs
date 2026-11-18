@@ -16,7 +16,7 @@ namespace D3B.Bot.Groups;
 /// </para>
 /// <para>
 /// It waits too for each follower's life to be over the share its own profile heals under, before any action it holds, as
-/// its own activity heals before each step (D433, D440); each follower heals by itself.
+/// its own activity heals before each step (D433, D441); each follower heals by itself.
 /// </para>
 /// <para>
 /// It waits as long as it takes, with no delay (D87): a follower disconnected, paused, fighting, on its way or stuck. The
@@ -107,7 +107,7 @@ internal sealed class GroupGate : IActionGate
                 var healed = (DateTimeOffset?)null;
 
                 // Each follower's life over the share the master's profile heals under, before any action, as an activity heals
-                // before its step (D433, D440): held only before the attack, the master would wait on the group's cell, which
+                // before its step (D433, D441): held only before the attack, the master would wait on the group's cell, which
                 // the group leaves meanwhile.
                 if (missing.Count is 0 && GroupLife.ShareOf(_bot) is { } share)
                     (missing, healed) = Healing(state, followers, share);

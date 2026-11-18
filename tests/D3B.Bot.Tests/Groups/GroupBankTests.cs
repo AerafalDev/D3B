@@ -7,7 +7,7 @@ using D3B.Protocol.Game;
 
 namespace D3B.Bot.Tests.Groups;
 
-/// <summary>The group's bank: a follower full takes the group to the bank, gives the master what it carries by an exchange, and the master deposits it with its own loot (D433, D441).</summary>
+/// <summary>The group's bank: a follower full takes the group to the bank, gives the master what it carries by an exchange, and the master deposits it with its own loot (D433, D442).</summary>
 public sealed class GroupBankTests
 {
     private const int MastersLoot = 1_782;
@@ -22,7 +22,7 @@ public sealed class GroupBankTests
         return new InventoryObject { Item = new ObjectItem { Uid = uid, ItemId = itemId, Quantity = quantity }, Position = position };
     }
 
-    // Both told, as the captures measured each (D435, D441).
+    // Both told, as the captures measured each (D435, D442).
     private static void Both(TestConnection master, TestConnection follower, Google.Protobuf.IMessage message)
     {
         master.Server(message);

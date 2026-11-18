@@ -8,7 +8,7 @@ using D3B.Protocol.Game;
 
 namespace D3B.Bot.Groups;
 
-/// <summary>The group's bank: a member full takes the whole group to the master's bank, each follower gives the master what it carries, and the master deposits it (D433, D441).</summary>
+/// <summary>The group's bank: a member full takes the whole group to the master's bank, each follower gives the master what it carries, and the master deposits it (D433, D442).</summary>
 /// <remarks>
 /// <para>
 /// One per bot, which does nothing while nobody follows it. The master's run asks it before each step: a follower is full at
@@ -17,7 +17,7 @@ namespace D3B.Bot.Groups;
 /// the group map after map (D437), and takes each follower's objects in turn, in the chain's order.
 /// </para>
 /// <para>
-/// Measured on 3.7.14.18 (D435, D441): the follower asks the master for an exchange; the master accepts and the exchange
+/// Measured on 3.7.14.18 (D435, D442): the follower asks the master for an exchange; the master accepts and the exchange
 /// opens for both; the follower moves its stacks in one by one, each change told to both; it says it is ready naming how
 /// many changes the exchange had, then the master the same; the exchange concludes as both are, the objects in the master's
 /// inventory. A follower gives every stack it carries and does not wear, never its kamas, at most what the master's pods
@@ -36,7 +36,7 @@ internal sealed class GroupBank : IGroupBank
     private const int MostJourneys = 3;
 
     // How long the master waits for its follower's asking, then for each of its moves and its readiness: each move is
-    // answered within 30 ms (D441), the client's display time between them.
+    // answered within 30 ms (D442), the client's display time between them.
     private static readonly TimeSpan _exchangeWait = TimeSpan.FromSeconds(30);
 
     private static readonly TimeSpan _busyWait = TimeSpan.FromSeconds(10);

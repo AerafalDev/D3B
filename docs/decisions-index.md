@@ -598,17 +598,17 @@ or refines another says so in its own entry. Add a line here with every new deci
 - [D438](decisions/d438-fights-challenges-bonus.md#d438-a-profile-chooses-the-challenges-bonus-of-its-fights-the-drops-by-default-mapping-format-19) A profile chooses the challenges' bonus of its fights, the drops by default, mapping format 19 (2026-11-18)
   - Two values, one box, another default, under "Advanced" or a section of its own, a general setting.
 
-## Step 10, 10c1: the group's fights (D439)
+## Step 10, 10c1: the group's fights (D440)
 
-- [D439](decisions/d439-step-10-the-groups-fights.md#d439-10c1-a-follower-joins-its-masters-fight-by-request-the-master-ready-once-its-followers-are-placed) 10c1, a follower joins its master's fight by request, the master ready once its followers are placed (2026-11-18)
+- [D440](decisions/d440-step-10-the-groups-fights.md#d440-10c1-a-follower-joins-its-masters-fight-by-request-the-master-ready-once-its-followers-are-placed) 10c1, a follower joins its master's fight by request, the master ready once its followers are placed (2026-11-18)
   - The master ready once placed, a follower setting its team's options, the fights shown on a map read.
 
-## Step 10, 10c2: the group's life before an attack (D440)
+## Step 10, 10c2: the group's life before an attack (D441)
 
-- [D440](decisions/d440-step-10-the-groups-life.md#d440-10c2-the-master-attacks-once-each-followers-life-is-over-its-profiles-share-each-follower-healing-by-itself) 10c2, the master attacks once each follower's life is over its profile's share, each follower healing by itself (2026-11-18)
+- [D441](decisions/d441-step-10-the-groups-life.md#d441-10c2-the-master-attacks-once-each-followers-life-is-over-its-profiles-share-each-follower-healing-by-itself) 10c2, the master attacks once each follower's life is over its profile's share, each follower healing by itself (2026-11-18)
   - Regenerating only, heal settings in "Follow", a fixed share or the follower's own, the life waited for before the attack alone.
 
-## Step 10, 10c3: the group's bank (D441)
+## Step 10, 10c3: the group's bank (D442)
 
-- [D441](decisions/d441-step-10-the-groups-bank.md#d441-10c3-a-full-member-takes-the-group-to-the-bank-each-follower-gives-the-master-what-it-carries-by-an-exchange-mapping-format-20) 10c3, a full member takes the group to the bank, each follower gives the master what it carries by an exchange, mapping format 20 (2026-11-18)
+- [D442](decisions/d442-step-10-the-groups-bank.md#d442-10c3-a-full-member-takes-the-group-to-the-bank-each-follower-gives-the-master-what-it-carries-by-an-exchange-mapping-format-20) 10c3, a full member takes the group to the bank, each follower gives the master what it carries by an exchange, mapping format 20 (2026-11-18)
   - All the master does not wear, two openings of the bank, the step counted from requests, one transfer of every stack.

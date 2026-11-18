@@ -145,7 +145,7 @@ public sealed class BotActor : IAsyncDisposable, IRequestWithholder
     /// <summary>Gets or sets the bot's part in its group's fights, which the AI asks during the placement (D431, D434).</summary>
     internal IFightTeam? Team { get; set; }
 
-    /// <summary>Gets or sets the bank of the group the bot leads, which its run unloads through instead of its activity's own (D433, D441).</summary>
+    /// <summary>Gets or sets the bank of the group the bot leads, which its run unloads through instead of its activity's own (D433, D442).</summary>
     internal IGroupBank? Bank { get; set; }
 
     /// <summary>Gets what the bot did and met, its actions once over, for the app (D112).</summary>

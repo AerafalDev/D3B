@@ -1,9 +1,9 @@
-# Step 10, 10c2: the group's life before an attack (D440)
+# Step 10, 10c2: the group's life before an attack (D441)
 
 A part of [the decisions](README.md); each decision has one line in [the index](../decisions-index.md). The step's design
-is in [D429 to D435](d429-d435-step-10-groups.md), the group's fights in [D439](d439-step-10-the-groups-fights.md).
+is in [D429 to D435](d429-d435-step-10-groups.md), the group's fights in [D440](d440-step-10-the-groups-fights.md).
 
-## D440: 10c2, the master attacks once each follower's life is over its profile's share, each follower healing by itself
+## D441: 10c2, the master attacks once each follower's life is over its profile's share, each follower healing by itself
 
 *2026-11-18, step 10, session 10c; the follower eating what only heals, else regenerating, the owner's choice among three,
 as the lead recommended it; the rest the lead's, local and reversible, within D433. Builds D148, D153, D325, D433, D437.*
@@ -19,7 +19,7 @@ as the lead recommended it; the rest the lead's, local and reversible, within D4
   whole the food it carries that only heals, smallest first, as a profile choosing no food does (D148); with none, its life
   regenerates up to the share (9g5), its master moving ending that wait as its other waits. The owner's choice: no setting
   more in "Follow".
-- **Not measured**: tested on the fake game only, with the rest of step 10 measured in game at the very end (D439).
+- **Not measured**: tested on the fake game only, with the rest of step 10 measured in game at the very end (D440).
 - **Rejected.**
   - The follower regenerating only: slower, and the food it carries left unused.
   - "Follow" with its own heal and food settings: a setting more than D433 wanted.

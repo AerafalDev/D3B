@@ -2,7 +2,7 @@ using D3B.Bot.Activities;
 
 namespace D3B.Bot.Runtime;
 
-/// <summary>A master's bank for its group, which its run asks before each step instead of its activity's own (D433, D441).</summary>
+/// <summary>A master's bank for its group, which its run asks before each step instead of its activity's own (D433, D442).</summary>
 internal interface IGroupBank
 {
     /// <summary>Tells whether the group's bank takes the activity's unloading: bots follow the bot, and the activity banks.</summary>

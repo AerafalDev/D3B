@@ -23,9 +23,9 @@ namespace D3B.Bot.Groups;
 /// turns them on by itself 3 to 22 ms after each party it joins, as long as its own window has them on, so the follower
 /// lets the client's display time pass, then turns both off, at each party joined.</item>
 /// <item>The master missing, disconnected or paused, the follower waits where it stands: no follower leads (D432).</item>
-/// <item>With its master, its master taking its objects at the bank, it gives them by an exchange (D433, D441).</item>
+/// <item>With its master, its master taking its objects at the bank, it gives them by an exchange (D433, D442).</item>
 /// <item>With its master, under the share of life its master's profile heals under, it heals: it eats until its life is
-/// whole the food it carries that only heals, else regenerates up to the share, its master waiting to attack (D440).</item>
+/// whole the food it carries that only heals, else regenerates up to the share, its master waiting to attack (D441).</item>
 /// <item>With its master, it waits for the master to move.</item>
 /// <item>Else it follows the chain: the member before it on its map, it waits for that one to go; once the master is
 /// placed on its new map, it changes maps towards it, one change a step by the world's paths, which from the map the
@@ -51,7 +51,7 @@ public sealed class FollowActivity : BotActivity, IDisposable
     // client closes it on the player's click alone.
     private static readonly TimeSpan _answerAfter = TimeSpan.FromSeconds(1.3);
 
-    // How long the follower waits for its exchange with its master to open, then to conclude, as the master waits (D441).
+    // How long the follower waits for its exchange with its master to open, then to conclude, as the master waits (D442).
     private static readonly TimeSpan _exchangeWait = TimeSpan.FromSeconds(30);
 
     private readonly Bots _bots;
@@ -184,7 +184,7 @@ public sealed class FollowActivity : BotActivity, IDisposable
 
         if (GroupChain.Together(theirs, state))
         {
-            // Its master taking its objects at the bank (D433, D441).
+            // Its master taking its objects at the bank (D433, D442).
             if (await GiveAsync(context, seen, cancellationToken).ConfigureAwait(false))
                 return true;
 
@@ -421,9 +421,9 @@ public sealed class FollowActivity : BotActivity, IDisposable
         return true;
     }
 
-    // Whether it gave this step: its master taking its objects at the bank (D433, D441), it asks the master for an exchange
+    // Whether it gave this step: its master taking its objects at the bank (D433, D442), it asks the master for an exchange
     // once a round, moves in, one by one, what the master's pods still hold of the stacks it does not wear, never its kamas,
-    // then says it is ready naming how many changes the server told it of, as the client did (D441). Its master accepts and
+    // then says it is ready naming how many changes the server told it of, as the client did (D442). Its master accepts and
     // concludes.
     private async Task<bool> GiveAsync(BotContext context, BotSeen master, CancellationToken cancellationToken)
     {
@@ -462,7 +462,7 @@ public sealed class FollowActivity : BotActivity, IDisposable
 
             await context.SendAsync(new ExchangeObjectMoveRequest { Uid = uid, Quantity = quantity }, cancellationToken).ConfigureAwait(false);
 
-            // Measured (D441): each move told to both 28 ms after; one the server refuses, such as an object bound to the
+            // Measured (D442): each move told to both 28 ms after; one the server refuses, such as an object bound to the
             // account (D153), changes nothing, and the next goes on.
             await context.WaitUntilAsync(now => now.Exchange is not { IsOpen: true } open || open.Changes > changes, context.Delays.Answer, cancellationToken).ConfigureAwait(false);
             await Task.Delay(context.Delays.Display, context.Time, cancellationToken).ConfigureAwait(false);

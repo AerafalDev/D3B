@@ -50,7 +50,7 @@ public abstract class BotActivity
     public virtual bool UsesTeleports => true;
 
     /// <summary>Gets whether the activity's journeys to the bank may teleport to a zaap, the general banking settings weighed (D405, D436).</summary>
-    /// <remarks>As its other journeys by default; a master's group goes to the bank by it (D441).</remarks>
+    /// <remarks>As its other journeys by default; a master's group goes to the bank by it (D442).</remarks>
     public virtual bool BanksByTeleport => UsesTeleports;
 
     /// <summary>Gets whether the AI plays the fights that cut the activity's steps, then the activity answers them once over (D198, D202).</summary>
@@ -80,7 +80,7 @@ public abstract class BotActivity
     /// <summary>Tells whether the activity's banking puts a stack in the bank, such as its loot or all the character does not wear.</summary>
     /// <param name="stack">A stack the character carries and does not wear.</param>
     /// <returns>Whether it does; none, by default.</returns>
-    /// <remarks>A master's group banks in one opening what its followers gave and what this says of the master's own (D441).</remarks>
+    /// <remarks>A master's group banks in one opening what its followers gave and what this says of the master's own (D442).</remarks>
     public virtual bool Deposits(InventoryItem stack)
     {
         ArgumentNullException.ThrowIfNull(stack);

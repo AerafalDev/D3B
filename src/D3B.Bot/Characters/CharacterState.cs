@@ -85,7 +85,7 @@ public sealed record CharacterState
     /// <summary>Gets the dialog of a zaap the character used, with its destinations, from the server's listing them to the dialog's end (D83).</summary>
     public ZaapDialog? ZaapDialog { get; init; }
 
-    /// <summary>Gets the exchange between the character and another character, from its asking to its end (D441).</summary>
+    /// <summary>Gets the exchange between the character and another character, from its asking to its end (D442).</summary>
     public PlayerExchange? Exchange { get; init; }
 
     /// <summary>Gets whether the character is in a dialog with an NPC or a zaap, or an exchange with a storage or an open one with another character, which a request to leave ends.</summary>

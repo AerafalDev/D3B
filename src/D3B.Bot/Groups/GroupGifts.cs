@@ -3,10 +3,10 @@ using D3B.Data.Items;
 
 namespace D3B.Bot.Groups;
 
-/// <summary>What a follower gives its master at the bank: each stack it carries and does not wear, never its kamas nor the food it eats, as much as the master's pods still hold (D433, D441).</summary>
+/// <summary>What a follower gives its master at the bank: each stack it carries and does not wear, never its kamas nor the food it eats, as much as the master's pods still hold (D433, D442).</summary>
 /// <remarks>
 /// Pure functions of the two states, so that the master and its follower reckon the same gifts. The food that only heals
-/// stays with the follower, which eats it before its master acts (D440), the lead's choice.
+/// stays with the follower, which eats it before its master acts (D441), the lead's choice.
 /// </remarks>
 internal static class GroupGifts
 {

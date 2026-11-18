@@ -1,13 +1,13 @@
-# Step 10, 10c3: the group's bank (D441)
+# Step 10, 10c3: the group's bank (D442)
 
 A part of [the decisions](README.md); each decision has one line in [the index](../decisions-index.md). The step's design
-is in [D429 to D435](d429-d435-step-10-groups.md), the group's life in [D440](d440-step-10-the-groups-life.md).
+is in [D429 to D435](d429-d435-step-10-groups.md), the group's life in [D441](d441-step-10-the-groups-life.md).
 
-## D441: 10c3, a full member takes the group to the bank, each follower gives the master what it carries by an exchange, mapping format 20
+## D442: 10c3, a full member takes the group to the bank, each follower gives the master what it carries by an exchange, mapping format 20
 
 *2026-11-18, step 10, session 10c; the master's own deposit by its profile's rule in one opening of the bank the owner's
 choice among three, as the lead recommended it; the step's reading and the rest the lead's, local and reversible, within
-D433. Builds D80, D325, D405, D433, D435, D437, D439.*
+D433. Builds D80, D325, D405, D433, D435, D437, D440.*
 
 - **Measured** on 10a's two captures of the exchange (`scripts/capture.cs --messages --frames`, type URLs, sizes and
   times only, never a value): the follower asked, the leader was told 27 ms later and accepted, the exchange opened for
@@ -29,7 +29,7 @@ D433. Builds D80, D325, D405, D433, D435, D437, D439.*
   (`BotActivity.BanksByTeleport`, D405, D436), again while busy, its gate gathering the group map after map (D437); in the
   chain's order, each follower asks it for an exchange (`ExchangePlayerRequest`), once a round; the master accepts after
   the client's display time, the follower moves in one by one (`ExchangeObjectMoveRequest`) each stack it does not wear,
-  never its kamas nor the food that only heals, which it eats before its master acts (D440, the lead's choice), as much as
+  never its kamas nor the food that only heals, which it eats before its master acts (D441, the lead's choice), as much as
   the master's pods still hold (`GroupGifts`), then says it is ready naming the changes, and the master the same. The
   master waits 30 s for the asking, then 30 s for each move or the readiness, so that a follower carrying many stacks is
   not cut short. When the master's pods hold none of a follower's next stack it deposits first; a follower whose round
@@ -38,13 +38,13 @@ D433. Builds D80, D325, D405, D433, D435, D437, D439.*
   never its kamas: the gifts by the master's stack they went into and how many, so that a gift joining a stack of the
   master's own, which its profile keeps, goes in for its quantity alone, by the move the guild's chest measured taking part
   of a stack (D153), the lead's reading for the bank.
-- **Not measured**: tested on the fake game only, with the rest of step 10 measured in game at the very end (D439):
+- **Not measured**: tested on the fake game only, with the rest of step 10 measured in game at the very end (D440):
   whether the server checks the step, what it answers an exchange of more than the master's pods, a part of a stack moved
   into the bank, and the client's windows of the exchange on both screens. A master harvesting to its guild's chest takes
   its group to the bank all the same; the group's banking is not counted on the activity's card, which keeps its last
   text meanwhile, the review's finding left for 10d.
-- **Needs**: the mapping of format 20 published with the release `client-3.7.14.18` on the owner's go, before an app that
-  reads it (D24).
+- **Published**: the mapping of format 20 on the release `client-3.7.14.18`, the owner's go of 2026-11-18 (D24), its
+  SHA-256 checked once downloaded again; an app reads it once this change ships.
 - **Rejected.**
   - The master depositing all it does not wear: a profile banking its loot alone would empty its consumables.
   - The gifts remembered by item: a gift merged into the master's own stack of that item would take the whole stack to

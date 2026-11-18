@@ -73,7 +73,7 @@ public sealed class GroupDirectory
         }
     }
 
-    /// <summary>Has a master take a follower's objects at the bank, until the round given back is disposed (D433, D441).</summary>
+    /// <summary>Has a master take a follower's objects at the bank, until the round given back is disposed (D433, D442).</summary>
     /// <param name="master">The master's character.</param>
     /// <param name="follower">The follower whose turn it is.</param>
     /// <returns>The round, which the master disposes once the exchange is over.</returns>

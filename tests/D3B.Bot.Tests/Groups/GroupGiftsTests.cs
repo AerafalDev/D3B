@@ -45,7 +45,7 @@ public sealed class GroupGiftsTests
     [Fact]
     public async Task AFollowerKeepsTheFoodItEatsAndWhatItWears()
     {
-        // D440: the follower eats what only heals before its master acts; the potion, whose use does more, is given.
+        // D441: the follower eats what only heals before its master acts; the potion, whose use does more, is given.
         await using var play = new TestPlay();
         var follower = State(0, new InventoryItem(1, TestPlay.Bread, 5, InventoryItem.NotWorn), new InventoryItem(2, TestPlay.Ash, 1, 1), new InventoryItem(3, TestPlay.ClassPotion, 1, InventoryItem.NotWorn));
 
