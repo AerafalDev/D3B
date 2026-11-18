@@ -1,4 +1,5 @@
 using D3B.Bot.Characters;
+using D3B.Bot.Fights;
 using D3B.Bot.Runtime;
 using D3B.Protocol.Game;
 using Google.Protobuf;
@@ -38,6 +39,19 @@ public sealed class PlayerActionsTests
     public void TheAcknowledgementsTheReadinessForATurnAndATurnsEndItMarksAreTheClientsOwn(IMessage request)
     {
         Assert.False(PlayerActions.Starts(_state, request));
+    }
+
+    [Fact]
+    public void AReadinessTakenBackIsThePlayersOnlyWhenTheCharacterWasReady()
+    {
+        // Measured on the owner's test of 2026-11-18 (D445): from the second fight, each follower's client sent by itself a
+        // request saying it is not ready as it joined its master's fight, the character not ready, and the bot paused.
+        var placing = _state with { Fight = new FightState { Phase = FightPhase.Placement } };
+
+        Assert.False(PlayerActions.Starts(_state, new FightReadyRequest()));
+        Assert.False(PlayerActions.Starts(placing, new FightReadyRequest()));
+        Assert.True(PlayerActions.Starts(placing with { Fight = placing.Fight! with { IsReady = true } }, new FightReadyRequest()));
+        Assert.True(PlayerActions.Starts(placing, new FightReadyRequest { Ready = true }));
     }
 
     [Fact]
