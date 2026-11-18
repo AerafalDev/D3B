@@ -286,7 +286,8 @@ The bots run in `D3B.Bot`: what each part does today, with the decisions that ma
   is over (`BotActor.RunInFightAsync`). `FightPlay`, one behavior, the same AI for every character: it waits until the
   server showed the character and its cells, judges the odds (`FightTactics.Odds`), prudent for the fight when it would
   lose (`TacticWeights.Prudent`, D198), closes the fight and blocks spectators (D216), sets the challenges' bonus the
-  activity's profile asks once the server answered the client's own (`BotActivity.ChallengeReward`, D438), places the character
+  activity's profile asks once the server answered the client's own (`BotActivity.ChallengeReward`, D438; a follower its master's,
+  D446), places the character
   (`FightTactics.Place`) and says it is ready; each turn it plans (`FightTactics.Plan`) from the fight as the AI imagines
   it (`ImaginedFights`, `CharacterSpells`), its sword's blow among its casts (D220), sends the plan's first walk or cast,
   waits for the server's answer and the client's acknowledgement, plans again, and ends its turn as soon as the plan is

@@ -1431,8 +1431,10 @@ session and never written down.
   has these two values alone. The request's second field, a message, was never set.
 - **The server's answer**: an event of the bonus, 27 to 29 ms after each request, with the value sent. Its three other
   fields were never set.
-- **Not measured**: a group. Whether the server answers or refuses a member who does not lead its team, and whether it
-  tells the members of their leader's choice, waits for the measure in game (D438).
+- **In a group** (D446), on the owner's test of 2026-11-18, a master and three followers: each follower's client sent its
+  own choice, with no value set, as it joined its master's fight, and the server answered each follower; the master was
+  told nothing of theirs, nor the followers of the master's. So the bonus is each character's own: the master's drops,
+  which D3B sent, and the followers' experience, their clients' default.
 
 **Mapped** (D438): the request and the event of the bonus, and its enum. Format 19, 253 messages paired, no failure;
 without the captures, the pins and the structure pair the same.

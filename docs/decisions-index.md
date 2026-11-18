@@ -631,3 +631,8 @@ or refines another says so in its own entry. Add a line here with every new deci
 
 - [D445](decisions/d445-groups-followers-not-ready.md#d445-a-readiness-taken-back-while-the-character-is-not-ready-is-the-clients-own-not-the-players) A readiness taken back while the character is not ready is the client's own, not the player's (2026-11-18)
   - Every readiness of a follower ignored, a follower resumed by itself after its fight.
+
+## Groups, the challenges' bonus of the followers (D446)
+
+- [D446](decisions/d446-groups-challenges-bonus.md#d446-a-follower-chooses-the-challenges-bonus-its-masters-profile-chooses) A follower chooses the challenges' bonus its master's profile chooses (2026-11-18)
+  - A bonus of its own in "Follow".

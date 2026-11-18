@@ -5,6 +5,7 @@ using D3B.Bot.Groups;
 using D3B.Bot.Journal;
 using D3B.Bot.Movement;
 using D3B.Bot.Runtime;
+using D3B.Bot.Tests.Fights;
 using D3B.Bot.Tests.Runtime;
 using D3B.Protocol.Game;
 
@@ -23,14 +24,51 @@ public sealed class FollowActivityTests
     }
 
     [Fact]
-    public async Task AFollowerFightsItsFightsAndLeavesTheChallengesBonusToItsMaster()
+    public async Task AFollowerFightsItsFightsAndChoosesTheChallengesBonusItsMastersProfileChooses()
     {
-        // D438: the master's choice counts, so a follower sends none.
+        // Measured on the owner's test of 2026-11-18 (D446): each character's client sends its own choice as it joins, so
+        // a follower sends its master's, the owner's choice; the client's while its master runs no profile.
         await using var play = new TestPlay();
+        var (_, master) = await TestGroup.MasterAsync(play, 300);
         var follow = new FollowActivity(new FollowSettings { Master = TestGroup.Master.ToId() }, play.Bots, play.Tables);
 
         Assert.True(follow.FightsItsFights);
         Assert.Equal(ChallengeReward.Client, follow.ChallengeReward);
+
+        var leading = master.StartActivity(new RewardActivity { Reward = ChallengeReward.Drop });
+
+        Assert.Equal(ChallengeReward.Drop, follow.ChallengeReward);
+
+        leading.Stop();
+        await leading.Completion;
+
+        Assert.Equal(ChallengeReward.Client, follow.ChallengeReward);
+    }
+
+    [Fact]
+    public async Task AFollowerLeavesTheBonusToItsClientUnderAMasterWhoseAIDoesNotFightOrWhoFollows()
+    {
+        // D438: a profile whose AI does not fight sends no bonus, its choice hidden; and two followers naming each other,
+        // before the directory refuses the second, must not ask each other for ever.
+        await using var play = new TestPlay();
+        var (_, master) = await TestGroup.MasterAsync(play, 300);
+        var (_, follower) = await TestGroup.FollowerAsync(play, 301);
+        var follow = new FollowActivity(new FollowSettings { Master = TestGroup.Master.ToId() }, play.Bots, play.Tables);
+        var harvesting = master.StartActivity(new RewardActivity { Reward = ChallengeReward.Drop, Fights = false });
+
+        Assert.Equal(ChallengeReward.Client, follow.ChallengeReward);
+
+        harvesting.Stop();
+        await harvesting.Completion;
+
+        var back = new FollowActivity(new FollowSettings { Master = TestGroup.Follower.ToId() }, play.Bots, play.Tables);
+        var masterFollows = master.StartActivity(back);
+        var followerFollows = follower.StartActivity(follow);
+
+        Assert.Equal(ChallengeReward.Client, follow.ChallengeReward);
+        Assert.Equal(ChallengeReward.Client, back.ChallengeReward);
+        masterFollows.Stop();
+        followerFollows.Stop();
     }
 
     [Fact]

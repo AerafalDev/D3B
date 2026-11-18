@@ -213,7 +213,8 @@ public static class FightPlay
 
         await context.SendAsync(new ChallengeBonusChoiceRequest { Bonus = bonus }, cancellationToken).ConfigureAwait(false);
 
-        // Not measured: whether the server answers a member who does not lead its team; unanswered, the placement goes on.
+        // Measured (D446): the server answers each member of a group, the bonus each character's own; unanswered, the
+        // placement goes on.
         var answer = await chosen.WaitAsync(context.Delays.Answer, cancellationToken).ConfigureAwait(false);
 
         FightLog.BonusChosen(context.Log, context.State.Key.CharacterId, bonus, answer is null ? "unanswered" : "set");
