@@ -120,9 +120,9 @@ public static class WorldTravel
     /// <summary>Gets what a character may follow through the world, from its state now.</summary>
     /// <param name="context">The behavior's context.</param>
     /// <returns>
-    /// The rules, with what the character's criteria are answered on (<see cref="FactsOf"/>), the zaaps it knows, the kamas it
-    /// carries, what a teleport counts as for the running activity (D167), and the teleports and NPCs' ways it was refused
-    /// (D248, D253).
+    /// The rules, with what the character's criteria are answered on (<see cref="FactsOf"/>), the zaaps it knows, none when the
+    /// running activity takes none (D429), the kamas it carries, what a teleport counts as for the running activity (D167), and
+    /// the teleports and NPCs' ways it was refused (D248, D253).
     /// </returns>
     public static WorldPathRules RulesOf(BotContext context)
     {
@@ -130,7 +130,7 @@ public static class WorldTravel
 
         var state = context.State;
 
-        return new WorldPathRules { Facts = FactsOf(state, context.Time.GetUtcNow()), KnownZaaps = state.KnownZaaps, Kamas = state.Kamas, TeleportChanges = context.TeleportChanges, NoTeleportFrom = context.NoTeleportFrom, NoNpcWays = context.NoNpcWays };
+        return new WorldPathRules { Facts = FactsOf(state, context.Time.GetUtcNow()), KnownZaaps = context.UsesTeleports ? state.KnownZaaps : FrozenSet<long>.Empty, Kamas = state.Kamas, TeleportChanges = context.TeleportChanges, NoTeleportFrom = context.NoTeleportFrom, NoNpcWays = context.NoNpcWays };
     }
 
     /// <summary>Gets what a character's criteria are answered on, from its state.</summary>

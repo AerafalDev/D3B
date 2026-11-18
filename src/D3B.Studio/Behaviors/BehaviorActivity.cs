@@ -71,6 +71,9 @@ internal sealed class BehaviorActivity : BotActivity, IDisposable, IBehaviorCont
     public override int TeleportChanges => _visit?.Current?.TeleportChanges ?? 1;
 
     /// <inheritdoc/>
+    public override bool UsesTeleports => _visit?.Current?.UsesTeleports ?? true;
+
+    /// <inheritdoc/>
     public override bool FightsItsFights => _visit?.Current?.FightsItsFights ?? true;
 
     /// <summary>Gets the activity an activity's node plays now, which the behavior speaks for, if one does.</summary>

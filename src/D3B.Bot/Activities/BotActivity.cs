@@ -45,6 +45,10 @@ public abstract class BotActivity
     /// <remarks>1 by default: a zaap as soon as it saves a change, as before.</remarks>
     public virtual int TeleportChanges => 1;
 
+    /// <summary>Gets whether the activity's journeys may teleport to a zaap at all, its banking's included; else every one walks, whatever the zaaps the character knows (D429).</summary>
+    /// <remarks>Yes by default, as before.</remarks>
+    public virtual bool UsesTeleports => true;
+
     /// <summary>Gets whether the AI plays the fights that cut the activity's steps, then the activity answers them once over (D198, D202).</summary>
     /// <remarks>None by default: the player plays them, as before step 9, unless the bot's switch has the AI play every fight.</remarks>
     public virtual bool FightsItsFights => false;

@@ -150,16 +150,16 @@
     <value>Own banking rules</value>
   </data>
   <data name="OwnBankingHelp" xml:space="preserve">
-    <value>Off, this profile banks as the app's settings say (Settings, Bots): the share of pods and whether a zaap is taken to the bank. On, it uses the two below.</value>
+    <value>Off, this profile banks as the app's settings say (Settings, Bots): the share of pods and whether a zaap is taken to the bank. On, it banks at the share below, and takes a zaap to the bank as its zaap setting says.</value>
   </data>
   <data name="FullAt" xml:space="preserve">
     <value>Pods full at</value>
   </data>
   <data name="UseZaaps" xml:space="preserve">
-    <value>Take a zaap to the bank</value>
+    <value>Take zaaps</value>
   </data>
   <data name="UseZaapsHelp" xml:space="preserve">
-    <value>Off, the character always walks to the bank. On, it takes a zaap when it saves enough maps and it can pay for it; else it walks.</value>
+    <value>Off, the character always walks, on every journey of the profile: to its place, back, and to the bank. On, it takes a zaap when it saves enough maps and it can pay for it; to the bank, only if the app's settings allow it too, unless the profile banks by its own rules.</value>
   </data>
   <data name="Deposit" xml:space="preserve">
     <value>Deposit</value>

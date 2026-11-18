@@ -565,3 +565,8 @@ or refines another says so in its own entry. Add a line here with every new deci
 - [D427](decisions/d427-d428-client-3-7-14-18.md#d427-client-371418-measured-against-371317) Client 3.7.14.18, measured against 3.7.13.17 (2026-11-17)
 - [D428](decisions/d427-d428-client-3-7-14-18.md#d428-371418-mapped-from-371317s-pins-without-its-own-captures-and-released) 3.7.14.18 mapped from 3.7.13.17's pins without its own captures, and released (2026-11-17)
   - Capturing first, as D364 did; 3.7.13.17's mapping file renamed for the new build.
+
+## Bug reports, the profile's zaaps (D429)
+
+- [D429](decisions/d429-bug-reports-zaaps.md#d429-a-profile-that-takes-no-zaap-takes-none-on-any-of-its-journeys-to-its-place-back-and-to-the-bank) A profile that takes no zaap takes none on any of its journeys, to its place, back and to the bank (2026-11-18)
+  - D405's meaning kept, two flags, "never" as a number of maps.
