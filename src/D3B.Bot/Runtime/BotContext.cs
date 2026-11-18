@@ -152,6 +152,18 @@ public sealed class BotContext
         await SendNowAsync(request, cancellationToken).ConfigureAwait(false);
     }
 
+    /// <summary>Waits as before an action the bot's gate holds: a master, until its group is with it (D447).</summary>
+    /// <param name="cancellationToken">The behavior's token.</param>
+    /// <returns>A task that completes once the bot may act; at once for a bot nobody follows.</returns>
+    /// <remarks>
+    /// The owner's choice (D447): the master's walks are no longer held, so a master attacking waits for its group before it
+    /// walks to the group of monsters, which leaves its cell within seconds (9g), not once it stands on it.
+    /// </remarks>
+    internal Task GatherAsync(CancellationToken cancellationToken)
+    {
+        return _bot.Gate?.GatherAsync(this, cancellationToken) ?? Task.CompletedTask;
+    }
+
     /// <summary>Sends a request past the bot's gate, once the client drew the map: the gate's own, such as a party's invitation.</summary>
     internal async Task SendNowAsync(IMessage request, CancellationToken cancellationToken)
     {

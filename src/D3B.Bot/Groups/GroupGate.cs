@@ -10,9 +10,9 @@ namespace D3B.Bot.Groups;
 /// <remarks>
 /// <para>
 /// One per bot, which holds nothing while nobody follows it. The requests it holds are those that start an action out of a
-/// fight, the kinds the player's own pause the bot for (<see cref="PlayerActions"/>) and the attack D3B sends: a walk, a
-/// map change, a use, an NPC talked to, a zaap, the haven bag. So the master waits after each map change, before an
-/// attack, a harvest, a zaap, the haven bag or a door, whatever its profile, and, a member missing, where it stands.
+/// fight, but its walks and map changes, which its followers copy as they come (D447, the owner's choice): a use, an NPC
+/// talked to, a zaap, the haven bag and the attack D3B sends. So the master moves on at once, and waits before an attack,
+/// a harvest, a zaap, the haven bag or a door, whatever its profile, and, a member missing, where it stands.
 /// </para>
 /// <para>
 /// It waits too for each follower's life to be over the share its own profile heals under, before any action it holds, as
@@ -51,8 +51,7 @@ internal sealed class GroupGate : IActionGate
     /// <returns>Whether the gate holds it.</returns>
     public static bool Holds(IMessage request)
     {
-        return request is MapMovementRequest or MapChangeRequest or InteractiveUseRequest or NpcActionRequest or TeleportRequest
-            or HavenBagEnterRequest or AttackMonsterRequest;
+        return request is InteractiveUseRequest or NpcActionRequest or TeleportRequest or HavenBagEnterRequest or AttackMonsterRequest;
     }
 
     private static PartyInvitationRequest Invite(string name)
@@ -75,10 +74,8 @@ internal sealed class GroupGate : IActionGate
         return Holds(request) ? GatherAsync(context, cancellationToken) : Task.CompletedTask;
     }
 
-    /// <summary>Waits until every follower is with the master, in its party and its life over the share, as before an action it holds.</summary>
-    /// <param name="context">The master's behavior, through which it sends its party's requests.</param>
-    /// <param name="cancellationToken">The behavior's token.</param>
-    /// <returns>A task that completes at once for a master in a fight or followed by nobody, else once they are.</returns>
+    /// <inheritdoc/>
+    /// <remarks>Until every follower is with the master, in its party and its life over the share; at once for a master in a fight or followed by nobody.</remarks>
     public async Task GatherAsync(BotContext context, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(context);
@@ -107,8 +104,8 @@ internal sealed class GroupGate : IActionGate
                 var healed = (DateTimeOffset?)null;
 
                 // Each follower's life over the share the master's profile heals under, before any action, as an activity heals
-                // before its step (D433, D441): held only before the attack, the master would wait on the group's cell, which
-                // the group leaves meanwhile.
+                // before its step (D433, D441); before an attack, the master waits before its walk to the group of monsters,
+                // which leaves its cell meanwhile (D447).
                 if (missing.Count is 0 && GroupLife.ShareOf(_bot) is { } share)
                     (missing, healed) = Healing(state, followers, share);
 

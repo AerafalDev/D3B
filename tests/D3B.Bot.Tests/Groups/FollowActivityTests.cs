@@ -7,6 +7,7 @@ using D3B.Bot.Movement;
 using D3B.Bot.Runtime;
 using D3B.Bot.Tests.Fights;
 using D3B.Bot.Tests.Runtime;
+using D3B.Engine.Maps;
 using D3B.Protocol.Game;
 
 namespace D3B.Bot.Tests.Groups;
@@ -197,6 +198,34 @@ public sealed class FollowActivityTests
     }
 
     [Fact]
+    public async Task AFollowerThatWalkedWithItsMasterToItsExitChangesMapsAtOnce()
+    {
+        // The owner's choice (D447): standing on its master's exit, it goes as its master goes, not once its master is placed.
+        await using var play = new TestPlay();
+        var (masterConnection, master) = await TestGroup.MasterAsync(play, 300);
+        var (connection, follower) = await TestGroup.FollowerAsync(play, 301);
+        var run = Follow(play, follower, TestGroup.Master);
+
+        await TestGroup.UntilAsync(play, () => Doing(run) == "Follows Master", "following");
+
+        var exit = play.StepTo(master, TestPlay.NorthMapId).Transition.CellId;
+
+        Assert.True(CellPathfinder.TryFind(play.Maps.Get(TestPlay.MapId).Cells.Span, 300, exit, out var path));
+        masterConnection.Server(new MapMovementEvent { ActorId = TestGroup.MasterId, Cells = { path.Cells.ToArray() } });
+
+        Assert.Equal(exit, await TestGroup.WalkedAsync(play, connection, TestGroup.FollowerId, 1));
+
+        // The master changes maps; the server names its new map, and has not placed it yet.
+        masterConnection.Server(new MapCurrentEvent { MapId = TestPlay.NorthMapId });
+        await master.ProcessedAsync();
+
+        // Towards the north at once, by the edge the world's paths give from there, its master not placed yet.
+        Assert.IsType<MapMovementRequest>(await TestGroup.SentAsync(play, connection, 2), exactMatch: false);
+        Assert.Null(master.State.Cell);
+        run.Stop();
+    }
+
+    [Fact]
     public async Task AFollowerGoesToTheMapItsMasterWentTo()
     {
         await using var play = new TestPlay();
@@ -278,11 +307,12 @@ public sealed class FollowActivityTests
     }
 
     [Fact]
-    public async Task AFollowerLetsTheOneBeforeItGoFirst()
+    public async Task AFollowerGoesWithoutWaitingForTheOneBeforeIt()
     {
+        // The owner's choice (D447): in real time, whatever the others' order.
         await using var play = new TestPlay();
         var (masterConnection, _) = await TestGroup.MasterAsync(play, 300);
-        var (firstConnection, first) = await TestGroup.SecondAsync(play, 302, name: "Abel");
+        var (_, first) = await TestGroup.SecondAsync(play, 302, name: "Abel");
         var (connection, follower) = await TestGroup.FollowerAsync(play, 301, name: "Zed");
 
         using var membership = play.Bots.Groups.Follow(first, TestGroup.Master, out _);
@@ -290,13 +320,41 @@ public sealed class FollowActivityTests
 
         TestGroup.Arrive(masterConnection, TestGroup.MasterId, TestPlay.NorthMapId, 500);
 
-        await TestGroup.UntilAsync(play, () => Doing(run) == "Waits for Abel to go first", "behind");
-        await TestGroup.SettleAsync(follower, first);
-        Assert.Empty(connection.Sent);
-
-        TestGroup.Arrive(firstConnection, TestGroup.SecondId, TestPlay.NorthMapId, 530);
-
         Assert.IsType<MapMovementRequest>(await TestGroup.SentAsync(play, connection, 1));
+        run.Stop();
+    }
+
+    [Fact]
+    public async Task AFollowerWalksWhereItsMasterWalksAsItWalksAndOnceAWalk()
+    {
+        // The owner's choice (D447): the follower copies each of its master's walks at once, to the cell the master walks to.
+        await using var play = new TestPlay();
+        var (masterConnection, master) = await TestGroup.MasterAsync(play, 300);
+        var (connection, follower) = await TestGroup.FollowerAsync(play, 301);
+        var run = Follow(play, follower, TestGroup.Master);
+
+        await TestGroup.UntilAsync(play, () => Doing(run) == "Follows Master", "following");
+
+        Assert.True(CellPathfinder.TryFind(play.Maps.Get(TestPlay.MapId).Cells.Span, 300, TestPlay.ActionCell, out var path));
+        masterConnection.Server(new MapMovementEvent { ActorId = TestGroup.MasterId, Cells = { path.Cells.ToArray() } });
+
+        var walk = Assert.IsType<MapMovementRequest>(await TestGroup.SentAsync(play, connection, 1));
+
+        Assert.Equal(TestPlay.ActionCell, walk.KeyMovements[^1] & 0xFFF);
+        Assert.True(master.State.IsWalking);
+        Assert.Contains(play.Log.GetSnapshot(), record => record.Message.Contains("walks with its master", StringComparison.Ordinal));
+
+        // Walked and confirmed, the follower stands where its master goes, and copies that walk no more.
+        var cells = CellPathfinder.TryFind(play.Maps.Get(TestPlay.MapId).Cells.Span, 301, TestPlay.ActionCell, out var own) ? own.Cells.ToArray() : [];
+
+        connection.Server(new MapMovementEvent { ActorId = TestGroup.FollowerId, Cells = { cells } });
+        connection.Client(new MapMovementConfirmRequest());
+        connection.Response(new MapMovementConfirmResponse());
+        await TestGroup.SettleAsync(follower, master);
+        play.Time.Advance(TimeSpan.FromSeconds(10));
+        await TestGroup.SettleAsync(follower, master);
+
+        Assert.Single(connection.Sent);
         run.Stop();
     }
 

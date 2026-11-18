@@ -636,3 +636,8 @@ or refines another says so in its own entry. Add a line here with every new deci
 
 - [D446](decisions/d446-groups-challenges-bonus.md#d446-a-follower-chooses-the-challenges-bonus-its-masters-profile-chooses) A follower chooses the challenges' bonus its master's profile chooses (2026-11-18)
   - A bonus of its own in "Follow".
+
+## Groups, following in real time (D447)
+
+- [D447](decisions/d447-groups-following-in-real-time.md#d447-the-followers-copy-their-masters-walks-as-they-come-and-the-master-no-longer-waits-after-each-map-change) The followers copy their master's walks as they come, and the master no longer waits after each map change (2026-11-19)
+  - Leaving together, walking to the exit only, copying only the exits, a follower that missed a walk waiting.

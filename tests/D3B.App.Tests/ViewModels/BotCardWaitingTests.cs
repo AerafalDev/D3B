@@ -26,7 +26,8 @@ public sealed class BotCardWaitingTests
         using var membership = play.Bots.Groups.Follow(follower, TestGroup.Master, out _);
         var acting = master.RunAsync(async (context, token) =>
         {
-            await context.SendAsync(new MapChangeRequest { MapId = 1 }, token);
+            // An action, which the master waits for its followers before: its map changes no longer (D447).
+            await context.SendAsync(new AttackMonsterRequest { MonsterGroupId = -1 }, token);
 
             return true;
         }, TestContext.Current.CancellationToken);

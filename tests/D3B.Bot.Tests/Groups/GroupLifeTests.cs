@@ -115,16 +115,16 @@ public sealed class GroupLifeTests
     }
 
     [Fact]
-    public async Task AMasterWaitsForItsFollowersLifeBeforeAWalkToo()
+    public async Task AMasterWaitsForItsFollowersLifeBeforeAUseToo()
     {
-        // As an activity heals before its step (D441): held only before the attack, the master would wait on the group's
-        // cell, which the group leaves meanwhile.
+        // As an activity heals before its step (D441): a use, such as a harvest or a door, is held as the attack is; the
+        // attack is waited for before the walk to the group of monsters (D447), which leaves its cell meanwhile.
         await using var play = new TestPlay();
         var (masterConnection, master, _, _, run) = await GroupAsync(play, 600);
         var started = play.Time.GetUtcNow();
-        var leading = master.StartActivity(new AttackingActivity { HealBelow = 70, Request = new MapChangeRequest { MapId = (int)TestPlay.NorthMapId } });
+        var leading = master.StartActivity(new AttackingActivity { HealBelow = 70, Request = new InteractiveUseRequest { ElementId = TestPlay.TreeElementId, SkillInstanceId = TestPlay.TreeInstanceId } });
 
-        Assert.IsType<MapChangeRequest>(await TestGroup.SentAsync(play, masterConnection, 1));
+        Assert.IsType<InteractiveUseRequest>(await TestGroup.SentAsync(play, masterConnection, 1));
         Assert.InRange(play.Time.GetUtcNow() - started, TimeSpan.FromSeconds(48), TimeSpan.FromSeconds(51));
         leading.Stop();
         run.Stop();

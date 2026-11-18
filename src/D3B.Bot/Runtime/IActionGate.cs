@@ -12,4 +12,10 @@ internal interface IActionGate
     /// <param name="cancellationToken">The behavior's token.</param>
     /// <returns>A task that completes once the request may go.</returns>
     Task PassAsync(BotContext context, IMessage request, CancellationToken cancellationToken);
+
+    /// <summary>Waits, within the behavior, as before an action the gate holds, such as before the walk to a group of monsters it attacks (D447).</summary>
+    /// <param name="context">The behavior's context, through which the gate may send its own requests.</param>
+    /// <param name="cancellationToken">The behavior's token.</param>
+    /// <returns>A task that completes once the bot may act.</returns>
+    Task GatherAsync(BotContext context, CancellationToken cancellationToken);
 }

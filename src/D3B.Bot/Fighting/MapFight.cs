@@ -92,6 +92,9 @@ public static class MapFight
 
     private static async Task<bool> AttackAsync(BotContext context, MapMonsterGroup group, CancellationToken cancellationToken)
     {
+        // A master's group with it before the walk to the group of monsters, which leaves its cell meanwhile (D447).
+        await context.GatherAsync(cancellationToken).ConfigureAwait(false);
+
         for (var walk = 0; walk < MostWalksToAGroup; walk++)
         {
             if (!context.State.MonsterGroups.TryGetValue(group.ActorId, out var now) || now.Cell is not { } cell)

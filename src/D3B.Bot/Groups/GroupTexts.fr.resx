@@ -77,9 +77,6 @@
   <data name="DoingJoins" xml:space="preserve">
     <value>Rejoint {0}</value>
   </data>
-  <data name="DoingBehind" xml:space="preserve">
-    <value>Attend que {0} passe devant</value>
-  </data>
   <data name="DoingStuck" xml:space="preserve">
     <value>Ne trouve pas de chemin vers {0}, réessaie</value>
   </data>

@@ -309,14 +309,16 @@ The bots run in `D3B.Bot`: what each part does today, with the decisions that ma
   activity, its one setting the master (`FollowSettings.Master`, `SettingKind.Character`, a character of the accounts page
   by `CharacterKey.ToId`). A follower is in its master's group while its activity runs (`GroupDirectory`, `Bots.Groups`, at
   most seven, no follower leading). Each bot has a gate (`IActionGate`, `BotActor.Gate`), which `BotContext.SendAsync` goes
-  through: the master's, `GroupGate`, holds the requests that start an action out of a fight while a bot follows it,
+  through: the master's, `GroupGate`, holds the requests that start an action out of a fight while a bot follows it, but
+  its walks and map changes (D447),
   leaving a party another leads, inviting its followers by name, and waiting with no delay until each is connected, not
   paused, out of a fight, on its map and in its party (`GroupChain.Missing`), the card saying whom for
   (`BotActor.WaitingFor`); its own requests go past it (`BotContext.SendNowAsync`). So every profile leads unchanged. The
   follower's steps keep the party (its master's invitation accepted, others refused, another party left, the automatic
-  options turned off at each party joined, D437's measure), then follow the chain (`GroupChain.Order`: the master's
-  party's order, then names): with its master it waits, behind the one before it it waits, else it travels to the master's
-  map, each in its own haven bag as the master is in his (`GroupChain.Together`). A wait reads the bots it waits on before
+  options turned off at each party joined, D437's measure), then follow in real time (D447): with its master it copies
+  each of its walks as the server shows it, to the cell the master walks to, else it changes maps towards the master by
+  the world's paths, whatever the others' order, each in its own haven bag as the master is in his
+  (`GroupChain.Together`); the master's party's order (`GroupChain.Order`) is only the card's and the bank's (D442). A wait reads the bots it waits on before
   deciding (`BotSeen`), so that no change made between the decision and the wait is missed (`GroupWaits`). In a fight
   (D440), each bot has a part too (`IFightTeam`, `BotActor.Team`, `GroupFight`), which the AI asks during the placement
   (`FightPlay`), from the fight itself: a master whose fight the server locked to its party refuses spectators only and
