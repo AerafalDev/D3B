@@ -75,15 +75,16 @@ public sealed class GroupFightTests
         };
     }
 
-    // The placement as the server shows it to one of the team, the master's attack (D435): its cell and another of its team's.
-    private static void Placement(TestConnection connection, long self, int cell, int near, int monster)
+    // The placement as the server shows it to one of the team (D435): its cell and another of its team's, its allies already
+    // in, and the party's lock the server sets by itself as a party's leader attacks.
+    private static void Placement(TestConnection connection, long self, int cell, int near, int monster, bool partyOnly, params Actor[] allies)
     {
         var order = new FightTurnListEvent();
 
         order.Entries.Add(new FightTurnEntry { Fighter = new FightTurnFighter { FighterId = self } });
         order.Entries.Add(new FightTurnEntry { Fighter = new FightTurnFighter { FighterId = Monster } });
 
-        foreach (var message in new IMessage[]
+        var messages = new List<IMessage>
         {
             new ContextDestroyEvent(),
             new ContextCreationEvent { Context = ContextCreationEvent.Types.GameContext.Fight },
@@ -92,19 +93,25 @@ public sealed class GroupFightTests
             new FightJoinEvent { PlacementTime = 440 },
             new FightFighterShowEvent { Fighter = Character(self, cell) },
             new FightFighterShowEvent { Fighter = MonsterActor(monster) },
-            new FightPlacementPossiblePositionsEvent { Cells = new PlacementCells { DefenderCells = { monster }, ChallengerCells = { cell, near } } },
-            new FightSpellsContextEvent { FighterId = self, Spells = { new SpellItem { SpellId = TestPlay.BlowSpellId, Grade = 1 } } },
-            order,
-        })
-        {
+        };
+
+        messages.AddRange(allies.Select(ally => new FightFighterShowEvent { Fighter = ally }));
+
+        if (partyOnly)
+            messages.Add(new FightOptionUpdateEvent { Option = FightOption.PartyOnly, Enabled = true });
+
+        messages.Add(new FightPlacementPossiblePositionsEvent { Cells = new PlacementCells { DefenderCells = { monster }, ChallengerCells = { cell, near } } });
+        messages.Add(new FightSpellsContextEvent { FighterId = self, Spells = { new SpellItem { SpellId = TestPlay.BlowSpellId, Grade = 1 } } });
+        messages.Add(order);
+
+        foreach (var message in messages)
             connection.Server(message);
-        }
     }
 
     // As the server tells the party (D435): the master's fight, on a map, in the millisecond it is shown there.
-    private static PartyMemberInFightEvent InFight(long mapId)
+    private static PartyMemberInFightEvent InFight(long mapId, int fightId = FightId)
     {
-        return new PartyMemberInFightEvent { FightId = FightId, MemberId = TestGroup.MasterId, Map = new MapLocation { MapId = mapId }, PartyId = TestGroup.PartyId, Cause = PartyFightCause.Monsters };
+        return new PartyMemberInFightEvent { FightId = fightId, MemberId = TestGroup.MasterId, Map = new MapLocation { MapId = mapId }, PartyId = TestGroup.PartyId, Cause = PartyFightCause.Monsters };
     }
 
     private static ActivityRun Follow(TestPlay play, BotActor follower)
@@ -124,6 +131,34 @@ public sealed class GroupFightTests
         return (connection, follower, run);
     }
 
+    private static bool Logged(TestPlay play, string text)
+    {
+        return play.Log.GetSnapshot().Any(record => record.Message.Contains(text, StringComparison.Ordinal));
+    }
+
+    private static Task WaitingAsync(TestPlay play)
+    {
+        return TestGroup.UntilAsync(play, () => Logged(play, "to be placed before it is ready"), "the master waiting");
+    }
+
+    // The master placed in a fight the server locked to its party: it refused spectators only, and waits or is ready.
+    private static async Task<int> PlacedAsync(TestPlay play, TestConnection connection, BotActor master)
+    {
+        var monster = Beside(Far, 8, 0);
+        var near = Beside(monster, -3, 0);
+        var sent = connection.Sent.Count;
+
+        master.FightsAlone = true;
+        Placement(connection, TestGroup.MasterId, Far, near, monster, partyOnly: true);
+
+        Assert.Equal(FightOption.NoSpectators, Assert.IsType<FightOptionToggleRequest>(await TestGroup.SentAsync(play, connection, sent + 1)).Option);
+        connection.Server(new FightOptionUpdateEvent { Option = FightOption.NoSpectators, Enabled = true });
+        Assert.IsType<FightPlacementPositionRequest>(await TestGroup.SentAsync(play, connection, sent + 2));
+        connection.Server(new EntitiesDispositionEvent { Dispositions = { new ActorDisposition { EntityId = TestGroup.MasterId, CellId = near } } });
+
+        return sent;
+    }
+
     [Fact]
     public async Task AFollowerJoinsItsMastersFightWhichTheMasterLeavesToItsPartyAndIsReadyOnceTheFollowerIs()
     {
@@ -135,7 +170,7 @@ public sealed class GroupFightTests
         var sent = masterConnection.Sent.Count;
 
         master.FightsAlone = true;
-        Placement(masterConnection, TestGroup.MasterId, Far, near, monster);
+        Placement(masterConnection, TestGroup.MasterId, Far, near, monster, partyOnly: true);
         followerConnection.Server(InFight(TestPlay.MapId));
 
         // Measured (D435): the server locks a leader's fight to its party; closing it would keep its follower out.
@@ -145,10 +180,12 @@ public sealed class GroupFightTests
 
         Assert.IsType<FightPlacementPositionRequest>(await TestGroup.SentAsync(play, masterConnection, sent + 2));
         masterConnection.Server(new EntitiesDispositionEvent { Dispositions = { new ActorDisposition { EntityId = TestGroup.MasterId, CellId = near } } });
-        await TestGroup.UntilAsync(play, () => play.Log.GetSnapshot().Any(record => record.Message.Contains("to be placed before it is ready", StringComparison.Ordinal)), "the master waiting");
+        await WaitingAsync(play);
 
-        // The follower in the fight, placed by its AI: it sets none of its team's options, which are its master's.
-        Placement(followerConnection, TestGroup.FollowerId, 301, Beside(monster, -2, 1), monster);
+        var waited = play.Time.GetUtcNow();
+
+        // The follower in its master's fight, placed by its AI: it sets none of its team's options, which are its master's.
+        Placement(followerConnection, TestGroup.FollowerId, 301, Beside(monster, -2, 1), monster, true, Character(TestGroup.MasterId, near));
         var placed = Assert.IsType<FightPlacementPositionRequest>(await TestGroup.SentAsync(play, followerConnection, 4));
 
         followerConnection.Server(new EntitiesDispositionEvent { Dispositions = { new ActorDisposition { EntityId = TestGroup.FollowerId, CellId = placed.CellId } } });
@@ -157,7 +194,10 @@ public sealed class GroupFightTests
 
         followerConnection.Server(new FightHumanReadyStateEvent { CharacterId = TestGroup.FollowerId, Ready = true });
 
+        // Ready as its follower is, not at the end of the AI's 45 s.
         Assert.True(Assert.IsType<FightReadyRequest>(await TestGroup.SentAsync(play, masterConnection, sent + 3)).Ready);
+        Assert.True(Logged(play, "its followers are placed"));
+        Assert.True(play.Time.GetUtcNow() - waited < TimeSpan.FromSeconds(45));
         Assert.DoesNotContain(followerConnection.Sent, request => request is FightOptionToggleRequest);
         run.Stop();
     }
@@ -168,22 +208,12 @@ public sealed class GroupFightTests
         await using var play = new TestPlay();
         var (connection, master) = await TestGroup.MasterAsync(play, Far);
         var (_, follower) = await TestGroup.FollowerAsync(play, 301, TestPlay.NorthMapId);
-        var monster = Beside(Far, 8, 0);
-        var near = Beside(monster, -3, 0);
 
         using var membership = play.Bots.Groups.Follow(follower, TestGroup.Master, out _);
-        var sent = connection.Sent.Count;
-
-        master.FightsAlone = true;
-        Placement(connection, TestGroup.MasterId, Far, near, monster);
-
-        Assert.Equal(FightOption.NoSpectators, Assert.IsType<FightOptionToggleRequest>(await TestGroup.SentAsync(play, connection, sent + 1)).Option);
-        connection.Server(new FightOptionUpdateEvent { Option = FightOption.NoSpectators, Enabled = true });
-        Assert.IsType<FightPlacementPositionRequest>(await TestGroup.SentAsync(play, connection, sent + 2));
-        connection.Server(new EntitiesDispositionEvent { Dispositions = { new ActorDisposition { EntityId = TestGroup.MasterId, CellId = near } } });
+        var sent = await PlacedAsync(play, connection, master);
 
         Assert.IsType<FightReadyRequest>(await TestGroup.SentAsync(play, connection, sent + 3));
-        Assert.DoesNotContain(play.Log.GetSnapshot(), record => record.Message.Contains("to be placed before it is ready", StringComparison.Ordinal));
+        Assert.False(Logged(play, "to be placed before it is ready"));
     }
 
     [Fact]
@@ -191,33 +221,83 @@ public sealed class GroupFightTests
     {
         await using var play = new TestPlay();
         var (connection, master) = await TestGroup.MasterAsync(play, Far);
+        var (followerConnection, follower) = await TestGroup.FollowerAsync(play, 301);
+
+        followerConnection.Server(TestGroup.Party(TestGroup.PartyId, TestGroup.MasterId, TestGroup.MasterId, TestGroup.FollowerId));
+
+        using var membership = play.Bots.Groups.Follow(follower, TestGroup.Master, out _);
+        var sent = await PlacedAsync(play, connection, master);
+
+        await WaitingAsync(play);
+
+        var waited = play.Time.GetUtcNow();
+
+        // On its map and in the party, out of the fight: the follower would join. The player taking it over, the master waits no longer.
+        follower.Pause();
+
+        Assert.IsType<FightReadyRequest>(await TestGroup.SentAsync(play, connection, sent + 3));
+        Assert.True(Logged(play, "its followers are placed"));
+        Assert.True(play.Time.GetUtcNow() - waited < TimeSpan.FromSeconds(45));
+    }
+
+    [Fact]
+    public async Task AMasterWaitsNotForAFollowerOutOfItsParty()
+    {
+        // Out of the party, the follower is told of no fight, and never joins it.
+        await using var play = new TestPlay();
+        var (connection, master) = await TestGroup.MasterAsync(play, Far);
         var (_, follower) = await TestGroup.FollowerAsync(play, 301);
+
+        using var membership = play.Bots.Groups.Follow(follower, TestGroup.Master, out _);
+        var sent = await PlacedAsync(play, connection, master);
+
+        Assert.IsType<FightReadyRequest>(await TestGroup.SentAsync(play, connection, sent + 3));
+        Assert.False(Logged(play, "to be placed before it is ready"));
+    }
+
+    [Fact]
+    public async Task AMastersFightTheServerDidNotLockToItsPartyIsClosedAsOneAlone()
+    {
+        // D216 still: an aggression, or a master whose party ended, has no lock the server set.
+        await using var play = new TestPlay();
+        var (connection, master) = await TestGroup.MasterAsync(play, Far);
+        var (_, follower) = await TestGroup.FollowerAsync(play, 301, TestPlay.NorthMapId);
         var monster = Beside(Far, 8, 0);
-        var near = Beside(monster, -3, 0);
 
         using var membership = play.Bots.Groups.Follow(follower, TestGroup.Master, out _);
         var sent = connection.Sent.Count;
 
         master.FightsAlone = true;
-        Placement(connection, TestGroup.MasterId, Far, near, monster);
-        Assert.IsType<FightOptionToggleRequest>(await TestGroup.SentAsync(play, connection, sent + 1));
-        connection.Server(new FightOptionUpdateEvent { Option = FightOption.NoSpectators, Enabled = true });
-        Assert.IsType<FightPlacementPositionRequest>(await TestGroup.SentAsync(play, connection, sent + 2));
-        connection.Server(new EntitiesDispositionEvent { Dispositions = { new ActorDisposition { EntityId = TestGroup.MasterId, CellId = near } } });
-        await TestGroup.UntilAsync(play, () => play.Log.GetSnapshot().Any(record => record.Message.Contains("to be placed before it is ready", StringComparison.Ordinal)), "the master waiting");
+        Placement(connection, TestGroup.MasterId, Far, Beside(monster, -3, 0), monster, partyOnly: false);
 
-        // On its map, out of the fight: the follower would join. The player taking it over, the master waits no longer.
-        follower.Pause();
-
-        Assert.IsType<FightReadyRequest>(await TestGroup.SentAsync(play, connection, sent + 3));
+        Assert.Equal(FightOption.Closed, Assert.IsType<FightOptionToggleRequest>(await TestGroup.SentAsync(play, connection, sent + 1)).Option);
     }
 
     [Fact]
-    public async Task AFollowerJoinsNoFightOnAnotherMapNorOneItsMasterIsNotIn()
+    public async Task AFollowersOwnFightWithoutItsMasterIsClosedAsOneAlone()
+    {
+        // An aggression on its way: its master is not in the fight, whose options are the follower's own.
+        await using var play = new TestPlay();
+        await TestGroup.MasterAsync(play, Far, TestPlay.NorthMapId);
+        var (connection, follower) = await TestGroup.FollowerAsync(play, Far);
+        var monster = Beside(Far, 8, 0);
+
+        using var membership = play.Bots.Groups.Follow(follower, TestGroup.Master, out _);
+        var sent = connection.Sent.Count;
+
+        follower.FightsAlone = true;
+        Placement(connection, TestGroup.FollowerId, Far, Beside(monster, -3, 0), monster, partyOnly: false);
+
+        Assert.Equal(FightOption.Closed, Assert.IsType<FightOptionToggleRequest>(await TestGroup.SentAsync(play, connection, sent + 1)).Option);
+    }
+
+    [Fact]
+    public async Task AFollowerJoinsNoFightItsMasterIsNotInNorOneThePartyToldOfBefore()
     {
         await using var play = new TestPlay();
-        await TestGroup.MasterAsync(play, Far);
+        var (masterConnection, _) = await TestGroup.MasterAsync(play, Far);
         var (connection, follower, run) = await FollowingAsync(play, 301);
+        var monster = Beside(Far, 8, 0);
 
         // The master fights nowhere: the party's word alone, which no message ends (D435), joins nothing.
         connection.Server(InFight(TestPlay.MapId));
@@ -226,6 +306,18 @@ public sealed class GroupFightTests
         await TestGroup.SettleAsync(follower);
 
         Assert.Equal(2, connection.Sent.Count);
+
+        // The master's next fight on the map: that word is over, and the follower waits for the party's next.
+        Placement(masterConnection, TestGroup.MasterId, Far, Beside(monster, -3, 0), monster, partyOnly: true);
+        await TestGroup.SettleAsync(follower);
+        play.Time.Advance(TimeSpan.FromSeconds(10));
+        await TestGroup.SettleAsync(follower);
+
+        Assert.Equal(2, connection.Sent.Count);
+
+        connection.Server(InFight(TestPlay.MapId, FightId + 1));
+
+        Assert.Equal(new FightJoinRequest { FightId = FightId + 1, FighterId = TestGroup.MasterId }, await TestGroup.SentAsync(play, connection, 3));
         run.Stop();
     }
 
@@ -237,8 +329,8 @@ public sealed class GroupFightTests
         var (connection, follower, run) = await FollowingAsync(play, 301);
         var monster = Beside(Far, 8, 0);
 
-        // The master in the placement, not played: the follower's join is all this test looks at.
-        Placement(masterConnection, TestGroup.MasterId, Far, Beside(monster, -3, 0), monster);
+        // The master in the placement, not played: the follower's join is all this test looks at. Another map's fight first.
+        Placement(masterConnection, TestGroup.MasterId, Far, Beside(monster, -3, 0), monster, partyOnly: true);
         connection.Server(InFight(TestPlay.NorthMapId));
         await TestGroup.SettleAsync(follower);
         play.Time.Advance(TimeSpan.FromSeconds(10));
@@ -261,12 +353,13 @@ public sealed class GroupFightTests
     }
 
     [Fact]
-    public async Task AfterALostFightTheFollowerGoesBackToItsMastersMap()
+    public async Task AFollowerBackFromAFightGoesToTheMapItsMasterIsOn()
     {
-        // D432: brought back elsewhere, the follower goes to its master's map by the world's paths, and the chain gathers again.
+        // D432: out of a fight away from its master, as after a lost one, the follower goes to its master's map by the world's
+        // paths; the master's gate waits for it after its next map change, as GroupGateTests show.
         await using var play = new TestPlay();
         var (masterConnection, _) = await TestGroup.MasterAsync(play, Far);
-        var (connection, follower, run) = await FollowingAsync(play, 301);
+        var (connection, _, run) = await FollowingAsync(play, 301);
         var sent = connection.Sent.Count;
 
         connection.Server(new ContextDestroyEvent());

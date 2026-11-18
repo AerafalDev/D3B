@@ -54,6 +54,7 @@ public sealed class FollowActivity : BotActivity, IDisposable
     private readonly HashSet<int> _refused = [];
     private (string? Connection, int Party)? _optionsOff;
     private (string? Connection, int Fight)? _joined;
+    private int? _over;
     private int _failedChanges;
 
     private volatile IDisposable? _membership;
@@ -316,14 +317,18 @@ public sealed class FollowActivity : BotActivity, IDisposable
     // in the millisecond it shows it there (D435), and the follower joins it by its id and the master's, as the owner's
     // click did. The end of a member's fight no message measured says: the master's own state, in the same host, says
     // whether its fight is still in its placement, which a follower may join. Once a fight and a connection, so that a join
-    // the server answers nothing to is not sent again and again.
+    // the server answers nothing to is not sent again and again. The party's word stays until the follower's context
+    // changes: one seen while its master fights no more is over, never joined, lest the next fight on the map join it.
     private async Task<bool> JoinFightAsync(BotContext context, BotSeen master, CancellationToken cancellationToken)
     {
         var state = context.State;
         var me = context.Actor;
 
+        if (state.PartyFight is { } told && master.State.Fight is null)
+            _over = told.FightId;
+
         if (state.IsFighting || state.PartyFight is not { } fight || fight.MemberId != master.Bot.Key.CharacterId || fight.MapId != state.MapId
-            || master.State.Fight is not { Phase: FightPhase.Placement } || _joined == (me.ConnectionId, fight.FightId))
+            || master.State.Fight is not { Phase: FightPhase.Placement } || _joined == (me.ConnectionId, fight.FightId) || _over == fight.FightId)
         {
             return false;
         }
