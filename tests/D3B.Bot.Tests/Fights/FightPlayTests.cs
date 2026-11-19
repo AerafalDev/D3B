@@ -306,6 +306,54 @@ public sealed class FightPlayTests : IAsyncDisposable
     }
 
     [Fact]
+    public async Task TheAILogsTheFightsChallengeOnceThenItsResult()
+    {
+        var (connection, bot) = await _play.EnterAsync(Far);
+        var monster = Beside(Far, 8, 0);
+        var sent = await StartTurnAsync(connection, bot, monster);
+
+        // Measured (D461): the list as the fight starts, its targets changed as a turn begins, its result before the end.
+        var challenge = new ChallengeInformation { State = ChallengeState.Running, ChallengeId = 3, Bonus = 85, Targets = { new ChallengeTarget { FighterId = Monster, CellId = monster } } };
+
+        connection.Server(new ChallengeListEvent { Challenges = { challenge } });
+        Assert.IsType<GameActionFightCastRequest>(await SentAsync(connection, sent + 5));
+        connection.Server(new ChallengeTargetsEvent { Challenge = challenge });
+        Cast(connection, monster, apLeft: 3, actionId: 1);
+        Assert.IsType<GameActionFightCastRequest>(await SentAsync(connection, sent + 6));
+        Cast(connection, monster, apLeft: 0, actionId: 2);
+        Assert.IsType<FightTurnFinishRequest>(await SentAsync(connection, sent + 7));
+        connection.Server(new FightTurnEndEvent { FighterId = Self });
+        connection.Server(new ChallengeResultEvent { ChallengeId = 3, Success = true });
+        connection.Server(new FightEndEvent { Results = { new FightResult { Fighter = new FightResultFighter { FighterId = Monster } } } });
+        await bot.ProcessedAsync();
+
+        await LoggedAsync($"Bot {Self}: the fight's challenge 3, bonus 85 %, 1 targets");
+        await LoggedAsync($"Bot {Self}: challenge 3 won");
+
+        Assert.Single(_play.Log.GetSnapshot(), record => record.Message.Contains("the fight's challenge", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public async Task AChallengeTheFightEndsWithNoResultForIsLoggedSo()
+    {
+        var (connection, bot) = await _play.EnterAsync(Far);
+        var monster = Beside(Far, 8, 0);
+        var sent = await StartTurnAsync(connection, bot, monster);
+
+        connection.Server(new ChallengeListEvent { Challenges = { new ChallengeInformation { State = ChallengeState.Running, ChallengeId = 41, Bonus = 60 } } });
+        Assert.IsType<GameActionFightCastRequest>(await SentAsync(connection, sent + 5));
+        Cast(connection, monster, apLeft: 3, actionId: 1);
+        Assert.IsType<GameActionFightCastRequest>(await SentAsync(connection, sent + 6));
+        Cast(connection, monster, apLeft: 0, actionId: 2);
+        Assert.IsType<FightTurnFinishRequest>(await SentAsync(connection, sent + 7));
+        connection.Server(new FightTurnEndEvent { FighterId = Self });
+        connection.Server(new FightEndEvent { Results = { new FightResult { Fighter = new FightResultFighter { FighterId = Monster } } } });
+        await bot.ProcessedAsync();
+
+        await LoggedAsync($"Bot {Self}: challenge 41 with no result");
+    }
+
+    [Fact]
     public async Task ACastTheServerRefusedWithATextIsCastAgainTheNextTurn()
     {
         // Reported by players against invisible monsters: a cast refused for a turn (the target not seen) had the AI leave

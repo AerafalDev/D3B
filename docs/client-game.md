@@ -1456,6 +1456,34 @@ session and never written down.
 **Mapped** (D438): the request and the event of the bonus, and its enum. Format 19, 253 messages paired, no failure;
 without the captures, the pins and the structure pair the same.
 
+## The game, the challenges
+
+The 83 game connections of 3.7.14.18 recorded through the app on 2026-11-18 and 19 (D461), 2,980 fights alone and in a
+group. Described with `scripts/capture.cs`, by structure and type URLs, each value compared on the machine by a tool of
+the session and never written down. The build's messages sit beside the bonus's, the `kt` and `ku` names.
+
+- **One challenge a fight**, in every fight: the server names it in an add event 0 to 3 ms before the fight's start, then
+  in a list just after the start, the same challenge in both. Its number is one of the client's challenges' table,
+  `ChallengesDataRoot`, 842 records with a name, a description, a category, the challenges it excludes, a completion and
+  an activation criterion, and a monster for some.
+- **What the server says of it**: its state, the third of three values in every description, the result coming apart;
+  two bonuses, 45 to 130, equal in every fight; and its targets. A target is a fighter of the fight's turns with its cell
+  (955 of 959), or neither, a negative cell. Of the fights, 2,654 had a challenge with no target, the others 1 to 8.
+- **Its targets change** 430 times as a turn begins or a cast ends, each time of the fight's challenge, with one target
+  alive, and for 145 of them the one fighter of the fight allowed to strike it.
+- **Its result**: once a fight, before the fight's end, a success or not with the challenge's number: 1,329 won and 1,647
+  lost.
+- **Proposals**: in 5 placements the server proposed two challenges to choose from and a number always set, not
+  understood: 4 times at the owner's request, a request with no value set, and once with no request before it in its
+  capture. The client then named one of the two, and the add event named that one. Once, the server also answered a message holding two challenges, the chosen one and another.
+- **Each placement** the client sends a request with no value set beside the bonus's, and the server sends twice an event
+  of the number 1 and, at many moments, an event of a two-valued enum, 0 everywhere: the mode and the number of the
+  challenges, as far as the values say, not mapped.
+
+**Mapped** (D461): the add, list, targets and result events, the proposals' request and event, the selection's request,
+the challenge's description and target, and its state's enum. Format 22, 264 messages paired, no failure; without the
+captures, the pins and the structure pair the same.
+
 ## The game, a companion
 
 Read on 2026-11-18 from the schema of 3.7.14.18 alone (D443), by structure, for a player's report that the bot did not

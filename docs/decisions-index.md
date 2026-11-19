@@ -707,6 +707,11 @@ or refines another says so in its own entry. Add a line here with every new deci
 - [D460](decisions/d460-group-fights-strike-now.md#d460-the-ai-weighs-next-turns-damage-under-1-in-a-group-too-so-that-it-strikes-now-what-it-could-strike-later) The AI weighs next turn's damage under 1, in a group too, so that it strikes now what it could strike later (2026-11-19)
   - D454 undone whole, a rule by element, the approach clamped silently in the judge.
 
+## Fights, the challenges read (D461)
+
+- [D461](decisions/d461-fights-challenges-read.md#d461-the-bot-reads-its-fights-challenges-their-targets-their-results-and-the-proposals-mapping-format-22) The bot reads its fight's challenges, their targets, their results and the proposals, mapping format 22 (2026-11-19)
+  - The challenges' table in the pack now, the mode and number events, a target with no fighter.
+
 ## Fights, the Forgelance's lances (D462)
 
 - [D462](decisions/d462-forgelance-lances.md#d462-the-forgelances-summons-are-not-a-last-resort-its-lances-striking-as-they-are-thrown) The Forgelance's summons are not a last resort, its lances striking as they are thrown (2026-11-19)

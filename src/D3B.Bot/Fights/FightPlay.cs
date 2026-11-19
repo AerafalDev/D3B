@@ -60,6 +60,7 @@ public static class FightPlay
         var weights = TacticWeights.Default;
         var judged = false;
         var refused = new HashSet<int>();
+        var challenged = new HashSet<int>();
         FightMap? map = null;
 
         // The client draws the fight's map first, as it does a map out of fights (D77); a fight over meanwhile ends the wait.
@@ -70,7 +71,10 @@ public static class FightPlay
             var state = context.State;
 
             if (state.Fight is not { Phase: not FightPhase.Ended } fight)
-                return state.Fight?.End;
+                return Ended(context, state.Fight);
+
+            foreach (var challenge in fight.Challenges.Where(challenge => challenged.Add(challenge.Id)))
+                FightLog.Challenged(context.Log, self, challenge.Id, challenge.Bonus, challenge.Targets.Length);
 
             if (state.MapId is not { } mapId || !context.Maps.TryGet(mapId, out var data))
                 return null;
@@ -129,6 +133,15 @@ public static class FightPlay
         var allies = fight.Fighters.Values.Any(fighter => fighter.Id != self && fighter.Team == fight.Team && fighter.IsAlive && fighter.BreedId is not null && fighter.SummonerId is null);
 
         return allies ? TacticWeights.Group : TacticWeights.Default;
+    }
+
+    private static FightEnd? Ended(BotContext context, FightState? fight)
+    {
+        // Measured (D461): the server gives each challenge's result before the fight's end, so the ended fight holds them.
+        foreach (var challenge in fight?.Challenges ?? [])
+            FightLog.ChallengeEnded(context.Log, context.State.Key.CharacterId, challenge.Id, challenge.Succeeded switch { true => "won", false => "lost", null => "with no result" });
+
+        return fight?.End;
     }
 
     private static bool Placing(FightState fight)

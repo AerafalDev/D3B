@@ -284,7 +284,10 @@ The bots run in `D3B.Bot`: what each part does today, with the decisions that ma
   fight's state the spells the server's context lists for the fight, the character's own and not a summon's it controls
   (D279), and the team's options; a turn puts the fight in its fighting phase, as a client that rejoins a fight gets no
   fight's start. Since 9f4 (D279), the fight's state holds the marks on the cells as the server sets and takes them back,
-  glyphs, traps, bombs' walls and portals (`GroundMark`), which `ImaginedFights.MarksOf` gives the engine.
+  glyphs, traps, bombs' walls and portals (`GroundMark`), which `ImaginedFights.MarksOf` gives the engine. Since D461, it
+  holds the fight's challenges (`FightChallenge`), each with its bonus, its targets as the server last named them
+  (`FightChallengeTarget`, with the fighters allowed to strike it) and its result; `FightPlay` logs each challenge once and its
+  result as the fight ends. The bot sends none of the challenges' requests yet.
 - **The bot fights** (D198, D202, D235, D244), in `D3B.Bot.Fights`: `FightPilot`, one per bot, made by `Bots`, waits for
   a fight not over that the AI plays (`BotActor.Fights`): every fight under the host's `Fights:Alone`
   (`BotActor.FightsAlone`), else the running activity's own as its profile says (`BotActivity.FightsItsFights`); out of an
@@ -463,7 +466,7 @@ Built in session 3b (D35 to D38): the relay of the connection phase, in `D3B.Net
   in its `game` directory, with the messages the game's frames carry), pairs every readable message and enum with its
   counterpart (`ProtocolMatcher`: pins, anchors, fields, then structural scores; `google.protobuf.Any` is its own
   counterpart), audits the result (`ContractAudit`, which counts what partial messages leave out apart from its notes),
-  and writes it beside the pack, `mapping-18.binpb` (`MappingFile`, D342, D383), only when it holds. For what is left open it
+  and writes it beside the pack, `mapping-22.binpb` (`MappingFile`, D342, D383), only when it holds. For what is left open it
   lists the build's messages that fit, which the maintainer pins (D54). The mapping records the schema's SHA-256 and the
   readable protocol's digest (`ProtocolDigest`); `MappingFile.FormatVersion` changes with `mapping.proto` or that
   digest.
