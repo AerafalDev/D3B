@@ -711,3 +711,8 @@ or refines another says so in its own entry. Add a line here with every new deci
 
 - [D461](decisions/d461-fights-challenges-read.md#d461-the-bot-reads-its-fights-challenges-their-targets-their-results-and-the-proposals-mapping-format-22) The bot reads its fight's challenges, their targets, their results and the proposals, mapping format 22 (2026-11-19)
   - The challenges' table in the pack now, the mode and number events, a target with no fighter.
+
+## Fights, the easy challenges (D464)
+
+- [D464](decisions/d464-fights-challenges-easy.md#d464-the-ai-plays-for-the-easy-challenges-those-of-its-own-turns-while-a-turn-costs-no-more-than-their-bonus-pays-pack-format-13) The AI plays for the easy challenges, those of its own turns, while a turn costs no more than their bonus pays, pack format 13 (2026-11-19)
+  - Hardi and Barbare among them, keeping a challenge whatever it costs, the whole balance as the price, one search with a penalty, matching by number.

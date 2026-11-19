@@ -372,10 +372,12 @@ follower) on the same map, the capture of every connection on; a capture's conte
   the bonus is each character's own, so a follower now sends its master's profile's choice (D446), to see again in game.
 - **The AI playing the challenges** (D461), the owner's ask of 2026-11-19, in three sessions. (1) Made on 2026-11-19 in code
   and tests, measured on the captures of 2,980 fights, mapping format 22: the bot reads its fight's challenge, its targets, its
-  result and the proposals, keeps them in the fight's state and logs them. (2) Next: the client's challenges' table in the pack
-  (842 records, with their texts and their completion and activation criteria), and the AI keeping the challenges whose
-  criterion only limits its own turn (a profile's option, the fight's safety first: prudent, it drops the challenge). (3) Then
-  the feasible ones, which order or name the targets, weighed by the judge, and the AI choosing the easier of the proposals.
+  result and the proposals, keeps them in the fight's state and logs them. (2) Made on 2026-11-19 in code and tests, pack
+  format 13 (D464): the client's challenges' table in the pack, 842 records with their texts and criteria, and the AI playing
+  for the 12 easy ones the owner listed, whose criterion asks only of its own turns, a profile's option « Challenges », Easy by
+  default; a turn keeps the challenge while what it costs stays within half of what keeps the reward a minute the same, and a
+  fight judged risky plays for none. Left: seen in game; the pack 13 published on the owner's go. (3) Then the feasible ones,
+  which order or name the targets, weighed by the judge, and the AI choosing the easier of the proposals.
 - **The companion** (D443), a player's report relayed by the owner (the Astrub Knight left unplayed), made on 2026-11-18 in
   code and tests and mapped from the client's schema alone, mapping format 21: the bot plays the character's companion as a
   summon it controls, with the spells the server lists for it. Left: the owner's fight with the companion, captured and
