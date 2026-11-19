@@ -1,4 +1,4 @@
-# Fights, the group's reply and its target (D466)
+# Fights, the group's reply and its target (D467)
 
 A part of [the decisions](README.md); each decision has one line in [the index](../decisions-index.md). The reply is
 [D201](d176-d208-step-9.md#d201-the-ai-an-imagined-fight-a-judge-a-beam-search-and-the-enemies-reply) and
@@ -6,7 +6,7 @@ A part of [the decisions](README.md); each decision has one line in [the index](
 [D434](d429-d435-step-10-groups.md#d434-the-ai-unchanged-in-a-group-then-measured),
 [D454](d454-group-fights-bolder.md) and [D460](d460-group-fights-strike-now.md).
 
-## D466: An enemy of the reply holds every character of a group as dear as the fighter playing, as real monsters do
+## D467: An enemy of the reply holds every character of a group as dear as the fighter playing, as real monsters do
 
 *2026-11-19, step 10, the first part of 10d, the owner's ask after the lead's study of the AI breed by breed (its T2). Refines
 D201, D211. Builds D244, D434, D463.*

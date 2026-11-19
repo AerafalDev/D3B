@@ -185,6 +185,18 @@
   <data name="ChallengeRewardClient" xml:space="preserve">
     <value>As the client sets it</value>
   </data>
+  <data name="Challenges" xml:space="preserve">
+    <value>Challenges</value>
+  </data>
+  <data name="ChallengesHelp" xml:space="preserve">
+    <value>The challenges the AI tries to win. Easy: those that ask only of its own turn (its MP, its spells, the cell it ends on). It leaves one when the fight is judged risky, or when keeping it would cost more than its bonus pays; in a group, the leader's choice counts.</value>
+  </data>
+  <data name="ChallengesNone" xml:space="preserve">
+    <value>None</value>
+  </data>
+  <data name="ChallengesEasy" xml:space="preserve">
+    <value>Easy</value>
+  </data>
   <data name="AfterLostFight" xml:space="preserve">
     <value>After a lost fight</value>
   </data>

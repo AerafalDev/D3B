@@ -86,6 +86,10 @@ internal sealed class BehaviorActivity : BotActivity, IDisposable, IBehaviorCont
     /// <remarks>The step playing's; out of an activity's node, the client's, for a behavior has no setting of its own.</remarks>
     public override ChallengeReward ChallengeReward => _visit?.Current?.ChallengeReward ?? ChallengeReward.Client;
 
+    /// <inheritdoc/>
+    /// <remarks>The step playing's; out of an activity's node, none, for a behavior has no setting of its own.</remarks>
+    public override ChallengePlay Challenges => _visit?.Current?.Challenges ?? ChallengePlay.None;
+
     /// <summary>Gets the activity an activity's node plays now, which the behavior speaks for, if one does.</summary>
     internal BotActivity? Playing => _visit?.Current;
 

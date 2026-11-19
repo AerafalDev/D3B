@@ -455,6 +455,7 @@ public sealed class BehaviorActivityTests : IAsyncDisposable
         await UntilAsync(() => run.Status is ActivityStatus.Stepping);
 
         Assert.Equal(ChallengeReward.Client, run.Activity.ChallengeReward);
+        Assert.Equal(ChallengePlay.None, run.Activity.Challenges);
 
         _behaviors.Play.Time.Advance(TimeSpan.FromSeconds(60));
 

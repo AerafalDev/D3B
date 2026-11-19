@@ -104,6 +104,9 @@ public sealed class FightActivity : BotActivity
     /// <inheritdoc/>
     public override ChallengeReward ChallengeReward => _settings.ChallengeReward;
 
+    /// <inheritdoc/>
+    public override ChallengePlay Challenges => _settings.Challenges;
+
     /// <summary>Initializes a new instance of the <see cref="FightActivity"/> class.</summary>
     /// <param name="settings">Which groups to attack, where, the upkeep and the bank.</param>
     /// <param name="world">The installed build's world: the zone's maps.</param>

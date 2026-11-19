@@ -1,4 +1,5 @@
 using D3B.Data.Banks;
+using D3B.Data.Challenges;
 using D3B.Data.Hints;
 using D3B.Data.Interactives;
 using D3B.Data.Items;
@@ -54,7 +55,7 @@ internal static class TextsExtractor
     }
 
     /// <summary>Gets the texts the tables name.</summary>
-    public static IReadOnlySet<int> Named(WorldAtlas atlas, ItemCatalog items, JobCatalog jobs, InteractiveCatalog interactives, BankCatalog banks, NpcCatalog npcs, HintCatalog hints, FightTables fights, WorldMapCatalog worldMaps)
+    public static IReadOnlySet<int> Named(WorldAtlas atlas, ItemCatalog items, JobCatalog jobs, InteractiveCatalog interactives, BankCatalog banks, NpcCatalog npcs, HintCatalog hints, ChallengeCatalog challenges, FightTables fights, WorldMapCatalog worldMaps)
     {
         var named = new HashSet<int>();
 
@@ -102,6 +103,12 @@ internal static class TextsExtractor
 
         foreach (var category in hints.Categories.Span)
             named.Add(category.NameId);
+
+        foreach (var challenge in challenges.Challenges.Span)
+        {
+            named.Add(challenge.NameId);
+            named.Add(challenge.DescriptionId);
+        }
 
         named.UnionWith(fights.Named());
 

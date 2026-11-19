@@ -1,6 +1,7 @@
 using D3B.Data.Banks;
 using D3B.Data.Npcs;
 using D3B.Data.Breeds;
+using D3B.Data.Challenges;
 using D3B.Data.Characteristics;
 using D3B.Data.Effects;
 using D3B.Data.Hints;
@@ -26,6 +27,9 @@ internal static class TestTables
     private static readonly int[] _monsterIcons = [1];
     private static readonly int[] _headIcons = [80, 151];
     private static readonly int[] _hintIcons = [411, 422];
+    private static readonly int[] _incompatibles = [2, 8, 1];
+    private static readonly string[] _completions = ["TM=1,0", "Tm<1,0"];
+    private static readonly string[] _activations = ["GL>4,0", "GL>4,0"];
     private static readonly int[] _glyphIcons = [(int)GameGlyph.Life];
     private static readonly int[] _levelIds = [1001, 1002, 2001];
     private static readonly int[] _zoneCells = [10, 11];
@@ -87,6 +91,16 @@ internal static class TestTables
             new IconTable(64, _monsterIcons, Enumerable.Repeat((byte)5, Large).ToArray()),
             new IconTable(64, _headIcons, Enumerable.Repeat((byte)6, 2 * Large).ToArray()),
             new IconTable(64, _glyphIcons, Enumerable.Repeat((byte)7, Large).ToArray()));
+    }
+
+    /// <summary>Zombie and Statue, as client 3.7.14.18 numbers them, the first excluding two challenges and the second one.</summary>
+    public static ChallengeCatalog Challenges()
+    {
+        return new ChallengeCatalog(
+            new Challenge[] { new(1, 742, 1_194_110, 1, 1, 0, 0, 2), new(2, 758, 1_008_206, 1, 2, 0, 2, 1) },
+            _incompatibles,
+            _completions,
+            _activations);
     }
 
     /// <summary>One bank; banker 100 has two chest replies, banker 6394 one.</summary>

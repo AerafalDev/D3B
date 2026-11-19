@@ -61,6 +61,10 @@ public abstract class BotActivity
     /// <remarks>The client's by default: nothing is sent, as before.</remarks>
     public virtual ChallengeReward ChallengeReward => ChallengeReward.Client;
 
+    /// <summary>Gets which challenges the AI plays for in the fights it plays (D466).</summary>
+    /// <remarks>None by default: the AI plays as before.</remarks>
+    public virtual ChallengePlay Challenges => ChallengePlay.None;
+
     /// <summary>Runs the next step, chosen from the character's state now.</summary>
     /// <param name="context">The step's behavior context.</param>
     /// <param name="cancellationToken">The step's token: an interruption or the activity's stop cancels it.</param>

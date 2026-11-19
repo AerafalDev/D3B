@@ -298,7 +298,7 @@ public sealed class FightJudge
         return best;
     }
 
-    /// <summary>Gets what the fighter playing's side is worth to an enemy choosing whom it strikes: its fighters' life and their being alive, as <see cref="Judge(ImaginedFight)"/> counts them, every character of the side held as dear as the fighter playing, as monsters hold them (D466: counted twice, the character drew 4.5 times the blows it took); alone, no other character on its side, nothing changes.</summary>
+    /// <summary>Gets what the fighter playing's side is worth to an enemy choosing whom it strikes: its fighters' life and their being alive, as <see cref="Judge(ImaginedFight)"/> counts them, every character of the side held as dear as the fighter playing, as monsters hold them (D467: counted twice, the character drew 4.5 times the blows it took); alone, no other character on its side, nothing changes.</summary>
     /// <param name="fight">The fight.</param>
     /// <returns>The worth, which an enemy's reply lowers as much as it can.</returns>
     public double AlliesWorth(ImaginedFight fight)
