@@ -182,7 +182,8 @@ public sealed class CastRules
     /// <remarks>
     /// As the references check a cast through portals (D3): the portal within the level's range and sight of the caster, then
     /// what the level asks of a cell on the cell it comes out on, within its range and sight of the exit. A level needing a
-    /// cell with no portal is refused on any portal's.
+    /// cell with no portal is refused on any portal's, the one cast on as the one it would land on: a Portail sets no portal
+    /// through portals.
     /// </remarks>
     public CastRefusal Check(FightMap map, IReadOnlyList<Combatant> fighters, IReadOnlyList<CellMark> marks, Combatant caster, in SpellLevel level, int cell, CastHistory history, int round)
     {
@@ -206,7 +207,7 @@ public sealed class CastRules
         if (refused is CastRefusal.None)
             refused = CellRefusal(map, fighters, cast, history, round, passage.Target);
 
-        if (refused is CastRefusal.None && HasPortalOn(marks, cast, passage.Target))
+        if (refused is CastRefusal.None && (HasPortalOn(marks, cast, cell) || HasPortalOn(marks, cast, passage.Target)))
             refused = CastRefusal.CellHasPortal;
 
         if (refused is CastRefusal.None)

@@ -1159,7 +1159,7 @@ Pure logic with no I/O, in `D3B.Engine`, which references `D3B.Data` for the cel
     sequences the best of each set of states the character holds, so that a Zobal's mask lives to the spells it opens
     (`WithEachStates`, D255), and the best of other sets of the team's portals, those whose ways land on an enemy first,
     so that a portal set lives to the cast it opens (D466); every level is tried on the portals' cells, and a level that
-    sets a portal on the cells that line a way up with an enemy; its best sequences weighed against the enemies' greedy reply, then the character's next
+    sets a portal is tried on the cells that line a way up with an enemy; its best sequences weighed against the enemies' greedy reply, then the character's next
     turn (`NextTurn`, D210), the plan with the fewest actions winning among those within a point of life that leave the same enemies
     alive (D407), the summoning spells left out of the first search but for the Osamodas', the Roublard's, the Steamer's and the
     Forgelance's, whose lances strike (D462), and searched again with them when it finds nothing to do (D408); `Place`; `Odds`; `OddsOverTheFight`, the enemies dying one after another (D249); `PathTo`.

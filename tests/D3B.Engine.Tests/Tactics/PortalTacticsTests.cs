@@ -75,6 +75,17 @@ public sealed class PortalTacticsTests
     }
 
     [Fact]
+    public void APortalTheServerSetWithNoEndStaysAsItsAuthorsNextTurnBegins()
+    {
+        // The server names no end for a portal (client-game.md), which the fight's state reads as round 0.
+        var fromServer = new CellMark(7, 1, 0, CellMarkKind.Portal, 2, 44338, Off(2, 0), [Off(2, 0)], 0);
+
+        var started = _tactics.Imagination.TurnStarted(Fight([fromServer]), 1, 3);
+
+        Assert.Equal([7], started.Marks.Select(mark => mark.Id));
+    }
+
+    [Fact]
     public void AFifthPortalOfATeamTakesThePlaceOfItsOldest()
     {
         ImmutableArray<CellMark> four = [Portal(1, Off(1, 1)), Portal(2, Off(2, 1)), Portal(3, Off(3, 1)), Portal(4, Off(4, 1))];

@@ -192,8 +192,9 @@ public sealed class Imagination
 
         var struck = Struck(fight, fighterId, CellMarkKind.TurnStart, walls: true);
 
-        // Measured (9f4): the server took a glyph back as its author's turn began, after the glyphs struck that author.
-        var kept = struck.Marks.RemoveAll(mark => mark.AuthorId == fighterId && mark.EndRound <= round);
+        // Measured (9f4): the server took a glyph back as its author's turn began, after the glyphs struck that author. A portal
+        // stays the whole fight, the server naming no end for it (D466).
+        var kept = struck.Marks.RemoveAll(mark => mark.AuthorId == fighterId && mark.EndRound <= round && mark.Kind is not CellMarkKind.Portal);
 
         return kept.Length == struck.Marks.Length ? struck : struck with { Marks = kept };
     }

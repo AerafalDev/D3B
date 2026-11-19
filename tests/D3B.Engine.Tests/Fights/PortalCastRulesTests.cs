@@ -58,8 +58,26 @@ public sealed class PortalCastRulesTests
         Assert.Equal(CastRefusal.None, _rules.Check(Open(), [_caster], alone, _caster, portail, Off(3, 0), CastHistory.Empty, 1));
     }
 
-    private static CastRefusal Check(int spell, int cell, Combatant[] fighters, FightMap? map = null, ImmutableArray<CellMark>? marks = null)
+    [Fact]
+    public void ALevelThatNeedsACellWithNoPortalIsRefusedOnAnOpenPortalThoughItWouldLandOnAFreeCell()
     {
-        return _rules.Check(map ?? Open(), fighters, marks ?? _portals, _caster, Level(_spells, spell), cell, CastHistory.Empty, 1);
+        // The pack's Portail needs a cell with no portal and may go through them: never a portal set through a portal.
+        var portail = Level(_spells, 20) with { Properties = Level(_spells, 20).Properties | SpellLevelProperties.NeedCellWithoutPortal };
+
+        Assert.Equal(CastRefusal.CellHasPortal, _rules.Check(Open(), [_caster], _portals, _caster, portail, Off(2, 0), CastHistory.Empty, 1));
+    }
+
+    [Fact]
+    public void ACastThroughAPortalNeedsThePortalWithinRangeAndSightOfTheCaster()
+    {
+        var there = Enemy(-1, Off(4, 8));
+
+        Assert.Equal(CastRefusal.NoLineOfSight, Check(10, Off(2, 0), [_caster, there], map: WithPillars(Off(1, 0))));
+        Assert.Equal(CastRefusal.OutOfRange, Check(10, Off(2, 0), [_caster with { Cell = Off(-2, 0) }, there], caster: _caster with { Cell = Off(-2, 0) }));
+    }
+
+    private static CastRefusal Check(int spell, int cell, Combatant[] fighters, FightMap? map = null, ImmutableArray<CellMark>? marks = null, Combatant? caster = null)
+    {
+        return _rules.Check(map ?? Open(), fighters, marks ?? _portals, caster ?? _caster, Level(_spells, spell), cell, CastHistory.Empty, 1);
     }
 }

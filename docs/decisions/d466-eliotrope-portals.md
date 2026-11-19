@@ -21,8 +21,9 @@ search [D255](d253-d292-step-9.md#d255-a-change-of-the-fighters-states-kept-in-t
   fifth taking the oldest's place; open while no fighter stands on it and its team has another open; a cast on an open
   portal goes along its chain, each portal to the nearest of its team's left, and lands as far from the last one as the
   caster stands from the first, its effects raised by 2% a cell between the portals (the effect's first dice). Any fighter
-  goes through. `CastRules` checks the portal from the caster, then the cell it lands on from the exit, and refuses a level
-  needing a cell with no portal on one; `Imagination` casts there, its zone and pushes from the exit; `TargetMask` answers
+  goes through. A portal the server set, which names no end, stays the whole fight as the search's do. `CastRules` checks the
+  portal from the caster, then the cell it lands on from the exit, and refuses a level needing a cell with no portal on the
+  portal cast on as on the cell it would land on, so that Portail, which may go through portals, sets none through them; `Imagination` casts there, its zone and pushes from the exit; `TargetMask` answers
   `R` and `r` on every cast. `FightTactics` tries every level on the portals' cells, a level that sets a portal on the cells
   that line a way up with an enemy, and keeps beside the best sequences the best of other sets of the team's portals, those
   whose ways land on an enemy first, as D255 keeps a mask. The bot sends the portal's cell, as the client does.
@@ -35,7 +36,7 @@ search [D255](d253-d292-step-9.md#d255-a-change-of-the-fighters-states-kept-in-t
   Affront 122 instead of 25, its push now imagined. Every other breed's section is the same line for line. The bench: the
   life a cast took imagined 206,959 against 205,854 before, for 207,016 announced; 777 pushes on the cell imagined against
   609; Commotion's pull of mask `r`, now imagined, stops beside the cell cast on where the server takes the target onto it,
-  712 times (a pull towards a zone's middle, left as it was). The searches 113 ms halfway and 589 ms at most, within 800.
+  712 times (a pull towards a zone's middle, left as it was). The searches 94 to 113 ms halfway and 589 ms at most over two runs, within 800 (93 and 577 before).
 - **Not modelled**: a walk onto a portal (1182) and the portals it closes until the next turn, the closing effect 1183, a tie
   between two portals as near (by an angle in the references, by the older here), the enemies' casts through portals in the
   reply, Coalition's spell triggered by a portal (`PT`). The bonus is the client's text, 2% a cell; the references add the
