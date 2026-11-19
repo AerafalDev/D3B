@@ -1152,8 +1152,8 @@ Pure logic with no I/O, in `D3B.Engine`, which references `D3B.Data` for the cel
     sequences the best of each set of states the character holds, so that a Zobal's mask lives to the spells it opens
     (`WithEachStates`, D255), its best sequences weighed against the enemies' greedy reply, then the character's next
     turn (`NextTurn`, D210), the plan with the fewest actions winning among those within a point of life that leave the same enemies
-    alive (D407), the summoning spells left out of the first search but for the Osamodas', the Roublard's and the Steamer's, and
-    searched again with them when it finds nothing to do (D408); `Place`; `Odds`; `OddsOverTheFight`, the enemies dying one after another (D249); `PathTo`.
+    alive (D407), the summoning spells left out of the first search but for the Osamodas', the Roublard's, the Steamer's and the
+    Forgelance's, whose lances strike (D462), and searched again with them when it finds nothing to do (D408); `Place`; `Odds`; `OddsOverTheFight`, the enemies dying one after another (D249); `PathTo`.
     `TacticWeights`, measured on 69 fights (D212), next turn's weight refused at 1 or more, which would leave a kill now for later (D460), `TurnSearchLimits`, `TurnPlan`, `TacticAction`.
   - Measured on the 166 turns of the characters captured: a search in 9 ms halfway, 158 ms at most (9e); on 204 searches
     of 61 captures, 56 ms halfway, 422 ms at most, and 86 ms halfway on the AI's own fights (9e2); benchmarked, a turn
@@ -1237,7 +1237,7 @@ interface's recast (D292).
   removed and erosion left to captures (9d, built, D195, D196).
 - A fight is decided by simulating candidate actions and scoring them (D13): each turn the AI searches the best sequences
   of moves and casts and thinks again after each answer of the server (9e, built, D201, D202), its judgement measured on
-  the captures turn by turn (9e2, D206 to D212). The simulator applies spell
+  the captures turn by turn (9e2, D206 to D212), and breed by breed since D463. The simulator applies spell
   effects read from the game data. It lives in `D3B.Engine`, with no I/O, so it is tested on its own.
 - The hard cases through the effects, measured one at a time (9f): a fighter's states, as the server sets and ends them
   and as the effects set and end them through the spells they cast, the Zobal's masks first (built, D224 to D229);
@@ -1281,6 +1281,10 @@ character's (D279). The character's spells by the
 - The effects' formulas are tested on fighters the tests build, with the numbers the bench measured; what a cast foresees
   on a catalog of the tests' own: a blow on each enemy, less a step away, its critical effects, resistances, and a boost
   of the caster its mask names (D195). The bench itself, `scripts/fights.cs`, runs on the captures of the owner's machine.
+  Its replays of the turns (`--turns`) and of the fights (`--live`) print their main counts again by the character's breed,
+  a section each, so that a change of the AI is read class by class and on what a farm needs: the plans, the damage, kills
+  and heals planned against played, the reply's blows against the enemies' alone and in a group, the spells planned against
+  played; the turns and rounds a fight won takes, the turns idle, the life lost and the deaths (D463).
 - Logic code in `D3B.Engine` and the state handlers is tested directly, with property tests on CsCheck for cell and
   world paths (D68, D71) and lines of sight, the same both ways and nearing their end at each cell. A fight's rules are
   tested on maps and fighters the tests build around a map's middle, with a catalog of six spells, each refusal named.
