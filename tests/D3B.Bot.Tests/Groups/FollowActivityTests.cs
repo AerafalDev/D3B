@@ -8,6 +8,7 @@ using D3B.Bot.Runtime;
 using D3B.Bot.Tests.Fights;
 using D3B.Bot.Tests.Runtime;
 using D3B.Data.Maps;
+using D3B.Data.World;
 using D3B.Engine.Maps;
 using D3B.Protocol.Game;
 
@@ -230,6 +231,30 @@ public sealed class FollowActivityTests
     }
 
     [Fact]
+    public async Task AFollowerStaysWhereItStandsAsItsMasterWalksToADoor()
+    {
+        // Measured (D453): beside its master's door, a walk more onto the door's cell went unconfirmed, and the server held it.
+        await using var play = new TestPlay();
+        var (masterConnection, master) = await TestGroup.MasterAsync(play, 300);
+        var (connection, follower) = await TestGroup.FollowerAsync(play, 433);
+        var run = Follow(play, follower, TestGroup.Master);
+
+        await TestGroup.UntilAsync(play, () => Doing(run) == "Follows Master", "following");
+
+        var step = play.StepTo(master, TestPlay.InsideMapId);
+
+        Assert.Equal(WorldTransitionType.Interactive, step.Transition.Type);
+        Assert.True(CellPathfinder.TryFind(play.Maps.Get(TestPlay.MapId).Cells.Span, 300, step.Transition.CellId, out var path));
+        masterConnection.Server(new MapMovementEvent { ActorId = TestGroup.MasterId, Cells = { path.Cells.ToArray() } });
+        await TestGroup.SettleAsync(follower, master);
+        play.Time.Advance(TimeSpan.FromSeconds(5));
+        await TestGroup.SettleAsync(follower, master);
+
+        Assert.Empty(connection.Sent);
+        run.Stop();
+    }
+
+    [Fact]
     public async Task AFollowerThatWalkedWithItsMasterToItsExitChangesMapsAtOnce()
     {
         // The owner's choice (D447): standing on its master's exit, it goes as its master goes, not once its master is placed.
@@ -372,14 +397,17 @@ public sealed class FollowActivityTests
 
         await TestGroup.UntilAsync(play, () => Doing(run) == "Follows Master", "following");
 
-        Assert.True(CellPathfinder.TryFind(play.Maps.Get(TestPlay.MapId).Cells.Span, 300, TestPlay.ActionCell, out var path));
+        // A cell that leads nowhere: no door, no map action, no edge (D451, D453).
+        const int Plain = 344;
+
+        Assert.True(CellPathfinder.TryFind(play.Maps.Get(TestPlay.MapId).Cells.Span, 300, Plain, out var path));
         masterConnection.Server(new MapMovementEvent { ActorId = TestGroup.MasterId, Cells = { path.Cells.ToArray() } });
 
         var walk = Assert.IsType<MapMovementRequest>(await TestGroup.SentAsync(play, connection, 1));
         var beside = walk.KeyMovements[^1] & 0xFFF;
 
         // Beside its master's cell, not on it (D448): the clients confirmed none of four walks to one cell.
-        Assert.Contains(beside, Around(TestPlay.ActionCell));
+        Assert.Contains(beside, Around(Plain));
         Assert.True(master.State.IsWalking);
         Assert.Contains(play.Log.GetSnapshot(), record => record.Message.Contains("walks with its master", StringComparison.Ordinal));
 
