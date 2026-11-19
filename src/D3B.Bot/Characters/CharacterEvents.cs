@@ -124,7 +124,11 @@ public static class CharacterEvents
                 HavenBagOwnerId = null,
                 IsWalkHeld = false,
             },
-            ContextCreationEvent created => state with { Fight = created.Context is ContextCreationEvent.Types.GameContext.Fight ? new FightState() : null, PartyFight = null },
+            ContextCreationEvent created => state with
+            {
+                Fight = created.Context is ContextCreationEvent.Types.GameContext.Fight ? new FightState { FromMapId = state.MapId } : null,
+                PartyFight = null,
+            },
             MapInformationEvent information when information.MapId == state.MapId => Placed(state, information),
             InteractiveElementUpdatedEvent { Element: { } element } when state.Elements.ContainsKey(element.ElementId) => state with
             {

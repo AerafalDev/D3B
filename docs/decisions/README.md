@@ -69,3 +69,4 @@ Each file holds the decisions of one group of [the index](../decisions-index.md)
 - [Groups, the followers paused in a fight (D445)](d445-groups-followers-not-ready.md): 1 decision, 2 KB.
 - [Groups, the challenges' bonus of the followers (D446)](d446-groups-challenges-bonus.md): 1 decision, 2 KB.
 - [Groups, following in real time (D447)](d447-groups-following-in-real-time.md): 1 decision, 3 KB.
+- [Groups, the followers into their master's fight (D448)](d448-groups-followers-into-the-fight.md): 1 decision, 3 KB.

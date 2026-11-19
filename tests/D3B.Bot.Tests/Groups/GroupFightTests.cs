@@ -79,6 +79,12 @@ public sealed class GroupFightTests
     // in, and the party's lock the server sets by itself as a party's leader attacks.
     private static void Placement(TestConnection connection, long self, int cell, int near, int monster, bool partyOnly, params Actor[] allies)
     {
+        Placement(connection, self, cell, near, monster, partyOnly, TestPlay.MapId, allies);
+    }
+
+    // Measured (D448): the server names the fight's own map, whose id is not the map's the fight began on.
+    private static void Placement(TestConnection connection, long self, int cell, int near, int monster, bool partyOnly, long fightMap, params Actor[] allies)
+    {
         var order = new FightTurnListEvent();
 
         order.Entries.Add(new FightTurnEntry { Fighter = new FightTurnFighter { FighterId = self } });
@@ -88,7 +94,7 @@ public sealed class GroupFightTests
         {
             new ContextDestroyEvent(),
             new ContextCreationEvent { Context = ContextCreationEvent.Types.GameContext.Fight },
-            new MapCurrentEvent { MapId = TestPlay.MapId },
+            new MapCurrentEvent { MapId = fightMap },
             new FightStartingEvent { AttackerId = TestGroup.MasterId, DefenderId = -20_004, Type = FightType.Monsters },
             new FightJoinEvent { PlacementTime = 440 },
             new FightFighterShowEvent { Fighter = Character(self, cell) },
@@ -170,7 +176,7 @@ public sealed class GroupFightTests
         var sent = masterConnection.Sent.Count;
 
         master.FightsAlone = true;
-        Placement(masterConnection, TestGroup.MasterId, Far, near, monster, partyOnly: true);
+        Placement(masterConnection, TestGroup.MasterId, Far, near, monster, true, TestPlay.EastMapId);
         followerConnection.Server(InFight(TestPlay.MapId));
 
         // Measured (D435): the server locks a leader's fight to its party; closing it would keep its follower out.
@@ -188,7 +194,7 @@ public sealed class GroupFightTests
         followerConnection.Client(new FightReadyRequest());
 
         // The follower in its master's fight, placed by its AI: it sets none of its team's options, which are its master's.
-        Placement(followerConnection, TestGroup.FollowerId, 301, Beside(monster, -2, 1), monster, true, Character(TestGroup.MasterId, near));
+        Placement(followerConnection, TestGroup.FollowerId, 301, Beside(monster, -2, 1), monster, true, TestPlay.EastMapId, Character(TestGroup.MasterId, near));
         var placed = Assert.IsType<FightPlacementPositionRequest>(await TestGroup.SentAsync(play, followerConnection, 4));
 
         followerConnection.Server(new EntitiesDispositionEvent { Dispositions = { new ActorDisposition { EntityId = TestGroup.FollowerId, CellId = placed.CellId } } });

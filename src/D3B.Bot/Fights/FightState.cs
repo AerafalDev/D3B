@@ -20,6 +20,13 @@ public sealed record FightState
     /// <summary>Gets where the fight stands.</summary>
     public FightPhase Phase { get; init; } = FightPhase.Placement;
 
+    /// <summary>Gets the map the character stood on as the fight began, out of fights.</summary>
+    /// <remarks>
+    /// Measured on the owner's test of 2026-11-19 (D448): the server names the fight's own map as the fight begins, whose id
+    /// is not the map's the fight began on, so a master comparing its followers' maps with its fight's found none there.
+    /// </remarks>
+    public long? FromMapId { get; init; }
+
     /// <summary>Gets the character's team: the challenger's, the attacker's, until the placement says otherwise.</summary>
     public FightTeam Team { get; init; }
 
