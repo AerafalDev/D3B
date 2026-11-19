@@ -291,7 +291,8 @@ The bots run in `D3B.Bot`: what each part does today, with the decisions that ma
   activity, the fights are the player's. The bot connected and not paused, it runs `FightPlay` once the step the fight cut
   is over (`BotActor.RunInFightAsync`). `FightPlay`, one behavior, the same AI for every character: it waits until the
   server showed the character and its cells, judges the odds (`FightTactics.Odds`), prudent for the fight when it would
-  lose (`TacticWeights.Prudent`, D198), closes the fight and blocks spectators (D216), sets the challenges' bonus the
+  lose (`TacticWeights.Prudent`, D198), beside allies of its group fearing the enemies' threat less (`TacticWeights.Group`,
+  D454, its next turn weighed as alone, D460), closes the fight and blocks spectators (D216), sets the challenges' bonus the
   activity's profile asks once the server answered the client's own (`BotActivity.ChallengeReward`, D438; a follower its master's,
   D446), places the character
   (`FightTactics.Place`) and says it is ready; each turn it plans (`FightTactics.Plan`) from the fight as the AI imagines
@@ -1149,7 +1150,7 @@ Pure logic with no I/O, in `D3B.Engine`, which references `D3B.Data` for the cel
     turn (`NextTurn`, D210), the plan with the fewest actions winning among those within a point of life that leave the same enemies
     alive (D407), the summoning spells left out of the first search but for the Osamodas', the Roublard's and the Steamer's, and
     searched again with them when it finds nothing to do (D408); `Place`; `Odds`; `OddsOverTheFight`, the enemies dying one after another (D249); `PathTo`.
-    `TacticWeights`, measured on 69 fights (D212), `TurnSearchLimits`, `TurnPlan`, `TacticAction`.
+    `TacticWeights`, measured on 69 fights (D212), next turn's weight refused at 1 or more, which would leave a kill now for later (D460), `TurnSearchLimits`, `TurnPlan`, `TacticAction`.
   - Measured on the 166 turns of the characters captured: a search in 9 ms halfway, 158 ms at most (9e); on 204 searches
     of 61 captures, 56 ms halfway, 422 ms at most, and 86 ms halfway on the AI's own fights (9e2); benchmarked, a turn
     against four enemies in 1.6 ms (9e), 3.1 ms and 6.5 MB (9e2, D216), 3.1 ms and 4.79 MB (9f, D229), 2.83 ms and

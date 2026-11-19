@@ -114,7 +114,20 @@ internal static class FightsCommand
         var maps = new GameMaps(pack);
         var translation = ProtocolTranslation.Create(ProtocolSchema.Load(schemaPath), MappingFile.Read(mappingPath));
         var bench = new CastBench(tables, maps, details ? Console.Out : null);
-        var turnBench = new TurnBench(tables, maps, Weighed(weights), TurnSearchLimits.Default, enemyLife);
+        TacticWeights weighed;
+
+        try
+        {
+            weighed = Weighed(weights);
+        }
+        catch (ArgumentException refused)
+        {
+            Console.Error.WriteLine(refused.Message);
+
+            return 2;
+        }
+
+        var turnBench = new TurnBench(tables, maps, weighed, TurnSearchLimits.Default, enemyLife);
         var liveBench = new LiveBench();
         var huntBench = live ? new HuntBench(tables, maps) : null;
         var failed = 0;
@@ -174,7 +187,15 @@ internal static class FightsCommand
             if (property is null || parts.Length is not 2 || !double.TryParse(parts[1], System.Globalization.CultureInfo.InvariantCulture, out var value))
                 throw new ArgumentException($"'{pair}' is not a Name=value pair of TacticWeights.");
 
-            property.SetValue(weights, value);
+            try
+            {
+                property.SetValue(weights, value);
+            }
+            catch (System.Reflection.TargetInvocationException refused) when (refused.InnerException is ArgumentOutOfRangeException)
+            {
+                // The approach is refused at 1 or more (D460): at once a blow later is worth as much as a blow now.
+                throw new ArgumentException($"'{pair}': {refused.InnerException!.Message}", refused);
+            }
         }
 
         return weights;

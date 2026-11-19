@@ -701,3 +701,8 @@ or refines another says so in its own entry. Add a line here with every new deci
 
 - [D459](decisions/d459-group-bank-rounds-and-food.md#d459-a-stack-an-exchange-leaves-is-offered-no-more-in-that-unloading-and-a-profile-banking-all-but-what-is-worn-banks-the-groups-food-too) A stack an exchange leaves is offered no more in that unloading, and a profile banking all but what is worn banks the group's food too (2026-11-19)
   - A new setting for the food; leaving out the refused stacks by their kind.
+
+## Fights, a blow now worth more than a blow later (D460)
+
+- [D460](decisions/d460-group-fights-strike-now.md#d460-the-ai-weighs-next-turns-damage-under-1-in-a-group-too-so-that-it-strikes-now-what-it-could-strike-later) The AI weighs next turn's damage under 1, in a group too, so that it strikes now what it could strike later (2026-11-19)
+  - D454 undone whole, a rule by element, the approach clamped silently in the judge.

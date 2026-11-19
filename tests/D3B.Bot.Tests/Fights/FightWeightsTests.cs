@@ -5,7 +5,7 @@ using D3B.Protocol.Game;
 
 namespace D3B.Bot.Tests.Fights;
 
-/// <summary>The weights the AI plays a fight with: prudent when it would lose, a little bolder beside allies of its group (D454).</summary>
+/// <summary>The weights the AI plays a fight with: prudent when it would lose, a little bolder beside allies of its group (D454, D460).</summary>
 public sealed class FightWeightsTests
 {
     private const long Self = 1;
@@ -24,7 +24,8 @@ public sealed class FightWeightsTests
 
         Assert.Same(TacticWeights.Group, FightPlay.WeightsOf(fight, Self, risky: false));
         Assert.True(TacticWeights.Group.Threat < TacticWeights.Default.Threat);
-        Assert.True(TacticWeights.Group.Approach > TacticWeights.Default.Approach);
+        // The next turn weighed as alone (D460): weighed more, it left whole the monsters a character could kill now.
+        Assert.Equal(TacticWeights.Default.Approach, TacticWeights.Group.Approach);
     }
 
     [Fact]
