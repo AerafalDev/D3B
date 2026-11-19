@@ -706,3 +706,8 @@ or refines another says so in its own entry. Add a line here with every new deci
 
 - [D460](decisions/d460-group-fights-strike-now.md#d460-the-ai-weighs-next-turns-damage-under-1-in-a-group-too-so-that-it-strikes-now-what-it-could-strike-later) The AI weighs next turn's damage under 1, in a group too, so that it strikes now what it could strike later (2026-11-19)
   - D454 undone whole, a rule by element, the approach clamped silently in the judge.
+
+## Fights, the Forgelance's lances (D462)
+
+- [D462](decisions/d462-forgelance-lances.md#d462-the-forgelances-summons-are-not-a-last-resort-its-lances-striking-as-they-are-thrown) The Forgelance's summons are not a last resort, its lances striking as they are thrown (2026-11-19)
+  - A criterion by effect, the summon as a spell's only worth; D408 undone for every breed.

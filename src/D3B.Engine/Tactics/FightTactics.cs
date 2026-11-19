@@ -41,8 +41,10 @@ public sealed class FightTactics
     private const double Tie = 1;
     private const int Finalists = 16;
 
-    // The breeds made of their summons: the Osamodas' beasts, the Roublard's bombs, the Steamer's turrets (D408).
-    private static readonly int[] _summonerBreeds = [2, 13, 15];
+    // The breeds whose summons are not a last resort (D408): the Osamodas' beasts, the Roublard's bombs, the Steamer's turrets, and
+    // the Forgelance's lances, which strike as they are thrown: replayed on its 221 turns of the 2026-11-19 captures, searching them
+    // first plans a third more damage (5,885 against 4,439) (D462).
+    private static readonly int[] _summonerBreeds = [2, 13, 15, 20];
 
     private const int RepliesAnEnemy = 3;
     private const int ReplyCells = 12;
