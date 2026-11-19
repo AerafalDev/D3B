@@ -1,6 +1,7 @@
 using D3B.Bot.Journal;
 using D3B.Bot.Runtime;
 using D3B.Data.Maps;
+using D3B.Data.World;
 using D3B.Engine.Maps;
 using D3B.Network.Relay;
 using D3B.Protocol.Game;
@@ -82,15 +83,35 @@ public static class MapWalk
     {
         ArgumentNullException.ThrowIfNull(context);
 
-        var state = context.State;
-
-        if (!state.IsWalkHeld)
+        if (!context.State.IsWalkHeld)
             return WalkOutcome.Arrived;
+
+        return await context.StepAsideAsync(cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <summary>Steps to a neighbour of the cell the character stands on, held or not, within a behavior.</summary>
+    /// <param name="context">The behavior's context.</param>
+    /// <param name="cancellationToken">The behavior's token.</param>
+    /// <returns>How the step ended.</returns>
+    /// <remarks>
+    /// A walk the server shows lets go of any it holds, and the client follows it from where the server has the character
+    /// (D85, D89): what a request failing again and again from one cell needs, whatever the state reckons (D464).
+    /// </remarks>
+    public static async Task<WalkOutcome> StepAsideAsync(this BotContext context, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(context);
+
+        var state = context.State;
 
         if (state.MapId is not { } mapId || state.Cell is not { } from || state.IsBusy)
             return WalkOutcome.Busy;
 
-        var neighbours = Clear(context, Enumerable.Range(0, MapCell.DirectionCount).Select(direction => MapGeometry.Neighbour(from, direction)).Where(neighbour => neighbour >= 0));
+        var all = Enumerable.Range(0, MapCell.DirectionCount).Select(direction => MapGeometry.Neighbour(from, direction)).Where(neighbour => neighbour >= 0).ToArray();
+
+        // Neither the cell the previous walk ended on, whose one-step walk the client does not follow (9g5), nor one that moves
+        // the character to another map, such as stairs, unless no other neighbour is left (D464).
+        var fit = all.Where(neighbour => neighbour != state.LastWalkEnd && !LeadsAway(context, mapId, neighbour)).ToArray();
+        var neighbours = Clear(context, fit.Length > 0 ? fit : all);
 
         if (!context.Maps.TryGet(mapId, out var map) || !CellPathfinder.TryFindNearest(map.Cells.Span, from, neighbours, out var aside))
             return WalkOutcome.NoPath;
@@ -116,6 +137,30 @@ public static class MapWalk
         request.KeyMovements.AddRange(path.TurningPoints().Select(turn => (turn.Direction << DirectionShift) | turn.Cell));
 
         return request;
+    }
+
+    /// <summary>Tells whether a cell of a map is where a door is used or a cell moves the character to another map, by the world's graph.</summary>
+    /// <param name="context">The behavior's context.</param>
+    /// <param name="mapId">The map.</param>
+    /// <param name="cell">The cell.</param>
+    /// <returns>Whether a walk onto it, or a use from it, leaves the map.</returns>
+    internal static bool LeadsAway(BotContext context, long mapId, int cell)
+    {
+        if (!context.Maps.TryGet(mapId, out var data) || !context.World.TryGetVertex(data, cell, out var vertex))
+            return false;
+
+        var graph = context.World.Graph;
+
+        foreach (var edge in graph.EdgesFrom(vertex))
+        {
+            foreach (var transition in graph.TransitionsOf(edge))
+            {
+                if (transition.CellId == cell && transition.Type is WorldTransitionType.Interactive or WorldTransitionType.MapAction)
+                    return true;
+            }
+        }
+
+        return false;
     }
 
     private static async Task<WalkOutcome> WalkToAsync(BotContext context, int cell, CancellationToken cancellationToken)

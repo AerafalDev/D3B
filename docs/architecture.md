@@ -135,7 +135,8 @@ The bots run in `D3B.Bot`: what each part does today, with the decisions that ma
   ends it too, and the character walking already makes it busy. A walk the client does not confirm leaves the character
   on its last cell, where the server has it (`BotContext.SettleWalkAsync`, D85); the server may still hold it, and
   refuses what is not a walk from there, so a step aside comes first (`MapWalk.ReleaseHeldWalkAsync`, D89), and a refusal
-  does not let it go: only a walk shown does (D456). No two bots of the host walk to one cell at once (D456): a walk claims
+  does not let it go: only a walk shown does (D456). Out of a fight a refusal holds it too, the client's confirmation of a
+  walk being sometimes its previous one's (D464). No two bots of the host walk to one cell at once (D456): a walk claims
   the cell it ends on before its request goes (`BotContext.ClaimAsync`, `MapMates`, one per host in `Bots`), waiting while
   another bot claims it or walks to it, 5 s at most, and a step aside keeps clear of the cells the others stand on, walk to
   or claim (`BotContext.TakenCells`). A walk of no
@@ -328,7 +329,7 @@ The bots run in `D3B.Bot`: what each part does today, with the decisions that ma
   options turned off at each party joined, D437's measure), then follow in real time (D447): with its master it copies
   each of its walks as the server shows it, to the cell the master walks to, else it changes maps towards the master by
   the world's paths, whatever the others' order, a whole journey only when its master is more than one change away
-  (D456), each in its own haven bag as the master is in his
+  (D456), a step aside after three changes failed in a row by a way of one (`MapWalk.StepAsideAsync`, D464), each in its own haven bag as the master is in his
   (`GroupChain.Together`); the master's party's order (`GroupChain.Order`) is only the card's and the bank's (D442). A wait reads the bots it waits on before
   deciding (`BotSeen`), so that no change made between the decision and the wait is missed (`GroupWaits`). In a fight
   (D440), each bot has a part too (`IFightTeam`, `BotActor.Team`, `GroupFight`), which the AI asks during the placement
@@ -1150,7 +1151,7 @@ Pure logic with no I/O, in `D3B.Engine`, which references `D3B.Data` for the cel
   - `FightTactics`, built once per pack: `Plan`, a beam search of walks and casts, each step keeping beside its best
     sequences the best of each set of states the character holds, so that a Zobal's mask lives to the spells it opens
     (`WithEachStates`, D255), its best sequences weighed against the enemies' greedy reply, each enemy striking whom it
-    lowers the side's worth most by, every character of a group as dear to it as the fighter playing (`AlliesWorth`, D464), then the character's next
+    lowers the side's worth most by, every character of a group as dear to it as the fighter playing (`AlliesWorth`, D465), then the character's next
     turn (`NextTurn`, D210), the plan with the fewest actions winning among those within a point of life that leave the same enemies
     alive (D407), the summoning spells left out of the first search but for the Osamodas', the Roublard's, the Steamer's and the
     Forgelance's, whose lances strike (D462), and searched again with them when it finds nothing to do (D408); `Place`; `Odds`; `OddsOverTheFight`, the enemies dying one after another (D249); `PathTo`.

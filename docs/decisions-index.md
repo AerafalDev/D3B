@@ -722,7 +722,12 @@ or refines another says so in its own entry. Add a line here with every new deci
 - [D463](decisions/d463-fights-by-breed.md#d463-scriptsfightscs---turns-and---live-print-their-main-counts-by-the-characters-breed) `scripts/fights.cs --turns` and `--live` print their main counts by the character's breed (2026-11-19)
   - The study's keys in the sorted counts, a breed's name from the pack, a switch to print the breeds.
 
-## Fights, the group's reply and its target (D464)
+## Groups, a follower the server holds (D464)
 
-- [D464](decisions/d464-group-reply-target.md#d464-an-enemy-of-the-reply-holds-every-character-of-a-group-as-dear-as-the-fighter-playing-as-real-monsters-do) An enemy of the reply holds every character of a group as dear as the fighter playing, as real monsters do (2026-11-19)
+- [D464](decisions/d464-groups-held-follower.md#d464-a-refusal-out-of-a-fight-says-the-server-may-hold-a-walk-and-a-follower-whose-change-keeps-failing-from-one-cell-steps-aside) A refusal out of a fight says the server may hold a walk, and a follower whose change keeps failing from one cell steps aside (2026-11-19)
+  - A confirmation told by its delay, a journey round, a master that stops waiting, every refusal held in a fight too.
+
+## Fights, the group's reply and its target (D465)
+
+- [D465](decisions/d465-group-reply-target.md#d465-an-enemy-of-the-reply-holds-every-character-of-a-group-as-dear-as-the-fighter-playing-as-real-monsters-do) An enemy of the reply holds every character of a group as dear as the fighter playing, as real monsters do (2026-11-19)
   - The fighter playing's life counted once, a group or not; a weight by breed or the group's weights; the allies' spells and turns in the same change.

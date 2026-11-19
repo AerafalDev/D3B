@@ -304,7 +304,7 @@ public sealed class FightJudge
 
         var worth = 0.0;
 
-        // Monsters do not hold the character dearer than its allies (D464): with its life counted twice, the reply on the group
+        // Monsters do not hold the character dearer than its allies (D465): with its life counted twice, the reply on the group
         // captures foresaw 10,574 on the character for 2,360 dealt. Alone nothing changes, no other character on its side.
         foreach (var fighter in fight.Fighters)
         {
