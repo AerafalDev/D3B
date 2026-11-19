@@ -10,6 +10,14 @@ public sealed record TacticWeights
     /// <summary>Gets the weights of a fight the AI expects to win.</summary>
     public static TacticWeights Default { get; } = new();
 
+    /// <summary>Gets the weights of a fight the AI expects to win beside allies of its own group, a little bolder than <see cref="Default"/>.</summary>
+    /// <remarks>
+    /// The owner's ask from game (D454): in a group the characters were "un poil trop sur la défensive". The enemies' blows
+    /// spread over several allies, so the life they may take weighs less, and the next turn's damage a little more. The
+    /// figures are the lead's reckoning, not a measure: 10d measures the group's fights and sets them (D434).
+    /// </remarks>
+    public static TacticWeights Group { get; } = new() { Threat = 0.75, Approach = 1.1 };
+
     /// <summary>Gets the weights of a fight judged too risky.</summary>
     public static TacticWeights Prudent { get; } = new() { Threat = 1.6, Survival = 3, Approach = 0.5 };
 

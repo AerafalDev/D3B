@@ -666,3 +666,8 @@ or refines another says so in its own entry. Add a line here with every new deci
 
 - [D452](decisions/d452-group-bank-master-empties.md#d452-at-the-groups-bank-the-master-deposits-all-it-does-not-wear-first-and-again-when-an-exchange-does-not-conclude) At the group's bank the master deposits all it does not wear first, and again when an exchange does not conclude (2026-11-19)
   - The master depositing by its profile's rule.
+
+## Fights, a little bolder in a group (D454)
+
+- [D454](decisions/d454-group-fights-bolder.md#d454-beside-allies-of-its-group-the-ai-weighs-the-enemies-threat-less-and-its-next-blows-more) Beside allies of its group, the AI weighs the enemies' threat less and its next blows more (2026-11-19)
+  - Waiting for 10d's measure, the prudent weights left out in a group.
