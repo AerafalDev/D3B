@@ -1149,7 +1149,8 @@ Pure logic with no I/O, in `D3B.Engine`, which references `D3B.Data` for the cel
     other side's mark, its own side's left to the reply as the cost measured (D290).
   - `FightTactics`, built once per pack: `Plan`, a beam search of walks and casts, each step keeping beside its best
     sequences the best of each set of states the character holds, so that a Zobal's mask lives to the spells it opens
-    (`WithEachStates`, D255), its best sequences weighed against the enemies' greedy reply, then the character's next
+    (`WithEachStates`, D255), its best sequences weighed against the enemies' greedy reply, each enemy striking whom it
+    lowers the side's worth most by, every character of a group as dear to it as the fighter playing (`AlliesWorth`, D464), then the character's next
     turn (`NextTurn`, D210), the plan with the fewest actions winning among those within a point of life that leave the same enemies
     alive (D407), the summoning spells left out of the first search but for the Osamodas', the Roublard's, the Steamer's and the
     Forgelance's, whose lances strike (D462), and searched again with them when it finds nothing to do (D408); `Place`; `Odds`; `OddsOverTheFight`, the enemies dying one after another (D249); `PathTo`.

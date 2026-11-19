@@ -215,7 +215,7 @@ public sealed class FightJudge
                 continue;
 
             worth += fighter.Team == _team
-                ? AllyWorth(fighter, Effective(fighter))
+                ? AllyWorth(fighter, Effective(fighter), Weight(fighter))
                 : -Cost(fighter, _tables.IndexOf(fighter), Effective(fighter));
         }
 
@@ -295,7 +295,7 @@ public sealed class FightJudge
         return best;
     }
 
-    /// <summary>Gets what the fighter playing's side is worth alone: its fighters' life and their being alive, as <see cref="Judge(ImaginedFight)"/> counts them.</summary>
+    /// <summary>Gets what the fighter playing's side is worth to an enemy choosing whom it strikes: its fighters' life and their being alive, as <see cref="Judge(ImaginedFight)"/> counts them, every character of the side held as dear as the fighter playing.</summary>
     /// <param name="fight">The fight.</param>
     /// <returns>The worth, which an enemy's reply lowers as much as it can.</returns>
     public double AlliesWorth(ImaginedFight fight)
@@ -304,10 +304,12 @@ public sealed class FightJudge
 
         var worth = 0.0;
 
+        // Monsters do not hold the character dearer than its allies (D464): with its life counted twice, the reply on the group
+        // captures foresaw 10,574 on the character for 2,360 dealt. Alone nothing changes, no other character on its side.
         foreach (var fighter in fight.Fighters)
         {
             if (fighter.IsAlive && fighter.Team == _team)
-                worth += AllyWorth(fighter, Effective(fighter));
+                worth += AllyWorth(fighter, Effective(fighter), fighter.IsCharacter ? _weights.Survival : Weight(fighter));
         }
 
         return worth;
@@ -332,7 +334,7 @@ public sealed class FightJudge
 
             if (fighter.Team == _team)
             {
-                worth += AllyWorth(fighter, Effective(fighter));
+                worth += AllyWorth(fighter, Effective(fighter), Weight(fighter));
 
                 if (threatened && fighter.Id != _actorId && fighter.IsSummon)
                 {
@@ -368,7 +370,7 @@ public sealed class FightJudge
             var loss = Weight(ally) * (LifeWorth(effective, ally.MaxLife) - LifeWorth(effective - lost, ally.MaxLife));
 
             if (feared[index] >= effective)
-                loss += Alive(ally, _tables.IndexOf(ally));
+                loss += Alive(ally, _tables.IndexOf(ally), Weight(ally));
 
             worth -= _weights.Threat * loss;
         }
@@ -385,19 +387,19 @@ public sealed class FightJudge
         return ((0.6 + (0.4 * share)) * life) + (KillTurns * hardest) + (0.1 * enemy.MaxLife);
     }
 
-    private double AllyWorth(Combatant ally, double life)
+    private double AllyWorth(Combatant ally, double life, double weight)
     {
-        return (Weight(ally) * LifeWorth(life, ally.MaxLife)) + Alive(ally, _tables.IndexOf(ally));
+        return (weight * LifeWorth(life, ally.MaxLife)) + Alive(ally, _tables.IndexOf(ally), weight);
     }
 
-    private double Alive(Combatant ally, int known)
+    private double Alive(Combatant ally, int known, double weight)
     {
         // A summon alive is worth the blows it deals with its own AP, as an enemy's being alive is (Cost): measured (D270), its
         // life counted as a character's had the AI summon 369 times on the turns its players summoned 42.
         if (ally.IsSummon)
             return known < 0 ? 0 : KillTurns * _tables.TurnDamage(known, ally.ActionPoints);
 
-        return Weight(ally) * AliveShare * ally.MaxLife;
+        return weight * AliveShare * ally.MaxLife;
     }
 
     private double Weight(Combatant ally)
