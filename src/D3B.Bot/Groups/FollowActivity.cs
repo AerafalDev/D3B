@@ -401,6 +401,7 @@ public sealed class FollowActivity : BotActivity, IDisposable
             .SelectMany(bot => new[] { bot.State.Cell, bot.State.IsWalking ? bot.State.Path[^1] : (int?)null })
             .Where(cell => cell is not null)
             .Select(cell => cell!.Value)
+            .Concat(context.TakenCells())
             .Append(end)
             .Append(master.Cell ?? -1)
             .ToHashSet();
@@ -608,24 +609,25 @@ public sealed class FollowActivity : BotActivity, IDisposable
 
     // One change towards the master's map a step, so that a change failing tries the same way again at the next step: a
     // journey would leave that way out and go round (D74), as measured in game (D437) after a walk the client did not
-    // follow. Only after several in a row does a whole journey find another way.
+    // follow. Only after several in a row does a whole journey find another way, and never while the master is one change
+    // away: measured on the owner's runs of 2026-11-19 (D456), such a journey went round by nine maps, the way the master
+    // had just taken failing only for the follower the server held.
     private async Task<bool> TowardsAsync(BotContext context, long map, CancellationToken cancellationToken)
     {
         var maps = FrozenSet.Create(map);
-
-        if (_failedChanges >= MostFailedChanges)
-        {
-            _failedChanges = 0;
-
-            return await context.TravelAsync(maps, cancellationToken).ConfigureAwait(false) is TravelOutcome.Arrived;
-        }
-
         var state = context.State;
         var rules = WorldTravel.RulesOf(context);
 
         if (state is not { MapId: { } here, Cell: { } cell } || !context.Maps.TryGet(here, out var data) || !context.World.TryGetVertex(data, cell, out var vertex)
             || !context.World.TryFind(vertex, maps, rules, out var path) || path.Steps.Count is 0)
         {
+            return await context.TravelAsync(maps, cancellationToken).ConfigureAwait(false) is TravelOutcome.Arrived;
+        }
+
+        if (_failedChanges >= MostFailedChanges && path.Steps.Count > 1)
+        {
+            _failedChanges = 0;
+
             return await context.TravelAsync(maps, cancellationToken).ConfigureAwait(false) is TravelOutcome.Arrived;
         }
 

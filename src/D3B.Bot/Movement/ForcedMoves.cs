@@ -94,7 +94,9 @@ public static class ForcedMoves
 
     private static async Task<MapChangeOutcome> LeaveByAsync(BotContext context, int direction, int? cell, Action<long> chose, CancellationToken cancellationToken)
     {
-        await context.ReleaseHeldWalkAsync(cancellationToken).ConfigureAwait(false);
+        // As a map change, nothing is asked while the server still holds a walk (D456).
+        if (!await MapChange.ReleasedAsync(context, cancellationToken).ConfigureAwait(false))
+            return MapChangeOutcome.NotWalked;
 
         var state = context.State;
 
@@ -146,7 +148,9 @@ public static class ForcedMoves
 
     private static async Task<MapChangeOutcome> UseDoorAtAsync(BotContext context, int elementCell, CancellationToken cancellationToken)
     {
-        await context.ReleaseHeldWalkAsync(cancellationToken).ConfigureAwait(false);
+        // As a map change, nothing is asked while the server still holds a walk (D456).
+        if (!await MapChange.ReleasedAsync(context, cancellationToken).ConfigureAwait(false))
+            return MapChangeOutcome.NotWalked;
 
         var state = context.State;
 
@@ -180,7 +184,9 @@ public static class ForcedMoves
 
     private static async Task<MapChangeOutcome> EnterAsync(BotContext context, CancellationToken cancellationToken)
     {
-        await context.ReleaseHeldWalkAsync(cancellationToken).ConfigureAwait(false);
+        // As a map change, nothing is asked while the server still holds a walk (D456).
+        if (!await MapChange.ReleasedAsync(context, cancellationToken).ConfigureAwait(false))
+            return MapChangeOutcome.NotWalked;
 
         var state = context.State;
         var self = state.Key.CharacterId;

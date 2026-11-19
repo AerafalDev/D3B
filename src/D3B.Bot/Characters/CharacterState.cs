@@ -47,7 +47,7 @@ public sealed record CharacterState
     /// <summary>Gets whether the server may still hold the character walking a path the client never confirmed, which the state settled on its last cell (D85).</summary>
     /// <remarks>
     /// Measured (client.md): the server then refuses what is not a walk from the path's last cell, such as a map change or a
-    /// teleport, and walks one from there, which the client follows. The next walk, refusal or map lets it go.
+    /// teleport, and walks one from there, which the client follows. The next walk shown or map lets it go, not a refusal (D456).
     /// </remarks>
     public bool IsWalkHeld { get; init; }
 

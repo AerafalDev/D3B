@@ -628,7 +628,7 @@ public sealed class CharacterEventsTests
     }
 
     [Fact]
-    public void TheServerHoldsAWalkTheClientDidNotConfirmUntilTheNextWalkRefusalOrMap()
+    public void TheServerHoldsAWalkTheClientDidNotConfirmUntilTheNextWalkOrMap()
     {
         var walking = Apply(_chosen, [.. EnteringTheGame(), Server(new MapMovementEvent { ActorId = TestPlay.CharacterId, Cells = { 300, 301, 302 } })]);
         var held = CharacterEvents.NotConfirmed(walking);
@@ -636,7 +636,10 @@ public sealed class CharacterEventsTests
         Assert.True(held.IsWalkHeld);
         Assert.False(held.IsBusy);
         Assert.False(Apply(held, Server(new MapMovementEvent { ActorId = TestPlay.CharacterId, Cells = { 302, 303 } })).IsWalkHeld);
-        Assert.False(Apply(held, Server(new MapMovementRefusedEvent { X = 18, Y = -3 })).IsWalkHeld);
+
+        // Measured on the owner's runs of 2026-11-19 (D456): after a refusal the server still refused a door's use 25 times.
+        Assert.True(Apply(held, Server(new MapMovementRefusedEvent { X = 18, Y = -3 })).IsWalkHeld);
+        Assert.False(Apply(_chosen, Server(new MapMovementRefusedEvent { X = 18, Y = -3 })).IsWalkHeld);
         Assert.False(Apply(held, Server(new MapCurrentEvent { MapId = TestPlay.NorthMapId })).IsWalkHeld);
         Assert.False(Apply(held, Server(new MapMovementConfirmResponse())).IsWalkHeld);
         Assert.True(Apply(held, Server(new MapMovementEvent { ActorId = 9, Cells = { 100, 101 } })).IsWalkHeld);

@@ -142,6 +142,9 @@ public sealed class BotActor : IAsyncDisposable, IRequestWithholder
     /// <summary>Gets or sets what holds the bot's requests until other bots are ready, such as a master's followers (D437).</summary>
     internal IActionGate? Gate { get; set; }
 
+    /// <summary>Gets or sets the cells the host's other bots stand on or walk to, which the bot's walks keep clear of (D456).</summary>
+    internal MapMates? Mates { get; set; }
+
     /// <summary>Gets or sets the bot's part in its group's fights, which the AI asks during the placement (D431, D434).</summary>
     internal IFightTeam? Team { get; set; }
 

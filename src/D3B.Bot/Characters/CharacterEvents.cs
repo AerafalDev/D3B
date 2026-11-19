@@ -153,11 +153,12 @@ public static class CharacterEvents
             MapActorRemovedEvent removed when state.MonsterGroups.ContainsKey(removed.ActorId) => state with { MonsterGroups = state.MonsterGroups.Remove(removed.ActorId) },
             MapMovementConfirmResponse when state.IsWalking => state with { Cell = state.Path[^1], Path = [] },
             MapMovementConfirmResponse => state with { IsWalkHeld = false },
+            // A refusal tells where the server has the character, not that it let the walk go: measured on the owner's runs of
+            // 2026-11-19 (D456), a door used from the cell one named was refused 25 times; only a walk shown lets it go, or a new map.
             MapMovementRefusedEvent refused => state with
             {
                 Cell = MapGeometry.TryGetCell(new MapPoint(refused.X, refused.Y), out var cell) ? cell : state.Cell,
                 Path = [],
-                IsWalkHeld = false,
             },
             NpcDialogCreationEvent creation when creation.MapId == state.MapId => state with { Dialog = new NpcDialog(creation.NpcActorId) },
             NpcDialogQuestionEvent question when state.Dialog is { } dialog => state with

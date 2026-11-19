@@ -134,7 +134,11 @@ The bots run in `D3B.Bot`: what each part does today, with the decisions that ma
   points, and is over once the server answers the client's confirmation; a refusal, no answer or no confirmation in time
   ends it too, and the character walking already makes it busy. A walk the client does not confirm leaves the character
   on its last cell, where the server has it (`BotContext.SettleWalkAsync`, D85); the server may still hold it, and
-  refuses what is not a walk from there, so a step aside comes first (`MapWalk.ReleaseHeldWalkAsync`, D89). A walk of no
+  refuses what is not a walk from there, so a step aside comes first (`MapWalk.ReleaseHeldWalkAsync`, D89), and a refusal
+  does not let it go: only a walk shown does (D456). No two bots of the host walk to one cell at once (D456): a walk claims
+  the cell it ends on before its request goes (`BotContext.ClaimAsync`, `MapMates`, one per host in `Bots`), waiting while
+  another bot claims it or walks to it, 5 s at most, and a step aside keeps clear of the cells the others stand on, walk to
+  or claim (`BotContext.TakenCells`). A walk of no
   step is never sent: the server closes the connection of one. The client does not follow a walk ending on the cell its
   previous walk ended on, even on another map (D260): the state keeps that cell (`CharacterState.LastWalkEnd`), and such a
   walk goes in two, to the path's cell before its last, or a step aside first when it has one step.
@@ -143,7 +147,9 @@ The bots run in `D3B.Bot`: what each part does today, with the decisions that ma
   then for the end of a use that lasts, such as a harvest. Nothing is sent for an element the map does not offer the
   skill on; the character walking or using answers `Busy`.
 - **Changing maps** (D73, D76): `MapChange` follows one step of a path through the world. It walks to the nearest cell
-  the map is left from, another than the one its previous walk ended on when there is one (D260), then asks for the neighbour, walks onto a map action's cell, or uses a door, and waits for the
+  the map is left from, another than the one its previous walk ended on when there is one (D260) and than those the host's
+  other bots stand on, walk to or claim, claimed until the character left (D456), so that a door's cells are taken in turn;
+  a step aside that did not let a held walk go asks nothing (`NotWalked`). Then it asks for the neighbour, walks onto a map action's cell, or uses a door, and waits for the
   new map, then for what is on it, which the client asks for. The server answers nothing to a change it refuses, which
   ends after its delay, and refuses a door's use with an event. A teleport (D83) is one request from where the character
   stands, refused with an error text (D84); `MapChange.LeaveHavenBagAsync` leaves the character's haven bag, back to the
@@ -317,7 +323,8 @@ The bots run in `D3B.Bot`: what each part does today, with the decisions that ma
   follower's steps keep the party (its master's invitation accepted, others refused, another party left, the automatic
   options turned off at each party joined, D437's measure), then follow in real time (D447): with its master it copies
   each of its walks as the server shows it, to the cell the master walks to, else it changes maps towards the master by
-  the world's paths, whatever the others' order, each in its own haven bag as the master is in his
+  the world's paths, whatever the others' order, a whole journey only when its master is more than one change away
+  (D456), each in its own haven bag as the master is in his
   (`GroupChain.Together`); the master's party's order (`GroupChain.Order`) is only the card's and the bank's (D442). A wait reads the bots it waits on before
   deciding (`BotSeen`), so that no change made between the decision and the wait is missed (`GroupWaits`). In a fight
   (D440), each bot has a part too (`IFightTeam`, `BotActor.Team`, `GroupFight`), which the AI asks during the placement
