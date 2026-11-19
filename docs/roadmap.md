@@ -376,7 +376,7 @@ follower) on the same map, the capture of every connection on; a capture's conte
   format 13 (D466): the client's challenges' table in the pack, 842 records with their texts and criteria, and the AI playing
   for the 12 easy ones the owner listed, whose criterion asks only of its own turns, a profile's option « Challenges », Easy by
   default; a turn keeps the challenge while what it costs stays within half of what keeps the reward a minute the same, and a
-  fight judged risky plays for none. Left: seen in game; the pack 13 published on the owner's go. (3) Then the feasible ones,
+  fight judged risky plays for none. Left: seen in game. The pack 13 is published on `client-3.7.14.18` (2026-11-20). (3) Then the feasible ones,
   which order or name the targets, weighed by the judge, and the AI choosing the easier of the proposals.
 - **The companion** (D443), a player's report relayed by the owner (the Astrub Knight left unplayed), made on 2026-11-18 in
   code and tests and mapped from the client's schema alone, mapping format 21: the bot plays the character's companion as a
