@@ -124,7 +124,14 @@
     { "readable": "d3b.game.ExchangeReadyEvent", "obfuscated": "kec" },
     { "readable": "d3b.game.ExchangeObjectsAddedEvent", "obfuscated": "kch" },
     { "readable": "d3b.game.ChallengeBonusChoiceRequest", "obfuscated": "kua" },
-    { "readable": "d3b.game.ChallengeBonusChoiceSelectedEvent", "obfuscated": "ktx" }
+    { "readable": "d3b.game.ChallengeBonusChoiceSelectedEvent", "obfuscated": "ktx" },
+    { "readable": "d3b.game.ChallengeListEvent", "obfuscated": "ktl" },
+    { "readable": "d3b.game.ChallengeAddEvent", "obfuscated": "ktm" },
+    { "readable": "d3b.game.ChallengeTargetsEvent", "obfuscated": "kth" },
+    { "readable": "d3b.game.ChallengeResultEvent", "obfuscated": "ktk" },
+    { "readable": "d3b.game.ChallengeProposalRequest", "obfuscated": "ktr" },
+    { "readable": "d3b.game.ChallengeProposalEvent", "obfuscated": "kue" },
+    { "readable": "d3b.game.ChallengeSelectionRequest", "obfuscated": "ktt" }
   ],
   "enums": []
 }
