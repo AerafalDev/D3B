@@ -51,6 +51,6 @@ public enum CastRefusal
     /// <summary>A cell between the caster and the cell blocks the line of sight.</summary>
     NoLineOfSight,
 
-    /// <summary>The level needs a cell with no portal, and an Eliotrope's portal stands on it (D467).</summary>
+    /// <summary>The level needs a cell with no portal, and an Eliotrope's portal stands on it (D468).</summary>
     CellHasPortal,
 }

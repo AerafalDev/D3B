@@ -1,10 +1,10 @@
-# Fights, an Eliotrope's portals (D467)
+# Fights, an Eliotrope's portals (D468)
 
 A part of [the decisions](README.md); each decision has one line in [the index](../decisions-index.md). The marks on the
 cells are [D280](d253-d292-step-9.md#d280-glyphs-walls-and-the-marks-as-a-turn-begins-and-ends), the masks' states in the
 search [D255](d253-d292-step-9.md#d255-a-change-of-the-fighters-states-kept-in-the-turns-search).
 
-## D467: An Eliotrope's portals in the AI, cast through by every character of the bot
+## D468: An Eliotrope's portals in the AI, cast through by every character of the bot
 
 *2026-11-19, the owner's ask and choice (A of three) after the lead's study of the portals in BubbleEmu, the pack of
 3.7.14.18 and the captures. Builds D3, D201, D244, D255, D280.*

@@ -737,7 +737,7 @@ or refines another says so in its own entry. Add a line here with every new deci
 - [D466](decisions/d466-fights-challenges-easy.md#d466-the-ai-plays-for-the-easy-challenges-those-of-its-own-turns-while-a-turn-costs-no-more-than-their-bonus-pays-pack-format-13) The AI plays for the easy challenges, those of its own turns, while a turn costs no more than their bonus pays, pack format 13 (2026-11-19)
   - Hardi and Barbare among them, keeping a challenge whatever it costs, the whole balance as the price, one search with a penalty, matching by number.
 
-## Fights, an Eliotrope's portals (D467)
+## Fights, an Eliotrope's portals (D468)
 
-- [D467](decisions/d467-eliotrope-portals.md#d467-an-eliotropes-portals-in-the-ai-cast-through-by-every-character-of-the-bot) An Eliotrope's portals in the AI, cast through by every character of the bot (2026-11-19)
+- [D468](decisions/d468-eliotrope-portals.md#d468-an-eliotropes-portals-in-the-ai-cast-through-by-every-character-of-the-bot) An Eliotrope's portals in the AI, cast through by every character of the bot (2026-11-19)
   - Capturing by hand first, casting only through the portals set, every exact set of portals kept, a worth of an open way.

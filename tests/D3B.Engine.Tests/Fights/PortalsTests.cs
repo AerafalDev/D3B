@@ -4,7 +4,7 @@ using static D3B.Engine.Tests.Fights.TestFights;
 
 namespace D3B.Engine.Tests.Fights;
 
-/// <summary>An Eliotrope's portals as the references model them (D467): a cast on one comes out of the last of its chain.</summary>
+/// <summary>An Eliotrope's portals as the references model them (D468): a cast on one comes out of the last of its chain.</summary>
 public sealed class PortalsTests
 {
     private static readonly Combatant _caster = Caster(Off(0, 0));

@@ -25,7 +25,7 @@ namespace D3B.Engine.Fights;
 /// <item><term><c>P</c>, <c>p</c></term><description>The caster, its summons, its summoner and their other summons, or not.</description></item>
 /// <item><term><c>Q</c>, <c>q</c></term><description>As many summons as it may have, or fewer.</description></item>
 /// <item><term><c>R</c>, <c>r</c></term><description>A cast through a portal, or through none: an Eliotrope's spells hold an effect of each, such as
-/// Audace's damage, its push on a straight cast only (D467).</description></item>
+/// Audace's damage, its push on a straight cast only (D468).</description></item>
 /// </list>
 /// <para>
 /// A caster's condition on its kind, such as <c>*h,*m</c>, asks one of them. What the fight's state does not tell, such as

@@ -139,7 +139,7 @@ public sealed class SpellEffects
     /// <param name="foreseen">The list the effects foreseen are added to, in the level's order.</param>
     /// <param name="whole">Whether a zone's effects reach every fighter whole, its decrease left out: a mark's spell on the fighter it strikes (9f4).</param>
     /// <param name="through">The way the cast goes through portals, its cell then the one it comes out on: its zone is directed from the exit,
-    /// its effects asking a portal or none chosen so, and its damage, steals and heals raised by its bonus (D467).</param>
+    /// its effects asking a portal or none chosen so, and its damage, steals and heals raised by its bonus (D468).</param>
     public void Foresee(FightMap map, IReadOnlyList<Combatant> fighters, Combatant caster, in SpellLevel level, int cell, bool critical, List<ForeseenEffect> foreseen, bool whole = false, PortalPassage? through = null)
     {
         ArgumentNullException.ThrowIfNull(map);

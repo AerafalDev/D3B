@@ -391,7 +391,7 @@ internal sealed class CastBench
                 var map = MapOf(mapId);
                 var fighters = FightCombatants.Of(fight, _tables.Monsters);
                 var combatant = fighters.First(fighter => fighter.Id == action.SourceId);
-                // A cast through portals names the cell it lands on and the portals, the one cast on first (D467): it is
+                // A cast through portals names the cell it lands on and the portals, the one cast on first (D468): it is
                 // checked and imagined as the AI casts it, on that portal.
                 var (through, marks, cell) = Through(fight, fighters, combatant, level, action, character);
                 var refusal = through is null
@@ -518,7 +518,7 @@ internal sealed class CastBench
     private (PortalPassage? Through, ImmutableArray<CellMark> Marks, int Cell) Through(FightState fight, IReadOnlyList<Combatant> fighters, Combatant caster, in SpellLevel level, GameActionFightEvent action, CharacterState? character)
     {
         // The way the engine foresees through the portals the server named, against the cell it announced and the last portal
-        // it named (D467): no capture of 3.7.13.17 or 3.7.14.18 holds one yet.
+        // it named (D468): no capture of 3.7.13.17 or 3.7.14.18 holds one yet.
         if (action.Cast.Spell is not { PortalIds.Count: > 0 } spell)
             return (null, [], action.Cast.CellId);
 

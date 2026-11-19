@@ -150,7 +150,7 @@ public sealed class Imagination
         var caster = fight.Actor;
         var cost = CastRules.Modified(level, caster).ApCost;
 
-        // A cast on an open portal lands where the portals send it (D467), the rules having checked it so.
+        // A cast on an open portal lands where the portals send it (D468), the rules having checked it so.
         var through = _rules.Passage(fight.Marks, fight.Fighters, caster, level, cell);
         var at = through?.Target ?? cell;
         var target = fight.On(at);
@@ -196,7 +196,7 @@ public sealed class Imagination
         var struck = Struck(ForgelanceLance.Returned(fight, fighterId), fighterId, CellMarkKind.TurnStart, walls: true);
 
         // Measured (9f4): the server took a glyph back as its author's turn began, after the glyphs struck that author. A portal
-        // stays the whole fight, the server naming no end for it (D467).
+        // stays the whole fight, the server naming no end for it (D468).
         var kept = struck.Marks.RemoveAll(mark => mark.AuthorId == fighterId && mark.EndRound <= round && mark.Kind is not CellMarkKind.Portal);
 
         return kept.Length == struck.Marks.Length ? struck : struck with { Marks = kept };
@@ -313,7 +313,7 @@ public sealed class Imagination
 
         foreach (var mark in set)
         {
-            // A team keeps four portals, a fifth taking the oldest's place (D467).
+            // A team keeps four portals, a fifth taking the oldest's place (D468).
             marks = mark.Kind is CellMarkKind.Portal ? Portals.Placed(marks, mark) : marks.Add(mark);
 
             if (mark.Kind is not CellMarkKind.Aura || !_glyphs.TryGetLevel(mark, out var aura))
@@ -690,7 +690,7 @@ public sealed class Imagination
         var target = fighters[index];
         var caster = fighters[casterIndex];
 
-        // A cast through portals pushes and pulls from the portal it came out of, as the references move it (D467).
+        // A cast through portals pushes and pulls from the portal it came out of, as the references move it (D468).
         var source = from ?? caster.Cell;
 
         if (!target.IsAlive || target.Cell is Combatant.NoCell || cells <= 0 || !_rules.CanBePushed(target))

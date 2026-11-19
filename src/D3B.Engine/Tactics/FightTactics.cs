@@ -139,7 +139,7 @@ public sealed class FightTactics
             hash.Add(fighter.MovementPoints);
         }
 
-        // Two portals set on two cells leave the fighters alike: their cells tell the sequences apart (D467).
+        // Two portals set on two cells leave the fighters alike: their cells tell the sequences apart (D468).
         foreach (var mark in fight.Marks)
         {
             if (mark.Kind is CellMarkKind.Portal)
@@ -216,7 +216,7 @@ public sealed class FightTactics
     {
         // A portal set deals nothing, and the cast it opens counts only once its exit is set too, as a Zobal's mask (D255):
         // beside the best sequences, the best of up to `most` other sets of the team's portals, those whose ways already land
-        // on an enemy first (D467).
+        // on an enemy first (D468).
         if (!ranked.Exists(node => HasPortals(node.Fight)))
             return kept;
 
@@ -816,7 +816,7 @@ public sealed class FightTactics
 
     private List<int> PortalCells(ImaginedFight fight, in SpellLevel level)
     {
-        // Beside the cells near the fighters, the portals' own cells, which a cast goes through (D467); and for a level that sets
+        // Beside the cells near the fighters, the portals' own cells, which a cast goes through (D468); and for a level that sets
         // a portal, the cells that line a way up with an enemy beside a portal of the team, as an exit or as an entry.
         var cells = new List<int>();
 
