@@ -170,6 +170,84 @@ enum ChallengeBonus {
   CHALLENGE_BONUS_DROP = 1;
 }
 
+// The fight's challenges (D461), as it starts: sent right after the fight's start. Measured on 3.7.14.18 (83 game
+// connections of 2026-11-18 and 19, 2,980 fights): one challenge in every fight, the one the add event named.
+message ChallengeListEvent {
+  repeated ChallengeInformation challenges = 1;
+}
+
+// A challenge of the fight (D461): sent once a fight, 0 to 3 ms before the fight's start, with the challenge the list
+// then names; in the 5 fights whose player chose among proposals, the one chosen. Its first field, a list, was never set.
+message ChallengeAddEvent {
+  option (d3b.readable.partial) = true;
+
+  ChallengeInformation challenge = 2;
+}
+
+// A challenge's targets changed (D461): 430 times in the fights measured, each of a challenge the list named, as a turn
+// began or a cast ended, with its one target alive and, for 145 of them, the fighter allowed to strike it.
+message ChallengeTargetsEvent {
+  ChallengeInformation challenge = 1;
+}
+
+// A challenge won or lost (D461): once a fight, before the fight's end, of the challenge the list named; 1,329 won and
+// 1,647 lost in the fights measured. Its first field, a message, was never set.
+message ChallengeResultEvent {
+  option (d3b.readable.partial) = true;
+
+  bool success = 2;
+  int32 challenge_id = 3;
+}
+
+// Asks the server for challenges to choose from, during the placement (D461): sent 4 times in the fights measured, at
+// the player's click, each answered by the proposals. Its two fields were never set.
+message ChallengeProposalRequest {
+}
+
+// The challenges the player may choose from, the server's answer to the request (D461): two in each of its 5 times, 4
+// of them right after the request, the other with none before it in its capture. Its third field, a number, was always
+// set, its meaning not measured.
+message ChallengeProposalEvent {
+  option (d3b.readable.partial) = true;
+
+  repeated ChallengeInformation proposals = 4;
+}
+
+// Chooses one of the challenges proposed (D461): sent once after each of the 5 proposals, naming one of them, which the
+// add event then named.
+message ChallengeSelectionRequest {
+  int32 challenge_id = 1;
+}
+
+// A challenge, as the server describes it (D461). Measured: its state was the running one everywhere, the result coming
+// apart; the two bonuses, 45 to 130, were equal in every fight; its sixth field, an enum, was never set.
+message ChallengeInformation {
+  option (d3b.readable.partial) = true;
+
+  ChallengeState state = 1;
+  int32 challenge_id = 2;
+  int32 bonus = 3;
+  repeated ChallengeTarget targets = 5;
+}
+
+// Where a challenge stands. Measured: 2 in every challenge the server described; the other two values not seen.
+enum ChallengeState {
+  CHALLENGE_STATE_VALUE_0 = 0;
+  CHALLENGE_STATE_VALUE_1 = 1;
+  CHALLENGE_STATE_RUNNING = 2;
+}
+
+// A challenge's target (D461). Measured: 955 of the 959 targets with an id were fighters of the fight's turns, each with
+// its cell; 123 had neither, and a negative cell; the fighters allowed to strike it were fighters of the fight. Its third and
+// fourth fields were never set.
+message ChallengeTarget {
+  option (d3b.readable.partial) = true;
+
+  int64 fighter_id = 1;
+  repeated int64 attacker_ids = 2;
+  int32 cell_id = 5;
+}
+
 // The character is ready to fight, or no longer: the fight starts once every character is.
 message FightReadyRequest {
   bool ready = 1;

@@ -94,6 +94,11 @@ public static class FightEvents
             FightSpellsContextEvent => fight,
             FightOptionUpdateEvent update => fight with { Options = fight.Options.SetItem(update.Option, update.Enabled) },
             ChallengeBonusChoiceSelectedEvent chosen => fight with { ChallengeBonus = chosen.Bonus },
+            ChallengeListEvent listed => listed.Challenges.Aggregate(fight with { Challenges = [.. fight.Challenges.Where(known => listed.Challenges.Any(challenge => challenge.ChallengeId == known.Id))] }, Described),
+            ChallengeAddEvent { Challenge: { } added } => Described(fight, added),
+            ChallengeTargetsEvent { Challenge: { } changed } => Described(fight, changed),
+            ChallengeAddEvent or ChallengeTargetsEvent => fight,
+            ChallengeResultEvent result => Challenged(fight, result.ChallengeId, known => known with { Succeeded = result.Success }),
             FightStartingEvent or FightJoinEvent => fight,
             _ => null,
         };
@@ -107,6 +112,27 @@ public static class FightEvents
     {
         // The event's team was unset in every fight captured, its meaning not measured: the character's own fighter says it.
         return fight.Fighters.TryGetValue(self, out var own) ? own.Team : positions.Team;
+    }
+
+    private static FightState Described(FightState fight, ChallengeInformation described)
+    {
+        // Measured (D461): a target the server names no fighter of comes with a negative cell, and tells nothing to strike.
+        ImmutableArray<FightChallengeTarget> targets = [.. described.Targets
+            .Where(target => target.FighterId != 0)
+            .Select(target => new FightChallengeTarget(target.FighterId, [.. target.AttackerIds]))];
+
+        return Challenged(fight, described.ChallengeId, known => known with { Bonus = described.Bonus, Targets = targets });
+    }
+
+    private static FightState Challenged(FightState fight, int id, Func<FightChallenge, FightChallenge> change)
+    {
+        for (var index = 0; index < fight.Challenges.Length; index++)
+        {
+            if (fight.Challenges[index].Id == id)
+                return fight with { Challenges = fight.Challenges.SetItem(index, change(fight.Challenges[index])) };
+        }
+
+        return fight with { Challenges = fight.Challenges.Add(change(new FightChallenge(id, 0, [], null))) };
     }
 
     private static FightState Synchronized(FightState fight, long self, FightSynchronizeEvent synchronized)

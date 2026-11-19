@@ -14,6 +14,12 @@ internal static partial class FightLog
     [LoggerMessage(Level = LogLevel.Information, Message = "Bot {Character}: chooses the challenges' bonus {Bonus}, {Outcome}")]
     public static partial void BonusChosen(ILogger logger, long character, ChallengeBonus bonus, string outcome);
 
+    [LoggerMessage(Level = LogLevel.Information, Message = "Bot {Character}: the fight's challenge {Challenge}, bonus {Bonus} %, {Targets} targets")]
+    public static partial void Challenged(ILogger logger, long character, int challenge, int bonus, int targets);
+
+    [LoggerMessage(Level = LogLevel.Information, Message = "Bot {Character}: challenge {Challenge} {Outcome}")]
+    public static partial void ChallengeEnded(ILogger logger, long character, int challenge, string outcome);
+
     [LoggerMessage(Level = LogLevel.Information, Message = "Bot {Character}: placed on cell {Cell}")]
     public static partial void Placed(ILogger logger, long character, int cell);
 
