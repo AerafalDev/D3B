@@ -109,6 +109,14 @@ public sealed class FollowActivity : BotActivity, IDisposable
             ? activity.ChallengeReward
             : ChallengeReward.Client;
 
+    /// <inheritdoc/>
+    /// <remarks>Its master's profile's, as the bonus (D446): the challenges ask of every allied fighter, and none while the master runs no fighting profile.</remarks>
+    public override ChallengePlay Challenges
+        => CharacterKey.TryParseId(_masterId, out var master) && _bots.TryGet(master, out var leader)
+            && leader.Activity is { IsOver: false, Activity: { FightsItsFights: true } activity } && activity is not FollowActivity
+            ? activity.Challenges
+            : ChallengePlay.None;
+
     /// <summary>Initializes a new instance of the <see cref="FollowActivity"/> class.</summary>
     /// <param name="settings">The activity's settings: the master.</param>
     /// <param name="bots">The host's bots, the master's among them, and their groups.</param>

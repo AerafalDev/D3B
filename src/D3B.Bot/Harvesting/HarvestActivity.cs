@@ -123,6 +123,9 @@ public sealed class HarvestActivity : BotActivity
     /// <inheritdoc/>
     public override ChallengeReward ChallengeReward => _settings.ChallengeReward;
 
+    /// <inheritdoc/>
+    public override ChallengePlay Challenges => _settings.Challenges;
+
     /// <summary>Initializes a new instance of the <see cref="HarvestActivity"/> class.</summary>
     /// <param name="settings">What to harvest, where, and when to bank.</param>
     /// <param name="world">The installed build's world: the zone's maps.</param>

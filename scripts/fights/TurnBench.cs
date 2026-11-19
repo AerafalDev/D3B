@@ -28,6 +28,11 @@ namespace D3B.Scripts.Fights;
 /// it dealt in its next turn. It prints counts and sums, never a value of one fight.
 /// </para>
 /// <para>
+/// A turn of a fight whose challenge is easy (D464) is planned once more keeping it, as the bot would with a profile's
+/// default, the fight's risk aside: the turns whose best plan keeps it already, those the search keeps it in within what its
+/// bonus pays, and those it leaves, by challenge; and how long both searches last.
+/// </para>
+/// <para>
 /// A summon's turn the client played is replayed the same, the AI's plan against the player's (D271); the summons planned
 /// and played are counted by breed and spell, and what the summons deal in the reply (D270).
 /// </para>
@@ -43,6 +48,8 @@ internal sealed class TurnBench
     private readonly double _enemyLife;
     private readonly Dictionary<long, FightMap> _fightMaps = [];
     private readonly List<double> _searches = [];
+    private readonly List<double> _challenged = [];
+    private readonly HashSet<int> _left = [];
     private readonly Dictionary<string, double> _sums = new(StringComparer.Ordinal);
 
     public Tally Tally { get; } = new();
@@ -132,7 +139,7 @@ internal sealed class TurnBench
                 // A summon the client controls plays its turn as the character does (9f2), the turns between left alone.
                 case FightTurnStartPlayingEvent when state.Fight is { IsOwnTurn: true, PlayingId: { } summon } && summon != self && Imagined(state, null) is { } summoned:
                     summonTurn = new Turn(summoned.Fight, summoned.Knowledge, (summoned.Fight.Actor.ActionPoints, summoned.Fight.Actor.MovementPoints));
-                    Plan(summonTurn);
+                    Plan(summonTurn, state.Fight);
 
                     break;
 
@@ -153,7 +160,7 @@ internal sealed class TurnBench
                     }
 
                     ending = null;
-                    Plan(turn);
+                    Plan(turn, state.Fight);
 
                     break;
 
@@ -164,6 +171,8 @@ internal sealed class TurnBench
                     break;
 
                 case FightEndEvent:
+                    _left.Clear();
+
                     if (ending is not null && state.Fight is { } over)
                         Settle(ending, null, over.Fighters.GetValueOrDefault(self));
 
@@ -188,6 +197,12 @@ internal sealed class TurnBench
         {
             _searches.Sort();
             writer.WriteLine($"searches: {_searches.Count}, halfway {_searches[_searches.Count / 2]:F0} ms, 90% {_searches[(int)(_searches.Count * 0.9)]:F0} ms, at most {_searches[^1]:F0} ms");
+        }
+
+        if (_challenged.Count > 0)
+        {
+            _challenged.Sort();
+            writer.WriteLine($"searches keeping a challenge: {_challenged.Count}, halfway {_challenged[_challenged.Count / 2]:F0} ms, 90% {_challenged[(int)(_challenged.Count * 0.9)]:F0} ms, at most {_challenged[^1]:F0} ms");
         }
     }
 
@@ -220,7 +235,7 @@ internal sealed class TurnBench
         }
     }
 
-    private void Plan(Turn turn)
+    private void Plan(Turn turn, FightState? fight)
     {
         var clock = Stopwatch.StartNew();
         var plan = _tactics.Plan(turn.Start, turn.Knowledge, _weights, _limits);
@@ -231,6 +246,26 @@ internal sealed class TurnBench
         var casts = plan.Actions.Count(action => action.Kind is TacticActionKind.Cast);
 
         Tally.Count($"{(turn.Start.Actor.IsSummon ? "summon plans" : "plans")}: {(plan.IsEmpty ? "nothing" : casts is 0 ? "walks only" : "casts")}");
+
+        // The fight's first easy challenge neither decided nor left, as the bot plays for it.
+        var played = fight?.Challenges.FirstOrDefault(challenge => challenge.Succeeded is null && !_left.Contains(challenge.Id) && TurnChallenge.Of(_tables.Challenges.CompletionOf(challenge.Id), challenge.Bonus) is not null);
+
+        if (played is null || TurnChallenge.Of(_tables.Challenges.CompletionOf(played.Id), played.Bonus) is not { } easy)
+            return;
+
+        clock.Restart();
+
+        var kept = _tactics.Plan(turn.Start, turn.Knowledge, _weights, _limits, challenge: easy with { StartCell = turn.Start.Actor.Cell });
+
+        _challenged.Add(clock.Elapsed.TotalMilliseconds);
+
+        if (!kept.KeepsChallenge)
+            _left.Add(played.Id);
+
+        var how = !kept.KeepsChallenge ? "left" : kept.Actions.SequenceEqual(plan.Actions) ? "kept by the best plan" : "kept by the search";
+
+        Tally.Count($"challenge {played.Id,4}: turns {how}");
+        Tally.Count($"challenges: turns {how}");
     }
 
     private static void Observe(FightState fight, long self, IMessage message, Turn turn, SpellLevel? blow)

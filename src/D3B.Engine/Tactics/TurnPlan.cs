@@ -12,4 +12,7 @@ public sealed record TurnPlan(ImmutableArray<TacticAction> Actions, double Score
 {
     /// <summary>Gets whether the turn is best ended now.</summary>
     public bool IsEmpty => Actions.IsDefaultOrEmpty;
+
+    /// <summary>Gets whether the plan keeps the fight's challenge the search was given (D464); false with none.</summary>
+    public bool KeepsChallenge { get; init; }
 }

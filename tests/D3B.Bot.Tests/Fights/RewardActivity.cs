@@ -13,9 +13,14 @@ internal sealed class RewardActivity : BotActivity
     /// <summary>Gets or sets whether the AI plays the activity's fights, as a harvest's profile says.</summary>
     public bool Fights { get; init; } = true;
 
+    /// <summary>Gets or sets which challenges the AI plays for.</summary>
+    public ChallengePlay Play { get; init; }
+
     public override bool FightsItsFights => Fights;
 
     public override ChallengeReward ChallengeReward => Reward;
+
+    public override ChallengePlay Challenges => Play;
 
     public override async Task<bool> StepAsync(BotContext context, CancellationToken cancellationToken)
     {

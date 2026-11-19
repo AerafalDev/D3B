@@ -353,6 +353,97 @@ public sealed class FightPlayTests : IAsyncDisposable
         await LoggedAsync($"Bot {Self}: challenge 41 with no result");
     }
 
+    private async Task<(TestConnection Connection, int Sent)> ChallengedTurnAsync(int challenge, ChallengePlay play, bool secondTurn = false)
+    {
+        // An activity playing for the profile's challenges, the fight's challenge listed before the character's first turn.
+        var (connection, bot) = await _play.EnterAsync(Far);
+        var monster = Beside(Far, 8, 0);
+        var near = Beside(monster, -3, 0);
+
+        bot.StartActivity(new RewardActivity { Reward = ChallengeReward.Client, Play = play });
+        await bot.ProcessedAsync();
+
+        var sent = connection.Sent.Count;
+
+        Placement(connection, near, monster);
+        await SentAsync(connection, sent + 1);
+        connection.Server(new FightOptionUpdateEvent { Option = FightOption.Closed, Enabled = true });
+        await SentAsync(connection, sent + 2);
+        connection.Server(new FightOptionUpdateEvent { Option = FightOption.NoSpectators, Enabled = true });
+        await SentAsync(connection, sent + 3);
+        connection.Server(new EntitiesDispositionEvent { Dispositions = { new ActorDisposition { EntityId = Self, CellId = near } } });
+        await SentAsync(connection, sent + 4);
+        connection.Server(new FightHumanReadyStateEvent { CharacterId = Self, Ready = true });
+        connection.Server(new ChallengeAddEvent { Challenge = new ChallengeInformation { State = ChallengeState.Running, ChallengeId = challenge, Bonus = 100 } });
+        connection.Server(new FightStartEvent());
+        connection.Server(new FightNewRoundEvent { Round = 1 });
+        connection.Server(new FightTurnEvent { FighterId = Self, Duration = 300, Round = 1 });
+        connection.Server(new FightTurnStartPlayingEvent());
+
+        Assert.IsType<GameActionFightCastRequest>(await SentAsync(connection, sent + 5));
+        Cast(connection, monster, apLeft: 3, actionId: 1);
+        Assert.IsType<GameActionFightCastRequest>(await SentAsync(connection, sent + 6));
+        Cast(connection, monster, apLeft: 0, actionId: 2);
+        Assert.IsType<FightTurnFinishRequest>(await SentAsync(connection, sent + 7));
+        connection.Server(new FightTurnEndEvent { FighterId = Self });
+
+        if (secondTurn)
+        {
+            connection.Server(new FightTurnEvent { FighterId = Self, Duration = 300, Round = 2 });
+            connection.Server(new FightRefreshCharacterStatsEvent { FighterId = Self, Stats = new FightCharacteristics { Characteristics = { Usable(1, 6), Usable(23, 0) } } });
+            connection.Server(new FightTurnStartPlayingEvent());
+            Assert.IsType<GameActionFightCastRequest>(await SentAsync(connection, sent + 8));
+            Cast(connection, monster, apLeft: 3, actionId: 3);
+            Assert.IsType<GameActionFightCastRequest>(await SentAsync(connection, sent + 9));
+            Cast(connection, monster, apLeft: 0, actionId: 4);
+            Assert.IsType<FightTurnFinishRequest>(await SentAsync(connection, sent + 10));
+            connection.Server(new FightTurnEndEvent { FighterId = Self });
+        }
+
+        connection.Server(new FightEndEvent { Results = { new FightResult { Fighter = new FightResultFighter { FighterId = Monster } } } });
+        await bot.ProcessedAsync();
+
+        return (connection, sent);
+    }
+
+    [Fact]
+    public async Task AChallengeATurnLeftIsLeftForTheWholeFight()
+    {
+        // Zombie with no MP (D464): no turn uses exactly one, so the first leaves it, and the second plays for it no more.
+        await ChallengedTurnAsync(TestPlay.ZombieChallenge, ChallengePlay.Easy, secondTurn: true);
+        await LoggedAsync($"Bot {Self}: ends its turn after 2 actions");
+
+        Assert.Single(_play.Log.GetSnapshot(), record => record.Message.Contains($"leaves challenge {TestPlay.ZombieChallenge}", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public async Task AnEasyChallengeThatWouldHalveTheTurnsDamageIsLeft()
+    {
+        // Versatile with one spell (D464): kept, the turn casts it once where it may twice, more than its bonus pays.
+        await ChallengedTurnAsync(TestPlay.VersatileChallenge, ChallengePlay.Easy);
+
+        await LoggedAsync($"Bot {Self}: leaves challenge {TestPlay.VersatileChallenge}, which would cost its turn more than its bonus pays");
+    }
+
+    [Fact]
+    public async Task AnEasyChallengeTheTurnKeepsAnywayIsNotLeft()
+    {
+        // Prudent, the monster three cells away: the best turn ends beside no enemy.
+        await ChallengedTurnAsync(TestPlay.PrudentChallenge, ChallengePlay.Easy);
+        await LoggedAsync($"Bot {Self}: ends its turn after 2 actions");
+
+        Assert.DoesNotContain(_play.Log.GetSnapshot(), record => record.Message.Contains("leaves challenge", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public async Task AProfileThatPlaysForNoChallengeLeavesNone()
+    {
+        await ChallengedTurnAsync(TestPlay.VersatileChallenge, ChallengePlay.None);
+        await LoggedAsync($"Bot {Self}: ends its turn after 2 actions");
+
+        Assert.DoesNotContain(_play.Log.GetSnapshot(), record => record.Message.Contains("leaves challenge", StringComparison.Ordinal));
+    }
+
     [Fact]
     public async Task ACastTheServerRefusedWithATextIsCastAgainTheNextTurn()
     {

@@ -126,6 +126,9 @@ public sealed class HarvestingModule : IModule
         settings.Choice(s => s.ChallengeReward, HarvestTexts.Text("ChallengeReward"), reward => HarvestTexts.Text($"ChallengeReward{reward}"))
             .Help(HarvestTexts.Text("ChallengeRewardHelp"))
             .VisibleWhen(s => s.AiFights);
+        settings.Choice(s => s.Challenges, HarvestTexts.Text("Challenges"), play => HarvestTexts.Text($"Challenges{play}"))
+            .Help(HarvestTexts.Text("ChallengesHelp"))
+            .VisibleWhen(s => s.AiFights);
         settings.Choice(s => s.AfterFight, HarvestTexts.Text("AfterFight"), after => HarvestTexts.Text($"AfterFight{after}"))
             .Help(HarvestTexts.Text("AfterFightHelp"))
             .Advanced();
