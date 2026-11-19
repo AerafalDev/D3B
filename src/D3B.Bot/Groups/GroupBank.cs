@@ -3,7 +3,6 @@ using D3B.Bot.Banks;
 using D3B.Bot.Characters;
 using D3B.Bot.Runtime;
 using D3B.Data;
-using D3B.Network.Relay;
 using D3B.Protocol.Game;
 
 namespace D3B.Bot.Groups;
@@ -96,9 +95,10 @@ internal sealed class GroupBank : IGroupBank
         if (!await ToBankerAsync(context, activity, cancellationToken).ConfigureAwait(false))
             return false;
 
-        // What the followers gave, by the master's stack it is in and how many: a gift that joins a stack of the master's own
-        // leaves the rest of that stack to the master's profile.
-        var given = new Dictionary<int, int>();
+        // The owner's report from game (D452): full, the master took its followers' objects all the same, and the server
+        // never told it their readiness, nor concluded. It empties itself first.
+        if (await DepositAsync(context, cancellationToken).ConfigureAwait(false) is not BankOutcome.Done)
+            return false;
 
         foreach (var follower in GroupChain.Order(context.State, _groups.FollowersOf(_bot.Key)))
         {
@@ -112,79 +112,57 @@ internal sealed class GroupBank : IGroupBank
                 if (!follower.IsConnected || follower.IsPaused || !GroupGifts.Carries(follower.State, _tables.Items))
                     break;
 
-                // Its pods holding none of the follower's next stack, the master deposits first, once.
-                if (GroupGifts.Of(follower.State, context.State, _tables.Items).Count is 0)
-                {
-                    if (deposited || await DepositAsync(context, activity, given, cancellationToken).ConfigureAwait(false) is not BankOutcome.Done)
-                        break;
+                // Its pods holding none of the follower's next stack, or an exchange that did not conclude, such as more
+                // than its pods hold by the server's reckoning, the master deposits, once, then takes the rest.
+                var gave = GroupGifts.Of(follower.State, context.State, _tables.Items).Count > 0
+                    && await ExchangeAsync(context, follower, cancellationToken).ConfigureAwait(false) > 0;
 
-                    deposited = true;
+                if (gave)
+                {
+                    deposited = false;
 
                     continue;
                 }
 
-                deposited = false;
-
-                // Nothing given, such as objects the server exchanges not: the next round would be the same.
-                if (await ExchangeAsync(context, follower, given, cancellationToken).ConfigureAwait(false) is 0)
+                if (deposited || !Carries(context.State) || await DepositAsync(context, cancellationToken).ConfigureAwait(false) is not BankOutcome.Done)
                     break;
+
+                deposited = true;
             }
         }
 
-        return await DepositAsync(context, activity, given, cancellationToken).ConfigureAwait(false) is BankOutcome.Done;
+        return await DepositAsync(context, cancellationToken).ConfigureAwait(false) is BankOutcome.Done;
     }
 
-    // The master's deposit: what its followers gave, and what its own profile banks, in one opening of the bank. A stack
-    // of the master's own that a gift joined goes in for the gift's quantity alone, by the move the guild's chest measured
-    // taking part of a stack (D153), the lead's reading for the bank.
-    private static async Task<BankOutcome> DepositAsync(BotContext context, BotActivity activity, Dictionary<int, int> given, CancellationToken cancellationToken)
+    // The owner's choice (D452): the master deposits all it does not wear, but the food it eats, whatever its profile banks,
+    // so that its pods go down whatever it carries, objects put in its bags by the player's hand too.
+    private bool Deposited(InventoryItem stack)
     {
+        return !stack.IsWorn && stack.Quantity > 0 && !(_tables.Items.TryGetItem(stack.ItemId, out var item) && item.Heals);
+    }
+
+    private bool Carries(CharacterState state)
+    {
+        return state.Inventory.Values.Any(Deposited);
+    }
+
+    // The master's deposit, in one opening of the bank; none while it carries nothing to deposit.
+    private async Task<BankOutcome> DepositAsync(BotContext context, CancellationToken cancellationToken)
+    {
+        var uids = context.State.Inventory.Values.Where(Deposited).Select(stack => stack.Uid).ToList();
+
+        if (uids.Count is 0)
+            return BankOutcome.Done;
+
         var outcome = await context.OpenBankAsync(cancellationToken).ConfigureAwait(false);
 
         if (outcome is not BankOutcome.Done)
             return outcome;
 
-        var whole = new List<int>();
-        var parts = new List<(int Uid, int Quantity)>();
-
-        foreach (var stack in context.State.Inventory.Values.Where(stack => !stack.IsWorn))
-        {
-            if (activity.Deposits(stack) || given.GetValueOrDefault(stack.Uid) >= stack.Quantity)
-                whole.Add(stack.Uid);
-            else if (given.GetValueOrDefault(stack.Uid) is > 0 and var part)
-                parts.Add((stack.Uid, part));
-        }
-
-        var deposit = whole.Count > 0 ? await context.DepositAsync(whole, 0, cancellationToken).ConfigureAwait(false) : BankOutcome.Done;
-
-        foreach (var (uid, quantity) in parts)
-        {
-            if (deposit is not BankOutcome.Done)
-                break;
-
-            deposit = await PartAsync(context, uid, quantity, cancellationToken).ConfigureAwait(false);
-        }
-
-        if (deposit is BankOutcome.Done)
-            given.Clear();
-
+        var deposit = await context.DepositAsync(uids, 0, cancellationToken).ConfigureAwait(false);
         var left = await context.LeaveBankAsync(cancellationToken).ConfigureAwait(false);
 
         return deposit is BankOutcome.Done ? left : deposit;
-    }
-
-    private static async Task<BankOutcome> PartAsync(BotContext context, int uid, int quantity, CancellationToken cancellationToken)
-    {
-        var answered = context.Expect((side, message, _) => side is RelayDirection.FromServer && message switch
-        {
-            ObjectQuantityEvent { Object: { } changed } => changed.Uid == uid,
-            ObjectDeletedEvent deleted => deleted.Uid == uid,
-            _ => false,
-        });
-
-        await context.SendAsync(new ExchangeObjectMoveRequest { Uid = uid, Quantity = quantity }, cancellationToken).ConfigureAwait(false);
-
-        return await answered.WaitAsync(context.Delays.Answer, cancellationToken).ConfigureAwait(false) is null ? BankOutcome.NoAnswer : BankOutcome.Done;
     }
 
     private static async Task LeaveAsync(BotContext context, CancellationToken cancellationToken)
@@ -216,7 +194,7 @@ internal sealed class GroupBank : IGroupBank
 
     // One exchange with a follower: it asks, the master accepts, it moves its stacks in and says it is ready, then the master.
     // Gives how many of the master's stacks grew, none when the exchange did not conclude.
-    private async Task<int> ExchangeAsync(BotContext context, BotActor follower, Dictionary<int, int> given, CancellationToken cancellationToken)
+    private async Task<int> ExchangeAsync(BotContext context, BotActor follower, CancellationToken cancellationToken)
     {
         var id = follower.Key.CharacterId;
         var before = context.State.Inventory;
@@ -256,7 +234,6 @@ internal sealed class GroupBank : IGroupBank
             if (stack.Quantity <= was)
                 continue;
 
-            given[stack.Uid] = given.GetValueOrDefault(stack.Uid) + stack.Quantity - was;
             grew++;
         }
 
