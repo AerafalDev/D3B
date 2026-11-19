@@ -711,3 +711,8 @@ or refines another says so in its own entry. Add a line here with every new deci
 
 - [D461](decisions/d461-fights-challenges-read.md#d461-the-bot-reads-its-fights-challenges-their-targets-their-results-and-the-proposals-mapping-format-22) The bot reads its fight's challenges, their targets, their results and the proposals, mapping format 22 (2026-11-19)
   - The challenges' table in the pack now, the mode and number events, a target with no fighter.
+
+## Fights, the Forgelance's lances (D462)
+
+- [D462](decisions/d462-forgelance-lances.md#d462-the-forgelances-summons-are-not-a-last-resort-its-lances-striking-as-they-are-thrown) The Forgelance's summons are not a last resort, its lances striking as they are thrown (2026-11-19)
+  - A criterion by effect, the summon as a spell's only worth; D408 undone for every breed.
