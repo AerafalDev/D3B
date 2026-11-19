@@ -166,6 +166,9 @@ public sealed class Imagination
         Effects(fight.Map, fighters, casterIndex, level, at, EffectFormulas.CriticalChance(level, caster), buffs, ref kept, 0, through: through);
         OnCell(fight.Map, fighters, casterIndex, level, at, buffs, ref kept);
 
+        if (BringsLance(level))
+            fighters[casterIndex] = ForgelanceLance.Thrown(fighters[casterIndex]);
+
         var marks = Marked(fight, fighters, casterIndex, level, at, buffs, ref kept);
 
         Walled(fight.Map, fighters, fight.Fighters, buffs, ref kept);
@@ -181,7 +184,7 @@ public sealed class Imagination
         };
     }
 
-    /// <summary>Gets the fight as a fighter's turn begins: its marks whose time is out gone, then the glyphs and bombs' walls on its cell struck on it.</summary>
+    /// <summary>Gets the fight as a fighter's turn begins: a Forgelance's lance back in its hand (D465), its marks whose time is out gone, then the glyphs and bombs' walls on its cell struck on it.</summary>
     /// <param name="fight">The fight.</param>
     /// <param name="fighterId">The fighter whose turn begins.</param>
     /// <param name="round">The round its turn is in, which tells its marks whose time is out.</param>
@@ -190,7 +193,7 @@ public sealed class Imagination
     {
         ArgumentNullException.ThrowIfNull(fight);
 
-        var struck = Struck(fight, fighterId, CellMarkKind.TurnStart, walls: true);
+        var struck = Struck(ForgelanceLance.Returned(fight, fighterId), fighterId, CellMarkKind.TurnStart, walls: true);
 
         // Measured (9f4): the server took a glyph back as its author's turn began, after the glyphs struck that author. A portal
         // stays the whole fight, the server naming no end for it (D466).
@@ -848,6 +851,17 @@ public sealed class Imagination
         }
 
         return null;
+    }
+
+    private bool BringsLance(in SpellLevel level)
+    {
+        foreach (var effect in _spells.EffectsOf(level))
+        {
+            if (effect.DiceNum == ForgelanceLance.Monster && _actions.Of(effect.EffectId).Kind is EffectKind.Summon)
+                return true;
+        }
+
+        return false;
     }
 
     private void Departed(List<Combatant> fighters, ImmutableArray<Combatant> before)
