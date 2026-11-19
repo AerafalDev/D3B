@@ -6,6 +6,7 @@
 #:project ../src/D3B.Data/D3B.Data.csproj
 #:include extract/BanksExtractor.cs
 #:include extract/BreedsExtractor.cs
+#:include extract/ChallengesExtractor.cs
 #:include extract/CharacteristicsExtractor.cs
 #:include extract/ClientMapLayout.cs
 #:include extract/EffectsExtractor.cs

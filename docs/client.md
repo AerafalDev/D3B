@@ -409,6 +409,38 @@ measuring tools never committed that print counts and write previews outside the
   auction house's. The 68 others are the house signs, prices and other numbers no hint uses. 91 pictures are 1,490,944 bytes as RGBA;
   the pack of format 12 is 111,872,773 bytes against format 11's 111,625,358, 247,415 more for the hints, their pictures and their texts.
 
+### Challenges
+
+Measured on 3.7.14.18 on 2026-11-19 for the session that has the AI play the easy challenges (D464), with `scripts/inspect.cs`
+and a measuring tool never committed that reads the table and counts the results of the owner's 2,976 captured fights by
+challenge number, nothing of the account printed.
+
+- **The table.** `Core.DataCenter.Metadata.Challenge.ChallengesDataRoot` holds 842 challenges, each with a name and a
+  description in both languages, a category, an icon, the challenges it excludes, a completion and an activation criterion,
+  and a monster for some. By category: 1, the fights' own, 43; 9, a dungeon boss's version of one of them with the same
+  completion criterion and its boss as monster, 33; 3, the dungeons' Duo, Trio, Quatuor and turns' limits, 561; 17, the
+  dungeons' Solo, 123; 4, the dungeons' own (the Kwapas'), 56; 11, the companions' collections, 25; 12, Contamination alone. 124
+  completion criteria in all; 80 exclusions name a challenge the table lacks, kept as written.
+- **The grammar of a criterion**, as far as the descriptions say: terms joined by `&`, an activation's also by `|` and
+  parentheses. A term is two letters, an operator (`=`, `<`, `>`, `~`, `!`, `#`) and arguments separated by commas. The first
+  letter is when it is checked: `T` at each turn's end, `S` over the fight, `C` on the target the server names; the dungeons'
+  `B`, `Ma` and `ST` count fighters and turns. The second is what: `M` the MP used (`TM=1,0` one, `TM=m,0` all of them), `m`
+  the cells moved (`Tm<1,0`), `T` a partial escape, `D` a distance (`TD<2` beside, `TD>1` never beside), `P` a position at the
+  turn's end (`l` in line, `d` in diagonal), `V` a line of sight (`s1` seen, `s0` unseen), `A` an action repeated (`t` a turn,
+  `g` the fight), `K` and `k` the kills, `L` their order by level, `C` the element, `O` who strikes whom, `D` the life lost.
+  Its arguments name the sides, `hc0` the allied fighters and `e1` the enemies, and `whb` walls, holes and the map's edges. An
+  activation's `G` terms test the fight as it starts: `GL` a level, `GN` the number of fighters of a side, `GM` a monster
+  among the enemies, `GB` a breed among the allies.
+- **In the fights captured**, 34 challenges, every one of category 1 but Contamination: the 12 the owner judged easy (D464),
+  whose completion asks only of each turn, were 1,458 fights, 49%, won without being played for: Zombie (`TM=1,0`) 128 fights
+  and 6% won, Statue (`Tm<1,0`) 123 and 7%, Nomade (`TM=m,0&TT=0,0`) 148 and 14%, Versatile (`SAt0`) 136 and 65%, Collant
+  (`TD<2,hc0,hc0`) 136 and 71%, Misanthrope (`TD>1,hc0,hc0`) 92 and 57%, Prudent (`TD>1,hc0,e1`) 118 and 93%, Raser les murs
+  (`TD<2,hc0,whb`) 129 and 34%, De la même lignée (`SP=te,l,hc0,hc0`) 124 and 77%, La diagonale du plein (`SP=te,d,hc0,hc0`)
+  152 and 66%, En ligne de mire (`SV=te,hc0,e1,s1,a`) 172 and 44%, and Pas vu pas pris (`SV=te,hc0,e1,s0,v`) none. The others:
+  Intouchable 188 and 66%, Barbare (`Ma=1`, the kills by a weapon) 123 and none won, Mains propres 112 and 7%, Miroir 112 and
+  none, Élémentaire 116 and 55%, Duel 124 and 74%, the targets' order (Premier, Dernier, Élitiste, Imprévisible, Tueur à
+  gages, Cruel, Ordonné, Tueur à vue) 337, and Hardi (`TD<2,hc0,e1`) 4.
+
 ### Fights' tables
 
 Laid out on 2026-10-30 for session 9a with `scripts/inspect.cs -- layout <bundle> <root> --references`, measured for
