@@ -1,6 +1,8 @@
 using D3B.Bot.Movement;
 using D3B.Bot.Runtime;
+using D3B.Bot.Tests.Groups;
 using D3B.Bot.Tests.Runtime;
+using D3B.Data.Maps;
 using D3B.Engine.Maps;
 using D3B.Protocol.Game;
 using Microsoft.Extensions.Time.Testing;
@@ -318,5 +320,99 @@ public sealed class MapWalkTests
 
         Assert.Contains($"Bot {TestPlay.CharacterId}: walks from cell 433 to cell 388, {path.Steps} steps", messages);
         Assert.Contains($"Bot {TestPlay.CharacterId}: walk to cell 388 over, Arrived", messages);
+    }
+
+    [Fact]
+    public async Task AWalkToACellAnotherBotWalksToGoesOnceThatWalkIsOver()
+    {
+        // Measured on the owner's runs of 2026-11-19 (D456): of walks to a cell another bot of the map walked to, the clients
+        // followed 9 of 28; to a free cell, 201 of 207.
+        await using var play = new TestPlay();
+        var (connection, bot) = await play.EnterAsync(300);
+        var (otherConnection, other) = await TestGroup.FollowerAsync(play, 301);
+        var path = PathOn(play, 300, 344);
+        var walk = bot.WalkAsync(344, TestContext.Current.CancellationToken);
+
+        await connection.SentAsync(1);
+        connection.Server(new MapMovementEvent { ActorId = TestPlay.CharacterId, Cells = { path.Cells.ToArray() } });
+        await bot.ProcessedAsync();
+
+        var otherWalk = other.WalkAsync(344, TestContext.Current.CancellationToken);
+
+        play.Time.Advance(TimeSpan.FromSeconds(1));
+        await TestGroup.SettleAsync(bot, other);
+        Assert.Empty(otherConnection.Sent);
+
+        connection.Client(new MapMovementConfirmRequest());
+        connection.Response(new MapMovementConfirmResponse());
+        Assert.Equal(WalkOutcome.Arrived, await walk);
+
+        var request = Assert.IsType<MapMovementRequest>(await TestWalks.SentAsync(play, otherConnection, 1));
+
+        Assert.Equal(344, request.KeyMovements[^1] & 0xFFF);
+        Assert.False(otherWalk.IsCompleted);
+    }
+
+    [Fact]
+    public async Task AWalkToACellAnotherBotStandsOnGoesAtOnce()
+    {
+        // Walks to a cell another bot stood on were followed 3 times of 4 (D456), and a master would wait on its followers.
+        await using var play = new TestPlay();
+        var (_, bot) = await play.EnterAsync(344);
+        var (otherConnection, other) = await TestGroup.FollowerAsync(play, 301);
+        var walk = other.WalkAsync(344, TestContext.Current.CancellationToken);
+
+        Assert.IsType<MapMovementRequest>(await otherConnection.SentAsync(1));
+        Assert.Equal(344, bot.State.Cell);
+        Assert.False(walk.IsCompleted);
+    }
+
+    [Fact]
+    public async Task AWalkToACellAnotherBotClaimsGoesOnceThatWalkIsUnanswered()
+    {
+        // A bot whose walk the server leaves unanswered keeps the others waiting a while, not for good.
+        await using var play = new TestPlay();
+        var (connection, bot) = await play.EnterAsync(300);
+        var (otherConnection, other) = await TestGroup.FollowerAsync(play, 301);
+        var walk = bot.WalkAsync(344, TestContext.Current.CancellationToken);
+
+        await connection.SentAsync(1);
+
+        var otherWalk = other.WalkAsync(344, TestContext.Current.CancellationToken);
+
+        play.Time.Advance(TimeSpan.FromSeconds(2));
+        await TestGroup.SettleAsync(bot, other);
+        Assert.Empty(otherConnection.Sent);
+
+        // Its walk unanswered, the first bot's claim goes with it.
+        Assert.IsType<MapMovementRequest>(await TestWalks.SentAsync(play, otherConnection, 1));
+        Assert.Equal(WalkOutcome.NoAnswer, await walk);
+        Assert.False(otherWalk.IsCompleted);
+    }
+
+    [Fact]
+    public async Task AStepAsideGoesToANeighbourNoOtherBotStandsOn()
+    {
+        await using var play = new TestPlay();
+        var cells = play.Maps.Get(TestPlay.MapId).Cells.Span;
+        var neighbours = Enumerable.Range(0, MapCell.DirectionCount).Select(direction => MapGeometry.Neighbour(20, direction)).Where(cell => cell >= 0).ToArray();
+
+        Assert.True(CellPathfinder.TryFindNearest(cells, 20, neighbours, out var nearest));
+
+        var (_, other) = await TestGroup.FollowerAsync(play, nearest.End);
+        var (connection, bot) = await play.EnterAsync(48);
+        var walk = bot.WalkAsync(20, TestContext.Current.CancellationToken);
+
+        await connection.SentAsync(1);
+        connection.Server(new MapMovementEvent { ActorId = TestPlay.CharacterId, Cells = { PathOn(play, 48, 20).Cells.ToArray() } });
+        Assert.Equal(WalkOutcome.NotConfirmed, await AdvanceUntilDoneAsync(play.Time, walk));
+
+        var aside = bot.RunAsync((context, token) => context.ReleaseHeldWalkAsync(token), TestContext.Current.CancellationToken);
+        var request = Assert.IsType<MapMovementRequest>(await connection.SentAsync(2));
+
+        Assert.Equal(20, request.KeyMovements[0] & 0xFFF);
+        Assert.NotEqual(nearest.End, request.KeyMovements[^1] & 0xFFF);
+        Assert.Equal(other.State.Cell, nearest.End);
+        Assert.False(aside.IsCompleted);
     }
 }

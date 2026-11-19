@@ -369,6 +369,33 @@ public sealed class FollowActivityTests
     }
 
     [Fact]
+    public async Task AFollowerNeverGoesRoundWhileItsMasterIsOneMapAway()
+    {
+        // Measured on the owner's runs of 2026-11-19 (D456): after three changes failed, a follower's journey to the map its
+        // master had reached in one change went round by nine; the way had not failed, the follower had.
+        await using var play = new TestPlay();
+        var (masterConnection, _) = await TestGroup.MasterAsync(play, 300);
+        var (connection, follower) = await TestGroup.FollowerAsync(play, 301);
+        var run = Follow(play, follower, TestGroup.Master);
+
+        await TestGroup.UntilAsync(play, () => Doing(run) == "Follows Master", "following");
+        TestGroup.Arrive(masterConnection, TestGroup.MasterId, TestPlay.NorthMapId, 500);
+
+        // Each walk to the edge refused where the follower stands: six changes failed in a row.
+        for (var count = 1; count <= 6; count++)
+        {
+            var walk = Assert.IsType<MapMovementRequest>(await TestGroup.SentAsync(play, connection, count));
+            var stood = MapGeometry.PointOf(walk.KeyMovements[0] & 0xFFF);
+
+            connection.Server(new MapMovementRefusedEvent { X = stood.X, Y = stood.Y });
+        }
+
+        await TestGroup.UntilAsync(play, () => Doing(run) == "Finds no way to Master, tries again", "stuck");
+        Assert.Empty(follower.Journal.All().OfType<TravelEntry>());
+        run.Stop();
+    }
+
+    [Fact]
     public async Task AFollowerGoesWithoutWaitingForTheOneBeforeIt()
     {
         // The owner's choice (D447): in real time, whatever the others' order.

@@ -1422,6 +1422,12 @@ failure; without the captures, the pins and the structure pair the same.
   alone, and keeps it open when D3B accepts. Closed by hand later, an invitation's window sends a refusal: five times,
   40 s to 6 min after D3B accepted, none answered, no follower leaving its party. A client connecting while in a party is
   told its party with no invitation before it.
+- **Several characters walking at once** (D456), on the owner's runs of 2026-11-19, one master and three followers, each
+  in its own client: of the walks of a character the server held no walk of, to a cell another character of the host on
+  its map was already walking to, the clients followed 9 of 28, against 201 of 207 to a free cell; the first on its way
+  to the shared cell was followed 17 times of 21. After a walk not followed, the next was followed 4 times in 74 and
+  refused 53, a refusal naming the walk's first cell, not its last; a door used from the cell a refusal named was refused
+  25 times in a row. The first walks on a map, 0.50 to 0.53 s after its information, were followed 162 times of 170.
 
 
 ## The game, the challenges' bonus

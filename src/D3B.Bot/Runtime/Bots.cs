@@ -45,6 +45,7 @@ public sealed class Bots : IGameObserver, IAsyncDisposable
     private readonly ConcurrentDictionary<CharacterKey, BotActor> _bots = new();
     private readonly ConcurrentDictionary<GameSession, Binding> _sessions = new();
     private readonly ConcurrentDictionary<CharacterKey, FightPilot> _pilots = new();
+    private readonly MapMates _mates;
     private volatile BotDelays _delays = BotDelays.Measured;
     private volatile bool _fightsAlone;
 
@@ -111,6 +112,7 @@ public sealed class Bots : IGameObserver, IAsyncDisposable
         _time = time;
         _logs = logs;
         _log = logs.CreateLogger<Bots>();
+        _mates = new MapMates(() => All);
     }
 
     /// <summary>Finds the bot of a character.</summary>
@@ -179,6 +181,7 @@ public sealed class Bots : IGameObserver, IAsyncDisposable
                 var gate = new GroupGate(bot, Groups);
 
                 bot.Gate = gate;
+                bot.Mates = _mates;
                 bot.Team = new GroupFight(bot, Groups);
                 bot.Bank = new GroupBank(bot, Groups, gate, _tables);
                 _bots[key] = bot;

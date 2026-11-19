@@ -118,8 +118,11 @@ public static class MapChange
 
     private static async Task<MapChangeOutcome> ChangeAsync(BotContext context, WorldStep step, WorldPathRules rules, long destination, CancellationToken cancellationToken)
     {
-        // The server refuses a map change or a teleport while it holds a walk the client did not follow (D89).
-        await context.ReleaseHeldWalkAsync(cancellationToken).ConfigureAwait(false);
+        // The server refuses a map change or a teleport while it holds a walk the client did not follow (D89), and still did
+        // after a refusal: measured on the owner's runs of 2026-11-19, a door used from the cell a refusal named was refused
+        // 25 times (D456). Only a walk shown lets it go, or a new map.
+        if (!await ReleasedAsync(context, cancellationToken).ConfigureAwait(false))
+            return MapChangeOutcome.NotWalked;
 
         var state = context.State;
         var world = context.World;
@@ -154,24 +157,41 @@ public static class MapChange
             // Standing on an exit of the map's edge, the character leaves from there, with no walk at all: measured on the
             // owner's retest of 2026-11-19 (D451), a one-step walk onto another exit went unconfirmed and the change unanswered.
             if (step.Transition.Type is not WorldTransitionType.MapAction and not WorldTransitionType.Interactive && exits.Contains(cell))
+            {
                 exits = [cell];
+            }
+            else
+            {
+                // Measured (9g5): the client does not follow a walk ending where its previous one did, such as the same cell of
+                // each map's edge on a journey straight on; another exit saves walking in two (MapWalk).
+                if (exits.Any(exit => exit != state.LastWalkEnd))
+                    exits = [.. exits.Where(exit => exit != state.LastWalkEnd)];
 
-            // Measured (9g5): the client does not follow a walk ending where its previous one did, such as the same cell of
-            // each map's edge on a journey straight on; another exit saves walking in two (MapWalk).
-            else if (exits.Any(exit => exit != state.LastWalkEnd))
-                exits = [.. exits.Where(exit => exit != state.LastWalkEnd)];
+                // Measured on the owner's runs of 2026-11-19 (D456): followers standing on one cell walked to the same nearest
+                // exit at once, and the clients of all but one did not follow. Each takes an exit no other bot stands on or walks to.
+                var taken = context.TakenCells();
 
-            if (!CellPathfinder.TryFindNearest(map.Cells.Span, cell, [.. exits], out var path))
+                if (exits.Any(exit => !taken.Contains(exit)))
+                    exits = [.. exits.Where(exit => !taken.Contains(exit))];
+            }
+
+            if (Nearest(context, map, cell, exits) is not { } nearest)
                 return MapChangeOutcome.NoPath;
 
-            BotLog.ChangingMap(context.Log, state.Key.CharacterId, mapId, destination, step.Transition.Type, path.End);
+            var (path, claim) = nearest;
 
-            outcome = step.Transition.Type switch
+            // Held until the character left: a door's cell or a map action's is then free for the next bot, in turn.
+            using (claim)
             {
-                WorldTransitionType.MapAction => await StepOnAsync(context, map, path, cancellationToken).ConfigureAwait(false),
-                WorldTransitionType.Interactive => await UseDoorAsync(context, mapId, path, step.Transition.ElementId, step.Transition.SkillId, cancellationToken).ConfigureAwait(false),
-                _ => await ScrollAsync(context, mapId, path, (int)step.Transition.MapId, cancellationToken).ConfigureAwait(false),
-            };
+                BotLog.ChangingMap(context.Log, state.Key.CharacterId, mapId, destination, step.Transition.Type, path.End);
+
+                outcome = step.Transition.Type switch
+                {
+                    WorldTransitionType.MapAction => await StepOnAsync(context, map, path, cancellationToken).ConfigureAwait(false),
+                    WorldTransitionType.Interactive => await UseDoorAsync(context, mapId, path, step.Transition.ElementId, step.Transition.SkillId, cancellationToken).ConfigureAwait(false),
+                    _ => await ScrollAsync(context, mapId, path, (int)step.Transition.MapId, cancellationToken).ConfigureAwait(false),
+                };
+            }
         }
 
         if (outcome is MapChangeOutcome.Changed && context.State.MapId != destination)
@@ -182,9 +202,36 @@ public static class MapChange
         return outcome;
     }
 
+    // Whether the server holds no walk of the character's, once a step aside was tried (D89, D456): a walk shown lets it go.
+    internal static async Task<bool> ReleasedAsync(BotContext context, CancellationToken cancellationToken)
+    {
+        return await context.ReleaseHeldWalkAsync(cancellationToken).ConfigureAwait(false) is WalkOutcome.Arrived || !context.State.IsWalkHeld;
+    }
+
+    // The nearest exit the bot could claim, claimed at once, so that bots choosing together choose apart; with every exit
+    // claimed, the nearest, whose walk then waits its turn (D456).
+    private static (CellPath Path, IDisposable Claim)? Nearest(BotContext context, MapData map, int cell, IReadOnlyList<int> exits)
+    {
+        var left = exits.ToList();
+        CellPath? first = null;
+
+        while (left.Count > 0 && CellPathfinder.TryFindNearest(map.Cells.Span, cell, [.. left], out var path))
+        {
+            first ??= path;
+
+            if (context.TryClaim(map.Id, path.End, out var claim))
+                return (path, claim);
+
+            left.Remove(path.End);
+        }
+
+        return first is null ? null : (first, BotContext.NoClaim);
+    }
+
     private static async Task<MapChangeOutcome> LeaveAsync(BotContext context, CancellationToken cancellationToken)
     {
-        await context.ReleaseHeldWalkAsync(cancellationToken).ConfigureAwait(false);
+        if (!await ReleasedAsync(context, cancellationToken).ConfigureAwait(false))
+            return MapChangeOutcome.NotWalked;
 
         var state = context.State;
         var self = state.Key.CharacterId;

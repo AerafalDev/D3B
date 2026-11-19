@@ -90,7 +90,7 @@ public static class MapWalk
         if (state.MapId is not { } mapId || state.Cell is not { } from || state.IsBusy)
             return WalkOutcome.Busy;
 
-        var neighbours = Enumerable.Range(0, MapCell.DirectionCount).Select(direction => MapGeometry.Neighbour(from, direction)).Where(neighbour => neighbour >= 0).ToArray();
+        var neighbours = Clear(context, Enumerable.Range(0, MapCell.DirectionCount).Select(direction => MapGeometry.Neighbour(from, direction)).Where(neighbour => neighbour >= 0));
 
         if (!context.Maps.TryGet(mapId, out var map) || !CellPathfinder.TryFindNearest(map.Cells.Span, from, neighbours, out var aside))
             return WalkOutcome.NoPath;
@@ -167,10 +167,9 @@ public static class MapWalk
         }
         else
         {
-            var neighbours = Enumerable.Range(0, MapCell.DirectionCount)
+            var neighbours = Clear(context, Enumerable.Range(0, MapCell.DirectionCount)
                 .Select(direction => MapGeometry.Neighbour(path.Start, direction))
-                .Where(neighbour => neighbour >= 0 && neighbour != path.End)
-                .ToArray();
+                .Where(neighbour => neighbour >= 0 && neighbour != path.End));
 
             if (!CellPathfinder.TryFindNearest(cells, path.Start, neighbours, out away) || away.Steps is 0)
                 return null;
@@ -179,9 +178,23 @@ public static class MapWalk
         return await WalkAlongAsync(context, mapId, away, cancellationToken).ConfigureAwait(false);
     }
 
+    // The cells no other bot of the host stands on, walks to or claims, when one is (D456): a step aside to the cell another
+    // steps to, measured at the bank's door, was refused for both.
+    private static int[] Clear(BotContext context, IEnumerable<int> cells)
+    {
+        var all = cells.ToArray();
+        var taken = context.TakenCells();
+        var clear = all.Where(cell => !taken.Contains(cell)).ToArray();
+
+        return clear.Length > 0 ? clear : all;
+    }
+
     private static async Task<WalkOutcome> WalkAlongAsync(BotContext context, long mapId, CellPath path, CancellationToken cancellationToken)
     {
         var self = context.State.Key.CharacterId;
+
+        // Two bots of the host walking to one cell at once: the clients followed 9 such walks of 28 (D456).
+        using var claim = await context.ClaimAsync(mapId, path.End, cancellationToken).ConfigureAwait(false);
 
         // Both are expected before the request goes, so that no answer can come before the bot looks for it.
         var answer = context.Expect((side, message, _) => side is RelayDirection.FromServer

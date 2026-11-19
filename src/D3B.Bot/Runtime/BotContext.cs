@@ -17,11 +17,18 @@ namespace D3B.Bot.Runtime;
 /// </remarks>
 public sealed class BotContext
 {
+    // A claim another bot holds is released once its walk is over, or its map change: this bounds a wait the server leaves
+    // unanswered, a walk's and a change's own delays being longer (D456).
+    private static readonly TimeSpan _mostWaitedForCell = TimeSpan.FromSeconds(5);
+
     private readonly BotActor _bot;
     private readonly RunningBehavior _behavior;
 
     // Only the behavior's own sequence of calls begins and ends actions.
     private int _actions;
+
+    /// <summary>Gets a claim that releases nothing, for a cell the bot could not claim (D456).</summary>
+    internal static IDisposable NoClaim => Claim.None;
 
     /// <summary>Gets the character's state now: a snapshot, which the next message the bot sees replaces.</summary>
     public CharacterState State => _bot.State;
@@ -174,6 +181,77 @@ public sealed class BotContext
         await _behavior.Session.SendAsync(request, cancellationToken).ConfigureAwait(false);
     }
 
+    /// <summary>Gets the cells of the character's map that the host's other bots stand on, walk to or claim (D456).</summary>
+    /// <returns>The cells; none off a map, or for a bot alone in the host.</returns>
+    internal IReadOnlySet<int> TakenCells()
+    {
+        return _bot.Mates is { } mates && State.MapId is { } mapId ? mates.Taken(_bot, mapId) : new HashSet<int>();
+    }
+
+    /// <summary>Claims a cell of the character's map at once, unless another bot claims it (D456).</summary>
+    /// <param name="mapId">The map.</param>
+    /// <param name="cell">The cell.</param>
+    /// <param name="claim">Releases the claim this call made; nothing when the bot held it already, or failed to.</param>
+    /// <returns>Whether the bot holds the claim.</returns>
+    internal bool TryClaim(long mapId, int cell, out IDisposable claim)
+    {
+        claim = Claim.None;
+
+        if (_bot.Mates is not { } mates)
+            return true;
+
+        if (!mates.TryClaim(_bot, mapId, cell, out var made))
+            return false;
+
+        if (made)
+            claim = new Claim(mates, _bot, mapId, cell);
+
+        return true;
+    }
+
+    /// <summary>Claims a cell of the character's map before a walk to it, once no other bot claims it or walks to it (D456).</summary>
+    /// <param name="mapId">The map.</param>
+    /// <param name="cell">The cell the walk ends on.</param>
+    /// <param name="cancellationToken">The behavior's token.</param>
+    /// <returns>Releases the claim this call made, once the walk is over.</returns>
+    /// <remarks>
+    /// Measured on the owner's runs of 2026-11-19: the clients followed 9 of 28 walks to a cell another bot of the map was
+    /// already walking to, so that two bots needing one cell, such as a door's, take it in turn. A bot standing on the cell
+    /// holds no one up: walks to such a cell were followed 3 times of 4, and a master would wait on its followers' cells.
+    /// The wait is bounded, the bot then walking all the same.
+    /// </remarks>
+    internal async Task<IDisposable> ClaimAsync(long mapId, int cell, CancellationToken cancellationToken)
+    {
+        if (_bot.Mates is not { } mates)
+            return Claim.None;
+
+        var until = _bot.Time.GetUtcNow() + _mostWaitedForCell;
+
+        while (true)
+        {
+            var changed = mates.Changed;
+            var walker = mates.WalkingTo(_bot, mapId, cell);
+
+            if (walker is null && TryClaim(mapId, cell, out var claim))
+                return claim;
+
+            var left = until - _bot.Time.GetUtcNow();
+
+            if (left <= TimeSpan.Zero)
+                return Claim.None;
+
+            using var linked = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+            var waits = new List<Task> { changed, Task.Delay(left, _bot.Time, linked.Token) };
+
+            if (walker is not null)
+                waits.Add(walker.WaitUntilAsync(other => !other.IsConnected || other.State.MapId != mapId || !other.State.IsWalking || other.State.Path[^1] != cell, linked.Token));
+
+            await Task.WhenAny(waits).ConfigureAwait(false);
+            await linked.CancelAsync().ConfigureAwait(false);
+            cancellationToken.ThrowIfCancellationRequested();
+        }
+    }
+
     /// <summary>Begins an action the journal writes once over, within the actions begun before it and not over (D112).</summary>
     internal JournalAction BeginAction()
     {
@@ -191,5 +269,29 @@ public sealed class BotContext
         var now = _bot.Time.GetUtcNow();
 
         _bot.Journal.Add(entry(now, now - action.Started));
+    }
+
+    private sealed class Claim : IDisposable
+    {
+        private readonly MapMates? _mates;
+        private readonly BotActor? _bot;
+        private readonly long _mapId;
+        private readonly int _cell;
+
+        public static IDisposable None { get; } = new Claim(null, null, 0, 0);
+
+        public Claim(MapMates? mates, BotActor? bot, long mapId, int cell)
+        {
+            _mates = mates;
+            _bot = bot;
+            _mapId = mapId;
+            _cell = cell;
+        }
+
+        public void Dispose()
+        {
+            if (_mates is not null && _bot is not null)
+                _mates.Release(_bot, _mapId, _cell);
+        }
     }
 }

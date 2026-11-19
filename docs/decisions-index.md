@@ -681,3 +681,8 @@ or refines another says so in its own entry. Add a line here with every new deci
 
 - [D455](decisions/d455-groups-windows-left-open.md#d455-the-windows-of-an-invitation-or-an-exchange-the-bot-answered-stay-open-closed-by-hand) The windows of an invitation or an exchange the bot answered stay open, closed by hand (2026-11-19)
   - Withholding the event that opens them, injecting the event that closes them.
+
+## Groups, one cell each (D456)
+
+- [D456](decisions/d456-groups-one-cell-each.md#d456-no-two-bots-of-the-host-walk-to-one-cell-at-once-a-walk-the-server-holds-is-let-go-only-by-a-walk-and-a-follower-never-goes-round-while-its-master-is-one-map-away) No two bots of the host walk to one cell at once, a walk the server holds is let go only by a walk, and a follower never goes round while its master is one map away (2026-11-19)
+  - The followers in a chain, the game's own following, the master's cells copied, a longer delay, waiting on a bot standing on the cell.

@@ -1,5 +1,9 @@
 using D3B.Bot.Movement;
+using D3B.Engine.Criteria;
 using D3B.Engine.Maps;
+using D3B.Bot.Tests.Groups;
+using D3B.Bot.Network;
+using D3B.Bot.Runtime;
 using D3B.Bot.Tests.Runtime;
 using D3B.Data.World;
 using D3B.Engine.World;
@@ -317,5 +321,124 @@ public sealed class MapChangeTests
 
         Assert.Equal(MapChangeOutcome.NoPath, await bot.ChangeMapAsync(step, TestContext.Current.CancellationToken));
         Assert.Empty(connection.Sent);
+    }
+
+    [Fact]
+    public async Task TwoBotsLeavingByOneScrollAtOnceWalkToTwoCellsOfItsEdge()
+    {
+        // Measured on the owner's runs of 2026-11-19 (D456): three followers on one cell walked to the edge's same nearest
+        // cell at once, and the clients of two did not follow their walks.
+        await using var play = new TestPlay();
+        var (connection, bot) = await play.EnterAsync(433);
+        var (otherConnection, other) = await TestGroup.FollowerAsync(play, 433);
+
+        _ = bot.ChangeMapAsync(play.StepTo(bot, TestPlay.NorthMapId), TestContext.Current.CancellationToken);
+        _ = other.ChangeMapAsync(play.StepTo(other, TestPlay.NorthMapId), TestContext.Current.CancellationToken);
+
+        var walk = Assert.IsType<MapMovementRequest>(await TestWalks.SentAsync(play, connection, 1));
+        var otherWalk = Assert.IsType<MapMovementRequest>(await TestWalks.SentAsync(play, otherConnection, 1));
+
+        Assert.NotEqual(walk.KeyMovements[^1] & 0xFFF, otherWalk.KeyMovements[^1] & 0xFFF);
+    }
+
+    [Fact]
+    public async Task ACharacterTheServerStillHoldsUsesNoDoorBeforeAWalkOfItsIsConfirmed()
+    {
+        // Measured on the owner's runs of 2026-11-19 (D456): held, then refused a walk, a follower used the bank's door from
+        // the cell the refusal named 25 times, each refused.
+        await using var play = new TestPlay();
+        var (connection, bot) = await play.EnterAsync(433);
+
+        Assert.True(CellPathfinder.TryFind(play.Maps.Get(TestPlay.MapId).Cells.Span, 433, 287, out var path));
+
+        var walk = bot.WalkAsync(287, TestContext.Current.CancellationToken);
+
+        await connection.SentAsync(1);
+        connection.Server(new MapMovementEvent { ActorId = TestPlay.CharacterId, Cells = { path.Cells.ToArray() } });
+        Assert.Equal(WalkOutcome.NotConfirmed, await TestWalks.AdvanceUntilDoneAsync(play.Time, walk));
+
+        var change = bot.ChangeMapAsync(play.StepTo(bot, TestPlay.InsideMapId), TestContext.Current.CancellationToken);
+        var stood = MapGeometry.PointOf(287);
+
+        Assert.IsType<MapMovementRequest>(await connection.SentAsync(2));
+        connection.Server(new MapMovementRefusedEvent { X = stood.X, Y = stood.Y });
+
+        Assert.Equal(MapChangeOutcome.NotWalked, await TestWalks.AdvanceUntilDoneAsync(play.Time, change));
+        Assert.DoesNotContain(connection.Sent, request => request is InteractiveUseRequest);
+        Assert.True(bot.State.IsWalkHeld);
+        Assert.Equal(287, bot.State.Cell);
+    }
+
+    [Fact]
+    public async Task ABotTakesADoorsCellInTurnOnceTheBotOnItLeftTheMap()
+    {
+        // Measured on the owner's runs of 2026-11-19 (D456): three followers walked to the bank door's cells at once, and the
+        // last was held by the server for minutes.
+        await using var play = new TestPlay();
+        var first = await play.EnterAsync(433);
+        var step = play.StepTo(first.Bot, TestPlay.InsideMapId);
+        var rules = new WorldPathRules { Facts = new CriterionFacts { Subscribed = true } };
+        var exits = new WorldPathfinder(play.World.Graph, play.World.Atlas).ExitCells(play.Maps.Get(TestPlay.MapId), step, rules);
+        var bots = new List<(TestConnection Connection, BotActor Bot, long Id)> { (first.Connection, first.Bot, TestPlay.CharacterId) };
+
+        for (var count = 1; count <= exits.Count; count++)
+        {
+            var id = 100_000L + count;
+            var (connection, bot) = await play.EnterAsync(433, TestPlay.MapId, new GameAccount(100 + count, $"bot{count}", "tag"), id, $"Bot{count}");
+
+            bots.Add((connection, bot, id));
+        }
+
+        var doors = new HashSet<int>();
+
+        // Every door's cell its own: each walked to, the door asked for, the new map not yet named.
+        foreach (var (connection, bot, id) in bots.Take(exits.Count))
+        {
+            _ = bot.ChangeMapAsync(play.StepTo(bot, TestPlay.InsideMapId), TestContext.Current.CancellationToken);
+            doors.Add(await TestGroup.WalkedAsync(play, connection, id, 1));
+            Assert.IsType<InteractiveUseRequest>(await TestGroup.SentAsync(play, connection, 2));
+        }
+
+        Assert.Equal(exits.Count, doors.Count);
+
+        var (lastConnection, last, _) = bots[^1];
+        var change = last.ChangeMapAsync(play.StepTo(last, TestPlay.InsideMapId), TestContext.Current.CancellationToken);
+
+        play.Time.Advance(TimeSpan.FromSeconds(2));
+        await TestGroup.SettleAsync([.. bots.Select(bot => bot.Bot)]);
+        Assert.Empty(lastConnection.Sent);
+
+        // The first goes in: its cell is the next one's.
+        bots[0].Connection.Server(new InteractiveUsedEvent { ActorId = TestPlay.CharacterId, ElementId = TestPlay.DoorElementId, SkillId = 184 });
+        TestWalks.Arrive(bots[0].Connection, TestPlay.InsideMapId, 396);
+
+        var walk = Assert.IsType<MapMovementRequest>(await TestGroup.SentAsync(play, lastConnection, 1));
+
+        Assert.Contains(walk.KeyMovements[^1] & 0xFFF, doors);
+        Assert.False(change.IsCompleted);
+    }
+
+    [Fact]
+    public async Task ACharacterTheServerStillHoldsAsksForNoHavenBag()
+    {
+        await using var play = new TestPlay();
+        var (connection, bot) = await play.EnterAsync(433);
+
+        Assert.True(CellPathfinder.TryFind(play.Maps.Get(TestPlay.MapId).Cells.Span, 433, 388, out var path));
+
+        var walk = bot.WalkAsync(388, TestContext.Current.CancellationToken);
+
+        await connection.SentAsync(1);
+        connection.Server(new MapMovementEvent { ActorId = TestPlay.CharacterId, Cells = { path.Cells.ToArray() } });
+        Assert.Equal(WalkOutcome.NotConfirmed, await TestWalks.AdvanceUntilDoneAsync(play.Time, walk));
+
+        var enter = bot.RunAsync((context, token) => context.EnterHavenBagAsync(token), TestContext.Current.CancellationToken);
+        var stood = MapGeometry.PointOf(388);
+
+        Assert.IsType<MapMovementRequest>(await connection.SentAsync(2));
+        connection.Server(new MapMovementRefusedEvent { X = stood.X, Y = stood.Y });
+
+        Assert.Equal(MapChangeOutcome.NotWalked, await TestWalks.AdvanceUntilDoneAsync(play.Time, enter));
+        Assert.DoesNotContain(connection.Sent, request => request is HavenBagEnterRequest);
     }
 }
