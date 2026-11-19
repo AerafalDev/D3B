@@ -76,7 +76,12 @@ public sealed class GroupBankTests
         Assert.Equal(new ExchangeObjectMoveRequest { Uid = AshUid, Quantity = quantity }, await TestGroup.SentAsync(play, follower, followerSent + 2));
         Both(master, follower, new ExchangeObjectsAddedEvent());
 
+        var changed = play.Time.GetUtcNow();
+
         Assert.Equal(new ExchangeReadyRequest { Step = 1, Ready = true }, await TestGroup.SentAsync(play, follower, followerSent + 3));
+
+        // Measured on the owner's test of 2026-11-19 (D458): a readiness 0.5 s after the exchange's last change went unanswered.
+        Assert.True(play.Time.GetUtcNow() - changed >= TimeSpan.FromSeconds(3.5));
         Both(master, follower, new ExchangeReadyEvent { Ready = true, CharacterId = TestGroup.FollowerId });
 
         Assert.Equal(new ExchangeReadyRequest { Step = 1, Ready = true }, await TestGroup.SentAsync(play, master, masterSent + 2));
@@ -244,6 +249,34 @@ public sealed class GroupBankTests
         Both(masterConnection, connection, new ExchangeReadyEvent { Ready = true, CharacterId = TestGroup.FollowerId });
 
         Assert.Equal(new ExchangeReadyRequest { Step = 3, Ready = true }, await TestGroup.SentAsync(play, masterConnection, 6));
+        leading.Stop();
+        run.Stop();
+    }
+
+    [Fact]
+    public async Task AFollowerSaysItIsReadyAgainWhenTheServerToldNothingThreeTimesAtMost()
+    {
+        // Measured on the owner's test of 2026-11-19 (D458): a readiness the server did not take was never sent again, and the
+        // master gave the exchange up 30 s later.
+        await using var play = new TestPlay();
+        var (masterConnection, master, connection, _, run) = await InTheBankAsync(play, 100);
+        var leading = master.StartActivity(new BankingActivity { Loot = new HashSet<int> { MastersLoot } });
+
+        await DepositedAsync(play, masterConnection, 0, 12, 14);
+
+        Assert.IsType<ExchangePlayerRequest>(await TestGroup.SentAsync(play, connection, 3));
+        Both(masterConnection, connection, new ExchangeRequestedEvent { Type = ExchangeType.Player, SourceId = TestGroup.FollowerId, TargetId = TestGroup.MasterId });
+        Assert.IsType<ExchangeAcceptRequest>(await TestGroup.SentAsync(play, masterConnection, 5));
+        Both(masterConnection, connection, new ExchangeStartedWithPlayerEvent { Type = ExchangeType.Player });
+        Assert.IsType<ExchangeObjectMoveRequest>(await TestGroup.SentAsync(play, connection, 4));
+        Both(masterConnection, connection, new ExchangeObjectsAddedEvent());
+
+        for (var ready = 5; ready <= 7; ready++)
+            Assert.Equal(new ExchangeReadyRequest { Step = 1, Ready = true }, await TestGroup.SentAsync(play, connection, ready));
+
+        play.Time.Advance(TimeSpan.FromSeconds(10));
+        await TestGroup.SettleAsync(master);
+        Assert.Equal(3, connection.Sent.Count(request => request is ExchangeReadyRequest));
         leading.Stop();
         run.Stop();
     }

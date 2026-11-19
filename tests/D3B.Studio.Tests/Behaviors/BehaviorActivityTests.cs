@@ -39,6 +39,28 @@ public sealed class BehaviorActivityTests : IAsyncDisposable
     }
 
     [Fact]
+    public async Task AnActivityStartedFullUnloadsBeforeItsFirstStep()
+    {
+        // The owner's report from game (D458): the master's profile travelled to its zone before it saw its full mule, the
+        // pods its activity watches unknown to the run until that activity's first step.
+        await _behaviors.PreparedAsync();
+
+        var (_, bot) = await _behaviors.Play.EnterAsync(300);
+        var behavior = _behaviors.Assets.Find<BehaviorAsset>(GivenAssets.BehaviorOf(FullActivityId))!;
+        var start = _behaviors.Starter.Start(bot, ProfileOf(behavior));
+
+        Assert.Null(start.Failure);
+
+        // Still full once unloaded, the run ends there: what it did before is all there is.
+        await start.Run!.Completion.WaitAsync(TimeSpan.FromSeconds(10), TestContext.Current.CancellationToken);
+
+        var activity = Assert.Single(_behaviors.Activities.OfType<D3B.Bot.Tests.Activities.TestActivity>());
+
+        Assert.Equal(1, activity.Unloads);
+        Assert.Equal(0, activity.Started);
+    }
+
+    [Fact]
     public async Task TheFirstStateWhoseConditionsHoldIsChosenAgainAtEachStepAsTheStateChanges()
     {
         var (connection, bot) = await _behaviors.Play.EnterAsync(300);

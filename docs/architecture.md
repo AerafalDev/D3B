@@ -336,7 +336,8 @@ The bots run in `D3B.Bot`: what each part does today, with the decisions that ma
   (`GroupLife`, the life its activity watches), and the follower with its master eats what only heals, else regenerates.
   A master whose activity banks unloads through its group's bank (D442, `IGroupBank`, `BotActor.Bank`, `GroupBank`), which
   its run asks before each step: a follower full at the pods the activity watches takes the group to the bank, each
-  follower gives the master what it carries by an exchange (`CharacterState.Exchange`, `GroupGifts`, the round in
+  follower gives the master what it carries by an exchange, its readiness once 3.5 s passed with no change (D458)
+  (`CharacterState.Exchange`, `GroupGifts`, the round in
   `GroupDirectory.Collect`), and the master deposits, first and again when an exchange does not conclude, all it does not wear but its food (D452),
   the stacks the bank left, such as a quest's objects, left for the rest of that unloading (D457).
 - **Fighting** (D236, D241, D245 to D249, D259), in `D3B.Bot.Fighting`, registered by `FightingModule`: `FightActivity`, its
@@ -926,7 +927,8 @@ moved to `D3B.Studio` (D393), with no new interface:
 - **The run time** (D315): `ProfileStarter` compiles a profile's behavior with its values (`BehaviorCompiler`, problems said
   where they are) and starts `BehaviorActivity`, the one activity that runs any behavior: each step the leaf chosen, then
   its actions gone through from the first, goals passed, what the state says nothing of played once per visit
-  (`StateVisit`), an activity's node delegating to today's activity; a leaf played to its end and chosen again is done
+  (`StateVisit`), an activity's node delegating to today's activity, which plays nothing at the step it starts, so that the
+  run looks at its pods first (D458); a leaf played to its end and chosen again is done
   unless it repeats (`BehaviorState.Repeat`: a number of times, for ever or until a condition, D421); no state holding, the run waits. On the bot's loop (`BotActivity.Watch`) rules play on events and an
   urgent state cuts the step. Variables of the run, the character's (`CharacterVariables`, kept by `D3B.Storage`) and the
   bots' (`SharedVariables`). The journal says each state entered and each note; the trace, each decision (D350).

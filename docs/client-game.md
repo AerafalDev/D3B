@@ -1428,6 +1428,9 @@ failure; without the captures, the pins and the structure pair the same.
   to the shared cell was followed 17 times of 21. After a walk not followed, the next was followed 4 times in 74 and
   refused 53, a refusal naming the walk's first cell, not its last; a door used from the cell a refusal named was refused
   25 times in a row. The first walks on a map, 0.50 to 0.53 s after its information, were followed 162 times of 170.
+- **The exchange's readiness** (D458), on the owner's test of 2026-11-19: a follower moving 67 stacks one by one, each after
+  the client's display time, took 39 s. A readiness sent 0.5 s after the exchange's last change was never answered, twice;
+  every one sent 3.5 to 4 s after was answered 28 ms later, and the master's, sent 60 ms after its follower's, was taken.
 
 
 ## The game, the challenges' bonus

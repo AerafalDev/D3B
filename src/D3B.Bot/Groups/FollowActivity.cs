@@ -59,6 +59,12 @@ public sealed class FollowActivity : BotActivity, IDisposable
     // How long the follower waits for its exchange with its master to open, then to conclude, as the master waits (D442).
     private static readonly TimeSpan _exchangeWait = TimeSpan.FromSeconds(30);
 
+    // Measured on the owner's test of 2026-11-19 (D458): the server took no readiness sent 0.5 s after the exchange's last
+    // change, twice, and every one sent 3.5 to 4 s after; the owner's own hand waits 3 to 5 s. Unanswered, it goes again.
+    private static readonly TimeSpan _readyAfterChange = TimeSpan.FromSeconds(3.5);
+
+    private static readonly TimeSpan _readyAgainAfter = TimeSpan.FromSeconds(1);
+
     private readonly Bots _bots;
     private readonly GameTables _tables;
     private readonly string _masterId;
@@ -553,8 +559,8 @@ public sealed class FollowActivity : BotActivity, IDisposable
 
     // Whether it gave this step: its master taking its objects at the bank (D433, D442), it asks the master for an exchange
     // once a round, moves in, one by one, what the master's pods still hold of the stacks it does not wear, never its kamas,
-    // then says it is ready naming how many changes the server told it of, as the client did (D442). Its master accepts and
-    // concludes.
+    // then says it is ready naming how many changes the server told it of, as the client did (D442), no sooner than the
+    // server takes it (D458). Its master accepts and concludes.
     private async Task<bool> GiveAsync(BotContext context, BotSeen master, CancellationToken cancellationToken)
     {
         var me = context.Actor;
@@ -585,26 +591,46 @@ public sealed class FollowActivity : BotActivity, IDisposable
         foreach (var (uid, quantity) in GroupGifts.Of(state, master.Bot.State, _tables.Items))
         {
             // Its master gave up the exchange, or the player closed it: nothing more goes in.
-            if (context.State.Exchange is not { IsOpen: true } still)
+            if (context.State.Exchange is not { IsOpen: true })
                 return true;
 
-            var changes = still.Changes;
-
-            await context.SendAsync(new ExchangeObjectMoveRequest { Uid = uid, Quantity = quantity }, cancellationToken).ConfigureAwait(false);
-
-            // Measured (D442): each move told to both 28 ms after; one the server refuses, such as an object bound to the
-            // account (D153), changes nothing, and the next goes on.
-            await context.WaitUntilAsync(now => now.Exchange is not { IsOpen: true } open || open.Changes > changes, context.Delays.Answer, cancellationToken).ConfigureAwait(false);
+            await MovedAsync(context, new ExchangeObjectMoveRequest { Uid = uid, Quantity = quantity }, cancellationToken).ConfigureAwait(false);
             await Task.Delay(context.Delays.Display, context.Time, cancellationToken).ConfigureAwait(false);
         }
 
-        if (context.State.Exchange is not { IsOpen: true } moved)
+        if (context.State.Exchange is not { IsOpen: true })
             return true;
 
-        await context.SendAsync(new ExchangeReadyRequest { Step = moved.Changes, Ready = true }, cancellationToken).ConfigureAwait(false);
+        // Until 3.5 s passed with no change told, whichever moves them, as the server takes no readiness sooner (D458).
+        for (var seen = context.State.Exchange.Changes; ; seen = context.State.Exchange?.Changes ?? seen)
+        {
+            if (!await context.WaitUntilAsync(now => now.Exchange is not { IsOpen: true } open || open.Changes != seen, _readyAfterChange, cancellationToken).ConfigureAwait(false))
+                break;
+
+            if (context.State.Exchange is not { IsOpen: true })
+                return true;
+        }
+
+        // Its readiness unanswered, it says it again, as long as the exchange is open: the master waits 30 s for it.
+        for (var attempt = 0; attempt < 3 && context.State.Exchange is { IsOpen: true, IsReady: false } moved; attempt++)
+        {
+            await context.SendAsync(new ExchangeReadyRequest { Step = moved.Changes, Ready = true }, cancellationToken).ConfigureAwait(false);
+            await context.WaitUntilAsync(now => now.Exchange is not { IsOpen: true, IsReady: false }, _readyAgainAfter, cancellationToken).ConfigureAwait(false);
+        }
+
         await context.WaitUntilAsync(now => now.Exchange is null, _exchangeWait, cancellationToken).ConfigureAwait(false);
 
         return true;
+    }
+
+    // A move into the exchange, until the server told its change, measured 28 ms after (D442), or did not, such as for an
+    // object bound to the account (D153), which changes nothing and the next goes on.
+    private static async Task MovedAsync(BotContext context, ExchangeObjectMoveRequest move, CancellationToken cancellationToken)
+    {
+        var changes = context.State.Exchange?.Changes ?? 0;
+
+        await context.SendAsync(move, cancellationToken).ConfigureAwait(false);
+        await context.WaitUntilAsync(now => now.Exchange is not { IsOpen: true } open || open.Changes > changes, context.Delays.Answer, cancellationToken).ConfigureAwait(false);
     }
 
     // One change towards the master's map a step, so that a change failing tries the same way again at the next step: a

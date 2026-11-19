@@ -19,6 +19,7 @@ internal sealed class TestBehaviors : IAsyncDisposable
 {
     public const string SettingsActivityId = "test.settings";
     public const string PlainActivityId = "test.plain";
+    public const string FullActivityId = "test.full";
 
     private readonly TemporaryDirectory _directory = new();
     private readonly ServiceProvider _services;
@@ -52,6 +53,7 @@ internal sealed class TestBehaviors : IAsyncDisposable
         services.AddSingleton(new ActivityCatalog(
         [
             new ActivityDefinition(PlainActivityId, "Plain", _ => new TestActivity()),
+            new ActivityDefinition(FullActivityId, "Full", _ => Made(new TestActivity { Full = _ => true, UnloadEmpties = false })),
             new ActivityDefinition(settings.Id, settings.Name, settings.Settings, (provider, values) => Made(settings.Create(provider, values))),
         ]));
         BehaviorsModule.Register(services, new StudioSettings { Path = Folder });
