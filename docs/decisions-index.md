@@ -641,3 +641,8 @@ or refines another says so in its own entry. Add a line here with every new deci
 
 - [D447](decisions/d447-groups-following-in-real-time.md#d447-the-followers-copy-their-masters-walks-as-they-come-and-the-master-no-longer-waits-after-each-map-change) The followers copy their master's walks as they come, and the master no longer waits after each map change (2026-11-19)
   - Leaving together, walking to the exit only, copying only the exits, a follower that missed a walk waiting.
+
+## Groups, the followers into their master's fight (D448)
+
+- [D448](decisions/d448-groups-followers-into-the-fight.md#d448-the-master-waits-for-its-followers-on-the-map-its-fight-began-from-and-they-walk-beside-it) The master waits for its followers on the map its fight began from, and they walk beside it (2026-11-19)
+  - The same cell as the master, the step aside added alone.

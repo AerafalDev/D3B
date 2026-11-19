@@ -7,6 +7,7 @@ using D3B.Bot.Movement;
 using D3B.Bot.Runtime;
 using D3B.Bot.Tests.Fights;
 using D3B.Bot.Tests.Runtime;
+using D3B.Data.Maps;
 using D3B.Engine.Maps;
 using D3B.Protocol.Game;
 
@@ -17,6 +18,11 @@ public sealed class FollowActivityTests
     private static ActivityRun Follow(TestPlay play, BotActor follower, CharacterKey master)
     {
         return follower.StartActivity(new FollowActivity(new FollowSettings { Master = master.ToId() }, play.Bots, play.Tables));
+    }
+
+    private static int[] Around(int cell)
+    {
+        return [.. Enumerable.Range(0, MapCell.DirectionCount).Select(direction => MapGeometry.Neighbour(cell, direction)).Where(neighbour => neighbour >= 0)];
     }
 
     private static string Doing(ActivityRun run)
@@ -213,7 +219,7 @@ public sealed class FollowActivityTests
         Assert.True(CellPathfinder.TryFind(play.Maps.Get(TestPlay.MapId).Cells.Span, 300, exit, out var path));
         masterConnection.Server(new MapMovementEvent { ActorId = TestGroup.MasterId, Cells = { path.Cells.ToArray() } });
 
-        Assert.Equal(exit, await TestGroup.WalkedAsync(play, connection, TestGroup.FollowerId, 1));
+        Assert.Contains(await TestGroup.WalkedAsync(play, connection, TestGroup.FollowerId, 1), Around(exit));
 
         // The master changes maps; the server names its new map, and has not placed it yet.
         masterConnection.Server(new MapCurrentEvent { MapId = TestPlay.NorthMapId });
@@ -339,13 +345,15 @@ public sealed class FollowActivityTests
         masterConnection.Server(new MapMovementEvent { ActorId = TestGroup.MasterId, Cells = { path.Cells.ToArray() } });
 
         var walk = Assert.IsType<MapMovementRequest>(await TestGroup.SentAsync(play, connection, 1));
+        var beside = walk.KeyMovements[^1] & 0xFFF;
 
-        Assert.Equal(TestPlay.ActionCell, walk.KeyMovements[^1] & 0xFFF);
+        // Beside its master's cell, not on it (D448): the clients confirmed none of four walks to one cell.
+        Assert.Contains(beside, Around(TestPlay.ActionCell));
         Assert.True(master.State.IsWalking);
         Assert.Contains(play.Log.GetSnapshot(), record => record.Message.Contains("walks with its master", StringComparison.Ordinal));
 
         // Walked and confirmed, the follower stands where its master goes, and copies that walk no more.
-        var cells = CellPathfinder.TryFind(play.Maps.Get(TestPlay.MapId).Cells.Span, 301, TestPlay.ActionCell, out var own) ? own.Cells.ToArray() : [];
+        var cells = CellPathfinder.TryFind(play.Maps.Get(TestPlay.MapId).Cells.Span, 301, beside, out var own) ? own.Cells.ToArray() : [];
 
         connection.Server(new MapMovementEvent { ActorId = TestGroup.FollowerId, Cells = { cells } });
         connection.Client(new MapMovementConfirmRequest());

@@ -46,10 +46,10 @@ internal sealed class GroupFight : IFightTeam
         _groups = groups;
     }
 
-    /// <summary>Tells whether a follower is still to place in its master's fight on a map.</summary>
+    /// <summary>Tells whether a follower is still to place in its master's fight, begun from a map.</summary>
     /// <param name="follower">The follower's bot.</param>
     /// <param name="masterId">The master's character.</param>
-    /// <param name="mapId">The map the master fights on.</param>
+    /// <param name="mapId">The map the master's fight began from, out of fights (D448).</param>
     /// <returns>Whether the master waits for it.</returns>
     public static bool Placing(BotActor follower, long masterId, long mapId)
     {
@@ -57,12 +57,15 @@ internal sealed class GroupFight : IFightTeam
 
         var state = follower.State;
 
-        if (!follower.IsConnected || follower.IsPaused || state.MapId != mapId)
+        if (!follower.IsConnected || follower.IsPaused)
             return false;
 
-        // Out of a fight, only a member of the master's party is told of its fight, and joins it (D435).
+        // Out of a fight, only a member of the master's party on the map the fight began from is told of it, and joins it (D435).
         if (state.Fight is not { } fight)
-            return state.Cell is not null && state.Party?.LeaderId == masterId;
+            return state.MapId == mapId && state.Cell is not null && state.Party?.LeaderId == masterId;
+
+        if ((fight.FromMapId ?? state.MapId) != mapId)
+            return false;
 
         // A placement whose cells are not yet told may be the master's still being drawn, its fighters shown one by one; once
         // told, one the master is not in is another fight.
@@ -86,7 +89,8 @@ internal sealed class GroupFight : IFightTeam
             var seen = followers.Select(BotSeen.Of).ToList();
             var left = until - _bot.Time.GetUtcNow();
 
-            if (state is not { Fight.Phase: FightPhase.Placement, MapId: { } mapId } || left <= TimeSpan.Zero)
+            // Measured (D448): the fight's own map is not the one it began from, where the followers stand.
+            if (state is not { Fight: { Phase: FightPhase.Placement } fight } || (fight.FromMapId ?? state.MapId) is not { } mapId || left <= TimeSpan.Zero)
                 return;
 
             var placing = followers.Where(follower => Placing(follower, _bot.Key.CharacterId, mapId)).Select(follower => follower.Key.CharacterId).ToList();

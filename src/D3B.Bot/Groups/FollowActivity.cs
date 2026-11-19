@@ -8,6 +8,8 @@ using D3B.Bot.Localization;
 using D3B.Bot.Movement;
 using D3B.Bot.Runtime;
 using D3B.Data;
+using D3B.Data.Maps;
+using D3B.Engine.Maps;
 using D3B.Protocol.Game;
 
 namespace D3B.Bot.Groups;
@@ -69,7 +71,7 @@ public sealed class FollowActivity : BotActivity, IDisposable
     private int? _over;
     private (string? Connection, int Round)? _giving;
     private ImmutableArray<int> _copied;
-    private (long Map, int Cell)? _copiedTo;
+    private (long Map, int MastersEnd, int Cell)? _copiedTo;
     private int _failedChanges;
     private bool _healing;
 
@@ -339,7 +341,7 @@ public sealed class FollowActivity : BotActivity, IDisposable
     // Whether the follower stands where it copied its master's last walk to, on the map its master just left: its exit.
     private bool OnMastersExit(CharacterState state, CharacterState master)
     {
-        return _copiedTo is { } copied && copied.Map == state.MapId && copied.Cell == state.Cell && master.LastWalkEnd == copied.Cell;
+        return _copiedTo is { } copied && copied.Map == state.MapId && copied.Cell == state.Cell && master.LastWalkEnd == copied.MastersEnd;
     }
 
     // Whether it copied its master's walk, in real time (D447, the owner's choice): as the master walks, to the cell it walks
@@ -347,19 +349,51 @@ public sealed class FollowActivity : BotActivity, IDisposable
     // master left it.
     private async Task<bool> CopyAsync(BotContext context, CharacterState master, CancellationToken cancellationToken)
     {
-        if (!master.IsWalking || master.Path == _copied || master.Path[^1] is var end && end == context.State.Cell)
+        if (!master.IsWalking || master.Path == _copied)
             return false;
 
-        var map = context.State.MapId ?? 0;
+        var state = context.State;
+        var end = master.Path[^1];
 
         _copied = master.Path;
-        _copiedTo = (map, end);
-        GroupLog.Copying(context.Log, context.Actor.Key.CharacterId, master.Key.CharacterId, end);
 
-        if (await context.WalkAsync(end, cancellationToken).ConfigureAwait(false) is not WalkOutcome.Arrived)
+        if (state is not { MapId: { } map, Cell: { } from } || Beside(context, master, map, from, end) is not { } cell)
+            return false;
+
+        _copiedTo = (map, end, cell);
+        GroupLog.Copying(context.Log, context.Actor.Key.CharacterId, master.Key.CharacterId, cell);
+
+        if (await context.WalkAsync(cell, cancellationToken).ConfigureAwait(false) is not WalkOutcome.Arrived)
             _copiedTo = null;
 
         return true;
+    }
+
+    // A free cell beside the one its master walks to, each follower its own, by its place in its master's party, that it can
+    // reach; none when it stands beside it already. Measured on the owner's test of 2026-11-19 (D448): the master and its
+    // three followers walking to one cell at once, none of their clients confirmed its walk, and the server held each
+    // follower there. The owner's choice: beside the master, by its own path.
+    private int? Beside(BotContext context, CharacterState master, long map, int from, int end)
+    {
+        if (!context.Maps.TryGet(map, out var data))
+            return null;
+
+        var followers = GroupChain.Order(master, _bots.Groups.FollowersOf(master.Key));
+        var at = followers.Select((bot, index) => (bot, index)).FirstOrDefault(pair => pair.bot == context.Actor).index;
+        var around = Enumerable.Range(0, MapCell.DirectionCount).Select(direction => MapGeometry.Neighbour(end, direction)).Where(cell => cell >= 0).ToList();
+
+        if (around.Contains(from))
+            return null;
+
+        for (var tried = 0; tried < around.Count; tried++)
+        {
+            var cell = around[(at + tried) % around.Count];
+
+            if (CellPathfinder.TryFind(data.Cells.Span, from, cell, out _))
+                return cell;
+        }
+
+        return null;
     }
 
     // Whether it asked to join its master's fight: as the master attacks on its map, the server tells the party of the fight
@@ -380,6 +414,15 @@ public sealed class FollowActivity : BotActivity, IDisposable
             || master.State.Fight is not { Phase: FightPhase.Placement } || _joined == (me.ConnectionId, fight.FightId) || _over == fight.FightId)
         {
             return false;
+        }
+
+        // Measured (D448): a follower whose walk its client did not confirm is held by the server, which answered nothing to
+        // its join; a step aside lets it go (D85), then it joins.
+        if (state.IsWalkHeld)
+        {
+            await context.ReleaseHeldWalkAsync(cancellationToken).ConfigureAwait(false);
+
+            return true;
         }
 
         _joined = (me.ConnectionId, fight.FightId);
