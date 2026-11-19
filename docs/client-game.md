@@ -1417,6 +1417,11 @@ failure; without the captures, the pins and the structure pair the same.
   and removed and the leader its own added, in the same millisecond as the two readiness events and the weights.
 - **Mapped** (D442): that event, `ExchangeObjectsAddedEvent`, no field read. Format 20, 254 messages paired, no failure;
   without the captures, the same pairs.
+- **The windows the bot answered** (D455), on every capture of 2026-11-18 and 2026-11-19: a click on Accept sends one
+  acceptance and nothing else, for an invitation as for an exchange asked, so the client closes its window on the click
+  alone, and keeps it open when D3B accepts. Closed by hand later, an invitation's window sends a refusal: five times,
+  40 s to 6 min after D3B accepted, none answered, no follower leaving its party. A client connecting while in a party is
+  told its party with no invitation before it.
 
 
 ## The game, the challenges' bonus

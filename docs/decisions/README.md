@@ -76,3 +76,4 @@ Each file holds the decisions of one group of [the index](../decisions-index.md)
 - [Groups, the master emptied at the bank (D452)](d452-group-bank-master-empties.md): 1 decision, 3 KB.
 - [Groups, the master's door (D453)](d453-groups-door.md): 1 decision, 2 KB.
 - [Fights, a little bolder in a group (D454)](d454-group-fights-bolder.md): 1 decision, 2 KB.
+- [Groups, the windows the bot answered (D455)](d455-groups-windows-left-open.md): 1 decision, 3 KB.

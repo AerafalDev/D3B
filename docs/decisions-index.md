@@ -676,3 +676,8 @@ or refines another says so in its own entry. Add a line here with every new deci
 
 - [D454](decisions/d454-group-fights-bolder.md#d454-beside-allies-of-its-group-the-ai-weighs-the-enemies-threat-less-and-its-next-blows-more) Beside allies of its group, the AI weighs the enemies' threat less and its next blows more (2026-11-19)
   - Waiting for 10d's measure, the prudent weights left out in a group.
+
+## Groups, the windows the bot answered (D455)
+
+- [D455](decisions/d455-groups-windows-left-open.md#d455-the-windows-of-an-invitation-or-an-exchange-the-bot-answered-stay-open-closed-by-hand) The windows of an invitation or an exchange the bot answered stay open, closed by hand (2026-11-19)
+  - Withholding the event that opens them, injecting the event that closes them.
