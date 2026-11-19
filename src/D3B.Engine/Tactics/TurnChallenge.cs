@@ -3,10 +3,10 @@ using D3B.Engine.Maps;
 
 namespace D3B.Engine.Tactics;
 
-/// <summary>A challenge that asks only of the turns of the fighter playing: its movement points, its casts, where it ends them (D464).</summary>
+/// <summary>A challenge that asks only of the turns of the fighter playing: its movement points, its casts, where it ends them (D465).</summary>
 /// <remarks>
 /// <para>
-/// The owner's list (D464), read from the client's completion criteria (client.md): Zombie, Statue, Nomade, Versatile,
+/// The owner's list (D465), read from the client's completion criteria (client.md): Zombie, Statue, Nomade, Versatile,
 /// Collant, Misanthrope, Prudent, Raser les murs, De la même lignée, La diagonale du plein, En ligne de mire and Pas vu pas
 /// pris, 49% of the 2,976 fights captured. A search keeps it (<see cref="FightTactics.Plan"/>)
 /// only while the turn it costs stays under <see cref="MostLoss"/>.
@@ -34,7 +34,7 @@ public sealed record TurnChallenge
 
     /// <summary>Gets the most of the turn's gain the challenge may cost, from 0 to 1, or more once the turn played for it.</summary>
     /// <remarks>
-    /// The owner's choice (D464): half of what keeps the reward a minute the same. A challenge won adds its bonus b to the
+    /// The owner's choice (D465): half of what keeps the reward a minute the same. A challenge won adds its bonus b to the
     /// fight's reward, so a fight slower by a share l of its pace still earns as much a minute while l ≤ b / (1 + b); half of it,
     /// since a turn's challenge is lost at the first turn that breaks it, so that a costly turn may be paid for nothing.
     /// </remarks>
@@ -87,7 +87,7 @@ public sealed record TurnChallenge
 
     private static bool BesideAnObstacle(FightMap map, int cell)
     {
-        // The client's description (D464): holes and the map's edges are obstacles too, so any cell beside that is not walked on.
+        // The client's description (D465): holes and the map's edges are obstacles too, so any cell beside that is not walked on.
         for (var direction = 1; direction < 8; direction += 2)
         {
             var next = MapGeometry.Neighbour(cell, direction);
@@ -135,7 +135,7 @@ public sealed record TurnChallenge
     /// <summary>Gets the challenge once a plan of the turn kept it: kept at any price for the rest of the turn.</summary>
     /// <returns>The challenge, its price without bound.</returns>
     /// <remarks>
-    /// The review's finding (D464): weighed again at each of the turn's searches, the price falls with what is left of the
+    /// The review's finding (D465): weighed again at each of the turn's searches, the price falls with what is left of the
     /// turn to gain, so that the walk that ends a turn kept so far would leave it, the turn paid for nothing.
     /// </remarks>
     public TurnChallenge KeptThisTurn()

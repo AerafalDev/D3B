@@ -2,7 +2,7 @@ using MemoryPack;
 
 namespace D3B.Data.Challenges;
 
-/// <summary>The client's challenges: their texts, their categories, what each excludes, and their completion and activation criteria (D464).</summary>
+/// <summary>The client's challenges: their texts, their categories, what each excludes, and their completion and activation criteria (D465).</summary>
 /// <remarks>
 /// <para>
 /// 842 challenges of client 3.7.14.18, which the server names a fight's by (D461). The table is sorted by identifier and found

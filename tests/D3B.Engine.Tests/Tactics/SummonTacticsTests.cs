@@ -14,8 +14,10 @@ public sealed class SummonTacticsTests
     private const int Summon = 10;
     private const int Bite = 20;
     private const int Blow = 30;
+    private const int Lance = 40;
     private const int Osamodas = 2;
     private const int Sram = 4;
+    private const int Forgelance = 20;
     private const int Monster = 900;
 
     private static readonly SpellCatalog _spells = Catalog();
@@ -26,7 +28,11 @@ public sealed class SummonTacticsTests
         new(181, 0, 0, '\0', 0, -1, 0, 0, 0, 0, EffectProperties.UseInFight),
     }), Monsters());
 
-    /// <summary>Spell 10, a summon of monster 900 at grade 1, 2 AP, range 1 to 2 on a free cell; spell 20, its earth bite of 25 to 30 on an enemy, 3 AP, range 1.</summary>
+    /// <summary>
+    /// Spell 10, a summon of monster 900 at grade 1, 2 AP, range 1 to 2 on a free cell; spell 20, its earth bite of 25 to 30 on an
+    /// enemy, 3 AP, range 1; spell 30, a blow of 20 to 24, 3 AP, range 1 to 4; spell 40, a lance of 3 AP, range 1 to 4, striking 40 to
+    /// 48 in a cross of 1 and bringing monster 900 to its free cell, as a Forgelance's lances strike and stay.
+    /// </summary>
     private static SpellCatalog Catalog()
     {
         string[] strings = ["A", "a", "I"];
@@ -36,12 +42,15 @@ public sealed class SummonTacticsTests
             new SpellLevel { Id = 1010, SpellId = Summon, Grade = 1, ApCost = 2, MinRange = 1, Range = 2, StatesCriterion = SpellLevel.NoCriterion, Properties = SpellLevelProperties.NeedFreeCell, FirstEffect = 0, EffectCount = 1 },
             new SpellLevel { Id = 1020, SpellId = Bite, Grade = 1, ApCost = 3, MinRange = 1, Range = 1, StatesCriterion = SpellLevel.NoCriterion, FirstEffect = 1, EffectCount = 1 },
             new SpellLevel { Id = 1030, SpellId = Blow, Grade = 1, ApCost = 3, MinRange = 1, Range = 4, StatesCriterion = SpellLevel.NoCriterion, FirstEffect = 2, EffectCount = 1 },
+            new SpellLevel { Id = 1040, SpellId = Lance, Grade = 1, ApCost = 3, MinRange = 1, Range = 4, StatesCriterion = SpellLevel.NoCriterion, FirstEffect = 3, EffectCount = 2 },
         ];
         SpellEffect[] effects =
         [
             new SpellEffect { Uid = 1, EffectId = 181, TargetMask = 1, Triggers = 2, DiceNum = Monster, DiceSide = 1, Zone = point },
             new SpellEffect { Uid = 2, EffectId = 97, TargetMask = 0, Triggers = 2, DiceNum = 25, DiceSide = 30, Zone = point },
             new SpellEffect { Uid = 3, EffectId = 97, TargetMask = 0, Triggers = 2, DiceNum = 20, DiceSide = 24, Zone = point },
+            new SpellEffect { Uid = 4, EffectId = 97, TargetMask = 0, Triggers = 2, DiceNum = 40, DiceSide = 48, Zone = Zone(SpellZoneShape.Cross) },
+            new SpellEffect { Uid = 5, EffectId = 181, TargetMask = 1, Triggers = 2, DiceNum = Monster, DiceSide = 1, Zone = point },
         ];
         Spell[] spells = [.. levels.Select((level, index) => new Spell { Id = level.SpellId, NameId = level.SpellId, FirstLevel = index, LevelCount = 1 })];
 
@@ -169,5 +178,25 @@ public sealed class SummonTacticsTests
     public void AnOsamodasSummonsWhateverElseItCouldDo()
     {
         Assert.Contains(Summon, Plan(Osamodas, Level(_spells, Summon), Level(_spells, Blow)));
+    }
+
+    [Fact]
+    public void AForgelanceThrowsALanceThatStrikesMoreThanItsBlowFromTheFirstSearch()
+    {
+        // Measured on the 221 Forgelance turns of the 2026-11-19 captures: its lances strike and stay, and leaving them to the last
+        // resort cost a third of its damage.
+        var plan = Plan(Forgelance, Level(_spells, Lance), Level(_spells, Blow));
+
+        Assert.Contains(Lance, plan);
+        Assert.DoesNotContain(Blow, plan);
+    }
+
+    [Fact]
+    public void ABreedThatDoesNotLiveBySummoningKeepsItsBlowOverALanceThatSummons()
+    {
+        var plan = Plan(Sram, Level(_spells, Lance), Level(_spells, Blow));
+
+        Assert.Contains(Blow, plan);
+        Assert.DoesNotContain(Lance, plan);
     }
 }

@@ -1,6 +1,6 @@
 namespace D3B.Engine.Tactics;
 
-/// <summary>Where a challenge asks the fighter playing to end its turn (D464).</summary>
+/// <summary>Where a challenge asks the fighter playing to end its turn (D465).</summary>
 public enum TurnEnd
 {
     /// <summary>Anywhere.</summary>

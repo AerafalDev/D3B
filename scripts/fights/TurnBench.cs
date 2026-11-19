@@ -28,13 +28,17 @@ namespace D3B.Scripts.Fights;
 /// it dealt in its next turn. It prints counts and sums, never a value of one fight.
 /// </para>
 /// <para>
-/// A turn of a fight whose challenge is easy (D464) is planned once more keeping it, as the bot would with a profile's
+/// A turn of a fight whose challenge is easy (D465) is planned once more keeping it, as the bot would with a profile's
 /// default, the fight's risk aside: the turns whose best plan keeps it already, those the search keeps it in within what its
 /// bonus pays, and those it leaves, by challenge; and how long both searches last.
 /// </para>
 /// <para>
 /// A summon's turn the client played is replayed the same, the AI's plan against the player's (D271); the summons planned
 /// and played are counted by breed and spell, and what the summons deal in the reply (D270).
+/// </para>
+/// <para>
+/// The main counts are printed again by the character's breed, a section each, with the reply's blows against the
+/// enemies', alone and in a group (D463).
 /// </para>
 /// </remarks>
 internal sealed class TurnBench
@@ -51,6 +55,7 @@ internal sealed class TurnBench
     private readonly List<double> _challenged = [];
     private readonly HashSet<int> _left = [];
     private readonly Dictionary<string, double> _sums = new(StringComparer.Ordinal);
+    private readonly BreedSections _byBreed = new();
 
     public Tally Tally { get; } = new();
 
@@ -68,6 +73,22 @@ internal sealed class TurnBench
     private static double Effective(Combatant fighter)
     {
         return fighter.IsAlive ? fighter.Life + Math.Max(0, fighter.Characteristic(FightCharacteristic.Shield)) : 0;
+    }
+
+    private static bool InGroup(ImaginedFight fight)
+    {
+        // Beside another character of the team still alive, as the bot weighs a group's fight (D454): the reply measured apart.
+        return fight.Fighters.Any(fighter => fighter.IsAlive && fighter.IsCharacter && fighter.Team == fight.Actor.Team && fighter.Id != fight.ActorId);
+    }
+
+    private static string Company(bool group)
+    {
+        return group ? "in a group" : "alone";
+    }
+
+    private static void Row(TextWriter writer, string label, double planned, double played)
+    {
+        writer.WriteLine($"  {label,-40}{planned,10:F0}{played,10:F0}");
     }
 
     private static (double Dealt, int Kills, double Healed) Outcome(ImaginedFight before, ImaginedFight after)
@@ -129,7 +150,11 @@ internal sealed class TurnBench
                 && between.Fighters.TryGetValue(self, out var own) && between.Fighters.TryGetValue(lost.LifeLost.TargetId, out var hit) && hit.Team == own.Team
                 && between.Fighters.TryGetValue(lost.SourceId, out var source) && source.Team != own.Team)
             {
-                Add($"enemies' blows between turns: life, on {(hit.Id == self ? "the character" : hit.SummonerId is not null ? "a summon" : "another ally")}", lost.LifeLost.Loss + (lost.LifeLost.HasShieldLoss ? lost.LifeLost.ShieldLoss : 0));
+                var on = hit.Id == self ? "the character" : hit.SummonerId is not null ? "a summon" : "another ally";
+                var life = lost.LifeLost.Loss + (lost.LifeLost.HasShieldLoss ? lost.LifeLost.ShieldLoss : 0);
+
+                Add($"enemies' blows between turns: life, on {on}", life);
+                _byBreed.Add(ending.Breed, $"reply {Company(ending.Group)}, dealt: on {on}", life);
             }
 
             state = CharacterEvents.Apply(state, RelayDirection.FromServer, message);
@@ -204,6 +229,70 @@ internal sealed class TurnBench
             _challenged.Sort();
             writer.WriteLine($"searches keeping a challenge: {_challenged.Count}, halfway {_challenged[_challenged.Count / 2]:F0} ms, 90% {_challenged[(int)(_challenged.Count * 0.9)]:F0} ms, at most {_challenged[^1]:F0} ms");
         }
+
+        WriteBreeds(writer);
+    }
+
+    private void WriteBreeds(TextWriter writer)
+    {
+        // The reply against the enemies' blows for every breed first, then each breed's section (D463).
+        string[] targets = ["the character", "another ally", "a summon"];
+
+        writer.WriteLine("reply's blows against the enemies' blows between turns, every breed");
+        writer.WriteLine($"  {string.Empty,-40}{"foreseen",10}{"dealt",10}{"ratio",8}");
+
+        foreach (var company in new[] { "alone", "in a group" })
+        {
+            writer.WriteLine($"  {company}, {_byBreed.Total($"reply {company}: turns"):F0} turns");
+
+            foreach (var on in targets)
+            {
+                var foreseen = _byBreed.Total($"reply {company}, foreseen: on {on}");
+                var dealt = _byBreed.Total($"reply {company}, dealt: on {on}");
+
+                writer.WriteLine($"    {"on " + on,-38}{foreseen,10:F0}{dealt,10:F0}{BreedSections.Ratio(foreseen, dealt),8}");
+            }
+        }
+
+        foreach (var breed in _byBreed.Breeds)
+        {
+            writer.WriteLine($"by breed: {BreedSections.Name(breed)}, {_byBreed.Of(breed, "turns: replayed"):F0} turns replayed");
+            writer.WriteLine($"  plans: casts {_byBreed.Of(breed, "plans: casts"):F0}, walks only {_byBreed.Of(breed, "plans: walks only"):F0}, nothing {_byBreed.Of(breed, "plans: nothing"):F0}");
+            writer.WriteLine($"  planned against played, damage: more {_byBreed.Of(breed, "against the turn played: damage more"):F0}, as much {_byBreed.Of(breed, "against the turn played: damage as much"):F0}, less {_byBreed.Of(breed, "against the turn played: damage less"):F0}");
+            writer.WriteLine($"  {string.Empty,-40}{"planned",10}{"played",10}");
+
+            foreach (var key in new[] { "damage foreseen", "kills foreseen", "heals foreseen", "life the reply takes", "damage over two turns", "kills over two turns", "judged" })
+                Row(writer, key, _byBreed.Of(breed, $"planned: {key}"), _byBreed.Of(breed, $"played: {key}"));
+
+            writer.WriteLine($"  {"damage dealt, as the server announced",-40}{string.Empty,10}{_byBreed.Of(breed, "played: damage dealt, as the server announced"),10:F0}");
+            writer.WriteLine($"  {"reply's blows against the enemies'",-40}{"foreseen",10}{"dealt",10}{"ratio",8}");
+
+            foreach (var company in new[] { "alone", "in a group" })
+            {
+                var turns = _byBreed.Of(breed, $"reply {company}: turns");
+
+                if (turns is 0)
+                    continue;
+
+                writer.WriteLine($"    {company}, {turns:F0} turns");
+
+                foreach (var on in targets)
+                {
+                    var foreseen = _byBreed.Of(breed, $"reply {company}, foreseen: on {on}");
+                    var dealt = _byBreed.Of(breed, $"reply {company}, dealt: on {on}");
+
+                    if (foreseen >= 1 || dealt >= 1)
+                        writer.WriteLine($"      {"on " + on,-36}{foreseen,10:F0}{dealt,10:F0}{BreedSections.Ratio(foreseen, dealt),8}");
+                }
+            }
+
+            writer.WriteLine($"  {"spells, by id",-40}{"planned",10}{"played",10}");
+
+            var spells = _byBreed.Suffixes(breed, "spells planned: ").Union(_byBreed.Suffixes(breed, "spells played: ")).OrderBy(id => int.Parse(id, System.Globalization.CultureInfo.InvariantCulture));
+
+            foreach (var spell in spells)
+                Row(writer, $"  spell {spell}", _byBreed.Of(breed, $"spells planned: {spell}"), _byBreed.Of(breed, $"spells played: {spell}"));
+        }
     }
 
     private void Add(string key, double value)
@@ -245,7 +334,12 @@ internal sealed class TurnBench
 
         var casts = plan.Actions.Count(action => action.Kind is TacticActionKind.Cast);
 
-        Tally.Count($"{(turn.Start.Actor.IsSummon ? "summon plans" : "plans")}: {(plan.IsEmpty ? "nothing" : casts is 0 ? "walks only" : "casts")}");
+        var kind = plan.IsEmpty ? "nothing" : casts is 0 ? "walks only" : "casts";
+
+        Tally.Count($"{(turn.Start.Actor.IsSummon ? "summon plans" : "plans")}: {kind}");
+
+        if (!turn.Start.Actor.IsSummon)
+            _byBreed.Add(turn.Start.Actor.BreedId, $"plans: {kind}");
 
         // The fight's first easy challenge neither decided nor left, as the bot plays for it.
         var played = fight?.Challenges.FirstOrDefault(challenge => challenge.Succeeded is null && !_left.Contains(challenge.Id) && TurnChallenge.Of(_tables.Challenges.CompletionOf(challenge.Id), challenge.Bonus) is not null);
@@ -499,7 +593,16 @@ internal sealed class TurnBench
         var played = Act(turn.Start, turn.Played);
         var planned = turn.Planned is { } plan ? Act(turn.Start, plan.Actions) : turn.Start;
 
+        var breed = turn.Start.Actor.BreedId;
+
         Tally.Count("turns: replayed");
+        _byBreed.Add(breed, "turns: replayed");
+
+        foreach (var action in turn.Played.Where(action => action.Kind is TacticActionKind.Cast))
+            _byBreed.Add(breed, $"spells played: {action.SpellId.ToString(System.Globalization.CultureInfo.InvariantCulture)}");
+
+        foreach (var action in turn.Planned?.Actions.Where(action => action.Kind is TacticActionKind.Cast) ?? [])
+            _byBreed.Add(breed, $"spells planned: {action.SpellId.ToString(System.Globalization.CultureInfo.InvariantCulture)}");
 
         foreach (var action in turn.Played.Where(action => action.Kind is TacticActionKind.Cast))
         {
@@ -591,6 +694,7 @@ internal sealed class TurnBench
         var ended = Imagined(state, turn.Points) is { } real ? real.Fight : played;
 
         Add("played: damage dealt, as the server announced", Dealt(turn.Start, ended));
+        _byBreed.Add(breed, "played: damage dealt, as the server announced", Dealt(turn.Start, ended));
         Add("played: kills, as the server announced", turn.Start.Fighters.Count(enemy => enemy.IsAlive && enemy.Team != turn.Start.Actor.Team && ended.Find(enemy.Id) is { IsAlive: false }));
 
         if (turn.Foreseen is { } foreseen)
@@ -609,12 +713,22 @@ internal sealed class TurnBench
         var endJudge = _tactics.JudgeOf(ended, turn.Knowledge, _weights);
         var self = ended.ActorId;
         var replied = _tactics.Replies(ended, turn.Knowledge, endJudge);
+        var group = InGroup(turn.Start);
+
+        _byBreed.Add(breed, $"reply {Company(group)}: turns");
 
         foreach (var ally in ended.Fighters.Where(fighter => fighter.IsAlive && fighter.Team == ended.Actor.Team))
         {
             if (replied.Find(ally.Id) is { } then)
-                Add($"reply's blows: life, on {(ally.Id == self ? "the character" : ally.IsSummon ? "a summon" : "another ally")}", Math.Max(0, Effective(ally) - Effective(then)));
+            {
+                var on = ally.Id == self ? "the character" : ally.IsSummon ? "a summon" : "another ally";
+                var life = Math.Max(0, Effective(ally) - Effective(then));
+
+                Add($"reply's blows: life, on {on}", life);
+                _byBreed.Add(breed, $"reply {Company(group)}, foreseen: on {on}", life);
+            }
         }
+
         var later = turn.Knowledge with { Cooldowns = turn.Knowledge.Cooldowns.Where(pair => pair.Value > 1).ToImmutableDictionary(pair => pair.Key, pair => pair.Value - 1) };
         var (next, _) = _tactics.NextTurn(replied, later, endJudge, _limits);
 
@@ -623,7 +737,9 @@ internal sealed class TurnBench
             endJudge.Threat(ended, self),
             Math.Max(0, Effective(ended.Actor) - (replied.Find(self) is { } after ? Effective(after) : 0)),
             endJudge.NextTurnDamage(ended),
-            Dealt(replied, next));
+            Dealt(replied, next),
+            breed,
+            group);
     }
 
     private static int Kills(ImaginedFight start, ImaginedFight end)
@@ -679,7 +795,29 @@ internal sealed class TurnBench
         Add("judged: played", judge.JudgeReplied(playedReply));
         Add("judged: planned", judge.JudgeReplied(plannedReply));
 
-        Tally.Count($"against the turn played: damage {(plannedDealt > playedDealt + 0.5 ? "more" : plannedDealt < playedDealt - 0.5 ? "less" : "as much")}");
+        var breed = turn.Start.Actor.BreedId;
+        var playedTwo = playedDealt + Dealt(playedReply, playedNext);
+        var plannedTwo = plannedDealt + Dealt(plannedReply, plannedNext);
+
+        foreach (var (key, playedValue, plannedValue) in new (string, double, double)[]
+        {
+            ("damage foreseen", playedDealt, plannedDealt),
+            ("kills foreseen", playedKills, plannedKills),
+            ("heals foreseen", playedHealed, plannedHealed),
+            ("life the reply takes", Math.Max(0, playedLost), Math.Max(0, plannedLost)),
+            ("damage over two turns", playedTwo, plannedTwo),
+            ("kills over two turns", playedKills + Kills(playedReply, playedNext), plannedKills + Kills(plannedReply, plannedNext)),
+            ("judged", judge.JudgeReplied(playedReply), judge.JudgeReplied(plannedReply)),
+        })
+        {
+            _byBreed.Add(breed, $"played: {key}", playedValue);
+            _byBreed.Add(breed, $"planned: {key}", plannedValue);
+        }
+
+        var damage = plannedDealt > playedDealt + 0.5 ? "more" : plannedDealt < playedDealt - 0.5 ? "less" : "as much";
+
+        _byBreed.Add(breed, $"against the turn played: damage {damage}");
+        Tally.Count($"against the turn played: damage {damage}");
         Tally.Count($"against the turn played: kills {(plannedKills > playedKills ? "more" : plannedKills < playedKills ? "fewer" : "as many")}");
         Tally.Count($"against the turn played: life the reply takes {(plannedLost < playedLost - 0.5 ? "less" : plannedLost > playedLost + 0.5 ? "more" : "as much")}");
     }
@@ -742,5 +880,5 @@ internal sealed class TurnBench
         public double? Searched { get; set; }
     }
 
-    private sealed record Ending(double Life, double Threat, double Replied, double NextTurn, double Searched);
+    private sealed record Ending(double Life, double Threat, double Replied, double NextTurn, double Searched, int? Breed, bool Group);
 }

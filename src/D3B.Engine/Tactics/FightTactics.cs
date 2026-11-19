@@ -41,8 +41,10 @@ public sealed class FightTactics
     private const double Tie = 1;
     private const int Finalists = 16;
 
-    // The breeds made of their summons: the Osamodas' beasts, the Roublard's bombs, the Steamer's turrets (D408).
-    private static readonly int[] _summonerBreeds = [2, 13, 15];
+    // The breeds whose summons are not a last resort (D408): the Osamodas' beasts, the Roublard's bombs, the Steamer's turrets, and
+    // the Forgelance's lances, which strike as they are thrown: replayed on its 221 turns of the 2026-11-19 captures, searching them
+    // first plans a third more damage (5,885 against 4,439) (D462).
+    private static readonly int[] _summonsFirstBreeds = [2, 13, 15, 20];
 
     private const int RepliesAnEnemy = 3;
     private const int ReplyCells = 12;
@@ -179,7 +181,7 @@ public sealed class FightTactics
 
     private bool SummonsAreLastResort(ImaginedFight fight, FightKnowledge knowledge)
     {
-        return !(fight.Actor.BreedId is { } breed && _summonerBreeds.Contains(breed)) && knowledge.SpellsOf(fight.Actor.Id).Any(IsSummon);
+        return !(fight.Actor.BreedId is { } breed && _summonsFirstBreeds.Contains(breed)) && knowledge.SpellsOf(fight.Actor.Id).Any(IsSummon);
     }
 
     private bool IsSummon(SpellLevel level)
@@ -330,7 +332,7 @@ public sealed class FightTactics
     /// <param name="challenge">The fight's challenge the turn may keep, or null.</param>
     /// <returns>The plan, <see cref="TurnPlan.KeepsChallenge"/> when it keeps the challenge.</returns>
     /// <remarks>
-    /// With a challenge (D464), the best plan is searched as always; when it does not keep the challenge, the best plan that
+    /// With a challenge (D465), the best plan is searched as always; when it does not keep the challenge, the best plan that
     /// does is searched too, its casts and walks only those the challenge allows and its turn ending only where it is kept.
     /// That plan is chosen while what it loses on the best, as judged once the enemies replied, stays within
     /// <see cref="TurnChallenge.MostLoss"/> of what the best gains on ending the turn now: a challenge that slows the fight
@@ -362,7 +364,7 @@ public sealed class FightTactics
 
     private (TurnPlan Plan, ImaginedFight End)? Search(ImaginedFight fight, FightKnowledge knowledge, TacticWeights weights, TurnSearchLimits limits, IReadOnlySet<(int SpellId, int Cell)>? refused, TurnChallenge? challenge)
     {
-        // The owner's ask, for a fast farm (D408): but for a breed made of its summons, a summon is a last resort, brought when the
+        // The owner's ask, for a fast farm (D408): but for the breeds of _summonsFirstBreeds, a summon is a last resort, brought when the
         // turn has nothing else worth doing; they slow a fight and rarely win it.
         if (SummonsAreLastResort(fight, knowledge) && Search(fight, knowledge.With(fight.Actor.Id, knowledge.SpellsOf(fight.Actor.Id).RemoveAll(IsSummon)), weights, limits, refused, challenge) is { Plan.IsEmpty: false } plain)
             return plain;

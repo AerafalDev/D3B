@@ -2,6 +2,7 @@
 #:package Google.Protobuf
 #:package System.CommandLine
 #:project ../src/D3B.Bot/D3B.Bot.csproj
+#:include fights/BreedSections.cs
 #:include fights/CapturedFights.cs
 #:include fights/CastBench.cs
 #:include fights/FightsCommand.cs
@@ -22,7 +23,8 @@ using D3B.Scripts.Fights;
 // played and what its judge foresaw against what came (D206); with --live, it counts what D3B did in the fights, who played
 // each, how it ended and what came of the AI's requests (D206), then the attacks on monster groups, D3B's and the player's,
 // the walks before each, the server's answer, the group as the AI judged it against the fight's outcome, and the pace
-// between D3B's fights (D245).
+// between D3B's fights (D245). Both print their main counts again by the character's breed, a section each, so that a
+// change of the AI is read class by class and on what a farm needs, not in totals only (D463).
 // Usage: dotnet run --file scripts/fights.cs -- [<file or directory>...] [--data <dir>] [--details] [--turns] [--live]; --help describes
 // the options.
 // Exit code: 0 once every capture was read; 1 when one could not be; 2 when the pack, the schema, the mapping or the

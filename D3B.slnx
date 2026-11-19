@@ -85,6 +85,7 @@
     <File Path="scripts/extract/WorldMapsExtractor.cs" />
   </Folder>
   <Folder Name="/scripts/fights/">
+    <File Path="scripts/fights/BreedSections.cs" />
     <File Path="scripts/fights/CapturedFights.cs" />
     <File Path="scripts/fights/CastBench.cs" />
     <File Path="scripts/fights/FightsCommand.cs" />

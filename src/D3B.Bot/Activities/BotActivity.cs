@@ -61,7 +61,7 @@ public abstract class BotActivity
     /// <remarks>The client's by default: nothing is sent, as before.</remarks>
     public virtual ChallengeReward ChallengeReward => ChallengeReward.Client;
 
-    /// <summary>Gets which challenges the AI plays for in the fights it plays (D464).</summary>
+    /// <summary>Gets which challenges the AI plays for in the fights it plays (D465).</summary>
     /// <remarks>None by default: the AI plays as before.</remarks>
     public virtual ChallengePlay Challenges => ChallengePlay.None;
 

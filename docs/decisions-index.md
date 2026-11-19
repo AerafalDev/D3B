@@ -712,7 +712,22 @@ or refines another says so in its own entry. Add a line here with every new deci
 - [D461](decisions/d461-fights-challenges-read.md#d461-the-bot-reads-its-fights-challenges-their-targets-their-results-and-the-proposals-mapping-format-22) The bot reads its fight's challenges, their targets, their results and the proposals, mapping format 22 (2026-11-19)
   - The challenges' table in the pack now, the mode and number events, a target with no fighter.
 
-## Fights, the easy challenges (D464)
+## Fights, the Forgelance's lances (D462)
 
-- [D464](decisions/d464-fights-challenges-easy.md#d464-the-ai-plays-for-the-easy-challenges-those-of-its-own-turns-while-a-turn-costs-no-more-than-their-bonus-pays-pack-format-13) The AI plays for the easy challenges, those of its own turns, while a turn costs no more than their bonus pays, pack format 13 (2026-11-19)
+- [D462](decisions/d462-forgelance-lances.md#d462-the-forgelances-summons-are-not-a-last-resort-its-lances-striking-as-they-are-thrown) The Forgelance's summons are not a last resort, its lances striking as they are thrown (2026-11-19)
+  - A criterion by effect, the summon as a spell's only worth; D408 undone for every breed.
+
+## Fights, the AI measured breed by breed (D463)
+
+- [D463](decisions/d463-fights-by-breed.md#d463-scriptsfightscs---turns-and---live-print-their-main-counts-by-the-characters-breed) `scripts/fights.cs --turns` and `--live` print their main counts by the character's breed (2026-11-19)
+  - The study's keys in the sorted counts, a breed's name from the pack, a switch to print the breeds.
+
+## Groups, a follower the server holds (D464)
+
+- [D464](decisions/d464-groups-held-follower.md#d464-a-refusal-out-of-a-fight-says-the-server-may-hold-a-walk-and-a-follower-whose-change-keeps-failing-from-one-cell-steps-aside) A refusal out of a fight says the server may hold a walk, and a follower whose change keeps failing from one cell steps aside (2026-11-19)
+  - A confirmation told by its delay, a journey round, a master that stops waiting, every refusal held in a fight too.
+
+## Fights, the easy challenges (D465)
+
+- [D465](decisions/d465-fights-challenges-easy.md#d465-the-ai-plays-for-the-easy-challenges-those-of-its-own-turns-while-a-turn-costs-no-more-than-their-bonus-pays-pack-format-13) The AI plays for the easy challenges, those of its own turns, while a turn costs no more than their bonus pays, pack format 13 (2026-11-19)
   - Hardi and Barbare among them, keeping a challenge whatever it costs, the whole balance as the price, one search with a penalty, matching by number.

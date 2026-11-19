@@ -109,7 +109,7 @@ public sealed class FightActivityTests : IAsyncDisposable
     [Fact]
     public void AFightProfilePlaysForTheEasyChallengesUnlessItSaysOtherwise()
     {
-        // The owner's default (D464), a profile stored before it included.
+        // The owner's default (D465), a profile stored before it included.
         Assert.Equal(ChallengePlay.Easy, Activity(new FightSettings()).Challenges);
         Assert.Equal(ChallengePlay.None, Activity(new FightSettings { Challenges = ChallengePlay.None }).Challenges);
     }

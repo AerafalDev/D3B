@@ -2,7 +2,7 @@ using System.Runtime.InteropServices;
 
 namespace D3B.Data.Challenges;
 
-/// <summary>A challenge of the client's table, which the server names a fight's by (D461, D464).</summary>
+/// <summary>A challenge of the client's table, which the server names a fight's by (D461, D465).</summary>
 /// <remarks>
 /// <para>
 /// The client's <c>ChallengesDataRoot</c> record: its texts by number, which <see cref="Texts.GameTexts"/> reads, its category,

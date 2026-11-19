@@ -8,7 +8,7 @@ using static D3B.Engine.Tests.Fights.TestFights;
 
 namespace D3B.Engine.Tests.Tactics;
 
-/// <summary>A turn keeps the fight's easy challenge while what it costs stays within what the challenge pays (D464).</summary>
+/// <summary>A turn keeps the fight's easy challenge while what it costs stays within what the challenge pays (D465).</summary>
 public sealed class ChallengeTacticsTests
 {
     private const int Blow = 200;

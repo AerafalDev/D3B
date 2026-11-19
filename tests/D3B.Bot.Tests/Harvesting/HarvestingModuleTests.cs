@@ -31,7 +31,7 @@ public sealed class HarvestingModuleTests
         Assert.Equal([312, 441], read.Resources);
         // Stored before D438, the profile chooses the drops.
         Assert.Equal(ChallengeReward.Drop, read.ChallengeReward);
-        // Stored before D464, the profile plays for the easy challenges.
+        // Stored before D465, the profile plays for the easy challenges.
         Assert.Equal(ChallengePlay.Easy, read.Challenges);
         Assert.Equal(HarvestPlace.Chosen, read.Place);
         Assert.Equal(0, read.Area);

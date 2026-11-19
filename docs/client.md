@@ -411,7 +411,7 @@ measuring tools never committed that print counts and write previews outside the
 
 ### Challenges
 
-Measured on 3.7.14.18 on 2026-11-19 for the session that has the AI play the easy challenges (D464), with `scripts/inspect.cs`
+Measured on 3.7.14.18 on 2026-11-19 for the session that has the AI play the easy challenges (D465), with `scripts/inspect.cs`
 and a measuring tool never committed that reads the table and counts the results of the owner's 2,976 captured fights by
 challenge number, nothing of the account printed.
 
@@ -431,7 +431,7 @@ challenge number, nothing of the account printed.
   Its arguments name the sides, `hc0` the allied fighters and `e1` the enemies, and `whb` walls, holes and the map's edges. An
   activation's `G` terms test the fight as it starts: `GL` a level, `GN` the number of fighters of a side, `GM` a monster
   among the enemies, `GB` a breed among the allies.
-- **In the fights captured**, 34 challenges, every one of category 1 but Contamination: the 12 the owner judged easy (D464),
+- **In the fights captured**, 34 challenges, every one of category 1 but Contamination: the 12 the owner judged easy (D465),
   whose completion asks only of each turn, were 1,458 fights, 49%, won without being played for: Zombie (`TM=1,0`) 128 fights
   and 6% won, Statue (`Tm<1,0`) 123 and 7%, Nomade (`TM=m,0&TT=0,0`) 148 and 14%, Versatile (`SAt0`) 136 and 65%, Collant
   (`TD<2,hc0,hc0`) 136 and 71%, Misanthrope (`TD>1,hc0,hc0`) 92 and 57%, Prudent (`TD>1,hc0,e1`) 118 and 93%, Raser les murs

@@ -135,7 +135,8 @@ The bots run in `D3B.Bot`: what each part does today, with the decisions that ma
   ends it too, and the character walking already makes it busy. A walk the client does not confirm leaves the character
   on its last cell, where the server has it (`BotContext.SettleWalkAsync`, D85); the server may still hold it, and
   refuses what is not a walk from there, so a step aside comes first (`MapWalk.ReleaseHeldWalkAsync`, D89), and a refusal
-  does not let it go: only a walk shown does (D456). No two bots of the host walk to one cell at once (D456): a walk claims
+  does not let it go: only a walk shown does (D456). Out of a fight a refusal holds it too, the client's confirmation of a
+  walk being sometimes its previous one's (D464). No two bots of the host walk to one cell at once (D456): a walk claims
   the cell it ends on before its request goes (`BotContext.ClaimAsync`, `MapMates`, one per host in `Bots`), waiting while
   another bot claims it or walks to it, 5 s at most, and a step aside keeps clear of the cells the others stand on, walk to
   or claim (`BotContext.TakenCells`). A walk of no
@@ -287,7 +288,7 @@ The bots run in `D3B.Bot`: what each part does today, with the decisions that ma
   glyphs, traps, bombs' walls and portals (`GroundMark`), which `ImaginedFights.MarksOf` gives the engine. Since D461, it
   holds the fight's challenges (`FightChallenge`), each with its bonus, its targets as the server last named them
   (`FightChallengeTarget`, with the fighters allowed to strike it) and its result; `FightPlay` logs each challenge once and its
-  result as the fight ends. The bot sends none of the challenges' requests yet. Since D464, each turn plays for the fight's
+  result as the fight ends. The bot sends none of the challenges' requests yet. Since D465, each turn plays for the fight's
   first easy challenge (`FightPlay.ChallengeOf`: its completion criterion in the pack's `ChallengeCatalog` read as a
   `TurnChallenge`) while the activity's profile asks it (`BotActivity.Challenges`, a follower its master's) and the fight is
   not judged risky; a plan that leaves it leaves it for the fight, and once a plan of the turn kept it, the turn's next plans
@@ -332,7 +333,7 @@ The bots run in `D3B.Bot`: what each part does today, with the decisions that ma
   options turned off at each party joined, D437's measure), then follow in real time (D447): with its master it copies
   each of its walks as the server shows it, to the cell the master walks to, else it changes maps towards the master by
   the world's paths, whatever the others' order, a whole journey only when its master is more than one change away
-  (D456), each in its own haven bag as the master is in his
+  (D456), a step aside after three changes failed in a row by a way of one (`MapWalk.StepAsideAsync`, D464), each in its own haven bag as the master is in his
   (`GroupChain.Together`); the master's party's order (`GroupChain.Order`) is only the card's and the bank's (D442). A wait reads the bots it waits on before
   deciding (`BotSeen`), so that no change made between the decision and the wait is missed (`GroupWaits`). In a fight
   (D440), each bot has a part too (`IFightTeam`, `BotActor.Team`, `GroupFight`), which the AI asks during the placement
@@ -555,7 +556,7 @@ Built at step 2 (D24 to D33):
   `PackWriter` writes it, compressing several entries at once in a deterministic order (D28). `GamePack` opens it by
   reading the index, then reads each entry when asked, from any thread. `PackCache` keeps the entries last read within
   a budget. A test fails when the serialized layout changes without a new `GamePack.FormatVersion`.
-- A pack of format 13 holds (D27, D29, D139, D182, D219, D237, D238, D257, D265, D343, D369, D385, D414, D464):
+- A pack of format 13 holds (D27, D29, D139, D182, D219, D237, D238, D257, D265, D343, D369, D385, D414, D465):
   - every map as its own entry, its neighbours, cells and interactive elements with their graphics (`MapData`), read
     through a `PackCache` by `GameMaps`;
   - the client's world graph, a vertex per zone of a map and transitions between them (`WorldGraph`), and the atlas
@@ -589,7 +590,7 @@ Built at step 2 (D24 to D33):
     (`NpcCatalog`, `GameTables.Npcs`, D385): the server sends ids alone (D383), which the studio shows as these texts (`NpcNames`);
   - the hints of the world map, from format 12 (D414): the client's 835 hints with their category, picture number, name, map, world and level, the
     6 categories, and the hints' pictures, 64 pixels in raw RGBA by picture number (`HintCatalog`, `GameTables.Hints`, an entry of its own);
-  - the challenges, from format 13 (D464): the client's 842 with their name, description, category, icon, monster, the challenges
+  - the challenges, from format 13 (D465): the client's 842 with their name, description, category, icon, monster, the challenges
     each excludes, and their completion and activation criteria as the client writes them (`ChallengeCatalog`, `GameTables.Challenges`);
   - in French and English, the texts these name (`GameTexts`).
 - Which interactive an element of a map is, and which skills it offers, the client's data does not say: the server
@@ -1157,8 +1158,8 @@ Pure logic with no I/O, in `D3B.Engine`, which references `D3B.Data` for the cel
     sequences the best of each set of states the character holds, so that a Zobal's mask lives to the spells it opens
     (`WithEachStates`, D255), its best sequences weighed against the enemies' greedy reply, then the character's next
     turn (`NextTurn`, D210), the plan with the fewest actions winning among those within a point of life that leave the same enemies
-    alive (D407), the summoning spells left out of the first search but for the Osamodas', the Roublard's and the Steamer's, and
-    searched again with them when it finds nothing to do (D408); given a `TurnChallenge` (D464), the plan searched again
+    alive (D407), the summoning spells left out of the first search but for the Osamodas', the Roublard's, the Steamer's and the
+    Forgelance's, whose lances strike (D462), and searched again with them when it finds nothing to do (D408); given a `TurnChallenge` (D465), the plan searched again
     keeping it when the best breaks it, its casts, walks and ends those the challenge allows, chosen while its loss stays
     within `TurnChallenge.MostLoss` of the best's gain (`TurnPlan.KeepsChallenge`); `Place`; `Odds`; `OddsOverTheFight`, the enemies dying one after another (D249); `PathTo`.
     `TacticWeights`, measured on 69 fights (D212), next turn's weight refused at 1 or more, which would leave a kill now for later (D460), `TurnSearchLimits`, `TurnPlan`, `TacticAction`.
@@ -1166,7 +1167,7 @@ Pure logic with no I/O, in `D3B.Engine`, which references `D3B.Data` for the cel
     of 61 captures, 56 ms halfway, 422 ms at most, and 86 ms halfway on the AI's own fights (9e2); benchmarked, a turn
     against four enemies in 1.6 ms (9e), 3.1 ms and 6.5 MB (9e2, D216), 3.1 ms and 4.79 MB (9f, D229), 2.83 ms and
     4.81 MB (9g4, D255); on 452 searches of 94 captures, 90 ms halfway, 538 ms at most (9g4); on 1,619 searches of 83
-    captures, 82 ms halfway, 711 ms at most, and on the 417 turns of an easy challenge, 90 ms and 786 ms given it (D464).
+    captures, 82 ms halfway, 711 ms at most, and on the 417 turns of an easy challenge, 90 ms and 786 ms given it (D465).
 - The weapons' blows, in `D3B.Engine.Fights` (9e3, D220): `WeaponBlows`, each sword's blow a level of spell 0, the
   punch's with the sword's fields and its effects used in fights, after the pack's levels in one catalog the rules, the
   effects and the AI share (`SpellCatalog.WithLevels`); `EffectFormulas.DealtByWeapon` and the weapons' multipliers,
@@ -1245,7 +1246,7 @@ interface's recast (D292).
   removed and erosion left to captures (9d, built, D195, D196).
 - A fight is decided by simulating candidate actions and scoring them (D13): each turn the AI searches the best sequences
   of moves and casts and thinks again after each answer of the server (9e, built, D201, D202), its judgement measured on
-  the captures turn by turn (9e2, D206 to D212). The simulator applies spell
+  the captures turn by turn (9e2, D206 to D212), and breed by breed since D463. The simulator applies spell
   effects read from the game data. It lives in `D3B.Engine`, with no I/O, so it is tested on its own.
 - The hard cases through the effects, measured one at a time (9f): a fighter's states, as the server sets and ends them
   and as the effects set and end them through the spells they cast, the Zobal's masks first (built, D224 to D229);
@@ -1289,6 +1290,10 @@ character's (D279). The character's spells by the
 - The effects' formulas are tested on fighters the tests build, with the numbers the bench measured; what a cast foresees
   on a catalog of the tests' own: a blow on each enemy, less a step away, its critical effects, resistances, and a boost
   of the caster its mask names (D195). The bench itself, `scripts/fights.cs`, runs on the captures of the owner's machine.
+  Its replays of the turns (`--turns`) and of the fights (`--live`) print their main counts again by the character's breed,
+  a section each, so that a change of the AI is read class by class and on what a farm needs: the plans, the damage, kills
+  and heals planned against played, the reply's blows against the enemies' alone and in a group, the spells planned against
+  played; the turns and rounds a fight won takes, the turns idle, the life lost and the deaths (D463).
 - Logic code in `D3B.Engine` and the state handlers is tested directly, with property tests on CsCheck for cell and
   world paths (D68, D71) and lines of sight, the same both ways and nearing their end at each cell. A fight's rules are
   tested on maps and fighters the tests build around a map's middle, with a catalog of six spells, each refusal named.
