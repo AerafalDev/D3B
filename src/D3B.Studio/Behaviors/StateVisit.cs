@@ -36,7 +36,7 @@ internal sealed class StateVisit : IDisposable
     /// <summary>Gets how many times the leaf's actions were played to their end.</summary>
     public int Passes { get; private set; }
 
-    /// <summary>Gets the activity the last step played, which the behavior's activity speaks for, its report, fullness and fights.</summary>
+    /// <summary>Gets the activity the visit plays, the last step's or the one it starts, whose first step comes at the next (D458).</summary>
     public BotActivity? Current => _current;
 
     /// <summary>Gets the step being played, until it returns, for the trace to say which one a cut or a failure ended.</summary>
@@ -156,8 +156,17 @@ internal sealed class StateVisit : IDisposable
                             _activities[activity.Id] = running;
                         }
 
+                        var starting = !ReferenceEquals(_current, running);
+
                         _current = running;
                         _at = activity.Id;
+
+                        // The owner's report from game (D458): the run reads an activity's pods, and its group's, before each step,
+                        // through the activity the behavior speaks for; one that starts plays nothing yet, so that the run looks
+                        // first, as the master's profile travelled to its zone before it saw its full mule.
+                        if (starting)
+                            return;
+
                         InFlight = new PlayedStep(activity.Definition.Name, null, false);
 
                         var goesOn = await running.StepAsync(context, cancellationToken).ConfigureAwait(false);

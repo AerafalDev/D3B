@@ -691,3 +691,8 @@ or refines another says so in its own entry. Add a line here with every new deci
 
 - [D457](decisions/d457-groups-invite-and-bank-refusal.md#d457-the-master-invites-its-followers-at-its-first-request-and-a-stack-the-bank-refuses-stops-not-the-groups-unloading) The master invites its followers at its first request, and a stack the bank refuses stops not the group's unloading (2026-11-19)
   - Waiting for the followers to accept before the first walk, leaving out a quest's objects by their type.
+
+## Groups, the exchange's pace and the pods seen first (D458)
+
+- [D458](decisions/d458-group-exchange-pace.md#d458-a-follower-says-it-is-ready-35-s-after-the-exchanges-last-change-and-an-activity-starting-plays-nothing-before-its-run-looks-at-the-pods) A follower says it is ready 3.5 s after the exchange's last change, and an activity starting plays nothing before its run looks at the pods (2026-11-19)
+  - The stacks in one transfer, unmeasured; the moves with no display time; the master waiting longer for the readiness.
