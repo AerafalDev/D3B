@@ -81,7 +81,7 @@ public static class FightPlay
             {
                 var odds = tactics.Odds(start.Fight, start.Knowledge);
 
-                weights = odds.IsRisky ? TacticWeights.Prudent : TacticWeights.Default;
+                weights = WeightsOf(state.Fight ?? fight, self, odds.IsRisky);
                 judged = true;
                 FightLog.Judged(context.Log, self, odds.TurnsToWin, odds.TurnsToLose, odds.IsRisky);
             }
@@ -114,6 +114,21 @@ public static class FightPlay
             await PlayTurnAsync(context, tactics, tables, map, weights, refused, cancellationToken).ConfigureAwait(false);
             await context.WaitUntilAsync(next => next.Fight is not { IsOwnTurn: true }, context.Delays.Answer, cancellationToken).ConfigureAwait(false);
         }
+    }
+
+    /// <summary>Gets the weights the AI plays a fight with: prudent when it would lose, a little bolder beside allies of its group (D454).</summary>
+    /// <param name="fight">The fight, as the bot knows it.</param>
+    /// <param name="self">The character.</param>
+    /// <param name="risky">Whether the AI judged the fight too risky.</param>
+    /// <returns>The weights.</returns>
+    internal static TacticWeights WeightsOf(FightState fight, long self, bool risky)
+    {
+        if (risky)
+            return TacticWeights.Prudent;
+
+        var allies = fight.Fighters.Values.Any(fighter => fighter.Id != self && fighter.Team == fight.Team && fighter.IsAlive && fighter.BreedId is not null && fighter.SummonerId is null);
+
+        return allies ? TacticWeights.Group : TacticWeights.Default;
     }
 
     private static bool Placing(FightState fight)
