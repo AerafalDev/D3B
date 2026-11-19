@@ -666,3 +666,8 @@ or refines another says so in its own entry. Add a line here with every new deci
 
 - [D452](decisions/d452-group-bank-master-empties.md#d452-at-the-groups-bank-the-master-deposits-all-it-does-not-wear-first-and-again-when-an-exchange-does-not-conclude) At the group's bank the master deposits all it does not wear first, and again when an exchange does not conclude (2026-11-19)
   - The master depositing by its profile's rule.
+
+## Groups, the master's door (D453)
+
+- [D453](decisions/d453-groups-door.md#d453-a-follower-does-not-copy-its-masters-walk-to-a-door-or-a-cell-that-moves-it-and-takes-that-way-itself) A follower does not copy its master's walk to a door or a cell that moves it, and takes that way itself (2026-11-19)
+  - Copying the walk to the door's cell itself.

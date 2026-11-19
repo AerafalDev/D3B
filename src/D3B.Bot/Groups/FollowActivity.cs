@@ -9,6 +9,7 @@ using D3B.Bot.Movement;
 using D3B.Bot.Runtime;
 using D3B.Data;
 using D3B.Data.Maps;
+using D3B.Data.World;
 using D3B.Engine.Maps;
 using D3B.Protocol.Game;
 
@@ -362,6 +363,12 @@ public sealed class FollowActivity : BotActivity, IDisposable
         if (master.MonsterGroups.Values.Any(group => group.Cell == end))
             return false;
 
+        // Measured on the owner's retest of 2026-11-19 (D453): a follower beside its master's door needed a walk more onto
+        // the door's own cell, which its client did not follow, and the server held it in front of the bank. A walk to a
+        // door or a cell that moves the character is its master's way out; the follower takes it once its master took it.
+        if (state.MapId is { } here && LeadsAway(context, here, end))
+            return false;
+
         if (state is not { MapId: { } map, Cell: { } from } || Beside(context, master, map, from, end) is not { } cell)
             return false;
 
@@ -422,6 +429,26 @@ public sealed class FollowActivity : BotActivity, IDisposable
         var free = rings.Where(cell => cell == from || CellPathfinder.TryFind(data.Cells.Span, from, cell, out _)).ToList();
 
         return free.Count is 0 ? null : free[Math.Min(at, free.Count - 1)] is var cell && cell != from ? cell : null;
+    }
+
+    // Whether a cell of the map is where a door is used or a cell moves the character to another map, by the world's graph.
+    private static bool LeadsAway(BotContext context, long map, int cell)
+    {
+        if (!context.Maps.TryGet(map, out var data) || !context.World.TryGetVertex(data, cell, out var vertex))
+            return false;
+
+        var graph = context.World.Graph;
+
+        foreach (var edge in graph.EdgesFrom(vertex))
+        {
+            foreach (var transition in graph.TransitionsOf(edge))
+            {
+                if (transition.CellId == cell && transition.Type is WorldTransitionType.Interactive or WorldTransitionType.MapAction)
+                    return true;
+            }
+        }
+
+        return false;
     }
 
     private static IEnumerable<int> Around(int cell)
