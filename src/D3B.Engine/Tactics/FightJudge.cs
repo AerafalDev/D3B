@@ -272,6 +272,9 @@ public sealed class FightJudge
     {
         ArgumentNullException.ThrowIfNull(fight);
 
+        // A Forgelance's lance is back in its hand as its next turn begins (D465).
+        fight = ForgelanceLance.Returned(fight, _actorId);
+
         var actor = fight.Find(_actorId);
         var known = _tables.IndexOf(_actorId);
 
@@ -295,7 +298,7 @@ public sealed class FightJudge
         return best;
     }
 
-    /// <summary>Gets what the fighter playing's side is worth to an enemy choosing whom it strikes: its fighters' life and their being alive, as <see cref="Judge(ImaginedFight)"/> counts them, every character of the side held as dear as the fighter playing.</summary>
+    /// <summary>Gets what the fighter playing's side is worth to an enemy choosing whom it strikes: its fighters' life and their being alive, as <see cref="Judge(ImaginedFight)"/> counts them, every character of the side held as dear as the fighter playing, as monsters hold them (D466: counted twice, the character drew 4.5 times the blows it took); alone, no other character on its side, nothing changes.</summary>
     /// <param name="fight">The fight.</param>
     /// <returns>The worth, which an enemy's reply lowers as much as it can.</returns>
     public double AlliesWorth(ImaginedFight fight)
@@ -304,8 +307,6 @@ public sealed class FightJudge
 
         var worth = 0.0;
 
-        // Monsters do not hold the character dearer than its allies (D465): with its life counted twice, the reply on the group
-        // captures foresaw 10,574 on the character for 2,360 dealt. Alone nothing changes, no other character on its side.
         foreach (var fighter in fight.Fighters)
         {
             if (fighter.IsAlive && fighter.Team == _team)
@@ -772,8 +773,9 @@ public sealed class FightJudge
 
     private ImaginedFight NextTurnOf(ImaginedFight fight)
     {
-        // A buff the fighter playing gave for one round ends as its next turn begins: that turn does without it.
-        var next = fight;
+        // A buff the fighter playing gave for one round ends as its next turn begins: that turn does without it; a Forgelance's
+        // lance is back in its hand (D465).
+        var next = ForgelanceLance.Returned(fight, _actorId);
 
         foreach (var buff in fight.Buffs)
         {

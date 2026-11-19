@@ -1132,6 +1132,10 @@ Pure logic with no I/O, in `D3B.Engine`, which references `D3B.Data` for the cel
     its turn's damage, and the blow it strikes next, before the enemies (`FightJudge`, D270); an enemy that would hit it
     hits it half the time. In the reply the character's summons that play strike first, the latest first; of summons drawn
     at random the likeliest alone comes.
+  - `ForgelanceLance`: a rule the pack does not hold, measured on the captures, and the AI's only one naming a breed's
+    states and monster: a throw takes the lance out of the Forgelance's hand (states 3360 and 3590 ended, 3361 given), so
+    that no spell asking it follows that turn, and `Imagination.TurnStarted` and the judge's next turn put it back, the
+    lance gone from the map (D465).
   - `Glyphs`, `CellMark` and `CellMarkKind`, in `D3B.Engine.Fights` (D280): the marks the pack's effects set on the cells of
     a zone, a glyph struck as a turn begins (401) or ends (402), a glyph-aura (1091), a trap (400), their spell, grade
     and end; the imagined fight's marks, the server's and those the casts set (`ImaginedFight.Marks`).
@@ -1151,7 +1155,7 @@ Pure logic with no I/O, in `D3B.Engine`, which references `D3B.Data` for the cel
   - `FightTactics`, built once per pack: `Plan`, a beam search of walks and casts, each step keeping beside its best
     sequences the best of each set of states the character holds, so that a Zobal's mask lives to the spells it opens
     (`WithEachStates`, D255), its best sequences weighed against the enemies' greedy reply, each enemy striking whom it
-    lowers the side's worth most by, every character of a group as dear to it as the fighter playing (`AlliesWorth`, D465), then the character's next
+    lowers the side's worth most by, every character of a group as dear to it as the fighter playing (`AlliesWorth`, D466), then the character's next
     turn (`NextTurn`, D210), the plan with the fewest actions winning among those within a point of life that leave the same enemies
     alive (D407), the summoning spells left out of the first search but for the Osamodas', the Roublard's, the Steamer's and the
     Forgelance's, whose lances strike (D462), and searched again with them when it finds nothing to do (D408); `Place`; `Odds`; `OddsOverTheFight`, the enemies dying one after another (D249); `PathTo`.

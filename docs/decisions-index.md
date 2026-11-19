@@ -727,7 +727,12 @@ or refines another says so in its own entry. Add a line here with every new deci
 - [D464](decisions/d464-groups-held-follower.md#d464-a-refusal-out-of-a-fight-says-the-server-may-hold-a-walk-and-a-follower-whose-change-keeps-failing-from-one-cell-steps-aside) A refusal out of a fight says the server may hold a walk, and a follower whose change keeps failing from one cell steps aside (2026-11-19)
   - A confirmation told by its delay, a journey round, a master that stops waiting, every refusal held in a fight too.
 
-## Fights, the group's reply and its target (D465)
+## Fights, the Forgelance's lance in hand (D465)
 
-- [D465](decisions/d465-group-reply-target.md#d465-an-enemy-of-the-reply-holds-every-character-of-a-group-as-dear-as-the-fighter-playing-as-real-monsters-do) An enemy of the reply holds every character of a group as dear as the fighter playing, as real monsters do (2026-11-19)
+- [D465](decisions/d465-forgelance-lance-state.md#d465-a-thrown-lance-is-out-of-the-forgelances-hand-until-its-next-turn-a-measured-rule-the-pack-does-not-hold) A thrown lance is out of the Forgelance's hand until its next turn, a measured rule the pack does not hold (2026-11-19)
+  - A rule read from the pack, a summon's client-only state given to its summoner, the refusals left to D407.
+
+## Fights, the group's reply and its target (D466)
+
+- [D466](decisions/d466-group-reply-target.md#d466-an-enemy-of-the-reply-holds-every-character-of-a-group-as-dear-as-the-fighter-playing-as-real-monsters-do) An enemy of the reply holds every character of a group as dear as the fighter playing, as real monsters do (2026-11-19)
   - The fighter playing's life counted once, a group or not; a weight by breed or the group's weights; the allies' spells and turns in the same change.
