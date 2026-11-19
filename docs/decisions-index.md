@@ -661,3 +661,8 @@ or refines another says so in its own entry. Add a line here with every new deci
 
 - [D451](decisions/d451-groups-direct-exit.md#d451-to-its-masters-exit-a-follower-walks-to-an-exit-of-its-own-and-a-character-on-an-exit-leaves-from-it) To its master's exit a follower walks to an exit of its own, and a character on an exit leaves from it (2026-11-19)
   - Copying the walk to the master's very exit cell.
+
+## Groups, the master emptied at the bank (D452)
+
+- [D452](decisions/d452-group-bank-master-empties.md#d452-at-the-groups-bank-the-master-deposits-all-it-does-not-wear-first-and-again-when-an-exchange-does-not-conclude) At the group's bank the master deposits all it does not wear first, and again when an exchange does not conclude (2026-11-19)
+  - The master depositing by its profile's rule.

@@ -103,36 +103,39 @@ public sealed class GroupBankTests
     }
 
     [Fact]
-    public async Task AFullFollowerGivesItsMasterWhatItCarriesAndTheMasterDepositsItWithItsOwnLoot()
+    public async Task AMasterEmptiesItselfThenTakesItsFollowersObjectsThenDepositsThem()
     {
+        // The owner's report and choice (D452): the master deposits all it does not wear first, its own loot or not, then
+        // takes the ash, never the follower's worn stack nor its kamas, then deposits it.
         await using var play = new TestPlay();
         var (masterConnection, master, connection, _, run) = await InTheBankAsync(play, 100);
         var activity = new BankingActivity { Loot = new HashSet<int> { MastersLoot } };
         var leading = master.StartActivity(activity);
 
-        // The ash, never the follower's worn stack nor its kamas, then one opening of the bank for the ash and the master's loot.
-        await ExchangedAsync(play, masterConnection, connection, 0, 2, 10);
-        await DepositedAsync(play, masterConnection, 2, 12, GivenUid);
-
+        await DepositedAsync(play, masterConnection, 0, 12, 14);
+        await ExchangedAsync(play, masterConnection, connection, 4, 2, 10);
+        await DepositedAsync(play, masterConnection, 6, GivenUid);
         await TestGroup.SettleAsync(master);
 
         Assert.DoesNotContain(connection.Sent, request => request is ExchangeKamasRequest);
         Assert.DoesNotContain(connection.Sent, request => request is ExchangeObjectMoveRequest { Uid: 41 });
         Assert.Equal(0, activity.OwnUnloads);
-        Assert.Contains(14, master.State.Inventory.Keys);
         leading.Stop();
         run.Stop();
     }
 
     [Fact]
-    public async Task AMasterWhosePodsHoldNothingMoreDepositsBeforeItTakesItsFollowersObjects()
+    public async Task AFullMasterDepositsBeforeItTakesItsFollowersObjects()
     {
+        // Measured in game (D452): full, the master took its follower's objects all the same, and the exchange never concluded.
         await using var play = new TestPlay();
         var (masterConnection, master, connection, _, run) = await InTheBankAsync(play, 1_000);
         var leading = master.StartActivity(new BankingActivity { Loot = new HashSet<int> { MastersLoot } });
 
-        // Its own loot first, the bank left, then the follower's ash, then the bank again for it.
-        await DepositedAsync(play, masterConnection, 0, 12);
+        await DepositedAsync(play, masterConnection, 0, 12, 14);
+
+        Assert.Equal(2, connection.Sent.Count);
+
         await ExchangedAsync(play, masterConnection, connection, 4, 2, 10);
         await DepositedAsync(play, masterConnection, 6, GivenUid);
         leading.Stop();
@@ -165,13 +168,15 @@ public sealed class GroupBankTests
 
         connection.Server(new InventoryContentEvent { Objects = { Stack(AshUid, TestPlay.Ash, 2), Stack(42, TestPlay.Chestnut, 2), Stack(43, TestPlay.WheatBag, 2) } });
         await follower.ProcessedAsync();
-        play.Bots.Delays = BotDelays.Measured with { Display = TimeSpan.FromSeconds(20), BetweenSteps = TimeSpan.Zero };
 
         var leading = master.StartActivity(new BankingActivity { Loot = new HashSet<int> { MastersLoot } });
 
+        await DepositedAsync(play, masterConnection, 0, 12, 14);
+        play.Bots.Delays = BotDelays.Measured with { Display = TimeSpan.FromSeconds(20), BetweenSteps = TimeSpan.Zero };
+
         Assert.IsType<ExchangePlayerRequest>(await TestGroup.SentAsync(play, connection, 3));
         Both(masterConnection, connection, new ExchangeRequestedEvent { Type = ExchangeType.Player, SourceId = TestGroup.FollowerId, TargetId = TestGroup.MasterId });
-        Assert.IsType<ExchangeAcceptRequest>(await TestGroup.SentAsync(play, masterConnection, 1));
+        Assert.IsType<ExchangeAcceptRequest>(await TestGroup.SentAsync(play, masterConnection, 5));
         Both(masterConnection, connection, new ExchangeStartedWithPlayerEvent { Type = ExchangeType.Player });
 
         var opened = play.Time.GetUtcNow();
@@ -186,53 +191,30 @@ public sealed class GroupBankTests
         Assert.True(play.Time.GetUtcNow() - opened > TimeSpan.FromSeconds(30));
         Both(masterConnection, connection, new ExchangeReadyEvent { Ready = true, CharacterId = TestGroup.FollowerId });
 
-        Assert.Equal(new ExchangeReadyRequest { Step = 3, Ready = true }, await TestGroup.SentAsync(play, masterConnection, 2));
+        Assert.Equal(new ExchangeReadyRequest { Step = 3, Ready = true }, await TestGroup.SentAsync(play, masterConnection, 6));
         leading.Stop();
         run.Stop();
     }
 
     [Fact]
-    public async Task AGiftJoiningTheMastersOwnStackIsDepositedForWhatWasGivenAlone()
+    public async Task TheMasterKeepsTheFoodItEatsAtTheBank()
     {
-        // The master's own chestnut, which its profile does not bank, stays: only the ten its follower gave go in.
+        // The owner's choice (D452): all it does not wear, but the food that only heals, which it eats (D441).
         await using var play = new TestPlay();
-        var (masterConnection, master, connection, follower, run) = await InTheBankAsync(play, 100);
+        var (masterConnection, master, _, _, run) = await InTheBankAsync(play, 100);
 
-        masterConnection.Server(new ObjectAddedEvent { Object = Stack(15, TestPlay.Chestnut, 30) });
-        connection.Server(new InventoryContentEvent { Objects = { Stack(42, TestPlay.Chestnut, 10) } });
-        await follower.ProcessedAsync();
+        masterConnection.Server(new ObjectAddedEvent { Object = Stack(16, TestPlay.Bread, 5) });
+        await master.ProcessedAsync();
 
         var leading = master.StartActivity(new BankingActivity { Loot = new HashSet<int> { MastersLoot } });
 
-        Assert.IsType<ExchangePlayerRequest>(await TestGroup.SentAsync(play, connection, 3));
-        Both(masterConnection, connection, new ExchangeRequestedEvent { Type = ExchangeType.Player, SourceId = TestGroup.FollowerId, TargetId = TestGroup.MasterId });
-        Assert.IsType<ExchangeAcceptRequest>(await TestGroup.SentAsync(play, masterConnection, 1));
-        Both(masterConnection, connection, new ExchangeStartedWithPlayerEvent { Type = ExchangeType.Player });
-        Assert.Equal(new ExchangeObjectMoveRequest { Uid = 42, Quantity = 10 }, await TestGroup.SentAsync(play, connection, 4));
-        Both(masterConnection, connection, new ExchangeObjectsAddedEvent());
-        Assert.IsType<ExchangeReadyRequest>(await TestGroup.SentAsync(play, connection, 5));
-        Both(masterConnection, connection, new ExchangeReadyEvent { Ready = true, CharacterId = TestGroup.FollowerId });
-        Assert.IsType<ExchangeReadyRequest>(await TestGroup.SentAsync(play, masterConnection, 2));
-        masterConnection.Server(new ObjectQuantityEvent { Object = new ObjectQuantity { Uid = 15, Quantity = 40 } });
-        connection.Server(new ObjectDeletedEvent { Uid = 42 });
-        connection.Server(new InventoryWeightEvent { Weight = 0, MaxWeight = 1_000 });
-        Both(masterConnection, connection, new ExchangeLeaveEvent());
-
-        Assert.Equal(_talk, await TestGroup.SentAsync(play, masterConnection, 3));
-        Opened(masterConnection);
-        Assert.IsType<NpcDialogReplyRequest>(await TestGroup.SentAsync(play, masterConnection, 4));
-        BankOpened(masterConnection);
-        Assert.Equal(new ExchangeTransferFromInventoryRequest { Uids = { 12 } }, await TestGroup.SentAsync(play, masterConnection, 5));
-        masterConnection.Server(new ObjectsDeletedEvent { Uids = { 12 } });
-        Assert.Equal(new ExchangeObjectMoveRequest { Uid = 15, Quantity = 10 }, await TestGroup.SentAsync(play, masterConnection, 6));
-        masterConnection.Server(new ObjectQuantityEvent { Object = new ObjectQuantity { Uid = 15, Quantity = 30 } });
-        Assert.IsType<DialogLeaveRequest>(await TestGroup.SentAsync(play, masterConnection, 7));
+        await DepositedAsync(play, masterConnection, 0, 12, 14);
         leading.Stop();
         run.Stop();
     }
 
     [Fact]
-    public async Task AFollowerThatNeverAsksIsLeftAndTheMasterDepositsItsOwnLoot()
+    public async Task AFollowerThatNeverAsksIsLeftAndTheMasterWaitsNoLongerThanThirtySeconds()
     {
         // A follower in the group whose activity does not run: it asks nothing, and the master waits no longer than 30 s.
         await using var play = new TestPlay();
@@ -251,12 +233,18 @@ public sealed class GroupBankTests
 
         await TestGroup.SettleAsync(master, follower);
 
-        var started = play.Time.GetUtcNow();
         var leading = master.StartActivity(new BankingActivity { Loot = new HashSet<int> { MastersLoot } });
 
-        Assert.Equal(_talk, await TestGroup.SentAsync(play, masterConnection, 1));
-        Assert.InRange(play.Time.GetUtcNow() - started, TimeSpan.FromSeconds(30), TimeSpan.FromSeconds(35));
+        await DepositedAsync(play, masterConnection, 0, 12);
+
+        for (var wait = 0; wait < 8; wait++)
+        {
+            play.Time.Advance(TimeSpan.FromSeconds(5));
+            await TestGroup.SettleAsync(master, follower);
+        }
+
         Assert.DoesNotContain(masterConnection.Sent, request => request is ExchangeAcceptRequest);
+        Assert.Equal(4, masterConnection.Sent.Count);
         leading.Stop();
     }
 }
