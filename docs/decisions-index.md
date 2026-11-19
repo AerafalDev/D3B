@@ -706,3 +706,8 @@ or refines another says so in its own entry. Add a line here with every new deci
 
 - [D460](decisions/d460-group-fights-strike-now.md#d460-the-ai-weighs-next-turns-damage-under-1-in-a-group-too-so-that-it-strikes-now-what-it-could-strike-later) The AI weighs next turn's damage under 1, in a group too, so that it strikes now what it could strike later (2026-11-19)
   - D454 undone whole, a rule by element, the approach clamped silently in the judge.
+
+## Fights, the AI measured breed by breed (D461)
+
+- [D461](decisions/d461-fights-by-breed.md#d461-scriptsfightscs---turns-and---live-print-their-main-counts-by-the-characters-breed) `scripts/fights.cs --turns` and `--live` print their main counts by the character's breed (2026-11-19)
+  - The study's keys in the sorted counts, a breed's name from the pack, a switch to print the breeds.

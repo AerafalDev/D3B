@@ -12,10 +12,14 @@ namespace D3B.Scripts.Fights;
 /// A fight is the AI's when D3B sent the server a request of the fight's itself (a <see cref="CaptureRecordKind.Injected"/>
 /// frame), the player's otherwise; a request of the fight's the client sent in an AI's fight is the player's hand (D202). A
 /// cast D3B sent is cast when the server announces the character's cast before anything else answers it, refused when an
-/// error text comes first (D203). It prints counts, never a value of one fight.
+/// error text comes first (D203). The AI's fights are counted again by the character's breed, with what matters to a farm:
+/// the turns and rounds a fight won takes, the turns idle, the life lost and the deaths (D461). It prints counts, never a
+/// value of one fight.
 /// </remarks>
 internal sealed class LiveBench
 {
+    private readonly BreedSections _byBreed = new();
+
     public Tally Tally { get; } = new();
 
     private static bool OfTheFight(IMessage message)
@@ -27,11 +31,17 @@ internal sealed class LiveBench
     {
         CharacterState? state = null;
         Fight? fight = null;
+        int? breed = null;
 
         foreach (var (kind, message) in messages)
         {
             if (kind is CaptureRecordKind.FromServer && message is CharacterSelectionEvent { Success.Character: { } chosen })
+            {
                 state = CharacterState.Chosen(new CharacterKey(0, chosen.Id), chosen);
+
+                // A group's fight often ends before a follower's first turn (10c): its breed is then the selection's.
+                breed = chosen.Basics?.Look?.BreedId is > 0 and var id ? id : null;
+            }
 
             if (state is null)
                 continue;
@@ -88,7 +98,7 @@ internal sealed class LiveBench
 
             if (message is FightEndEvent)
             {
-                Settle(fight, state.Fight, self);
+                Settle(fight, state.Fight, self, fight.Breed ?? breed);
                 fight = null;
             }
         }
@@ -157,7 +167,30 @@ internal sealed class LiveBench
         }
     }
 
-    private void Settle(Fight fight, FightState? state, long self)
+    public void WriteBreeds(TextWriter writer)
+    {
+        foreach (var breed in _byBreed.Breeds)
+        {
+            var won = _byBreed.Of(breed, "won");
+            var fights = _byBreed.Of(breed, "fights");
+            var turns = _byBreed.Of(breed, "turns");
+            var known = _byBreed.Of(breed, "fights with the life known");
+
+            writer.WriteLine($"by breed: {BreedSections.Name(breed)}, the AI's fights");
+            writer.WriteLine($"  fights: {fights:F0}, won {won:F0}, lost {_byBreed.Of(breed, "lost"):F0}, other {fights - won - _byBreed.Of(breed, "lost"):F0}");
+            writer.WriteLine($"  turns a fight won takes: {Per(_byBreed.Of(breed, "turns in fights won"), won)}, rounds {Per(_byBreed.Of(breed, "rounds in fights won"), won)}");
+            writer.WriteLine($"  the character's turns: {turns:F0}, with no cast nor walk {_byBreed.Of(breed, "idle"):F0} ({Per(100 * _byBreed.Of(breed, "idle"), turns)}%)");
+            writer.WriteLine($"  the character's life lost a fight: {Per(_byBreed.Of(breed, "life lost"), known)}, over {known:F0} fights it played a turn of");
+            writer.WriteLine($"  the character's deaths: {_byBreed.Of(breed, "deaths"):F0}");
+        }
+
+        static string Per(double sum, double count)
+        {
+            return count is 0 ? "-" : (sum / count).ToString("F1", System.Globalization.CultureInfo.InvariantCulture);
+        }
+    }
+
+    private void Settle(Fight fight, FightState? state, long self, int? breed)
     {
         var ai = fight.Requests.Count > 0;
         var who = ai ? "the AI's" : "the player's";
@@ -186,7 +219,26 @@ internal sealed class LiveBench
         Tally.Count("the AI's fights: the client's readiness for a turn", fight.ClientReady);
 
         if (fight.Life is { } life && state?.Fighters.GetValueOrDefault(self) is { } end)
+        {
             Tally.Count("the AI's fights: the character's life lost", Math.Max(0, life - (end.IsAlive ? end.Life : 0)));
+            _byBreed.Add(breed, "life lost", Math.Max(0, life - (end.IsAlive ? end.Life : 0)));
+            _byBreed.Add(breed, "fights with the life known");
+        }
+
+        var dead = state?.Fighters.GetValueOrDefault(self) is { IsAlive: false };
+
+        Tally.Count("the AI's fights: the character's deaths", dead ? 1 : 0);
+        _byBreed.Add(breed, "fights");
+        _byBreed.Add(breed, outcome is "won" or "lost" ? outcome : "other");
+        _byBreed.Add(breed, "turns", fight.Turns);
+        _byBreed.Add(breed, "idle", fight.Idle);
+        _byBreed.Add(breed, "deaths", dead ? 1 : 0);
+
+        if (outcome is "won")
+        {
+            _byBreed.Add(breed, "turns in fights won", fight.Turns);
+            _byBreed.Add(breed, "rounds in fights won", state?.Round ?? 0);
+        }
 
         foreach (var (name, count) in fight.Requests)
             Tally.Count($"D3B's requests: {name}", count);

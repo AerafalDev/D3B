@@ -82,3 +82,4 @@ Each file holds the decisions of one group of [the index](../decisions-index.md)
 - [Groups, the exchange's pace and the pods seen first (D458)](d458-group-exchange-pace.md): 1 decision, 3 KB.
 - [Groups, the bank's rounds and the food (D459)](d459-group-bank-rounds-and-food.md): 1 decision, 3 KB.
 - [Fights, a blow now worth more than a blow later (D460)](d460-group-fights-strike-now.md): 1 decision, 4 KB.
+- [Fights, the AI measured breed by breed (D461)](d461-fights-by-breed.md): 1 decision, 4 KB.
