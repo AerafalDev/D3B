@@ -1,6 +1,6 @@
 namespace D3B.Engine.Tactics;
 
-/// <summary>What a challenge asks of the movement points the fighter playing uses in its turn (D465).</summary>
+/// <summary>What a challenge asks of the movement points the fighter playing uses in its turn (D466).</summary>
 public enum TurnMovement
 {
     /// <summary>Nothing.</summary>

@@ -76,7 +76,7 @@ public sealed class GameTables
     /// <exception cref="PackFormatException">Their entry is damaged.</exception>
     public HintCatalog Hints => _hints.Value;
 
-    /// <summary>Gets the client's challenges, their texts and their criteria (D465).</summary>
+    /// <summary>Gets the client's challenges, their texts and their criteria (D466).</summary>
     /// <exception cref="KeyNotFoundException">The pack holds no challenges.</exception>
     /// <exception cref="PackFormatException">Their entry is damaged.</exception>
     public ChallengeCatalog Challenges => _challenges.Value;

@@ -373,7 +373,7 @@ follower) on the same map, the capture of every connection on; a capture's conte
 - **The AI playing the challenges** (D461), the owner's ask of 2026-11-19, in three sessions. (1) Made on 2026-11-19 in code
   and tests, measured on the captures of 2,980 fights, mapping format 22: the bot reads its fight's challenge, its targets, its
   result and the proposals, keeps them in the fight's state and logs them. (2) Made on 2026-11-19 in code and tests, pack
-  format 13 (D465): the client's challenges' table in the pack, 842 records with their texts and criteria, and the AI playing
+  format 13 (D466): the client's challenges' table in the pack, 842 records with their texts and criteria, and the AI playing
   for the 12 easy ones the owner listed, whose criterion asks only of its own turns, a profile's option « Challenges », Easy by
   default; a turn keeps the challenge while what it costs stays within half of what keeps the reward a minute the same, and a
   fight judged risky plays for none. Left: seen in game; the pack 13 published on the owner's go. (3) Then the feasible ones,

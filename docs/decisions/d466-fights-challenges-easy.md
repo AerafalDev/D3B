@@ -1,9 +1,9 @@
-# Fights, the easy challenges (D465)
+# Fights, the easy challenges (D466)
 
 A part of [the decisions](README.md); each decision has one line in [the index](../decisions-index.md). The challenges read
 are in [D461](d461-fights-challenges-read.md), their bonus in [D438](d438-fights-challenges-bonus.md).
 
-## D465: The AI plays for the easy challenges, those of its own turns, while a turn costs no more than their bonus pays, pack format 13
+## D466: The AI plays for the easy challenges, those of its own turns, while a turn costs no more than their bonus pays, pack format 13
 
 *2026-11-19, outside the roadmap's steps, the owner's ask (« que l'IA fasse les challs qui sont jugés faisables ou faciles »),
 the second of the three sessions D461 began; the list, the default and the price are the owner's choices. Builds D198, D201,

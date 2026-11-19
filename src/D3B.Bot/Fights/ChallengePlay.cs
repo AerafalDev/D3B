@@ -1,6 +1,6 @@
 namespace D3B.Bot.Fights;
 
-/// <summary>Which of a fight's challenges the AI plays for, which a profile sets for every fight the AI plays (D465).</summary>
+/// <summary>Which of a fight's challenges the AI plays for, which a profile sets for every fight the AI plays (D466).</summary>
 /// <remarks>Whatever the profile, the AI plays for none in a fight it judged too risky, and leaves one that costs a turn more than it pays.</remarks>
 public enum ChallengePlay
 {

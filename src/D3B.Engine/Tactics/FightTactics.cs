@@ -43,7 +43,7 @@ public sealed class FightTactics
 
     // The breeds whose summons are not a last resort (D408): the Osamodas' beasts, the Roublard's bombs, the Steamer's turrets, and
     // the Forgelance's lances, which strike as they are thrown: replayed on its 221 turns of the 2026-11-19 captures, searching them
-    // first plans a third more damage (5,885 against 4,439) (D462).
+    // first plans over a quarter more damage (5,676 against 4,439), a thrown lance out of hand until its next turn (D462, D465).
     private static readonly int[] _summonsFirstBreeds = [2, 13, 15, 20];
 
     private const int RepliesAnEnemy = 3;
@@ -332,7 +332,7 @@ public sealed class FightTactics
     /// <param name="challenge">The fight's challenge the turn may keep, or null.</param>
     /// <returns>The plan, <see cref="TurnPlan.KeepsChallenge"/> when it keeps the challenge.</returns>
     /// <remarks>
-    /// With a challenge (D465), the best plan is searched as always; when it does not keep the challenge, the best plan that
+    /// With a challenge (D466), the best plan is searched as always; when it does not keep the challenge, the best plan that
     /// does is searched too, its casts and walks only those the challenge allows and its turn ending only where it is kept.
     /// That plan is chosen while what it loses on the best, as judged once the enemies replied, stays within
     /// <see cref="TurnChallenge.MostLoss"/> of what the best gains on ending the turn now: a challenge that slows the fight

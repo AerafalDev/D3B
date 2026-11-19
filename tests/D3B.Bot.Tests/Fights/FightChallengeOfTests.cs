@@ -5,7 +5,7 @@ using D3B.Engine.Tactics;
 
 namespace D3B.Bot.Tests.Fights;
 
-/// <summary>The challenge a turn plays for: the fight's first easy one not yet decided nor left, never in a risky fight (D465).</summary>
+/// <summary>The challenge a turn plays for: the fight's first easy one not yet decided nor left, never in a risky fight (D466).</summary>
 public sealed class FightChallengeOfTests
 {
     private const int Zombie = 1;

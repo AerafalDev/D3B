@@ -66,7 +66,7 @@ public sealed class HarvestSettings
     /// <summary>Gets or sets what the challenges of each fight the AI plays give, set during the placement; the drops unless the profile says otherwise (D438).</summary>
     public ChallengeReward ChallengeReward { get; set; } = ChallengeReward.Drop;
 
-    /// <summary>Gets or sets which challenges the AI plays for while it fights; the easy ones unless the profile says otherwise (D465).</summary>
+    /// <summary>Gets or sets which challenges the AI plays for while it fights; the easy ones unless the profile says otherwise (D466).</summary>
     public ChallengePlay Challenges { get; set; } = ChallengePlay.Easy;
 
     /// <summary>Gets or sets what the activity does once a fight cut one of its steps (D144).</summary>

@@ -23,7 +23,7 @@ namespace D3B.Bot.Fights;
 /// client controls plays its turns the same, with the same requests, which the server takes as the summon's (9f2).
 /// </para>
 /// <para>
-/// With a profile's challenges (D465), each turn plays for the fight's challenge while it is easy, asking only of the
+/// With a profile's challenges (D466), each turn plays for the fight's challenge while it is easy, asking only of the
 /// character's own turns (<see cref="TurnChallenge"/>): the search keeps it while what it costs the turn stays within what
 /// its bonus pays, and once a turn leaves it, it is left for the fight, a turn's challenge being lost then. A fight judged too
 /// risky plays for none.
@@ -149,7 +149,7 @@ public static class FightPlay
         return allies ? TacticWeights.Group : TacticWeights.Default;
     }
 
-    /// <summary>Gets the challenge the AI plays for in a turn: the fight's first easy one not yet won, lost nor left (D465).</summary>
+    /// <summary>Gets the challenge the AI plays for in a turn: the fight's first easy one not yet won, lost nor left (D466).</summary>
     /// <param name="fight">The fight, as the bot knows it.</param>
     /// <param name="catalog">The client's challenges, whose completion criteria say what each asks.</param>
     /// <param name="play">Which challenges the profile plays for.</param>

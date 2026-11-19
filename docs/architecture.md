@@ -288,7 +288,7 @@ The bots run in `D3B.Bot`: what each part does today, with the decisions that ma
   glyphs, traps, bombs' walls and portals (`GroundMark`), which `ImaginedFights.MarksOf` gives the engine. Since D461, it
   holds the fight's challenges (`FightChallenge`), each with its bonus, its targets as the server last named them
   (`FightChallengeTarget`, with the fighters allowed to strike it) and its result; `FightPlay` logs each challenge once and its
-  result as the fight ends. The bot sends none of the challenges' requests yet. Since D465, each turn plays for the fight's
+  result as the fight ends. The bot sends none of the challenges' requests yet. Since D466, each turn plays for the fight's
   first easy challenge (`FightPlay.ChallengeOf`: its completion criterion in the pack's `ChallengeCatalog` read as a
   `TurnChallenge`) while the activity's profile asks it (`BotActivity.Challenges`, a follower its master's) and the fight is
   not judged risky; a plan that leaves it leaves it for the fight, and once a plan of the turn kept it, the turn's next plans
@@ -556,7 +556,7 @@ Built at step 2 (D24 to D33):
   `PackWriter` writes it, compressing several entries at once in a deterministic order (D28). `GamePack` opens it by
   reading the index, then reads each entry when asked, from any thread. `PackCache` keeps the entries last read within
   a budget. A test fails when the serialized layout changes without a new `GamePack.FormatVersion`.
-- A pack of format 13 holds (D27, D29, D139, D182, D219, D237, D238, D257, D265, D343, D369, D385, D414, D465):
+- A pack of format 13 holds (D27, D29, D139, D182, D219, D237, D238, D257, D265, D343, D369, D385, D414, D466):
   - every map as its own entry, its neighbours, cells and interactive elements with their graphics (`MapData`), read
     through a `PackCache` by `GameMaps`;
   - the client's world graph, a vertex per zone of a map and transitions between them (`WorldGraph`), and the atlas
@@ -590,7 +590,7 @@ Built at step 2 (D24 to D33):
     (`NpcCatalog`, `GameTables.Npcs`, D385): the server sends ids alone (D383), which the studio shows as these texts (`NpcNames`);
   - the hints of the world map, from format 12 (D414): the client's 835 hints with their category, picture number, name, map, world and level, the
     6 categories, and the hints' pictures, 64 pixels in raw RGBA by picture number (`HintCatalog`, `GameTables.Hints`, an entry of its own);
-  - the challenges, from format 13 (D465): the client's 842 with their name, description, category, icon, monster, the challenges
+  - the challenges, from format 13 (D466): the client's 842 with their name, description, category, icon, monster, the challenges
     each excludes, and their completion and activation criteria as the client writes them (`ChallengeCatalog`, `GameTables.Challenges`);
   - in French and English, the texts these name (`GameTexts`).
 - Which interactive an element of a map is, and which skills it offers, the client's data does not say: the server
@@ -1138,6 +1138,10 @@ Pure logic with no I/O, in `D3B.Engine`, which references `D3B.Data` for the cel
     its turn's damage, and the blow it strikes next, before the enemies (`FightJudge`, D270); an enemy that would hit it
     hits it half the time. In the reply the character's summons that play strike first, the latest first; of summons drawn
     at random the likeliest alone comes.
+  - `ForgelanceLance`: a rule the pack does not hold, measured on the captures, and the AI's only one naming a breed's
+    states and monster: a throw takes the lance out of the Forgelance's hand (states 3360 and 3590 ended, 3361 given), so
+    that no spell asking it follows that turn, and `Imagination.TurnStarted` and the judge's next turn put it back, the
+    lance gone from the map (D465).
   - `Glyphs`, `CellMark` and `CellMarkKind`, in `D3B.Engine.Fights` (D280): the marks the pack's effects set on the cells of
     a zone, a glyph struck as a turn begins (401) or ends (402), a glyph-aura (1091), a trap (400), their spell, grade
     and end; the imagined fight's marks, the server's and those the casts set (`ImaginedFight.Marks`).
@@ -1159,7 +1163,7 @@ Pure logic with no I/O, in `D3B.Engine`, which references `D3B.Data` for the cel
     (`WithEachStates`, D255), its best sequences weighed against the enemies' greedy reply, then the character's next
     turn (`NextTurn`, D210), the plan with the fewest actions winning among those within a point of life that leave the same enemies
     alive (D407), the summoning spells left out of the first search but for the Osamodas', the Roublard's, the Steamer's and the
-    Forgelance's, whose lances strike (D462), and searched again with them when it finds nothing to do (D408); given a `TurnChallenge` (D465), the plan searched again
+    Forgelance's, whose lances strike (D462), and searched again with them when it finds nothing to do (D408); given a `TurnChallenge` (D466), the plan searched again
     keeping it when the best breaks it, its casts, walks and ends those the challenge allows, chosen while its loss stays
     within `TurnChallenge.MostLoss` of the best's gain (`TurnPlan.KeepsChallenge`); `Place`; `Odds`; `OddsOverTheFight`, the enemies dying one after another (D249); `PathTo`.
     `TacticWeights`, measured on 69 fights (D212), next turn's weight refused at 1 or more, which would leave a kill now for later (D460), `TurnSearchLimits`, `TurnPlan`, `TacticAction`.
@@ -1167,7 +1171,7 @@ Pure logic with no I/O, in `D3B.Engine`, which references `D3B.Data` for the cel
     of 61 captures, 56 ms halfway, 422 ms at most, and 86 ms halfway on the AI's own fights (9e2); benchmarked, a turn
     against four enemies in 1.6 ms (9e), 3.1 ms and 6.5 MB (9e2, D216), 3.1 ms and 4.79 MB (9f, D229), 2.83 ms and
     4.81 MB (9g4, D255); on 452 searches of 94 captures, 90 ms halfway, 538 ms at most (9g4); on 1,619 searches of 83
-    captures, 82 ms halfway, 711 ms at most, and on the 417 turns of an easy challenge, 90 ms and 786 ms given it (D465).
+    captures, 82 ms halfway, 711 ms at most, and on the 417 turns of an easy challenge, 90 ms and 786 ms given it (D466).
 - The weapons' blows, in `D3B.Engine.Fights` (9e3, D220): `WeaponBlows`, each sword's blow a level of spell 0, the
   punch's with the sword's fields and its effects used in fights, after the pack's levels in one catalog the rules, the
   effects and the AI share (`SpellCatalog.WithLevels`); `EffectFormulas.DealtByWeapon` and the weapons' multipliers,

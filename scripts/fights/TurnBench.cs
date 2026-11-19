@@ -28,7 +28,7 @@ namespace D3B.Scripts.Fights;
 /// it dealt in its next turn. It prints counts and sums, never a value of one fight.
 /// </para>
 /// <para>
-/// A turn of a fight whose challenge is easy (D465) is planned once more keeping it, as the bot would with a profile's
+/// A turn of a fight whose challenge is easy (D466) is planned once more keeping it, as the bot would with a profile's
 /// default, the fight's risk aside: the turns whose best plan keeps it already, those the search keeps it in within what its
 /// bonus pays, and those it leaves, by challenge; and how long both searches last.
 /// </para>

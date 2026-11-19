@@ -409,7 +409,7 @@ public sealed class FightPlayTests : IAsyncDisposable
     [Fact]
     public async Task AChallengeATurnLeftIsLeftForTheWholeFight()
     {
-        // Zombie with no MP (D465): no turn uses exactly one, so the first leaves it, and the second plays for it no more.
+        // Zombie with no MP (D466): no turn uses exactly one, so the first leaves it, and the second plays for it no more.
         await ChallengedTurnAsync(TestPlay.ZombieChallenge, ChallengePlay.Easy, secondTurn: true);
         await LoggedAsync($"Bot {Self}: ends its turn after 2 actions");
 
@@ -419,7 +419,7 @@ public sealed class FightPlayTests : IAsyncDisposable
     [Fact]
     public async Task AnEasyChallengeThatWouldHalveTheTurnsDamageIsLeft()
     {
-        // Versatile with one spell (D465): kept, the turn casts it once where it may twice, more than its bonus pays.
+        // Versatile with one spell (D466): kept, the turn casts it once where it may twice, more than its bonus pays.
         await ChallengedTurnAsync(TestPlay.VersatileChallenge, ChallengePlay.Easy);
 
         await LoggedAsync($"Bot {Self}: leaves challenge {TestPlay.VersatileChallenge}, which would cost its turn more than its bonus pays");
