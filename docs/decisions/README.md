@@ -75,3 +75,4 @@ Each file holds the decisions of one group of [the index](../decisions-index.md)
 - [Groups, the master's exit taken straight (D451)](d451-groups-direct-exit.md): 1 decision, 2 KB.
 - [Groups, the master emptied at the bank (D452)](d452-group-bank-master-empties.md): 1 decision, 3 KB.
 - [Fights, a little bolder in a group (D454)](d454-group-fights-bolder.md): 1 decision, 2 KB.
+- [Groups, the windows the bot answered (D455)](d455-groups-windows-left-open.md): 1 decision, 3 KB.
