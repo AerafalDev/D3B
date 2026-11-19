@@ -80,3 +80,4 @@ Each file holds the decisions of one group of [the index](../decisions-index.md)
 - [Groups, one cell each (D456)](d456-groups-one-cell-each.md): 1 decision, 4 KB.
 - [Groups, the invitation at once and a stack the bank refuses (D457)](d457-groups-invite-and-bank-refusal.md): 1 decision, 3 KB.
 - [Groups, the exchange's pace and the pods seen first (D458)](d458-group-exchange-pace.md): 1 decision, 3 KB.
+- [Groups, the bank's rounds and the food (D459)](d459-group-bank-rounds-and-food.md): 1 decision, 3 KB.

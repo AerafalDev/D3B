@@ -77,6 +77,9 @@ internal sealed class BehaviorActivity : BotActivity, IDisposable, IBehaviorCont
     public override bool BanksByTeleport => _visit?.Current?.BanksByTeleport ?? true;
 
     /// <inheritdoc/>
+    public override bool DepositsAll => _visit?.Current?.DepositsAll ?? false;
+
+    /// <inheritdoc/>
     public override bool FightsItsFights => _visit?.Current?.FightsItsFights ?? true;
 
     /// <inheritdoc/>

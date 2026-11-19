@@ -50,6 +50,9 @@ internal sealed class GroupBank : IGroupBank
     // step at a time, reads and writes them.
     private readonly HashSet<int> _refused = [];
 
+    // Whether the master's profile banks all but what is worn, its food too (D459), as the unloading begins.
+    private bool _food;
+
     public GroupBank(BotActor bot, GroupDirectory groups, GroupGate gate, GameTables tables)
     {
         _bot = bot;
@@ -97,6 +100,7 @@ internal sealed class GroupBank : IGroupBank
 
         GroupLog.Banking(context.Log, _bot.Key.CharacterId);
         _refused.Clear();
+        _food = activity.DepositsAll;
 
         if (!await ToBankerAsync(context, activity, cancellationToken).ConfigureAwait(false))
             return false;
@@ -110,24 +114,36 @@ internal sealed class GroupBank : IGroupBank
         {
             var deposited = false;
 
+            // Measured on the owner's test of 2026-11-19 (D459): a stack the exchange told no change for was offered again in
+            // two more exchanges, each concluding with nothing 8.1 s later. The stacks an exchange leaves are left.
+            var left = new HashSet<int>();
+
             for (var round = 0; round < MostRounds; round++)
             {
                 // The whole group with the master, as before any action (D437).
                 await _gate.GatherAsync(context, cancellationToken).ConfigureAwait(false);
 
-                if (!follower.IsConnected || follower.IsPaused || !GroupGifts.Carries(follower.State, _tables.Items))
+                if (!follower.IsConnected || follower.IsPaused || !GroupGifts.Carries(follower.State, _tables.Items, _food, left))
                     break;
+
+                var offered = GroupGifts.Of(follower.State, context.State, _tables.Items, _food, left);
 
                 // Its pods holding none of the follower's next stack, or an exchange that did not conclude, such as more
                 // than its pods hold by the server's reckoning, the master deposits, once, then takes the rest.
-                var gave = GroupGifts.Of(follower.State, context.State, _tables.Items).Count > 0
-                    && await ExchangeAsync(context, follower, cancellationToken).ConfigureAwait(false) > 0;
-
-                if (gave)
+                if (offered.Count > 0)
                 {
-                    deposited = false;
+                    var carried = offered.ToDictionary(gift => gift.Uid, gift => follower.State.Inventory.TryGetValue(gift.Uid, out var stack) ? stack.Quantity : 0);
 
-                    continue;
+                    if (await ExchangeAsync(context, follower, left, cancellationToken).ConfigureAwait(false) is not null)
+                    {
+                        // Concluded: a stack offered whose quantity did not go down, the exchange takes not; one given in
+                        // part, the master's pods full, is taken again once it deposited (D452).
+                        await SettledAsync(follower, cancellationToken).ConfigureAwait(false);
+                        left.UnionWith(carried.Where(gift => follower.State.Inventory.TryGetValue(gift.Key, out var stack) && stack.Quantity >= gift.Value).Select(gift => gift.Key));
+                        deposited = false;
+
+                        continue;
+                    }
                 }
 
                 if (deposited || !Carries(context.State) || await DepositAsync(context, cancellationToken).ConfigureAwait(false) is not BankOutcome.Done)
@@ -144,12 +160,19 @@ internal sealed class GroupBank : IGroupBank
     // so that its pods go down whatever it carries, objects put in its bags by the player's hand too.
     private bool Deposited(InventoryItem stack)
     {
-        return !stack.IsWorn && stack.Quantity > 0 && !_refused.Contains(stack.Uid) && !(_tables.Items.TryGetItem(stack.ItemId, out var item) && item.Heals);
+        return !stack.IsWorn && stack.Quantity > 0 && !_refused.Contains(stack.Uid) && (_food || !(_tables.Items.TryGetItem(stack.ItemId, out var item) && item.Heals));
     }
 
     private bool Carries(CharacterState state)
     {
         return state.Inventory.Values.Any(Deposited);
+    }
+
+    // Until the follower's own state shows the exchange over, its stacks given gone from it: its loop reads the conclusion
+    // apart from the master's.
+    private Task SettledAsync(BotActor follower, CancellationToken cancellationToken)
+    {
+        return GroupWaits.AnyAsync([(follower, bot => bot.State.Exchange is null)], Task.Delay(Timeout.Infinite, cancellationToken), _bot.Time, _bot.Delays.Answer, cancellationToken);
     }
 
     // The master's deposit, in one opening of the bank; none while it carries nothing the bank takes. The owner's report from
@@ -208,16 +231,16 @@ internal sealed class GroupBank : IGroupBank
     }
 
     // One exchange with a follower: it asks, the master accepts, it moves its stacks in and says it is ready, then the master.
-    // Gives how many of the master's stacks grew, none when the exchange did not conclude.
-    private async Task<int> ExchangeAsync(BotContext context, BotActor follower, CancellationToken cancellationToken)
+    // Gives how many of the master's stacks grew, or nothing when the exchange did not conclude.
+    private async Task<int?> ExchangeAsync(BotContext context, BotActor follower, IReadOnlySet<int> left, CancellationToken cancellationToken)
     {
         var id = follower.Key.CharacterId;
         var before = context.State.Inventory;
 
-        using var collecting = _groups.Collect(_bot.Key, follower.Key);
+        using var collecting = _groups.Collect(_bot.Key, follower.Key, _food, left);
 
         if (!await context.WaitUntilAsync(state => state.Exchange is { IsOpen: false } asked && asked.SourceId == id, _exchangeWait, cancellationToken).ConfigureAwait(false))
-            return 0;
+            return null;
 
         // The client shows the asking first, as it does a map before a walk (D77).
         await Task.Delay(context.Delays.Display, context.Time, cancellationToken).ConfigureAwait(false);
@@ -228,7 +251,7 @@ internal sealed class GroupBank : IGroupBank
         {
             await LeaveAsync(context, cancellationToken).ConfigureAwait(false);
 
-            return 0;
+            return null;
         }
 
         await context.SendAsync(new ExchangeReadyRequest { Step = open.Changes, Ready = true }, cancellationToken).ConfigureAwait(false);
@@ -237,7 +260,7 @@ internal sealed class GroupBank : IGroupBank
         {
             await LeaveAsync(context, cancellationToken).ConfigureAwait(false);
 
-            return 0;
+            return null;
         }
 
         var grew = 0;
