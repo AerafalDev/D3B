@@ -419,7 +419,7 @@ public sealed class MapWalkTests
     [Fact]
     public async Task AStepAsideLeavesOutTheCellThePreviousWalkEndedOn()
     {
-        // D462's case: a step onto a neighbour taken for arrived, then a refusal naming the cell it left; a step back onto that
+        // D464's case: a step onto a neighbour taken for arrived, then a refusal naming the cell it left; a step back onto that
         // neighbour is a walk ending where the previous one did, which the client does not follow (9g5).
         await using var play = new TestPlay();
         var cells = play.Maps.Get(TestPlay.MapId).Cells.Span;

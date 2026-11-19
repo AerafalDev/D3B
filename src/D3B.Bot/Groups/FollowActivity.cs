@@ -638,7 +638,7 @@ public sealed class FollowActivity : BotActivity, IDisposable
             if (path.Steps.Count > 1)
                 return await context.TravelAsync(maps, cancellationToken).ConfigureAwait(false) is TravelOutcome.Arrived;
 
-            // Measured on the owner's group runs of 2026-11-19 (D462): a follower asked for its master's map from the cell the
+            // Measured on the owner's group runs of 2026-11-19 (D464): a follower asked for its master's map from the cell the
             // server held it on, every 8.5 s for thirty minutes, its group waiting until the server closed every connection of
             // it for inactivity. A walk shown lets any hold go, and the next step takes the change again from there.
             return await context.StepAsideAsync(cancellationToken).ConfigureAwait(false) is WalkOutcome.Arrived;

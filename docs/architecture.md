@@ -136,7 +136,7 @@ The bots run in `D3B.Bot`: what each part does today, with the decisions that ma
   on its last cell, where the server has it (`BotContext.SettleWalkAsync`, D85); the server may still hold it, and
   refuses what is not a walk from there, so a step aside comes first (`MapWalk.ReleaseHeldWalkAsync`, D89), and a refusal
   does not let it go: only a walk shown does (D456). Out of a fight a refusal holds it too, the client's confirmation of a
-  walk being sometimes its previous one's (D462). No two bots of the host walk to one cell at once (D456): a walk claims
+  walk being sometimes its previous one's (D464). No two bots of the host walk to one cell at once (D456): a walk claims
   the cell it ends on before its request goes (`BotContext.ClaimAsync`, `MapMates`, one per host in `Bots`), waiting while
   another bot claims it or walks to it, 5 s at most, and a step aside keeps clear of the cells the others stand on, walk to
   or claim (`BotContext.TakenCells`). A walk of no
@@ -329,7 +329,7 @@ The bots run in `D3B.Bot`: what each part does today, with the decisions that ma
   options turned off at each party joined, D437's measure), then follow in real time (D447): with its master it copies
   each of its walks as the server shows it, to the cell the master walks to, else it changes maps towards the master by
   the world's paths, whatever the others' order, a whole journey only when its master is more than one change away
-  (D456), a step aside after three changes failed in a row by a way of one (`MapWalk.StepAsideAsync`, D462), each in its own haven bag as the master is in his
+  (D456), a step aside after three changes failed in a row by a way of one (`MapWalk.StepAsideAsync`, D464), each in its own haven bag as the master is in his
   (`GroupChain.Together`); the master's party's order (`GroupChain.Order`) is only the card's and the bank's (D442). A wait reads the bots it waits on before
   deciding (`BotSeen`), so that no change made between the decision and the wait is missed (`GroupWaits`). In a fight
   (D440), each bot has a part too (`IFightTeam`, `BotActor.Team`, `GroupFight`), which the AI asks during the placement

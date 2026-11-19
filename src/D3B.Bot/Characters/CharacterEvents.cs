@@ -156,7 +156,7 @@ public static class CharacterEvents
             // A refusal tells where the server has the character, not that it let the walk go: measured on the owner's runs of
             // 2026-11-19 (D456), a door used from the cell one named was refused 25 times; only a walk shown lets it go, or a new map.
             // Out of a fight it says the server may hold one, even after a confirmation: measured on the owner's group runs of that
-            // day (D462), a walk taken for arrived, the client's confirmation being for its previous one, left the server refusing
+            // day (D464), a walk taken for arrived, the client's confirmation being for its previous one, left the server refusing
             // every map change from the cell it named for thirty minutes.
             MapMovementRefusedEvent refused => state with
             {

@@ -95,7 +95,7 @@ public static class MapWalk
     /// <returns>How the step ended.</returns>
     /// <remarks>
     /// A walk the server shows lets go of any it holds, and the client follows it from where the server has the character
-    /// (D85, D89): what a request failing again and again from one cell needs, whatever the state reckons (D462).
+    /// (D85, D89): what a request failing again and again from one cell needs, whatever the state reckons (D464).
     /// </remarks>
     public static async Task<WalkOutcome> StepAsideAsync(this BotContext context, CancellationToken cancellationToken)
     {
@@ -109,7 +109,7 @@ public static class MapWalk
         var all = Enumerable.Range(0, MapCell.DirectionCount).Select(direction => MapGeometry.Neighbour(from, direction)).Where(neighbour => neighbour >= 0).ToArray();
 
         // Neither the cell the previous walk ended on, whose one-step walk the client does not follow (9g5), nor one that moves
-        // the character to another map, such as stairs, unless no other neighbour is left (D462).
+        // the character to another map, such as stairs, unless no other neighbour is left (D464).
         var fit = all.Where(neighbour => neighbour != state.LastWalkEnd && !LeadsAway(context, mapId, neighbour)).ToArray();
         var neighbours = Clear(context, fit.Length > 0 ? fit : all);
 

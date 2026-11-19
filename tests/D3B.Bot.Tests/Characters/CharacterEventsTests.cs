@@ -647,7 +647,7 @@ public sealed class CharacterEventsTests
     [Fact]
     public void ARefusalOutOfAFightTellsTheServerMayHoldAWalk()
     {
-        // Measured on the owner's group runs of 2026-11-19 (D462): a walk the bot took for arrived, the client's confirmation
+        // Measured on the owner's group runs of 2026-11-19 (D464): a walk the bot took for arrived, the client's confirmation
         // being for its previous one, left the server holding the character; it refused each map change asked from the cell it
         // named, for thirty minutes, until it closed the connection.
         var standing = Apply(_chosen, EnteringTheGame());

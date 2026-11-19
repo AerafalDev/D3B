@@ -1,11 +1,11 @@
-# Groups, a follower the server holds (D462)
+# Groups, a follower the server holds (D464)
 
 A part of [the decisions](README.md); each decision has one line in [the index](../decisions-index.md). A walk the server
 holds is in [D85](d064-d090-step-4.md#d85-a-walk-the-client-does-not-follow-leaves-the-character-where-the-server-has-it),
 [D89](d064-d090-step-4.md#d89-recovery-the-clients-new-connection-and-a-walk-the-server-holds) and
 [D456](d456-groups-one-cell-each.md); the exit taken with no walk in [D451](d451-groups-direct-exit.md).
 
-## D462: A refusal out of a fight says the server may hold a walk, and a follower whose change keeps failing from one cell steps aside
+## D464: A refusal out of a fight says the server may hold a walk, and a follower whose change keeps failing from one cell steps aside
 
 *2026-11-19, the owner's report after the group runs of the day, one master and seven followers ("y'a des persos qui restent
 bloqués sur une map très longtemps", "j'ai toujours un perso bloqué au bout d'un moment et hop afk fenêtre qui se ferme",

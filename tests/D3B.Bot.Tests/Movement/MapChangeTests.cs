@@ -146,7 +146,7 @@ public sealed class MapChangeTests
     [Fact]
     public async Task ACharacterRefusedAMapChangeOnACellOfTheEdgeStepsAsideBeforeAskingAgain()
     {
-        // Measured on the owner's group runs of 2026-11-19 (D462): a follower on a cell of the edge asked for the neighbour every
+        // Measured on the owner's group runs of 2026-11-19 (D464): a follower on a cell of the edge asked for the neighbour every
         // 8.5 s for thirty minutes, each refused, the server naming that cell; a walk it shows lets the hold go (D89).
         await using var play = new TestPlay();
         var (connection, bot) = await play.EnterAsync(20);
