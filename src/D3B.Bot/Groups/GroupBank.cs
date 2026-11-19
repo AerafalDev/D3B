@@ -45,6 +45,11 @@ internal sealed class GroupBank : IGroupBank
     private readonly GroupGate _gate;
     private readonly GameTables _tables;
 
+    // The stacks the bank left, such as a quest's objects, left in the master's bags for the rest of one unloading (D457):
+    // a refusal of another cause, such as a bank full that day, is tried again at the next. Only the master's run, one
+    // step at a time, reads and writes them.
+    private readonly HashSet<int> _refused = [];
+
     public GroupBank(BotActor bot, GroupDirectory groups, GroupGate gate, GameTables tables)
     {
         _bot = bot;
@@ -91,12 +96,13 @@ internal sealed class GroupBank : IGroupBank
         ArgumentNullException.ThrowIfNull(activity);
 
         GroupLog.Banking(context.Log, _bot.Key.CharacterId);
+        _refused.Clear();
 
         if (!await ToBankerAsync(context, activity, cancellationToken).ConfigureAwait(false))
             return false;
 
         // The owner's report from game (D452): full, the master took its followers' objects all the same, and the server
-        // never told it their readiness, nor concluded. It empties itself first.
+        // never told it their readiness, nor concluded. It empties itself first; a stack the bank refuses stops nothing (D457).
         if (await DepositAsync(context, cancellationToken).ConfigureAwait(false) is not BankOutcome.Done)
             return false;
 
@@ -138,7 +144,7 @@ internal sealed class GroupBank : IGroupBank
     // so that its pods go down whatever it carries, objects put in its bags by the player's hand too.
     private bool Deposited(InventoryItem stack)
     {
-        return !stack.IsWorn && stack.Quantity > 0 && !(_tables.Items.TryGetItem(stack.ItemId, out var item) && item.Heals);
+        return !stack.IsWorn && stack.Quantity > 0 && !_refused.Contains(stack.Uid) && !(_tables.Items.TryGetItem(stack.ItemId, out var item) && item.Heals);
     }
 
     private bool Carries(CharacterState state)
@@ -146,7 +152,9 @@ internal sealed class GroupBank : IGroupBank
         return state.Inventory.Values.Any(Deposited);
     }
 
-    // The master's deposit, in one opening of the bank; none while it carries nothing to deposit.
+    // The master's deposit, in one opening of the bank; none while it carries nothing the bank takes. The owner's report from
+    // game (D457): the bank took none of the one stack the master carried, and the master stopped there, its full follower
+    // never emptied. The stacks the bank leaves are left from then on, and the unloading goes on.
     private async Task<BankOutcome> DepositAsync(BotContext context, CancellationToken cancellationToken)
     {
         var uids = context.State.Inventory.Values.Where(Deposited).Select(stack => stack.Uid).ToList();
@@ -162,7 +170,14 @@ internal sealed class GroupBank : IGroupBank
         var deposit = await context.DepositAsync(uids, 0, cancellationToken).ConfigureAwait(false);
         var left = await context.LeaveBankAsync(cancellationToken).ConfigureAwait(false);
 
-        return deposit is BankOutcome.Done ? left : deposit;
+        if (deposit is BankOutcome.Done or BankOutcome.Refused)
+        {
+            _refused.UnionWith(uids.Where(context.State.Inventory.ContainsKey));
+
+            return left;
+        }
+
+        return deposit;
     }
 
     private static async Task LeaveAsync(BotContext context, CancellationToken cancellationToken)
