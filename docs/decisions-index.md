@@ -696,3 +696,8 @@ or refines another says so in its own entry. Add a line here with every new deci
 
 - [D458](decisions/d458-group-exchange-pace.md#d458-a-follower-says-it-is-ready-35-s-after-the-exchanges-last-change-and-an-activity-starting-plays-nothing-before-its-run-looks-at-the-pods) A follower says it is ready 3.5 s after the exchange's last change, and an activity starting plays nothing before its run looks at the pods (2026-11-19)
   - The stacks in one transfer, unmeasured; the moves with no display time; the master waiting longer for the readiness.
+
+## Fights, a blow now worth more than a blow later (D460)
+
+- [D460](decisions/d460-group-fights-strike-now.md#d460-the-ai-weighs-next-turns-damage-under-1-in-a-group-too-so-that-it-strikes-now-what-it-could-strike-later) The AI weighs next turn's damage under 1, in a group too, so that it strikes now what it could strike later (2026-11-19)
+  - D454 undone whole, a rule by element, the approach clamped silently in the judge.
