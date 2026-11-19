@@ -1,5 +1,6 @@
 using D3B.Data.Banks;
 using D3B.Data.Breeds;
+using D3B.Data.Challenges;
 using D3B.Data.Characteristics;
 using D3B.Data.Effects;
 using D3B.Data.Hints;
@@ -26,6 +27,7 @@ public sealed class GameTables
     private readonly Lazy<NpcCatalog> _npcs;
     private readonly Lazy<IconCatalog> _icons;
     private readonly Lazy<HintCatalog> _hints;
+    private readonly Lazy<ChallengeCatalog> _challenges;
     private readonly Lazy<SpellCatalog> _spells;
     private readonly Lazy<SpellStateCatalog> _states;
     private readonly Lazy<EffectCatalog> _effects;
@@ -73,6 +75,11 @@ public sealed class GameTables
     /// <exception cref="KeyNotFoundException">The pack holds no hints.</exception>
     /// <exception cref="PackFormatException">Their entry is damaged.</exception>
     public HintCatalog Hints => _hints.Value;
+
+    /// <summary>Gets the client's challenges, their texts and their criteria (D464).</summary>
+    /// <exception cref="KeyNotFoundException">The pack holds no challenges.</exception>
+    /// <exception cref="PackFormatException">Their entry is damaged.</exception>
+    public ChallengeCatalog Challenges => _challenges.Value;
 
     /// <summary>Gets the spells, their levels and effects, their variants, and the Rogue's bombs and walls.</summary>
     /// <exception cref="KeyNotFoundException">The pack holds no spells.</exception>
@@ -124,6 +131,7 @@ public sealed class GameTables
         _npcs = new Lazy<NpcCatalog>(() => pack.Read<NpcCatalog>(NpcCatalog.EntryName), LazyThreadSafetyMode.PublicationOnly);
         _icons = new Lazy<IconCatalog>(() => pack.Read<IconCatalog>(IconCatalog.EntryName), LazyThreadSafetyMode.PublicationOnly);
         _hints = new Lazy<HintCatalog>(() => pack.Read<HintCatalog>(HintCatalog.EntryName), LazyThreadSafetyMode.PublicationOnly);
+        _challenges = new Lazy<ChallengeCatalog>(() => pack.Read<ChallengeCatalog>(ChallengeCatalog.EntryName), LazyThreadSafetyMode.PublicationOnly);
         _spells = new Lazy<SpellCatalog>(() => pack.Read<SpellCatalog>(SpellCatalog.EntryName), LazyThreadSafetyMode.PublicationOnly);
         _states = new Lazy<SpellStateCatalog>(() => pack.Read<SpellStateCatalog>(SpellStateCatalog.EntryName), LazyThreadSafetyMode.PublicationOnly);
         _effects = new Lazy<EffectCatalog>(() => pack.Read<EffectCatalog>(EffectCatalog.EntryName), LazyThreadSafetyMode.PublicationOnly);
