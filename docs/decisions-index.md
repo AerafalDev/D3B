@@ -656,3 +656,8 @@ or refines another says so in its own entry. Add a line here with every new deci
 
 - [D450](decisions/d450-fights-placement-answer.md#d450-the-ai-waits-a-second-at-most-for-its-placements-answer) The AI waits a second at most for its placement's answer (2026-11-19)
   - Mapping the swap's event now, avoiding the allies' cells.
+
+## Groups, the master's exit taken straight (D451)
+
+- [D451](decisions/d451-groups-direct-exit.md#d451-to-its-masters-exit-a-follower-walks-to-an-exit-of-its-own-and-a-character-on-an-exit-leaves-from-it) To its master's exit a follower walks to an exit of its own, and a character on an exit leaves from it (2026-11-19)
+  - Copying the walk to the master's very exit cell.

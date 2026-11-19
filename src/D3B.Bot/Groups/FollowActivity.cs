@@ -397,11 +397,27 @@ public sealed class FollowActivity : BotActivity, IDisposable
             .Append(end)
             .Append(master.Cell ?? -1)
             .ToHashSet();
-        var near = Around(end);
+        var near = Around(end).ToList();
         var rings = near.Concat(near.SelectMany(Around)).Distinct().Where(cell => !taken.Contains(cell)).ToList();
+        var cells = data.Cells;
 
-        if (near.Contains(from) && !taken.Contains(from))
+        // Measured on the owner's retest of 2026-11-19 (D451): a follower stopped beside its master's exit needed one step
+        // more onto an exit, which its client did not follow, and the server held it, its map changes unanswered, until its
+        // journey went round. To its master's exit, it walks to an exit of its own, which leaves the map the same way.
+        if (cells.Span[end].MapChangeData is not 0 and var leaves)
+        {
+            var exits = rings.Where(cell => (cells.Span[cell].MapChangeData & leaves) is not 0).ToList();
+
+            if (exits.Contains(from))
+                return null;
+
+            if (exits.Count > 0)
+                rings = exits;
+        }
+        else if (near.Contains(from) && !taken.Contains(from))
+        {
             return null;
+        }
 
         var free = rings.Where(cell => cell == from || CellPathfinder.TryFind(data.Cells.Span, from, cell, out _)).ToList();
 
