@@ -213,6 +213,32 @@ public sealed class GroupFightTests
     }
 
     [Fact]
+    public async Task APlacementTheStateDoesNotSeeAnsweredDelaysTheReadinessASecondAtMost()
+    {
+        // Measured (D450): a swap with an ally, which the state does not read, answered the move; the AI waited 3 s for it.
+        await using var play = new TestPlay();
+        var (connection, master) = await TestGroup.MasterAsync(play, Far);
+        var monster = Beside(Far, 8, 0);
+        var near = Beside(monster, -3, 0);
+        var sent = connection.Sent.Count;
+
+        master.FightsAlone = true;
+        Placement(connection, TestGroup.MasterId, Far, near, monster, partyOnly: false);
+
+        Assert.IsType<FightOptionToggleRequest>(await TestGroup.SentAsync(play, connection, sent + 1));
+        connection.Server(new FightOptionUpdateEvent { Option = FightOption.Closed, Enabled = true });
+        Assert.IsType<FightOptionToggleRequest>(await TestGroup.SentAsync(play, connection, sent + 2));
+        connection.Server(new FightOptionUpdateEvent { Option = FightOption.NoSpectators, Enabled = true });
+        Assert.IsType<FightPlacementPositionRequest>(await TestGroup.SentAsync(play, connection, sent + 3));
+
+        var asked = play.Time.GetUtcNow();
+
+        // Nothing the state reads answers it: the readiness comes after a second and the fight's pace, not the answer's 3 s.
+        Assert.IsType<FightReadyRequest>(await TestGroup.SentAsync(play, connection, sent + 4));
+        Assert.True(play.Time.GetUtcNow() - asked < TimeSpan.FromSeconds(2.5));
+    }
+
+    [Fact]
     public async Task AMasterIsReadyAtOnceWhenItsFollowerIsOnAnotherMap()
     {
         await using var play = new TestPlay();

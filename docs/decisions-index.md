@@ -651,3 +651,8 @@ or refines another says so in its own entry. Add a line here with every new deci
 
 - [D449](decisions/d449-groups-join-where-they-stand.md#d449-a-follower-does-not-copy-its-masters-walk-to-a-group-of-monsters-and-no-two-followers-walk-to-one-cell) A follower does not copy its master's walk to a group of monsters, and no two followers walk to one cell (2026-11-19)
   - Cutting a copied walk short as the fight is told.
+
+## Fights, the placement's answer (D450)
+
+- [D450](decisions/d450-fights-placement-answer.md#d450-the-ai-waits-a-second-at-most-for-its-placements-answer) The AI waits a second at most for its placement's answer (2026-11-19)
+  - Mapping the swap's event now, avoiding the allies' cells.
