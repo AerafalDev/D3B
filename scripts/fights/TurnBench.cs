@@ -70,8 +70,8 @@ internal sealed class TurnBench
 
     private static bool InGroup(ImaginedFight fight)
     {
-        // A fight beside another character of the team, as a group's are (10c): the reply measured apart, where D454 found it wrong.
-        return fight.Fighters.Any(fighter => fighter.IsCharacter && fighter.Team == fight.Actor.Team && fighter.Id != fight.ActorId);
+        // Beside another character of the team still alive, as the bot weighs a group's fight (D454): the reply measured apart.
+        return fight.Fighters.Any(fighter => fighter.IsAlive && fighter.IsCharacter && fighter.Team == fight.Actor.Team && fighter.Id != fight.ActorId);
     }
 
     private static string Company(bool group)

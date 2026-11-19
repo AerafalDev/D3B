@@ -14,13 +14,15 @@ sessions of the AI to come (D408 refined, 10d, the mechanisms shared by several 
   another. The totals hid both of the study's findings: the spear throws planned 2 times against 10 played were lost
   among 1,619 searches, and the reply's excess on the character among the summed blows on the whole team.
 - **`--turns`** keeps every line it printed and adds, at its end, the reply's blows against the enemies' blows between
-  turns, alone and in a group, for every breed (a group's fight: another character on the character's team), then a
+  turns, alone and in a group, for every breed (in a group: another character of the team alive as the turn begins, as
+  the bot weighs a group's fight, D454), then a
   section by breed: the turns replayed, the plans (casts, walks only, nothing), the plans dealing more, as much or less
   than the turn played, the damage, kills and heals foreseen, the life the reply takes, the damage and kills over two
   turns and the judgement, planned against played, the damage the server announced, the reply's blows against the
   enemies' on the character, another ally and a summon, alone and in a group, and the spells planned against played by id.
 - **`--live`** keeps every line and adds the character's deaths to the AI's fights, then a section by breed: the fights
-  and how they ended, the turns and rounds a fight won takes, the character's turns and those with no cast nor walk, the
+  and how they ended, the turns and rounds a fight won takes, the character's own turns (not those of a summon or a
+  companion it controls) and those with no cast nor walk, the
   life lost a fight and the deaths. A fight's breed is the character's at its first turn, else its selection's: a group's
   fight often ends before a follower plays (1,629 of the 2,969 fights had no breed before).
 - **Measured** on the machine's 83 captures (client 3.7.14.18): every total identical to main dcbe44d1's, `--turns` and

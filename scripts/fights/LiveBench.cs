@@ -89,6 +89,11 @@ internal sealed class LiveBench
             {
                 fight.Turns++;
                 fight.Acted = 0;
+
+                // A summon or companion the client controls plays its own turns too: the breed's turns are the character's.
+                if (playing.PlayingId == self)
+                    fight.OwnTurns++;
+
                 fight.Breed ??= playing.Fighters.GetValueOrDefault(self)?.BreedId;
                 fight.Life ??= playing.Fighters.GetValueOrDefault(self)?.Life;
             }
@@ -230,13 +235,13 @@ internal sealed class LiveBench
         Tally.Count("the AI's fights: the character's deaths", dead ? 1 : 0);
         _byBreed.Add(breed, "fights");
         _byBreed.Add(breed, outcome is "won" or "lost" ? outcome : "other");
-        _byBreed.Add(breed, "turns", fight.Turns);
+        _byBreed.Add(breed, "turns", fight.OwnTurns);
         _byBreed.Add(breed, "idle", fight.Idle);
         _byBreed.Add(breed, "deaths", dead ? 1 : 0);
 
         if (outcome is "won")
         {
-            _byBreed.Add(breed, "turns in fights won", fight.Turns);
+            _byBreed.Add(breed, "turns in fights won", fight.OwnTurns);
             _byBreed.Add(breed, "rounds in fights won", state?.Round ?? 0);
         }
 
@@ -254,6 +259,8 @@ internal sealed class LiveBench
         public Dictionary<int, int> Refused { get; } = [];
 
         public int Turns { get; set; }
+
+        public int OwnTurns { get; set; }
 
         public int Idle { get; set; }
 
