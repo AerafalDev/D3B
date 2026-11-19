@@ -588,7 +588,9 @@ public sealed class FollowActivity : BotActivity, IDisposable
         if (exchange.IsReady || exchange.SourceId != me.Key.CharacterId)
             return false;
 
-        foreach (var (uid, quantity) in GroupGifts.Of(state, master.Bot.State, _tables.Items))
+        // What its master reckons it gives: its food too as the master's profile banks all but what is worn, and not the
+        // stacks an exchange of that unloading left (D459).
+        foreach (var (uid, quantity) in GroupGifts.Of(state, master.Bot.State, _tables.Items, collect.Food, collect.Left))
         {
             // Its master gave up the exchange, or the player closed it: nothing more goes in.
             if (context.State.Exchange is not { IsOpen: true })

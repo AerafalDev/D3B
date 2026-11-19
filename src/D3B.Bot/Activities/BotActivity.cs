@@ -77,6 +77,10 @@ public abstract class BotActivity
         return false;
     }
 
+    /// <summary>Gets whether the activity's banking puts in the bank all the character does not wear, its food too, as a profile's "All but what is worn" says (D459).</summary>
+    /// <remarks>A master's group banks its food then, its followers giving theirs; else each keeps the food it eats (D441, D452).</remarks>
+    public virtual bool DepositsAll => false;
+
     /// <summary>Tells whether the activity's banking puts a stack in the bank, such as its loot or all the character does not wear.</summary>
     /// <param name="stack">A stack the character carries and does not wear.</param>
     /// <returns>Whether it does; none, by default.</returns>

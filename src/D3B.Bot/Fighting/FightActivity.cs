@@ -99,6 +99,9 @@ public sealed class FightActivity : BotActivity
     public override bool FightsItsFights => true;
 
     /// <inheritdoc/>
+    public override bool DepositsAll => _settings.Deposit is FightDeposit.AllButWorn;
+
+    /// <inheritdoc/>
     public override ChallengeReward ChallengeReward => _settings.ChallengeReward;
 
     /// <summary>Initializes a new instance of the <see cref="FightActivity"/> class.</summary>

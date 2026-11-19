@@ -340,7 +340,9 @@ The bots run in `D3B.Bot`: what each part does today, with the decisions that ma
   follower gives the master what it carries by an exchange, its readiness once 3.5 s passed with no change (D458)
   (`CharacterState.Exchange`, `GroupGifts`, the round in
   `GroupDirectory.Collect`), and the master deposits, first and again when an exchange does not conclude, all it does not wear but its food (D452),
-  the stacks the bank left, such as a quest's objects, left for the rest of that unloading (D457).
+  the stacks the bank left, such as a quest's objects, left for the rest of that unloading (D457); the stacks an exchange
+  left are offered no more in that unloading, the round telling the follower which and whether the food goes
+  (`GroupCollect`), and a profile depositing all but what is worn (`BotActivity.DepositsAll`) banks the group's food too (D459).
 - **Fighting** (D236, D241, D245 to D249, D259), in `D3B.Bot.Fighting`, registered by `FightingModule`: `FightActivity`, its
   settings `FightSettings`. Each step heals, then on a map of the zone walks onto the cell of the nearest group the
   settings allow, monsters or families of monsters chosen, a family a race (`ChosenMonsters`), with no judgement of its
