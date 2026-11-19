@@ -151,9 +151,14 @@ public static class MapChange
         {
             var exits = world.ExitCells(map, step, rules);
 
+            // Standing on an exit of the map's edge, the character leaves from there, with no walk at all: measured on the
+            // owner's retest of 2026-11-19 (D451), a one-step walk onto another exit went unconfirmed and the change unanswered.
+            if (step.Transition.Type is not WorldTransitionType.MapAction and not WorldTransitionType.Interactive && exits.Contains(cell))
+                exits = [cell];
+
             // Measured (9g5): the client does not follow a walk ending where its previous one did, such as the same cell of
             // each map's edge on a journey straight on; another exit saves walking in two (MapWalk).
-            if (exits.Any(exit => exit != state.LastWalkEnd))
+            else if (exits.Any(exit => exit != state.LastWalkEnd))
                 exits = [.. exits.Where(exit => exit != state.LastWalkEnd)];
 
             if (!CellPathfinder.TryFindNearest(map.Cells.Span, cell, [.. exits], out var path))

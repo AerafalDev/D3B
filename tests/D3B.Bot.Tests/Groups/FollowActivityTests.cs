@@ -245,14 +245,19 @@ public sealed class FollowActivityTests
         Assert.True(CellPathfinder.TryFind(play.Maps.Get(TestPlay.MapId).Cells.Span, 300, exit, out var path));
         masterConnection.Server(new MapMovementEvent { ActorId = TestGroup.MasterId, Cells = { path.Cells.ToArray() } });
 
-        Assert.Contains(await TestGroup.WalkedAsync(play, connection, TestGroup.FollowerId, 1), Around(exit));
+        // An exit of its own, which leaves the map the way its master's does (D451).
+        var walked = await TestGroup.WalkedAsync(play, connection, TestGroup.FollowerId, 1);
+        var cells = play.Maps.Get(TestPlay.MapId).Cells;
+
+        Assert.NotEqual(exit, walked);
+        Assert.NotEqual(0, cells.Span[walked].MapChangeData & cells.Span[exit].MapChangeData);
 
         // The master changes maps; the server names its new map, and has not placed it yet.
         masterConnection.Server(new MapCurrentEvent { MapId = TestPlay.NorthMapId });
         await master.ProcessedAsync();
 
-        // Towards the north at once, by the edge the world's paths give from there, its master not placed yet.
-        Assert.IsType<MapMovementRequest>(await TestGroup.SentAsync(play, connection, 2), exactMatch: false);
+        // From its own exit at once, with no walk more (D451), its master not placed yet.
+        Assert.Equal(new MapChangeRequest { MapId = (int)TestPlay.NorthMapId }, await TestGroup.SentAsync(play, connection, 2));
         Assert.Null(master.State.Cell);
         run.Stop();
     }

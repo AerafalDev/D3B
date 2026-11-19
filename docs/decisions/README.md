@@ -72,3 +72,4 @@ Each file holds the decisions of one group of [the index](../decisions-index.md)
 - [Groups, the followers into their master's fight (D448)](d448-groups-followers-into-the-fight.md): 1 decision, 3 KB.
 - [Groups, joining from where they stand (D449)](d449-groups-join-where-they-stand.md): 1 decision, 2 KB.
 - [Fights, the placement's answer (D450)](d450-fights-placement-answer.md): 1 decision, 2 KB.
+- [Groups, the master's exit taken straight (D451)](d451-groups-direct-exit.md): 1 decision, 2 KB.
