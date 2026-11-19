@@ -79,7 +79,7 @@ dotnet run --project src/D3B.Host          # the same host without the app; need
 dotnet run --file scripts/<tool>.cs -- --help   # the tools of scripts/, each described by its own help
 ```
 
-The README has the rest: the host's options, the installer, the local tools. Two tools change things: `scripts/release.cs`
+[docs/development.md](docs/development.md) has the rest: the host's options, the tools, the installer, the local tools. Two tools change things: `scripts/release.cs`
 publishes only with `--publish`, and `scripts/client.cs -- restore` gives the client Ankama's configuration back after a
 crash. The shell is Git Bash on Windows.
 
