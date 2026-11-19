@@ -5,8 +5,8 @@ namespace D3B.Engine.Tactics;
 /// <summary>The Forgelance's lance, out of its hand once thrown and back in it as its next turn begins (D465).</summary>
 /// <remarks>
 /// <para>
-/// The one rule of the AI the pack does not hold: no effect of the pack of 3.7.14.18 takes the state a throw asks, the server
-/// does. Measured on the 83 game captures of 18 and 19 November 2026: at each throw the server ended states 3360 and 3590
+/// A rule the pack does not hold, and the AI's only one that names a breed's states and monster, those of 3.7.14.18: no
+/// effect of the pack takes the state a throw asks, the server does. Measured on the 83 game captures of 18 and 19 November 2026: at each throw the server ended states 3360 and 3590
 /// on the Forgelance and gave it 3361; with the lance out, the players cast none of the spells asking 3360; 304 of the
 /// Forgelance's 308 turns began with 3360 and 3590 again and no lance on the map.
 /// </para>

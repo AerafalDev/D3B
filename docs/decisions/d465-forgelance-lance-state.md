@@ -21,12 +21,15 @@ D224, D244, D255, D270, D407.*
   308 plans threw a lance and cast after it a spell asking it, which the server refuses; 20 threw the same lance twice.
 - **Made**: `ForgelanceLance`, the ids in one place with the measure: a cast that brings monster 7139 takes 3360 and 3590
   from its caster and gives 3361; `Imagination.TurnStarted` gives 3360 and 3590 back and takes 3361 and the lance off the
-  map as its thrower's turn begins. Five tests: the thrower no longer holds it, a second throw refused by its states, the
-  lance back as the thrower's next turn begins, left as an enemy's begins, one throw a turn in a plan.
+  map as its thrower's turn begins, and the judge's next turn, which weighs the approach, does the same. Eight tests: the
+  thrower no longer holds it, a second throw refused by its states, the lance back as the thrower's next turn begins, left
+  as an enemy's begins, each Forgelance's own lance alone back, a throw with 3589 alone leaving the states, the judge's
+  next turn throwing again, one throw a turn in a plan.
 - **Replayed** with `scripts/fights.cs --turns`, before and after, on the same captures: only the Forgelance moves. Its
-  221 turns plan 5,558 damage instead of 5,885, 164 kills instead of 171, and the reply takes 1,704 instead of 1,546;
-  the first lance spell is planned 57 times instead of 96. Against the turns before D462 (4,439, 120 and 1,907), the
-  lances searched first are still worth a quarter more damage: of D462's gain, 327 were second throws the server refuses.
+  221 turns plan 5,676 damage instead of 5,885, 162 kills instead of 171, and the reply takes 1,643 instead of 1,546;
+  the first lance spell is planned 67 times instead of 96. Against the turns before D462 (4,439, 120 and 1,907), the
+  lances searched first are still worth over a quarter more damage: of D462's gain, 209 were second throws the server
+  refuses. The totals of every breed change by the Forgelance's figures alone.
 - **Rejected**: a rule read from the pack, as the rest of the AI is (D244): the swap is the server's own and nothing in the
   pack says it; giving a summon's client-only state to its summoner would touch the states of many other monsters'
   starting spells. Leaving it to D407, the server refusing the second cast and the AI planning again: a round trip a turn

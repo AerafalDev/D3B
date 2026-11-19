@@ -102,8 +102,8 @@ As of 2026-11-19, after D465 (a thrown lance is out of the Forgelance's hand unt
   (5,885 instead of 4,439), 171 kills instead of 120, and the reply takes less (1,546 instead of 1,907); no other breed moves.
   Tested on the imagined fight only; to see in game: a Forgelance throwing its lance. The other breeds' spells that strike and
   summon (the Féca's, one of the Eniripsa's and of the Pandawa's) stay a last resort. A thrown lance is out of its hand until
-  its next turn (D465, the server's own rule, measured on the captures): the replay now plans 5,558 damage instead of 5,885,
-  164 kills instead of 171, no second throw the server refuses; to see in game: one throw a turn, then what it may cast.
+  its next turn (D465, the server's own rule, measured on the captures): the replay now plans 5,676 damage instead of 5,885,
+  162 kills instead of 171, no second throw the server refuses; to see in game: one throw a turn, then what it may cast.
 - The AI in a group (D454, D460): a little bolder beside allies, the enemies' threat weighed 0.75, next turn's damage as alone
   (0.9). D454's approach of 1.1 left 15 turns of 87 empty in the owner's group run of 2026-11-19, main a752a945, a monster in
   reach each time; replayed on its captures, these weights plan a blow on all 15 and twice the damage. Tested on the fake

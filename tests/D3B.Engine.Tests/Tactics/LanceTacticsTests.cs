@@ -72,6 +72,16 @@ public sealed class LanceTacticsTests
         return _tactics.Imagination.Cast(Fight(), Level(_spells, Throw), Off(2, 0));
     }
 
+    private static FightKnowledge Knowledge(ImaginedFight fight)
+    {
+        var spells = ImmutableDictionary<long, ImmutableArray<SpellLevel>>.Empty.Add(1, [Level(_spells, Throw)]);
+
+        foreach (var fighter in fight.Fighters.Where(fighter => fighter.Id != 1))
+            spells = spells.Add(fighter.Id, []);
+
+        return new FightKnowledge { Spells = spells };
+    }
+
     [Fact]
     public void AForgelanceThatThrewItsLanceNoLongerHoldsIt()
     {
@@ -115,6 +125,43 @@ public sealed class LanceTacticsTests
 
         Assert.True(next.Find(1)!.HasState(Out));
         Assert.Contains(next.Fighters, fighter => fighter.MonsterId == Lance);
+    }
+
+    [Fact]
+    public void TheJudgeCountsNextTurnsThrowsOnceTheLanceIsOut()
+    {
+        var fight = Fight();
+        var judge = _tactics.JudgeOf(fight, Knowledge(fight), TacticWeights.Default);
+
+        Assert.True(judge.NextTurnDamage(Thrown()) > 0);
+    }
+
+    [Fact]
+    public void AFightersTurnBringsBackItsOwnLanceAlone()
+    {
+        // Two Forgelances, such as a character and an enemy's, each with its lance on the map.
+        var other = Thrower() with { Id = 2, Team = 1, Cell = Off(-3, 0) };
+        var fight = Fight() with { Fighters = [.. Fight().Fighters, other] };
+        var both = _tactics.Imagination.Cast(_tactics.Imagination.Cast(fight, Level(_spells, Throw), Off(2, 0)) with { ActorId = 2 }, Level(_spells, Throw), Off(-2, 0));
+
+        var next = _tactics.Imagination.TurnStarted(both, 1, 2);
+
+        Assert.True(next.Find(1)!.HasState(InHand));
+        Assert.True(next.Find(2)!.HasState(Out));
+        Assert.Single(next.Fighters, fighter => fighter.MonsterId == Lance);
+        Assert.Contains(next.Fighters, fighter => fighter.MonsterId == Lance && fighter.SummonerId == 2);
+    }
+
+    [Fact]
+    public void AThrowWithoutTheLanceInHandLeavesTheStatesAsTheyWere()
+    {
+        // The throws ask 3360 or 3589: what a throw does to a thrower holding 3589 alone was never captured.
+        var fight = Fight();
+        var holder = fight.Actor with { States = [3589] };
+
+        var thrown = _tactics.Imagination.Cast(fight.With(holder), Level(_spells, Throw), Off(2, 0));
+
+        Assert.Equal([3589], thrown.Actor.States);
     }
 
     [Fact]
