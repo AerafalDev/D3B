@@ -357,6 +357,11 @@ public sealed class FollowActivity : BotActivity, IDisposable
 
         _copied = master.Path;
 
+        // The owner's ask (D449): a walk to a group of monsters is its master's attack, whose fight a follower on the map
+        // joins from where it stands; walking beside its master first only delayed its join.
+        if (master.MonsterGroups.Values.Any(group => group.Cell == end))
+            return false;
+
         if (state is not { MapId: { } map, Cell: { } from } || Beside(context, master, map, from, end) is not { } cell)
             return false;
 
@@ -380,20 +385,32 @@ public sealed class FollowActivity : BotActivity, IDisposable
 
         var followers = GroupChain.Order(master, _bots.Groups.FollowersOf(master.Key));
         var at = followers.Select((bot, index) => (bot, index)).FirstOrDefault(pair => pair.bot == context.Actor).index;
-        var around = Enumerable.Range(0, MapCell.DirectionCount).Select(direction => MapGeometry.Neighbour(end, direction)).Where(cell => cell >= 0).ToList();
 
-        if (around.Contains(from))
+        // Measured on the owner's retest of 2026-11-19 (D449): around a cell on a map's edge, one neighbour alone was free,
+        // and three followers walked to it at once, two of their walks unconfirmed. The cells around, then those around
+        // them, none another member stands on or walks to; each follower its own among them, by its place in the party, so
+        // that followers choosing at once choose apart.
+        var taken = followers.Where(bot => bot != context.Actor)
+            .SelectMany(bot => new[] { bot.State.Cell, bot.State.IsWalking ? bot.State.Path[^1] : (int?)null })
+            .Where(cell => cell is not null)
+            .Select(cell => cell!.Value)
+            .Append(end)
+            .Append(master.Cell ?? -1)
+            .ToHashSet();
+        var near = Around(end);
+        var rings = near.Concat(near.SelectMany(Around)).Distinct().Where(cell => !taken.Contains(cell)).ToList();
+
+        if (near.Contains(from) && !taken.Contains(from))
             return null;
 
-        for (var tried = 0; tried < around.Count; tried++)
-        {
-            var cell = around[(at + tried) % around.Count];
+        var free = rings.Where(cell => cell == from || CellPathfinder.TryFind(data.Cells.Span, from, cell, out _)).ToList();
 
-            if (CellPathfinder.TryFind(data.Cells.Span, from, cell, out _))
-                return cell;
-        }
+        return free.Count is 0 ? null : free[Math.Min(at, free.Count - 1)] is var cell && cell != from ? cell : null;
+    }
 
-        return null;
+    private static IEnumerable<int> Around(int cell)
+    {
+        return Enumerable.Range(0, MapCell.DirectionCount).Select(direction => MapGeometry.Neighbour(cell, direction)).Where(neighbour => neighbour >= 0);
     }
 
     // Whether it asked to join its master's fight: as the master attacks on its map, the server tells the party of the fight
