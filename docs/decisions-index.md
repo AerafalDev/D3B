@@ -737,6 +737,11 @@ or refines another says so in its own entry. Add a line here with every new deci
 - [D466](decisions/d466-fights-challenges-easy.md#d466-the-ai-plays-for-the-easy-challenges-those-of-its-own-turns-while-a-turn-costs-no-more-than-their-bonus-pays-pack-format-13) The AI plays for the easy challenges, those of its own turns, while a turn costs no more than their bonus pays, pack format 13 (2026-11-19)
   - Hardi and Barbare among them, keeping a challenge whatever it costs, the whole balance as the price, one search with a penalty, matching by number.
 
+## Fights, the group's reply and its target (D467)
+
+- [D467](decisions/d467-group-reply-target.md#d467-an-enemy-of-the-reply-holds-every-character-of-a-group-as-dear-as-the-fighter-playing-as-real-monsters-do) An enemy of the reply holds every character of a group as dear as the fighter playing, as real monsters do (2026-11-19)
+  - The fighter playing's life counted once, a group or not; a weight by breed or the group's weights; the allies' spells and turns in the same change.
+
 ## Fights, an Eliotrope's portals (D468)
 
 - [D468](decisions/d468-eliotrope-portals.md#d468-an-eliotropes-portals-in-the-ai-cast-through-by-every-character-of-the-bot) An Eliotrope's portals in the AI, cast through by every character of the bot (2026-11-19)
