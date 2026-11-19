@@ -396,6 +396,52 @@ public sealed class FollowActivityTests
     }
 
     [Fact]
+    public async Task AFollowerRefusedItsMastersWayFromAnExitWalksBeforeAskingAgain()
+    {
+        // Measured on the owner's group runs of 2026-11-19 (D462): on its master's exit after a fight, a follower asked for the
+        // neighbour every 8.5 s for thirty minutes, each refused naming its cell, its group waiting, until the server closed every
+        // connection of the group for inactivity.
+        await using var play = new TestPlay();
+        var (masterConnection, _) = await TestGroup.MasterAsync(play, 300);
+        var (connection, follower) = await TestGroup.FollowerAsync(play, 20);
+        var run = Follow(play, follower, TestGroup.Master);
+        var stood = MapGeometry.PointOf(20);
+
+        await TestGroup.UntilAsync(play, () => Doing(run) == "Follows Master", "following");
+        TestGroup.Arrive(masterConnection, TestGroup.MasterId, TestPlay.NorthMapId, 500);
+
+        Assert.IsType<MapChangeRequest>(await TestGroup.SentAsync(play, connection, 1));
+        connection.Server(new MapMovementRefusedEvent { X = stood.X, Y = stood.Y });
+
+        var walk = Assert.IsType<MapMovementRequest>(await TestGroup.SentAsync(play, connection, 2));
+
+        Assert.Equal(20, walk.KeyMovements[0] & 0xFFF);
+        run.Stop();
+    }
+
+    [Fact]
+    public async Task AFollowerWhoseChangesFailFromWhereItStandsStepsAsideBeforeTheNext()
+    {
+        // The same way failing again and again from one cell (D456), whatever the server answers or not: a walk shown lets any
+        // hold go and has the client draw its character where the server has it (D462).
+        await using var play = new TestPlay();
+        var (masterConnection, _) = await TestGroup.MasterAsync(play, 300);
+        var (connection, follower) = await TestGroup.FollowerAsync(play, 20);
+        var run = Follow(play, follower, TestGroup.Master);
+
+        await TestGroup.UntilAsync(play, () => Doing(run) == "Follows Master", "following");
+        TestGroup.Arrive(masterConnection, TestGroup.MasterId, TestPlay.NorthMapId, 500);
+
+        for (var count = 1; count <= 3; count++)
+            Assert.IsType<MapChangeRequest>(await TestGroup.SentAsync(play, connection, count));
+
+        var walk = Assert.IsType<MapMovementRequest>(await TestGroup.SentAsync(play, connection, 4));
+
+        Assert.Equal(20, walk.KeyMovements[0] & 0xFFF);
+        run.Stop();
+    }
+
+    [Fact]
     public async Task AFollowerGoesWithoutWaitingForTheOneBeforeIt()
     {
         // The owner's choice (D447): in real time, whatever the others' order.

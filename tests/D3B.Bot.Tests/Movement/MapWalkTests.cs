@@ -415,4 +415,35 @@ public sealed class MapWalkTests
         Assert.Equal(other.State.Cell, nearest.End);
         Assert.False(aside.IsCompleted);
     }
+
+    [Fact]
+    public async Task AStepAsideLeavesOutTheCellThePreviousWalkEndedOn()
+    {
+        // D462's case: a step onto a neighbour taken for arrived, then a refusal naming the cell it left; a step back onto that
+        // neighbour is a walk ending where the previous one did, which the client does not follow (9g5).
+        await using var play = new TestPlay();
+        var cells = play.Maps.Get(TestPlay.MapId).Cells.Span;
+        var neighbours = Enumerable.Range(0, MapCell.DirectionCount).Select(direction => MapGeometry.Neighbour(20, direction)).Where(cell => cell >= 0).ToArray();
+
+        Assert.True(CellPathfinder.TryFindNearest(cells, 20, neighbours, out var nearest));
+
+        var (connection, bot) = await play.EnterAsync(20);
+        var stood = MapGeometry.PointOf(20);
+
+        connection.Server(new MapMovementEvent { ActorId = TestPlay.CharacterId, Cells = { 20, nearest.End } });
+        connection.Client(new MapMovementConfirmRequest());
+        connection.Response(new MapMovementConfirmResponse());
+        connection.Server(new MapMovementRefusedEvent { X = stood.X, Y = stood.Y });
+        await bot.ProcessedAsync();
+
+        Assert.True(bot.State.IsWalkHeld);
+        Assert.Equal(nearest.End, bot.State.LastWalkEnd);
+
+        var aside = bot.RunAsync((context, token) => context.StepAsideAsync(token), TestContext.Current.CancellationToken);
+        var request = Assert.IsType<MapMovementRequest>(await connection.SentAsync(1));
+
+        Assert.Equal(20, request.KeyMovements[0] & 0xFFF);
+        Assert.NotEqual(nearest.End, request.KeyMovements[^1] & 0xFFF);
+        Assert.False(aside.IsCompleted);
+    }
 }

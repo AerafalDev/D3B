@@ -711,3 +711,8 @@ or refines another says so in its own entry. Add a line here with every new deci
 
 - [D461](decisions/d461-fights-challenges-read.md#d461-the-bot-reads-its-fights-challenges-their-targets-their-results-and-the-proposals-mapping-format-22) The bot reads its fight's challenges, their targets, their results and the proposals, mapping format 22 (2026-11-19)
   - The challenges' table in the pack now, the mode and number events, a target with no fighter.
+
+## Groups, a follower the server holds (D462)
+
+- [D462](decisions/d462-groups-held-follower.md#d462-a-refusal-out-of-a-fight-says-the-server-may-hold-a-walk-and-a-follower-whose-change-keeps-failing-from-one-cell-steps-aside) A refusal out of a fight says the server may hold a walk, and a follower whose change keeps failing from one cell steps aside (2026-11-19)
+  - A confirmation told by its delay, a journey round, a master that stops waiting, every refusal held in a fight too.

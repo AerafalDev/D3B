@@ -83,3 +83,4 @@ Each file holds the decisions of one group of [the index](../decisions-index.md)
 - [Groups, the bank's rounds and the food (D459)](d459-group-bank-rounds-and-food.md): 1 decision, 3 KB.
 - [Fights, a blow now worth more than a blow later (D460)](d460-group-fights-strike-now.md): 1 decision, 4 KB.
 - [Fights, the challenges read (D461)](d461-fights-challenges-read.md): 1 decision, 3 KB.
+- [Groups, a follower the server holds (D462)](d462-groups-held-follower.md): 1 decision, 4 KB.

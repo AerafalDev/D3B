@@ -144,6 +144,42 @@ public sealed class MapChangeTests
     }
 
     [Fact]
+    public async Task ACharacterRefusedAMapChangeOnACellOfTheEdgeStepsAsideBeforeAskingAgain()
+    {
+        // Measured on the owner's group runs of 2026-11-19 (D462): a follower on a cell of the edge asked for the neighbour every
+        // 8.5 s for thirty minutes, each refused, the server naming that cell; a walk it shows lets the hold go (D89).
+        await using var play = new TestPlay();
+        var (connection, bot) = await play.EnterAsync(20);
+        var first = bot.ChangeMapAsync(play.StepTo(bot, TestPlay.NorthMapId), TestContext.Current.CancellationToken);
+        var stood = MapGeometry.PointOf(20);
+
+        Assert.IsType<MapChangeRequest>(await connection.SentAsync(1));
+        connection.Server(new MapMovementRefusedEvent { X = stood.X, Y = stood.Y });
+        Assert.NotEqual(MapChangeOutcome.Changed, await TestWalks.AdvanceUntilDoneAsync(play.Time, first));
+
+        var again = bot.ChangeMapAsync(play.StepTo(bot, TestPlay.NorthMapId), TestContext.Current.CancellationToken);
+        var aside = Assert.IsType<MapMovementRequest>(await connection.SentAsync(2));
+
+        Assert.Equal(20, aside.KeyMovements[0] & 0xFFF);
+
+        await TestWalks.WalkedAsync(play, connection, 2);
+
+        var request = await TestWalks.SentAsync(play, connection, 3);
+
+        if (request is MapMovementRequest)
+        {
+            await TestWalks.WalkedAsync(play, connection, 3);
+            request = await TestWalks.SentAsync(play, connection, 4);
+        }
+
+        Assert.Equal(new MapChangeRequest { MapId = (int)TestPlay.NorthMapId }, request);
+
+        TestWalks.Arrive(connection, TestPlay.NorthMapId, 552);
+
+        Assert.Equal(MapChangeOutcome.Changed, await TestWalks.AdvanceUntilDoneAsync(play.Time, again));
+    }
+
+    [Fact]
     public async Task AMapActionWalksOntoItsCellAndTheServerNamesTheNewMapBeforeAnsweringTheConfirmation()
     {
         await using var play = new TestPlay();
