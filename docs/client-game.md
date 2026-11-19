@@ -1407,6 +1407,9 @@ failure; without the captures, the pins and the structure pair the same.
   followers, described with `scripts/capture.cs --messages`): from the second fight on, each follower's client sent by
   itself an empty `FightReadyRequest`, not ready, about 0.5 s after the bot's request to join its master's fight and
   before the server's answer, the character not in the fight yet. Not in the first fight; why, not measured.
+- **A placement swapped** (D450), on the owner's retest of 2026-11-19: a follower's move to a cell another follower chose
+  at the same time was answered 31 ms later by an event not mapped, whose fields are two cells and two fighters, a swap;
+  a move to a free cell, by the dispositions, 29 ms later.
 - **The exchange's moves, read again** (D442): of the follower's three moves, two were `ExchangeObjectMoveRequest` and one
   `ExchangeTransferFromInventoryRequest` of one stack; each was told to both, 28 to 29 ms later, by one event listing the
   stacks moved, each with its object and a number. Both sides then said they were ready with step 3, as many as those

@@ -646,3 +646,8 @@ or refines another says so in its own entry. Add a line here with every new deci
 
 - [D448](decisions/d448-groups-followers-into-the-fight.md#d448-the-master-waits-for-its-followers-on-the-map-its-fight-began-from-and-they-walk-beside-it) The master waits for its followers on the map its fight began from, and they walk beside it (2026-11-19)
   - The same cell as the master, the step aside added alone.
+
+## Fights, the placement's answer (D450)
+
+- [D450](decisions/d450-fights-placement-answer.md#d450-the-ai-waits-a-second-at-most-for-its-placements-answer) The AI waits a second at most for its placement's answer (2026-11-19)
+  - Mapping the swap's event now, avoiding the allies' cells.

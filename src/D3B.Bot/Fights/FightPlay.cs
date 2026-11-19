@@ -39,6 +39,9 @@ public static class FightPlay
     private static readonly FightOption[] _leading = [FightOption.NoSpectators];
 
     private static readonly TimeSpan _placementWait = TimeSpan.FromSeconds(45);
+
+    // How long the AI waits for its placement's answer: the server's within 30 ms, measured (D450).
+    private static readonly TimeSpan _placedWait = TimeSpan.FromSeconds(1);
     private static readonly TimeSpan _turnWait = TimeSpan.FromMinutes(5);
 
     /// <summary>Plays the character's fight to its end.</summary>
@@ -175,7 +178,10 @@ public static class FightPlay
             var moved = context.Expect((side, _, state) => side is RelayDirection.FromServer && state.Fight?.Fighters.GetValueOrDefault(self)?.Cell == cell);
 
             await context.SendAsync(new FightPlacementPositionRequest { CellId = cell, FighterId = self }, cancellationToken).ConfigureAwait(false);
-            await moved.WaitAsync(context.Delays.Answer, cancellationToken).ConfigureAwait(false);
+            // Measured on the owner's test of 2026-11-19 (D450): the server answers a move to a free cell within 30 ms; one to
+            // a cell an ally chose at the same time it answers by swapping the two, which the state does not read, and
+            // waiting its whole answer delay cost each such follower 3 s before it said it was ready.
+            await moved.WaitAsync(_placedWait < context.Delays.Answer ? _placedWait : context.Delays.Answer, cancellationToken).ConfigureAwait(false);
         }
 
         FightLog.Placed(context.Log, self, context.State.Fight?.Fighters.GetValueOrDefault(self)?.Cell ?? cell);
