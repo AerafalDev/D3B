@@ -726,3 +726,8 @@ or refines another says so in its own entry. Add a line here with every new deci
 
 - [D464](decisions/d464-groups-held-follower.md#d464-a-refusal-out-of-a-fight-says-the-server-may-hold-a-walk-and-a-follower-whose-change-keeps-failing-from-one-cell-steps-aside) A refusal out of a fight says the server may hold a walk, and a follower whose change keeps failing from one cell steps aside (2026-11-19)
   - A confirmation told by its delay, a journey round, a master that stops waiting, every refusal held in a fight too.
+
+## Fights, an Eliotrope's portals (D466)
+
+- [D466](decisions/d466-eliotrope-portals.md#d466-an-eliotropes-portals-in-the-ai-cast-through-by-every-character-of-the-bot) An Eliotrope's portals in the AI, cast through by every character of the bot (2026-11-19)
+  - Capturing by hand first, casting only through the portals set, every exact set of portals kept, a worth of an open way.
