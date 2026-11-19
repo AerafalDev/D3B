@@ -707,7 +707,17 @@ or refines another says so in its own entry. Add a line here with every new deci
 - [D460](decisions/d460-group-fights-strike-now.md#d460-the-ai-weighs-next-turns-damage-under-1-in-a-group-too-so-that-it-strikes-now-what-it-could-strike-later) The AI weighs next turn's damage under 1, in a group too, so that it strikes now what it could strike later (2026-11-19)
   - D454 undone whole, a rule by element, the approach clamped silently in the judge.
 
-## Fights, the AI measured breed by breed (D461)
+## Fights, the challenges read (D461)
 
-- [D461](decisions/d461-fights-by-breed.md#d461-scriptsfightscs---turns-and---live-print-their-main-counts-by-the-characters-breed) `scripts/fights.cs --turns` and `--live` print their main counts by the character's breed (2026-11-19)
+- [D461](decisions/d461-fights-challenges-read.md#d461-the-bot-reads-its-fights-challenges-their-targets-their-results-and-the-proposals-mapping-format-22) The bot reads its fight's challenges, their targets, their results and the proposals, mapping format 22 (2026-11-19)
+  - The challenges' table in the pack now, the mode and number events, a target with no fighter.
+
+## Fights, the Forgelance's lances (D462)
+
+- [D462](decisions/d462-forgelance-lances.md#d462-the-forgelances-summons-are-not-a-last-resort-its-lances-striking-as-they-are-thrown) The Forgelance's summons are not a last resort, its lances striking as they are thrown (2026-11-19)
+  - A criterion by effect, the summon as a spell's only worth; D408 undone for every breed.
+
+## Fights, the AI measured breed by breed (D463)
+
+- [D463](decisions/d463-fights-by-breed.md#d463-scriptsfightscs---turns-and---live-print-their-main-counts-by-the-characters-breed) `scripts/fights.cs --turns` and `--live` print their main counts by the character's breed (2026-11-19)
   - The study's keys in the sorted counts, a breed's name from the pack, a switch to print the breeds.

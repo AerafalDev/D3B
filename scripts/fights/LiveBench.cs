@@ -13,7 +13,7 @@ namespace D3B.Scripts.Fights;
 /// frame), the player's otherwise; a request of the fight's the client sent in an AI's fight is the player's hand (D202). A
 /// cast D3B sent is cast when the server announces the character's cast before anything else answers it, refused when an
 /// error text comes first (D203). The AI's fights are counted again by the character's breed, with what matters to a farm:
-/// the turns and rounds a fight won takes, the turns idle, the life lost and the deaths (D461). It prints counts, never a
+/// the turns and rounds a fight won takes, the turns idle, the life lost and the deaths (D463). It prints counts, never a
 /// value of one fight.
 /// </remarks>
 internal sealed class LiveBench

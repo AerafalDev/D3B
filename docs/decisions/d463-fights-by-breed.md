@@ -1,18 +1,19 @@
-# Fights, the AI measured breed by breed (D461)
+# Fights, the AI measured breed by breed (D463)
 
 A part of [the decisions](README.md); each decision has one line in [the index](../decisions-index.md). The replays of
 the turns and the fights are [D206](d176-d208-step-9.md#d206-the-turns-and-the-fights-replayed-scriptsfightscs---turns-and---live);
 the AI in a group is [D454](d454-group-fights-bolder.md) and [D460](d460-group-fights-strike-now.md).
 
-## D461: `scripts/fights.cs --turns` and `--live` print their main counts by the character's breed
+## D463: `scripts/fights.cs --turns` and `--live` print their main counts by the character's breed
 
 *2026-11-19, the lead's study of the AI by breed, whose copy of the bench, keyed by breed by hand, found the Forgelance's
 spear throws left out by D408 and the reply overestimating the enemies in a group; the lead's choice, a guard for the
-sessions of the AI to come (D408 refined, 10d, the mechanisms shared by several breeds). Builds D206, D212, D407, D460.*
+sessions of the AI to come (10d, the mechanisms shared by several breeds). Builds D206, D212, D407, D460.*
 
 - **Why**: one AI for every breed (D244) is changed through the effects, and a change helps one breed while it costs
   another. The totals hid both of the study's findings: the spear throws planned 2 times against 10 played were lost
-  among 1,619 searches, and the reply's excess on the character among the summed blows on the whole team.
+  among 1,619 searches (D462 has since given them back), and the reply's excess on the character among the summed
+  blows on the whole team.
 - **`--turns`** keeps every line it printed and adds, at its end, the reply's blows against the enemies' blows between
   turns, alone and in a group, for every breed (in a group: another character of the team alive as the turn begins, as
   the bot weighs a group's fight, D454), then a

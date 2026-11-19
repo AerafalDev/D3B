@@ -33,7 +33,7 @@ namespace D3B.Scripts.Fights;
 /// </para>
 /// <para>
 /// The main counts are printed again by the character's breed, a section each, with the reply's blows against the
-/// enemies', alone and in a group (D461).
+/// enemies', alone and in a group (D463).
 /// </para>
 /// </remarks>
 internal sealed class TurnBench
@@ -220,7 +220,7 @@ internal sealed class TurnBench
 
     private void WriteBreeds(TextWriter writer)
     {
-        // The reply against the enemies' blows for every breed first, then each breed's section (D461).
+        // The reply against the enemies' blows for every breed first, then each breed's section (D463).
         string[] targets = ["the character", "another ally", "a summon"];
 
         writer.WriteLine("reply's blows against the enemies' blows between turns, every breed");

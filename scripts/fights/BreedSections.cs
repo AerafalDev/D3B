@@ -5,7 +5,7 @@ namespace D3B.Scripts.Fights;
 /// <summary>Sums of the benches' measures by the character's breed, which each bench prints as a section per breed.</summary>
 /// <remarks>
 /// The totals hide a breed the AI plays badly behind those it plays well: a change of the AI is read breed by breed
-/// (D461). A breed is the client's id, 0 when the replay could not tell it; it prints counts and sums, never a value
+/// (D463). A breed is the client's id, 0 when the replay could not tell it; it prints counts and sums, never a value
 /// of one fight.
 /// </remarks>
 internal sealed class BreedSections

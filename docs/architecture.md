@@ -284,7 +284,10 @@ The bots run in `D3B.Bot`: what each part does today, with the decisions that ma
   fight's state the spells the server's context lists for the fight, the character's own and not a summon's it controls
   (D279), and the team's options; a turn puts the fight in its fighting phase, as a client that rejoins a fight gets no
   fight's start. Since 9f4 (D279), the fight's state holds the marks on the cells as the server sets and takes them back,
-  glyphs, traps, bombs' walls and portals (`GroundMark`), which `ImaginedFights.MarksOf` gives the engine.
+  glyphs, traps, bombs' walls and portals (`GroundMark`), which `ImaginedFights.MarksOf` gives the engine. Since D461, it
+  holds the fight's challenges (`FightChallenge`), each with its bonus, its targets as the server last named them
+  (`FightChallengeTarget`, with the fighters allowed to strike it) and its result; `FightPlay` logs each challenge once and its
+  result as the fight ends. The bot sends none of the challenges' requests yet.
 - **The bot fights** (D198, D202, D235, D244), in `D3B.Bot.Fights`: `FightPilot`, one per bot, made by `Bots`, waits for
   a fight not over that the AI plays (`BotActor.Fights`): every fight under the host's `Fights:Alone`
   (`BotActor.FightsAlone`), else the running activity's own as its profile says (`BotActivity.FightsItsFights`); out of an
@@ -463,7 +466,7 @@ Built in session 3b (D35 to D38): the relay of the connection phase, in `D3B.Net
   in its `game` directory, with the messages the game's frames carry), pairs every readable message and enum with its
   counterpart (`ProtocolMatcher`: pins, anchors, fields, then structural scores; `google.protobuf.Any` is its own
   counterpart), audits the result (`ContractAudit`, which counts what partial messages leave out apart from its notes),
-  and writes it beside the pack, `mapping-18.binpb` (`MappingFile`, D342, D383), only when it holds. For what is left open it
+  and writes it beside the pack, `mapping-22.binpb` (`MappingFile`, D342, D383), only when it holds. For what is left open it
   lists the build's messages that fit, which the maintainer pins (D54). The mapping records the schema's SHA-256 and the
   readable protocol's digest (`ProtocolDigest`); `MappingFile.FormatVersion` changes with `mapping.proto` or that
   digest.
@@ -1148,8 +1151,8 @@ Pure logic with no I/O, in `D3B.Engine`, which references `D3B.Data` for the cel
     sequences the best of each set of states the character holds, so that a Zobal's mask lives to the spells it opens
     (`WithEachStates`, D255), its best sequences weighed against the enemies' greedy reply, then the character's next
     turn (`NextTurn`, D210), the plan with the fewest actions winning among those within a point of life that leave the same enemies
-    alive (D407), the summoning spells left out of the first search but for the Osamodas', the Roublard's and the Steamer's, and
-    searched again with them when it finds nothing to do (D408); `Place`; `Odds`; `OddsOverTheFight`, the enemies dying one after another (D249); `PathTo`.
+    alive (D407), the summoning spells left out of the first search but for the Osamodas', the Roublard's, the Steamer's and the
+    Forgelance's, whose lances strike (D462), and searched again with them when it finds nothing to do (D408); `Place`; `Odds`; `OddsOverTheFight`, the enemies dying one after another (D249); `PathTo`.
     `TacticWeights`, measured on 69 fights (D212), next turn's weight refused at 1 or more, which would leave a kill now for later (D460), `TurnSearchLimits`, `TurnPlan`, `TacticAction`.
   - Measured on the 166 turns of the characters captured: a search in 9 ms halfway, 158 ms at most (9e); on 204 searches
     of 61 captures, 56 ms halfway, 422 ms at most, and 86 ms halfway on the AI's own fights (9e2); benchmarked, a turn
@@ -1233,7 +1236,7 @@ interface's recast (D292).
   removed and erosion left to captures (9d, built, D195, D196).
 - A fight is decided by simulating candidate actions and scoring them (D13): each turn the AI searches the best sequences
   of moves and casts and thinks again after each answer of the server (9e, built, D201, D202), its judgement measured on
-  the captures turn by turn (9e2, D206 to D212), and breed by breed since D461. The simulator applies spell
+  the captures turn by turn (9e2, D206 to D212), and breed by breed since D463. The simulator applies spell
   effects read from the game data. It lives in `D3B.Engine`, with no I/O, so it is tested on its own.
 - The hard cases through the effects, measured one at a time (9f): a fighter's states, as the server sets and ends them
   and as the effects set and end them through the spells they cast, the Zobal's masks first (built, D224 to D229);
@@ -1280,7 +1283,7 @@ character's (D279). The character's spells by the
   Its replays of the turns (`--turns`) and of the fights (`--live`) print their main counts again by the character's breed,
   a section each, so that a change of the AI is read class by class and on what a farm needs: the plans, the damage, kills
   and heals planned against played, the reply's blows against the enemies' alone and in a group, the spells planned against
-  played; the turns and rounds a fight won takes, the turns idle, the life lost and the deaths (D461).
+  played; the turns and rounds a fight won takes, the turns idle, the life lost and the deaths (D463).
 - Logic code in `D3B.Engine` and the state handlers is tested directly, with property tests on CsCheck for cell and
   world paths (D68, D71) and lines of sight, the same both ways and nearing their end at each cell. A fight's rules are
   tested on maps and fighters the tests build around a map's middle, with a catalog of six spells, each refusal named.

@@ -119,6 +119,16 @@ public sealed class FightEventsTests
         return order;
     }
 
+    private static ChallengeInformation Challenge(int id, int bonus, params ChallengeTarget[] targets)
+    {
+        return new ChallengeInformation { State = ChallengeState.Running, ChallengeId = id, Bonus = bonus, Targets = { targets } };
+    }
+
+    private static ChallengeTarget Target(long fighter, int cell, params long[] attackers)
+    {
+        return new ChallengeTarget { FighterId = fighter, CellId = cell, AttackerIds = { attackers } };
+    }
+
     /// <summary>The fight's context, its map and its placement, as the server sends them once the player attacked.</summary>
     private static CharacterState Placed()
     {
@@ -678,6 +688,82 @@ public sealed class FightEventsTests
             new ChallengeBonusChoiceSelectedEvent { Bonus = ChallengeBonus.Experience });
 
         Assert.Equal(ChallengeBonus.Experience, chosen.Fight!.ChallengeBonus);
+    }
+
+    [Fact]
+    public void TheFightsChallengesAreTheServersWithTheirTargetsAndNoneBefore()
+    {
+        Assert.Empty(Placed().Fight!.Challenges);
+
+        // Measured (D461): the add event just before the fight's start, then the list just after it, of the same challenge.
+        var started = Apply(
+            Placed(),
+            new ChallengeAddEvent { Challenge = Challenge(3, 85, Target(Monster, 301)) },
+            new FightStartEvent(),
+            new ChallengeListEvent { Challenges = { Challenge(3, 85, Target(Monster, 301)) } });
+
+        var challenge = Assert.Single(started.Fight!.Challenges);
+
+        Assert.Equal(3, challenge.Id);
+        Assert.Equal(85, challenge.Bonus);
+        var target = Assert.Single(challenge.Targets);
+
+        Assert.Equal(Monster, target.FighterId);
+        Assert.Empty(target.AttackerIds);
+        Assert.Null(challenge.Succeeded);
+    }
+
+    [Fact]
+    public void TheListLeavesOutAChallengeItDoesNotName()
+    {
+        var listed = Apply(
+            Placed(),
+            new ChallengeAddEvent { Challenge = Challenge(5, 60) },
+            new FightStartEvent(),
+            new ChallengeListEvent { Challenges = { Challenge(3, 85) } });
+
+        Assert.Equal(3, Assert.Single(listed.Fight!.Challenges).Id);
+    }
+
+    [Fact]
+    public void AChallengesTargetsAreTheServersLastWordAndATargetWithNoFighterIsLeftOut()
+    {
+        var started = Apply(Playing(), new ChallengeListEvent { Challenges = { Challenge(3, 85, Target(Monster, 301)) } });
+
+        // Measured (D461): a target with no fighter carries a negative cell; one named later comes with who may strike it.
+        var hidden = new ChallengeTarget { CellId = -1 };
+        var changed = Apply(
+            started,
+            new ChallengeTargetsEvent { Challenge = Challenge(3, 85, hidden, Target(Turret, 287, Self)) });
+
+        var target = Assert.Single(Assert.Single(changed.Fight!.Challenges).Targets);
+
+        Assert.Equal(Turret, target.FighterId);
+        Assert.Equal([Self], target.AttackerIds.ToArray());
+    }
+
+    [Fact]
+    public void AChallengesResultIsKeptThroughItsTargetsChanging()
+    {
+        var started = Apply(Playing(), new ChallengeListEvent { Challenges = { Challenge(3, 85), Challenge(41, 60) } });
+
+        var ended = Apply(
+            started,
+            new ChallengeResultEvent { ChallengeId = 41, Success = true },
+            new ChallengeTargetsEvent { Challenge = Challenge(41, 60, Target(Monster, 301)) },
+            new ChallengeResultEvent { ChallengeId = 3 });
+
+        Assert.Equal([(3, (bool?)false), (41, true)], ended.Fight!.Challenges.Select(challenge => (challenge.Id, challenge.Succeeded)).ToArray());
+    }
+
+    [Fact]
+    public void AResultOfAChallengeTheServerNeverListedIsKeptAsItsOwn()
+    {
+        var ended = Apply(Playing(), new ChallengeResultEvent { ChallengeId = 8, Success = true });
+
+        var challenge = Assert.Single(ended.Fight!.Challenges);
+
+        Assert.Equal((8, 0, (bool?)true), (challenge.Id, challenge.Bonus, challenge.Succeeded));
     }
 
     [Fact]

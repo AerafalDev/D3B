@@ -34,7 +34,7 @@ internal static class FightsCommand
         };
         var turns = new Option<bool>("--turns")
         {
-            Description = "Replays every turn the characters played through the fight's AI instead: its plan against the turn played, and what its judge foresaw against what came (D206); then by breed, the plans, damage, kills, heals, reply, judgement and spells planned against played, and the reply's blows against the enemies', alone and in a group (D461).",
+            Description = "Replays every turn the characters played through the fight's AI instead: its plan against the turn played, and what its judge foresaw against what came (D206); then by breed, the plans, damage, kills, heals, reply, judgement and spells planned against played, and the reply's blows against the enemies', alone and in a group (D463).",
         };
         var enemyLife = new Option<double>("--enemy-life")
         {
@@ -47,7 +47,7 @@ internal static class FightsCommand
         };
         var live = new Option<bool>("--live")
         {
-            Description = "Counts what D3B did in the fights instead: who played each, how it ended, and what came of the AI's requests (D206); then by breed, the turns and rounds a fight won takes, the turns idle, the life lost and the deaths (D461).",
+            Description = "Counts what D3B did in the fights instead: who played each, how it ended, and what came of the AI's requests (D206); then by breed, the turns and rounds a fight won takes, the turns idle, the life lost and the deaths (D463).",
         };
         var command = new RootCommand("Replays the captured fights and compares what D3B.Engine foresees with what the server announced, action by action.")
         {

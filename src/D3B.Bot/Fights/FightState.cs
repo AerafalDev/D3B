@@ -81,6 +81,10 @@ public sealed record FightState
     /// <remarks>Measured: the client sends its player's last choice as the placement starts, and the server answers it at once.</remarks>
     public ChallengeBonus? ChallengeBonus { get; init; }
 
+    /// <summary>Gets the fight's challenges, in the order the server listed them, each with its targets and its result (D461).</summary>
+    /// <remarks>Measured: the server names them as the fight starts, changes their targets as turns go, and gives each result before the fight's end.</remarks>
+    public ImmutableArray<FightChallenge> Challenges { get; init; } = [];
+
     /// <summary>Gets how the fight ended for the character, once the server sent the results.</summary>
     public FightEnd? End { get; init; }
 }
