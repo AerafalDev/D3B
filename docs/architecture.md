@@ -471,7 +471,7 @@ Built in session 3b (D35 to D38): the relay of the connection phase, in `D3B.Net
   in its `game` directory, with the messages the game's frames carry), pairs every readable message and enum with its
   counterpart (`ProtocolMatcher`: pins, anchors, fields, then structural scores; `google.protobuf.Any` is its own
   counterpart), audits the result (`ContractAudit`, which counts what partial messages leave out apart from its notes),
-  and writes it beside the pack, `mapping-22.binpb` (`MappingFile`, D342, D383), only when it holds. For what is left open it
+  and writes it beside the pack, `mapping-23.binpb` (`MappingFile`, D342, D383), only when it holds. For what is left open it
   lists the build's messages that fit, which the maintainer pins (D54). The mapping records the schema's SHA-256 and the
   readable protocol's digest (`ProtocolDigest`); `MappingFile.FormatVersion` changes with `mapping.proto` or that
   digest.
@@ -1095,13 +1095,15 @@ Pure logic with no I/O, in `D3B.Engine`, which references `D3B.Data` for the cel
     fighter, the same both ways.
   - `SpellZones`: the cells each of the 26 shapes covers, centred on the cell cast on and directed from the caster.
     `TargetMask`: an effect's mask parsed once, answering on three values whether it selects a fighter; `C` names the
-    caster wherever it stands, `c` in the zone only (D226).
+    caster wherever it stands, `c` in the zone only (D226); `R` asks a cast through a portal and `r` a cast through none,
+    which every cast tells (D468).
   - `CastRules`, built once per pack: whether a fighter may cast a level on a cell, the refusal named (`CastRefusal`)
     in the order the checks run, from its `CastHistory`, the level as the caster's spell modifiers change it
     (`SpellModifier`, `CastRules.Modified`); the cells it may cast on; the fighters each effect reaches. The level's
     criterion on states is a `Criterion` answering `HS` on `CriterionFacts.States`; a state preventing casts lets through
     the levels asking for it (D191). `StatesAllow` says whether the states let a fighter cast a level at all, which the
-    judge reads (D228).
+    judge reads (D228). Given the fight's marks, a cast on an open portal is checked from the caster to the portal, then
+    on the cell it lands on from its exit, and a level needing a cell with no portal is refused on one (`Passage`, D468).
   - `FightMoves`, built once per pack: the four cells a fighter steps to, the share of its MP and AP a tackle leaves it,
     and the cells it walks to with what it keeps there.
   - Benchmarked on a captured fight's map: every cell a level may be cast on in 6.3 µs, a line of sight in 30 ns, an
@@ -1158,9 +1160,16 @@ Pure logic with no I/O, in `D3B.Engine`, which references `D3B.Data` for the cel
     goes, a wall while its bombs live, its blow rising with their combos, each blow as likely as the enemy stays, measured
     on the monsters' turns (D288); it reckons the walls once a judgement, and a turn's start only for a fighter on the
     other side's mark, its own side's left to the reply as the cost measured (D290).
+  - `Portals` and `PortalPassage`, in `D3B.Engine.Fights` (D468): an Eliotrope's portals, marks of effect 1181 kept the
+    whole fight, four a team, as the references model them, no capture having measured one in Dofus 3. A cast on an open
+    portal, by any fighter, goes along its chain, each portal to the nearest of its team's left, and lands as far from the
+    last one as the caster stands from the first, its zone and pushes from that exit, its damage, steals and heals raised
+    by 2% a cell between the portals, the effects of mask `R` or `r` chosen so (`Imagination.Cast`, `SpellEffects.Foresee`).
   - `FightTactics`, built once per pack: `Plan`, a beam search of walks and casts, each step keeping beside its best
     sequences the best of each set of states the character holds, so that a Zobal's mask lives to the spells it opens
-    (`WithEachStates`, D255), its best sequences weighed against the enemies' greedy reply, each enemy striking whom it
+    (`WithEachStates`, D255), and the best of other sets of the team's portals, those whose ways land on an enemy first,
+    so that a portal set lives to the cast it opens (D468); every level is tried on the portals' cells, and a level that
+    sets a portal is tried on the cells that line a way up with an enemy; its best sequences weighed against the enemies' greedy reply, each enemy striking whom it
     lowers the side's worth most by, every character of a group as dear to it as the fighter playing (`AlliesWorth`, D467), then the character's next
     turn (`NextTurn`, D210), the plan with the fewest actions winning among those within a point of life that leave the same enemies
     alive (D407), the summoning spells left out of the first search but for the Osamodas', the Roublard's, the Steamer's and the
@@ -1258,8 +1267,9 @@ interface's recast (D292).
   summons, those the AI brings and those the client controls (built, D269 to D271); the Roublard's bombs, their chains,
   combos and walls, every move that brings a fighter into a wall counted (built, D276, D277); the marks on the cells,
   glyphs and walls struck as a turn begins and ends, the Féca's to measure in game (built, D280), weighed over the rounds
-  they strike (built, D288); then runes,
-  telefrags, traps, portals, carrying, each taken in through every move that brings fighters into it (D277): one AI for every breed, through the effects, never per class (D244); and the fighting activity, which attacks the groups its profile
+  they strike (built, D288); an Eliotrope's portals, set and cast through by any fighter of the bot (built, D468), the walk
+  through one and the enemies' casts through them left; then runes,
+  telefrags, traps, carrying, each taken in through every move that brings fighters into it (D277): one AI for every breed, through the effects, never per class (D244); and the fighting activity, which attacks the groups its profile
   allows (9g, built, D236 to D241, D245).
 
 ## Tests

@@ -11,7 +11,7 @@ public sealed class ContractAuditTests
 {
     // The readable protocol's size, which the audit checks whole: messages, fields, enums and enum values.
     private const int ReadableMessages = 264;
-    private const int ReadableFields = 570;
+    private const int ReadableFields = 571;
     private const int ReadableEnums = 37;
     private const int ReadableValues = 244;
 

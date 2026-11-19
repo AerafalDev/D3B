@@ -741,3 +741,8 @@ or refines another says so in its own entry. Add a line here with every new deci
 
 - [D467](decisions/d467-group-reply-target.md#d467-an-enemy-of-the-reply-holds-every-character-of-a-group-as-dear-as-the-fighter-playing-as-real-monsters-do) An enemy of the reply holds every character of a group as dear as the fighter playing, as real monsters do (2026-11-19)
   - The fighter playing's life counted once, a group or not; a weight by breed or the group's weights; the allies' spells and turns in the same change.
+
+## Fights, an Eliotrope's portals (D468)
+
+- [D468](decisions/d468-eliotrope-portals.md#d468-an-eliotropes-portals-in-the-ai-cast-through-by-every-character-of-the-bot) An Eliotrope's portals in the AI, cast through by every character of the bot (2026-11-19)
+  - Capturing by hand first, casting only through the portals set, every exact set of portals kept, a worth of an open way.

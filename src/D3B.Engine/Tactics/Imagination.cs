@@ -149,7 +149,11 @@ public sealed class Imagination
 
         var caster = fight.Actor;
         var cost = CastRules.Modified(level, caster).ApCost;
-        var target = fight.On(cell);
+
+        // A cast on an open portal lands where the portals send it (D468), the rules having checked it so.
+        var through = _rules.Passage(fight.Marks, fight.Fighters, caster, level, cell);
+        var at = through?.Target ?? cell;
+        var target = fight.On(at);
         var fighters = new List<Combatant>(fight.Fighters.Length + 1);
         var buffs = new List<ImaginedBuff>();
         var kept = fight.Buffs;
@@ -159,13 +163,13 @@ public sealed class Imagination
         var casterIndex = IndexOf(fighters, caster.Id);
 
         fighters[casterIndex] = caster with { ActionPoints = Math.Max(0, caster.ActionPoints - cost) };
-        Effects(fight.Map, fighters, casterIndex, level, cell, EffectFormulas.CriticalChance(level, caster), buffs, ref kept, 0);
-        OnCell(fight.Map, fighters, casterIndex, level, cell, buffs, ref kept);
+        Effects(fight.Map, fighters, casterIndex, level, at, EffectFormulas.CriticalChance(level, caster), buffs, ref kept, 0, through: through);
+        OnCell(fight.Map, fighters, casterIndex, level, at, buffs, ref kept);
 
         if (BringsLance(level))
             fighters[casterIndex] = ForgelanceLance.Thrown(fighters[casterIndex]);
 
-        var marks = Marked(fight, fighters, casterIndex, level, cell, buffs, ref kept);
+        var marks = Marked(fight, fighters, casterIndex, level, at, buffs, ref kept);
 
         Walled(fight.Map, fighters, fight.Fighters, buffs, ref kept);
         Entered(fight.Map, fighters, fight.Fighters, marks, buffs, ref kept);
@@ -191,8 +195,9 @@ public sealed class Imagination
 
         var struck = Struck(ForgelanceLance.Returned(fight, fighterId), fighterId, CellMarkKind.TurnStart, walls: true);
 
-        // Measured (9f4): the server took a glyph back as its author's turn began, after the glyphs struck that author.
-        var kept = struck.Marks.RemoveAll(mark => mark.AuthorId == fighterId && mark.EndRound <= round);
+        // Measured (9f4): the server took a glyph back as its author's turn began, after the glyphs struck that author. A portal
+        // stays the whole fight, the server naming no end for it (D468).
+        var kept = struck.Marks.RemoveAll(mark => mark.AuthorId == fighterId && mark.EndRound <= round && mark.Kind is not CellMarkKind.Portal);
 
         return kept.Length == struck.Marks.Length ? struck : struck with { Marks = kept };
     }
@@ -304,8 +309,13 @@ public sealed class Imagination
 
         _glyphs.Set(fight.Map, fighters, fighters[casterIndex], level, cell, fight.Round, first - MostMarksACast, set);
 
+        var marks = fight.Marks;
+
         foreach (var mark in set)
         {
+            // A team keeps four portals, a fifth taking the oldest's place (D468).
+            marks = mark.Kind is CellMarkKind.Portal ? Portals.Placed(marks, mark) : marks.Add(mark);
+
             if (mark.Kind is not CellMarkKind.Aura || !_glyphs.TryGetLevel(mark, out var aura))
                 continue;
 
@@ -313,7 +323,7 @@ public sealed class Imagination
             Effects(fight.Map, fighters, casterIndex, aura, mark.Centre, 0, buffs, ref kept, 1);
         }
 
-        return fight.Marks.AddRange(set);
+        return marks;
     }
 
     private void Entered(FightMap map, List<Combatant> fighters, ImmutableArray<Combatant> before, ImmutableArray<CellMark> marks, List<ImaginedBuff> buffs, ref ImmutableArray<ImaginedBuff> kept)
@@ -370,7 +380,7 @@ public sealed class Imagination
             buffs.Add(new ImaginedBuff(caster.Id, target.Id, characteristic, change, effect.Duration, spellId));
     }
 
-    private void Effects(FightMap map, List<Combatant> fighters, int casterIndex, in SpellLevel level, int cell, double chance, List<ImaginedBuff> buffs, ref ImmutableArray<ImaginedBuff> kept, int depth, long? only = null)
+    private void Effects(FightMap map, List<Combatant> fighters, int casterIndex, in SpellLevel level, int cell, double chance, List<ImaginedBuff> buffs, ref ImmutableArray<ImaginedBuff> kept, int depth, long? only = null, PortalPassage? through = null)
     {
         var foreseen = Foreseen(depth);
         var caster = fighters[casterIndex];
@@ -379,12 +389,12 @@ public sealed class Imagination
 
         // Measured (9f4): a mark struck the fighter whole, three glyphs of rings of 2 and 3 cells dealing 120 where their
         // zones' decrease foresaw 86.
-        _effects.Foresee(map, fighters, caster, level, cell, false, foreseen, whole: only is not null);
+        _effects.Foresee(map, fighters, caster, level, cell, false, foreseen, whole: only is not null, through);
 
         var normal = foreseen.Count;
 
         if (chance > 0)
-            _effects.Foresee(map, fighters, caster, level, cell, true, foreseen, whole: only is not null);
+            _effects.Foresee(map, fighters, caster, level, cell, true, foreseen, whole: only is not null, through);
 
         for (var index = 0; index < foreseen.Count; index++)
         {
@@ -399,7 +409,7 @@ public sealed class Imagination
             else if (effect.Action.Kind is EffectKind.Detonate)
                 Detonate(map, fighters, effect, buffs, ref kept, depth);
             else
-                Apply(map, fighters, casterIndex, effect, cell, critical ? chance : InLife(effect.Action.Kind) ? 1 - chance : 1, level, buffs, ref kept);
+                Apply(map, fighters, casterIndex, effect, cell, critical ? chance : InLife(effect.Action.Kind) ? 1 - chance : 1, level, buffs, ref kept, through?.Exit);
         }
 
         foreseen.Clear();
@@ -512,7 +522,7 @@ public sealed class Imagination
         fighters[summoner] = fighters[summoner] with { Characteristics = fighters[summoner].Characteristics.SetItem(FightCharacteristic.BombComboBonus, combo) };
     }
 
-    private void Apply(FightMap map, List<Combatant> fighters, int casterIndex, in ForeseenEffect effect, int cell, double share, in SpellLevel level, List<ImaginedBuff> buffs, ref ImmutableArray<ImaginedBuff> kept)
+    private void Apply(FightMap map, List<Combatant> fighters, int casterIndex, in ForeseenEffect effect, int cell, double share, in SpellLevel level, List<ImaginedBuff> buffs, ref ImmutableArray<ImaginedBuff> kept, int? exit = null)
     {
         var index = IndexOf(fighters, effect.TargetId);
 
@@ -549,10 +559,10 @@ public sealed class Imagination
             // A move happens or not: one the mask only maybe selects, such as a Botte's push of another Roublard's bombs, moves no
             // one (9f4), where its half rounded to a whole cell.
             case EffectKind.Push when effect.IsCertain:
-                Slide(map, fighters, casterIndex, index, cell, value, away: true, across: Across(level, effect.EffectId), harmless: effect.EffectId is HarmlessPush);
+                Slide(map, fighters, casterIndex, index, cell, value, away: true, across: Across(level, effect.EffectId), harmless: effect.EffectId is HarmlessPush, from: exit);
                 break;
             case EffectKind.Pull when effect.IsCertain:
-                Slide(map, fighters, casterIndex, index, cell, value, away: false, across: Across(level, effect.EffectId));
+                Slide(map, fighters, casterIndex, index, cell, value, away: false, across: Across(level, effect.EffectId), from: exit);
                 break;
             case EffectKind.Swap when target.IsAlive && fighters[casterIndex].Cell is not Combatant.NoCell:
                 {
@@ -675,10 +685,13 @@ public sealed class Imagination
         return false;
     }
 
-    private void Slide(FightMap map, List<Combatant> fighters, int casterIndex, int index, int cell, int cells, bool away, bool upTo = false, bool across = false, bool harmless = false)
+    private void Slide(FightMap map, List<Combatant> fighters, int casterIndex, int index, int cell, int cells, bool away, bool upTo = false, bool across = false, bool harmless = false, int? from = null)
     {
         var target = fighters[index];
         var caster = fighters[casterIndex];
+
+        // A cast through portals pushes and pulls from the portal it came out of, as the references move it (D468).
+        var source = from ?? caster.Cell;
 
         if (!target.IsAlive || target.Cell is Combatant.NoCell || cells <= 0 || !_rules.CanBePushed(target))
             return;
@@ -690,9 +703,9 @@ public sealed class Imagination
             _bombs.Walls(map, fighters, walls = []);
 
         var at = MapGeometry.PointOf(target.Cell);
-        var origin = target.Cell == cell && caster.Cell is not Combatant.NoCell ? MapGeometry.PointOf(caster.Cell) : MapGeometry.PointOf(cell);
-        var (x, y) = across && caster.Cell is not Combatant.NoCell && caster.Cell != cell
-            ? (away ? Along(MapGeometry.PointOf(caster.Cell), MapGeometry.PointOf(cell)) : Along(MapGeometry.PointOf(cell), MapGeometry.PointOf(caster.Cell)))
+        var origin = target.Cell == cell && source is not Combatant.NoCell ? MapGeometry.PointOf(source) : MapGeometry.PointOf(cell);
+        var (x, y) = across && source is not Combatant.NoCell && source != cell
+            ? (away ? Along(MapGeometry.PointOf(source), MapGeometry.PointOf(cell)) : Along(MapGeometry.PointOf(cell), MapGeometry.PointOf(source)))
             : away ? Along(origin, at) : Along(at, origin);
 
         if ((x, y) == (0, 0))

@@ -139,7 +139,40 @@ public sealed class FightTactics
             hash.Add(fighter.MovementPoints);
         }
 
+        // Two portals set on two cells leave the fighters alike: their cells tell the sequences apart (D468).
+        foreach (var mark in fight.Marks)
+        {
+            if (mark.Kind is CellMarkKind.Portal)
+                hash.Add(mark.Centre);
+        }
+
         return hash.ToHashCode();
+    }
+
+    private static long PortalsOf(ImaginedFight fight)
+    {
+        // The cells of the portals of the fighter playing's team, whatever the order they were set in.
+        var sum = 0L;
+        var team = fight.Actor.Team;
+
+        foreach (var mark in fight.Marks)
+        {
+            if (mark.Kind is CellMarkKind.Portal && mark.Team == team)
+                sum = unchecked(sum + ((mark.Centre + 1L) * -7046029254386353131L));
+        }
+
+        return sum;
+    }
+
+    private static bool HasPortals(ImaginedFight fight)
+    {
+        foreach (var mark in fight.Marks)
+        {
+            if (mark.Kind is CellMarkKind.Portal)
+                return true;
+        }
+
+        return false;
     }
 
     /// <summary>Gets the best of a search's ranked sequences, and beside them the best of each set of states the fighter playing holds that they leave out.</summary>
@@ -177,6 +210,47 @@ public sealed class FightTactics
             sum = unchecked(sum + ((long)state * -7046029254386353131L));
 
         return unchecked(sum + fighter.States.Length);
+    }
+
+    private static List<Node> WithEachPortals(List<Node> kept, List<Node> ranked, int most)
+    {
+        // A portal set deals nothing, and the cast it opens counts only once its exit is set too, as a Zobal's mask (D255):
+        // beside the best sequences, the best of up to `most` other sets of the team's portals, those whose ways already land
+        // on an enemy first (D468).
+        if (!ranked.Exists(node => HasPortals(node.Fight)))
+            return kept;
+
+        var sets = kept.Select(node => PortalsOf(node.Fight)).ToHashSet();
+        var added = 0;
+
+        foreach (var node in ranked.OrderByDescending(node => Promise(node.Fight)).ThenByDescending(node => node.Score))
+        {
+            if (added >= most)
+                break;
+
+            if (sets.Add(PortalsOf(node.Fight)))
+            {
+                kept.Add(node);
+                added++;
+            }
+        }
+
+        return kept;
+    }
+
+    private static int Promise(ImaginedFight fight)
+    {
+        // The enemies a cast of the fighter playing through an open portal would land on.
+        var actor = fight.Actor;
+        var count = 0;
+
+        foreach (var mark in fight.Marks)
+        {
+            if (mark.Kind is CellMarkKind.Portal && Portals.Through(fight.Marks, fight.Fighters, actor.Cell, mark.Centre) is { } way && fight.On(way.Target) is { } on && on.Team != actor.Team)
+                count++;
+        }
+
+        return count;
     }
 
     private bool SummonsAreLastResort(ImaginedFight fight, FightKnowledge knowledge)
@@ -403,14 +477,17 @@ public sealed class FightTactics
 
             var seen = new HashSet<long>();
             var kept = new List<(Node Node, double Score)>();
+            var ranked = children.OrderByDescending(child => child.Score).ToList();
 
-            foreach (var child in WithEachStates(children.OrderByDescending(child => child.Score).ToList(), child => child.Fight.Actor, limits.Width * 2))
+            foreach (var child in WithEachPortals(WithEachStates(ranked, child => child.Fight.Actor, limits.Width * 2), ranked, limits.Width))
             {
                 if (seen.Add(Signature(child.Fight)))
                     kept.Add((child, Ends(child, judge, knowledge, challenge, finalists, 1, ref weighed)));
             }
 
-            frontier = [.. WithEachStates(kept.OrderByDescending(pair => pair.Score).ToList(), pair => pair.Node.Fight.Actor, limits.Width).Select(pair => pair.Node)];
+            var leading = kept.OrderByDescending(pair => pair.Score).Select(pair => pair.Node).ToList();
+
+            frontier = WithEachPortals(WithEachStates(leading, node => node.Fight.Actor, limits.Width), leading, limits.Width);
         }
 
         // A challenge may leave no end that keeps it.
@@ -656,7 +733,7 @@ public sealed class FightTactics
 
                     foreach (var target in targets)
                     {
-                        if (Rules.Check(there.Map, there.Fighters, moved, level, target, there.History, there.Round) is not CastRefusal.None)
+                        if (Rules.Check(there.Map, there.Fighters, there.Marks, moved, level, target, there.History, there.Round) is not CastRefusal.None)
                             continue;
 
                         var after = Imagination.Cast(there, level, target);
@@ -699,12 +776,12 @@ public sealed class FightTactics
             if (knowledge.Cooldowns.GetValueOrDefault(level.SpellId) > 0 || actor.ActionPoints < CastRules.Modified(level, actor).ApCost || challenge?.AllowsCast(fight, level.SpellId) is false)
                 continue;
 
-            foreach (var cell in TargetCells(fight, level, limits.CellsPerLevel))
+            foreach (var cell in TargetCells(fight, level, limits.CellsPerLevel).Union(PortalCells(fight, level)))
             {
                 if (refused?.Contains((level.SpellId, cell)) is true)
                     continue;
 
-                if (Rules.Check(fight.Map, fight.Fighters, actor, level, cell, fight.History, fight.Round) is CastRefusal.None)
+                if (Rules.Check(fight.Map, fight.Fighters, fight.Marks, actor, level, cell, fight.History, fight.Round) is CastRefusal.None)
                 {
                     yield return (null, level, cell);
 
@@ -726,7 +803,7 @@ public sealed class FightTactics
 
                     var there = fight.With(moved);
 
-                    if (Rules.Check(there.Map, there.Fighters, moved, level, cell, there.History, there.Round) is not CastRefusal.None)
+                    if (Rules.Check(there.Map, there.Fighters, there.Marks, moved, level, cell, there.History, there.Round) is not CastRefusal.None)
                         continue;
 
                     found++;
@@ -735,6 +812,52 @@ public sealed class FightTactics
                 }
             }
         }
+    }
+
+    private List<int> PortalCells(ImaginedFight fight, in SpellLevel level)
+    {
+        // Beside the cells near the fighters, the portals' own cells, which a cast goes through (D468); and for a level that sets
+        // a portal, the cells that line a way up with an enemy beside a portal of the team, as an exit or as an entry.
+        var cells = new List<int>();
+
+        if (!HasPortals(fight) && !Glyphs.SetsPortal(level))
+            return cells;
+
+        var actor = fight.Actor;
+
+        foreach (var mark in fight.Marks)
+        {
+            if (mark.Kind is CellMarkKind.Portal)
+                cells.Add(mark.Centre);
+        }
+
+        if (!Glyphs.SetsPortal(level) || actor.Cell is Combatant.NoCell)
+            return cells;
+
+        var from = MapGeometry.PointOf(actor.Cell);
+
+        foreach (var mark in fight.Marks)
+        {
+            if (mark.Kind is not CellMarkKind.Portal || mark.Team != actor.Team)
+                continue;
+
+            var portal = MapGeometry.PointOf(mark.Centre);
+
+            foreach (var enemy in fight.Fighters)
+            {
+                if (!enemy.IsAlive || enemy.Team == actor.Team || enemy.Cell is Combatant.NoCell)
+                    continue;
+
+                var target = MapGeometry.PointOf(enemy.Cell);
+
+                // A cast on the portal at p from c lands on q + (p - c) out of the portal at q: either way, the other portal stands
+                // at the enemy's cell less the one's, plus the caster's.
+                if (MapGeometry.TryGetCell(new MapPoint(target.X - portal.X + from.X, target.Y - portal.Y + from.Y), out var other))
+                    cells.Add(other);
+            }
+        }
+
+        return cells;
     }
 
     private List<int> TargetCells(ImaginedFight fight, in SpellLevel level, int most)
