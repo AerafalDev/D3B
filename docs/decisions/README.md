@@ -88,3 +88,4 @@ Each file holds the decisions of one group of [the index](../decisions-index.md)
 - [Groups, a follower the server holds (D464)](d464-groups-held-follower.md): 1 decision, 4 KB.
 - [Fights, the Forgelance's lance in hand (D465)](d465-forgelance-lance-state.md): 1 decision, 4 KB.
 - [Fights, the easy challenges (D466)](d466-fights-challenges-easy.md): 1 decision, 5 KB.
+- [Fights, the group's reply and its target (D467)](d467-group-reply-target.md): 1 decision, 4 KB.
