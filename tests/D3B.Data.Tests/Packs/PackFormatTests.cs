@@ -2,6 +2,7 @@ using System.Security.Cryptography;
 using System.Text;
 using D3B.Data.Banks;
 using D3B.Data.Breeds;
+using D3B.Data.Challenges;
 using D3B.Data.Characteristics;
 using D3B.Data.Effects;
 using D3B.Data.Hints;
@@ -50,6 +51,7 @@ public sealed class PackFormatTests
         (10, "53dd018f5218468a162c91ed2b22add526bd5029e09a9090235af07f9fdb75ef"),
         (11, "f8ee4c1ccc2600633445615dbc0147dd2a4c6862bf2b4c4101e7a34e4ee10b6a"),
         (12, "098d33e90f65d3bc6b3535c7b8f24466f19bfbe1008d6371f7e45f147dc18bc1"),
+        (13, "b3826b61cd7dc808415644598331fec094805e7164faac38d2138ca2a2d04eaf"),
     ];
 
     private static readonly string[] _criteria = ["c24"];
@@ -63,6 +65,9 @@ public sealed class PackFormatTests
     private static readonly int[] _headIcons = [214];
     private static readonly int[] _glyphIcons = [216];
     private static readonly int[] _hintIcons = [240];
+    private static readonly int[] _incompatibles = [261];
+    private static readonly string[] _completions = ["c262"];
+    private static readonly string[] _activations = ["a263"];
     private static readonly int[] _levelIds = [97, 98];
     private static readonly int[] _zoneCells = [99, 100, 101];
     private static readonly string[] _strings = ["s0", "s1", "s2", "s3", "s4"];
@@ -239,6 +244,7 @@ public sealed class PackFormatTests
         Append(hash, new CharacteristicCatalog(new Characteristic[] { new(190, 191, 192, 193, 194, true, false) }, _keywords, _formulaIds, _formulas));
         Append(hash, new WorldMapCatalog(new WorldMap[] { new(217, 218, 219, 220, 221.5f, 222.5f, 0.2f, 1.5f, 0.6f, 223, 224, true, 0, 2) }, new WorldMapLevel[] { new(100, 225, 226), new(75, 227, 228) }));
         Append(hash, new HintCatalog(new Hint[] { new(241, 242, 243, 244, 245, 246, -247, -248, 249) }, new HintCategory[] { new(250, 251) }, new IconTable(2, _hintIcons, Pixels(252, 2))));
+        Append(hash, new ChallengeCatalog(new Challenge[] { new(253, 254, 255, 256, 257, 258, 0, 1) }, _incompatibles, _completions, _activations));
         Append(hash, new byte[] { 229, 230 });
 
         return Convert.ToHexStringLower(hash.GetHashAndReset());

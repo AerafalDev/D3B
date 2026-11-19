@@ -488,6 +488,18 @@
   <data name="ChallengeRewardClient" xml:space="preserve">
     <value>Comme le client</value>
   </data>
+  <data name="Challenges" xml:space="preserve">
+    <value>Challenges</value>
+  </data>
+  <data name="ChallengesHelp" xml:space="preserve">
+    <value>Les challenges que l'IA tente de réussir. Faciles : ceux qui ne demandent que des choses sur son propre tour (ses PM, ses sorts, la case où il finit). Elle en abandonne un quand le combat est jugé risqué, ou quand le tenir lui coûterait plus que ce que rapporte son bonus ; en groupe, c'est le choix du meneur qui compte.</value>
+  </data>
+  <data name="ChallengesNone" xml:space="preserve">
+    <value>Aucun</value>
+  </data>
+  <data name="ChallengesEasy" xml:space="preserve">
+    <value>Faciles</value>
+  </data>
   <data name="AiFights" xml:space="preserve">
     <value>L'IA combat</value>
   </data>

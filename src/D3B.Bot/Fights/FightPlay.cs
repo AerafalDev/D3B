@@ -2,6 +2,7 @@ using D3B.Bot.Characters;
 using D3B.Bot.Movement;
 using D3B.Bot.Runtime;
 using D3B.Data;
+using D3B.Data.Challenges;
 using D3B.Engine.Fights;
 using D3B.Engine.Maps;
 using D3B.Engine.Tactics;
@@ -20,6 +21,12 @@ namespace D3B.Bot.Fights;
 /// sends its first action, waits for the server's answer and the client's showing it, and searches again from what the
 /// server said; it ends its turn at once when nothing is worth doing, instead of waiting for the turn's time. A summon the
 /// client controls plays its turns the same, with the same requests, which the server takes as the summon's (9f2).
+/// </para>
+/// <para>
+/// With a profile's challenges (D466), each turn plays for the fight's challenge while it is easy, asking only of the
+/// character's own turns (<see cref="TurnChallenge"/>): the search keeps it while what it costs the turn stays within what
+/// its bonus pays, and once a turn leaves it, it is left for the fight, a turn's challenge being lost then. A fight judged too
+/// risky plays for none.
 /// </para>
 /// <para>
 /// A cast the server refuses with an error text is not weighed again this turn, on that cell, and the next turn weighs it anew:
@@ -59,8 +66,10 @@ public static class FightPlay
         var self = context.State.Key.CharacterId;
         var weights = TacticWeights.Default;
         var judged = false;
+        var risky = false;
         var refused = new HashSet<int>();
         var challenged = new HashSet<int>();
+        var left = new HashSet<int>();
         FightMap? map = null;
 
         // The client draws the fight's map first, as it does a map out of fights (D77); a fight over meanwhile ends the wait.
@@ -86,6 +95,7 @@ public static class FightPlay
                 var odds = tactics.Odds(start.Fight, start.Knowledge);
 
                 weights = WeightsOf(state.Fight ?? fight, self, odds.IsRisky);
+                risky = odds.IsRisky;
                 judged = true;
                 FightLog.Judged(context.Log, self, odds.TurnsToWin, odds.TurnsToLose, odds.IsRisky);
             }
@@ -115,7 +125,11 @@ public static class FightPlay
                 continue;
             }
 
-            await PlayTurnAsync(context, tactics, tables, map, weights, refused, cancellationToken).ConfigureAwait(false);
+            // The pack's challenges are read only once a turn may play for one.
+            var play = PlayOf(context);
+            var playedFor = play is ChallengePlay.None || risky || fight.Challenges.IsEmpty ? null : ChallengeOf(fight, tables.Challenges, play, risky, left);
+
+            await PlayTurnAsync(context, tactics, tables, map, weights, refused, playedFor, left, cancellationToken).ConfigureAwait(false);
             await context.WaitUntilAsync(next => next.Fight is not { IsOwnTurn: true }, context.Delays.Answer, cancellationToken).ConfigureAwait(false);
         }
     }
@@ -133,6 +147,37 @@ public static class FightPlay
         var allies = fight.Fighters.Values.Any(fighter => fighter.Id != self && fighter.Team == fight.Team && fighter.IsAlive && fighter.BreedId is not null && fighter.SummonerId is null);
 
         return allies ? TacticWeights.Group : TacticWeights.Default;
+    }
+
+    /// <summary>Gets the challenge the AI plays for in a turn: the fight's first easy one not yet won, lost nor left (D466).</summary>
+    /// <param name="fight">The fight, as the bot knows it.</param>
+    /// <param name="catalog">The client's challenges, whose completion criteria say what each asks.</param>
+    /// <param name="play">Which challenges the profile plays for.</param>
+    /// <param name="risky">Whether the AI judged the fight too risky: then none, the fight's safety first.</param>
+    /// <param name="left">The challenges a turn left this fight.</param>
+    /// <returns>The challenge and what it asks of the turn; null when the AI plays for none.</returns>
+    internal static (int Id, TurnChallenge Challenge)? ChallengeOf(FightState fight, ChallengeCatalog catalog, ChallengePlay play, bool risky, IReadOnlySet<int> left)
+    {
+        ArgumentNullException.ThrowIfNull(fight);
+        ArgumentNullException.ThrowIfNull(catalog);
+        ArgumentNullException.ThrowIfNull(left);
+
+        if (play is ChallengePlay.None || risky)
+            return null;
+
+        foreach (var challenge in fight.Challenges)
+        {
+            if (challenge.Succeeded is null && !left.Contains(challenge.Id) && TurnChallenge.Of(catalog.CompletionOf(challenge.Id), challenge.Bonus) is { } turn)
+                return (challenge.Id, turn);
+        }
+
+        return null;
+    }
+
+    private static ChallengePlay PlayOf(BotContext context)
+    {
+        // As the bonus (D438): only a fight its activity has the AI play, so none with the host's Fights:Alone.
+        return context.Actor.Activity is { IsOver: false, Activity: { FightsItsFights: true } activity } ? activity.Challenges : ChallengePlay.None;
     }
 
     private static FightEnd? Ended(BotContext context, FightState? fight)
@@ -264,7 +309,7 @@ public static class FightPlay
         };
     }
 
-    private static async Task PlayTurnAsync(BotContext context, FightTactics tactics, GameTables tables, FightMap map, TacticWeights weights, HashSet<int> refusedSpells, CancellationToken cancellationToken)
+    private static async Task PlayTurnAsync(BotContext context, FightTactics tactics, GameTables tables, FightMap map, TacticWeights weights, HashSet<int> refusedSpells, (int Id, TurnChallenge Challenge)? challenge, HashSet<int> left, CancellationToken cancellationToken)
     {
         // The character's turn, or a summon's it controls.
         var self = context.State.Fight?.PlayingId ?? context.State.Key.CharacterId;
@@ -272,6 +317,9 @@ public static class FightPlay
         var refusals = 0;
         var acted = 0;
         (int ActionPoints, int MovementPoints)? turnPoints = context.State.Fight?.Fighters.GetValueOrDefault(self) is { } own ? (own.ActionPoints, own.MovementPoints) : null;
+
+        if (challenge is { } turn)
+            challenge = (turn.Id, turn.Challenge with { StartCell = context.State.Fight?.Fighters.GetValueOrDefault(self)?.Cell });
 
         for (; acted < MostActionsATurn; acted++)
         {
@@ -284,9 +332,22 @@ public static class FightPlay
             if (refusedSpells.Count > 0)
                 imagined = (imagined.Fight, imagined.Knowledge.Without(refusedSpells));
 
-            var plan = tactics.Plan(imagined.Fight, imagined.Knowledge, weights, TurnSearchLimits.Default, refused);
+            var plan = tactics.Plan(imagined.Fight, imagined.Knowledge, weights, TurnSearchLimits.Default, refused, challenge?.Challenge);
 
             FightLog.Planned(context.Log, self, plan.Actions.Length, plan.Score, plan.Standing, plan.Weighed, (long)plan.Elapsed.TotalMilliseconds);
+
+            // A turn that breaks a challenge of the turns loses it: it is left for the fight. One the turn kept so far is kept
+            // to its end, whatever is left of it to gain.
+            if (challenge is { } played && !plan.KeepsChallenge)
+            {
+                left.Add(played.Id);
+                FightLog.ChallengeLeft(context.Log, self, played.Id);
+                challenge = null;
+            }
+            else if (challenge is { } kept)
+            {
+                challenge = (kept.Id, kept.Challenge.KeptThisTurn());
+            }
 
             if (plan.IsEmpty)
                 break;

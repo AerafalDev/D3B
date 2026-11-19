@@ -83,6 +83,8 @@ public sealed class FightingModule : IModule
 
         settings.Choice(s => s.ChallengeReward, FightTexts.Text("ChallengeReward"), reward => FightTexts.Text($"ChallengeReward{reward}"))
             .Help(FightTexts.Text("ChallengeRewardHelp"));
+        settings.Choice(s => s.Challenges, FightTexts.Text("Challenges"), play => FightTexts.Text($"Challenges{play}"))
+            .Help(FightTexts.Text("ChallengesHelp"));
         settings.Choice(s => s.AfterLostFight, FightTexts.Text("AfterLostFight"), after => FightTexts.Text($"AfterLostFight{after}"))
             .Help(FightTexts.Text("AfterLostFightHelp"))
             .Advanced();

@@ -42,15 +42,18 @@ public sealed class FollowActivityTests
 
         Assert.True(follow.FightsItsFights);
         Assert.Equal(ChallengeReward.Client, follow.ChallengeReward);
+        Assert.Equal(ChallengePlay.None, follow.Challenges);
 
-        var leading = master.StartActivity(new RewardActivity { Reward = ChallengeReward.Drop });
+        var leading = master.StartActivity(new RewardActivity { Reward = ChallengeReward.Drop, Play = ChallengePlay.Easy });
 
         Assert.Equal(ChallengeReward.Drop, follow.ChallengeReward);
+        Assert.Equal(ChallengePlay.Easy, follow.Challenges);
 
         leading.Stop();
         await leading.Completion;
 
         Assert.Equal(ChallengeReward.Client, follow.ChallengeReward);
+        Assert.Equal(ChallengePlay.None, follow.Challenges);
     }
 
     [Fact]

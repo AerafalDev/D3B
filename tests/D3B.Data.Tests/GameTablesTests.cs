@@ -1,5 +1,6 @@
 using D3B.Data.Banks;
 using D3B.Data.Breeds;
+using D3B.Data.Challenges;
 using D3B.Data.Characteristics;
 using D3B.Data.Effects;
 using D3B.Data.Hints;
@@ -36,6 +37,7 @@ public sealed class GameTablesTests : IDisposable
             writer.Add(NpcCatalog.EntryName, TestTables.Npcs());
             writer.Add(IconCatalog.EntryName, TestTables.Icons());
             writer.Add(HintCatalog.EntryName, TestTables.Hints());
+            writer.Add(ChallengeCatalog.EntryName, TestTables.Challenges());
             writer.Add(SpellCatalog.EntryName, TestTables.Spells());
             writer.Add(SpellStateCatalog.EntryName, TestTables.States());
             writer.Add(EffectCatalog.EntryName, TestTables.Effects());
@@ -60,6 +62,9 @@ public sealed class GameTablesTests : IDisposable
         Assert.Equal(TestTables.Hints().Hints.ToArray(), tables.Hints.Hints.ToArray());
         Assert.Equal(TestTables.Hints().Categories.ToArray(), tables.Hints.Categories.ToArray());
         Assert.Equal(TestTables.Hints().Icons.Ids.ToArray(), tables.Hints.Icons.Ids.ToArray());
+        Assert.Same(tables.Challenges, tables.Challenges);
+        Assert.Equal(TestTables.Challenges().Challenges.ToArray(), tables.Challenges.Challenges.ToArray());
+        Assert.Equal(TestTables.Challenges().Completions.ToArray(), tables.Challenges.Completions.ToArray());
         Assert.Same(tables.Spells, tables.Spells);
         Assert.Same(tables.States, tables.States);
         Assert.Same(tables.Effects, tables.Effects);
