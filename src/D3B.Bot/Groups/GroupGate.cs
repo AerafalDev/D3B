@@ -69,9 +69,13 @@ internal sealed class GroupGate : IActionGate
     }
 
     /// <inheritdoc/>
+    /// <remarks>
+    /// A request it does not hold, such as a walk, first has the master invite its followers out of its party, waiting for
+    /// nothing: the owner's report from game (D457), the master walked six maps before its first door, where it invited.
+    /// </remarks>
     public Task PassAsync(BotContext context, IMessage request, CancellationToken cancellationToken)
     {
-        return Holds(request) ? GatherAsync(context, cancellationToken) : Task.CompletedTask;
+        return Holds(request) ? GatherAsync(context, cancellationToken) : InviteAsync(context, cancellationToken);
     }
 
     /// <inheritdoc/>
@@ -137,6 +141,19 @@ internal sealed class GroupGate : IActionGate
         {
             _bot.WaitFor([]);
         }
+    }
+
+    // The party kept as the master goes, outside a fight: a party another leads left, its followers invited.
+    private async Task InviteAsync(BotContext context, CancellationToken cancellationToken)
+    {
+        var state = _bot.State;
+        var followers = _groups.FollowersOf(_bot.Key);
+
+        if (followers.Count is 0 || state.IsFighting)
+            return;
+
+        await LeaveOthersAsync(context, state, cancellationToken).ConfigureAwait(false);
+        await InviteAsync(context, state, followers, cancellationToken).ConfigureAwait(false);
     }
 
     // The followers whose life is under the share, in the chain's order, and when the first regenerates to it: its life rises

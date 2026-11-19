@@ -78,3 +78,4 @@ Each file holds the decisions of one group of [the index](../decisions-index.md)
 - [Fights, a little bolder in a group (D454)](d454-group-fights-bolder.md): 1 decision, 2 KB.
 - [Groups, the windows the bot answered (D455)](d455-groups-windows-left-open.md): 1 decision, 3 KB.
 - [Groups, one cell each (D456)](d456-groups-one-cell-each.md): 1 decision, 4 KB.
+- [Groups, the invitation at once and a stack the bank refuses (D457)](d457-groups-invite-and-bank-refusal.md): 1 decision, 3 KB.

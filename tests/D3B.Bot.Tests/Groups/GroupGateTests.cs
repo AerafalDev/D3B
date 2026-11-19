@@ -189,6 +189,32 @@ public sealed class GroupGateTests
     }
 
     [Fact]
+    public async Task AMasterInvitesItsFollowersAtItsFirstWalkAndWalksAtOnce()
+    {
+        // The owner's report from game (D457): the master walked six maps before it invited its followers, at its first door.
+        await using var play = new TestPlay();
+        var (masterConnection, master) = await TestGroup.MasterAsync(play, 300);
+        var (_, follower) = await TestGroup.FollowerAsync(play, 300, TestPlay.NorthMapId);
+
+        using var membership = play.Bots.Groups.Follow(follower, TestGroup.Master, out _);
+        var walk = new MapMovementRequest { MapId = TestPlay.MapId };
+
+        await Act(master, walk);
+
+        Assert.Equal(Invitation("Follower"), masterConnection.Sent[0]);
+        Assert.Equal(walk, masterConnection.Sent[^1]);
+        Assert.Empty(master.WaitingFor);
+
+        // Unanswered, the invitation goes again 10 s later, not at each walk.
+        await Act(master, walk);
+        Assert.Single(masterConnection.Sent, request => request is PartyInvitationRequest);
+
+        play.Time.Advance(GroupGate.InviteAgainAfter);
+        await Act(master, walk);
+        Assert.Equal(2, masterConnection.Sent.Count(request => request is PartyInvitationRequest));
+    }
+
+    [Fact]
     public async Task AMasterSendsWhatStartsNoActionAtOnceAndActsOnceItsLastFollowerLeaves()
     {
         await using var play = new TestPlay();
@@ -199,7 +225,8 @@ public sealed class GroupGateTests
 
         await Act(master, refused);
 
-        Assert.Equal(refused, Assert.Single(masterConnection.Sent));
+        // At once, its follower invited first (D457).
+        Assert.Equal([Invitation("Follower"), refused], masterConnection.Sent);
 
         var acting = Act(master, _act);
 

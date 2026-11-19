@@ -125,6 +125,58 @@ public sealed class GroupBankTests
     }
 
     [Fact]
+    public async Task AStackTheBankRefusesStopsNotTheMasterTakingItsFollowersObjects()
+    {
+        // The owner's report from game (D457): the bank took none of the one stack its master carried, such as a quest's
+        // object, and the master stopped there, its full follower never emptied.
+        await using var play = new TestPlay();
+        var (masterConnection, master, connection, _, run) = await InTheBankAsync(play, 100);
+        var leading = master.StartActivity(new BankingActivity { Loot = new HashSet<int> { MastersLoot } });
+
+        Assert.Equal(_talk, await TestGroup.SentAsync(play, masterConnection, 1));
+        Opened(masterConnection);
+        Assert.IsType<NpcDialogReplyRequest>(await TestGroup.SentAsync(play, masterConnection, 2));
+        BankOpened(masterConnection);
+        Assert.Equal(new ExchangeTransferFromInventoryRequest { Uids = { 12, 14 } }, await TestGroup.SentAsync(play, masterConnection, 3));
+
+        // The server answers nothing: it took none.
+        Assert.IsType<DialogLeaveRequest>(await TestGroup.SentAsync(play, masterConnection, 4));
+        masterConnection.Server(new ExchangeLeaveEvent { Type = DialogType.Storage });
+
+        await ExchangedAsync(play, masterConnection, connection, 4, 2, 10);
+
+        // What it was given, and not again the stacks the bank refused.
+        await DepositedAsync(play, masterConnection, 6, GivenUid);
+        leading.Stop();
+        run.Stop();
+    }
+
+    [Fact]
+    public async Task AStackTheBankLeftIsNotOfferedAgainInTheSameUnloading()
+    {
+        await using var play = new TestPlay();
+        var (masterConnection, master, connection, _, run) = await InTheBankAsync(play, 100);
+        var leading = master.StartActivity(new BankingActivity { Loot = new HashSet<int> { MastersLoot } });
+
+        Assert.Equal(_talk, await TestGroup.SentAsync(play, masterConnection, 1));
+        Opened(masterConnection);
+        Assert.IsType<NpcDialogReplyRequest>(await TestGroup.SentAsync(play, masterConnection, 2));
+        BankOpened(masterConnection);
+        Assert.Equal(new ExchangeTransferFromInventoryRequest { Uids = { 12, 14 } }, await TestGroup.SentAsync(play, masterConnection, 3));
+
+        // The bank takes one stack of two, and leaves the other.
+        masterConnection.Server(new ObjectsDeletedEvent { Uids = { 12 } });
+        masterConnection.Server(new InventoryWeightEvent { Weight = 60, MaxWeight = 1_000 });
+        Assert.IsType<DialogLeaveRequest>(await TestGroup.SentAsync(play, masterConnection, 4));
+        masterConnection.Server(new ExchangeLeaveEvent { Type = DialogType.Storage });
+
+        await ExchangedAsync(play, masterConnection, connection, 4, 2, 10);
+        await DepositedAsync(play, masterConnection, 6, GivenUid);
+        leading.Stop();
+        run.Stop();
+    }
+
+    [Fact]
     public async Task AFullMasterDepositsBeforeItTakesItsFollowersObjects()
     {
         // Measured in game (D452): full, the master took its follower's objects all the same, and the exchange never concluded.

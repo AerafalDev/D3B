@@ -686,3 +686,8 @@ or refines another says so in its own entry. Add a line here with every new deci
 
 - [D456](decisions/d456-groups-one-cell-each.md#d456-no-two-bots-of-the-host-walk-to-one-cell-at-once-a-walk-the-server-holds-is-let-go-only-by-a-walk-and-a-follower-never-goes-round-while-its-master-is-one-map-away) No two bots of the host walk to one cell at once, a walk the server holds is let go only by a walk, and a follower never goes round while its master is one map away (2026-11-19)
   - The followers in a chain, the game's own following, the master's cells copied, a longer delay, waiting on a bot standing on the cell.
+
+## Groups, the invitation at once and a stack the bank refuses (D457)
+
+- [D457](decisions/d457-groups-invite-and-bank-refusal.md#d457-the-master-invites-its-followers-at-its-first-request-and-a-stack-the-bank-refuses-stops-not-the-groups-unloading) The master invites its followers at its first request, and a stack the bank refuses stops not the group's unloading (2026-11-19)
+  - Waiting for the followers to accept before the first walk, leaving out a quest's objects by their type.

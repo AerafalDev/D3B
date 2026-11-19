@@ -316,8 +316,8 @@ The bots run in `D3B.Bot`: what each part does today, with the decisions that ma
   by `CharacterKey.ToId`). A follower is in its master's group while its activity runs (`GroupDirectory`, `Bots.Groups`, at
   most seven, no follower leading). Each bot has a gate (`IActionGate`, `BotActor.Gate`), which `BotContext.SendAsync` goes
   through: the master's, `GroupGate`, holds the requests that start an action out of a fight while a bot follows it, but
-  its walks and map changes (D447),
-  leaving a party another leads, inviting its followers by name, and waiting with no delay until each is connected, not
+  its walks and map changes (D447), before which it only leaves a party another leads and invites its followers (D457),
+  and for those it holds leaves a party another leads, invites its followers by name, and waits with no delay until each is connected, not
   paused, out of a fight, on its map and in its party (`GroupChain.Missing`), the card saying whom for
   (`BotActor.WaitingFor`); its own requests go past it (`BotContext.SendNowAsync`). So every profile leads unchanged. The
   follower's steps keep the party (its master's invitation accepted, others refused, another party left, the automatic
@@ -337,7 +337,8 @@ The bots run in `D3B.Bot`: what each part does today, with the decisions that ma
   A master whose activity banks unloads through its group's bank (D442, `IGroupBank`, `BotActor.Bank`, `GroupBank`), which
   its run asks before each step: a follower full at the pods the activity watches takes the group to the bank, each
   follower gives the master what it carries by an exchange (`CharacterState.Exchange`, `GroupGifts`, the round in
-  `GroupDirectory.Collect`), and the master deposits, first and again when an exchange does not conclude, all it does not wear but its food (D452).
+  `GroupDirectory.Collect`), and the master deposits, first and again when an exchange does not conclude, all it does not wear but its food (D452),
+  the stacks the bank left, such as a quest's objects, left for the rest of that unloading (D457).
 - **Fighting** (D236, D241, D245 to D249, D259), in `D3B.Bot.Fighting`, registered by `FightingModule`: `FightActivity`, its
   settings `FightSettings`. Each step heals, then on a map of the zone walks onto the cell of the nearest group the
   settings allow, monsters or families of monsters chosen, a family a race (`ChosenMonsters`), with no judgement of its
