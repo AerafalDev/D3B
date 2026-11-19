@@ -696,3 +696,8 @@ or refines another says so in its own entry. Add a line here with every new deci
 
 - [D458](decisions/d458-group-exchange-pace.md#d458-a-follower-says-it-is-ready-35-s-after-the-exchanges-last-change-and-an-activity-starting-plays-nothing-before-its-run-looks-at-the-pods) A follower says it is ready 3.5 s after the exchange's last change, and an activity starting plays nothing before its run looks at the pods (2026-11-19)
   - The stacks in one transfer, unmeasured; the moves with no display time; the master waiting longer for the readiness.
+
+## Groups, the bank's rounds and the food (D459)
+
+- [D459](decisions/d459-group-bank-rounds-and-food.md#d459-a-stack-an-exchange-leaves-is-offered-no-more-in-that-unloading-and-a-profile-banking-all-but-what-is-worn-banks-the-groups-food-too) A stack an exchange leaves is offered no more in that unloading, and a profile banking all but what is worn banks the group's food too (2026-11-19)
+  - A new setting for the food; leaving out the refused stacks by their kind.

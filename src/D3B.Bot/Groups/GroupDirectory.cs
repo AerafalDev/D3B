@@ -1,3 +1,4 @@
+using System.Collections.Frozen;
 using System.Collections.Immutable;
 using D3B.Bot.Characters;
 using D3B.Bot.Runtime;
@@ -76,12 +77,16 @@ public sealed class GroupDirectory
     /// <summary>Has a master take a follower's objects at the bank, until the round given back is disposed (D433, D442).</summary>
     /// <param name="master">The master's character.</param>
     /// <param name="follower">The follower whose turn it is.</param>
+    /// <param name="food">Whether the food that only heals is given too (D459).</param>
+    /// <param name="left">The follower's stacks an exchange of that unloading left, given no more (D459).</param>
     /// <returns>The round, which the master disposes once the exchange is over.</returns>
-    public IDisposable Collect(CharacterKey master, CharacterKey follower)
+    public IDisposable Collect(CharacterKey master, CharacterKey follower, bool food, IEnumerable<int> left)
     {
+        ArgumentNullException.ThrowIfNull(left);
+
         lock (_lock)
         {
-            var collect = new GroupCollect(follower, ++_rounds);
+            var collect = new GroupCollect(follower, ++_rounds, food, left.ToFrozenSet());
 
             _collecting = _collecting.SetItem(master, collect);
             Raise();

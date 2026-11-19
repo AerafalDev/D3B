@@ -14,10 +14,15 @@ internal sealed class BankingActivity : BotActivity
     /// <summary>Gets or sets the items the profile banks of the master's own.</summary>
     public IReadOnlySet<int> Loot { get; init; } = new HashSet<int>();
 
+    /// <summary>Gets or sets whether the profile banks all the character does not wear, its food too (D459).</summary>
+    public bool All { get; init; }
+
     /// <summary>Gets the number of times the activity's own unloading was asked.</summary>
     public int OwnUnloads { get; private set; }
 
     public override ImmutableArray<ActivityWatch> Watches => [new ActivityWatch(WatchedGauge.Pods, FullAt, WatchAction.Bank)];
+
+    public override bool DepositsAll => All;
 
     public override bool IsFull(CharacterState state)
     {
@@ -26,7 +31,7 @@ internal sealed class BankingActivity : BotActivity
 
     public override bool Deposits(InventoryItem stack)
     {
-        return Loot.Contains(stack.ItemId);
+        return All || Loot.Contains(stack.ItemId);
     }
 
     public override Task<bool> UnloadAsync(BotContext context, CancellationToken cancellationToken)
