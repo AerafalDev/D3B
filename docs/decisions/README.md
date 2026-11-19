@@ -85,3 +85,4 @@ Each file holds the decisions of one group of [the index](../decisions-index.md)
 - [Fights, the challenges read (D461)](d461-fights-challenges-read.md): 1 decision, 3 KB.
 - [Fights, the Forgelance's lances (D462)](d462-forgelance-lances.md): 1 decision, 3 KB.
 - [Fights, the AI measured breed by breed (D463)](d463-fights-by-breed.md): 1 decision, 4 KB.
+- [Groups, a follower the server holds (D464)](d464-groups-held-follower.md): 1 decision, 4 KB.

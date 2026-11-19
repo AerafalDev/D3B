@@ -639,10 +639,27 @@ public sealed class CharacterEventsTests
 
         // Measured on the owner's runs of 2026-11-19 (D456): after a refusal the server still refused a door's use 25 times.
         Assert.True(Apply(held, Server(new MapMovementRefusedEvent { X = 18, Y = -3 })).IsWalkHeld);
-        Assert.False(Apply(_chosen, Server(new MapMovementRefusedEvent { X = 18, Y = -3 })).IsWalkHeld);
         Assert.False(Apply(held, Server(new MapCurrentEvent { MapId = TestPlay.NorthMapId })).IsWalkHeld);
         Assert.False(Apply(held, Server(new MapMovementConfirmResponse())).IsWalkHeld);
         Assert.True(Apply(held, Server(new MapMovementEvent { ActorId = 9, Cells = { 100, 101 } })).IsWalkHeld);
+    }
+
+    [Fact]
+    public void ARefusalOutOfAFightTellsTheServerMayHoldAWalk()
+    {
+        // Measured on the owner's group runs of 2026-11-19 (D464): a walk the bot took for arrived, the client's confirmation
+        // being for its previous one, left the server holding the character; it refused each map change asked from the cell it
+        // named, for thirty minutes, until it closed the connection.
+        var standing = Apply(_chosen, EnteringTheGame());
+        var refused = Apply(standing, Server(new MapMovementRefusedEvent { X = 18, Y = -3 }));
+
+        Assert.True(refused.IsWalkHeld);
+        Assert.False(refused.IsBusy);
+        Assert.False(Apply(refused, Server(new MapMovementEvent { ActorId = TestPlay.CharacterId, Cells = { 302, 303 } })).IsWalkHeld);
+
+        var fighting = Apply(standing, Server(new ContextCreationEvent { Context = ContextCreationEvent.Types.GameContext.Fight }));
+
+        Assert.False(Apply(fighting, Server(new MapMovementRefusedEvent { X = 18, Y = -3 })).IsWalkHeld);
     }
 
     [Fact]
