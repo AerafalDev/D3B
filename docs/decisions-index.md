@@ -721,3 +721,8 @@ or refines another says so in its own entry. Add a line here with every new deci
 
 - [D463](decisions/d463-fights-by-breed.md#d463-scriptsfightscs---turns-and---live-print-their-main-counts-by-the-characters-breed) `scripts/fights.cs --turns` and `--live` print their main counts by the character's breed (2026-11-19)
   - The study's keys in the sorted counts, a breed's name from the pack, a switch to print the breeds.
+
+## Groups, a follower the server holds (D464)
+
+- [D464](decisions/d464-groups-held-follower.md#d464-a-refusal-out-of-a-fight-says-the-server-may-hold-a-walk-and-a-follower-whose-change-keeps-failing-from-one-cell-steps-aside) A refusal out of a fight says the server may hold a walk, and a follower whose change keeps failing from one cell steps aside (2026-11-19)
+  - A confirmation told by its delay, a journey round, a master that stops waiting, every refusal held in a fight too.
