@@ -24,10 +24,12 @@ namespace D3B.Engine.Fights;
 /// <item><term><c>V</c>, <c>v</c></term><description>Life under a share of the most, in percent, or not.</description></item>
 /// <item><term><c>P</c>, <c>p</c></term><description>The caster, its summons, its summoner and their other summons, or not.</description></item>
 /// <item><term><c>Q</c>, <c>q</c></term><description>As many summons as it may have, or fewer.</description></item>
+/// <item><term><c>R</c>, <c>r</c></term><description>A cast through a portal, or through none: an Eliotrope's spells hold an effect of each, such as
+/// Audace's damage, its push on a straight cast only (D466).</description></item>
 /// </list>
 /// <para>
 /// A caster's condition on its kind, such as <c>*h,*m</c>, asks one of them. What the fight's state does not tell, such as
-/// a fighter carried (<c>K</c>), a portal (<c>R</c>), a teleport (<c>T</c>, <c>W</c>), a fighter appearing (<c>U</c>),
+/// a fighter carried (<c>K</c>), a teleport (<c>T</c>, <c>W</c>), a fighter appearing (<c>U</c>),
 /// the triggering target (<c>O</c>) or the tokens Dofus 3 added (<c>Atq</c>, <c>Def</c>, <c>Sce</c>, <c>PB</c>, <c>PR</c>,
 /// <c>AP</c>, <c>MP</c>, <c>u</c>, <c>x</c>), answers <see cref="CriterionAnswer.Unknown"/>, as an unknown criterion does
 /// (D71).
@@ -36,7 +38,7 @@ namespace D3B.Engine.Fights;
 public sealed class TargetMask
 {
     private const string Kinds = "aAgcChHlLmMjJiIsSdD";
-    private const string Conditions = "EeFfBbZzVvPpQq";
+    private const string Conditions = "EeFfBbZzVvPpQqRr";
     private const string Alternatives = "FfBbZz";
 
     private readonly Token[] _kinds;
@@ -95,7 +97,7 @@ public sealed class TargetMask
         var hasValue = int.TryParse(body.AsSpan(1), NumberStyles.AllowLeadingSign, CultureInfo.InvariantCulture, out var value);
         var bare = body.Length is 1;
 
-        if (Conditions.Contains(letter, StringComparison.Ordinal) && (hasValue || (bare && letter is 'P' or 'p' or 'Q' or 'q')))
+        if (Conditions.Contains(letter, StringComparison.Ordinal) && (hasValue || (bare && letter is 'P' or 'p' or 'Q' or 'q' or 'R' or 'r')))
             return new Token(TokenKind.Condition, onCaster, letter, value);
 
         if (bare && Kinds.Contains(letter, StringComparison.Ordinal))
@@ -110,7 +112,7 @@ public sealed class TargetMask
     {
         var measured = body.Length > 2 && char.IsAsciiDigit(body[2]) && body[..2] is "AP" or "ap" or "MP" or "mp";
 
-        return measured || body is "K" or "O" or "o" or "R" or "r" or "T" or "U" or "W" or "PB" or "pb" or "PR" or "pr";
+        return measured || body is "K" or "O" or "o" or "T" or "U" or "W" or "PB" or "pb" or "PR" or "pr";
     }
 
     private static (bool OnCaster, char Letter, int Index) Alternative(Token token, int index)
@@ -124,13 +126,13 @@ public sealed class TargetMask
             : (token.OnCaster, token.Letter, index);
     }
 
-    private static CriterionAnswer Any(Token[] group, Combatant caster, Combatant target, IReadOnlyCollection<Combatant> fighters)
+    private static CriterionAnswer Any(Token[] group, Combatant caster, Combatant target, IReadOnlyCollection<Combatant> fighters, bool throughPortal)
     {
         var result = CriterionAnswer.False;
 
         foreach (var token in group)
         {
-            var answer = Condition(token, caster, target, fighters);
+            var answer = Condition(token, caster, target, fighters, throughPortal);
 
             if (answer is CriterionAnswer.True)
                 return answer;
@@ -186,7 +188,7 @@ public sealed class TargetMask
         return Of(full ? count >= most : count < most);
     }
 
-    private static CriterionAnswer Condition(Token token, Combatant caster, Combatant target, IReadOnlyCollection<Combatant> fighters)
+    private static CriterionAnswer Condition(Token token, Combatant caster, Combatant target, IReadOnlyCollection<Combatant> fighters, bool throughPortal)
     {
         if (token.Kind is TokenKind.Untold or TokenKind.UnknownKind)
             return CriterionAnswer.Unknown;
@@ -212,6 +214,8 @@ public sealed class TargetMask
             'p' => Of(!IsFamily(caster, target)),
             'Q' => Summons(fighter, fighters, full: true),
             'q' => Summons(fighter, fighters, full: false),
+            'R' => Of(throughPortal),
+            'r' => Of(!throughPortal),
             _ => CriterionAnswer.Unknown,
         };
     }
@@ -220,8 +224,9 @@ public sealed class TargetMask
     /// <param name="caster">The caster.</param>
     /// <param name="target">A fighter in the effect's zone.</param>
     /// <param name="fighters">Every fighter of the fight, for the conditions on summons.</param>
+    /// <param name="throughPortal">Whether the cast goes through a portal (<see cref="Portals"/>), which <c>R</c> and <c>r</c> ask.</param>
     /// <returns>Whether the mask selects it, or unknown when it asks what the fight's state does not tell.</returns>
-    public CriterionAnswer Selects(Combatant caster, Combatant target, IReadOnlyCollection<Combatant> fighters)
+    public CriterionAnswer Selects(Combatant caster, Combatant target, IReadOnlyCollection<Combatant> fighters, bool throughPortal = false)
     {
         ArgumentNullException.ThrowIfNull(caster);
         ArgumentNullException.ThrowIfNull(target);
@@ -234,7 +239,7 @@ public sealed class TargetMask
 
         foreach (var group in _groups)
         {
-            var met = Any(group, caster, target, fighters);
+            var met = Any(group, caster, target, fighters, throughPortal);
 
             if (met is CriterionAnswer.False)
                 return met;

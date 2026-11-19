@@ -76,6 +76,17 @@ public sealed class TargetMaskTests
         Assert.Equal(CriterionAnswer.True, TargetMask.Parse("a,q").Selects(_caster with { MaxSummons = 1 }, _caster with { MaxSummons = 1 }, _fighters));
     }
 
+    [Fact]
+    public void AnUppercaseRAsksACastThroughAPortalAndALowercaseOneACastThroughNone()
+    {
+        // An Eliotrope's spells hold both, such as Audace's damage on enemies "A,r" cast straight and "a,A,R" through a portal.
+        Assert.Equal(CriterionAnswer.True, TargetMask.Parse("a,A,R").Selects(_caster, _enemy, _fighters, throughPortal: true));
+        Assert.Equal(CriterionAnswer.False, TargetMask.Parse("a,A,R").Selects(_caster, _enemy, _fighters, throughPortal: false));
+        Assert.Equal(CriterionAnswer.False, TargetMask.Parse("A,r").Selects(_caster, _enemy, _fighters, throughPortal: true));
+        Assert.Equal(CriterionAnswer.True, TargetMask.Parse("A,r").Selects(_caster, _enemy, _fighters));
+        Assert.Equal(CriterionAnswer.False, TargetMask.Parse("A,R").Selects(_caster, _enemy, _fighters));
+    }
+
     private static Combatant[] Selected(string mask)
     {
         var parsed = TargetMask.Parse(mask);

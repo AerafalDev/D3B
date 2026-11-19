@@ -160,13 +160,141 @@ public sealed class CastRules
         ArgumentNullException.ThrowIfNull(caster);
         ArgumentNullException.ThrowIfNull(history);
 
+        var cast = Modified(level, caster);
+        var refusal = CasterRefusal(fighters, caster, level, cast, history, round);
+
+        if (refusal is CastRefusal.None)
+            refusal = CellRefusal(map, fighters, cast, history, round, cell);
+
+        return refusal is CastRefusal.None ? ReachRefusal(map, fighters, caster, cast, caster.Cell, cell) : refusal;
+    }
+
+    /// <summary>Tells whether a fighter may cast a level on a cell, an open portal's sending it through the portals (D466).</summary>
+    /// <param name="map">The fight's map.</param>
+    /// <param name="fighters">Every fighter of the fight, the caster among them.</param>
+    /// <param name="marks">The marks on the fight's cells, its portals among them.</param>
+    /// <param name="caster">The caster.</param>
+    /// <param name="level">The level, of the pack's spells.</param>
+    /// <param name="cell">The cell cast on.</param>
+    /// <param name="history">The caster's casts this fight.</param>
+    /// <param name="round">The fight's round.</param>
+    /// <returns>Why the cast is refused, or <see cref="CastRefusal.None"/>.</returns>
+    /// <remarks>
+    /// As the references check a cast through portals (D3): the portal within the level's range and sight of the caster, then
+    /// what the level asks of a cell on the cell it comes out on, within its range and sight of the exit. A level needing a
+    /// cell with no portal is refused on any portal's.
+    /// </remarks>
+    public CastRefusal Check(FightMap map, IReadOnlyList<Combatant> fighters, IReadOnlyList<CellMark> marks, Combatant caster, in SpellLevel level, int cell, CastHistory history, int round)
+    {
+        ArgumentNullException.ThrowIfNull(map);
+        ArgumentNullException.ThrowIfNull(fighters);
+        ArgumentNullException.ThrowIfNull(marks);
+        ArgumentNullException.ThrowIfNull(caster);
+        ArgumentNullException.ThrowIfNull(history);
+
+        var cast = Modified(level, caster);
+
+        if (Passage(marks, fighters, caster, level, cell) is not { } passage)
+        {
+            var refusal = Check(map, fighters, caster, level, cell, history, round);
+
+            return refusal is CastRefusal.None && HasPortalOn(marks, cast, cell) ? CastRefusal.CellHasPortal : refusal;
+        }
+
+        var refused = CasterRefusal(fighters, caster, level, cast, history, round);
+
+        if (refused is CastRefusal.None)
+            refused = CellRefusal(map, fighters, cast, history, round, passage.Target);
+
+        if (refused is CastRefusal.None && HasPortalOn(marks, cast, passage.Target))
+            refused = CastRefusal.CellHasPortal;
+
+        if (refused is CastRefusal.None)
+            refused = ReachRefusal(map, fighters, caster, cast, caster.Cell, cell);
+
+        return refused is CastRefusal.None ? ReachRefusal(map, fighters, caster, cast, passage.Exit, passage.Target) : refused;
+    }
+
+    /// <summary>Finds the way a level cast on a cell goes through the portals, as <see cref="Portals.Through"/> finds it for any level that may go.</summary>
+    /// <param name="marks">The marks on the fight's cells, its portals among them.</param>
+    /// <param name="fighters">Every fighter of the fight.</param>
+    /// <param name="caster">The caster.</param>
+    /// <param name="level">The level, of the pack's spells.</param>
+    /// <param name="cell">The cell cast on.</param>
+    /// <returns>The way, or none: the cell is no open portal's, or the level forbids the way through portals, or closes them.</returns>
+    public PortalPassage? Passage(IReadOnlyList<CellMark> marks, IReadOnlyList<Combatant> fighters, Combatant caster, in SpellLevel level, int cell)
+    {
+        ArgumentNullException.ThrowIfNull(marks);
+        ArgumentNullException.ThrowIfNull(fighters);
+        ArgumentNullException.ThrowIfNull(caster);
+
+        if (marks.Count is 0 || (Modified(level, caster).Properties & SpellLevelProperties.PortalProjectionForbidden) is not 0)
+            return null;
+
+        foreach (var effect in _spells.EffectsOf(level))
+        {
+            if (effect.EffectId is Portals.CloseEffect)
+                return null;
+        }
+
+        return Portals.Through(marks, fighters, caster.Cell, cell);
+    }
+
+    private static bool HasPortalOn(IReadOnlyList<CellMark> marks, in SpellLevel cast, int cell)
+    {
+        if ((cast.Properties & SpellLevelProperties.NeedCellWithoutPortal) is 0)
+            return false;
+
+        for (var index = 0; index < marks.Count; index++)
+        {
+            if (marks[index].Kind is CellMarkKind.Portal && marks[index].Centre == cell)
+                return true;
+        }
+
+        return false;
+    }
+
+    private static CastRefusal CellRefusal(FightMap map, IReadOnlyList<Combatant> fighters, in SpellLevel cast, CastHistory history, int round, int cell)
+    {
+        if (!map.IsWalkable(cell))
+            return CastRefusal.CellNotWalkable;
+
+        var occupant = fighters.FirstOrDefault(fighter => fighter.IsAlive && fighter.Cell == cell);
+        var properties = cast.Properties;
+
+        if ((properties & SpellLevelProperties.NeedFreeCell) is not 0 && occupant is not null)
+            return CastRefusal.CellNotFree;
+
+        if ((properties & SpellLevelProperties.NeedTakenCell) is not 0 && occupant is null)
+            return CastRefusal.CellNotTaken;
+
+        if ((properties & SpellLevelProperties.NeedVisibleEntity) is not 0 && occupant is not { IsVisible: true })
+            return CastRefusal.TargetNotVisible;
+
+        if (cast.MaxCastPerTarget > 0 && occupant is not null && history.CastsOn(cast.SpellId, occupant.Id, round) >= cast.MaxCastPerTarget)
+            return CastRefusal.TooManyCastsOnTarget;
+
+        return CastRefusal.None;
+    }
+
+    private static CastRefusal ReachRefusal(FightMap map, IReadOnlyList<Combatant> fighters, Combatant caster, in SpellLevel cast, int from, int cell)
+    {
+        if (!SpellRange.Reaches(cast, caster.RangeBonus, from, cell))
+            return CastRefusal.OutOfRange;
+
+        if ((cast.Properties & SpellLevelProperties.CastTestLos) is not 0 && !LineOfSight.IsClear(map, Occupied(fighters), from, cell))
+            return CastRefusal.NoLineOfSight;
+
+        return CastRefusal.None;
+    }
+
+    private CastRefusal CasterRefusal(IReadOnlyList<Combatant> fighters, Combatant caster, in SpellLevel level, in SpellLevel cast, CastHistory history, int round)
+    {
         if (!caster.IsAlive || caster.Cell is Combatant.NoCell)
             return CastRefusal.CasterAbsent;
 
         var spellId = level.SpellId;
         var criterion = CriterionOf(level);
-
-        var cast = Modified(level, caster);
 
         if (Prevented(caster, criterion))
             return CastRefusal.CasterCannotCast;
@@ -186,34 +314,7 @@ public sealed class CastRules
         if (cast.MaxCastPerTurn > 0 && history.CastsIn(spellId, round) >= cast.MaxCastPerTurn)
             return CastRefusal.TooManyCasts;
 
-        if (HasNoSlot(fighters, caster, cast))
-            return CastRefusal.TooManySummons;
-
-        if (!map.IsWalkable(cell))
-            return CastRefusal.CellNotWalkable;
-
-        var occupant = fighters.FirstOrDefault(fighter => fighter.IsAlive && fighter.Cell == cell);
-        var properties = cast.Properties;
-
-        if ((properties & SpellLevelProperties.NeedFreeCell) is not 0 && occupant is not null)
-            return CastRefusal.CellNotFree;
-
-        if ((properties & SpellLevelProperties.NeedTakenCell) is not 0 && occupant is null)
-            return CastRefusal.CellNotTaken;
-
-        if ((properties & SpellLevelProperties.NeedVisibleEntity) is not 0 && occupant is not { IsVisible: true })
-            return CastRefusal.TargetNotVisible;
-
-        if (cast.MaxCastPerTarget > 0 && occupant is not null && history.CastsOn(spellId, occupant.Id, round) >= cast.MaxCastPerTarget)
-            return CastRefusal.TooManyCastsOnTarget;
-
-        if (!SpellRange.Reaches(cast, caster.RangeBonus, caster.Cell, cell))
-            return CastRefusal.OutOfRange;
-
-        if ((properties & SpellLevelProperties.CastTestLos) is not 0 && !LineOfSight.IsClear(map, Occupied(fighters), caster.Cell, cell))
-            return CastRefusal.NoLineOfSight;
-
-        return CastRefusal.None;
+        return HasNoSlot(fighters, caster, cast) ? CastRefusal.TooManySummons : CastRefusal.None;
     }
 
     /// <summary>Tells whether a push or a pull moves a fighter: a monster the pack says may be pushed, and no fighter in a state that keeps it from being moved or pushed.</summary>
@@ -260,7 +361,7 @@ public sealed class CastRules
     /// <param name="level">The level, of the pack's spells.</param>
     /// <param name="history">The caster's casts this fight.</param>
     /// <param name="round">The fight's round.</param>
-    /// <returns>The cells <see cref="Check"/> allows.</returns>
+    /// <returns>The cells <see cref="Check(FightMap, IReadOnlyList{Combatant}, Combatant, in SpellLevel, int, CastHistory, int)"/> allows.</returns>
     public CellSet Targets(FightMap map, IReadOnlyList<Combatant> fighters, Combatant caster, in SpellLevel level, CastHistory history, int round)
     {
         ArgumentNullException.ThrowIfNull(caster);
@@ -306,9 +407,10 @@ public sealed class CastRules
     /// <param name="effect">The effect, of the pack's spells.</param>
     /// <param name="cell">The cell cast on.</param>
     /// <param name="reached">The list the fighters reached are added to.</param>
+    /// <param name="throughPortal">Whether the cast goes through a portal, its zone then directed from the exit, the caster's cell given as it.</param>
     /// <returns>The cells the effect's zone covers.</returns>
     /// <remarks>A search foresees many casts on one fight: the occupied cells are reckoned once, and nothing is allocated (D200).</remarks>
-    public CellSet Reached(FightMap map, IReadOnlyList<Combatant> fighters, in CellSet occupied, Combatant caster, in SpellEffect effect, int cell, List<(Combatant Fighter, CriterionAnswer Selected)> reached)
+    public CellSet Reached(FightMap map, IReadOnlyList<Combatant> fighters, in CellSet occupied, Combatant caster, in SpellEffect effect, int cell, List<(Combatant Fighter, CriterionAnswer Selected)> reached, bool throughPortal = false)
     {
         ArgumentNullException.ThrowIfNull(fighters);
         ArgumentNullException.ThrowIfNull(caster);
@@ -328,7 +430,7 @@ public sealed class CastRules
             if (!named && (fighter.IsAlive ? !zone.Contains(fighter.Cell) : !withTheDead))
                 continue;
 
-            var selected = mask.Selects(caster, fighter, fighters);
+            var selected = mask.Selects(caster, fighter, fighters, throughPortal);
 
             if (selected is not CriterionAnswer.False)
                 reached.Add((fighter, selected));

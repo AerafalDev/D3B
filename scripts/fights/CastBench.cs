@@ -391,7 +391,12 @@ internal sealed class CastBench
                 var map = MapOf(mapId);
                 var fighters = FightCombatants.Of(fight, _tables.Monsters);
                 var combatant = fighters.First(fighter => fighter.Id == action.SourceId);
-                var refusal = _rules.Check(map, fighters, combatant, level, action.Cast.CellId, caster.Casts, fight.Round);
+                // A cast through portals names the cell it lands on and the portals, the one cast on first (D466): it is
+                // checked and imagined as the AI casts it, on that portal.
+                var (through, marks, cell) = Through(fight, fighters, combatant, level, action, character);
+                var refusal = through is null
+                    ? _rules.Check(map, fighters, combatant, level, action.Cast.CellId, caster.Casts, fight.Round)
+                    : _rules.Check(map, fighters, marks, combatant, level, cell, caster.Casts, fight.Round);
 
                 Tally.Count($"rules of the casts chosen: {(refusal is CastRefusal.None ? "accepted" : $"refused, {refusal}")}");
 
@@ -428,6 +433,8 @@ internal sealed class CastBench
                     Map = map,
                     Level = level,
                     Cell = action.Cast.CellId,
+                    Through = through,
+                    Marks = marks,
                     Critical = action.Cast.Critical is FightCastCritical.Critical,
                     Depth = fight.Sequences.Length,
                     Round = fight.Round,
@@ -508,9 +515,39 @@ internal sealed class CastBench
         return map;
     }
 
+    private (PortalPassage? Through, ImmutableArray<CellMark> Marks, int Cell) Through(FightState fight, IReadOnlyList<Combatant> fighters, Combatant caster, in SpellLevel level, GameActionFightEvent action, CharacterState? character)
+    {
+        // The way the engine foresees through the portals the server named, against the cell it announced and the last portal
+        // it named (D466): no capture of 3.7.13.17 or 3.7.14.18 holds one yet.
+        if (action.Cast.Spell is not { PortalIds.Count: > 0 } spell)
+            return (null, [], action.Cast.CellId);
+
+        var who = caster.Id == character?.Key.CharacterId ? "the character" : caster.Team == (int)fight.Team ? "an ally" : "an enemy";
+
+        Tally.Count($"casts through portals: by {who}, portals named {spell.PortalIds.Count}");
+
+        if (!fight.Marks.TryGetValue(spell.PortalIds[0], out var entry) || !fight.Marks.TryGetValue(spell.PortalIds[^1], out var last))
+        {
+            Tally.Count("casts through portals: a portal named unknown");
+
+            return (null, [], action.Cast.CellId);
+        }
+
+        var marks = ImaginedFights.MarksOf(fight, _glyphs);
+        var through = _rules.Passage(marks, fighters, caster, level, entry.Centre);
+
+        Tally.Count($"casts through portals: the cell foreseen {(through is not { } way ? "none, no way found" : way.Target == action.Cast.CellId ? "as announced" : "otherwise")}");
+        Tally.Count($"casts through portals: the exit foreseen {(through is { } exit && exit.Exit == last.Centre ? "as named" : "otherwise")}");
+
+        if (through is { } found)
+            Tally.Count("casts through portals: the bonus foreseen, in percent, summed", found.Bonus);
+
+        return (through, marks, entry.Centre);
+    }
+
     private void Settle(Cast cast, FightState after)
     {
-        var foreseen = _effects.Foresee(cast.Map, cast.Fighters, cast.Caster, cast.Level, cast.Cell, cast.Critical);
+        var foreseen = _effects.Foresee(cast.Map, cast.Fighters, cast.Caster, cast.Level, cast.Cell, cast.Critical, cast.Through);
         var alone = cast.TriggeredCasts is 0 ? "alone" : "with the casts it triggered";
 
         if (WeaponBlows.IsBlow(cast.Level))
@@ -529,7 +566,7 @@ internal sealed class CastBench
         // damage from out of fights (D263, 9f2).
         if (cast.OutOfFights is { } fuller && cast.TriggeredCasts is 0)
         {
-            var completed = _effects.Foresee(cast.Map, cast.Fighters, fuller, cast.Level, cast.Cell, cast.Critical);
+            var completed = _effects.Foresee(cast.Map, cast.Fighters, fuller, cast.Level, cast.Cell, cast.Critical, cast.Through);
             var kind = cast.Critical ? "critical" : "normal";
 
             Damage(cast, foreseen, $"the character's {kind}, as in fights", main: false);
@@ -692,7 +729,7 @@ internal sealed class CastBench
         foreach (var push in foreseen.Where(effect => effect.IsImmediate && effect.IsCertain && effect.Action.Kind is EffectKind.Push or EffectKind.Pull))
         {
             // Where the target ends, as the server moved it and as D3B imagines the whole cast, blocks and walls counted (9f4).
-            imagined ??= _imagination.Cast(new ImaginedFight { Map = cast.Map, Fighters = [.. cast.Fighters], ActorId = cast.Caster.Id, Round = cast.Round, History = CastHistory.Empty }, cast.Level, cast.Cell);
+            imagined ??= _imagination.Cast(new ImaginedFight { Map = cast.Map, Fighters = [.. cast.Fighters], ActorId = cast.Caster.Id, Round = cast.Round, History = CastHistory.Empty, Marks = cast.Marks }, cast.Level, cast.Through?.Entry ?? cast.Cell);
 
             var moves = cast.Actions.Where(action => action.ActionCase is GameActionFightEvent.ActionOneofCase.Slide && action.Slide.TargetId == push.TargetId).ToList();
             var from = cast.Fighters.FirstOrDefault(fighter => fighter.Id == push.TargetId)?.Cell ?? Combatant.NoCell;
@@ -849,7 +886,7 @@ internal sealed class CastBench
     {
         // The states each fighter holds once the cast's sequence ended, against those the AI imagines the cast leaves, set and
         // removed by its effects and the spells they cast at once (D229); and the life the cast took, imagined and announced.
-        var imagined = _imagination.Cast(new ImaginedFight { Map = cast.Map, Fighters = [.. cast.Fighters], ActorId = cast.Caster.Id, Round = cast.Round, History = CastHistory.Empty }, cast.Level, cast.Cell);
+        var imagined = _imagination.Cast(new ImaginedFight { Map = cast.Map, Fighters = [.. cast.Fighters], ActorId = cast.Caster.Id, Round = cast.Round, History = CastHistory.Empty, Marks = cast.Marks }, cast.Level, cast.Through?.Entry ?? cast.Cell);
         var casts = CastsSpells(cast.Level) ? "casting spells at once" : "casting none";
         int lostImagined = 0, lostAnnounced = 0;
 
@@ -1150,6 +1187,10 @@ internal sealed class CastBench
         public required SpellLevel Level { get; init; }
 
         public required int Cell { get; init; }
+
+        public PortalPassage? Through { get; init; }
+
+        public ImmutableArray<CellMark> Marks { get; init; } = [];
 
         public required bool Critical { get; init; }
 

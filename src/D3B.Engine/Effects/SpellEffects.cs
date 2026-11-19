@@ -118,12 +118,13 @@ public sealed class SpellEffects
     /// <param name="level">The level cast, of the pack's spells.</param>
     /// <param name="cell">The cell cast on.</param>
     /// <param name="critical">Whether the cast is a critical hit: its level's critical effects apply instead.</param>
+    /// <param name="through">The way the cast goes through portals, as the other overload takes it.</param>
     /// <returns>The effects foreseen, in the level's order, each on each fighter it reaches.</returns>
-    public IReadOnlyList<ForeseenEffect> Foresee(FightMap map, IReadOnlyList<Combatant> fighters, Combatant caster, in SpellLevel level, int cell, bool critical)
+    public IReadOnlyList<ForeseenEffect> Foresee(FightMap map, IReadOnlyList<Combatant> fighters, Combatant caster, in SpellLevel level, int cell, bool critical, PortalPassage? through = null)
     {
         var foreseen = new List<ForeseenEffect>();
 
-        Foresee(map, fighters, caster, level, cell, critical, foreseen);
+        Foresee(map, fighters, caster, level, cell, critical, foreseen, through: through);
 
         return foreseen;
     }
@@ -137,7 +138,9 @@ public sealed class SpellEffects
     /// <param name="critical">Whether the cast is a critical hit: its level's critical effects apply instead.</param>
     /// <param name="foreseen">The list the effects foreseen are added to, in the level's order.</param>
     /// <param name="whole">Whether a zone's effects reach every fighter whole, its decrease left out: a mark's spell on the fighter it strikes (9f4).</param>
-    public void Foresee(FightMap map, IReadOnlyList<Combatant> fighters, Combatant caster, in SpellLevel level, int cell, bool critical, List<ForeseenEffect> foreseen, bool whole = false)
+    /// <param name="through">The way the cast goes through portals, its cell then the one it comes out on: its zone is directed from the exit,
+    /// its effects asking a portal or none chosen so, and its damage, steals and heals raised by its bonus (D466).</param>
+    public void Foresee(FightMap map, IReadOnlyList<Combatant> fighters, Combatant caster, in SpellLevel level, int cell, bool critical, List<ForeseenEffect> foreseen, bool whole = false, PortalPassage? through = null)
     {
         ArgumentNullException.ThrowIfNull(map);
         ArgumentNullException.ThrowIfNull(fighters);
@@ -151,6 +154,9 @@ public sealed class SpellEffects
         int? weaponBonus = WeaponBlows.IsBlow(level) ? _blows?.CriticalBonusOf(level) ?? 0 : null;
         var occupied = CastRules.OccupiedBy(fighters);
         var reached = _reached ??= [];
+
+        // Through portals, the zone starts from the exit as from a caster standing there; the caster's own cell stays its own.
+        var origin = through is { } passage ? caster with { Cell = passage.Exit } : caster;
         Span<int> steps = fighters.Count <= 64 ? stackalloc int[fighters.Count] : new int[fighters.Count];
 
         foreach (var effect in effects)
@@ -165,7 +171,7 @@ public sealed class SpellEffects
             var element = EffectFormulas.Resolve(action.Element, caster);
 
             reached.Clear();
-            _rules.Reached(map, fighters, occupied, caster, effect, cell, reached);
+            _rules.Reached(map, fighters, occupied, origin, effect, cell, reached, through is not null);
 
             if (reached.Count is 0)
                 continue;
@@ -173,12 +179,15 @@ public sealed class SpellEffects
             if (whole)
                 steps[..reached.Count].Clear();
             else
-                Steps(effect, map, occupied, caster, cell, reached, steps);
+                Steps(effect, map, occupied, origin, cell, reached, steps);
 
             for (var index = 0; index < reached.Count; index++)
             {
                 var (target, selected) = reached[index];
                 var value = Value(effect, action.Kind, element, caster, target, steps[index], critical, baseBonus, damageBonus, weaponBonus);
+
+                if (through is { Bonus: > 0 } way && action.Kind is EffectKind.Damage or EffectKind.Steal or EffectKind.Heal)
+                    value = new LifeRange(value.Min * (100 + way.Bonus) / 100, value.Max * (100 + way.Bonus) / 100);
 
                 var grade = action.Kind is EffectKind.CastSpell ? Math.Max(1, effect.DiceSide) : 0;
 

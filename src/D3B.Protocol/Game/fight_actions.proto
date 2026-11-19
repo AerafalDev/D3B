@@ -268,6 +268,10 @@ message FightCastSpell {
   int32 level_id = 1;
 
   int32 spell_id = 2;
+
+  // The portals the cast went through, by their marks' ids, the one cast on first, as the references name them (D466): read
+  // in the client's schema, none in the 137 game connections of 3.7.13.17 and 3.7.14.18.
+  repeated int32 portal_ids = 3;
 }
 
 // A fighter died.
