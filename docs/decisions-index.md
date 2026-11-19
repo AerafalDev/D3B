@@ -646,3 +646,8 @@ or refines another says so in its own entry. Add a line here with every new deci
 
 - [D448](decisions/d448-groups-followers-into-the-fight.md#d448-the-master-waits-for-its-followers-on-the-map-its-fight-began-from-and-they-walk-beside-it) The master waits for its followers on the map its fight began from, and they walk beside it (2026-11-19)
   - The same cell as the master, the step aside added alone.
+
+## Groups, joining from where they stand (D449)
+
+- [D449](decisions/d449-groups-join-where-they-stand.md#d449-a-follower-does-not-copy-its-masters-walk-to-a-group-of-monsters-and-no-two-followers-walk-to-one-cell) A follower does not copy its master's walk to a group of monsters, and no two followers walk to one cell (2026-11-19)
+  - Cutting a copied walk short as the fight is told.

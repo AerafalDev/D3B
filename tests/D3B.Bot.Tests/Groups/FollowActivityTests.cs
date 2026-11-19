@@ -204,6 +204,32 @@ public sealed class FollowActivityTests
     }
 
     [Fact]
+    public async Task AFollowerStaysWhereItStandsAsItsMasterWalksToAGroupOfMonsters()
+    {
+        // The owner's ask (D449): on its master's map, it joins the fight from where it stands, without walking beside it.
+        await using var play = new TestPlay();
+        var (masterConnection, master) = await TestGroup.MasterAsync(play, 300);
+        var (connection, follower) = await TestGroup.FollowerAsync(play, 301);
+        var run = Follow(play, follower, TestGroup.Master);
+
+        await TestGroup.UntilAsync(play, () => Doing(run) == "Follows Master", "following");
+
+        var group = new MonsterGroup { Main = new GroupMonster { MonsterId = 489, Grade = 1, Level = 20 } };
+
+        masterConnection.Server(new MapActorShownEvent { Actors = { new Actor { Id = -3, Disposition = new ActorDisposition { CellId = TestPlay.ActionCell }, Information = new ActorInformation { Roleplay = new RoleplayActor { MonsterGroup = new MonsterGroupActor { Monsters = group } } } } } });
+        await master.ProcessedAsync();
+
+        Assert.True(CellPathfinder.TryFind(play.Maps.Get(TestPlay.MapId).Cells.Span, 300, TestPlay.ActionCell, out var path));
+        masterConnection.Server(new MapMovementEvent { ActorId = TestGroup.MasterId, Cells = { path.Cells.ToArray() } });
+        await TestGroup.SettleAsync(follower, master);
+        play.Time.Advance(TimeSpan.FromSeconds(5));
+        await TestGroup.SettleAsync(follower, master);
+
+        Assert.Empty(connection.Sent);
+        run.Stop();
+    }
+
+    [Fact]
     public async Task AFollowerThatWalkedWithItsMasterToItsExitChangesMapsAtOnce()
     {
         // The owner's choice (D447): standing on its master's exit, it goes as its master goes, not once its master is placed.
