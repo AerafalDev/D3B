@@ -20,6 +20,9 @@ internal static partial class FightLog
     [LoggerMessage(Level = LogLevel.Information, Message = "Bot {Character}: challenge {Challenge} {Outcome}")]
     public static partial void ChallengeEnded(ILogger logger, long character, int challenge, string outcome);
 
+    [LoggerMessage(Level = LogLevel.Information, Message = "Bot {Character}: leaves challenge {Challenge}, which would cost its turn more than its bonus pays")]
+    public static partial void ChallengeLeft(ILogger logger, long character, int challenge);
+
     [LoggerMessage(Level = LogLevel.Information, Message = "Bot {Character}: placed on cell {Cell}")]
     public static partial void Placed(ILogger logger, long character, int cell);
 

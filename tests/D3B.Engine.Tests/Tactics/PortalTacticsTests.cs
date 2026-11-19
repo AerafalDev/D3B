@@ -8,7 +8,7 @@ using static D3B.Engine.Tests.Fights.TestFights;
 
 namespace D3B.Engine.Tests.Tactics;
 
-/// <summary>An Eliotrope's portals as the AI imagines them (D466): set by a cast, a cast on an open one coming out of the last of its chain.</summary>
+/// <summary>An Eliotrope's portals as the AI imagines them (D467): set by a cast, a cast on an open one coming out of the last of its chain.</summary>
 public sealed class PortalTacticsTests
 {
     private const int Portail = 30;
@@ -121,7 +121,7 @@ public sealed class PortalTacticsTests
     [Fact]
     public void AnAllyStrikesThroughAnEliotropesPortalsAnEnemyItsBlowCannotReachStraight()
     {
-        // The owner's ask (D466): every character of the bot casts through an ally's portals when it is worth it.
+        // The owner's ask (D467): every character of the bot casts through an ally's portals when it is worth it.
         var iop = Caster(Off(0, 0)) with { BreedId = 8, MovementPoints = 0 };
         var eliotrope = Caster(Off(-1, 0)) with { Id = 2, BreedId = 16 };
         var there = Enemy(-1, Off(4, 8)) with { Life = 100 };

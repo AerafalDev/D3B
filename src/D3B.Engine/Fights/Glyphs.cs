@@ -15,7 +15,7 @@ namespace D3B.Engine.Fights;
 /// struck a monster whose turn began on it the same way, 1 time.
 /// </para>
 /// <para>
-/// An effect of 1181 sets an Eliotrope's portal on its cell (<see cref="Portals"/>, D466), the whole fight: it casts nothing,
+/// An effect of 1181 sets an Eliotrope's portal on its cell (<see cref="Portals"/>, D467), the whole fight: it casts nothing,
 /// its first dice, which the server's mark names as the spell it casts, the damage it adds a cell between two portals.
 /// </para>
 /// <para>Built once per pack and shared, from any thread.</para>
@@ -78,7 +78,7 @@ public sealed class Glyphs
         return false;
     }
 
-    /// <summary>Tells whether a level sets an Eliotrope's portal (D466).</summary>
+    /// <summary>Tells whether a level sets an Eliotrope's portal (D467).</summary>
     /// <param name="level">The level.</param>
     /// <returns>Whether one of its effects does.</returns>
     public bool SetsPortal(in SpellLevel level)

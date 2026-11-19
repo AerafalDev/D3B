@@ -6,7 +6,7 @@ namespace D3B.Engine.Fights;
 /// <summary>An Eliotrope's portals: the way a cast on one goes through them, and how many a team keeps.</summary>
 /// <remarks>
 /// <para>
-/// The references' model (D3, D466), Dofus 2's, which no capture of Dofus 3 measured yet: none of the 137 game connections
+/// The references' model (D3, D467), Dofus 2's, which no capture of Dofus 3 measured yet: none of the 137 game connections
 /// of 3.7.13.17 and 3.7.14.18 holds a cast the server says went through a portal, among 24 portals set. A portal is a mark of
 /// effect 1181 on one cell, kept the whole fight; a team keeps four, a fifth taking the oldest's place. A portal is open while
 /// no fighter stands on it and its team has another open. A cast on an open portal goes along its chain, from it to the

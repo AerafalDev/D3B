@@ -7,6 +7,7 @@ using D3B.Bot.Tests.Network;
 using D3B.Data;
 using D3B.Data.Banks;
 using D3B.Data.Breeds;
+using D3B.Data.Challenges;
 using D3B.Data.Effects;
 using D3B.Data.Icons;
 using D3B.Data.Items;
@@ -101,6 +102,9 @@ internal sealed class TestPlay : IAsyncDisposable
     public const uint TeleportFlag = 1 << 3;
     public const long CharacterId = 70_001;
     public const int BlowSpellId = 100;
+    public const int ZombieChallenge = 1;
+    public const int VersatileChallenge = 6;
+    public const int PrudentChallenge = 40;
     public const int BlowLevelId = 1_100;
     public const int SwordItemId = 6_751;
 
@@ -298,6 +302,19 @@ internal sealed class TestPlay : IAsyncDisposable
         return pixels;
     }
 
+    private static ChallengeCatalog Challenges()
+    {
+        // Zombie, Versatile and Prudent, as client 3.7.14.18 numbers them, and Premier, which is not easy (D466).
+        string[] completions = ["TM=1,0", "CK~1", "SAt0", "TD>1,hc0,e1"];
+        string[] activations = ["GL>4,0", "GL>4,0", "GL>4,0", "GL>4,0"];
+
+        return new ChallengeCatalog(
+            new Challenge[] { new(ZombieChallenge, 742, 1_194_110, 1, 1, 0, 0, 0), new(3, 851_058, 1_019_192, 1, 3, 0, 0, 0), new(VersatileChallenge, 4_007, 1_008_210, 1, 6, 0, 0, 0), new(PrudentChallenge, 4_041, 1_008_244, 1, 40, 0, 0, 0) },
+            ReadOnlyMemory<int>.Empty,
+            completions,
+            activations);
+    }
+
     private static byte[] Pack(int[] blocked, int[] otherZone, bool otherZoneIsEntered)
     {
         var cells = Enumerable.Range(0, MapData.CellCount).Select(cell => blocked.Contains(cell) ? Wall() : Walkable(cell, otherZone.Contains(cell) ? 2 : 1)).ToArray();
@@ -325,6 +342,7 @@ internal sealed class TestPlay : IAsyncDisposable
                 new IconTable(IconSize, new[] { IconCatalog.HeadOf(5, true), IconCatalog.HeadOf(8, false) }, Disc(0x5B, 0x8D, 0xD6).Concat(Disc(0xC8, 0x6A, 0x3E)).ToArray()),
                 new IconTable(IconSize, Enum.GetValues<GameGlyph>().Where(glyph => glyph is not GameGlyph.None).Select(glyph => (int)glyph).ToArray(), Enum.GetValues<GameGlyph>().Where(glyph => glyph is not GameGlyph.None).SelectMany(_ => Disc(0xFF, 0xFF, 0xFF)).ToArray())));
             writer.Add(SpellCatalog.EntryName, Spells());
+            writer.Add(ChallengeCatalog.EntryName, Challenges());
             writer.Add(WeaponCatalog.EntryName, new WeaponCatalog(
                 new[] { new Weapon { ItemId = SwordItemId, TypeId = 6, ApCost = 3, MinRange = 1, Range = 1, CriticalHitProbability = 0, MaxCastPerTurn = 1, Properties = SpellLevelProperties.CastTestLos, FirstEffect = 0, EffectCount = 1 } },
                 new[] { new WeaponEffect { EffectId = 97, DiceNum = 20, DiceSide = 25 } },

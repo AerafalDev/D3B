@@ -1248,7 +1248,7 @@ committed that print fighters by aliases, never an actor's id or name.
   casts the wall's spell), when it was set and when it goes, by round and turn, and its id. Of 88 marks: 22 glyphs by
   401, 6 glyph-auras by 1091, 28 traps, all monsters'; 21 walls; 11 portals by 1181. A trap its enemies do not see names
   cell -1.
-- **Portals** (D466). In the 83 game connections of 3.7.14.18 of 2026-11-18 and 19 and the 54 of 3.7.13.17 of 2026-11-06 to 11,
+- **Portals** (D467). In the 83 game connections of 3.7.14.18 of 2026-11-18 and 19 and the 54 of 3.7.13.17 of 2026-11-06 to 11,
   read by a throwaway probe: 24 portals set by 1181, each a mark of type 3 on one cell, with no end, its spell the one its
   effect's first dice names (2), its grade the second (44338); 3 the character's, 21 an Eliotrope ally's; no cast whose
   spell names a portal it went through, and 8 walks ending on a portal's cell with no teleport. The cast's spell holds a

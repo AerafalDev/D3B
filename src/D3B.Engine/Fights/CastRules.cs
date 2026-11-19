@@ -169,7 +169,7 @@ public sealed class CastRules
         return refusal is CastRefusal.None ? ReachRefusal(map, fighters, caster, cast, caster.Cell, cell) : refusal;
     }
 
-    /// <summary>Tells whether a fighter may cast a level on a cell, an open portal's sending it through the portals (D466).</summary>
+    /// <summary>Tells whether a fighter may cast a level on a cell, an open portal's sending it through the portals (D467).</summary>
     /// <param name="map">The fight's map.</param>
     /// <param name="fighters">Every fighter of the fight, the caster among them.</param>
     /// <param name="marks">The marks on the fight's cells, its portals among them.</param>

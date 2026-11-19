@@ -5,7 +5,7 @@ using static D3B.Engine.Tests.Fights.TestFights;
 
 namespace D3B.Engine.Tests.Fights;
 
-/// <summary>The rules of a cast on an open portal, as the references check it (D466): the portal from the caster, its target from the exit.</summary>
+/// <summary>The rules of a cast on an open portal, as the references check it (D467): the portal from the caster, its target from the exit.</summary>
 public sealed class PortalCastRulesTests
 {
     private static readonly SpellCatalog _spells = Spells();

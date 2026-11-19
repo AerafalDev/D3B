@@ -107,6 +107,14 @@ public sealed class FightActivityTests : IAsyncDisposable
     }
 
     [Fact]
+    public void AFightProfilePlaysForTheEasyChallengesUnlessItSaysOtherwise()
+    {
+        // The owner's default (D466), a profile stored before it included.
+        Assert.Equal(ChallengePlay.Easy, Activity(new FightSettings()).Challenges);
+        Assert.Equal(ChallengePlay.None, Activity(new FightSettings { Challenges = ChallengePlay.None }).Challenges);
+    }
+
+    [Fact]
     public void AGroupIsAttackedWithinItsSizeNoMonsterLeftOutAndAsTheModeSaysWhateverItsLevels()
     {
         var automatic = new FightSettings { LeastMonsters = 2, MostMonsters = 3, Excluded = [Bouftou] };
