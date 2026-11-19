@@ -716,3 +716,8 @@ or refines another says so in its own entry. Add a line here with every new deci
 
 - [D462](decisions/d462-forgelance-lances.md#d462-the-forgelances-summons-are-not-a-last-resort-its-lances-striking-as-they-are-thrown) The Forgelance's summons are not a last resort, its lances striking as they are thrown (2026-11-19)
   - A criterion by effect, the summon as a spell's only worth; D408 undone for every breed.
+
+## Fights, the AI measured breed by breed (D463)
+
+- [D463](decisions/d463-fights-by-breed.md#d463-scriptsfightscs---turns-and---live-print-their-main-counts-by-the-characters-breed) `scripts/fights.cs --turns` and `--live` print their main counts by the character's breed (2026-11-19)
+  - The study's keys in the sorted counts, a breed's name from the pack, a switch to print the breeds.
