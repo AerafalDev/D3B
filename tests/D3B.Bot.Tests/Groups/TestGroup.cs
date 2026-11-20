@@ -23,6 +23,9 @@ internal static class TestGroup
 
     public static GameAccount SecondAccount { get; } = new(9, "second", "tag");
 
+    /// <summary>The follower's account, subscribed: with a subscribed master, a group the game follows (D476).</summary>
+    public static GameAccount SubscribedFollowerAccount { get; } = FollowerAccount with { SubscriptionEnd = DateTimeOffset.MaxValue };
+
     public static CharacterKey Master { get; } = TestPlay.Key;
 
     public static CharacterKey Follower { get; } = new(FollowerAccount.Id, FollowerId);
@@ -37,6 +40,21 @@ internal static class TestGroup
     public static Task<(TestConnection Connection, BotActor Bot)> FollowerAsync(TestPlay play, int cell, long mapId = TestPlay.MapId, string name = "Follower")
     {
         return play.EnterAsync(cell, mapId, FollowerAccount, FollowerId, name);
+    }
+
+    /// <summary>A master and its follower, both accounts subscribed and both characters of level 200, in the master's party it leads: a group the game follows (D476).</summary>
+    public static async Task<(TestConnection Master, BotActor MasterBot, TestConnection Follower, BotActor FollowerBot)> FollowedByTheGameAsync(TestPlay play, int masterCell, int followerCell)
+    {
+        ArgumentNullException.ThrowIfNull(play);
+
+        var (masterConnection, master) = await play.EnterAsync(masterCell, TestPlay.MapId, TestPlay.SubscribedAccount, MasterId, "Master");
+        var (connection, follower) = await play.EnterAsync(followerCell, TestPlay.MapId, SubscribedFollowerAccount, FollowerId, "Follower");
+
+        masterConnection.Server(Party(PartyId, MasterId, MasterId));
+        masterConnection.Server(new PartyNewMemberEvent { PartyId = PartyId, Member = new Character { Id = FollowerId } });
+        await master.ProcessedAsync();
+
+        return (masterConnection, master, connection, follower);
     }
 
     public static Task<(TestConnection Connection, BotActor Bot)> SecondAsync(TestPlay play, int cell, long mapId = TestPlay.MapId, string name = "Second")

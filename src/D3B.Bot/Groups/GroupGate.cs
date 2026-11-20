@@ -29,11 +29,19 @@ namespace D3B.Bot.Groups;
 /// owner's ask (D471); else it leaves it first, as its followers leave a party it is not in: an invitation into a party
 /// another leads is not measured.
 /// </para>
+/// <para>
+/// In a group the game follows (<see cref="GameFollowing"/>, D476), it asks its members to follow it while a follower with it
+/// does not, every 30 s at most: the owner's report, its "follow me" turned off stops its members, turned on again makes them
+/// follow.
+/// </para>
 /// </remarks>
 internal sealed class GroupGate : IActionGate
 {
     /// <summary>How long an invitation goes unanswered before the master sends it again, the owner's choice (D437).</summary>
     public static readonly TimeSpan InviteAgainAfter = TimeSpan.FromSeconds(10);
+
+    /// <summary>How long the master waits before it asks its members to follow it again, while one with it does not (D476).</summary>
+    public static readonly TimeSpan CallAgainAfter = TimeSpan.FromSeconds(30);
 
     private readonly BotActor _bot;
     private readonly GroupDirectory _groups;
@@ -42,6 +50,7 @@ internal sealed class GroupGate : IActionGate
     private readonly Dictionary<CharacterKey, Invitation> _invited = [];
     private (int Party, DateTimeOffset At)? _left;
     private (string? Connection, int Party)? _optionsOff;
+    private (int Party, DateTimeOffset At)? _called;
 
     public GroupGate(BotActor bot, GroupDirectory groups)
     {
@@ -107,6 +116,7 @@ internal sealed class GroupGate : IActionGate
 
                 var left = await LeaveOthersAsync(context, state, followers, cancellationToken).ConfigureAwait(false);
                 var invited = await InviteAsync(context, state, followers, cancellationToken).ConfigureAwait(false);
+                var called = await CallAsync(context, state, followers, cancellationToken).ConfigureAwait(false);
                 var missing = GroupChain.Missing(state, followers);
                 var healed = (DateTimeOffset?)null;
 
@@ -137,7 +147,7 @@ internal sealed class GroupGate : IActionGate
                     }
                 }
 
-                await ChangedAsync(changed, state, seen, Earliest(Earliest(invited, left), healed), cancellationToken).ConfigureAwait(false);
+                await ChangedAsync(changed, state, seen, Earliest(Earliest(Earliest(invited, left), healed), called), cancellationToken).ConfigureAwait(false);
             }
         }
         finally
@@ -157,6 +167,33 @@ internal sealed class GroupGate : IActionGate
 
         await LeaveOthersAsync(context, state, followers, cancellationToken).ConfigureAwait(false);
         await InviteAsync(context, state, followers, cancellationToken).ConfigureAwait(false);
+        await CallAsync(context, state, followers, cancellationToken).ConfigureAwait(false);
+    }
+
+    // Gives the next time the master may ask again, if it asked its members to follow it. In a group the game follows (D476),
+    // a follower with it in its party that does not follow it: measured on the owner's game of 2026-11-20, the leader's ask
+    // turned on the following of each member whose own option was on, and its "stop" turned it off, the owner's report too.
+    private async Task<DateTimeOffset?> CallAsync(BotContext context, CharacterState state, IReadOnlyList<BotActor> followers, CancellationToken cancellationToken)
+    {
+        var now = _bot.Time.GetUtcNow();
+
+        if (state.Party is not { } party || !GameFollowing.Applies(state, [.. followers.Select(follower => follower.State)], now))
+            return null;
+
+        var lagging = followers.Any(follower => follower.IsConnected && party.Members.Contains(follower.Key.CharacterId)
+            && GroupChain.Together(state, follower.State) && follower.State.Party?.FollowsLeader != true);
+
+        if (!lagging)
+            return null;
+
+        if (_called is { } sent && sent.Party == party.Id && now - sent.At < CallAgainAfter)
+            return sent.At + CallAgainAfter;
+
+        _called = (party.Id, now);
+        GroupLog.CallingFollowers(_bot.Log, _bot.Key.CharacterId, party.Id);
+        await context.SendNowAsync(new PartyFollowMeRequest { Follow = true }, cancellationToken).ConfigureAwait(false);
+
+        return now + CallAgainAfter;
     }
 
     // The followers whose life is under the share, in the chain's order, and when the first regenerates to it: its life rises

@@ -778,3 +778,8 @@ or refines another says so in its own entry. Add a line here with every new deci
 
 - [D475](decisions/d475-follower-waits-fight-options.md#d475-a-follower-joins-its-masters-fight-once-the-server-listed-it-open) A follower joins its master's fight once the server listed it open (2026-11-20)
   - Waiting for the turns' order, sending the join again after a refusal.
+
+## Groups, the game's own following for a subscribed group (D476)
+
+- [D476](decisions/d476-groups-game-following.md#d476-a-group-the-game-can-follow-turns-its-options-on-and-the-bot-watches-each-follower) A group the game can follow turns its options on, and the bot watches each follower (2026-11-20)
+  - The fights' options only, measuring first, the master's "follow me" alone.
