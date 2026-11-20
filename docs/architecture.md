@@ -327,11 +327,12 @@ The bots run in `D3B.Bot`: what each part does today, with the decisions that ma
   by `CharacterKey.ToId`). A follower is in its master's group while its activity runs (`GroupDirectory`, `Bots.Groups`, at
   most seven, no follower leading). Each bot has a gate (`IActionGate`, `BotActor.Gate`), which `BotContext.SendAsync` goes
   through: the master's, `GroupGate`, holds the requests that start an action out of a fight while a bot follows it, but
-  its walks and map changes (D447), before which it only leaves a party another leads and invites its followers (D457),
-  and for those it holds leaves a party another leads, invites its followers by name, and waits with no delay until each is connected, not
-  paused, out of a fight, on its map and in its party (`GroupChain.Missing`), the card saying whom for
+  its walks and map changes (D447), before which it only leaves a party another leads that lacks a follower and invites its followers (D457),
+  and for those it holds leaves such a party, invites its followers by name, and waits with no delay until each is connected, not
+  paused, out of a fight, on its map and in its party (`GroupChain.Missing`), the party it is in whoever leads it, one
+  another leads kept while it holds each follower (`GroupChain.HoldsAll`, D471), the card saying whom for
   (`BotActor.WaitingFor`); its own requests go past it (`BotContext.SendNowAsync`). So every profile leads unchanged. The
-  follower's steps keep the party (its master's invitation accepted, others refused, another party left, the automatic
+  follower's steps keep the party (its master's invitation accepted, others refused, a party its master is not in left, the automatic
   options turned off at each party joined, D437's measure), then follow in real time (D447): with its master it copies
   each of its walks as the server shows it, to the cell the master walks to, else it changes maps towards the master by
   the world's paths, whatever the others' order, a whole journey only when its master is more than one change away
@@ -339,10 +340,12 @@ The bots run in `D3B.Bot`: what each part does today, with the decisions that ma
   (`GroupChain.Together`); the master's party's order (`GroupChain.Order`) is only the card's and the bank's (D442). A wait reads the bots it waits on before
   deciding (`BotSeen`), so that no change made between the decision and the wait is missed (`GroupWaits`). In a fight
   (D440), each bot has a part too (`IFightTeam`, `BotActor.Team`, `GroupFight`), which the AI asks during the placement
-  (`FightPlay`), from the fight itself: a master whose fight the server locked to its party refuses spectators only and
-  says it is ready once each follower on its map is placed, a follower in its master's fight sets no option, and any other
-  fight is closed and refused to spectators as one alone. The follower joins its master's fight by request
-  (`FightJoinRequest`) as its party is told of it on its map, its master's own state saying the fight is in its placement.
+  (`FightPlay`), from the fight itself: a master with followers, or whose fight the server locked to its party, refuses
+  spectators only, opens a fight the server kept closed from its last (D471), each option toggled only when the fight
+  shows it otherwise, and says it is ready once each follower on its map is placed; a follower in its master's fight sets
+  no option, and any other fight is closed and refused to spectators as one alone. The follower joins its master's fight by request
+  (`FightJoinRequest`) as its party is told of it on its map, its master's own state saying the fight is in its placement
+  and not closed.
   Before any action (D441), the gate waits too for each follower's life over the share the master's profile heals under
   (`GroupLife`, the life its activity watches), and the follower with its master eats what only heals, else regenerates.
   A master whose activity banks unloads through its group's bank (D442, `IGroupBank`, `BotActor.Bank`, `GroupBank`), which

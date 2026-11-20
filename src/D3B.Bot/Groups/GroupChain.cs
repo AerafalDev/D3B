@@ -4,10 +4,17 @@ using D3B.Bot.Runtime;
 namespace D3B.Bot.Groups;
 
 /// <summary>The group's chain: its followers' order, who is with the master, and who is missing (D430, D432, D437).</summary>
-/// <remarks>Pure functions of the bots' states, so that the master's gate and its followers read the same chain.</remarks>
+/// <remarks>
+/// <para>Pure functions of the bots' states, so that the master's gate and its followers read the same chain.</para>
+/// <para>
+/// The master's party is the one it is in, whoever leads it: the owner's report of 2026-11-20 (D471), a party formed by
+/// hand that a follower led was left by each follower and formed again by the master two minutes later. Measured that night,
+/// the server locks to its party the fight of a member that is not its leader, as it does the leader's.
+/// </para>
+/// </remarks>
 public static class GroupChain
 {
-    /// <summary>Orders a master's followers as the chain goes: those in the master's party in the party's order, then the others by name (D430).</summary>
+    /// <summary>Orders a master's followers as the chain goes: those in the master's party in the party's order, then the others by name (D430, D471).</summary>
     /// <param name="master">The master's state, whose party gives the order.</param>
     /// <param name="followers">The followers' bots.</param>
     /// <returns>The followers, the first behind the master first.</returns>
@@ -16,7 +23,7 @@ public static class GroupChain
         ArgumentNullException.ThrowIfNull(master);
         ArgumentNullException.ThrowIfNull(followers);
 
-        var members = master.Party is { } party && party.LeaderId == master.Key.CharacterId ? party.Members : [];
+        var members = master.Party?.Members ?? [];
 
         return
         [
@@ -76,10 +83,20 @@ public static class GroupChain
         if (!Together(master, state))
             return MemberAbsence.Away;
 
-        // The owner's choice: in the party too, which the fights locked to it need (D431, D437).
-        return master.Party is { } party && party.LeaderId == master.Key.CharacterId && party.Members.Contains(follower.Key.CharacterId)
-            ? null
-            : MemberAbsence.OutOfParty;
+        // The owner's choice: in the party too, which the fights locked to it need (D431, D437), whoever leads it (D471).
+        return master.Party?.Members.Contains(follower.Key.CharacterId) == true ? null : MemberAbsence.OutOfParty;
+    }
+
+    /// <summary>Tells whether the master's party holds each of its followers a connection plays, whoever leads it (D471).</summary>
+    /// <param name="master">The master's state.</param>
+    /// <param name="followers">The followers' bots.</param>
+    /// <returns>Whether it does; not when the master is in no party.</returns>
+    public static bool HoldsAll(CharacterState master, IReadOnlyList<BotActor> followers)
+    {
+        ArgumentNullException.ThrowIfNull(master);
+        ArgumentNullException.ThrowIfNull(followers);
+
+        return master.Party is { } party && followers.All(follower => !follower.IsConnected || party.Members.Contains(follower.Key.CharacterId));
     }
 
     /// <summary>Gets the followers missing for the master to act, in the chain's order (D432).</summary>
