@@ -125,10 +125,11 @@ As of 2026-11-20, after D473 (a fork reaches a row past its size, each row a ste
   summon (the Féca's, one of the Eniripsa's and of the Pandawa's) stay a last resort. A thrown lance is out of its hand until
   its next turn (D465, the server's own rule, measured on the captures): the replay now plans 5,676 damage instead of 5,885,
   162 kills instead of 171, no second throw the server refuses; to see in game: one throw a turn, then what it may cast.
-  Trident de la Mer's fork reaches two rows (D473), measured on the captures: its 21 blows on the second row are foreseen,
-  Trident planned 42 times instead of 32; to see in game, a Trident striking two cells past the cell cast on. Left, each
-  for a session: a pull towards a cell imagined stopping beside it where the server takes the target onto it and past it
-  (728 pulls, every breed's), and casts planned that strike nothing (18 of the 42 Tridents).
+  Trident de la Mer's fork reaches two rows (D473), measured on the captures: its 21 blows on the second row are foreseen
+  and sought, Trident planned 61 times instead of 27, the Forgelance's damage planned 6,493 instead of 6,213; to see in
+  game, a Trident striking two cells past the cell cast on. Left, each for a session: a pull towards a cell imagined
+  stopping beside it where the server takes the target onto it and past it (728 pulls, every breed's), and casts planned
+  that strike nothing (7 of the 61 Tridents).
 - The AI in a group (D454, D460): a little bolder beside allies, the enemies' threat weighed 0.75, next turn's damage as alone
   (0.9). D454's approach of 1.1 left 15 turns of 87 empty in the owner's group run of 2026-11-19, main a752a945, a monster in
   reach each time; replayed on its captures, these weights plan a blow on all 15 and twice the damage. Tested on the fake
@@ -314,4 +315,5 @@ Q16 (casts and walks the server refuses that the rules allow), Q17 (a build that
   fight's pilot left waiting as its bot stopped held `Bots.DisposeAsync` forever). Seen once each under load and not fixed:
   `BehaviorActivityTests.AListThatRepeatsReportsItsFirstStepAgainWhenItStartsOver` timing out (it advances the fake clock
   once the run is stepping, perhaps before its wait step set its timer), and `D3B.Studio.Tests` ending with zero tests and
-  exit code 1, not explained.
+  exit code 1, not explained; its host also hung once for 14 minutes during a full run beside other sessions' replays,
+  its 224 tests passing in 2 s when run again alone.

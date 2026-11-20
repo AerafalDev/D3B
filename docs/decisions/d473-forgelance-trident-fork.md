@@ -6,8 +6,8 @@ are [D187](d176-d208-step-9.md#d187-zones-and-target-masks), the lance in hand [
 ## D473: A fork reaches a row past its size, each row a step of its decrease
 
 *2026-11-20, the owner's report of a Forgelance throwing Tridents into the void, the lead's finding of 4 losses of life
-the engine did not foresee in that capture, the owner's choice of the fork alone after the measure. Builds D3, D181, D187,
-D195, D465.*
+the engine did not foresee in that capture, the owner's choice of the fork alone after the measure, the cells the search
+tries added after the review. Builds D3, D181, D187, D195, D465.*
 
 - **Reported**: in a fight of 2026-11-20 the Forgelance cast Trident de la Mer (23393) on empty cells, twice from the
   caster's column three cells ahead, and a monster two cells past each lost life; the engine had foreseen no damage, and
@@ -23,20 +23,24 @@ D195, D465.*
   and the blow comes from the spell 30711 it casts on the cell while the lance is in hand. The AI's imagination foresees
   every one of the 392 losses the bench counted as not foreseen, the bench comparing only the level's own effects.
 - **Made**: `SpellZones` draws a fork of size n as the cell and n + 1 rows ahead, row r its middle and the cells r away on
-  each side; `SpellEffects` counts a fork's row as its steps away. `scripts/fights.cs` counts a loss the level's effects do
-  not foresee and the whole cast imagined does, through a spell it cast, as "dealt, imagined through a spell it cast". Two
-  tests: a fork of 1 covers its seven cells, a fork's rows lower its damage a step each.
-- **Replayed**, before and after: the bench's losses with the casts they triggered, 413 dealt and not foreseen, are now 0
-  (21 within, 392 imagined through a spell cast), the 13 below as before, no Trident under or over its range. With
-  `--turns`, 1,282 turns, only the Forgelance moves, every other breed's section the same line for line: its 250 turns plan
-  6,201 damage instead of 6,182, 174 kills instead of 172, the reply as before (1,226); its played turns foresee 5,078
-  instead of 5,020, against 4,988 dealt; Trident is planned 42 times instead of 32 (53 played). The searches 117 ms halfway
-  and 502 at most (103 and 623 before), those keeping a challenge 145 and 862 (126 and 814 before), over the budget of 800
-  at most as before.
+  each side; `SpellEffects` counts a fork's row as its steps away; `FightTactics` seeks the cells to cast a fork on as far
+  from a fighter as its rows reach straight ahead, n + 1, where it sought n, so that the search tries the cell three ahead
+  of the Forgelance with an enemy two past it, as the owner's fight had it. `scripts/fights.cs` counts a loss on a target
+  the level's own effects foresee nothing on, which the whole cast imagined takes, as "dealt, imagined through a spell it
+  cast". Three tests: a fork of 1 covers its seven cells, a fork's rows lower its damage a step each, the AI casts a fork
+  where its second row strikes an enemy.
+- **Replayed** on the same captures, against main as it stood (b208236e, after D470 to D472): the bench's losses with the
+  casts they triggered, 413 dealt and not foreseen, are now 0 (21 within, 392 imagined through a spell cast), the 13 below
+  as before, no Trident under or over its range. With `--turns`, 1,282 turns, only the Forgelance moves, every other
+  breed's section the same line for line: its 250 turns plan 6,493 damage instead of 6,213, 188 kills instead of 173, the
+  reply the same (1,271 against 1,270), 13,666 over two turns instead of 13,236, 38 walks alone instead of 51; its played
+  turns foresee 5,078 instead of 5,020, against 4,988 dealt. Trident is planned 61 times instead of 27, for 53 played. The
+  searches 99 ms halfway and 469 at most (90 and 421 before), those keeping a challenge 126 and 824 (114 and 581), the
+  machine shared with other sessions' replays.
 - **Left for sessions of their own**, the owner's choice: a pull towards a cell stops beside it in `Imagination`, where the
   server takes the target onto it and on past it, Trident's pull 24739 among them (728 pulls went beyond the cell
-  imagined, every breed's); and casts the AI plans that strike nothing, 18 of the 42 Tridents planned, half of them doing
-  nothing but spend AP, the others pulling an ally.
+  imagined, every breed's); and casts the AI plans that strike nothing, 7 of the 61 Tridents planned (17 of 32 before the
+  search sought the second row), 5 pulling an ally and 2 doing nothing but spend AP.
 - **Rejected**: correcting the pull in this session, a change of every breed's pulls that needs its own measure; a fork
   of size n reaching n rows, as the references' damage preview draws it, which the captures refute.
 - **Not measured**: a fork of 2 or 3, which monsters' spells and none of the captures' casts hold, and one cast along a
