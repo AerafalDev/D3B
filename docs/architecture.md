@@ -1098,8 +1098,8 @@ Pure logic with no I/O, in `D3B.Engine`, which references `D3B.Data` for the cel
   - `SpellRange`: the cells a level reaches from its caster's, a diamond, a line or diagonals, its most boosted by the
     caster's range. `LineOfSight`: the cells between two cells, a corner touching only, none blocking by its data or a
     fighter, the same both ways.
-  - `SpellZones`: the cells each of the 26 shapes covers, centred on the cell cast on and directed from the caster.
-    `TargetMask`: an effect's mask parsed once, answering on three values whether it selects a fighter; `C` names the
+  - `SpellZones`: the cells each of the 26 shapes covers, centred on the cell cast on and directed from the caster, a fork
+    a row past its size (D473). `TargetMask`: an effect's mask parsed once, answering on three values whether it selects a fighter; `C` names the
     caster wherever it stands, `c` in the zone only (D226); `R` asks a cast through a portal and `r` a cast through none,
     which every cast tells (D468).
   - `CastRules`, built once per pack: whether a fighter may cast a level on a cell, the refusal named (`CastRefusal`)
@@ -1175,7 +1175,8 @@ Pure logic with no I/O, in `D3B.Engine`, which references `D3B.Data` for the cel
   - `FightTactics`, built once per pack: `Plan`, a beam search of walks and casts, each step keeping beside its best
     sequences the best of each set of states the character holds, so that a Zobal's mask lives to the spells it opens
     (`WithEachStates`, D255), and the best of other sets of the team's portals, those whose ways land on an enemy first,
-    so that a portal set lives to the cast it opens (D468); every level is tried on the portals' cells, and a level that
+    so that a portal set lives to the cast it opens (D468); every level is tried on the cells as near a fighter as its zones
+    reach, a fork's a row past its size (D473), and on the portals' cells, and a level that
     sets a portal is tried on the cells that line a way up with an enemy; its best sequences weighed against the enemies' greedy reply, each enemy striking whom it
     lowers the side's worth most by, every character of a group as dear to it as the fighter playing (`AlliesWorth`, D467), then the character's next
     turn (`NextTurn`, D210), the plan with the fewest actions winning among those within a point of life that leave the same enemies

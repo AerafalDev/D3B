@@ -612,6 +612,15 @@ internal sealed class CastBench
 
             if (!expected.TryGetValue(key, out var range))
             {
+                // The level's effects alone foresee nothing of a spell it casts, such as Effondrement's 30711 on the cell cast
+                // on, which the AI imagines as the cast's own (D473): a target they foresee nothing on, whose life it takes.
+                if (cast.TriggeredCasts > 0 && !expected.Keys.Any(other => other.Target == key.Target) && TakenByTheWholeCast(cast, key.Target))
+                {
+                    Tally.Count($"damage, {alone}: dealt, imagined through a spell it cast");
+
+                    continue;
+                }
+
                 Tally.Count($"damage, {alone}: dealt, not foreseen");
                 _details?.WriteLine($"damage not foreseen: spell {cast.Level.SpellId} level {cast.Level.Id} element {key.Element}");
 
@@ -635,6 +644,14 @@ internal sealed class CastBench
             if (outcome is "below" or "above" && main)
                 _details?.WriteLine($"damage {outcome}: spell {cast.Level.SpellId} level {cast.Level.Id}{(cast.Critical ? " critical" : "")} element {key.Element}: {total} against {range.Min}..{range.Max}, {alone}; {Why(cast, foreseen, key.Target, key.Element)}");
         }
+    }
+
+    private bool TakenByTheWholeCast(Cast cast, long targetId)
+    {
+        var before = cast.Fighters.FirstOrDefault(fighter => fighter.Id == targetId);
+        var imagined = _imagination.Cast(new ImaginedFight { Map = cast.Map, Fighters = [.. cast.Fighters], ActorId = cast.Caster.Id, Round = cast.Round, History = CastHistory.Empty, Marks = cast.Marks }, cast.Level, cast.Through?.Entry ?? cast.Cell);
+
+        return before is not null && imagined.Find(targetId) is { } after && after.Life < before.Life;
     }
 
     private string Why(Cast cast, IReadOnlyList<ForeseenEffect> foreseen, long targetId, EffectElement element)

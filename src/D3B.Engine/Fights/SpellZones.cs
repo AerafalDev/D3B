@@ -24,7 +24,7 @@ namespace D3B.Engine.Fights;
 /// at the first fighter when the zone says so.</description></item>
 /// <item><term>PerpendicularLine, DiagonalPerpendicularLine</term><description>Across the direction, on both sides, up to the size.</description></item>
 /// <item><term>Cone, HalfCircle, Boomerang, Fork</term><description>Widening away from the caster; two arms back towards it; two arms away; three
-/// arms away.</description></item>
+/// arms away, a row past the size, each row a step of its decrease.</description></item>
 /// <item><term>Square, SquareWithoutDiagonals, Checkerboard</term><description>Within the size on both axes; without the diagonals; every other cell of
 /// the diamond.</description></item>
 /// <item><term>Rectangle</term><description>From the cell away from the caster, the size long and the least size wide.</description></item>
@@ -38,6 +38,10 @@ namespace D3B.Engine.Fights;
 /// without centre, star, diagonal perpendicular line, fork, half circle, cone and whole map explains some alone; of 343
 /// fighters an effect damaging at once foresaw, 342 lost life. Ring, outside circles, checkerboard, square without
 /// diagonals, rectangle, boomerang, diagonal line, diagonal cross without centre and the custom zones are not measured.
+/// The fork was measured again on the 92 captures of 3.7.14.18 (D473), Trident de la Mer's of 1, cast straight: of the
+/// enemies within 4 cells of the cell cast on, along and across, the 314 on the cell, on the first row's three cells and
+/// on the second's three, its arms 2 cells apart, lost life, and none of the 324 elsewhere; the second row's 21 had been
+/// left out. A fork of 2 or 3 and one cast along a diagonal are not measured.
 /// </para>
 /// </remarks>
 public static class SpellZones
@@ -117,8 +121,9 @@ public static class SpellZones
             case SpellZoneShape.Boomerang:
                 Arms(ref cells, origin, axis, size, forward: 1, middle: false);
                 break;
+            // Measured (D473): a fork of 1 reached a second row, the 21 losses of life of Trident de la Mer it had left out.
             case SpellZoneShape.Fork:
-                Arms(ref cells, origin, axis, size, forward: 1, middle: true);
+                Arms(ref cells, origin, axis, size + 1, forward: 1, middle: true);
                 break;
             case SpellZoneShape.Square:
                 Square(ref cells, origin, least, size, diagonals: true);
