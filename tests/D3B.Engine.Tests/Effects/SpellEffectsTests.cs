@@ -7,7 +7,7 @@ using static D3B.Engine.Tests.Fights.TestFights;
 
 namespace D3B.Engine.Tests.Effects;
 
-/// <summary>A cast foreseen effect by effect: a fire blow in a circle, and a boost of the caster its mask names.</summary>
+/// <summary>A cast foreseen effect by effect: a fire blow in a circle, and a boost of the caster its mask names; a fire blow in a fork.</summary>
 public sealed class SpellEffectsTests
 {
     private static readonly SpellCatalog _spells = Catalog();
@@ -21,21 +21,23 @@ public sealed class SpellEffectsTests
 
     /// <summary>
     /// Spell 10, level 1010: fire damage of 10 to 12 in a circle of 1 on the enemies, then 2 AP for a round on the caster
-    /// its mask names; on a critical hit, fire damage of 15 to 17.
+    /// its mask names; on a critical hit, fire damage of 15 to 17. Spell 11, level 1011: fire damage of 10 to 12 in a fork of 1.
     /// </summary>
     private static SpellCatalog Catalog()
     {
         string[] strings = ["A", "I", "C"];
         var circle = Zone(SpellZoneShape.Circle);
         var level = new SpellLevel { Id = 1010, SpellId = 10, Grade = 1, ApCost = 3, MinRange = 1, Range = 3, StatesCriterion = SpellLevel.NoCriterion, FirstEffect = 0, EffectCount = 2, CriticalEffectCount = 1 };
+        var forked = level with { Id = 1011, SpellId = 11, FirstEffect = 3, EffectCount = 1, CriticalEffectCount = 0 };
         SpellEffect[] effects =
         [
             new SpellEffect { Uid = 1, EffectId = 99, TargetMask = 0, Triggers = 1, DiceNum = 10, DiceSide = 12, Zone = circle },
             new SpellEffect { Uid = 2, EffectId = 1, TargetMask = 2, Triggers = 1, DiceNum = 2, Duration = 1, Zone = Zone(SpellZoneShape.Point) },
             new SpellEffect { Uid = 3, EffectId = 99, TargetMask = 0, Triggers = 1, DiceNum = 15, DiceSide = 17, Zone = circle },
+            new SpellEffect { Uid = 4, EffectId = 99, TargetMask = 0, Triggers = 1, DiceNum = 10, DiceSide = 12, Zone = Zone(SpellZoneShape.Fork) },
         ];
 
-        return new SpellCatalog(new[] { new Spell { Id = 10, NameId = 10, FirstLevel = 0, LevelCount = 1 } }, new[] { level }, new[] { level.Id }, effects, Array.Empty<SpellPreviewZone>(), Array.Empty<int>(), strings,
+        return new SpellCatalog(new[] { new Spell { Id = 10, NameId = 10, FirstLevel = 0, LevelCount = 1 }, new Spell { Id = 11, NameId = 11, FirstLevel = 1, LevelCount = 1 } }, new[] { level, forked }, new[] { level.Id, forked.Id }, effects, Array.Empty<SpellPreviewZone>(), Array.Empty<int>(), strings,
             Array.Empty<SpellVariant>(), Array.Empty<SpellBomb>(), Array.Empty<SpellBombWall>());
     }
 
@@ -55,6 +57,15 @@ public sealed class SpellEffectsTests
         Assert.Equal(new LifeRange(20, 24), blows[0].Value);
         Assert.Equal(new LifeRange(18, 21), blows[1].Value);
         Assert.All(blows, blow => Assert.True(blow.IsCertain && blow.IsImmediate && !blow.IsRandom));
+    }
+
+    [Fact]
+    public void AForksRowsAreItsStepsAway()
+    {
+        Combatant[] fighters = [_caster, Enemy(-1, Off(3, 0)), Enemy(-2, Off(4, 1)), Enemy(-3, Off(5, 2))];
+        var blows = _effects.Foresee(Open(), fighters, _caster, Level(_spells, 11), Off(3, 0), false);
+
+        Assert.Equal([new LifeRange(20, 24), new LifeRange(18, 21), new LifeRange(16, 19)], blows.Select(blow => blow.Value));
     }
 
     [Fact]

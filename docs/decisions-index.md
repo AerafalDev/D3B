@@ -751,3 +751,8 @@ or refines another says so in its own entry. Add a line here with every new deci
 
 - [D469](decisions/d469-readme-for-players.md#d469-the-readme-written-for-players-building-and-maintaining-d3b-in-docsdevelopmentmd) The README written for players, building and maintaining D3B in docs/development.md (2026-11-20)
   - Trimming the README in place, moving the commands out of it too.
+
+## Fights, the Forgelance's Trident and the fork (D472)
+
+- [D472](decisions/d472-forgelance-trident-fork.md#d472-a-fork-reaches-a-row-past-its-size-each-row-a-step-of-its-decrease) A fork reaches a row past its size, each row a step of its decrease (2026-11-20)
+  - Correcting the pull towards a cell in this session; a fork of size n reaching n rows.

@@ -69,6 +69,15 @@ public sealed class SpellZonesTests
     }
 
     [Fact]
+    public void AForkReachesARowFartherThanItsSizeEachArmWideningByACell()
+    {
+        var fork = CellSet.Of(_centre, Off(3, -1), Off(3, 0), Off(3, 1), Off(4, -2), Off(4, 0), Off(4, 2));
+
+        Assert.Equal(fork, Cells(Zone(SpellZoneShape.Fork, 1)));
+        Assert.Equal(1 + 3 * 3, Cells(Zone(SpellZoneShape.Fork, 2)).Count);
+    }
+
+    [Fact]
     public void ASquareCoversBothAxesAndLeavesItsDiagonalsWhenAsked()
     {
         Assert.Equal(9, Cells(Zone(SpellZoneShape.Square, 1)).Count);
