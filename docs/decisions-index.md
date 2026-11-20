@@ -746,3 +746,8 @@ or refines another says so in its own entry. Add a line here with every new deci
 
 - [D468](decisions/d468-eliotrope-portals.md#d468-an-eliotropes-portals-in-the-ai-cast-through-by-every-character-of-the-bot) An Eliotrope's portals in the AI, cast through by every character of the bot (2026-11-19)
   - Capturing by hand first, casting only through the portals set, every exact set of portals kept, a worth of an open way.
+
+## Docs, the README for players (D469)
+
+- [D469](decisions/d469-readme-for-players.md#d469-the-readme-written-for-players-building-and-maintaining-d3b-in-docsdevelopmentmd) The README written for players, building and maintaining D3B in docs/development.md (2026-11-20)
+  - Trimming the README in place, moving the commands out of it too.

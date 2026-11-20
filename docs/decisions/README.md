@@ -90,3 +90,4 @@ Each file holds the decisions of one group of [the index](../decisions-index.md)
 - [Fights, the easy challenges (D466)](d466-fights-challenges-easy.md): 1 decision, 5 KB.
 - [Fights, the group's reply and its target (D467)](d467-group-reply-target.md): 1 decision, 4 KB.
 - [Fights, an Eliotrope's portals (D468)](d468-eliotrope-portals.md): 1 decision, 5 KB.
+- [Docs, the README for players (D469)](d469-readme-for-players.md): 1 decision, 2 KB.
