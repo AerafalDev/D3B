@@ -34,7 +34,7 @@ internal static class FightsCommand
         };
         var turns = new Option<bool>("--turns")
         {
-            Description = "Replays every turn the characters played through the fight's AI instead: its plan against the turn played, and what its judge foresaw against what came (D206); then by breed, the plans, damage, kills, heals, reply, judgement and spells planned against played, and the reply's blows against the enemies', alone and in a group (D463).",
+            Description = "Replays every turn the characters played through the fight's AI instead: its plan against the turn played, and what its judge foresaw against what came (D206); then by breed, the plans, damage, kills, heals, reply, judgement and spells planned against played, and the reply's blows against the enemies', alone and in a group (D463); and every placement, by the character's place in the turn order (D478).",
         };
         var enemyLife = new Option<double>("--enemy-life")
         {
@@ -128,6 +128,7 @@ internal static class FightsCommand
         }
 
         var turnBench = new TurnBench(tables, maps, weighed, TurnSearchLimits.Default, enemyLife);
+        var placementBench = new PlacementBench(tables, maps, weighed);
         var liveBench = new LiveBench();
         var huntBench = live ? new HuntBench(tables, maps) : null;
         var failed = 0;
@@ -151,7 +152,10 @@ internal static class FightsCommand
                 var messages = CapturedFights.ServerMessages(translation, file);
 
                 if (turns)
+                {
                     turnBench.Replay(messages);
+                    placementBench.Replay(messages);
+                }
                 else
                     bench.Replay(messages);
             }
@@ -169,7 +173,10 @@ internal static class FightsCommand
             liveBench.WriteBreeds(Console.Out);
         }
         else if (turns)
+        {
             turnBench.Write(Console.Out);
+            placementBench.Write(Console.Out);
+        }
         else
             bench.Tally.Write(Console.Out);
 

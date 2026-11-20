@@ -289,6 +289,37 @@ public sealed class FightTactics
         return nearest;
     }
 
+    /// <summary>Gets the enemies playing before the fighter playing's first turn, whose threat a placement weighs (D478).</summary>
+    /// <param name="fight">The fight as placed now.</param>
+    /// <param name="turnOrder">The fighters' ids in the order they play, as the server lists them.</param>
+    /// <returns>The enemies alive the order lists before the fighter, and those it does not list; null when it does not list the fighter.</returns>
+    public static IReadOnlySet<long>? PlayingBefore(ImaginedFight fight, IReadOnlyList<long> turnOrder)
+    {
+        ArgumentNullException.ThrowIfNull(fight);
+        ArgumentNullException.ThrowIfNull(turnOrder);
+
+        var place = -1;
+
+        for (var index = 0; index < turnOrder.Count && place < 0; index++)
+        {
+            if (turnOrder[index] == fight.ActorId)
+                place = index;
+        }
+
+        if (place < 0)
+            return null;
+
+        // An enemy the order does not list is held as playing first: its threat left out would place the fighter in its reach.
+        var after = turnOrder.Skip(place + 1).ToHashSet();
+
+        return EnemiesAlive(fight).Where(enemy => !after.Contains(enemy)).ToHashSet();
+    }
+
+    private static double Judged(FightJudge judge, ImaginedFight fight, IReadOnlySet<long>? threatening)
+    {
+        return threatening is null ? judge.Judge(fight) : judge.Judge(fight, threatening);
+    }
+
     /// <summary>Gets a judge of a fight as it stands, which a search and a placement share.</summary>
     /// <param name="fight">The fight.</param>
     /// <param name="knowledge">What the AI knows of the fighters.</param>
@@ -368,24 +399,31 @@ public sealed class FightTactics
     /// <param name="cells">The team's placement cells.</param>
     /// <param name="knowledge">What the AI knows of the fighters.</param>
     /// <param name="weights">The weights.</param>
+    /// <param name="turnOrder">The fighters' ids in the order they play, as the server lists them; empty when not known.</param>
     /// <returns>The cell judged best, the fighter's own on a tie; its own when no other is free.</returns>
-    /// <remarks>Each free cell judged as a turn's end is (<see cref="FightJudge"/>): the enemies' threat there against the damage it may deal from there.</remarks>
-    public int Place(ImaginedFight fight, IEnumerable<int> cells, FightKnowledge knowledge, TacticWeights weights)
+    /// <remarks>
+    /// Each free cell judged as a turn's end is (<see cref="FightJudge"/>): the enemies' threat there against the damage it may
+    /// deal from there. The owner's report (D478): the threat is only that of the enemies playing before the fighter's first
+    /// turn, those after finding it gone from where it stood, so that one playing first goes where it strikes and one playing
+    /// after the enemies stays out of their reach; every enemy's when the fighter is not in the order.
+    /// </remarks>
+    public int Place(ImaginedFight fight, IEnumerable<int> cells, FightKnowledge knowledge, TacticWeights weights, IReadOnlyList<long>? turnOrder = null)
     {
         ArgumentNullException.ThrowIfNull(fight);
         ArgumentNullException.ThrowIfNull(cells);
 
         var judge = JudgeOf(fight, knowledge, weights);
         var actor = fight.Actor;
+        var threatening = PlayingBefore(fight, turnOrder ?? []);
         var best = actor.Cell;
-        var bestScore = judge.Judge(fight);
+        var bestScore = Judged(judge, fight, threatening);
 
         foreach (var cell in cells)
         {
             if (cell == actor.Cell || !fight.Map.IsWalkable(cell) || fight.On(cell) is not null)
                 continue;
 
-            var score = judge.Judge(fight.With(actor with { Cell = cell }));
+            var score = Judged(judge, fight.With(actor with { Cell = cell }), threatening);
 
             if (score > bestScore + Better)
             {

@@ -788,3 +788,8 @@ or refines another says so in its own entry. Add a line here with every new deci
 
 - [D477](decisions/d477-game-following-pause-and-ready.md#d477-a-follower-the-game-moves-is-not-paused-by-its-clients-walks-and-leaves-its-readiness-to-the-server) A follower the game moves is not paused by its client's walks, and leaves its readiness to the server (2026-11-20)
   - Telling the client's walks by their delay, keeping the followers' readiness.
+
+## Fights, the placement weighed by the turn order (D478)
+
+- [D478](decisions/d478-placement-turn-order.md#d478-a-placement-weighs-only-the-threat-of-the-enemies-playing-before-the-characters-first-turn) A placement weighs only the threat of the enemies playing before the character's first turn (2026-11-20)
+  - A fixed rule by the turn order, the group placed together.

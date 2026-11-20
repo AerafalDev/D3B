@@ -8,6 +8,7 @@
 #:include fights/FightsCommand.cs
 #:include fights/HuntBench.cs
 #:include fights/LiveBench.cs
+#:include fights/PlacementBench.cs
 #:include fights/Tally.cs
 #:include fights/TurnBench.cs
 

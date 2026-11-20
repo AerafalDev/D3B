@@ -172,6 +172,26 @@ public sealed class FightTacticsTests
     }
 
     [Fact]
+    public void ACharacterPlayingBeforeTheEnemiesIsPlacedWhereItStrikesThemFirst()
+    {
+        var near = Off(-2, 0);
+        var far = Off(-9, 0);
+        var (fight, knowledge) = Fight(Caster(Off(-8, 0)) with { Life = 50 }, Biter(-1, Off(2, 0), life: 200), Biter(-2, Off(2, 1), life: 200));
+
+        Assert.Equal(near, _tactics.Place(fight, [far, near], knowledge, TacticWeights.Default, [1, -1, -2]));
+    }
+
+    [Fact]
+    public void ACharacterPlayingAfterTheEnemiesIsPlacedOutOfTheirReach()
+    {
+        var near = Off(-2, 0);
+        var far = Off(-9, 0);
+        var (fight, knowledge) = Fight(Caster(near) with { Life = 50 }, Biter(-1, Off(2, 0), life: 200), Biter(-2, Off(2, 1), life: 200));
+
+        Assert.Equal(far, _tactics.Place(fight, [far, near], knowledge, TacticWeights.Default, [-1, -2, 1]));
+    }
+
+    [Fact]
     public void OverTheFightEachEnemyStrikesOnlyWhileItLives()
     {
         // Six weak biters: every one striking every turn takes the character's life before it beats them; over the fight,

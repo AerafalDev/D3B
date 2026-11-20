@@ -268,7 +268,7 @@ public static class FightPlay
 
         await ChooseBonusAsync(context, cancellationToken).ConfigureAwait(false);
 
-        var cell = tactics.Place(imagined.Fight, fight.OwnCells, imagined.Knowledge, weights);
+        var cell = tactics.Place(imagined.Fight, fight.OwnCells, imagined.Knowledge, weights, (context.State.Fight ?? fight).TurnOrder);
 
         if (!await PacedAsync(context, Placing, cancellationToken).ConfigureAwait(false))
             return;

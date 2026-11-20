@@ -176,7 +176,19 @@ public sealed class FightJudge
     /// <returns>Its worth for the fighter playing's side.</returns>
     public double Judge(ImaginedFight fight)
     {
-        return Judge(fight, threatened: true);
+        return Judge(fight, threatened: true, null);
+    }
+
+    /// <summary>Judges a fight once the fighter playing's turn ends, the threat only that of some enemies.</summary>
+    /// <param name="fight">The fight imagined.</param>
+    /// <param name="threatening">The enemies whose threat counts.</param>
+    /// <returns>Its worth for the fighter playing's side.</returns>
+    /// <remarks>Where a fighter stands as the fight starts, the enemies playing after it find it gone from there (D478).</remarks>
+    public double Judge(ImaginedFight fight, IReadOnlySet<long> threatening)
+    {
+        ArgumentNullException.ThrowIfNull(threatening);
+
+        return Judge(fight, threatened: true, threatening);
     }
 
     /// <summary>Judges a fight once the enemies played the turns that follow the fighter playing's, as the search imagined them.</summary>
@@ -184,7 +196,7 @@ public sealed class FightJudge
     /// <returns>Its worth for the fighter playing's side, the threat left out: the enemies' blows are in the fighters' life.</returns>
     public double JudgeReplied(ImaginedFight fight)
     {
-        return Judge(fight, threatened: false);
+        return Judge(fight, threatened: false, null);
     }
 
     /// <summary>Judges a fight once the enemies replied, the fighter playing's next turn searched from there rather than reckoned.</summary>
@@ -245,13 +257,24 @@ public sealed class FightJudge
     /// <remarks>What the bench sets against the life the fighter lost before its next turn (D206).</remarks>
     public double Threat(ImaginedFight fight, long allyId)
     {
+        return Threat(fight, allyId, null);
+    }
+
+    /// <summary>Gets the life the threat of some enemies reckons they may take from a fighter of the side playing.</summary>
+    /// <param name="fight">The fight, as the fighter playing's turn ends.</param>
+    /// <param name="allyId">The fighter.</param>
+    /// <param name="threatening">The enemies whose threat counts, every one when null.</param>
+    /// <returns>The life, unweighed; 0 for a fighter of the other side or not in the fight.</returns>
+    /// <remarks>What the bench sets against the life a fighter lost before its first turn, the enemies playing before it (D478).</remarks>
+    public double Threat(ImaginedFight fight, long allyId, IReadOnlySet<long>? threatening)
+    {
         ArgumentNullException.ThrowIfNull(fight);
 
         Span<double> feared = stackalloc double[fight.Fighters.Length];
 
         foreach (var fighter in fight.Fighters)
         {
-            if (fighter.IsAlive && fighter.Team != _team)
+            if (fighter.IsAlive && fighter.Team != _team && threatening?.Contains(fighter.Id) != false)
                 Threaten(fight, fighter, _tables.IndexOf(fighter), feared);
         }
 
@@ -316,7 +339,7 @@ public sealed class FightJudge
         return worth;
     }
 
-    private double Judge(ImaginedFight fight, bool threatened)
+    private double Judge(ImaginedFight fight, bool threatened, IReadOnlySet<long>? threatening)
     {
         ArgumentNullException.ThrowIfNull(fight);
 
@@ -348,7 +371,7 @@ public sealed class FightJudge
 
             worth -= Cost(fighter, known, Effective(fighter));
 
-            if (threatened)
+            if (threatened && threatening?.Contains(fighter.Id) != false)
                 Threaten(fight, fighter, known, feared);
         }
 
