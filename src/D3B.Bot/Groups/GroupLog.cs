@@ -26,6 +26,15 @@ internal static partial class GroupLog
     [LoggerMessage(Level = LogLevel.Information, Message = "Bot {Character}: turns off its automatic options in party {Party}")]
     public static partial void OptionsOff(ILogger logger, long character, int party);
 
+    [LoggerMessage(Level = LogLevel.Information, Message = "Bot {Character}: turns on its automatic options in party {Party}, which the game follows")]
+    public static partial void OptionsOn(ILogger logger, long character, int party);
+
+    [LoggerMessage(Level = LogLevel.Information, Message = "Bot {Character}: asks to follow the leader of party {Party}")]
+    public static partial void FollowingLeader(ILogger logger, long character, int party);
+
+    [LoggerMessage(Level = LogLevel.Information, Message = "Bot {Character}: asks its followers to follow it in party {Party}")]
+    public static partial void CallingFollowers(ILogger logger, long character, int party);
+
     [LoggerMessage(Level = LogLevel.Information, Message = "Bot {Character}: walks with its master {Master} to cell {Cell}")]
     public static partial void Copying(ILogger logger, long character, long master, int cell);
 

@@ -37,7 +37,8 @@ D3B updates itself. After an update of the game, wait for the D3B version that s
 3. To take the character back, just play it: the bot pauses until you press Play again.
 
 For a group, make a **Follow** profile for the followers (*Add* in the assets' panel) and name their leader in it. The
-leader plays any profile.
+leader plays any profile. When every account is subscribed and the followers are level 10 or more, they follow, join
+the fights and get ready through the game's own party options, and D3B still watches that none is left behind.
 
 If D3B crashes, the game cannot connect until you start D3B again and close it.
 

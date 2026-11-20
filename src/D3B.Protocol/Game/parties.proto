@@ -206,3 +206,98 @@ enum PartyFightCause {
   PARTY_FIGHT_CAUSE_VALUE_3 = 3;
   PARTY_FIGHT_CAUSE_VALUE_4 = 4;
 }
+
+// Turns on the first of a member's two automatic options, which PartyAutoOptionOneOffRequest turns off: the client sends it
+// 3 to 22 ms after each party its character joins while its window has the option on, and as the player ticks it, answered
+// by an empty response (D435, D476).
+message PartyAutoOptionOneOnRequest {
+  // No capture sets it.
+  repeated int32 numbers_1 = 1;
+}
+
+// Turns on the second of the two options, which PartyAutoOptionTwoOffRequest turns off, right after the first.
+message PartyAutoOptionTwoOnRequest {
+  // No capture sets it.
+  repeated string texts_1 = 1;
+}
+
+// The leader asks its party's members to follow it, or to stop. Measured on the owner's game of 2026-11-20 (D476): the
+// server tells each member, whose client then asks to follow the leader or to stop, by itself; a member whose own option is
+// off was not measured.
+message PartyFollowMeRequest {
+  bool follow = 1;
+
+  // No capture sets this field, nor the next.
+  Unmeasured value_2 = 2;
+  int64 number_3 = 3;
+
+  enum Unmeasured {
+    UNMEASURED_VALUE_0 = 0;
+    UNMEASURED_VALUE_1 = 1;
+    UNMEASURED_VALUE_2 = 2;
+    UNMEASURED_VALUE_3 = 3;
+    UNMEASURED_VALUE_4 = 4;
+    UNMEASURED_VALUE_5 = 5;
+    UNMEASURED_VALUE_6 = 6;
+    UNMEASURED_VALUE_7 = 7;
+    UNMEASURED_VALUE_8 = 8;
+  }
+}
+
+// Follows the party's leader, the third option of a member's party window, which asks level 10 and a subscription. Measured
+// (D476): from then on, as the leader walks, the server tells the member where, and the member's client walks after it by
+// itself, 4 to 6 ms later.
+message PartyFollowLeaderRequest {
+}
+
+// The server's answer to the request to follow the leader, to the connection that sent it, the client or D3B.
+message PartyFollowLeaderResponse {
+  Result result = 1;
+
+  enum Result {
+    // Every answer captured, each followed by the leader's place.
+    RESULT_DONE = 0;
+    // No capture sets it.
+    RESULT_VALUE_1 = 1;
+  }
+}
+
+// Stops following the party's leader: the client sends it by itself once its leader asked its members to stop.
+message PartyStopFollowingRequest {
+  // No capture sets it.
+  Unmeasured value_1 = 1;
+
+  message Unmeasured {
+    repeated int64 numbers_1 = 1;
+    int64 number_2 = 2;
+    optional int64 number_3 = 3;
+    string text_4 = 4;
+    optional int32 number_5 = 5;
+    int32 number_6 = 6;
+    repeated bool flags_7 = 7;
+    repeated bool flags_8 = 8;
+  }
+}
+
+// The server's answer to the request to stop following the leader.
+message PartyStopFollowingResponse {
+  Result result = 1;
+
+  enum Result {
+    // Every answer captured.
+    RESULT_DONE = 0;
+    // No capture sets it.
+    RESULT_VALUE_1 = 1;
+  }
+}
+
+// A member of the character's party follows its leader now, to the other members, the leader among them.
+message PartyMemberFollowsEvent {
+  int64 member_id = 1;
+}
+
+// A member of the character's party no longer follows its leader, to the members: the one stopping among them, measured on
+// three members stopping at once, each told of three.
+message PartyMemberStopsFollowingEvent {
+  int64 member_id = 1;
+}

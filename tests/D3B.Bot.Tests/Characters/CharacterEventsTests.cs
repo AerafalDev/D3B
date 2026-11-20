@@ -813,6 +813,28 @@ public sealed class CharacterEventsTests
     }
 
     [Fact]
+    public void TheCharacterFollowsItsLeaderFromTheServersAnswerToItsStopOrItsWord()
+    {
+        // Measured on the owner's game of 2026-11-20 (D476): an answer to the request to follow, whoever sent it, and the
+        // word that a member stopped, the stopping one told too.
+        var self = TestPlay.Key.CharacterId;
+        var party = Apply(_chosen, Server(Joined(4, 900, 900, self)));
+
+        var following = Apply(party, Server(new PartyFollowLeaderResponse()));
+        var refused = Apply(party, Server(new PartyFollowLeaderResponse { Result = PartyFollowLeaderResponse.Types.Result.Value1 }));
+        var another = Apply(following, Server(new PartyMemberStopsFollowingEvent { MemberId = 901 }), Server(new PartyNewMemberEvent { PartyId = 4, Member = Member(902) }));
+
+        Assert.False(party.Party!.FollowsLeader);
+        Assert.True(following.Party!.FollowsLeader);
+        Assert.False(refused.Party!.FollowsLeader);
+        Assert.True(another.Party!.FollowsLeader);
+        Assert.False(Apply(following, Server(new PartyMemberStopsFollowingEvent { MemberId = self })).Party!.FollowsLeader);
+        Assert.False(Apply(following, Server(new PartyStopFollowingResponse())).Party!.FollowsLeader);
+        Assert.True(Apply(party, Server(new PartyMemberFollowsEvent { MemberId = self })).Party!.FollowsLeader);
+        Assert.Null(Apply(_chosen, Server(new PartyFollowLeaderResponse())).Party);
+    }
+
+    [Fact]
     public void AnotherPartysEndLeavesTheCharactersParty()
     {
         var self = TestPlay.Key.CharacterId;

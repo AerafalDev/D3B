@@ -348,6 +348,12 @@ The bots run in `D3B.Bot`: what each part does today, with the decisions that ma
   and open (`FightState.IsOpen`): its options listed, after the placement's cells, and the one that closes it off (D475).
   Before any action (D441), the gate waits too for each follower's life over the share the master's profile heals under
   (`GroupLife`, the life its activity watches), and the follower with its master eats what only heals, else regenerates.
+  A group the game can follow (`GameFollowing`, D476: every account subscribed, every follower of level 10 or more, the master
+  leading its party) turns the game's options on instead: the follower's client walks after its leader and the server joins
+  it to its leader's fights and sets it ready. The follower then copies no walk while it follows, asks to follow again on its master's map
+  while it does not (`CharacterParty.FollowsLeader`, from the server's answers and words), goes by its own paths once the
+  game did not bring it to its master's new map within 10 s, and joins by request a fight the server did not join it to
+  within 1 s, its options turned on again; the master's gate asks its members to follow it while one with it does not.
   A master whose activity banks unloads through its group's bank (D442, `IGroupBank`, `BotActor.Bank`, `GroupBank`), which
   its run asks before each step: a follower full at the pods the activity watches takes the group to the bank, each
   follower gives the master what it carries by an exchange, its readiness once 3.5 s passed with no change (D458)
@@ -476,7 +482,7 @@ Built in session 3b (D35 to D38): the relay of the connection phase, in `D3B.Net
   in its `game` directory, with the messages the game's frames carry), pairs every readable message and enum with its
   counterpart (`ProtocolMatcher`: pins, anchors, fields, then structural scores; `google.protobuf.Any` is its own
   counterpart), audits the result (`ContractAudit`, which counts what partial messages leave out apart from its notes),
-  and writes it beside the pack, `mapping-23.binpb` (`MappingFile`, D342, D383), only when it holds. For what is left open it
+  and writes it beside the pack, `mapping-24.binpb` (`MappingFile`, D342, D383), only when it holds. For what is left open it
   lists the build's messages that fit, which the maintainer pins (D54). The mapping records the schema's SHA-256 and the
   readable protocol's digest (`ProtocolDigest`); `MappingFile.FormatVersion` changes with `mapping.proto` or that
   digest.

@@ -226,6 +226,10 @@ public static class CharacterEvents
             PartyDeletedEvent deleted when state.Party?.Id == deleted.PartyId => Unparty(state),
             PartyLeaveEvent left when state.Party?.Id == left.PartyId => Unparty(state),
             PartyKickedByEvent kicked when state.Party?.Id == kicked.PartyId => Unparty(state),
+            PartyFollowLeaderResponse { Result: PartyFollowLeaderResponse.Types.Result.Done } when state.Party is { } party => state with { Party = party with { FollowsLeader = true } },
+            PartyStopFollowingResponse { Result: PartyStopFollowingResponse.Types.Result.Done } when state.Party is { } party => state with { Party = party with { FollowsLeader = false } },
+            PartyMemberFollowsEvent follows when follows.MemberId == self && state.Party is { } party => state with { Party = party with { FollowsLeader = true } },
+            PartyMemberStopsFollowingEvent stops when stops.MemberId == self && state.Party is { } party => state with { Party = party with { FollowsLeader = false } },
             PartyMemberInFightEvent { Map: { } map } fighting when state.Party?.Id == fighting.PartyId => state with
             {
                 PartyFight = new PartyMemberFight(fighting.MemberId, fighting.FightId, map.MapId),

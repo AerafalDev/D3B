@@ -35,6 +35,41 @@ public sealed class GroupGateTests
     }
 
     [Fact]
+    public async Task AMasterTheGameFollowsAsksAFollowerWithItThatDoesNotFollowToFollowItEveryThirtySeconds()
+    {
+        // The owner's report (D476): the leader's "follow me" off, its members stop; on again, they follow again.
+        await using var play = new TestPlay();
+        var (masterConnection, master, followerConnection, follower) = await TestGroup.FollowedByTheGameAsync(play, 300, 301);
+
+        using var membership = play.Bots.Groups.Follow(follower, TestGroup.Master, out _);
+
+        followerConnection.Server(TestGroup.Party(TestGroup.PartyId, TestGroup.MasterId, TestGroup.MasterId, TestGroup.FollowerId));
+        await follower.ProcessedAsync();
+        await Act(master, _act);
+
+        Assert.Equal(new PartyFollowMeRequest { Follow = true }, masterConnection.Sent[0]);
+        Assert.Equal(_act, masterConnection.Sent[1]);
+
+        await Act(master, _act);
+
+        Assert.Equal(3, masterConnection.Sent.Count);
+
+        play.Time.Advance(GroupGate.CallAgainAfter);
+        await Act(master, _act);
+
+        Assert.Equal(new PartyFollowMeRequest { Follow = true }, masterConnection.Sent[3]);
+
+        // Its follower following, the master asks no more.
+        followerConnection.Response(new PartyFollowLeaderResponse());
+        await follower.ProcessedAsync();
+        play.Time.Advance(GroupGate.CallAgainAfter);
+        await Act(master, _act);
+
+        Assert.Equal(_act, masterConnection.Sent[^1]);
+        Assert.Equal(6, masterConnection.Sent.Count);
+    }
+
+    [Fact]
     public async Task AMasterNobodyFollowsActsAtOnce()
     {
         await using var play = new TestPlay();

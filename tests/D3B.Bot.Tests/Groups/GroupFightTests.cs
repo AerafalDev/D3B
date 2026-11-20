@@ -391,6 +391,70 @@ public sealed class GroupFightTests
         run.Stop();
     }
 
+    // A group the game follows (D476), its follower following, its options on.
+    private static async Task<(TestConnection Master, BotActor MasterBot, TestConnection Follower, BotActor FollowerBot, ActivityRun Run)> FollowedByTheGameAsync(TestPlay play)
+    {
+        var (masterConnection, master, connection, follower) = await TestGroup.FollowedByTheGameAsync(play, Far, 301);
+        var run = Follow(play, follower);
+
+        connection.Server(TestGroup.Party(TestGroup.PartyId, TestGroup.MasterId, TestGroup.MasterId, TestGroup.FollowerId));
+        Assert.IsType<PartyFollowLeaderRequest>(await TestGroup.SentAsync(play, connection, 3));
+        connection.Response(new PartyFollowLeaderResponse());
+        await TestGroup.SettleAsync(follower);
+
+        return (masterConnection, master, connection, follower, run);
+    }
+
+    [Fact]
+    public async Task AFollowerTheGameFollowsLeavesItsJoinToTheServer()
+    {
+        // Measured on the owner's game of 2026-11-20 (D476): the server joined the followers in the millisecond of the attack.
+        await using var play = new TestPlay();
+        var (masterConnection, master, followerConnection, follower, run) = await FollowedByTheGameAsync(play);
+        var monster = Beside(Far, 8, 0);
+
+        master.FightsAlone = true;
+        Placement(masterConnection, TestGroup.MasterId, Far, Beside(monster, -3, 0), monster, true, TestPlay.EastMapId);
+        followerConnection.Server(InFight(TestPlay.MapId));
+        await TestGroup.SettleAsync(master, follower);
+        play.Time.Advance(TimeSpan.FromMilliseconds(500));
+        await TestGroup.SettleAsync(master, follower);
+        Placement(followerConnection, TestGroup.FollowerId, 301, Beside(monster, -3, 0), monster, true, TestPlay.EastMapId);
+        await TestGroup.SettleAsync(master, follower);
+        play.Time.Advance(TimeSpan.FromSeconds(2));
+        await TestGroup.SettleAsync(master, follower);
+
+        Assert.True(follower.State.IsFighting);
+        Assert.DoesNotContain(followerConnection.Sent, request => request is FightJoinRequest);
+        run.Stop();
+    }
+
+    [Fact]
+    public async Task AFollowerTheServerDidNotJoinJoinsByRequestAndTurnsItsOptionsOnAgain()
+    {
+        await using var play = new TestPlay();
+        var (masterConnection, master, followerConnection, follower, run) = await FollowedByTheGameAsync(play);
+        var monster = Beside(Far, 8, 0);
+
+        master.FightsAlone = true;
+        Placement(masterConnection, TestGroup.MasterId, Far, Beside(monster, -3, 0), monster, true, TestPlay.EastMapId);
+        followerConnection.Server(InFight(TestPlay.MapId));
+
+        Assert.Equal(new FightJoinRequest { FightId = FightId, FighterId = TestGroup.MasterId }, await TestGroup.SentAsync(play, followerConnection, 4));
+
+        // The server answers nothing: once its fight is over, the follower's options go on again.
+        masterConnection.Server(new ContextDestroyEvent());
+        masterConnection.Server(new ContextCreationEvent { Context = ContextCreationEvent.Types.GameContext.Roleplay });
+        TestGroup.Arrive(masterConnection, TestGroup.MasterId, TestPlay.MapId, Far);
+        followerConnection.Server(new ContextDestroyEvent());
+        followerConnection.Server(new ContextCreationEvent { Context = ContextCreationEvent.Types.GameContext.Roleplay });
+        TestGroup.Arrive(followerConnection, TestGroup.FollowerId, TestPlay.MapId, 301);
+
+        Assert.IsType<PartyAutoOptionOneOnRequest>(await TestGroup.SentAsync(play, followerConnection, 5));
+        Assert.IsType<PartyAutoOptionTwoOnRequest>(await TestGroup.SentAsync(play, followerConnection, 6));
+        run.Stop();
+    }
+
     [Fact]
     public async Task AFollowerWaitsForItsMastersFightToListItsOptionsBeforeJoiningIt()
     {

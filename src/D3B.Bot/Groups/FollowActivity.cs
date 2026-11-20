@@ -22,7 +22,7 @@ namespace D3B.Bot.Groups;
 /// </para>
 /// <list type="number">
 /// <item>The party first (D431): a party the master is not in is left, the master's invitation accepted and any other
-/// refused, and once in the master's party, whoever leads it (D471), the game's two automatic options turned off. Measured on 3.7.14.18 (D437): the client
+/// refused, and once in the master's party, whoever leads it (D471), the game's two automatic options turned off, or on in a group the game follows (D476). Measured on 3.7.14.18 (D437): the client
 /// turns them on by itself 3 to 22 ms after each party it joins, as long as its own window has them on, so the follower
 /// lets the client's display time pass, then turns both off, at each party joined.</item>
 /// <item>The master missing, disconnected or paused, the follower waits where it stands: no follower leads (D432).</item>
@@ -40,6 +40,13 @@ namespace D3B.Bot.Groups;
 /// <para>
 /// As its master attacks on its map, the follower joins the fight by request (D431, D435); the AI places it and says it
 /// is ready, as it plays the follower's own fights, such as an aggression on its way.
+/// </para>
+/// <para>
+/// A group the game can follow (<see cref="GameFollowing"/>, D476) turns the three options on instead: the client walks
+/// after its master and the server joins the follower to its master's fights. The bot does not copy the walks then, but
+/// watches: a follower that no longer follows, once on its master's map, asks again; one the game did not bring to its
+/// master's map within a while goes there by its own paths; one the server did not join to its master's fight joins it by
+/// request and turns its options on again.
 /// </para>
 /// </remarks>
 public sealed class FollowActivity : BotActivity, IDisposable
@@ -64,6 +71,16 @@ public sealed class FollowActivity : BotActivity, IDisposable
 
     private static readonly TimeSpan _readyAgainAfter = TimeSpan.FromSeconds(1);
 
+    // How often a follower that does not follow its leader asks again, once on its master's map (D476).
+    private static readonly TimeSpan _followAgainAfter = TimeSpan.FromSeconds(10);
+
+    // How long the game's following has to bring a follower to its master's new map before the bot takes it there (D476):
+    // measured, the client walks after its leader 4 to 6 ms after the server tells it where; a map change was not measured.
+    private static readonly TimeSpan _gameWay = TimeSpan.FromSeconds(10);
+
+    // Measured (D476): the server joins a follower to its leader's fight in the millisecond of the attack, with no request.
+    private static readonly TimeSpan _gameJoin = TimeSpan.FromSeconds(1);
+
     private readonly Bots _bots;
     private readonly GameTables _tables;
     private readonly string _masterId;
@@ -72,7 +89,9 @@ public sealed class FollowActivity : BotActivity, IDisposable
     // Only the activity's steps, one at a time, read and write them.
     private readonly HashSet<int> _refused = [];
     private readonly HashSet<int> _unusable = [];
-    private (string? Connection, int Party)? _optionsOff;
+    private (string? Connection, int Party, bool Game)? _options;
+    private DateTimeOffset? _followAsked;
+    private (long? Map, DateTimeOffset At)? _mastersMap;
     private (string? Connection, int Fight)? _joined;
     private int? _over;
     private (string? Connection, int Round)? _giving;
@@ -201,6 +220,11 @@ public sealed class FollowActivity : BotActivity, IDisposable
 
         var theirs = seen.State;
         var name = GameTextValue.Of(theirs.Name);
+        var now = context.Time.GetUtcNow();
+        var game = InGame(theirs, now);
+
+        if (_mastersMap?.Map != theirs.MapId)
+            _mastersMap = (theirs.MapId, now);
 
         if (GroupChain.Together(theirs, state))
         {
@@ -211,7 +235,13 @@ public sealed class FollowActivity : BotActivity, IDisposable
             // In real time first (D447): a follower healing would fall a map behind its master, who walks on.
             Publish(GameText.Of(GroupTexts.Text("DoingFollows"), name));
 
-            if (await CopyAsync(context, theirs, cancellationToken).ConfigureAwait(false))
+            // The game's following lost, the owner's ask (D476): on its master's map, it asks again.
+            if (game && await FollowAgainAsync(context, now, cancellationToken).ConfigureAwait(false))
+                return true;
+
+            // Its client walks after its master by itself while it follows by the game (D476): two walks would race (D456). Not
+            // following, such as refused, it copies them as before.
+            if (!(game && state.Party?.FollowsLeader == true) && await CopyAsync(context, theirs, cancellationToken).ConfigureAwait(false))
                 return true;
 
             // Its life over the share its master's profile heals under, before its master's next action (D433, D441).
@@ -266,6 +296,15 @@ public sealed class FollowActivity : BotActivity, IDisposable
             return true;
         }
 
+        // Following by the game, its client takes it after its master: the bot waits a while before it goes by its own paths.
+        if (game && state.Party?.FollowsLeader == true && _mastersMap is { } since && now - since.At < _gameWay)
+        {
+            Publish(GameText.Of(GroupTexts.Text("DoingFollows"), name));
+            await WaitAsync(context, changed, mine, seen, cancellationToken).ConfigureAwait(false);
+
+            return true;
+        }
+
         Publish(GameText.Of(GroupTexts.Text("DoingJoins"), name));
 
         if (!await TowardsAsync(context, map, cancellationToken).ConfigureAwait(false))
@@ -279,6 +318,30 @@ public sealed class FollowActivity : BotActivity, IDisposable
     {
         _membership?.Dispose();
         _membership = null;
+    }
+
+    // Whether its master's group follows by the game's options (D476), as its master is now.
+    private bool InGame(CharacterState master, DateTimeOffset now)
+    {
+        return GameFollowing.Applies(master, [.. _bots.Groups.FollowersOf(master.Key).Select(follower => follower.State)], now);
+    }
+
+    // Whether it asked to follow its leader this step: its options on in this party first, not following, and not asked within
+    // a while (D476).
+    private async Task<bool> FollowAgainAsync(BotContext context, DateTimeOffset now, CancellationToken cancellationToken)
+    {
+        if (context.State.Party is not { FollowsLeader: false } party || _options != (context.Actor.ConnectionId, party.Id, true)
+            || (_followAsked is { } asked && now - asked < _followAgainAfter))
+        {
+            return false;
+        }
+
+        _followAsked = now;
+        GroupLog.FollowingLeader(context.Log, context.Actor.Key.CharacterId, party.Id);
+        await context.SendAsync(new PartyFollowLeaderRequest(), cancellationToken).ConfigureAwait(false);
+        await context.WaitUntilAsync(state => state.Party is not { FollowsLeader: false }, context.Delays.Answer, cancellationToken).ConfigureAwait(false);
+
+        return true;
     }
 
     private CharacterKey Join(BotActor me)
@@ -338,19 +401,40 @@ public sealed class FollowActivity : BotActivity, IDisposable
             return true;
         }
 
-        if (state.Party is { } party && party.Members.Contains(masterId) && _optionsOff != (me.ConnectionId, party.Id))
+        if (state.Party is not { } party || !party.Members.Contains(masterId))
+            return false;
+
+        // The game's options on in a group the game follows (D476), else off (D431), again as the group changes, such as a
+        // follower whose subscription ended. A master connecting again has no party until the server gives it: what was
+        // decided holds meanwhile, lest each of its connections turn every follower's options off and on.
+        var game = _bots.TryGet(master, out var leader) && leader.IsConnected && leader.State.Party is not null
+            ? InGame(leader.State, context.Time.GetUtcNow())
+            : _options is { } decided && decided.Connection == me.ConnectionId && decided.Party == party.Id && decided.Game;
+
+        if (_options == (me.ConnectionId, party.Id, game))
+            return false;
+
+        // Measured (D437): the client turns both on 3 to 22 ms after the party's join, which its display time leaves behind.
+        await Task.Delay(context.Delays.Display, context.Time, cancellationToken).ConfigureAwait(false);
+        _options = (me.ConnectionId, party.Id, game);
+
+        if (game)
         {
-            // Measured (D437): the client turns both on 3 to 22 ms after the party's join, which its display time leaves behind.
-            await Task.Delay(context.Delays.Display, context.Time, cancellationToken).ConfigureAwait(false);
-            GroupLog.OptionsOff(context.Log, me.Key.CharacterId, party.Id);
-            await context.SendAsync(new PartyAutoOptionOneOffRequest(), cancellationToken).ConfigureAwait(false);
-            await context.SendAsync(new PartyAutoOptionTwoOffRequest(), cancellationToken).ConfigureAwait(false);
-            _optionsOff = (me.ConnectionId, party.Id);
+            GroupLog.OptionsOn(context.Log, me.Key.CharacterId, party.Id);
+            await context.SendAsync(new PartyAutoOptionOneOnRequest(), cancellationToken).ConfigureAwait(false);
+            await context.SendAsync(new PartyAutoOptionTwoOnRequest(), cancellationToken).ConfigureAwait(false);
 
             return true;
         }
 
-        return false;
+        GroupLog.OptionsOff(context.Log, me.Key.CharacterId, party.Id);
+        await context.SendAsync(new PartyAutoOptionOneOffRequest(), cancellationToken).ConfigureAwait(false);
+        await context.SendAsync(new PartyAutoOptionTwoOffRequest(), cancellationToken).ConfigureAwait(false);
+
+        if (context.State.Party?.FollowsLeader == true)
+            await context.SendAsync(new PartyStopFollowingRequest(), cancellationToken).ConfigureAwait(false);
+
+        return true;
     }
 
     // Whether the follower stands where it copied its master's last walk to, on the map its master just left: its exit.
@@ -484,6 +568,16 @@ public sealed class FollowActivity : BotActivity, IDisposable
             await context.ReleaseHeldWalkAsync(cancellationToken).ConfigureAwait(false);
 
             return true;
+        }
+
+        // In a group the game follows, the server joins the follower itself (D476): a join told and not made says its options
+        // went off, which the bot turns on again after its join.
+        if (InGame(master.State, context.Time.GetUtcNow()))
+        {
+            if (await context.WaitUntilAsync(now => now.IsFighting, _gameJoin, cancellationToken).ConfigureAwait(false))
+                return true;
+
+            _options = null;
         }
 
         _joined = (me.ConnectionId, fight.FightId);

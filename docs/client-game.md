@@ -1454,6 +1454,21 @@ failure; without the captures, the pins and the structure pair the same.
   (`scripts/capture.cs --messages`): each of the 3,109 placements that began lists the team's four options, after the
   placement's cells and before the turns' order, in the millisecond of the fight's join, so that a fight kept closed
   looks open in between.
+- **The game's own following** (D476), on the owner's game of 2026-11-20, four connections of 05:53 UTC through the host,
+  played by hand, the leader walking on one map only (`scripts/capture.cs --messages --frames`, structure only):
+  - **Following is the client's**: a member asks to follow its leader, with no field; the server answers, then, at each of
+    its leader's walks, tells it in the same millisecond the leader's party, id and place, and the member's client sends its
+    own walk 4 to 6 ms later. The other members are told that it follows, by its id; stopping, each member is told, the one
+    stopping too.
+  - **The leader's "follow me"**: a request with one flag; the server passes the flag to each member 28 ms later, and each
+    member's client asks by itself, 3 to 5 ms after, to follow or to stop.
+  - **Joined and ready by the server**: the followers' context became the fight's in the millisecond of their leader's
+    attack, with no request to join and no word of a member's fight, and the four were ready in the millisecond their
+    leader was, the followers sending no readiness.
+  - **The options on**: the two requests a client sends at each party joined turn on the two options its off requests turn
+    off; the owner ticking them on in a capture of 2026-11-18 sent the same, each answered by a response.
+  - **Mapped** (D476): those requests and the leader's, the answers to following and stopping, and the words that a member
+    follows or stopped. Format 24, every readable field paired; the leader's place and the flag passed on are not.
 - **The exchange's readiness** (D458), on the owner's test of 2026-11-19: a follower moving 67 stacks one by one, each after
   the client's display time, took 39 s. A readiness sent 0.5 s after the exchange's last change was never answered, twice;
   every one sent 3.5 to 4 s after was answered 28 ms later, and the master's, sent 60 ms after its follower's, was taken.

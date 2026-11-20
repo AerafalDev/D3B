@@ -527,6 +527,173 @@ public sealed class FollowActivityTests
     }
 
     [Fact]
+    public async Task AFollowerOfAGroupTheGameFollowsTurnsItsOptionsOnAndFollowsItsLeaderOnce()
+    {
+        // The owner's choice (D476): every account subscribed, the master leading, the game's three options on.
+        await using var play = new TestPlay();
+        var (_, _, connection, follower) = await TestGroup.FollowedByTheGameAsync(play, 300, 301);
+        var run = Follow(play, follower, TestGroup.Master);
+
+        connection.Server(TestGroup.Party(TestGroup.PartyId, TestGroup.MasterId, TestGroup.MasterId, TestGroup.FollowerId));
+
+        Assert.IsType<PartyAutoOptionOneOnRequest>(await TestGroup.SentAsync(play, connection, 1));
+        Assert.IsType<PartyAutoOptionTwoOnRequest>(await TestGroup.SentAsync(play, connection, 2));
+        Assert.IsType<PartyFollowLeaderRequest>(await TestGroup.SentAsync(play, connection, 3));
+
+        connection.Response(new PartyFollowLeaderResponse());
+        await TestGroup.SettleAsync(follower);
+        play.Time.Advance(TimeSpan.FromSeconds(30));
+        await TestGroup.SettleAsync(follower);
+
+        Assert.True(follower.State.Party?.FollowsLeader);
+        Assert.Equal(3, connection.Sent.Count);
+        run.Stop();
+    }
+
+    [Fact]
+    public async Task AFollowerOfAGroupWithAnAccountNotSubscribedTurnsTheOptionsOff()
+    {
+        await using var play = new TestPlay();
+        var (masterConnection, master) = await play.EnterAsync(300, TestPlay.MapId, TestPlay.SubscribedAccount, TestGroup.MasterId, "Master");
+        var (connection, follower) = await TestGroup.FollowerAsync(play, 301);
+        var run = Follow(play, follower, TestGroup.Master);
+
+        masterConnection.Server(TestGroup.Party(TestGroup.PartyId, TestGroup.MasterId, TestGroup.MasterId, TestGroup.FollowerId));
+        await master.ProcessedAsync();
+        connection.Server(TestGroup.Party(TestGroup.PartyId, TestGroup.MasterId, TestGroup.MasterId, TestGroup.FollowerId));
+
+        Assert.IsType<PartyAutoOptionOneOffRequest>(await TestGroup.SentAsync(play, connection, 1));
+        Assert.IsType<PartyAutoOptionTwoOffRequest>(await TestGroup.SentAsync(play, connection, 2));
+        run.Stop();
+    }
+
+    [Fact]
+    public async Task AFollowerTheGameFollowsLeavesItsMastersWalksToItsClientAndFollowsAgainOnceItStopped()
+    {
+        await using var play = new TestPlay();
+        var (masterConnection, master, connection, follower) = await TestGroup.FollowedByTheGameAsync(play, 300, 301);
+        var run = Follow(play, follower, TestGroup.Master);
+
+        connection.Server(TestGroup.Party(TestGroup.PartyId, TestGroup.MasterId, TestGroup.MasterId, TestGroup.FollowerId));
+        Assert.IsType<PartyFollowLeaderRequest>(await TestGroup.SentAsync(play, connection, 3));
+        connection.Response(new PartyFollowLeaderResponse());
+        await TestGroup.SettleAsync(follower);
+
+        // Its client walks after its master by itself (D476): the bot's walk would race it.
+        Assert.True(CellPathfinder.TryFind(play.Maps.Get(TestPlay.MapId).Cells.Span, 300, 344, out var path));
+        masterConnection.Server(new MapMovementEvent { ActorId = TestGroup.MasterId, Cells = { path.Cells.ToArray() } });
+        await TestGroup.SettleAsync(follower, master);
+        play.Time.Advance(TimeSpan.FromSeconds(10));
+        await TestGroup.SettleAsync(follower, master);
+
+        Assert.DoesNotContain(connection.Sent, request => request is MapMovementRequest);
+
+        // Its leader asked to stop, its client stopped: on its master's map, it asks again (the owner's ask).
+        connection.Server(new PartyMemberStopsFollowingEvent { MemberId = TestGroup.FollowerId });
+
+        Assert.IsType<PartyFollowLeaderRequest>(await TestGroup.SentAsync(play, connection, 4));
+        run.Stop();
+    }
+
+    [Fact]
+    public async Task AFollowerOfAGroupThatNoLongerQualifiesTurnsItsOptionsOffAndStopsFollowing()
+    {
+        // The game follows the party's leader (D471): the party now led by the follower, the bot drives the group again.
+        await using var play = new TestPlay();
+        var (masterConnection, master, connection, follower) = await TestGroup.FollowedByTheGameAsync(play, 300, 301);
+        var run = Follow(play, follower, TestGroup.Master);
+
+        connection.Server(TestGroup.Party(TestGroup.PartyId, TestGroup.MasterId, TestGroup.MasterId, TestGroup.FollowerId));
+        Assert.IsType<PartyFollowLeaderRequest>(await TestGroup.SentAsync(play, connection, 3));
+        connection.Response(new PartyFollowLeaderResponse());
+        await TestGroup.SettleAsync(follower);
+
+        masterConnection.Server(TestGroup.Party(TestGroup.PartyId, TestGroup.FollowerId, TestGroup.FollowerId, TestGroup.MasterId));
+        await master.ProcessedAsync();
+
+        Assert.IsType<PartyAutoOptionOneOffRequest>(await TestGroup.SentAsync(play, connection, 4));
+        Assert.IsType<PartyAutoOptionTwoOffRequest>(await TestGroup.SentAsync(play, connection, 5));
+        Assert.IsType<PartyStopFollowingRequest>(await TestGroup.SentAsync(play, connection, 6));
+        run.Stop();
+    }
+
+    [Fact]
+    public async Task AFollowerTheGameRefusedToFollowCopiesItsMastersWalks()
+    {
+        await using var play = new TestPlay();
+        var (masterConnection, _, connection, follower) = await TestGroup.FollowedByTheGameAsync(play, 300, 301);
+        var run = Follow(play, follower, TestGroup.Master);
+
+        connection.Server(TestGroup.Party(TestGroup.PartyId, TestGroup.MasterId, TestGroup.MasterId, TestGroup.FollowerId));
+        Assert.IsType<PartyFollowLeaderRequest>(await TestGroup.SentAsync(play, connection, 3));
+        connection.Response(new PartyFollowLeaderResponse { Result = PartyFollowLeaderResponse.Types.Result.Value1 });
+        await TestGroup.SettleAsync(follower);
+
+        // Its client walks after nobody: the bot copies the walk, as in a group the bot drives (D447).
+        Assert.True(CellPathfinder.TryFind(play.Maps.Get(TestPlay.MapId).Cells.Span, 300, 344, out var path));
+        masterConnection.Server(new MapMovementEvent { ActorId = TestGroup.MasterId, Cells = { path.Cells.ToArray() } });
+
+        Assert.IsType<MapMovementRequest>(await TestGroup.SentAsync(play, connection, 4));
+        run.Stop();
+    }
+
+    [Fact]
+    public async Task AFollowerKeepsItsOptionsWhileItsMasterConnectsAgain()
+    {
+        // A master connecting again has no party until the server gives it: the followers' options are not turned off meanwhile.
+        await using var play = new TestPlay();
+        var (masterConnection, _, connection, follower) = await TestGroup.FollowedByTheGameAsync(play, 300, 301);
+        var run = Follow(play, follower, TestGroup.Master);
+
+        connection.Server(TestGroup.Party(TestGroup.PartyId, TestGroup.MasterId, TestGroup.MasterId, TestGroup.FollowerId));
+        Assert.IsType<PartyFollowLeaderRequest>(await TestGroup.SentAsync(play, connection, 3));
+        connection.Response(new PartyFollowLeaderResponse());
+        await TestGroup.SettleAsync(follower);
+
+        masterConnection.Close();
+        await TestGroup.SettleAsync(follower);
+
+        var (again, master) = await play.EnterAsync(300, TestPlay.MapId, TestPlay.SubscribedAccount, TestGroup.MasterId, "Master");
+
+        await TestGroup.SettleAsync(follower, master);
+        again.Server(TestGroup.Party(TestGroup.PartyId, TestGroup.MasterId, TestGroup.MasterId, TestGroup.FollowerId));
+        await TestGroup.SettleAsync(follower, master);
+        play.Time.Advance(TimeSpan.FromSeconds(10));
+        await TestGroup.SettleAsync(follower, master);
+
+        Assert.Equal(3, connection.Sent.Count);
+        run.Stop();
+    }
+
+    [Fact]
+    public async Task AFollowerTheGameFollowsGoesToItsMastersMapItselfOnceTheGameDidNotBringIt()
+    {
+        await using var play = new TestPlay();
+        var (masterConnection, master, connection, follower) = await TestGroup.FollowedByTheGameAsync(play, 300, 301);
+        var run = Follow(play, follower, TestGroup.Master);
+
+        connection.Server(TestGroup.Party(TestGroup.PartyId, TestGroup.MasterId, TestGroup.MasterId, TestGroup.FollowerId));
+        Assert.IsType<PartyFollowLeaderRequest>(await TestGroup.SentAsync(play, connection, 3));
+        connection.Response(new PartyFollowLeaderResponse());
+        await TestGroup.SettleAsync(follower);
+
+        var arrived = play.Time.GetUtcNow();
+
+        TestGroup.Arrive(masterConnection, TestGroup.MasterId, TestPlay.NorthMapId, 500);
+        await TestGroup.SettleAsync(follower, master);
+        play.Time.Advance(TimeSpan.FromSeconds(5));
+        await TestGroup.SettleAsync(follower, master);
+
+        // The game's following first: a map change it makes is not measured, so the bot waits a while.
+        Assert.Equal(3, connection.Sent.Count);
+
+        await TestGroup.WalkedAsync(play, connection, TestGroup.FollowerId, 4);
+        Assert.Equal(new MapChangeRequest { MapId = (int)TestPlay.NorthMapId }, await TestGroup.SentAsync(play, connection, 5));
+        Assert.True(play.Time.GetUtcNow() - arrived >= TimeSpan.FromSeconds(10));
+        run.Stop();
+    }
+
+    [Fact]
     public async Task AFollowerWaitsWhereItStandsWhileItsMasterIsDisconnected()
     {
         await using var play = new TestPlay();
