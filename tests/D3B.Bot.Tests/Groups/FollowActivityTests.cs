@@ -192,7 +192,7 @@ public sealed class FollowActivityTests
     }
 
     [Fact]
-    public async Task AFollowerLeavesAPartyItsMasterDoesNotLead()
+    public async Task AFollowerLeavesAPartyItsMasterIsNotIn()
     {
         await using var play = new TestPlay();
         await TestGroup.MasterAsync(play, 300);
@@ -204,6 +204,31 @@ public sealed class FollowActivityTests
         var run = Follow(play, follower, TestGroup.Master);
 
         Assert.Equal(new PartyLeaveRequest { PartyId = TestGroup.OtherPartyId }, await TestGroup.SentAsync(play, connection, 1));
+        run.Stop();
+    }
+
+    [Fact]
+    public async Task AFollowerKeepsAPartyItsMasterIsInWhoeverLeadsItAndTurnsTheOptionsOff()
+    {
+        // The owner's report of 2026-11-20 (D471): four characters in a party formed by hand, a follower leading it; each
+        // follower left it as its activity started, the party ended, and the master formed it again two minutes later.
+        await using var play = new TestPlay();
+        await TestGroup.MasterAsync(play, 300);
+        var (connection, follower) = await TestGroup.FollowerAsync(play, 301);
+
+        connection.Server(TestGroup.Party(TestGroup.OtherPartyId, TestGroup.SecondId, TestGroup.SecondId, TestGroup.MasterId, TestGroup.FollowerId));
+        await follower.ProcessedAsync();
+
+        var run = Follow(play, follower, TestGroup.Master);
+
+        Assert.IsType<PartyAutoOptionOneOffRequest>(await TestGroup.SentAsync(play, connection, 1));
+        Assert.IsType<PartyAutoOptionTwoOffRequest>(await TestGroup.SentAsync(play, connection, 2));
+
+        await TestGroup.SettleAsync(follower);
+        play.Time.Advance(TimeSpan.FromSeconds(10));
+        await TestGroup.SettleAsync(follower);
+
+        Assert.DoesNotContain(connection.Sent, request => request is PartyLeaveRequest);
         run.Stop();
     }
 

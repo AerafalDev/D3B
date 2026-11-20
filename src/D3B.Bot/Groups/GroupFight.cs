@@ -8,11 +8,12 @@ namespace D3B.Bot.Groups;
 /// <summary>A bot's part in its group's fights: the master's fight left to its party, and its wait for its followers' placement (D431, D434).</summary>
 /// <remarks>
 /// <para>
-/// Measured on 3.7.14.18 (D435): the server locks a party's leader's fight to its party by itself as it attacks, and the
-/// master's closing of it, which the AI did alone (D216), would keep its followers out. So a master whose fight the server
-/// locked to its party refuses spectators only, and a follower in its master's fight, whose team's options are its
-/// master's, sets none. Any other fight of theirs, such as an aggression on the way or a fight of a master out of a party,
-/// is the bot's own, which it closes as one alone does.
+/// Measured on 3.7.14.18 (D435, D471): the server locks a member's fight to its party by itself as it attacks, its leader's or
+/// another's, and the master's closing of it, which the AI did alone (D216), would keep its followers out. So a master with
+/// followers, or whose fight the server locked to its party, refuses spectators only and opens a fight the server kept
+/// closed from its last (D471), and a follower in its master's fight, whose team's options are its master's, sets none. Any
+/// other fight, a follower's own such as an aggression on its way, or one of a character out of a party nobody follows, is
+/// the bot's own, which it closes as one alone does.
 /// </para>
 /// <para>
 /// A master says it is ready once each follower that joins its fight is placed and ready (D434): a follower in the master's
@@ -36,7 +37,9 @@ internal sealed class GroupFight : IFightTeam
             if (_groups.MasterOf(_bot.Key) is { } master)
                 return fight?.Fighters.ContainsKey(master.CharacterId) == true ? FightRole.Follows : FightRole.Alone;
 
-            return _groups.FollowersOf(_bot.Key).Count > 0 && fight?.Options.GetValueOrDefault(FightOption.PartyOnly) == true ? FightRole.Leads : FightRole.Alone;
+            // The owner's report of 2026-11-20 (D471): out of its party for two minutes, the master fought closed, and the server
+            // kept its next fight closed, its followers' joins refused. A master its followers are known to closes none.
+            return _groups.FollowersOf(_bot.Key).Count > 0 || fight?.Options.GetValueOrDefault(FightOption.PartyOnly) == true ? FightRole.Leads : FightRole.Alone;
         }
     }
 
@@ -62,7 +65,7 @@ internal sealed class GroupFight : IFightTeam
 
         // Out of a fight, only a member of the master's party on the map the fight began from is told of it, and joins it (D435).
         if (state.Fight is not { } fight)
-            return state.MapId == mapId && state.Cell is not null && state.Party?.LeaderId == masterId;
+            return state.MapId == mapId && state.Cell is not null && state.Party?.Members.Contains(masterId) == true;
 
         if ((fight.FromMapId ?? state.MapId) != mapId)
             return false;

@@ -30,8 +30,11 @@ internal static class JudgeTurns
     public static double Nearing(int distance, int reach)
     {
         // Where no spell lands yet, each cell nearer still counts a little, so that the fighter playing comes to the enemies
-        // it cannot strike yet instead of waiting where it stands.
-        return 0.5 * Math.Pow(0.85, Math.Max(0, distance - reach - 1));
+        // it cannot strike yet instead of waiting where it stands. Measured on the owner's run's captures: within the spells'
+        // range and MP, out of sight or behind walls, every cell was worth half and the characters passed their turns; there
+        // each cell nearer adds its share of a tenth of the half, whatever the reach, so that the share keeps near the half that
+        // weighs every damaging spell where a landing weighs only the spells that land.
+        return distance > reach + 1 ? 0.5 * Math.Pow(0.85, distance - reach - 1) : 0.5 + (0.05 * (reach + 1 - Math.Max(0, distance)) / (reach + 1));
     }
 
     public static ulong All(int count)

@@ -64,13 +64,15 @@ internal static class ImaginedFighters
 
     public static Combatant Changed(Combatant target, int characteristic, int change)
     {
-        // The fighter playing spends its AP and MP now; the others hold those of their next turn.
+        // The fighter playing spends its AP and MP now; the others hold those of their next turn. Measured in game (the owner's
+        // Pandawa, client 3.7.14.18): a malus of 1 MP took a fighter with none left to -1 and its end to 0, so the points go below
+        // 0 as the server keeps them, or the malus' end gives back a point the fighter never had.
         switch (characteristic)
         {
             case 1:
-                return target with { ActionPoints = Math.Max(0, target.ActionPoints + change) };
+                return target with { ActionPoints = target.ActionPoints + change };
             case 23:
-                return target with { MovementPoints = Math.Max(0, target.MovementPoints + change) };
+                return target with { MovementPoints = target.MovementPoints + change };
         }
 
         var value = EffectFormulas.ValueOf(target, characteristic) + change;

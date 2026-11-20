@@ -28,10 +28,10 @@ public sealed class GroupChainTests
 
         Assert.Equal([follower, second], GroupChain.Order(party, [second, follower]));
 
-        // A party another leads gives no order.
-        var others = master with { Party = new CharacterParty(TestGroup.PartyId, TestGroup.StrangerId, [TestGroup.StrangerId, TestGroup.FollowerId]) };
+        // A party another leads gives its order too (D471).
+        var others = master with { Party = new CharacterParty(TestGroup.PartyId, TestGroup.StrangerId, [TestGroup.StrangerId, TestGroup.FollowerId, TestGroup.MasterId]) };
 
-        Assert.Equal([second, follower], GroupChain.Order(others, [follower, second]));
+        Assert.Equal([follower, second], GroupChain.Order(others, [follower, second]));
     }
 
     [Fact]
@@ -54,6 +54,24 @@ public sealed class GroupChainTests
         // In another's haven bag, the master's own among them, no member is with it: each enters its own.
         Assert.False(GroupChain.Together(bagged, follower with { MapId = TestPlay.HavenBagMapId, HavenBagOwnerId = TestGroup.MasterId }));
         Assert.False(GroupChain.Together(master, follower with { HavenBagOwnerId = TestGroup.FollowerId }));
+    }
+
+    [Fact]
+    public async Task AFollowerIsInItsMastersPartyWhoeverLeadsIt()
+    {
+        // The owner's report of 2026-11-20 (D471): the party formed by hand, a follower leading it, is the group's.
+        await using var play = new TestPlay();
+        var (_, follower) = await TestGroup.FollowerAsync(play, 300, name: "Zed");
+        var (_, second) = await TestGroup.SecondAsync(play, 301, name: "Abel");
+        var master = Placed(TestGroup.Master, TestPlay.MapId) with
+        {
+            Party = new CharacterParty(TestGroup.PartyId, TestGroup.FollowerId, [TestGroup.FollowerId, TestGroup.MasterId, TestGroup.SecondId]),
+        };
+
+        Assert.Null(GroupChain.AbsenceOf(master, follower));
+        Assert.Equal([follower, second], GroupChain.Order(master, [second, follower]));
+        Assert.True(GroupChain.HoldsAll(master, [follower, second]));
+        Assert.False(GroupChain.HoldsAll(master with { Party = master.Party! with { Members = [TestGroup.FollowerId, TestGroup.MasterId] } }, [follower, second]));
     }
 
     [Fact]

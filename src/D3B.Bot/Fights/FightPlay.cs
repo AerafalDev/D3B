@@ -41,9 +41,10 @@ public static class FightPlay
     private const int MostRefusedATurn = 2;
 
     // The owner's ask (D203, D216): the AI's fight is closed to other players, then to spectators. A master's is left to its
-    // party, which the server locks it to (D431, D435); a follower's options are its master's.
-    private static readonly FightOption[] _closing = [FightOption.Closed, FightOption.NoSpectators];
-    private static readonly FightOption[] _leading = [FightOption.NoSpectators];
+    // party, which the server locks it to (D431, D435), and opened when the server kept it closed from the last (D471); a
+    // follower's options are its master's.
+    private static readonly (FightOption Option, bool On)[] _closing = [(FightOption.Closed, true), (FightOption.NoSpectators, true)];
+    private static readonly (FightOption Option, bool On)[] _leading = [(FightOption.Closed, false), (FightOption.NoSpectators, true)];
 
     private static readonly TimeSpan _placementWait = TimeSpan.FromSeconds(45);
 
@@ -236,12 +237,19 @@ public static class FightPlay
 
         var role = context.Actor.Team?.Role ?? FightRole.Alone;
 
-        foreach (var option in role switch { FightRole.Leads => _leading, FightRole.Follows => [], _ => _closing })
+        // Measured on the owner's game of 2026-11-20 (D471): a toggle, each; the server keeps a team's options from one fight of
+        // its leader to the next, showing them as the placement starts, so that only those not yet as wanted are toggled.
+        foreach (var (option, on) in role switch { FightRole.Leads => _leading, FightRole.Follows => [], _ => _closing })
         {
-            if (context.State.Fight?.Options.GetValueOrDefault(option) is true || !await PacedAsync(context, Placing, cancellationToken).ConfigureAwait(false))
+            // Read again after the pace: a toggle flips the option, and the server shows the options after the placement's cells,
+            // measured, so that one not yet shown may come meanwhile.
+            if (context.State.Fight?.Options.TryGetValue(option, out var shown) == true && shown == on)
                 continue;
 
-            var set = context.Expect((side, message, _) => side is RelayDirection.FromServer && message is FightOptionUpdateEvent { Enabled: true } update && update.Option == option);
+            if (!await PacedAsync(context, Placing, cancellationToken).ConfigureAwait(false) || context.State.Fight?.Options.GetValueOrDefault(option) == on)
+                continue;
+
+            var set = context.Expect((side, message, _) => side is RelayDirection.FromServer && message is FightOptionUpdateEvent update && update.Option == option && update.Enabled == on);
 
             await context.SendAsync(new FightOptionToggleRequest { Option = option }, cancellationToken).ConfigureAwait(false);
             await set.WaitAsync(context.Delays.Answer, cancellationToken).ConfigureAwait(false);

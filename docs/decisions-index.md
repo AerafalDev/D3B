@@ -752,6 +752,18 @@ or refines another says so in its own entry. Add a line here with every new deci
 - [D469](decisions/d469-readme-for-players.md#d469-the-readme-written-for-players-building-and-maintaining-d3b-in-docsdevelopmentmd) The README written for players, building and maintaining D3B in docs/development.md (2026-11-20)
   - Trimming the README in place, moving the commands out of it too.
 
+## Fights, points below 0 and the approach within reach (D470, D472)
+
+- [D470](decisions/d470-fights-phantom-points-and-nearing.md#d470-a-malus-of-ap-or-mp-takes-the-fighters-points-below-0-as-the-server-keeps-them-the-pandawa-no-longer-swaps-its-states-twice-for-a-point-it-never-had) A malus of AP or MP takes the fighter's points below 0, as the server keeps them: the Pandawa no longer swaps its states twice for a point it never had (2026-11-20)
+  - Recording the malus as only what it took from the points.
+- [D472](decisions/d470-fights-phantom-points-and-nearing.md#d472-within-its-spells-range-and-mp-out-of-their-sight-each-cell-nearer-an-enemy-still-counts-the-characters-walk-instead-of-passing-their-turns) Within its spells' range and MP, out of their sight, each cell nearer an enemy still counts: the characters walk instead of passing their turns (2026-11-20)
+  - Ending a tie on the walk nearest the enemies; the reply's blows foreseen too high as the cause; a hundredth a cell; a larger share.
+
+## Groups, the party kept and the fight's lock (D471)
+
+- [D471](decisions/d471-groups-party-kept-and-lock.md#d471-a-party-holding-the-master-and-its-followers-is-kept-whoever-leads-it-a-master-with-followers-never-closes-its-fight-and-opens-one-the-server-kept-closed) A party holding the master and its followers is kept whoever leads it, a master with followers never closes its fight, and opens one the server kept closed (2026-11-20)
+  - The lead passed to the master, unmapped; an invitation into a party another leads, unmeasured; a join sent again after a refusal.
+
 ## Fights, the Pandawa's carrying (D474)
 
 - [D474](decisions/d474-pandawa-carrying.md#d474-the-pandawas-carrying-in-the-ai-a-carry-and-its-throw-within-one-turn-as-the-references-model-it) The Pandawa's carrying in the AI, a carry and its throw within one turn, as the references model it (2026-11-20)
