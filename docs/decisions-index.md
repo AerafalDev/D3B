@@ -768,3 +768,8 @@ or refines another says so in its own entry. Add a line here with every new deci
 
 - [D473](decisions/d473-forgelance-trident-fork.md#d473-a-fork-reaches-a-row-past-its-size-each-row-a-step-of-its-decrease) A fork reaches a row past its size, each row a step of its decrease (2026-11-20)
   - Correcting the pull towards a cell in this session; a fork of size n reaching n rows.
+
+## Fights, the Pandawa's carrying (D474)
+
+- [D474](decisions/d474-pandawa-carrying.md#d474-the-pandawas-carrying-in-the-ai-a-carry-and-its-throw-within-one-turn-as-the-references-model-it) The Pandawa's carrying in the AI, a carry and its throw within one turn, as the references model it (2026-11-20)
+  - Keeping a carry from one turn to the next, capturing first, a worth of a fighter placed, allies only, Porteur's boosts, `K` counted half.

@@ -59,4 +59,12 @@ public sealed class FightCombatantsTests
         Assert.Equal(Combatant.NoCell, FightCombatants.Of(new Fighter { Id = 1, CarrierId = 2 }, _monsters).Cell);
         Assert.Null(FightCombatants.Of(new Fighter { Id = 1 }, _monsters).MaxSummons);
     }
+
+    [Fact]
+    public void ACarriedFighterGivesTheEngineItsCarrier()
+    {
+        // The AI throws what its character carries (D474): it must know who carries whom.
+        Assert.Equal(2, FightCombatants.Of(new Fighter { Id = 1, CarrierId = 2 }, _monsters).CarrierId);
+        Assert.Null(FightCombatants.Of(new Fighter { Id = 1, Cell = 300 }, _monsters).CarrierId);
+    }
 }

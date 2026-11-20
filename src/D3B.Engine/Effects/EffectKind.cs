@@ -88,4 +88,10 @@ public enum EffectKind
 
     /// <summary>The first fighter in line from the caster pushed to the cell cast on: 783, a Roublabot's.</summary>
     PushToCell,
+
+    /// <summary>The fighter reached carried by the caster, off its cell: 50, a Pandawa's Karcham (<see cref="Fights.Carrying"/>).</summary>
+    Carry,
+
+    /// <summary>The fighter the caster carries thrown onto the cell cast on: 51 (<see cref="Fights.Carrying"/>).</summary>
+    Throw,
 }

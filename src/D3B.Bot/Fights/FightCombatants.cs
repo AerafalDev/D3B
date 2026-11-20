@@ -63,6 +63,7 @@ public static class FightCombatants
             MonsterProperties = properties,
             SummonerId = fighter.SummonerId,
             MasterId = fighter.MasterId,
+            CarrierId = fighter.CarrierId,
             States = fighter.States,
             Modifiers = fighter.Modifiers,
             Buffs = [.. fighter.Buffs.Where(buff => buff.Kind is FightBuffKind.Boost or FightBuffKind.State or FightBuffKind.SpellModifier).Select(Held)],

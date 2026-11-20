@@ -72,6 +72,13 @@ public sealed record Combatant
     /// <remarks>A companion is no summon: its master's client plays it, for its master's sake (D443).</remarks>
     public long? MasterId { get; init; }
 
+    /// <summary>Gets the fighter carrying this one, while it is carried, or null.</summary>
+    /// <remarks>
+    /// A carried fighter stands on no cell, as the server says (D193), except as a throw lands it, when it stands on the cell
+    /// cast on and is still its carrier's for the throw's own effects, which <c>K</c> names (D474).
+    /// </remarks>
+    public long? CarrierId { get; init; }
+
     /// <summary>Gets the states the fighter is in.</summary>
     public ImmutableArray<int> States { get; init; } = [];
 

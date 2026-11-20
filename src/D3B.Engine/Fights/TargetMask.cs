@@ -26,10 +26,12 @@ namespace D3B.Engine.Fights;
 /// <item><term><c>Q</c>, <c>q</c></term><description>As many summons as it may have, or fewer.</description></item>
 /// <item><term><c>R</c>, <c>r</c></term><description>A cast through a portal, or through none: an Eliotrope's spells hold an effect of each, such as
 /// Audace's damage, its push on a straight cast only (D468).</description></item>
+/// <item><term><c>K</c></term><description>The fighter the caster carries, or throws as the throw's own effects land: a Pandawa's throws heal an ally thrown and strike an enemy
+/// thrown so, as the references read it (D474).</description></item>
 /// </list>
 /// <para>
 /// A caster's condition on its kind, such as <c>*h,*m</c>, asks one of them. What the fight's state does not tell, such as
-/// a fighter carried (<c>K</c>), a teleport (<c>T</c>, <c>W</c>), a fighter appearing (<c>U</c>),
+/// a teleport (<c>T</c>, <c>W</c>), a fighter appearing (<c>U</c>),
 /// the triggering target (<c>O</c>) or the tokens Dofus 3 added (<c>Atq</c>, <c>Def</c>, <c>Sce</c>, <c>PB</c>, <c>PR</c>,
 /// <c>AP</c>, <c>MP</c>, <c>u</c>, <c>x</c>), answers <see cref="CriterionAnswer.Unknown"/>, as an unknown criterion does
 /// (D71).
@@ -38,7 +40,7 @@ namespace D3B.Engine.Fights;
 public sealed class TargetMask
 {
     private const string Kinds = "aAgcChHlLmMjJiIsSdD";
-    private const string Conditions = "EeFfBbZzVvPpQqRr";
+    private const string Conditions = "EeFfBbZzVvPpQqRrK";
     private const string Alternatives = "FfBbZz";
 
     private readonly Token[] _kinds;
@@ -97,7 +99,7 @@ public sealed class TargetMask
         var hasValue = int.TryParse(body.AsSpan(1), NumberStyles.AllowLeadingSign, CultureInfo.InvariantCulture, out var value);
         var bare = body.Length is 1;
 
-        if (Conditions.Contains(letter, StringComparison.Ordinal) && (hasValue || (bare && letter is 'P' or 'p' or 'Q' or 'q' or 'R' or 'r')))
+        if (Conditions.Contains(letter, StringComparison.Ordinal) && (hasValue || (bare && letter is 'P' or 'p' or 'Q' or 'q' or 'R' or 'r' or 'K')))
             return new Token(TokenKind.Condition, onCaster, letter, value);
 
         if (bare && Kinds.Contains(letter, StringComparison.Ordinal))
@@ -112,7 +114,7 @@ public sealed class TargetMask
     {
         var measured = body.Length > 2 && char.IsAsciiDigit(body[2]) && body[..2] is "AP" or "ap" or "MP" or "mp";
 
-        return measured || body is "K" or "O" or "o" or "T" or "U" or "W" or "PB" or "pb" or "PR" or "pr";
+        return measured || body is "O" or "o" or "T" or "U" or "W" or "PB" or "pb" or "PR" or "pr";
     }
 
     private static (bool OnCaster, char Letter, int Index) Alternative(Token token, int index)
@@ -216,6 +218,7 @@ public sealed class TargetMask
             'q' => Summons(fighter, fighters, full: false),
             'R' => Of(throughPortal),
             'r' => Of(!throughPortal),
+            'K' => Of(target.CarrierId == caster.Id),
             _ => CriterionAnswer.Unknown,
         };
     }
