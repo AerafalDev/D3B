@@ -25,7 +25,9 @@ namespace D3B.Bot.Groups;
 /// <para>
 /// The party: the master invites each follower connected and not in its party by its name (D431), again once the
 /// follower's connection is a new one, and every 10 s while the invitation is not answered, the owner's choice. A party
-/// another leads, it leaves first, as its followers do.
+/// another leads it keeps while that party holds each of its followers, such as one formed by hand that a follower leads, the
+/// owner's ask (D471); else it leaves it first, as its followers leave a party it is not in: an invitation into a party
+/// another leads is not measured.
 /// </para>
 /// </remarks>
 internal sealed class GroupGate : IActionGate
@@ -39,6 +41,7 @@ internal sealed class GroupGate : IActionGate
     // Only the bot's behaviors, one at a time, read and write them.
     private readonly Dictionary<CharacterKey, Invitation> _invited = [];
     private (int Party, DateTimeOffset At)? _left;
+    private (string? Connection, int Party)? _optionsOff;
 
     public GroupGate(BotActor bot, GroupDirectory groups)
     {
@@ -102,7 +105,7 @@ internal sealed class GroupGate : IActionGate
                 if (followers.Count is 0 || state.IsFighting)
                     return;
 
-                var left = await LeaveOthersAsync(context, state, cancellationToken).ConfigureAwait(false);
+                var left = await LeaveOthersAsync(context, state, followers, cancellationToken).ConfigureAwait(false);
                 var invited = await InviteAsync(context, state, followers, cancellationToken).ConfigureAwait(false);
                 var missing = GroupChain.Missing(state, followers);
                 var healed = (DateTimeOffset?)null;
@@ -152,7 +155,7 @@ internal sealed class GroupGate : IActionGate
         if (followers.Count is 0 || state.IsFighting)
             return;
 
-        await LeaveOthersAsync(context, state, cancellationToken).ConfigureAwait(false);
+        await LeaveOthersAsync(context, state, followers, cancellationToken).ConfigureAwait(false);
         await InviteAsync(context, state, followers, cancellationToken).ConfigureAwait(false);
     }
 
@@ -176,12 +179,27 @@ internal sealed class GroupGate : IActionGate
         return (missing, healed);
     }
 
-    // Gives the next time the leaving may go again, while the master is in a party another leads: a leaving the server
-    // answered nothing to goes again, as an invitation does.
-    private async Task<DateTimeOffset?> LeaveOthersAsync(BotContext context, CharacterState state, CancellationToken cancellationToken)
+    // Gives the next time the leaving may go again, while the master is in a party another leads that lacks a follower: a
+    // leaving the server answered nothing to goes again, as an invitation does. A party another leads that it keeps, its
+    // automatic options are turned off as its followers' are (D437, D471): joining its leader's fights would take the master
+    // into a fight of its follower's, where its own followers are not told to join.
+    private async Task<DateTimeOffset?> LeaveOthersAsync(BotContext context, CharacterState state, IReadOnlyList<BotActor> followers, CancellationToken cancellationToken)
     {
         if (state.Party is not { } party || party.LeaderId == state.Key.CharacterId)
             return null;
+
+        if (GroupChain.HoldsAll(state, followers))
+        {
+            if (_optionsOff != (_bot.ConnectionId, party.Id))
+            {
+                _optionsOff = (_bot.ConnectionId, party.Id);
+                GroupLog.OptionsOff(_bot.Log, _bot.Key.CharacterId, party.Id);
+                await context.SendNowAsync(new PartyAutoOptionOneOffRequest(), cancellationToken).ConfigureAwait(false);
+                await context.SendNowAsync(new PartyAutoOptionTwoOffRequest(), cancellationToken).ConfigureAwait(false);
+            }
+
+            return null;
+        }
 
         var now = _bot.Time.GetUtcNow();
 

@@ -1,4 +1,4 @@
-# Fights, points below 0 and the approach within reach (D470, D471)
+# Fights, points below 0 and the approach within reach (D470, D472)
 
 A part of [the decisions](README.md); each decision has one line in [the index](../decisions-index.md). The imagined fight is
 [D201](d176-d208-step-9.md#d201-the-ai-an-imagined-fight-a-judge-a-beam-search-and-the-enemies-reply); the Pandawa's drink,
@@ -24,7 +24,7 @@ lead's measure on the run's captures. Refines D201, D420.*
 - **Rejected.** Recording the malus as only what it took from the points: the server's own count is the negative one, and
   the bot reads the server's -1 into its fights as it is.
 
-## D471: Within its spells' range and MP, out of their sight, each cell nearer an enemy still counts: the characters walk instead of passing their turns
+## D472: Within its spells' range and MP, out of their sight, each cell nearer an enemy still counts: the characters walk instead of passing their turns
 
 *2026-11-20, step 10, the owner's report from the same run ("des persos passent tour alors qu'ils peuvent avancer vers les
 monstres"), the lead's measure on the run's captures. Refines D201's approach; builds D210, D460.*

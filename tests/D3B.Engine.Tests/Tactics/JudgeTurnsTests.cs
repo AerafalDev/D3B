@@ -2,7 +2,7 @@ using D3B.Engine.Tactics;
 
 namespace D3B.Engine.Tests.Tactics;
 
-/// <summary>The share of next turn's damage the approach counts where no spell lands yet (D201, D471).</summary>
+/// <summary>The share of next turn's damage the approach counts where no spell lands yet (D201, D472).</summary>
 public sealed class JudgeTurnsTests
 {
     [Theory]
@@ -11,7 +11,7 @@ public sealed class JudgeTurnsTests
     [InlineData(13)]
     public void EachCellNearerAnEnemyNoSpellReachesCountsALittleMoreUpToItsCell(int reach)
     {
-        // Measured on the owner's run's captures (D471): within the spells' range and MP, every cell was worth the same half.
+        // Measured on the owner's run's captures (D472): within the spells' range and MP, every cell was worth the same half.
         for (var distance = 1; distance <= reach + 6; distance++)
             Assert.True(JudgeTurns.Nearing(distance, reach) > JudgeTurns.Nearing(distance + 1, reach));
     }
