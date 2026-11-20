@@ -764,6 +764,11 @@ or refines another says so in its own entry. Add a line here with every new deci
 - [D471](decisions/d471-groups-party-kept-and-lock.md#d471-a-party-holding-the-master-and-its-followers-is-kept-whoever-leads-it-a-master-with-followers-never-closes-its-fight-and-opens-one-the-server-kept-closed) A party holding the master and its followers is kept whoever leads it, a master with followers never closes its fight, and opens one the server kept closed (2026-11-20)
   - The lead passed to the master, unmapped; an invitation into a party another leads, unmeasured; a join sent again after a refusal.
 
+## Fights, the Forgelance's Trident and the fork (D473)
+
+- [D473](decisions/d473-forgelance-trident-fork.md#d473-a-fork-reaches-a-row-past-its-size-each-row-a-step-of-its-decrease) A fork reaches a row past its size, each row a step of its decrease (2026-11-20)
+  - Correcting the pull towards a cell in this session; a fork of size n reaching n rows.
+
 ## Fights, the Pandawa's carrying (D474)
 
 - [D474](decisions/d474-pandawa-carrying.md#d474-the-pandawas-carrying-in-the-ai-a-carry-and-its-throw-within-one-turn-as-the-references-model-it) The Pandawa's carrying in the AI, a carry and its throw within one turn, as the references model it (2026-11-20)

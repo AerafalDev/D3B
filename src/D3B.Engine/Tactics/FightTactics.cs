@@ -896,6 +896,9 @@ public sealed class FightTactics
             {
                 SpellZoneShape.Point or SpellZoneShape.None or SpellZoneShape.Custom => 0,
                 SpellZoneShape.WholeMap or SpellZoneShape.WholeMapWithTheDead => 0,
+
+                // A fork reaches a row past its size straight ahead (D473), as Trident struck two cells past the cell cast on.
+                SpellZoneShape.Fork => Math.Min(effect.Zone.Size + 1, 6),
                 _ => Math.Min((int)effect.Zone.Size, 6),
             });
         }

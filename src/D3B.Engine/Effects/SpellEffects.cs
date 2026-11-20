@@ -235,7 +235,8 @@ public sealed class SpellEffects
             {
                 if (steps[index] < 0 && cells.Contains(reached[index].Fighter.Cell))
                 {
-                    steps[index] = size - zone.MinSize;
+                    // A fork reaches a row past its size (D473): its rows are its steps, the first one step away.
+                    steps[index] = size - zone.MinSize + (zone.Shape is SpellZoneShape.Fork ? 1 : 0);
                     left--;
                 }
             }
