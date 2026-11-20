@@ -305,7 +305,8 @@ The bots run in `D3B.Bot`: what each part does today, with the decisions that ma
   D454, its next turn weighed as alone, D460), closes the fight and blocks spectators (D216), sets the challenges' bonus the
   activity's profile asks once the server answered the client's own (`BotActivity.ChallengeReward`, D438; a follower its master's,
   D446), places the character
-  (`FightTactics.Place`) and says it is ready; each turn it plans (`FightTactics.Plan`) from the fight as the AI imagines
+  (`FightTactics.Place`, the threat there only that of the enemies the server's turn order lists before its first turn,
+  D478) and says it is ready; each turn it plans (`FightTactics.Plan`) from the fight as the AI imagines
   it (`ImaginedFights`, `CharacterSpells`), its sword's blow among its casts (D220), sends the plan's first walk or cast,
   waits for the server's answer and the client's acknowledgement, plans again, and ends its turn as soon as the plan is
   empty. A summon of the character's the client controls plays its turns the same, the fight imagined from its view, its
@@ -1333,7 +1334,9 @@ character's (D279). The character's spells by the
   Its replays of the turns (`--turns`) and of the fights (`--live`) print their main counts again by the character's breed,
   a section each, so that a change of the AI is read class by class and on what a farm needs: the plans, the damage, kills
   and heals planned against played, the reply's blows against the enemies' alone and in a group, the spells planned against
-  played; the turns and rounds a fight won takes, the turns idle, the life lost and the deaths (D463).
+  played; the turns and rounds a fight won takes, the turns idle, the life lost and the deaths (D463). `--turns` also
+  replays every placement by the character's place in the turn order: its cell as placed, with every enemy's threat and
+  by the turn order, each judged by the threat of the enemies playing before it and the damage it may strike (D478).
 - Logic code in `D3B.Engine` and the state handlers is tested directly, with property tests on CsCheck for cell and
   world paths (D68, D71) and lines of sight, the same both ways and nearing their end at each cell. A fight's rules are
   tested on maps and fighters the tests build around a map's middle, with a catalog of six spells, each refusal named.
