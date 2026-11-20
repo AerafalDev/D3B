@@ -472,8 +472,9 @@ public sealed class FollowActivity : BotActivity, IDisposable
         }
 
         // Measured on the owner's game of 2026-11-20 (D471): the server keeps a team's options from one fight to the next, and
-        // refused the joins sent while the fight was closed; the master opens it in its placement, and the join waits for that.
-        if (masters.Options.GetValueOrDefault(FightOption.Closed))
+        // refused the joins sent while the fight was closed; the master opens it in its placement, and the join waits for that,
+        // and for the options to be listed, after the placement's cells (D475).
+        if (!masters.IsOpen)
             return false;
 
         // Measured (D448): a follower whose walk its client did not confirm is held by the server, which answered nothing to

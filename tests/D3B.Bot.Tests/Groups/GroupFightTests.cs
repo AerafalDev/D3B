@@ -88,9 +88,9 @@ public sealed class GroupFightTests
         Placement(connection, self, cell, near, monster, partyOnly ? [FightOption.PartyOnly] : [], fightMap, allies);
     }
 
-    // Measured on the owner's game of 2026-11-20 (D471): the server shows each of the team's options as the placement starts,
-    // those its leader set in its last fight among them.
-    private static void Placement(TestConnection connection, long self, int cell, int near, int monster, FightOption[] on, long fightMap, params Actor[] allies)
+    // Measured on the machine's captures (D471, D475): the server lists the team's four options as the placement starts, after
+    // its cells, those its leader set in its last fight on among them; null withholds them, as in the instant before.
+    private static void Placement(TestConnection connection, long self, int cell, int near, int monster, FightOption[]? on, long fightMap, params Actor[] allies)
     {
         var order = new FightTurnListEvent();
 
@@ -109,15 +109,21 @@ public sealed class GroupFightTests
         };
 
         messages.AddRange(allies.Select(ally => new FightFighterShowEvent { Fighter = ally }));
-
-        messages.AddRange(on.Select(option => new FightOptionUpdateEvent { Option = option, Enabled = true }));
-
         messages.Add(new FightPlacementPossiblePositionsEvent { Cells = new PlacementCells { DefenderCells = { monster }, ChallengerCells = { cell, near } } });
+
+        if (on is not null)
+            messages.AddRange(Options(on));
+
         messages.Add(new FightSpellsContextEvent { FighterId = self, Spells = { new SpellItem { SpellId = TestPlay.BlowSpellId, Grade = 1 } } });
         messages.Add(order);
 
         foreach (var message in messages)
             connection.Server(message);
+    }
+
+    private static IEnumerable<FightOptionUpdateEvent> Options(FightOption[] on)
+    {
+        return Enum.GetValues<FightOption>().Select(option => new FightOptionUpdateEvent { Option = option, Enabled = on.Contains(option) });
     }
 
     // As the server tells the party (D435): the master's fight, on a map, in the millisecond it is shown there.
@@ -382,6 +388,34 @@ public sealed class GroupFightTests
 
         // Spectators already refused, as the server kept them: the master toggles nothing else, and places itself.
         Assert.IsType<FightPlacementPositionRequest>(await TestGroup.SentAsync(play, masterConnection, sent + 2));
+        run.Stop();
+    }
+
+    [Fact]
+    public async Task AFollowerWaitsForItsMastersFightToListItsOptionsBeforeJoiningIt()
+    {
+        // Measured (D475): the placement shows its cells before its options, so that a fight kept closed looks open in between;
+        // a join sent then was refused, and the follower never tried again.
+        await using var play = new TestPlay();
+        var (masterConnection, master) = await TestGroup.MasterAsync(play, Far);
+        var (followerConnection, follower, run) = await FollowingAsync(play, 301);
+        var monster = Beside(Far, 8, 0);
+
+        master.FightsAlone = true;
+        Placement(masterConnection, TestGroup.MasterId, Far, Beside(monster, -3, 0), monster, null, TestPlay.EastMapId);
+        followerConnection.Server(InFight(TestPlay.MapId));
+
+        await TestGroup.UntilAsync(play, () => follower.State.PartyFight is not null && master.State.Fight is not null, "the follower told of the fight");
+        await TestGroup.SettleAsync(master, follower);
+
+        Assert.Equal(2, followerConnection.Sent.Count);
+
+        foreach (var listed in Options([FightOption.PartyOnly]))
+            masterConnection.Server(listed);
+
+        await TestGroup.SettleAsync(master, follower);
+
+        Assert.Equal(new FightJoinRequest { FightId = FightId, FighterId = TestGroup.MasterId }, Assert.Single(followerConnection.Sent.Skip(2)));
         run.Stop();
     }
 

@@ -77,6 +77,11 @@ public sealed record FightState
     /// <summary>Gets the options of the character's team's fight the server said are set, or not, by option (D203).</summary>
     public ImmutableSortedDictionary<FightOption, bool> Options { get; init; } = ImmutableSortedDictionary<FightOption, bool>.Empty;
 
+    /// <summary>Gets whether the server said the fight is open to joins: not closed, once its options are listed (D475).</summary>
+    /// <remarks>Measured: the server lists the team's four options as each placement starts, after its cells, so that a fight
+    /// kept closed from the last looks open in between.</remarks>
+    public bool IsOpen => Options.TryGetValue(FightOption.Closed, out var closed) && !closed;
+
     /// <summary>Gets what the team's challenges give, as the server last said it, or null until it says (D438).</summary>
     /// <remarks>Measured: the client sends its player's last choice as the placement starts, and the server answers it at once.</remarks>
     public ChallengeBonus? ChallengeBonus { get; init; }

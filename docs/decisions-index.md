@@ -773,3 +773,8 @@ or refines another says so in its own entry. Add a line here with every new deci
 
 - [D474](decisions/d474-pandawa-carrying.md#d474-the-pandawas-carrying-in-the-ai-a-carry-and-its-throw-within-one-turn-as-the-references-model-it) The Pandawa's carrying in the AI, a carry and its throw within one turn, as the references model it (2026-11-20)
   - Keeping a carry from one turn to the next, capturing first, a worth of a fighter placed, allies only, Porteur's boosts, `K` counted half.
+
+## Groups, a follower waits for its master's fight's options (D475)
+
+- [D475](decisions/d475-follower-waits-fight-options.md#d475-a-follower-joins-its-masters-fight-once-the-server-listed-it-open) A follower joins its master's fight once the server listed it open (2026-11-20)
+  - Waiting for the turns' order, sending the join again after a refusal.
