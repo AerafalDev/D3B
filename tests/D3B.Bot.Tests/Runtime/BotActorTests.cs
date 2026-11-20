@@ -21,6 +21,28 @@ public sealed class BotActorTests : IAsyncDisposable
         return [.. _byItself.Keys];
     }
 
+    private static Task Hold(BotActor bot, ManualResetEventSlim gate)
+    {
+        // The bot's loop held in a waiter's condition until the gate opens, so that what a test sends queues in its inbox.
+        var token = TestContext.Current.CancellationToken;
+
+        using var entered = new ManualResetEventSlim();
+
+        var holding = bot.WaitUntilAsync(
+            _ =>
+            {
+                entered.Set();
+                gate.Wait(token);
+
+                return true;
+            },
+            token);
+
+        entered.Wait(token);
+
+        return holding;
+    }
+
     public ValueTask DisposeAsync()
     {
         return _play.DisposeAsync();
@@ -292,6 +314,51 @@ public sealed class BotActorTests : IAsyncDisposable
 
         await Assert.ThrowsAsync<ObjectDisposedException>(() => stopped);
         await Assert.ThrowsAsync<ObjectDisposedException>(() => bot.WaitUntilAsync(_ => true, TestContext.Current.CancellationToken));
+    }
+
+    [Fact]
+    public async Task AWaitOrAStartTheBotTakesInAfterItsStopFailsAsOnceStopped()
+    {
+        var (_, bot) = await _play.EnterAsync(300);
+        var token = TestContext.Current.CancellationToken;
+
+        using var gate = new ManualResetEventSlim();
+
+        // A wait and a start, as a fight's pilot sends them, queued behind the stop. The hang this guards came from a wait
+        // written between the stop and the inbox's end, two lines apart then, which no test can time.
+        var holding = Hold(bot, gate);
+        var stopping = bot.DisposeAsync();
+        var waiting = bot.WaitUntilAsync(_ => false, token);
+        var starting = bot.RunWhenReadyAsync((_, _) => Task.FromResult(0), token);
+
+        gate.Set();
+        await holding;
+        await stopping;
+
+        // As a request sent once the bot is stopped: an activity takes it for the bot's stop by the bot's name.
+        var waited = await Assert.ThrowsAsync<ObjectDisposedException>(() => waiting.WaitAsync(TimeSpan.FromSeconds(10), token));
+        var started = await Assert.ThrowsAsync<ObjectDisposedException>(() => starting.WaitAsync(TimeSpan.FromSeconds(10), token));
+
+        Assert.Equal((typeof(BotActor).FullName, typeof(BotActor).FullName), (waited.ObjectName, started.ObjectName));
+    }
+
+    [Fact]
+    public async Task AConnectionTheBotTakesInAfterItsStopLeavesItStopped()
+    {
+        var (_, bot) = await _play.EnterAsync(300);
+
+        using var gate = new ManualResetEventSlim();
+
+        var holding = Hold(bot, gate);
+        var stopping = bot.DisposeAsync();
+        var again = _play.Connect(TestPlay.Account);
+
+        again.Server(TestPlay.Chosen());
+        gate.Set();
+        await holding;
+        await stopping;
+
+        Assert.False(bot.IsConnected);
     }
 
     [Fact]

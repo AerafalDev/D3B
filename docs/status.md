@@ -295,3 +295,9 @@ Q16 (casts and walks the server refuses that the rules allow), Q17 (a build that
   `scripts/fights/HuntBench.cs` and their tests. D387 kept them on purpose, for that bench: if the bench is dropped, they go
   with their tests; `Allows` and `Character` are alive.
 - `docs/decisions/` is cut in files by group of the index, about 100 KB at most each (D401): read the index, then the file of the area worked on.
+- The tests under load (2026-11-20): a test host that hangs, killed or timed out, leaves the summary's `failed` at 0 and lowers
+  its `total`, the lost host counted only on its `error` line: read that line before trusting a count. One cause is fixed (a
+  fight's pilot left waiting as its bot stopped held `Bots.DisposeAsync` forever). Seen once each under load and not fixed:
+  `BehaviorActivityTests.AListThatRepeatsReportsItsFirstStepAgainWhenItStartsOver` timing out (it advances the fake clock
+  once the run is stepping, perhaps before its wait step set its timer), and `D3B.Studio.Tests` ending with zero tests and
+  exit code 1, not explained.

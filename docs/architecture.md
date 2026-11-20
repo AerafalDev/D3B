@@ -124,7 +124,9 @@ The bots run in `D3B.Bot`: what each part does today, with the decisions that ma
   interruption cancels it, off the loop:
   the player acting, the connection closing, a fight beginning (D88), the host stopping (`BotInterruptedException`).
   Anyone may wait for what a bot's state becomes (`BotActor.WaitUntilAsync`), as a follower will at step 10, and a
-  behavior for its own state, with a delay (`BotContext.WaitUntilAsync`).
+  behavior for its own state, with a delay (`BotContext.WaitUntilAsync`). A bot stops through its loop: taking the stop in,
+  the loop ends its inbox, and a wait or a start it still takes in behind the stop fails as one sent after it, since a
+  fight's pilot left waiting there held the host's stop forever.
 - **The player wins** (D66): a request the player sends that acts on the character (`PlayerActions`) interrupts the bot's
   behavior, and the bot pauses until it is resumed. What the client sends by itself after an action is not the player's:
   a request to leave is the player's only while the character is in a dialog or an exchange (D81), but for a dialog whose
@@ -287,8 +289,8 @@ The bots run in `D3B.Bot`: what each part does today, with the decisions that ma
   fight's start. Since 9f4 (D279), the fight's state holds the marks on the cells as the server sets and takes them back,
   glyphs, traps, bombs' walls and portals (`GroundMark`), which `ImaginedFights.MarksOf` gives the engine. Since D461, it
   holds the fight's challenges (`FightChallenge`), each with its bonus, its targets as the server last named them
-  (`FightChallengeTarget`, with the fighters allowed to strike it) and its result; `FightPlay` logs each challenge once and its
-  result as the fight ends. The bot sends none of the challenges' requests yet. Since D466, each turn plays for the fight's
+  (`FightChallengeTarget`, with the fighters allowed to strike it) and its result; `FightPlay` logs each challenge once, as its
+  loop next sees it or at the latest as the fight ends, then its result as the fight ends. The bot sends none of the challenges' requests yet. Since D466, each turn plays for the fight's
   first easy challenge (`FightPlay.ChallengeOf`: its completion criterion in the pack's `ChallengeCatalog` read as a
   `TurnChallenge`) while the activity's profile asks it (`BotActivity.Challenges`, a follower its master's) and the fight is
   not judged risky; a plan that leaves it leaves it for the fight, and once a plan of the turn kept it, the turn's next plans
