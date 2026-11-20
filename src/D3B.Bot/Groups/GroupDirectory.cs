@@ -119,6 +119,13 @@ public sealed class GroupDirectory
         return [.. Volatile.Read(ref _following).Where(following => following.Master == master).Select(following => following.Follower)];
     }
 
+    /// <summary>Completes <see cref="Changed"/> for a change of a group's part no bot's state shows, such as a follower placed whose readiness is the game's (D477).</summary>
+    internal void Touch()
+    {
+        lock (_lock)
+            Raise();
+    }
+
     private void Leave(Following membership)
     {
         lock (_lock)

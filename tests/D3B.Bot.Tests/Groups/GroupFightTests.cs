@@ -430,6 +430,70 @@ public sealed class GroupFightTests
     }
 
     [Fact]
+    public async Task AFollowerTheGameFollowsPlacesItselfAndLeavesItsReadinessToTheServerItsMasterReadyOnceItIsPlaced()
+    {
+        // The owner's ask (D476): the server sets the followers ready as their master is; each one's readiness is needless.
+        await using var play = new TestPlay();
+        var (masterConnection, master, followerConnection, follower, run) = await FollowedByTheGameAsync(play);
+        var monster = Beside(Far, 8, 0);
+        var near = Beside(monster, -3, 0);
+        var sent = masterConnection.Sent.Count;
+
+        master.FightsAlone = true;
+        Placement(masterConnection, TestGroup.MasterId, Far, near, monster, true, TestPlay.EastMapId);
+        Assert.IsType<FightOptionToggleRequest>(await TestGroup.SentAsync(play, masterConnection, sent + 1));
+        masterConnection.Server(new FightOptionUpdateEvent { Option = FightOption.NoSpectators, Enabled = true });
+        Assert.IsType<FightPlacementPositionRequest>(await TestGroup.SentAsync(play, masterConnection, sent + 2));
+        masterConnection.Server(new EntitiesDispositionEvent { Dispositions = { new ActorDisposition { EntityId = TestGroup.MasterId, CellId = near } } });
+        await WaitingAsync(play);
+
+        var waited = play.Time.GetUtcNow();
+
+        // Joined by the server, with no request: the follower places itself, and says nothing more.
+        Placement(followerConnection, TestGroup.FollowerId, 301, Beside(monster, -2, 1), monster, true, TestPlay.EastMapId, Character(TestGroup.MasterId, near));
+        var placed = Assert.IsType<FightPlacementPositionRequest>(await TestGroup.SentAsync(play, followerConnection, 4));
+
+        followerConnection.Server(new EntitiesDispositionEvent { Dispositions = { new ActorDisposition { EntityId = TestGroup.FollowerId, CellId = placed.CellId } } });
+
+        Assert.True(Assert.IsType<FightReadyRequest>(await TestGroup.SentAsync(play, masterConnection, sent + 3)).Ready);
+
+        // Once its follower is placed, not at the end of the AI's 45 s.
+        Assert.True(play.Time.GetUtcNow() - waited < TimeSpan.FromSeconds(10));
+
+        await TestGroup.SettleAsync(master, follower);
+        play.Time.Advance(TimeSpan.FromSeconds(50));
+        await TestGroup.SettleAsync(master, follower);
+
+        Assert.DoesNotContain(followerConnection.Sent, request => request is FightReadyRequest);
+        Assert.Single(followerConnection.Sent, request => request is FightPlacementPositionRequest);
+        Assert.False(follower.IsPaused);
+        run.Stop();
+    }
+
+    [Fact]
+    public async Task AFollowerJoinedByRequestSaysItIsReadyItselfAsTheServerWouldNot()
+    {
+        // The review of D477: its options off, the server neither joined it nor will set it ready.
+        await using var play = new TestPlay();
+        var (masterConnection, master, followerConnection, follower, run) = await FollowedByTheGameAsync(play);
+        var monster = Beside(Far, 8, 0);
+        var near = Beside(monster, -3, 0);
+
+        master.FightsAlone = true;
+        Placement(masterConnection, TestGroup.MasterId, Far, near, monster, true, TestPlay.EastMapId);
+        followerConnection.Server(InFight(TestPlay.MapId));
+        Assert.IsType<FightJoinRequest>(await TestGroup.SentAsync(play, followerConnection, 4));
+
+        Placement(followerConnection, TestGroup.FollowerId, 301, Beside(monster, -2, 1), monster, true, TestPlay.EastMapId, Character(TestGroup.MasterId, near));
+        var placed = Assert.IsType<FightPlacementPositionRequest>(await TestGroup.SentAsync(play, followerConnection, 5));
+
+        followerConnection.Server(new EntitiesDispositionEvent { Dispositions = { new ActorDisposition { EntityId = TestGroup.FollowerId, CellId = placed.CellId } } });
+
+        Assert.True(Assert.IsType<FightReadyRequest>(await TestGroup.SentAsync(play, followerConnection, 6)).Ready);
+        run.Stop();
+    }
+
+    [Fact]
     public async Task AFollowerTheServerDidNotJoinJoinsByRequestAndTurnsItsOptionsOnAgain()
     {
         await using var play = new TestPlay();

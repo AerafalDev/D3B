@@ -32,6 +32,10 @@ namespace D3B.Bot.Runtime;
 /// turn and paused the bot, though no one touched the client, measured on a friend's capture (D252). Its text names that
 /// state: an inactive client passes the character's turns until the player clicks its OK (D366).
 /// </para>
+/// <para>
+/// A character following its party's leader by the game's option (D476, D477) walks and changes maps by its client: out of a
+/// fight, those are not the player's while it follows, so that a player's walk of such a follower pauses nothing.
+/// </para>
 /// </remarks>
 public static class PlayerActions
 {
@@ -42,6 +46,12 @@ public static class PlayerActions
     public static bool Starts(CharacterState state, IMessage request)
     {
         ArgumentNullException.ThrowIfNull(state);
+
+        // Measured on the owner's games of 2026-11-20 (D477): a character following its party's leader by the game's option
+        // walks and changes maps by its client, after its leader, so that its bot paused as for the player's hand. Its other
+        // actions are still the player's.
+        if (state.Party is { FollowsLeader: true } && state.Fight is null && request is MapMovementRequest or MapChangeRequest)
+            return false;
 
         return request is MapMovementRequest or MapMovementCancelRequest or MapChangeRequest or InteractiveUseRequest or NpcActionRequest
             or NpcDialogReplyRequest or ExchangeTransferFromInventoryRequest or ExchangeKamasRequest or TeleportRequest

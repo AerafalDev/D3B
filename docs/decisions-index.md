@@ -783,3 +783,8 @@ or refines another says so in its own entry. Add a line here with every new deci
 
 - [D476](decisions/d476-groups-game-following.md#d476-a-group-the-game-can-follow-turns-its-options-on-and-the-bot-watches-each-follower) A group the game can follow turns its options on, and the bot watches each follower (2026-11-20)
   - The fights' options only, measuring first, the master's "follow me" alone.
+
+## Groups, the game's following not paused and its readiness left to the server (D477)
+
+- [D477](decisions/d477-game-following-pause-and-ready.md#d477-a-follower-the-game-moves-is-not-paused-by-its-clients-walks-and-leaves-its-readiness-to-the-server) A follower the game moves is not paused by its client's walks, and leaves its readiness to the server (2026-11-20)
+  - Telling the client's walks by their delay, keeping the followers' readiness.

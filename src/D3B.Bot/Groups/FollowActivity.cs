@@ -578,6 +578,7 @@ public sealed class FollowActivity : BotActivity, IDisposable
                 return true;
 
             _options = null;
+            me.Team?.JoinedByRequest();
         }
 
         _joined = (me.ConnectionId, fight.FightId);

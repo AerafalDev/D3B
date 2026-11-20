@@ -97,3 +97,4 @@ Each file holds the decisions of one group of [the index](../decisions-index.md)
 - [Fights, the Pandawa's carrying (D474)](d474-pandawa-carrying.md): 1 decision, 8 KB.
 - [Groups, a follower waits for its master's fight's options (D475)](d475-follower-waits-fight-options.md): 1 decision, 2 KB.
 - [Groups, the game's own following for a subscribed group (D476)](d476-groups-game-following.md): 1 decision, 4 KB.
+- [Groups, the game's following not paused and its readiness left to the server (D477)](d477-game-following-pause-and-ready.md): 1 decision, 2 KB.

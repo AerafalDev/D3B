@@ -1467,6 +1467,9 @@ failure; without the captures, the pins and the structure pair the same.
     leader was, the followers sending no readiness.
   - **The options on**: the two requests a client sends at each party joined turn on the two options its off requests turn
     off; the owner ticking them on in a capture of 2026-11-18 sent the same, each answered by a response.
+  - **Map changes followed** (D477), on the owner's game of 07:12 UTC through the app: each follower's client sent 10 to 11
+    walks and 3 to 4 map changes by itself after its master's, a map change 2 to 190 ms after its walk's confirmation,
+    and each follower was on its master's map within a second.
   - **Mapped** (D476): those requests and the leader's, the answers to following and stopping, and the words that a member
     follows or stopped. Format 24, every readable field paired; the leader's place and the flag passed on are not.
 - **The exchange's readiness** (D458), on the owner's test of 2026-11-19: a follower moving 67 stacks one by one, each after

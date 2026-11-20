@@ -16,16 +16,23 @@ namespace D3B.Bot.Groups;
 /// the bot's own, which it closes as one alone does.
 /// </para>
 /// <para>
-/// A master says it is ready once each follower that joins its fight is placed and ready (D434): a follower in the master's
+/// A master says it is ready once each follower that joins its fight is placed and ready (D434), or placed when its readiness is the game's (D477): a follower in the master's
 /// fight not yet ready, or on the fight's map in the master's party and not yet in a fight, is waited for; one
 /// disconnected, paused, elsewhere, out of the party or in another fight is not. The fight starting ends the wait, as the
 /// delay the AI gives does.
+/// </para>
+/// <para>
+/// In a group the game follows (D476, D477), the server sets each follower ready as its master is, measured on the owner's games of
+/// 2026-11-20: a follower places itself and says nothing more, and its master waits for it placed, not ready.
 /// </para>
 /// </remarks>
 internal sealed class GroupFight : IFightTeam
 {
     private readonly BotActor _bot;
     private readonly GroupDirectory _groups;
+    private readonly Bots _bots;
+    private volatile bool _placed;
+    private volatile bool _joinedByRequest;
 
     /// <inheritdoc/>
     public FightRole Role
@@ -43,10 +50,19 @@ internal sealed class GroupFight : IFightTeam
         }
     }
 
-    public GroupFight(BotActor bot, GroupDirectory groups)
+    /// <inheritdoc/>
+    public bool LeavesReadyToTheGame
+        => !_joinedByRequest && Role is FightRole.Follows && _groups.MasterOf(_bot.Key) is { } master && _bots.TryGet(master, out var leader)
+            && GameFollowing.Applies(leader.State, [.. _groups.FollowersOf(master).Select(follower => follower.State)], _bot.Time.GetUtcNow());
+
+    /// <inheritdoc/>
+    public bool IsPlaced => _placed;
+
+    public GroupFight(BotActor bot, GroupDirectory groups, Bots bots)
     {
         _bot = bot;
         _groups = groups;
+        _bots = bots;
     }
 
     /// <summary>Tells whether a follower is still to place in its master's fight, begun from a map.</summary>
@@ -72,7 +88,9 @@ internal sealed class GroupFight : IFightTeam
 
         // A placement whose cells are not yet told may be the master's still being drawn, its fighters shown one by one; once
         // told, one the master is not in is another fight.
-        return fight is { Phase: FightPhase.Placement, IsReady: false } && (fight.Fighters.ContainsKey(masterId) || fight.OwnCells.IsEmpty);
+        // A follower that leaves its readiness to the game is waited for until placed (D477).
+        return fight is { Phase: FightPhase.Placement, IsReady: false } && (fight.Fighters.ContainsKey(masterId) || fight.OwnCells.IsEmpty)
+            && follower.Team?.IsPlaced != true;
     }
 
     /// <inheritdoc/>
@@ -122,5 +140,31 @@ internal sealed class GroupFight : IFightTeam
 
             await GroupWaits.AnyAsync([.. seen.Select(one => (one.Bot, (Func<BotActor, bool>)one.Changed)), own], changed, _bot.Time, left, cancellationToken).ConfigureAwait(false);
         }
+    }
+
+    /// <inheritdoc/>
+    public void Placed(bool placed)
+    {
+        if (_placed == placed)
+            return;
+
+        _placed = placed;
+
+        // No state of the follower's shows it: its master's wait for it would see nothing change.
+        _groups.Touch();
+    }
+
+    /// <inheritdoc/>
+    /// <remarks>The review of D477: the server joins only a follower whose options are on, and sets ready only such a one.</remarks>
+    public void JoinedByRequest()
+    {
+        _joinedByRequest = true;
+    }
+
+    /// <inheritdoc/>
+    public void FightOver()
+    {
+        _joinedByRequest = false;
+        Placed(false);
     }
 }

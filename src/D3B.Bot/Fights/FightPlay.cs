@@ -73,65 +73,76 @@ public static class FightPlay
         var left = new HashSet<int>();
         FightMap? map = null;
 
+        // Not placed until this fight's placement places it, whatever the last fight left (D477).
+        context.Actor.Team?.Placed(false);
+
         // The client draws the fight's map first, as it does a map out of fights (D77); a fight over meanwhile ends the wait.
         await context.WaitUntilAsync(Over, context.Delays.Display, cancellationToken).ConfigureAwait(false);
 
-        while (true)
+        try
         {
-            var state = context.State;
-
-            if (state.Fight is not { Phase: not FightPhase.Ended } fight)
-                return Ended(context, state.Fight, challenged);
-
-            foreach (var challenge in fight.Challenges.Where(challenge => challenged.Add(challenge.Id)))
-                FightLog.Challenged(context.Log, self, challenge.Id, challenge.Bonus, challenge.Targets.Length);
-
-            if (state.MapId is not { } mapId || !context.Maps.TryGet(mapId, out var data))
-                return null;
-
-            map = map?.Id == mapId ? map : FightMap.Of(data);
-
-            if (!judged && ImaginedFights.Of(state, map, tables, tactics.Blows, null) is { } start)
+            while (true)
             {
-                var odds = tactics.Odds(start.Fight, start.Knowledge);
+                var state = context.State;
 
-                weights = WeightsOf(state.Fight ?? fight, self, odds.IsRisky);
-                risky = odds.IsRisky;
-                judged = true;
-                FightLog.Judged(context.Log, self, odds.TurnsToWin, odds.TurnsToLose, odds.IsRisky);
-            }
+                if (state.Fight is not { Phase: not FightPhase.Ended } fight)
+                    return Ended(context, state.Fight, challenged);
 
-            if (fight.Phase is FightPhase.Placement)
-            {
-                // Measured live: the fight's context comes before the server shows the character and its team's cells.
-                if (!Shown(fight, self))
+                foreach (var challenge in fight.Challenges.Where(challenge => challenged.Add(challenge.Id)))
+                    FightLog.Challenged(context.Log, self, challenge.Id, challenge.Bonus, challenge.Targets.Length);
+
+                if (state.MapId is not { } mapId || !context.Maps.TryGet(mapId, out var data))
+                    return null;
+
+                map = map?.Id == mapId ? map : FightMap.Of(data);
+
+                if (!judged && ImaginedFights.Of(state, map, tables, tactics.Blows, null) is { } start)
                 {
-                    await context.WaitUntilAsync(next => next.Fight is not { Phase: FightPhase.Placement } placing || Shown(placing, self), context.Delays.Placed, cancellationToken).ConfigureAwait(false);
+                    var odds = tactics.Odds(start.Fight, start.Knowledge);
+
+                    weights = WeightsOf(state.Fight ?? fight, self, odds.IsRisky);
+                    risky = odds.IsRisky;
+                    judged = true;
+                    FightLog.Judged(context.Log, self, odds.TurnsToWin, odds.TurnsToLose, odds.IsRisky);
+                }
+
+                if (fight.Phase is FightPhase.Placement)
+                {
+                    // Measured live: the fight's context comes before the server shows the character and its team's cells.
+                    if (!Shown(fight, self))
+                    {
+                        await context.WaitUntilAsync(next => next.Fight is not { Phase: FightPhase.Placement } placing || Shown(placing, self), context.Delays.Placed, cancellationToken).ConfigureAwait(false);
+
+                        continue;
+                    }
+
+                    // Placed once a fight when its readiness is the game's (D477), as it says nothing the server answers.
+                    if (!fight.IsReady && context.Actor.Team?.IsPlaced != true)
+                        await PlaceAsync(context, tactics, tables, map, weights, cancellationToken).ConfigureAwait(false);
+
+                    await context.WaitUntilAsync(next => next.Fight is not { Phase: FightPhase.Placement }, _placementWait, cancellationToken).ConfigureAwait(false);
 
                     continue;
                 }
 
-                if (!fight.IsReady)
-                    await PlaceAsync(context, tactics, tables, map, weights, cancellationToken).ConfigureAwait(false);
+                if (!fight.IsOwnTurn)
+                {
+                    await context.WaitUntilAsync(next => next.Fight is not { Phase: FightPhase.Fighting, IsOwnTurn: false }, _turnWait, cancellationToken).ConfigureAwait(false);
 
-                await context.WaitUntilAsync(next => next.Fight is not { Phase: FightPhase.Placement }, _placementWait, cancellationToken).ConfigureAwait(false);
+                    continue;
+                }
 
-                continue;
+                // The pack's challenges are read only once a turn may play for one.
+                var play = PlayOf(context);
+                var playedFor = play is ChallengePlay.None || risky || fight.Challenges.IsEmpty ? null : ChallengeOf(fight, tables.Challenges, play, risky, left);
+
+                await PlayTurnAsync(context, tactics, tables, map, weights, refused, playedFor, left, cancellationToken).ConfigureAwait(false);
+                await context.WaitUntilAsync(next => next.Fight is not { IsOwnTurn: true }, context.Delays.Answer, cancellationToken).ConfigureAwait(false);
             }
-
-            if (!fight.IsOwnTurn)
-            {
-                await context.WaitUntilAsync(next => next.Fight is not { Phase: FightPhase.Fighting, IsOwnTurn: false }, _turnWait, cancellationToken).ConfigureAwait(false);
-
-                continue;
-            }
-
-            // The pack's challenges are read only once a turn may play for one.
-            var play = PlayOf(context);
-            var playedFor = play is ChallengePlay.None || risky || fight.Challenges.IsEmpty ? null : ChallengeOf(fight, tables.Challenges, play, risky, left);
-
-            await PlayTurnAsync(context, tactics, tables, map, weights, refused, playedFor, left, cancellationToken).ConfigureAwait(false);
-            await context.WaitUntilAsync(next => next.Fight is not { IsOwnTurn: true }, context.Delays.Answer, cancellationToken).ConfigureAwait(false);
+        }
+        finally
+        {
+            context.Actor.Team?.FightOver();
         }
     }
 
@@ -274,6 +285,15 @@ public static class FightPlay
         }
 
         FightLog.Placed(context.Log, self, context.State.Fight?.Fighters.GetValueOrDefault(self)?.Cell ?? cell);
+
+        // In a group the game follows, the server sets the follower ready as its master is (D477): the owner's ask, a readiness
+        // of each follower is needless.
+        if (context.Actor.Team is { LeavesReadyToTheGame: true } follower)
+        {
+            follower.Placed(true);
+
+            return;
+        }
 
         // A master is ready once its followers joining are placed (D434), lest the fight start without them.
         if (role is FightRole.Leads && context.Actor.Team is { } team)
