@@ -289,8 +289,8 @@ The bots run in `D3B.Bot`: what each part does today, with the decisions that ma
   fight's start. Since 9f4 (D279), the fight's state holds the marks on the cells as the server sets and takes them back,
   glyphs, traps, bombs' walls and portals (`GroundMark`), which `ImaginedFights.MarksOf` gives the engine. Since D461, it
   holds the fight's challenges (`FightChallenge`), each with its bonus, its targets as the server last named them
-  (`FightChallengeTarget`, with the fighters allowed to strike it) and its result; `FightPlay` logs each challenge once and its
-  result as the fight ends. The bot sends none of the challenges' requests yet. Since D466, each turn plays for the fight's
+  (`FightChallengeTarget`, with the fighters allowed to strike it) and its result; `FightPlay` logs each challenge once, as its
+  loop next sees it or at the latest as the fight ends, then its result as the fight ends. The bot sends none of the challenges' requests yet. Since D466, each turn plays for the fight's
   first easy challenge (`FightPlay.ChallengeOf`: its completion criterion in the pack's `ChallengeCatalog` read as a
   `TurnChallenge`) while the activity's profile asks it (`BotActivity.Challenges`, a follower its master's) and the fight is
   not judged risky; a plan that leaves it leaves it for the fight, and once a plan of the turn kept it, the turn's next plans

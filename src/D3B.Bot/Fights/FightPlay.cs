@@ -80,7 +80,7 @@ public static class FightPlay
             var state = context.State;
 
             if (state.Fight is not { Phase: not FightPhase.Ended } fight)
-                return Ended(context, state.Fight);
+                return Ended(context, state.Fight, challenged);
 
             foreach (var challenge in fight.Challenges.Where(challenge => challenged.Add(challenge.Id)))
                 FightLog.Challenged(context.Log, self, challenge.Id, challenge.Bonus, challenge.Targets.Length);
@@ -180,11 +180,19 @@ public static class FightPlay
         return context.Actor.Activity is { IsOver: false, Activity: { FightsItsFights: true } activity } ? activity.Challenges : ChallengePlay.None;
     }
 
-    private static FightEnd? Ended(BotContext context, FightState? fight)
+    private static FightEnd? Ended(BotContext context, FightState? fight, HashSet<int> challenged)
     {
-        // Measured (D461): the server gives each challenge's result before the fight's end, so the ended fight holds them.
+        var self = context.State.Key.CharacterId;
+
+        // Measured (D461): the server gives each challenge's result before the fight's end, so the ended fight holds them. A
+        // challenge listed during a turn the fight ended in never reached the loop's top, where a challenge is said, and is said here, before its result.
         foreach (var challenge in fight?.Challenges ?? [])
-            FightLog.ChallengeEnded(context.Log, context.State.Key.CharacterId, challenge.Id, challenge.Succeeded switch { true => "won", false => "lost", null => "with no result" });
+        {
+            if (challenged.Add(challenge.Id))
+                FightLog.Challenged(context.Log, self, challenge.Id, challenge.Bonus, challenge.Targets.Length);
+
+            FightLog.ChallengeEnded(context.Log, self, challenge.Id, challenge.Succeeded switch { true => "won", false => "lost", null => "with no result" });
+        }
 
         return fight?.End;
     }
