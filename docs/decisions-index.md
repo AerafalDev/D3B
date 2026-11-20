@@ -751,3 +751,8 @@ or refines another says so in its own entry. Add a line here with every new deci
 
 - [D469](decisions/d469-readme-for-players.md#d469-the-readme-written-for-players-building-and-maintaining-d3b-in-docsdevelopmentmd) The README written for players, building and maintaining D3B in docs/development.md (2026-11-20)
   - Trimming the README in place, moving the commands out of it too.
+
+## Groups, the party kept and the fight's lock (D471)
+
+- [D471](decisions/d471-groups-party-kept-and-lock.md#d471-a-party-holding-the-master-and-its-followers-is-kept-whoever-leads-it-a-master-with-followers-never-closes-its-fight-and-opens-one-the-server-kept-closed) A party holding the master and its followers is kept whoever leads it, a master with followers never closes its fight, and opens one the server kept closed (2026-11-20)
+  - The lead passed to the master, unmapped; an invitation into a party another leads, unmeasured; a join sent again after a refusal.

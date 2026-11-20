@@ -1435,6 +1435,21 @@ failure; without the captures, the pins and the structure pair the same.
   to the shared cell was followed 17 times of 21. After a walk not followed, the next was followed 4 times in 74 and
   refused 53, a refusal naming the walk's first cell, not its last; a door used from the cell a refusal named was refused
   25 times in a row. The first walks on a map, 0.50 to 0.53 s after its information, were followed 162 times of 170.
+- **The lock kept, and a member's fight** (D471), on the owner's game of 2026-11-20, a master and three followers through
+  the app, the four game connections of 00:32 to 00:38 UTC (`scripts/capture.cs --messages`; the options, their states and
+  whether the party's leader was the character decoded in a scratch tool, nothing written down):
+  - **A member's fight is locked too**: the four in one party formed by hand, another character its leader, the master
+    attacked by hand; the server turned option 1 on 30 ms after the attack, as for a leader's fight.
+  - **The options kept from one fight to the next**: the party ended, the master fought alone and D3B closed the fight
+    and refused spectators. As the master attacked again, back in its own party, the server sent options 0 and 2 on before
+    the placement, and listed them on as it began, with option 1, before any request; once the owner turned option 2
+    off by hand, the next fights began with option 0 on and option 2 off. Options 0 and 2 were off in each of the master's
+    seven fights before D3B's toggles that night.
+  - **A join into a closed fight**: each follower asked to join 0.45 s after its party's word; the server answered each,
+    29 ms later, by an event not mapped of 9 bytes, not by the fight, and none tried again. The joins of the next fight,
+    open, were answered by the fight.
+  - **A party left**: as their activity started, each follower left the party a follower led, about 2 s apart; the
+    master's party ended with the third.
 - **The exchange's readiness** (D458), on the owner's test of 2026-11-19: a follower moving 67 stacks one by one, each after
   the client's display time, took 39 s. A readiness sent 0.5 s after the exchange's last change was never answered, twice;
   every one sent 3.5 to 4 s after was answered 28 ms later, and the master's, sent 60 ms after its follower's, was taken.

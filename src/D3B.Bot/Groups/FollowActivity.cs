@@ -21,8 +21,8 @@ namespace D3B.Bot.Groups;
 /// profile, waits for it before acting (<see cref="GroupGate"/>). Each step looks at the state, as every activity does (D87):
 /// </para>
 /// <list type="number">
-/// <item>The party first (D431): a party another leads is left, the master's invitation accepted and any other refused,
-/// and once in the master's party, the game's two automatic options turned off. Measured on 3.7.14.18 (D437): the client
+/// <item>The party first (D431): a party the master is not in is left, the master's invitation accepted and any other
+/// refused, and once in the master's party, whoever leads it (D471), the game's two automatic options turned off. Measured on 3.7.14.18 (D437): the client
 /// turns them on by itself 3 to 22 ms after each party it joins, as long as its own window has them on, so the follower
 /// lets the client's display time pass, then turns both off, at each party joined.</item>
 /// <item>The master missing, disconnected or paused, the follower waits where it stands: no follower leads (D432).</item>
@@ -304,8 +304,9 @@ public sealed class FollowActivity : BotActivity, IDisposable
         var me = context.Actor;
         var masterId = master.CharacterId;
 
-        // A party another leads is left first, whoever invites (D431).
-        if (state.Party is { } other && other.LeaderId != masterId)
+        // A party its master is not in is left first, whoever invites (D431); one it is in is kept, whoever leads it, as a party
+        // formed by hand: the owner's report of 2026-11-20 (D471), each follower left it and the master formed it again later.
+        if (state.Party is { } other && !other.Members.Contains(masterId))
         {
             Publish(GameText.Of(GroupTexts.Text("DoingLeaves")));
             GroupLog.Leaving(context.Log, me.Key.CharacterId, other.Id);
@@ -337,7 +338,7 @@ public sealed class FollowActivity : BotActivity, IDisposable
             return true;
         }
 
-        if (state.Party is { } party && party.LeaderId == masterId && _optionsOff != (me.ConnectionId, party.Id))
+        if (state.Party is { } party && party.Members.Contains(masterId) && _optionsOff != (me.ConnectionId, party.Id))
         {
             // Measured (D437): the client turns both on 3 to 22 ms after the party's join, which its display time leaves behind.
             await Task.Delay(context.Delays.Display, context.Time, cancellationToken).ConfigureAwait(false);
@@ -465,10 +466,15 @@ public sealed class FollowActivity : BotActivity, IDisposable
             _over = told.FightId;
 
         if (state.IsFighting || state.PartyFight is not { } fight || fight.MemberId != master.Bot.Key.CharacterId || fight.MapId != state.MapId
-            || master.State.Fight is not { Phase: FightPhase.Placement } || _joined == (me.ConnectionId, fight.FightId) || _over == fight.FightId)
+            || master.State.Fight is not { Phase: FightPhase.Placement } masters || _joined == (me.ConnectionId, fight.FightId) || _over == fight.FightId)
         {
             return false;
         }
+
+        // Measured on the owner's game of 2026-11-20 (D471): the server keeps a team's options from one fight to the next, and
+        // refused the joins sent while the fight was closed; the master opens it in its placement, and the join waits for that.
+        if (masters.Options.GetValueOrDefault(FightOption.Closed))
+            return false;
 
         // Measured (D448): a follower whose walk its client did not confirm is held by the server, which answered nothing to
         // its join; a step aside lets it go (D85), then it joins.

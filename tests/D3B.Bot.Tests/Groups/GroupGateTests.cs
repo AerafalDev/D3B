@@ -149,6 +149,56 @@ public sealed class GroupGateTests
     }
 
     [Fact]
+    public async Task AMasterKeepsAPartyAFollowerLeadsWhileItHoldsEachOfItsFollowersAndActsInIt()
+    {
+        // The owner's report of 2026-11-20 (D471): the party formed by hand, a follower leading it, is kept, not formed again.
+        await using var play = new TestPlay();
+        var (masterConnection, master) = await TestGroup.MasterAsync(play, 300);
+        var (followerConnection, follower) = await TestGroup.FollowerAsync(play, 301);
+        var (secondConnection, second) = await TestGroup.SecondAsync(play, 302);
+        var party = TestGroup.Party(TestGroup.OtherPartyId, TestGroup.FollowerId, TestGroup.FollowerId, TestGroup.MasterId, TestGroup.SecondId);
+
+        masterConnection.Server(party);
+        followerConnection.Server(party);
+        secondConnection.Server(party);
+        await TestGroup.SettleAsync(master, follower, second);
+
+        using var membership = play.Bots.Groups.Follow(follower, TestGroup.Master, out _);
+        using var secondMembership = play.Bots.Groups.Follow(second, TestGroup.Master, out _);
+
+        await Act(master, new MapMovementRequest { MapId = TestPlay.MapId });
+        await Act(master, _act);
+
+        // A member of a party another leads, the master turns its own automatic options off, once: joining its leader's
+        // fights would take it into a follower's.
+        Assert.Equal(
+            [new PartyAutoOptionOneOffRequest(), new PartyAutoOptionTwoOffRequest(), new MapMovementRequest { MapId = TestPlay.MapId }, _act],
+            masterConnection.Sent);
+    }
+
+    [Fact]
+    public async Task AMasterLeavesAPartyAnotherLeadsOnceAFollowerIsOutOfIt()
+    {
+        await using var play = new TestPlay();
+        var (masterConnection, master) = await TestGroup.MasterAsync(play, 300);
+        var (followerConnection, follower) = await TestGroup.FollowerAsync(play, 301);
+        var (_, second) = await TestGroup.SecondAsync(play, 302);
+        var party = TestGroup.Party(TestGroup.OtherPartyId, TestGroup.FollowerId, TestGroup.FollowerId, TestGroup.MasterId);
+
+        masterConnection.Server(party);
+        followerConnection.Server(party);
+        await TestGroup.SettleAsync(master, follower);
+
+        using var membership = play.Bots.Groups.Follow(follower, TestGroup.Master, out _);
+        using var secondMembership = play.Bots.Groups.Follow(second, TestGroup.Master, out _);
+        var acting = Act(master, _act);
+
+        // Invitations into a party another leads are not measured: the master leaves it and forms its own.
+        Assert.Equal(new PartyLeaveRequest { PartyId = TestGroup.OtherPartyId }, await TestGroup.SentAsync(play, masterConnection, 1));
+        Assert.False(acting.IsCompleted);
+    }
+
+    [Fact]
     public async Task AMasterLeavesAgainAPartyItIsStillInTenSecondsAfter()
     {
         await using var play = new TestPlay();

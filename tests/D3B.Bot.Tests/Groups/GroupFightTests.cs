@@ -85,6 +85,13 @@ public sealed class GroupFightTests
     // Measured (D448): the server names the fight's own map, whose id is not the map's the fight began on.
     private static void Placement(TestConnection connection, long self, int cell, int near, int monster, bool partyOnly, long fightMap, params Actor[] allies)
     {
+        Placement(connection, self, cell, near, monster, partyOnly ? [FightOption.PartyOnly] : [], fightMap, allies);
+    }
+
+    // Measured on the owner's game of 2026-11-20 (D471): the server shows each of the team's options as the placement starts,
+    // those its leader set in its last fight among them.
+    private static void Placement(TestConnection connection, long self, int cell, int near, int monster, FightOption[] on, long fightMap, params Actor[] allies)
+    {
         var order = new FightTurnListEvent();
 
         order.Entries.Add(new FightTurnEntry { Fighter = new FightTurnFighter { FighterId = self } });
@@ -103,8 +110,7 @@ public sealed class GroupFightTests
 
         messages.AddRange(allies.Select(ally => new FightFighterShowEvent { Fighter = ally }));
 
-        if (partyOnly)
-            messages.Add(new FightOptionUpdateEvent { Option = FightOption.PartyOnly, Enabled = true });
+        messages.AddRange(on.Select(option => new FightOptionUpdateEvent { Option = option, Enabled = true }));
 
         messages.Add(new FightPlacementPossiblePositionsEvent { Cells = new PlacementCells { DefenderCells = { monster }, ChallengerCells = { cell, near } } });
         messages.Add(new FightSpellsContextEvent { FighterId = self, Spells = { new SpellItem { SpellId = TestPlay.BlowSpellId, Grade = 1 } } });
@@ -277,6 +283,22 @@ public sealed class GroupFightTests
     }
 
     [Fact]
+    public async Task AMasterWaitsForAFollowerOfItsPartyWhoeverLeadsIt()
+    {
+        // The party formed by hand, its follower leading it (D471): the follower is told of the fight and joins it.
+        await using var play = new TestPlay();
+        var (connection, master) = await TestGroup.MasterAsync(play, Far);
+        var (followerConnection, follower) = await TestGroup.FollowerAsync(play, 301);
+
+        followerConnection.Server(TestGroup.Party(TestGroup.PartyId, TestGroup.FollowerId, TestGroup.FollowerId, TestGroup.MasterId));
+
+        using var membership = play.Bots.Groups.Follow(follower, TestGroup.Master, out _);
+
+        await PlacedAsync(play, connection, master);
+        await WaitingAsync(play);
+    }
+
+    [Fact]
     public async Task AMasterWaitsNotForAFollowerOutOfItsParty()
     {
         // Out of the party, the follower is told of no fight, and never joins it.
@@ -292,9 +314,11 @@ public sealed class GroupFightTests
     }
 
     [Fact]
-    public async Task AMastersFightTheServerDidNotLockToItsPartyIsClosedAsOneAlone()
+    public async Task AMasterClosesNotItsFightWhileItHasFollowersThoughTheServerDidNotLockItToItsParty()
     {
-        // D216 still: an aggression, or a master whose party ended, has no lock the server set.
+        // The owner's report of 2026-11-20 (D471): the master's party ended, it fought closed, and the server kept its fight
+        // closed into the next, its followers' joins refused. A master with followers closes no fight, so that none is kept
+        // closed into the one they join; spectators only are refused.
         await using var play = new TestPlay();
         var (connection, master) = await TestGroup.MasterAsync(play, Far);
         var (_, follower) = await TestGroup.FollowerAsync(play, 301, TestPlay.NorthMapId);
@@ -306,7 +330,59 @@ public sealed class GroupFightTests
         master.FightsAlone = true;
         Placement(connection, TestGroup.MasterId, Far, Beside(monster, -3, 0), monster, partyOnly: false);
 
-        Assert.Equal(FightOption.Closed, Assert.IsType<FightOptionToggleRequest>(await TestGroup.SentAsync(play, connection, sent + 1)).Option);
+        Assert.Equal(FightOption.NoSpectators, Assert.IsType<FightOptionToggleRequest>(await TestGroup.SentAsync(play, connection, sent + 1)).Option);
+        connection.Server(new FightOptionUpdateEvent { Option = FightOption.NoSpectators, Enabled = true });
+        Assert.IsType<FightPlacementPositionRequest>(await TestGroup.SentAsync(play, connection, sent + 2));
+    }
+
+    [Fact]
+    public async Task ACharacterClosesNotAFightTheServerLockedToItsPartyThoughNobodyFollowsIt()
+    {
+        // Measured (D471): the server locks to its party the fight of any member that attacks, its leader or not.
+        await using var play = new TestPlay();
+        var (connection, master) = await TestGroup.MasterAsync(play, Far);
+        var monster = Beside(Far, 8, 0);
+        var sent = connection.Sent.Count;
+
+        master.FightsAlone = true;
+        Placement(connection, TestGroup.MasterId, Far, Beside(monster, -3, 0), monster, partyOnly: true);
+
+        Assert.Equal(FightOption.NoSpectators, Assert.IsType<FightOptionToggleRequest>(await TestGroup.SentAsync(play, connection, sent + 1)).Option);
+        connection.Server(new FightOptionUpdateEvent { Option = FightOption.NoSpectators, Enabled = true });
+        Assert.IsType<FightPlacementPositionRequest>(await TestGroup.SentAsync(play, connection, sent + 2));
+    }
+
+    [Fact]
+    public async Task AMasterOpensTheFightTheServerKeptClosedAndItsFollowerJoinsItOnceOpen()
+    {
+        // Measured on the owner's game of 2026-11-20 (D471): the server keeps a team's options from one fight of its leader
+        // to the next; the fight after one D3B closed began closed, and the followers' joins sent then were refused.
+        await using var play = new TestPlay();
+        var (masterConnection, master) = await TestGroup.MasterAsync(play, Far);
+        var (followerConnection, follower, run) = await FollowingAsync(play, 301);
+        var monster = Beside(Far, 8, 0);
+        var sent = masterConnection.Sent.Count;
+
+        master.FightsAlone = true;
+        Placement(masterConnection, TestGroup.MasterId, Far, Beside(monster, -3, 0), monster, [FightOption.PartyOnly, FightOption.Closed, FightOption.NoSpectators], TestPlay.EastMapId);
+        followerConnection.Server(InFight(TestPlay.MapId));
+
+        Assert.Equal(FightOption.Closed, Assert.IsType<FightOptionToggleRequest>(await TestGroup.SentAsync(play, masterConnection, sent + 1)).Option);
+        await TestGroup.UntilAsync(play, () => follower.State.PartyFight is not null, "the follower told of the fight");
+        await TestGroup.SettleAsync(master, follower);
+
+        // Closed, the fight would refuse the follower: it waits for it to open.
+        Assert.Equal(2, followerConnection.Sent.Count);
+
+        // Opened, the follower joins at once, the clock still: the master's fight opening wakes it.
+        masterConnection.Server(new FightOptionUpdateEvent { Option = FightOption.Closed, Enabled = false });
+        await TestGroup.SettleAsync(master, follower);
+
+        Assert.Equal(new FightJoinRequest { FightId = FightId, FighterId = TestGroup.MasterId }, Assert.Single(followerConnection.Sent.Skip(2)));
+
+        // Spectators already refused, as the server kept them: the master toggles nothing else, and places itself.
+        Assert.IsType<FightPlacementPositionRequest>(await TestGroup.SentAsync(play, masterConnection, sent + 2));
+        run.Stop();
     }
 
     [Fact]
