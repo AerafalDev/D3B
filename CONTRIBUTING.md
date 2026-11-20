@@ -46,7 +46,7 @@ dotnet test
 ```
 
 To run the app from source, the host needs the installed client's pack, schema and mapping: the
-[README](README.md#run) says how to fetch them. `dotnet tool restore` installs the repository's local tools,
+[development guide](docs/development.md#run-from-source) says how to fetch them. `dotnet tool restore` installs the repository's local tools,
 `dotnet-ef` and `vpk`, pinned in [`.config/dotnet-tools.json`](.config/dotnet-tools.json).
 
 ## How the code is organized
