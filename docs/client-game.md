@@ -1248,6 +1248,13 @@ committed that print fighters by aliases, never an actor's id or name.
   casts the wall's spell), when it was set and when it goes, by round and turn, and its id. Of 88 marks: 22 glyphs by
   401, 6 glyph-auras by 1091, 28 traps, all monsters'; 21 walls; 11 portals by 1181. A trap its enemies do not see names
   cell -1.
+- **Portals** (D468). In the 83 game connections of 3.7.14.18 of 2026-11-18 and 19 and the 54 of 3.7.13.17 of 2026-11-06 to 11,
+  read by a throwaway probe: 24 portals set by 1181, each a mark of type 3 on one cell, with no end, its spell the one its
+  effect's first dice names (2), its grade the second (44338); 3 the character's, 21 an Eliotrope ally's; no cast whose
+  spell names a portal it went through, and 8 walks ending on a portal's cell with no teleport. The cast's spell holds a
+  third field, a list of numbers D3B maps as the portals' ids (mapping format 23), as the references name the portals a cast
+  went through; the client's schema also holds a fight event of a flag and two numbers shaped as Dofus 2's mark activation,
+  which no capture carries.
 - **Glyphs.** On 5 casts of a monster's *Gare aux Glyphes* (10241, four glyphs a cast, of grades 2 to 5, a point, a
   cross and rings of 2 and 3 cells) and 2 of *Particules Spirituelles* (5868): as a fighter's turn began on one, before
   its turn's own sequence, the server struck it in a sequence of type 2, its glyph-and-trap sequence, action 307, then

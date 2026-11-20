@@ -3,7 +3,7 @@ namespace D3B.Engine.Fights;
 /// <summary>When a mark on cells casts its spell, as the effect that set it says.</summary>
 public enum CellMarkKind
 {
-    /// <summary>A mark the engine does not foresee, such as a portal.</summary>
+    /// <summary>A mark the engine does not foresee.</summary>
     Other,
 
     /// <summary>A glyph cast on a fighter there as its turn begins: effect 401.</summary>
@@ -17,4 +17,7 @@ public enum CellMarkKind
 
     /// <summary>A trap, cast as a fighter comes onto it: effect 400.</summary>
     Trap,
+
+    /// <summary>An Eliotrope's portal, which casts nothing: a cast on it comes out of another (<see cref="Portals"/>), effect 1181.</summary>
+    Portal,
 }

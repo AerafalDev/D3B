@@ -3,7 +3,7 @@ using D3B.Data.Spells;
 
 namespace D3B.Engine.Fights;
 
-/// <summary>The marks spells set on cells, glyphs and traps, as the pack's effects make them.</summary>
+/// <summary>The marks spells set on cells, glyphs, traps and portals, as the pack's effects make them.</summary>
 /// <remarks>
 /// <para>
 /// An effect of 401, 402, 1091 or 400 sets a mark on the cells of its zone around the cell cast on, those a fighter may stand
@@ -13,6 +13,10 @@ namespace D3B.Engine.Fights;
 /// alone taking its effects, 3 times on the character, as many on monsters of the author's side, which its mask spared;
 /// the glyph went as its author's turn of the round its duration names began, after it struck. A Roublard's bombs' wall
 /// struck a monster whose turn began on it the same way, 1 time.
+/// </para>
+/// <para>
+/// An effect of 1181 sets an Eliotrope's portal on its cell (<see cref="Portals"/>, D468), the whole fight: it casts nothing,
+/// its first dice, which the server's mark names as the spell it casts, the damage it adds a cell between two portals.
 /// </para>
 /// <para>Built once per pack and shared, from any thread.</para>
 /// </remarks>
@@ -55,6 +59,7 @@ public sealed class Glyphs
             TurnEnd => CellMarkKind.TurnEnd,
             Aura => CellMarkKind.Aura,
             Trap => CellMarkKind.Trap,
+            Portals.SetEffect => CellMarkKind.Portal,
             _ => CellMarkKind.Other,
         };
     }
@@ -67,6 +72,20 @@ public sealed class Glyphs
         foreach (var effect in _spells.EffectsOf(level))
         {
             if (KindOf(effect.EffectId) is not CellMarkKind.Other && (effect.Properties & SpellEffectProperties.ForClientOnly) is 0)
+                return true;
+        }
+
+        return false;
+    }
+
+    /// <summary>Tells whether a level sets an Eliotrope's portal (D468).</summary>
+    /// <param name="level">The level.</param>
+    /// <returns>Whether one of its effects does.</returns>
+    public bool SetsPortal(in SpellLevel level)
+    {
+        foreach (var effect in _spells.EffectsOf(level))
+        {
+            if (effect.EffectId is Portals.SetEffect && (effect.Properties & SpellEffectProperties.ForClientOnly) is 0)
                 return true;
         }
 
