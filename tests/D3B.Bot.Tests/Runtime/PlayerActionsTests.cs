@@ -42,6 +42,21 @@ public sealed class PlayerActionsTests
     }
 
     [Fact]
+    public void TheWalksAndMapChangesOfACharacterFollowingItsLeaderByTheGameAreTheClientsOwn()
+    {
+        // Measured on the owner's games of 2026-11-20 (D476): the client walks and changes maps after its leader by itself.
+        var party = new CharacterParty(5, 900, [900, TestPlay.CharacterId]);
+        var following = _state with { Party = party with { FollowsLeader = true } };
+
+        Assert.False(PlayerActions.Starts(following, new MapMovementRequest()));
+        Assert.False(PlayerActions.Starts(following, new MapChangeRequest { MapId = 1 }));
+        Assert.True(PlayerActions.Starts(following, new InteractiveUseRequest()));
+        Assert.True(PlayerActions.Starts(_state with { Party = party }, new MapMovementRequest()));
+        Assert.True(PlayerActions.Starts(_state with { Party = party }, new MapChangeRequest { MapId = 1 }));
+        Assert.True(PlayerActions.Starts(following with { Fight = new FightState() }, new MapMovementRequest()));
+    }
+
+    [Fact]
     public void AReadinessTakenBackIsThePlayersOnlyWhenTheCharacterWasReady()
     {
         // Measured on the owner's test of 2026-11-18 (D445): from the second fight, each follower's client sent by itself a

@@ -182,7 +182,7 @@ public sealed class Bots : IGameObserver, IAsyncDisposable
 
                 bot.Gate = gate;
                 bot.Mates = _mates;
-                bot.Team = new GroupFight(bot, Groups);
+                bot.Team = new GroupFight(bot, Groups, this);
                 bot.Bank = new GroupBank(bot, Groups, gate, _tables);
                 _bots[key] = bot;
                 _pilots[key] = new FightPilot(bot, _tactics, _tables);

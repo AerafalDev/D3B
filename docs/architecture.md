@@ -354,6 +354,9 @@ The bots run in `D3B.Bot`: what each part does today, with the decisions that ma
   while it does not (`CharacterParty.FollowsLeader`, from the server's answers and words), goes by its own paths once the
   game did not bring it to its master's new map within 10 s, and joins by request a fight the server did not join it to
   within 1 s, its options turned on again; the master's gate asks its members to follow it while one with it does not.
+  Its client's walks and map changes, out of a fight, are not the player's while it follows (`PlayerActions`, D477), and in
+  its master's fight it places itself once and leaves its readiness to the server (`IFightTeam.LeavesReadyToTheGame`,
+  `IsPlaced`): the master waits for it placed, its being placed waking that wait (`GroupDirectory.Touch`).
   A master whose activity banks unloads through its group's bank (D442, `IGroupBank`, `BotActor.Bank`, `GroupBank`), which
   its run asks before each step: a follower full at the pods the activity watches takes the group to the bank, each
   follower gives the master what it carries by an exchange, its readiness once 3.5 s passed with no change (D458)
