@@ -38,7 +38,7 @@ namespace D3B.Engine.Fights;
 /// without centre, star, diagonal perpendicular line, fork, half circle, cone and whole map explains some alone; of 343
 /// fighters an effect damaging at once foresaw, 342 lost life. Ring, outside circles, checkerboard, square without
 /// diagonals, rectangle, boomerang, diagonal line, diagonal cross without centre and the custom zones are not measured.
-/// The fork was measured again on the 92 captures of 3.7.14.18 (D472), Trident de la Mer's of 1, cast straight: of the
+/// The fork was measured again on the 92 captures of 3.7.14.18 (D473), Trident de la Mer's of 1, cast straight: of the
 /// enemies within 4 cells of the cell cast on, along and across, the 314 on the cell, on the first row's three cells and
 /// on the second's three, its arms 2 cells apart, lost life, and none of the 324 elsewhere; the second row's 21 had been
 /// left out. A fork of 2 or 3 and one cast along a diagonal are not measured.
@@ -121,7 +121,7 @@ public static class SpellZones
             case SpellZoneShape.Boomerang:
                 Arms(ref cells, origin, axis, size, forward: 1, middle: false);
                 break;
-            // Measured (D472): a fork of 1 reached a second row, the 21 losses of life of Trident de la Mer it had left out.
+            // Measured (D473): a fork of 1 reached a second row, the 21 losses of life of Trident de la Mer it had left out.
             case SpellZoneShape.Fork:
                 Arms(ref cells, origin, axis, size + 1, forward: 1, middle: true);
                 break;

@@ -514,7 +514,7 @@ ids, 1 to 559; a whole map's, 8,758, one number, 1. `LineFromCaster` sets `param
 1 and 63 on 160 of its 322: the first and the count of its cells from the caster, the other way round. A fork of size 1
 reaches two rows past the cell cast on, the first of 3 cells side by side, the second of 3 with its arms 2 cells apart,
 each row a step of the zone's decrease: measured on the 92 game captures of 3.7.14.18 by Trident de la Mer's losses of
-life, the only fork that damages among the casts captured, 105 forks in the pack, of sizes 1 to 3 (D472).
+life, the only fork that damages among the casts captured, 105 forks in the pack, of sizes 1 to 3 (D473).
 
 **Effects.** 884, ids 0 to 4,076: a characteristic on 213, changed by `+`, `-` or `/` on 383; categories 0 to 9; an
 element on 118; boost on 251, active on 172, used in fights on 31; an opposite on 146, every one held; a description on

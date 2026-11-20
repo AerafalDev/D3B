@@ -1,9 +1,9 @@
-# Fights, the Forgelance's Trident and the fork (D472)
+# Fights, the Forgelance's Trident and the fork (D473)
 
 A part of [the decisions](README.md); each decision has one line in [the index](../decisions-index.md). The zones and masks
 are [D187](d176-d208-step-9.md#d187-zones-and-target-masks), the lance in hand [D465](d465-forgelance-lance-state.md).
 
-## D472: A fork reaches a row past its size, each row a step of its decrease
+## D473: A fork reaches a row past its size, each row a step of its decrease
 
 *2026-11-20, the owner's report of a Forgelance throwing Tridents into the void, the lead's finding of 4 losses of life
 the engine did not foresee in that capture, the owner's choice of the fork alone after the measure. Builds D3, D181, D187,

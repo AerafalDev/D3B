@@ -1099,7 +1099,7 @@ Pure logic with no I/O, in `D3B.Engine`, which references `D3B.Data` for the cel
     caster's range. `LineOfSight`: the cells between two cells, a corner touching only, none blocking by its data or a
     fighter, the same both ways.
   - `SpellZones`: the cells each of the 26 shapes covers, centred on the cell cast on and directed from the caster, a fork
-    a row past its size (D472). `TargetMask`: an effect's mask parsed once, answering on three values whether it selects a fighter; `C` names the
+    a row past its size (D473). `TargetMask`: an effect's mask parsed once, answering on three values whether it selects a fighter; `C` names the
     caster wherever it stands, `c` in the zone only (D226); `R` asks a cast through a portal and `r` a cast through none,
     which every cast tells (D468).
   - `CastRules`, built once per pack: whether a fighter may cast a level on a cell, the refusal named (`CastRefusal`)

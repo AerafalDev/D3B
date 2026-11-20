@@ -613,7 +613,7 @@ internal sealed class CastBench
             if (!expected.TryGetValue(key, out var range))
             {
                 // The level's effects alone foresee nothing of a spell it casts, such as Effondrement's 30711 on the cell cast
-                // on, which the AI imagines as the cast's own (D472).
+                // on, which the AI imagines as the cast's own (D473).
                 if (cast.TriggeredCasts > 0 && TakenByTheWholeCast(cast, key.Target))
                 {
                     Tally.Count($"damage, {alone}: dealt, imagined through a spell it cast");
