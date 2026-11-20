@@ -345,7 +345,7 @@ The bots run in `D3B.Bot`: what each part does today, with the decisions that ma
   shows it otherwise, and says it is ready once each follower on its map is placed; a follower in its master's fight sets
   no option, and any other fight is closed and refused to spectators as one alone. The follower joins its master's fight by request
   (`FightJoinRequest`) as its party is told of it on its map, its master's own state saying the fight is in its placement
-  and not closed.
+  and open (`FightState.IsOpen`): its options listed, after the placement's cells, and the one that closes it off (D475).
   Before any action (D441), the gate waits too for each follower's life over the share the master's profile heals under
   (`GroupLife`, the life its activity watches), and the follower with its master eats what only heals, else regenerates.
   A master whose activity banks unloads through its group's bank (D442, `IGroupBank`, `BotActor.Bank`, `GroupBank`), which

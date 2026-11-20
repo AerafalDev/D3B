@@ -1450,6 +1450,10 @@ failure; without the captures, the pins and the structure pair the same.
     open, were answered by the fight.
   - **A party left**: as their activity started, each follower left the party a follower led, about 2 s apart; the
     master's party ended with the third.
+- **The options listed after the cells** (D475), on the 92 game connections of 3.7.14.18 on the machine
+  (`scripts/capture.cs --messages`): each of the 3,109 placements that began lists the team's four options, after the
+  placement's cells and before the turns' order, in the millisecond of the fight's join, so that a fight kept closed
+  looks open in between.
 - **The exchange's readiness** (D458), on the owner's test of 2026-11-19: a follower moving 67 stacks one by one, each after
   the client's display time, took 39 s. A readiness sent 0.5 s after the exchange's last change was never answered, twice;
   every one sent 3.5 to 4 s after was answered 28 ms later, and the master's, sent 60 ms after its follower's, was taken.

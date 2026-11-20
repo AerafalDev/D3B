@@ -1,6 +1,5 @@
 using D3B.Bot.Characters;
 using D3B.Bot.Runtime;
-using D3B.Protocol.Game;
 
 namespace D3B.Bot.Groups;
 
@@ -17,10 +16,10 @@ internal sealed record BotSeen(BotActor Bot, CharacterState State, bool IsConnec
         return new BotSeen(bot, bot.State, bot.IsConnected, bot.IsPaused);
     }
 
-    // A follower joins its master's fight once it is no longer closed (D471).
-    private static bool IsClosed(CharacterState state)
+    // A follower joins its master's fight once the server said it is open (D471, D475).
+    private static bool IsOpen(CharacterState state)
     {
-        return state.Fight?.Options.GetValueOrDefault(FightOption.Closed) == true;
+        return state.Fight?.IsOpen == true;
     }
 
     /// <summary>Tells whether anything of the bot changed since it was seen: its state, whatever of it, its connection or its pause.</summary>
@@ -29,14 +28,14 @@ internal sealed record BotSeen(BotActor Bot, CharacterState State, bool IsConnec
         return !ReferenceEquals(now.State, State) || now.IsConnected != IsConnected || now.IsPaused != IsPaused;
     }
 
-    /// <summary>Tells whether the bot moved or its group's part changed since it was seen: its map, its placing, its walk, its haven bag, its party, a member's fight, its fighting, its fight closed or opened, its connection or its pause.</summary>
+    /// <summary>Tells whether the bot moved or its group's part changed since it was seen: its map, its placing, its walk, its haven bag, its party, a member's fight, its fighting, its fight said open or no longer, its connection or its pause.</summary>
     public bool Moved(BotActor now)
     {
         var state = now.State;
 
         return state.MapId != State.MapId || state.Cell is null != State.Cell is null || state.HavenBagOwnerId != State.HavenBagOwnerId
             || state.Party != State.Party || state.Invitation != State.Invitation || state.IsFighting != State.IsFighting
-            || state.PartyFight != State.PartyFight || state.Path != State.Path || IsClosed(state) != IsClosed(State)
+            || state.PartyFight != State.PartyFight || state.Path != State.Path || IsOpen(state) != IsOpen(State)
             || now.IsConnected != IsConnected || now.IsPaused != IsPaused;
     }
 }

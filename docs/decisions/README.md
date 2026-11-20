@@ -95,3 +95,4 @@ Each file holds the decisions of one group of [the index](../decisions-index.md)
 - [Fights, points below 0 and the approach within reach (D470, D472)](d470-fights-phantom-points-and-nearing.md): 2 decisions, 5 KB.
 - [Fights, the Forgelance's Trident and the fork (D473)](d473-forgelance-trident-fork.md): 1 decision, 4 KB.
 - [Fights, the Pandawa's carrying (D474)](d474-pandawa-carrying.md): 1 decision, 8 KB.
+- [Groups, a follower waits for its master's fight's options (D475)](d475-follower-waits-fight-options.md): 1 decision, 2 KB.
