@@ -66,6 +66,7 @@ public sealed class BotActor : IAsyncDisposable, IRequestWithholder
     // Only the loop reads and writes these.
     private GameSession? _session;
     private RunningBehavior? _behavior;
+    private bool _stopped;
 
     // The loop writes these, and anyone reads them.
     private volatile CharacterState _state;
@@ -198,6 +199,12 @@ public sealed class BotActor : IAsyncDisposable, IRequestWithholder
         _loop = Task.Run(ReadInboxAsync);
     }
 
+    private static ObjectDisposedException Stopped()
+    {
+        // An activity takes this for the bot's stop by its name, which ObjectDisposedException.ThrowIf gives it too.
+        return new ObjectDisposedException(typeof(BotActor).FullName, "The bot was stopped.");
+    }
+
     /// <summary>Runs a behavior, the only one while it runs.</summary>
     /// <typeparam name="T">What the behavior gives.</typeparam>
     /// <param name="behavior">The behavior: an async method reading the bot's state and sending requests through its context.</param>
@@ -315,7 +322,7 @@ public sealed class BotActor : IAsyncDisposable, IRequestWithholder
         var waiter = new BotWaiter(condition, cancellationToken);
 
         if (!_inbox.Writer.TryWrite(new Waiting(waiter)))
-            waiter.Fail(new ObjectDisposedException(nameof(BotActor), "The bot was stopped."));
+            waiter.Fail(Stopped());
 
         return waiter.Task;
     }
@@ -325,7 +332,6 @@ public sealed class BotActor : IAsyncDisposable, IRequestWithholder
     public async ValueTask DisposeAsync()
     {
         Post(new Stopping());
-        _inbox.Writer.TryComplete();
         await _loop.ConfigureAwait(false);
     }
 
@@ -453,6 +459,13 @@ public sealed class BotActor : IAsyncDisposable, IRequestWithholder
 
     private void Handle(BotInput input)
     {
+        if (_stopped)
+        {
+            Refuse(input);
+
+            return;
+        }
+
         switch (input)
         {
             case Seen seen:
@@ -487,6 +500,33 @@ public sealed class BotActor : IAsyncDisposable, IRequestWithholder
                 break;
             case Settling settling:
                 _state = CharacterEvents.NotConfirmed(_state);
+                settling.Settled.TrySetResult();
+                break;
+            case Processing processing:
+                processing.Processed.TrySetResult();
+                break;
+        }
+    }
+
+    private void Refuse(BotInput input)
+    {
+        // What the loop takes in behind its stop goes as what is sent once the inbox ended: a wait or a start fails, an
+        // expectation is cancelled, the rest is dropped, a connection too, which would bring the stopped bot back.
+        switch (input)
+        {
+            case Expecting expecting:
+                expecting.Expectation.Cancel();
+                break;
+            case Starting starting:
+                starting.Started.TrySetException(Stopped());
+                break;
+            case Waiting waiting:
+                waiting.Waiter.Fail(Stopped());
+                break;
+            case Finished finished:
+                OnFinished(finished.Behavior);
+                break;
+            case Settling settling:
                 settling.Settled.TrySetResult();
                 break;
             case Processing processing:
@@ -723,6 +763,12 @@ public sealed class BotActor : IAsyncDisposable, IRequestWithholder
 
     private void OnStopping()
     {
+        // Measured on 2026-11-20: a fight's pilot that waited or started again as the bot stopped had its input queued
+        // behind the stop, which left it waiting forever, and the host's stop with it. The loop ends its inbox here, and what
+        // it still takes in behind the stop fails as what comes after it.
+        _stopped = true;
+        _inbox.Writer.TryComplete();
+
         if (_behavior is { } behavior)
             Interrupt(behavior, Interruption.Stopped);
 
@@ -730,7 +776,7 @@ public sealed class BotActor : IAsyncDisposable, IRequestWithholder
             starting.Started.TrySetException(new BotInterruptedException(Interruption.Stopped));
 
         foreach (var waiter in _waiters)
-            waiter.Fail(new ObjectDisposedException(nameof(BotActor), "The bot was stopped."));
+            waiter.Fail(Stopped());
 
         _parked.Clear();
         _waiters.Clear();

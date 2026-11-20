@@ -124,7 +124,9 @@ The bots run in `D3B.Bot`: what each part does today, with the decisions that ma
   interruption cancels it, off the loop:
   the player acting, the connection closing, a fight beginning (D88), the host stopping (`BotInterruptedException`).
   Anyone may wait for what a bot's state becomes (`BotActor.WaitUntilAsync`), as a follower will at step 10, and a
-  behavior for its own state, with a delay (`BotContext.WaitUntilAsync`).
+  behavior for its own state, with a delay (`BotContext.WaitUntilAsync`). A bot stops through its loop: taking the stop in,
+  the loop ends its inbox, and a wait or a start it still takes in behind the stop fails as one sent after it, since a
+  fight's pilot left waiting there held the host's stop forever.
 - **The player wins** (D66): a request the player sends that acts on the character (`PlayerActions`) interrupts the bot's
   behavior, and the bot pauses until it is resumed. What the client sends by itself after an action is not the player's:
   a request to leave is the player's only while the character is in a dialog or an exchange (D81), but for a dialog whose
