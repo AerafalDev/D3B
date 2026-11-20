@@ -503,16 +503,23 @@ public sealed class FightTactics
         var scored = new List<(Finalist Finalist, double Score)>();
         var later = knowledge with { Cooldowns = knowledge.Cooldowns.Where(pair => pair.Value > 1).ToImmutableDictionary(pair => pair.Key, pair => pair.Value - 1) };
 
+        // Ending the turn still carrying is the last resort of a turn that began so (D474).
+        var lastResort = Carrying.Carries(standing.End.Fighters, standing.End.ActorId) && finalists.Count > 1;
+
         foreach (var finalist in finalists.OrderByDescending(finalist => finalist.Score).Take(Finalists).Append(standing).Distinct())
         {
             var replied = Replies(finalist.End, knowledge, judge);
             var score = judge.JudgeReplied(replied, NextTurn(replied, later, judge, limits).Gain);
 
             weighed++;
-            scored.Add((finalist, score));
 
             if (finalist == standing)
                 standingScore = score;
+
+            if (lastResort && finalist == standing)
+                continue;
+
+            scored.Add((finalist, score));
 
             if (score > bestScore + Better || (finalist == standing && score >= bestScore - Better))
             {
@@ -649,10 +656,18 @@ public sealed class FightTactics
         // Ending where the fighter stands comes first, so that a tie keeps it there and no walk is sent; with a challenge, only
         // the ends that keep it, a walk worse than standing among them when standing breaks it.
         var actor = node.Fight.Actor;
+
+        // The owner's choice (D474): a turn never ends carrying, a carry being thrown within the turn; a turn that began carrying
+        // may end so only when nothing else can (Search), and walks nowhere first.
+        var carrying = Carrying.Carries(node.Fight.Fighters, actor.Id);
+
+        if (carrying && !node.Actions.IsEmpty)
+            return node.Score;
+
         var here = challenge?.IsKept(node.Fight, knowledge) ?? true;
         List<Finalist> ends = here ? [new Finalist(node.Actions, node.Fight, node.Score)] : [];
 
-        if (actor.MovementPoints > 0 && actor.Cell is not Combatant.NoCell)
+        if (!carrying && actor.MovementPoints > 0 && actor.Cell is not Combatant.NoCell)
         {
             foreach (var (cell, left) in Moves.Reachable(node.Fight.Map, node.Fight.Fighters, actor))
             {
@@ -796,7 +811,7 @@ public sealed class FightTactics
                         break;
 
                     var moved = actor with { Cell = from, MovementPoints = left.MovementPoints, ActionPoints = left.ActionPoints };
-                    var modified = CastRules.Modified(level, moved);
+                    var modified = Rules.Cast(level, fight.Fighters, moved);
 
                     if (!SpellRange.Reaches(modified, moved.RangeBonus, from, cell))
                         continue;
@@ -863,6 +878,10 @@ public sealed class FightTactics
     private List<int> TargetCells(ImaginedFight fight, in SpellLevel level, int most)
     {
         var actor = fight.Actor;
+
+        if (Rules.Throws(level) && Carrying.Carries(fight.Fighters, actor.Id))
+            return ThrowCells(fight, level, most);
+
         var radius = 0;
         var free = (level.Properties & SpellLevelProperties.NeedFreeCell) is not 0;
         var bomb = false;
@@ -906,6 +925,25 @@ public sealed class FightTactics
             .OrderBy(cell => Nearest(fight, actor.Team, cell))
             .ThenBy(cell => MapGeometry.Distance(actor.Cell, cell))
             .Take(most)];
+    }
+
+    private List<int> ThrowCells(ImaginedFight fight, in SpellLevel level, int most)
+    {
+        // A throw lands where the judge prefers its fighter (D474): an enemy among its own side's foes or into a zone, the cells
+        // nearest the enemies, an ally out of their reach, the farthest; half each, in range of where the carrier stands.
+        var actor = fight.Actor;
+        var cells = new List<int>();
+
+        foreach (var cell in SpellRange.Cells(Rules.Cast(level, fight.Fighters, actor), actor.RangeBonus, actor.Cell))
+        {
+            if (fight.Map.IsWalkable(cell) && fight.On(cell) is null)
+                cells.Add(cell);
+        }
+
+        var ordered = cells.OrderBy(cell => Nearest(fight, actor.Team, cell)).ThenBy(cell => MapGeometry.Distance(actor.Cell, cell)).ToList();
+        var near = most / 2;
+
+        return [.. ordered.Take(near).Concat(Enumerable.Reverse(ordered).Take(most - near)).Distinct()];
     }
 
 

@@ -1098,7 +1098,7 @@ Pure logic with no I/O, in `D3B.Engine`, which references `D3B.Data` for the cel
   - `SpellZones`: the cells each of the 26 shapes covers, centred on the cell cast on and directed from the caster.
     `TargetMask`: an effect's mask parsed once, answering on three values whether it selects a fighter; `C` names the
     caster wherever it stands, `c` in the zone only (D226); `R` asks a cast through a portal and `r` a cast through none,
-    which every cast tells (D468).
+    which every cast tells (D468); `K` names the fighter the caster carries, or throws as the throw's own effects land (D474).
   - `CastRules`, built once per pack: whether a fighter may cast a level on a cell, the refusal named (`CastRefusal`)
     in the order the checks run, from its `CastHistory`, the level as the caster's spell modifiers change it
     (`SpellModifier`, `CastRules.Modified`); the cells it may cast on; the fighters each effect reaches. The level's
@@ -1106,6 +1106,8 @@ Pure logic with no I/O, in `D3B.Engine`, which references `D3B.Data` for the cel
     the levels asking for it (D191). `StatesAllow` says whether the states let a fighter cast a level at all, which the
     judge reads (D228). Given the fight's marks, a cast on an open portal is checked from the caster to the portal, then
     on the cell it lands on from its exit, and a level needing a cell with no portal is refused on one (`Passage`, D468).
+    A level that throws, cast by a carrier, lands on a free cell, its range raised by the level's own modifiers of its
+    spell unless the server gave one (`CastRules.Cast`, `Throws`, D474).
   - `FightMoves`, built once per pack: the four cells a fighter steps to, the share of its MP and AP a tackle leaves it,
     and the cells it walks to with what it keeps there.
   - Benchmarked on a captured fight's map: every cell a level may be cast on in 6.3 µs, a line of sight in 30 ns, an
@@ -1162,6 +1164,12 @@ Pure logic with no I/O, in `D3B.Engine`, which references `D3B.Data` for the cel
     goes, a wall while its bombs live, its blow rising with their combos, each blow as likely as the enemy stays, measured
     on the monsters' turns (D288); it reckons the walls once a judgement, and a turn's start only for a fighter on the
     other side's mark, its own side's left to the reply as the cost measured (D290).
+  - `Carrying`, in `D3B.Engine.Fights` (D474): a carry (effect 50) takes the fighter reached off its cell, its carrier's
+    (`Combatant.CarrierId`), the carrier in state 3 and the carried in 8 and 3579, as the server sets them; a throw (51) lands
+    the carried on the free cell cast on, still carried for the throw's own effects there, then ends the carry
+    (`Imagination.Cast`). A carried monster must be one the pack lets be. `FightTactics` never ends a turn carrying: a node
+    that carries is ranked but is no end, and a turn that began carrying ends so only when no other end exists; a throw is
+    tried on the free cells in its range, half the nearest to the enemies and half the farthest (`ThrowCells`).
   - `Portals` and `PortalPassage`, in `D3B.Engine.Fights` (D468): an Eliotrope's portals, marks of effect 1181 kept the
     whole fight, four a team, as the references model them, no capture having measured one in Dofus 3. A cast on an open
     portal, by any fighter, goes along its chain, each portal to the nearest of its team's left, and lands as far from the

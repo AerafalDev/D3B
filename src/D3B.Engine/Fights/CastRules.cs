@@ -144,6 +144,60 @@ public sealed class CastRules
         return false;
     }
 
+    /// <summary>Gets a level as a fighter casts it among others: as its modifiers change it (<see cref="Modified"/>), and as a carrier throws.</summary>
+    /// <param name="level">The level.</param>
+    /// <param name="fighters">Every fighter of the fight, the caster among them.</param>
+    /// <param name="caster">The fighter casting it.</param>
+    /// <returns>The level as cast.</returns>
+    /// <remarks>
+    /// A level that throws (<see cref="Carrying.ThrowEffect"/>), cast by a fighter that carries, lands on a free cell, never a
+    /// taken one, its range raised by what the level's own modifiers of its spell give the caster, unless the caster already holds
+    /// a range modifier of that spell. Measured on 3.7.12.12 (D191): the server's buffs gave a carrier's Karcham 3 more range, no
+    /// taken cell and a free one; on 3.7.14.18 the level holds that range for the client only, and no capture holds a throw (D474).
+    /// </remarks>
+    public SpellLevel Cast(in SpellLevel level, IReadOnlyList<Combatant> fighters, Combatant caster)
+    {
+        ArgumentNullException.ThrowIfNull(fighters);
+        ArgumentNullException.ThrowIfNull(caster);
+
+        var cast = Modified(level, caster);
+
+        if (!Throws(level) || !Carrying.Carries(fighters, caster.Id))
+            return cast;
+
+        var raised = 0;
+        var spellId = level.SpellId;
+
+        if (!caster.Modifiers.Any(modifier => modifier.SpellId == spellId && modifier.Kind is SpellModifierKind.Range or SpellModifierKind.RangeSet))
+        {
+            foreach (var effect in _spells.EffectsOf(level))
+            {
+                if (effect.EffectId == (int)SpellModifierKind.Range && effect.DiceNum == level.SpellId && MaskOf(effect).NamesTheCaster)
+                    raised += effect.Value;
+            }
+        }
+
+        return cast with
+        {
+            Range = (byte)Math.Clamp(cast.Range + raised, 0, byte.MaxValue),
+            Properties = (cast.Properties & ~SpellLevelProperties.NeedTakenCell) | SpellLevelProperties.NeedFreeCell,
+        };
+    }
+
+    /// <summary>Tells whether a level throws the fighter its caster carries.</summary>
+    /// <param name="level">The level, of the pack's spells.</param>
+    /// <returns>Whether one of its effects is <see cref="Carrying.ThrowEffect"/>.</returns>
+    public bool Throws(in SpellLevel level)
+    {
+        foreach (var effect in _spells.EffectsOf(level))
+        {
+            if (effect.EffectId is Carrying.ThrowEffect)
+                return true;
+        }
+
+        return false;
+    }
+
     /// <summary>Tells whether a fighter may cast a level on a cell.</summary>
     /// <param name="map">The fight's map.</param>
     /// <param name="fighters">Every fighter of the fight, the caster among them.</param>
@@ -160,7 +214,7 @@ public sealed class CastRules
         ArgumentNullException.ThrowIfNull(caster);
         ArgumentNullException.ThrowIfNull(history);
 
-        var cast = Modified(level, caster);
+        var cast = Cast(level, fighters, caster);
         var refusal = CasterRefusal(fighters, caster, level, cast, history, round);
 
         if (refusal is CastRefusal.None)
@@ -193,7 +247,7 @@ public sealed class CastRules
         ArgumentNullException.ThrowIfNull(caster);
         ArgumentNullException.ThrowIfNull(history);
 
-        var cast = Modified(level, caster);
+        var cast = Cast(level, fighters, caster);
 
         if (Passage(marks, fighters, caster, level, cell) is not { } passage)
         {
@@ -372,7 +426,7 @@ public sealed class CastRules
         if (caster.Cell is Combatant.NoCell)
             return cells;
 
-        foreach (var cell in SpellRange.Cells(Modified(level, caster), caster.RangeBonus, caster.Cell))
+        foreach (var cell in SpellRange.Cells(Cast(level, fighters, caster), caster.RangeBonus, caster.Cell))
         {
             if (Check(map, fighters, caster, level, cell, history, round) is CastRefusal.None)
                 cells.Add(cell);

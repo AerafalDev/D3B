@@ -70,10 +70,21 @@ public sealed class TargetMaskTests
     public void WhatTheFightsStateDoesNotTellIsUnknown()
     {
         Assert.Equal(CriterionAnswer.Unknown, TargetMask.Parse("Sce").Selects(_caster, _enemy, _fighters));
-        Assert.Equal(CriterionAnswer.Unknown, TargetMask.Parse("A,K").Selects(_caster, _enemy, _fighters));
-        Assert.Equal(CriterionAnswer.False, TargetMask.Parse("A,K").Selects(_caster, _ally, _fighters));
+        Assert.Equal(CriterionAnswer.Unknown, TargetMask.Parse("A,T").Selects(_caster, _enemy, _fighters));
+        Assert.Equal(CriterionAnswer.False, TargetMask.Parse("A,T").Selects(_caster, _ally, _fighters));
         Assert.Equal(CriterionAnswer.Unknown, TargetMask.Parse("A,q").Selects(_caster, _enemy, _fighters));
         Assert.Equal(CriterionAnswer.True, TargetMask.Parse("a,q").Selects(_caster with { MaxSummons = 1 }, _caster with { MaxSummons = 1 }, _fighters));
+    }
+
+    [Fact]
+    public void AKNamesTheFighterTheCasterCarries()
+    {
+        // A Pandawa's throws heal an ally thrown and strike an enemy thrown, by masks g,K and A,K (D474).
+        var carried = _enemy with { Cell = Combatant.NoCell, CarrierId = _caster.Id };
+
+        Assert.Equal(CriterionAnswer.True, TargetMask.Parse("A,K").Selects(_caster, carried, _fighters));
+        Assert.Equal(CriterionAnswer.False, TargetMask.Parse("A,K").Selects(_caster, _enemy, _fighters));
+        Assert.Equal(CriterionAnswer.False, TargetMask.Parse("g,K").Selects(_caster, carried, _fighters));
     }
 
     [Fact]

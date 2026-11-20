@@ -751,3 +751,8 @@ or refines another says so in its own entry. Add a line here with every new deci
 
 - [D469](decisions/d469-readme-for-players.md#d469-the-readme-written-for-players-building-and-maintaining-d3b-in-docsdevelopmentmd) The README written for players, building and maintaining D3B in docs/development.md (2026-11-20)
   - Trimming the README in place, moving the commands out of it too.
+
+## Fights, the Pandawa's carrying (D474)
+
+- [D474](decisions/d474-pandawa-carrying.md#d474-the-pandawas-carrying-in-the-ai-a-carry-and-its-throw-within-one-turn-as-the-references-model-it) The Pandawa's carrying in the AI, a carry and its throw within one turn, as the references model it (2026-11-20)
+  - Keeping a carry from one turn to the next, capturing first, a worth of a fighter placed, allies only, Porteur's boosts, `K` counted half.

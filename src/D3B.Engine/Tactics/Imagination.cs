@@ -44,6 +44,11 @@ namespace D3B.Engine.Tactics;
 /// bombs' wall covering its cell casts its spell on it alone; as its turn ends (<see cref="TurnEnded"/>), each glyph struck as
 /// a turn ends does.
 /// </para>
+/// <para>
+/// Carrying (<see cref="Carrying"/>, D474): a carry takes the fighter it surely reaches off its cell, its caster's; a throw cast
+/// on a free cell lands the fighter its caster carries there before its effects, so that those of mask <c>K</c> reach it, then
+/// ends the carry.
+/// </para>
 /// <para>Built once per pack and shared, from any thread.</para>
 /// </remarks>
 public sealed class Imagination
@@ -163,7 +168,19 @@ public sealed class Imagination
         var casterIndex = IndexOf(fighters, caster.Id);
 
         fighters[casterIndex] = caster with { ActionPoints = Math.Max(0, caster.ActionPoints - cost) };
+
+        // A throw lands its carried on the cell first, still carried, so that its effects there reach it as K names it; the carry
+        // ends once they are done (D474).
+        var thrown = target is null && _rules.Throws(level) ? Carrying.CarriedBy(fighters, caster.Id) : -1;
+
+        if (thrown >= 0)
+            fighters[thrown] = fighters[thrown] with { Cell = at };
+
         Effects(fight.Map, fighters, casterIndex, level, at, EffectFormulas.CriticalChance(level, caster), buffs, ref kept, 0, through: through);
+
+        if (thrown >= 0)
+            (fighters[casterIndex], fighters[thrown]) = Carrying.Released(fighters[casterIndex], fighters[thrown]);
+
         OnCell(fight.Map, fighters, casterIndex, level, at, buffs, ref kept);
 
         if (BringsLance(level))
@@ -601,6 +618,9 @@ public sealed class Imagination
                 break;
             case EffectKind.Kill:
                 fighters[index] = target with { Life = 0, IsAlive = false, Cell = Combatant.NoCell };
+                break;
+            case EffectKind.Carry when effect.IsCertain && index != casterIndex && fighters[casterIndex].Cell is not Combatant.NoCell && Carrying.CanBeCarried(fighters, target) && !Carrying.Carries(fighters, fighters[casterIndex].Id):
+                (fighters[casterIndex], fighters[index]) = Carrying.Carry(fighters[casterIndex], target);
                 break;
         }
     }
