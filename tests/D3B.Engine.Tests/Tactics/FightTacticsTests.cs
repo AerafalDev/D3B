@@ -112,6 +112,28 @@ public sealed class FightTacticsTests
     }
 
     [Fact]
+    public void AnEnemyWithinTheSpellsReachButOutOfSightIsWalkedTowards()
+    {
+        // Reported by the owner: characters passed their turns while they could walk to the monsters. Measured on the run's
+        // captures: within its spells' range and MP, with no spell landing from anywhere it could stand, each cell nearer was
+        // worth nothing, and ending the turn now wins a tie.
+        var walled = Off(8, 0);
+        var hider = Biter(-1, walled) with { MovementPoints = 0 };
+        var pillars = new[] { Off(7, 0), Off(9, 0), Off(8, 1), Off(8, -1), Off(7, 1), Off(7, -1), Off(9, 1), Off(9, -1) };
+        var fight = new ImaginedFight { Map = WithPillars(pillars), Fighters = [Caster(), hider], ActorId = Caster().Id, Round = 1 };
+        var knowledge = new FightKnowledge
+        {
+            Spells = ImmutableDictionary<long, ImmutableArray<SpellLevel>>.Empty.Add(Caster().Id, [Level(_spells, Shot)]).Add(hider.Id, [Level(_spells, Bite)]),
+        };
+
+        var plan = Plan(fight, knowledge);
+
+        Assert.False(plan.IsEmpty);
+        Assert.Equal(TacticActionKind.Walk, plan.Actions[^1].Kind);
+        Assert.True(MapGeometry.Distance(plan.Actions[^1].Cell, walled) < MapGeometry.Distance(Middle, walled));
+    }
+
+    [Fact]
     public void ABadlyHurtCharacterHealsItself()
     {
         var (fight, knowledge) = Fight(Caster() with { Life = 20, MovementPoints = 0 }, Biter(-1, Off(12, 0)));

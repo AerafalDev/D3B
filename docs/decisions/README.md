@@ -92,4 +92,5 @@ Each file holds the decisions of one group of [the index](../decisions-index.md)
 - [Fights, an Eliotrope's portals (D468)](d468-eliotrope-portals.md): 1 decision, 5 KB.
 - [Docs, the README for players (D469)](d469-readme-for-players.md): 1 decision, 2 KB.
 - [Groups, the party kept and the fight's lock (D471)](d471-groups-party-kept-and-lock.md): 1 decision, 5 KB.
+- [Fights, points below 0 and the approach within reach (D470, D472)](d470-fights-phantom-points-and-nearing.md): 2 decisions, 5 KB.
 - [Fights, the Forgelance's Trident and the fork (D473)](d473-forgelance-trident-fork.md): 1 decision, 4 KB.

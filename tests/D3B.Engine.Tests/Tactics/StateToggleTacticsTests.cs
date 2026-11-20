@@ -24,6 +24,8 @@ public sealed class StateToggleTacticsTests
     private static readonly FightTactics _tactics = new(_spells, States(), new EffectCatalog(new Effect[]
     {
         new(97, 0, 0, '\0', 2, 1, 0, 0, 0, 0, EffectProperties.UseInFight),
+        new(127, 0, 23, '-', 0, -1, 0, 0, 0, 0, EffectProperties.UseInFight),
+        new(406, 0, 0, '\0', 0, -1, 0, 0, 0, 0, EffectProperties.UseInFight),
         new(792, 0, 0, '\0', 0, -1, 0, 0, 0, 0, EffectProperties.UseInFight),
         new(950, 0, 0, '\0', 0, -1, 0, 0, 0, 0, EffectProperties.UseInFight),
         new(951, 0, 0, '\0', 0, -1, 0, 0, 0, 0, EffectProperties.UseInFight),
@@ -31,8 +33,9 @@ public sealed class StateToggleTacticsTests
 
     /// <summary>
     /// Spell 10, 1 AP on the caster's cell, up to 6 times a turn: casts 20, taking Sobre (7) off and putting Saoul (8) on for 2
-    /// rounds, when the caster is sober, and 30, the other way round with Sobre for the whole fight, when it is drunk. Spell 40,
-    /// 3 AP at range 1 to 4: an earth blow of 40 which the enemy takes only when its caster is sober.
+    /// rounds with a malus of 1 MP, when the caster is sober, and 30, the other way round with Sobre for the whole fight, Saoul's
+    /// buffs dispelled, when it is drunk. Spell 40, 3 AP at range 1 to 4: an earth blow of 40 which the enemy takes only when its
+    /// caster is sober.
     /// </summary>
     private static SpellCatalog Catalog()
     {
@@ -64,9 +67,9 @@ public sealed class StateToggleTacticsTests
         SpellLevel[] levels =
         [
             Level(1010, Toggle, 1, 0, 0, 0, 2, perTurn: 6),
-            Level(1020, Drink, 0, 0, 0, 2, 2),
-            Level(1030, Sober, 0, 0, 0, 4, 2),
-            Level(1040, Strike, 3, 1, 4, 6, 1),
+            Level(1020, Drink, 0, 0, 0, 2, 3),
+            Level(1030, Sober, 0, 0, 0, 5, 3),
+            Level(1040, Strike, 3, 1, 4, 8, 1),
         ];
         SpellEffect[] effects =
         [
@@ -74,8 +77,10 @@ public sealed class StateToggleTacticsTests
             Effect(792, 3, dice: Sober, side: 1),
             Effect(951, 0, value: SoberState),
             Effect(950, 0, value: DrunkState, duration: 2),
+            Effect(127, 0, dice: 1, duration: 2),
             Effect(951, 0, value: DrunkState),
             Effect(950, 0, value: SoberState, duration: -1),
+            Effect(406, 0, value: Drink),
             Effect(97, 4, dice: 40, side: 40),
         ];
         Spell[] spells =
@@ -105,9 +110,9 @@ public sealed class StateToggleTacticsTests
         return Caster() with { ActionPoints = actionPoints, MovementPoints = 0, States = [state] };
     }
 
-    private static Combatant Target()
+    private static Combatant Target(int away = 2)
     {
-        return Enemy(-1, Off(2, 0)) with { Life = 300, MaxLife = 300 };
+        return Enemy(-1, Off(away, 0)) with { Life = 300, MaxLife = 300 };
     }
 
     [Fact]
@@ -179,5 +184,44 @@ public sealed class StateToggleTacticsTests
 
         Assert.Equal(swaps, casts.Count(spell => spell is Toggle));
         Assert.Contains(Strike, casts);
+    }
+
+    [Fact]
+    public void AMovementPointMalusOnACasterWithNoneLeftGivesNoneBackAsItEnds()
+    {
+        // Measured in game (the owner's Pandawa, client 3.7.14.18): Saoul's malus took the MP of a Pandawa with none left to -1,
+        // and the swap back to Sobre to 0, not to 1.
+        var pandawa = Pandawa(SoberState, 6);
+        var fight = Fight(pandawa, Target());
+
+        var drunk = _tactics.Imagination.Cast(fight, Level(_spells, Toggle), pandawa.Cell);
+        var sober = _tactics.Imagination.Cast(drunk, Level(_spells, Toggle), pandawa.Cell);
+
+        Assert.Equal(-1, drunk.Actor.MovementPoints);
+        Assert.Equal(0, sober.Actor.MovementPoints);
+    }
+
+    [Fact]
+    public void ACharacterWithNoMovementPointLeftDoesNotSwapItsStatesTwiceToWalk()
+    {
+        // Reported by the owner: a Pandawa with no MP left cast Bombance three times in a row, the AI seeing a walk and a blow
+        // after two swaps that the server never gave.
+        var fight = Fight(Pandawa(SoberState, 6), Target(away: 5));
+        var casts = new List<int>();
+
+        for (var step = 0; step < 8; step++)
+        {
+            var plan = _tactics.Plan(fight, Knowledge(fight.Actor), TacticWeights.Default, TurnSearchLimits.Default with { Budget = TimeSpan.FromSeconds(30) });
+
+            if (plan.IsEmpty)
+                break;
+
+            var action = plan.Actions[0];
+
+            casts.Add(action.SpellId);
+            fight = action.Kind is TacticActionKind.Walk ? fight : _tactics.Imagination.Cast(fight, Level(_spells, action.SpellId), action.Cell);
+        }
+
+        Assert.DoesNotContain(Toggle, casts);
     }
 }
