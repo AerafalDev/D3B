@@ -77,11 +77,14 @@ public sealed class CasterMoveTacticsTests
     }
 
     [Fact]
-    public void ACasterMovedAgainstAnObstacleTakesNoDamage()
+    public void ACasterMovedAgainstAnObstacleTakesThePushDamageOfItsOwnLevel()
     {
-        var cast = _tactics.Imagination.Cast(Fight(Off(1, 0), Off(-1, 0)), Level(_spells, Recoil), Off(1, 0));
+        var fight = Fight(Off(1, 0), Off(-1, 0));
+        var caster = fight.Actor with { Level = 40 };
+        var cast = _tactics.Imagination.Cast(fight with { Fighters = [caster, fight.Fighters[1] with { Level = 100 }] }, Level(_spells, Recoil), Off(1, 0));
 
+        // Measured on the captures: 3 cells short at level 40, (20 + 32) times 3 over 4; the enemy's level 100 would give 61.
         Assert.Equal(Middle, cast.Actor.Cell);
-        Assert.Equal(100, cast.Actor.Life);
+        Assert.Equal(100 - 39, cast.Actor.Life);
     }
 }
