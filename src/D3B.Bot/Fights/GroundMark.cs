@@ -40,6 +40,6 @@ public sealed record GroundMark
     /// <summary>Gets the round it goes in, as its author's turn of that round begins.</summary>
     public int EndRound { get; init; }
 
-    /// <summary>Gets whether a fighter went through this portal this turn, which closes it until a turn begins (D482).</summary>
+    /// <summary>Gets whether a fighter went through this portal this turn, which closes it until a turn begins (D489).</summary>
     public bool IsUsed { get; init; }
 }

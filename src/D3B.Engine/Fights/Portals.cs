@@ -4,21 +4,21 @@ using D3B.Engine.Maps;
 
 namespace D3B.Engine.Fights;
 
-/// <summary>An Eliotrope's portals: the way a cast on one goes through them, and how many a team keeps.</summary>
+/// <summary>An Eliotrope's portals: the way a cast or a move on one goes through them, and how many a team keeps.</summary>
 /// <remarks>
 /// <para>
-/// The references' model (D3, D468), Dofus 2's, which no capture of Dofus 3 measured yet: none of the 137 game connections
-/// of 3.7.13.17 and 3.7.14.18 holds a cast the server says went through a portal, among 24 portals set. A portal is a mark of
+/// The references' model (D3, D468), measured on the captures of 3.7.14.18 of 2026-11-18 to 21 (D489). A portal is a mark of
 /// effect 1181 on one cell, kept the whole fight; a team keeps four, a fifth taking the oldest's place. A portal is open while
-/// no fighter stands on it and its team has another open. A cast on an open portal goes along its chain, from it to the
-/// nearest of its team's other open portals, then to the nearest of those left, and so on, and comes out of the last one,
-/// its target as far from that exit, in the same direction, as the caster is from the portal cast on; its effects gain, in
-/// percent, the first dice of each portal's effect 1181, 2 in the pack, for each cell between it and the portal before it in
-/// the chain, the effect's text naming its third, 0, a share of its own. Any fighter's cast goes through, the references asking no team.
+/// no fighter stands on it, no fighter went through it this turn, and its team has another open. A cast on an open portal
+/// goes along its chain, from it to the nearest of its team's other open portals, then to the nearest of those left, and so
+/// on, and comes out of the last one, its target as far from that exit, in the same direction, as the caster is from the
+/// portal cast on: 1,329 casts of 1,329 as the server named them. Its effects gain, in percent, the first dice of each
+/// portal's effect 1181, 2 in the pack, for each cell between it and the portal before it in the chain: the share that fits
+/// the most damage dealt, where the references' 2 more fit fewer. Any fighter's cast goes through. A walk or a push that ends
+/// on an open portal sends its fighter onto the last of the chain, which closes the two until a turn begins.
 /// </para>
 /// <para>
-/// Not modelled: a tie between two portals as near, which the references break by an angle, here by the older; a portal used
-/// by a walk, which closes it until the next turn; one an effect 1183 closes; the walk through one (1182).
+/// Not modelled: a portal an effect 1183 closes; the spell 14631 that each of an Eliotrope's casts through portals casts on it.
 /// </para>
 /// </remarks>
 public static class Portals
@@ -67,7 +67,7 @@ public static class Portals
     /// <param name="cell">The cell its move ends on.</param>
     /// <returns>The cell it ends on, and the marks: the two portals closed when it went through, else the same.</returns>
     /// <remarks>
-    /// Measured on 3.7.14.18 (D482): 777 of 818 walks and slides that ended on an open portal, by both teams, were teleported
+    /// Measured on 3.7.14.18 (D489): 777 of 818 walks and slides that ended on an open portal, by both teams, were teleported
     /// onto the cell of the portal a cast on it comes out of; none of 152 over a portal on its way; none of 64 onto a portal
     /// one went through that turn. The mover's own cell, left, no longer closes the portal there. A monster goes through when
     /// its properties let it, as the references ask.
@@ -185,7 +185,7 @@ public static class Portals
 
     private static CellMark Tied(CellMark current, List<CellMark> tied)
     {
-        // Measured on 3.7.14.18 (D482), as the references break it (D3): of the portals as near, turning from the map's bottom,
+        // Measured on 3.7.14.18 (D489), as the references break it (D3): of the portals as near, turning from the map's bottom,
         // x falling first, the last of an arc narrower than a half turn, or the first when they lie all around, or two opposite.
         var centre = MapGeometry.PointOf(current.Centre);
         var vectors = tied.ConvertAll(mark => Vector(centre, mark.Centre));

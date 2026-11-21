@@ -140,7 +140,7 @@ public sealed class FightTactics
         }
 
         // Two portals set on two cells leave the fighters alike: their cells tell the sequences apart (D468), and so do the
-        // portals a walk closed (D482).
+        // portals a walk closed (D489).
         foreach (var mark in fight.Marks)
         {
             if (mark.Kind is CellMarkKind.Portal)
@@ -778,7 +778,7 @@ public sealed class FightTactics
             {
                 foreach (var (from, left) in cells)
                 {
-                    // An enemy that walks onto an open portal strikes from the one it comes out of (D482).
+                    // An enemy that walks onto an open portal strikes from the one it comes out of (D489).
                     var (landed, marks) = Portals.Moved(view.Marks, view.Fighters, enemy, from);
                     var moved = enemy with { Cell = landed, MovementPoints = left.MovementPoints, ActionPoints = left.ActionPoints };
 
@@ -851,7 +851,7 @@ public sealed class FightTactics
                     if (found >= limits.WalksPerTarget)
                         break;
 
-                    // A walk that ends on an open portal casts from the portal it comes out of (D482).
+                    // A walk that ends on an open portal casts from the portal it comes out of (D489).
                     var (landed, marks) = Portals.Moved(fight.Marks, fight.Fighters, actor, from);
                     var moved = actor with { Cell = landed, MovementPoints = left.MovementPoints, ActionPoints = left.ActionPoints };
                     var modified = Rules.Cast(level, fight.Fighters, moved);

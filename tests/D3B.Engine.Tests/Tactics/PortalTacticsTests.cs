@@ -204,7 +204,7 @@ public sealed class PortalTacticsTests
     [Fact]
     public void AnAllyWalksOntoAPortalToStrikeAnEnemyOutOfReachOtherwise()
     {
-        // Measured on 3.7.14.18 (D482): a walk that ends on an open portal comes out of the last of its chain.
+        // Measured on 3.7.14.18 (D489): a walk that ends on an open portal comes out of the last of its chain.
         var iop = Caster(Off(0, 0)) with { BreedId = 8, MovementPoints = 1 };
         var there = Enemy(-1, Off(15, 0)) with { Life = 100 };
 

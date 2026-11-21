@@ -106,3 +106,4 @@ Each file holds the decisions of one group of [the index](../decisions-index.md)
 - [Fights, a carry and the states that forbid it (D483)](d483-carry-states.md): 1 decision, 2 KB.
 - [Activities, the wait for a busy character bounded (D484)](d484-busy-wait-bounded.md): 1 decision, 3 KB.
 - [Fights, the blows on the character's own allies (D485)](d485-ally-strikes.md): 1 decision, 7 KB.
+- [Fights, an Eliotrope's portals measured (D489)](d489-eliotrope-portals-measured.md): 1 decision, 5 KB.
