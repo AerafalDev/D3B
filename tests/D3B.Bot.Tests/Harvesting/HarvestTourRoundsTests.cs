@@ -4,7 +4,7 @@ using D3B.Bot.Tests.Runtime;
 
 namespace D3B.Bot.Tests.Harvesting;
 
-/// <summary>A tour that goes round without getting anywhere (D486): journeys that arrive with nothing harvested and no map gone through, left, or crossed between them.</summary>
+/// <summary>A tour that goes round without getting anywhere (D487): journeys that arrive with nothing harvested and no map gone through, left, or crossed between them.</summary>
 public sealed class HarvestTourRoundsTests : IAsyncDisposable
 {
     private readonly TestPlay _play = new();
@@ -27,7 +27,7 @@ public sealed class HarvestTourRoundsTests : IAsyncDisposable
     [Fact]
     public void ATourGoesRoundOnceThreeJourneysInARowArriveWithNothingDoneSinceTheLast()
     {
-        // Measured in a mine (D486): each round a journey arrived on the map whose ore the character never reached, 58 times.
+        // Measured in a mine (D487): each round a journey arrived on the map whose ore the character never reached, 58 times.
         var tour = Tour();
 
         Assert.False(tour.Arrived());

@@ -30,7 +30,7 @@ internal sealed class HarvestReporter
     /// <summary>Gets or sets the warning the guild chest gave, by its text's key: what it refused, or that none was reached (D147).</summary>
     public string? ChestWarning { get; set; }
 
-    /// <summary>Gets or sets the warning of a tour that went round and was ended, until the next harvest (D486).</summary>
+    /// <summary>Gets or sets the warning of a tour that went round and was ended, until the next harvest (D487).</summary>
     public GameText? RoundWarning { get; set; }
 
     /// <summary>Initializes a new instance of the <see cref="HarvestReporter"/> class.</summary>
