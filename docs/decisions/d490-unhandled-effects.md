@@ -34,12 +34,13 @@ chosen by the owner ("1+2+3 puis 4") among the audit's ranked list. Refines D195
 - **The bench's own counts.** The server names a 1020 shield as 1040 and a 1079 or 1080 removal as 168 or 169, given as a
   buff: matched by its source effect, the buffs whose target was not foreseen fall from 43,429 to 4,914, and the AP removed
   within the range from 602 to 2,940.
-- **Replayed** with `--turns` on the 217 captures, main ac1c7fe6 against the branch: the turns played foresee 312,229 damage
-  for 316,624 announced (309,924 before) and 2,053 kills for 2,059 (2,077 before); the plans casting rise from 7,671 to
-  7,864, those that only walk fall from 688 to 512. By breed, the damage planned rises for the Pandawa (50,309 to 52,906),
-  the Forgelance (31,646 to 32,880), the Sacrieur, the Iop, the Enutrof and the Zobal, holds for the Féca and the Crâ, and
-  falls by 0.2 % for the Eliotrope and 0.8 % for the Huppermage; the kills planned fall by 3 to 8 for the Enutrof, the Iop,
-  the Sacrieur and the Zobal, foreseen nearer what the server announces.
+- **Replayed** with `--turns` on the 217 captures, main ac1c7fe6 against the branch, the judge's tables reading the shares
+  and the reduction too: the turns played foresee 312,229 damage for 316,624 announced (309,924 before) and 2,053 kills for
+  2,059 (2,077 before); the plans foresee 325,570 damage (317,577) and 2,445 kills (2,410), those casting rise from 7,671 to
+  7,867, those that only walk fall from 688 to 510. By breed, the damage planned rises for the Pandawa (50,309 to 55,836),
+  the Forgelance (31,646 to 32,882), the Sacrieur, the Iop, the Enutrof and the Zobal, holds for the Féca and the Crâ, and
+  falls by 0.4 % for the Eliotrope and 0.8 % for the Huppermage; the kills planned fall by 1 to 8 for the Enutrof, the Iop,
+  the Sacrieur, the Zobal and the Huppermage, foreseen nearer what the server announces.
 - **Rejected.** Every effect of the audit at once: the dodge of AP and MP, the damage reflected (107), erosion and the
   Sacrieur's states are each a session's work, ranked in the audit. A share of 1163 ended with its buff's rounds: the search
   covers the turn and the reply, inside which the captured shares last.
