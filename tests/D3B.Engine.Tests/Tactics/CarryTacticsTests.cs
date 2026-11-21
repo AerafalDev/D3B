@@ -16,13 +16,16 @@ public sealed class CarryTacticsTests
     private const int Throw = 20;
     private const int Strike = 40;
 
-    // As the pack of 3.7.14.18 writes them: state 252 cannot be moved, its state effects 3 and 17; state 63 has effect 4
-    // alone; state 6 is not pushed nor swapped, its effects 0, 1, 2, 17 and 18, here 0 and 18.
-    private const int Rooted = 252;
-    private const int Uncarriable = 63;
-    private const int Anchored = 6;
+    // As the pack of 3.7.14.18 writes them: Enraciné (6), not pushed nor swapped, its state effects 0, 1, 2, 17 and 18, here 0
+    // and 18; Pesanteur (7), not swapped, effect 18; Lourd (63), effect 4 alone; Emprisonné (252), which cannot be moved,
+    // effects 3 and 17; Assourdi (1349), not pushed, effect 0.
+    private const int Rooted = 6;
+    private const int Gravity = 7;
+    private const int Heavy = 63;
+    private const int Imprisoned = 252;
+    private const int Deafened = 1349;
 
-    private static readonly int[] _stateEffects = [0, 18, 4, 3, 17];
+    private static readonly int[] _stateEffects = [0, 18, 18, 4, 3, 17, 0];
     private static readonly SpellCatalog _spells = Catalog();
 
     private static readonly FightTactics _tactics = new(_spells, CarryStates(), new EffectCatalog(new Effect[]
@@ -103,11 +106,13 @@ public sealed class CarryTacticsTests
             new SpellState[]
             {
                 new(Carrying.CarrierState, 1, SpellStateProperties.PreventsSpellCast | SpellStateProperties.PreventsFight, 0, 0, 0),
-                new(Anchored, 6, SpellStateProperties.CantBePushed | SpellStateProperties.CantSwitchPosition, 0, 2, 0),
-                new(Carrying.CarriedState, 2, SpellStateProperties.None, 2, 0, 0),
-                new(Uncarriable, 5, SpellStateProperties.None, 2, 1, 0),
-                new(Rooted, 4, SpellStateProperties.CantBeMoved, 3, 2, 0),
-                new(Carrying.HalvedState, 3, SpellStateProperties.None, 5, 0, 0),
+                new(Rooted, 4, SpellStateProperties.CantBePushed | SpellStateProperties.CantSwitchPosition, 0, 2, 0),
+                new(Gravity, 5, SpellStateProperties.CantSwitchPosition, 2, 1, 0),
+                new(Carrying.CarriedState, 2, SpellStateProperties.None, 3, 0, 0),
+                new(Heavy, 6, SpellStateProperties.None, 3, 1, 0),
+                new(Imprisoned, 7, SpellStateProperties.CantBeMoved, 4, 2, 0),
+                new(Deafened, 8, SpellStateProperties.CantBePushed, 6, 1, 0),
+                new(Carrying.HalvedState, 3, SpellStateProperties.None, 7, 0, 0),
             },
             _stateEffects);
     }
@@ -161,13 +166,15 @@ public sealed class CarryTacticsTests
     }
 
     [Theory]
+    [InlineData(Imprisoned, false)]
+    [InlineData(Heavy, false)]
     [InlineData(Rooted, false)]
-    [InlineData(Uncarriable, false)]
-    [InlineData(Anchored, true)]
+    [InlineData(Gravity, false)]
+    [InlineData(Deafened, true)]
     public void AFighterIsCarriedUnlessOneOfItsStatesKeepsItFromBeingMovedOrCarried(int state, bool carried)
     {
-        // The references read a state's effects 3 and 4 so (D482): a carry takes no fighter in such a state, and still takes one
-        // in a state that only stops pushes and swaps.
+        // The references read a state's effects 3 and 4 so (D482), and the owner said Enraciné and Pesanteur keep a fighter from
+        // being carried too: a carry takes no fighter in such a state, and still takes one a state only keeps from being pushed.
         var pandawa = Pandawa(6);
         var ally = Ally(2, Off(1, 0)) with { States = [state] };
 

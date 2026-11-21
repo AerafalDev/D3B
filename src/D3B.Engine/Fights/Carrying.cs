@@ -59,7 +59,7 @@ public static class Carrying
         return CarriedBy(fighters, carrierId) >= 0;
     }
 
-    /// <summary>Tells whether a fighter may be carried: alive on a cell, carrying none and carried by none, and a monster the pack lets be.</summary>
+    /// <summary>Tells whether a fighter may be carried: alive on a cell, carrying none and carried by none, and a monster the pack lets be; its states are <see cref="CastRules.StatesLetCarry"/>'s (D482).</summary>
     /// <param name="fighters">Every fighter of the fight.</param>
     /// <param name="fighter">The fighter.</param>
     /// <returns>Whether it may.</returns>

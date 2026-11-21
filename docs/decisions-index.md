@@ -811,5 +811,5 @@ or refines another says so in its own entry. Add a line here with every new deci
 
 ## Fights, a carry and the states that forbid it (D482)
 
-- [D482](decisions/d482-carry-states.md#d482-a-carry-takes-no-fighter-whose-state-keeps-it-from-being-moved-or-carried) A carry takes no fighter whose state keeps it from being moved or carried (2026-11-21)
-  - The cast refused in the rules, the flag "cannot be moved" alone.
+- [D482](decisions/d482-carry-states.md#d482-a-carry-takes-no-fighter-whose-state-keeps-it-from-being-moved-or-carried-nor-one-enraciné-or-under-pesanteur) A carry takes no fighter whose state keeps it from being moved or carried, nor one Enraciné or under Pesanteur (2026-11-21)
+  - Bubble's reading alone, the cast refused in the rules, the flag "cannot be moved" alone.
