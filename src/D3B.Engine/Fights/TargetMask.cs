@@ -254,6 +254,38 @@ public sealed class TargetMask
         return answer;
     }
 
+    /// <summary>Tells whether the mask's conditions on its caster hold, those led by <c>*</c>, whoever the target.</summary>
+    /// <param name="caster">The caster.</param>
+    /// <param name="fighters">Every fighter of the fight, for the conditions on summons.</param>
+    /// <returns>Whether they hold, or unknown when one asks what the fight's state does not tell; true for a mask that asks none.</returns>
+    /// <remarks>
+    /// An effect on a free cell, such as a summon, reaches no fighter, but the server still asks its caster's conditions:
+    /// Épilogue's lance, of mask <c>a,A,*E3360</c>, never came while the lance was out (D489).
+    /// </remarks>
+    public CriterionAnswer CasterAllows(Combatant caster, IReadOnlyCollection<Combatant> fighters)
+    {
+        ArgumentNullException.ThrowIfNull(caster);
+        ArgumentNullException.ThrowIfNull(fighters);
+
+        var answer = CriterionAnswer.True;
+
+        foreach (var group in _groups)
+        {
+            if (!Array.TrueForAll(group, token => token.OnCaster))
+                continue;
+
+            var met = Any(group, caster, caster, fighters, throughPortal: false);
+
+            if (met is CriterionAnswer.False)
+                return met;
+
+            if (met is CriterionAnswer.Unknown)
+                answer = CriterionAnswer.Unknown;
+        }
+
+        return answer;
+    }
+
     private CriterionAnswer Included(Combatant caster, Combatant target)
     {
         if (target.Id == caster.Id)

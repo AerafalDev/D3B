@@ -89,7 +89,8 @@ internal sealed class GroupBank : IGroupBank
         if (ShareOf(activity) is not { } share)
             return false;
 
-        return _groups.FollowersOf(_bot.Key).Any(follower => follower.State is { MaxWeight: > 0 } state && state.Weight * 100L >= (long)share * state.MaxWeight);
+        // A follower left behind takes nothing to the bank, which would wait for it in vain (D490).
+        return _groups.FollowersOf(_bot.Key).Any(follower => !_gate.IsBehind(follower.Key) && follower.State is { MaxWeight: > 0 } state && state.Weight * 100L >= (long)share * state.MaxWeight);
     }
 
     /// <inheritdoc/>
@@ -123,7 +124,7 @@ internal sealed class GroupBank : IGroupBank
                 // The whole group with the master, as before any action (D437).
                 await _gate.GatherAsync(context, cancellationToken).ConfigureAwait(false);
 
-                if (!follower.IsConnected || follower.IsPaused || !GroupGifts.Carries(follower.State, _tables.Items, _food, left))
+                if (!follower.IsConnected || follower.IsPaused || _gate.IsBehind(follower.Key) || !GroupGifts.Carries(follower.State, _tables.Items, _food, left))
                     break;
 
                 var offered = GroupGifts.Of(follower.State, context.State, _tables.Items, _food, left);

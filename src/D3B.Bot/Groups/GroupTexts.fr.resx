@@ -110,6 +110,9 @@
   <data name="DoingRegenerate" xml:space="preserve">
     <value>Attend que sa vie se régénère, {0} s</value>
   </data>
+  <data name="LeftBehind" xml:space="preserve">
+    <value>Part sans {0}, absent depuis cinq minutes</value>
+  </data>
   <data name="WaitingSeveral" xml:space="preserve">
     <value>Attend {0}</value>
   </data>
