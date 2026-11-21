@@ -38,7 +38,7 @@ public sealed class LanceTacticsTests
     /// <summary>
     /// Spell 40, a lance thrown as the pack's throws are: 3 AP, range 1 to 4, three times a turn, asking the lance in hand or state
     /// 3589, striking 40 to 48 in a cross of 1 and bringing the lance, monster 7139, to its free cell. The lance's starting spell, 24591
-    /// here as the one it casts in 3.7.14.18, gives its thrower's spells 41 and 42 a range of 1 to 63 and asks 41 a taken cell (D481). Spell
+    /// here as the one it casts in 3.7.14.18, gives its thrower's spells 41 and 42 a range of 1 to 63 and asks 41 a taken cell (D482). Spell
     /// 41, as Effondrement: 3 AP, range 0 to 1, its caster casting spell 51 on its own lance while it is out, which strikes 30 to 34
     /// in a cross of 1 around it. Spell 43, as Épilogue: 1 AP, bringing the lance only while it is in hand.
     /// </summary>
@@ -206,7 +206,7 @@ public sealed class LanceTacticsTests
     [Fact]
     public void AThrownLanceGivesEachSpellItNamesItsReach()
     {
-        // Measured on the 25 captures of 20 and 21 November 2026 (D481): with the lance out, Effondrement was cast on it 43
+        // Measured on the 25 captures of 20 and 21 November 2026 (D482): with the lance out, Effondrement was cast on it 43
         // times from beyond its own range, as the lance's spell 24591 sets the range of 13 of the Forgelance's spells.
         var thrower = Thrown().Actor;
         var collapse = CastRules.Modified(Level(_spells, Collapse), thrower);
@@ -245,7 +245,7 @@ public sealed class LanceTacticsTests
     [Fact]
     public void ASecondLanceDoesNotComeWhileTheFirstIsOut()
     {
-        // Measured (D481): 15 casts of Épilogue on a free cell with the lance out brought nothing; its summon asks 3360 of its caster.
+        // Measured (D482): 15 casts of Épilogue on a free cell with the lance out brought nothing; its summon asks 3360 of its caster.
         var thrown = Thrown();
 
         var after = _tactics.Imagination.Cast(thrown, Level(_spells, Epilogue), Off(1, 1));
