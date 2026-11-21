@@ -101,4 +101,5 @@ Each file holds the decisions of one group of [the index](../decisions-index.md)
 - [Fights, the placement weighed by the turn order (D478)](d478-placement-turn-order.md): 1 decision, 2 KB.
 - [Fights, the turn's pace (D479)](d479-fight-turn-pace.md): 1 decision, 2 KB.
 - [Fights, the server's cooldowns merged (D480)](d480-cooldowns-merged.md): 1 decision, 4 KB.
+- [The harvest, fights lost in a row (D481)](d481-harvest-losses-go-on.md): 1 decision, 3 KB.
 - [Fights, a carry and the states that forbid it (D482)](d482-carry-states.md): 1 decision, 2 KB.
