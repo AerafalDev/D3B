@@ -689,7 +689,7 @@ internal sealed class TurnBench
 
     private void Lance(ImaginedFight before, ImaginedFight after, in SpellLevel level, int cell, string whose)
     {
-        // A Forgelance's casts with its lance out (D488): on the lance, where the server casts their spell around it, or
+        // A Forgelance's casts with its lance out (D489): on the lance, where the server casts their spell around it, or
         // elsewhere, where it strikes nothing; the lance's ids are 3.7.14.18's, as D465 reads them.
         const int lance = 7139, outOfHand = 3361;
 

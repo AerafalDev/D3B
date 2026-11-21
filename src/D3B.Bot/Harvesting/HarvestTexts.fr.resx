@@ -188,6 +188,9 @@
   <data name="WarningLevel" xml:space="preserve">
     <value>{0} demande {1} {2}, le perso est {3}</value>
   </data>
+  <data name="WarningGoneRound" xml:space="preserve">
+    <value>Le tour {0} tournait en rond, sans rien récolter ni parcourir de nouvelle carte, et s'est arrêté sur la carte {1}</value>
+  </data>
   <data name="FailNoZone" xml:space="preserve">
     <value>La zone ne contient aucune carte à récolter.</value>
   </data>

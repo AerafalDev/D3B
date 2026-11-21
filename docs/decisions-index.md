@@ -839,7 +839,12 @@ or refines another says so in its own entry. Add a line here with every new deci
 - [D487](decisions/d487-far-walk-wins-tie.md#d487-a-walk-nearer-the-enemies-that-the-judge-weighs-better-before-the-reply-wins-a-tie-within-a-point-after-it) A walk nearer the enemies that the judge weighs better before the reply wins a tie within a point after it (2026-11-21)
   - The approach added to next turn's gain, more walks weighed after the reply, any walk nearest winning a tie.
 
-## Fights, the Forgelance's spells cast on its lance (D488)
+## Movement and the harvest, a map action's cell crossed (D488)
 
-- [D488](decisions/d488-forgelance-lance-reach.md#d488-the-lance-gives-each-spell-it-names-its-reach-and-a-summon-on-a-free-cell-asks-its-casters-conditions) The lance gives each spell it names its reach, and a summon on a free cell asks its caster's conditions (2026-11-21)
+- [D488](decisions/d488-harvest-action-cells.md#d488-a-walk-goes-round-the-maps-action-cells-a-harvest-the-server-cuts-by-moving-the-character-leaves-its-map-gone-through-and-a-tour-going-round-ends) A walk goes round the map's action cells, a harvest the server cuts by moving the character leaves its map gone through, and a tour going round ends (2026-11-21)
+  - Going round alone, a watchdog alone, stopping the activity, counting dry tours, never crossing with no fall back.
+
+## Fights, the Forgelance's spells cast on its lance (D489)
+
+- [D489](decisions/d489-forgelance-lance-reach.md#d489-the-lance-gives-each-spell-it-names-its-reach-and-a-summon-on-a-free-cell-asks-its-casters-conditions) The lance gives each spell it names its reach, and a summon on a free cell asks its caster's conditions (2026-11-21)
   - A rule naming the 13 spells, leaving 314 to the server's refusal.

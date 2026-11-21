@@ -200,6 +200,40 @@ public sealed class CellPathfinderTests
         }, iter: 100);
     }
 
+    [Fact]
+    public void AWalkGoesRoundACellToAvoidThroughAnotherWayIn()
+    {
+        // The cell walled in but on two sides: avoiding one of them, the walk comes in by the other.
+        const int inside = 20 * 14 + 6;
+        var sides = Enumerable.Range(0, 8).Select(direction => MapGeometry.Neighbour(inside, direction)).ToArray();
+        var (avoided, open) = (sides[1], sides[5]);
+        var cells = TestCells.OpenBut([.. sides.Where(side => side != avoided && side != open)]);
+
+        Assert.True(CellPathfinder.TryFind(cells, 10, inside, [avoided], out var path));
+        Assert.Contains(open, path.Cells.ToArray());
+        Assert.DoesNotContain(avoided, path.Cells.ToArray());
+    }
+
+    [Fact]
+    public void ACellToAvoidIsStillAWalksDestinationAndItsStart()
+    {
+        Assert.True(CellPathfinder.TryFind(TestCells.OpenBut(), 100, 160, [160], out var to));
+        Assert.Equal(160, to.End);
+
+        Assert.True(CellPathfinder.TryFindNearest(TestCells.OpenBut(), 100, [160, 300], [100, 300], out var from));
+        Assert.Equal(100, from.Start);
+        Assert.Equal(160, from.End);
+    }
+
+    [Fact]
+    public void ACellReachedOnlyThroughOneToAvoidHasNoPath()
+    {
+        const int inside = 20 * 14 + 6;
+        var sides = Enumerable.Range(0, 8).Select(direction => MapGeometry.Neighbour(inside, direction)).ToArray();
+
+        Assert.False(CellPathfinder.TryFind(TestCells.OpenBut([.. sides.Where((_, direction) => direction is not 1)]), 10, inside, [sides[1]], out _));
+    }
+
     private static MapCell[] Terraced(Func<int, (int Floor, int MoveZone)> byColumn)
     {
         // Cell 0, in column 0 and of a stair, keeps floors counting on the map whatever the columns hold.

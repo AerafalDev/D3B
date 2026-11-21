@@ -256,6 +256,28 @@ public sealed class HarvestActivityTests : IAsyncDisposable
     }
 
     [Fact]
+    public async Task AHarvestWhoseWalkTheServerCutsByMovingTheCharacterLeavesItsMapGoneThrough()
+    {
+        // Measured in a mine (D488): the walk to the ore crossed a map action, and the server moved the character to the next
+        // map before it reached the ore; the map was never gone through, and the tour came back to it for 18 minutes.
+        var (connection, bot) = await _play.EnterAsync(433);
+        var activity = Activity(new HarvestSettings { Resources = [TestPlay.Ash], SubAreas = [TestPlay.SubAreaId] });
+        var run = bot.StartActivity(activity);
+
+        Assert.IsType<MapMovementRequest>(await TestWalks.SentAsync(_play, connection, 1));
+        connection.Server(new MapMovementRefusedEvent { X = 0, Y = 0 });
+        TestWalks.Arrive(connection, TestPlay.EastMapId, 20);
+
+        var report = await ReportedAsync(activity, report => report.Focus is { MapId: TestPlay.EastMapId } && Say(report.Doing) == "Heading to the next map");
+
+        Assert.Contains(report.Focus!.Zone, map => map.MapId == TestPlay.MapId && map.State is ZoneMapState.Visited);
+
+        run.Stop();
+
+        Assert.Equal(ActivityOutcome.Stopped, await run.Completion);
+    }
+
+    [Fact]
     public void AProfileBanksAtTheGeneralShareOfPodsUnlessItAsksForItsOwn()
     {
         var general = new BankingPreferences { FullAt = 98 };
