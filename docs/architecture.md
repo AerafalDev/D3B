@@ -286,7 +286,8 @@ The bots run in `D3B.Bot`: what each part does today, with the decisions that ma
   (`FightEndEntry`). The client acknowledges the sequences and says it is ready for each turn by itself; the bot sends
   nothing in a fight until 9e. Since 9d (D193), each fighter also holds its characteristics as the server last gave them,
   its buffs (`FightBuff`), from which its states and spells' modifiers come, each ending as the turn the server named
-  begins or as the server ends it (`FightBuffEndEvent`, D225), its cooldowns, each spell as the server last named it (D480), the casts it chose (`CastHistory`), and who carries it; the state holds the sequences open
+  begins or as the server ends it (`FightBuffEndEvent`, D225), a removal of a spell's buffs taking that spell's alone and
+  a dispel taking none itself, the server ending each buff it takes and keeping those not dispellable (D486), its cooldowns, each spell as the server last named it (D480), the casts it chose (`CastHistory`), and who carries it; the state holds the sequences open
   (`FightSequence`), and moves a fighter on a slide, a carry and a throw. `FightCombatants` gives the engine the fighters.
   Since 9e (D199, D203), the character's state holds its spells as the server listed them and its transformed form's, the
   fight's state the spells the server's context lists for the fight, the character's own and not a summon's it controls
@@ -1304,7 +1305,8 @@ interface's recast (D292).
   removed and erosion left to captures (9d, built, D195, D196).
 - A fight is decided by simulating candidate actions and scoring them (D13): each turn the AI searches the best sequences
   of moves and casts and thinks again after each answer of the server (9e, built, D201, D202), its judgement measured on
-  the captures turn by turn (9e2, D206 to D212), and breed by breed since D463. The simulator applies spell
+  the captures turn by turn (9e2, D206 to D212), and breed by breed since D463, with the element of each blow against
+  the caster's best and the states each breed holds as its turns begin since D486. The simulator applies spell
   effects read from the game data. It lives in `D3B.Engine`, with no I/O, so it is tested on its own.
 - The hard cases through the effects, measured one at a time (9f): a fighter's states, as the server sets and ends them
   and as the effects set and end them through the spells they cast, the Zobal's masks first (built, D224 to D229);

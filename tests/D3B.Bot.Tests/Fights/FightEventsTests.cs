@@ -539,13 +539,42 @@ public sealed class FightEventsTests
 
         Assert.Equal([2], one.Fight!.Fighters[Self].Buffs.Select(buff => buff.Uid));
 
-        var all = Apply(one, new GameActionFightEvent { ActionId = 132, SourceId = -1, BuffsRemoval = new FightBuffsRemoval { All = true, TargetId = Self } });
-
-        Assert.Empty(all.Fight!.Fighters[Self].Buffs);
-
-        var dead = Apply(all, new GameActionFightEvent { ActionId = 103, SourceId = Self, Death = new FightDeath { TargetId = Monster } });
+        var dead = Apply(one, new GameActionFightEvent { ActionId = 103, SourceId = Self, Death = new FightDeath { TargetId = Monster } });
 
         Assert.Empty(dead.Fight!.Fighters[Monster].Buffs);
+    }
+
+    [Fact]
+    public void ADispelTakesOnlyTheBuffsTheServerEnds()
+    {
+        // Measured (D486): a Pandawa's Sobre, of the whole fight and not dispellable, outlived a monster's dispel, the server
+        // ending each buff it took one by one, while the bot let every buff go and held the Pandawa in no state.
+        var buffed = Apply(
+            Playing(),
+            Buff(Self, 1, 950, FightBuffKind.State, 24_037, parameter: 3531),
+            Buff(Self, 2, 112, FightBuffKind.Boost, 20, value: 10));
+
+        var dispelled = Apply(
+            buffed,
+            new GameActionFightEvent { ActionId = 132, SourceId = Monster, BuffsRemoval = new FightBuffsRemoval { All = true, TargetId = Self } },
+            new FightBuffEndEvent { Uid = 2, TargetId = Self });
+
+        Assert.Equal([1], dispelled.Fight!.Fighters[Self].Buffs.Select(buff => buff.Uid));
+        Assert.Equal([3531], dispelled.Fight.Fighters[Self].States);
+    }
+
+    [Fact]
+    public void ARemovalNamingASpellTakesThatSpellsBuffsAloneWhateverItsOtherFlag()
+    {
+        // Measured (D486): action 406 came 441 times with the flag action 132 sets, naming a spell whose buffs no fighter held.
+        var buffed = Apply(
+            Playing(),
+            Buff(Self, 1, 950, FightBuffKind.State, 24_037, parameter: 3531),
+            Buff(Self, 2, 112, FightBuffKind.Boost, 13_996, value: 10));
+
+        var removed = Apply(buffed, new GameActionFightEvent { ActionId = 406, SourceId = Self, BuffsRemoval = new FightBuffsRemoval { SpellId = 13_996, All = true, TargetId = Self } });
+
+        Assert.Equal([1], removed.Fight!.Fighters[Self].Buffs.Select(buff => buff.Uid));
     }
 
     [Fact]
