@@ -260,7 +260,7 @@ public sealed class TargetMask
     /// <returns>Whether they hold, or unknown when one asks what the fight's state does not tell; true for a mask that asks none.</returns>
     /// <remarks>
     /// An effect on a free cell, such as a summon, reaches no fighter, but the server still asks its caster's conditions:
-    /// Épilogue's lance, of mask <c>a,A,*E3360</c>, never came while the lance was out (D487).
+    /// Épilogue's lance, of mask <c>a,A,*E3360</c>, never came while the lance was out (D488).
     /// </remarks>
     public CriterionAnswer CasterAllows(Combatant caster, IReadOnlyCollection<Combatant> fighters)
     {

@@ -134,6 +134,32 @@ public sealed class FightTacticsTests
     }
 
     [Fact]
+    public void AFarEnemyIsWalkedTowardsWhenNextTurnGainsAsMuchFromEitherCell()
+    {
+        // Measured on the captures of 2026-11-20 and 21: once the enemies replied, next turn's search gained as much from
+        // where the character stood as from a cell nearer, a heal here, and ending the turn now won the tie the approach
+        // had broken before the reply.
+        var enemy = Off(12, 0);
+        var hurt = Caster() with { Life = 60, ActionPoints = 1, MovementPoints = 3 };
+        var (fight, knowledge) = Fight(hurt, Biter(-1, enemy));
+
+        var plan = Plan(fight, knowledge with { TurnPoints = knowledge.TurnPoints.Add(hurt.Id, (6, 3)) });
+
+        Assert.False(plan.IsEmpty);
+        Assert.Equal(TacticActionKind.Walk, plan.Actions[^1].Kind);
+        Assert.True(MapGeometry.Distance(plan.Actions[^1].Cell, enemy) < MapGeometry.Distance(Middle, enemy));
+    }
+
+    [Fact]
+    public void ACharacterOnNoCellEndsItsTurn()
+    {
+        // Replayed on the captures: a character carried stands on no cell, which the walks nearer the enemies measure from.
+        var (fight, knowledge) = Fight(Caster() with { Cell = Combatant.NoCell, ActionPoints = 1 }, Biter(-1, Off(12, 0)));
+
+        Assert.True(Plan(fight, knowledge).IsEmpty);
+    }
+
+    [Fact]
     public void ABadlyHurtCharacterHealsItself()
     {
         var (fight, knowledge) = Fight(Caster() with { Life = 20, MovementPoints = 0 }, Biter(-1, Off(12, 0)));

@@ -1120,7 +1120,7 @@ Pure logic with no I/O, in `D3B.Engine`, which references `D3B.Data` for the cel
   - `SpellZones`: the cells each of the 26 shapes covers, centred on the cell cast on and directed from the caster, a fork
     a row past its size (D473). `TargetMask`: an effect's mask parsed once, answering on three values whether it selects a fighter; `C` names the
     caster wherever it stands, `c` in the zone only (D226); `R` asks a cast through a portal and `r` a cast through none,
-    which every cast tells (D468); `K` names the fighter the caster carries, or throws as the throw's own effects land (D474); `CasterAllows` reads the conditions on the caster alone, which an effect on a free cell, such as a summon, asks (D487).
+    which every cast tells (D468); `K` names the fighter the caster carries, or throws as the throw's own effects land (D474); `CasterAllows` reads the conditions on the caster alone, which an effect on a free cell, such as a summon, asks (D488).
   - `CastRules`, built once per pack: whether a fighter may cast a level on a cell, the refusal named (`CastRefusal`)
     in the order the checks run, from its `CastHistory`, the level as the caster's spell modifiers change it
     (`SpellModifier`, `CastRules.Modified`); the cells it may cast on; the fighters each effect reaches. The level's
@@ -1159,7 +1159,8 @@ Pure logic with no I/O, in `D3B.Engine`, which references `D3B.Data` for the cel
     the spells' range and MP too (D472); the fighters read as the search left them, states that prevent casting
     or damage and invulnerability included, a spell its states forbid dealing nothing (D228), a buff worth what it does
     over the rounds it lasts (D209), a state the fighter held as the search began being no gain (D420); once the enemies
-    replied, the character's next turn searched (`Standing`, `NextTurnStart`, D210). `Threat` and `NextTurnDamage` give
+    replied, the character's next turn searched (`Standing`, `NextTurnStart`, D210), a walk nearer the enemies weighed better
+    before the reply winning a tie within a point with ending the turn now after it (`FightTactics`, D487). `Threat` and `NextTurnDamage` give
     the bench what it measures (D206). What it reckons once from where the fight starts and keeps is `JudgeTables` (each
     fighter's damaging spells, the damage of its best turn on every other for every number of AP, which spells land from where
     it walks), the odds are `JudgeOdds`, and the pure turn arithmetic is `JudgeTurns` (D399).
@@ -1172,7 +1173,7 @@ Pure logic with no I/O, in `D3B.Engine`, which references `D3B.Data` for the cel
   - `ForgelanceLance`: a rule the pack does not hold, measured on the captures, and the AI's only one naming a breed's
     states and monster: a throw takes the lance out of the Forgelance's hand (states 3360 and 3590 ended, 3361 given), so
     that no spell asking it follows that turn, and `Imagination.TurnStarted` and the judge's next turn put it back, the
-    lance gone from the map (D465), and the reach its spell 24591 gave its thrower's spells with it (D487).
+    lance gone from the map (D465), and the reach its spell 24591 gave its thrower's spells with it (D488).
   - `Glyphs`, `CellMark` and `CellMarkKind`, in `D3B.Engine.Fights` (D280): the marks the pack's effects set on the cells of
     a zone, a glyph struck as a turn begins (401) or ends (402), a glyph-aura (1091), a trap (400), their spell, grade
     and end; the imagined fight's marks, the server's and those the casts set (`ImaginedFight.Marks`).
@@ -1181,7 +1182,7 @@ Pure logic with no I/O, in `D3B.Engine`, which references `D3B.Data` for the cel
     strikes who it covers as it comes and who a cast or a walk brings into it. The reply begins and ends each fighter's
     turn so, and the fighter playing's next turn begins so; the judge counts a side's marks on the other's fighters, sure
     on an enemy, feared on an ally, and the bombs' promise on an enemy with the approach, its kill once (D281). A summon
-    casts its grade's starting spell, a spell modifier is imagined for the spell its effect's first die names (D487), and a fighter's death takes back the buffs it gave
+    casts its grade's starting spell, a spell modifier is imagined for the spell its effect's first die names (D488), and a fighter's death takes back the buffs it gave
     (`HeldBuff.CasterId`, D282). Pushes and pulls go along the farthest axis, the cast's way for a line across it, never
     moving a fighter `CastRules.CanBePushed` refuses nor one the mask only maybe selects (D283); a push moves as far as its
     cells, a step along a diagonal of the coordinates as far as two, and a step so only between two free cells (D289); a

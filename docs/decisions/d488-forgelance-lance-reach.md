@@ -1,10 +1,10 @@
-# Fights, the Forgelance's spells cast on its lance (D487)
+# Fights, the Forgelance's spells cast on its lance (D488)
 
 A part of [the decisions](README.md); each decision has one line in [the index](../decisions-index.md). The lances searched
 first are [D462](d462-forgelance-lances.md), the lance out of hand [D465](d465-forgelance-lance-state.md), the spell
 modifiers [D193](d176-d208-step-9.md#d193-what-the-server-announces-of-a-fight-named-and-kept-mapping-format-10).
 
-## D487: The lance gives each spell it names its reach, and a summon on a free cell asks its caster's conditions
+## D488: The lance gives each spell it names its reach, and a summon on a free cell asks its caster's conditions
 
 *2026-11-21, the owner's report of a Forgelance casting a zone spell elsewhere than on its lance, the lead's session of
 the six reports of 20 and 21 November. Refines D465. Builds D187, D193, D227, D462.*

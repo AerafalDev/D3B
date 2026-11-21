@@ -799,7 +799,7 @@ public sealed class Imagination
             if (effect.Delay is not 0 || (effect.Properties & SpellEffectProperties.ForClientOnly) is not 0)
                 continue;
 
-            // Measured (D487): an effect on a free cell asks its caster's conditions still, Épilogue bringing no lance while one was out.
+            // Measured (D488): an effect on a free cell asks its caster's conditions still, Épilogue bringing no lance while one was out.
             if (_rules.MaskOf(effect).CasterAllows(fighters[casterIndex], fighters) is CriterionAnswer.False)
                 continue;
 
@@ -879,7 +879,7 @@ public sealed class Imagination
     private SpellModifier? ModifierOf(in SpellLevel level, int effectId, int spellId)
     {
         // A spell modifier names the spell it changes by its first die and how much by its value, as the server gives it. A
-        // level may hold one effect id for many spells, as the Forgelance's lance gives 13 their range (D487): the effect
+        // level may hold one effect id for many spells, as the Forgelance's lance gives 13 their range (D488): the effect
         // foreseen names its spell by its roll, the first die.
         SpellModifier? first = null;
 
