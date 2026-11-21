@@ -38,16 +38,19 @@ the Bubble emulator; the lead's plan, the owner's choice of all three. Builds D3
   carries the marks through a cast's effects, so that a spell an effect casts sets its marks and a trigger acts in its
   level's order, the states before it held; a trap set off by a fighter a cast or a walk brings onto its cells, again for
   one its spell moves onto another; a slide stopped on a trap's first cell, with no push damage; `FightMoves.Reachable`
-  and `Path` stopping a walk on the first trap cell it steps on, for the fighter playing and the enemies of the reply.
-  Fifteen tests on spells built as the pack's: a rune set by the spell cast, striking no one until triggered, triggered
+  and `Path` stopping a walk on the first trap cell it steps on, for the fighter playing and the enemies of the reply,
+  an enemy of the reply that walks onto one setting it off before it strikes.
+  Sixteen tests on spells built as the pack's: a rune set by the spell cast, striking no one until triggered, triggered
   on its cell or over the map, its author's alone, replaced; the elements combined; the server's rune known; a trap
-  kept, set off by a walk and by a push that stops on it, a walk stopping on it, none set off by a trap set around a
-  fighter; a Féca's glyphs triggered on their cell and kept.
+  kept, set off by a walk and by a push that stops on it, a walk stopping on it, an enemy of the reply setting it off, none set off by a
+  trap set around a fighter; a Féca's glyphs triggered on their cell and kept.
 - **Measured with `scripts/fights.cs --turns`** on the 217 captures, against `main` at the session's start, each run on
   its own tree: the Huppermage's 70 turns plan Runification 7 times instead of none, its damage foreseen 2,517 then 2,573,
   its heals 18 then 47, the rune healing its allies, its kills over two turns 125 then 126, the life the reply takes 262
   then 337; runes set by its plans 76, by its turns played 49. The Féca's 274 turns: damage over two turns 20,666 then
-  20,710, kills 230 then 231, plans of nothing 36 then 35. No other breed moved; searches 177 ms halfway as before.
+  20,710, kills 230 then 231, plans of nothing 36 then 35. No other breed moved; searches 177 ms halfway as before. The fixes the review asked for after this run, a trap the
+  reply walks onto, a slide of the caster and a pull to a cell stopping on a trap, and a glyph-aura a spell's spell sets,
+  touch no fight of the captures, which hold no trap of the bot's side.
 - **Left**: a rune or a trap left on the ground weighed for the rounds to come, as D288 weighs a glyph: the judge counts a
   rune only once a plan triggers it in the same turn, and a trap only as the reply walks onto it; the enemies' traps,
   which the server does not show; a glyph-aura's buffs taken back as a fighter leaves it; a rune triggered, a trap and

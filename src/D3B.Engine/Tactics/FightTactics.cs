@@ -787,7 +787,8 @@ public sealed class FightTactics
                 break;
 
             var mobile = !enemy.IsStatic && (enemy.MonsterId is null || (enemy.MonsterProperties & MonsterProperties.CanMove) is not 0);
-            var reachable = mobile && enemy.MovementPoints > 0 ? Moves.Reachable(view.Map, view.Fighters, enemy, Glyphs.TrapCells(view.Marks)) : new Dictionary<int, (int, int)> { [enemy.Cell] = (enemy.MovementPoints, enemy.ActionPoints) };
+            var traps = Glyphs.TrapCells(view.Marks);
+            var reachable = mobile && enemy.MovementPoints > 0 ? Moves.Reachable(view.Map, view.Fighters, enemy, traps) : new Dictionary<int, (int, int)> { [enemy.Cell] = (enemy.MovementPoints, enemy.ActionPoints) };
             var foes = view.Fighters.Where(fighter => fighter.IsAlive && fighter.Team != enemy.Team && fighter.Cell is not Combatant.NoCell).Select(fighter => fighter.Cell).ToList();
             var targets = strikesOnly ? foes : [.. view.Fighters.Where(fighter => fighter.IsAlive && fighter.Cell is not Combatant.NoCell).Select(fighter => fighter.Cell)];
 
@@ -811,6 +812,16 @@ public sealed class FightTactics
                         continue;
 
                     var there = landed == from ? view.With(moved) : view.With(moved) with { Marks = marks };
+
+                    // An enemy that walks onto a trap sets it off before it strikes, and may die of it (D493).
+                    if (from != enemy.Cell && traps.Contains(from))
+                    {
+                        there = Imagination.Walked(view, from, left);
+                        moved = there.Actor;
+
+                        if (!moved.IsAlive)
+                            continue;
+                    }
 
                     foreach (var target in targets)
                     {

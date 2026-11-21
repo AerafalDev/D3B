@@ -196,7 +196,7 @@ public sealed class Imagination
         if (BringsLance(level))
             fighters[casterIndex] = ForgelanceLance.Thrown(fighters[casterIndex]);
 
-        Marked(fight.Map, fighters, casterIndex, level, at, buffs, ref kept, marks);
+        Marked(fight.Map, fighters, casterIndex, level, at, buffs, ref kept, marks, 0);
         ThroughPortals(fighters, fight.Fighters, marks);
 
         Walled(fight.Map, fighters, fight.Fighters, buffs, ref kept, marks);
@@ -355,7 +355,7 @@ public sealed class Imagination
         return reaches;
     }
 
-    private void Marked(FightMap map, List<Combatant> fighters, int casterIndex, in SpellLevel level, int cell, List<ImaginedBuff> buffs, ref ImmutableArray<ImaginedBuff> kept, Ground marks)
+    private void Marked(FightMap map, List<Combatant> fighters, int casterIndex, in SpellLevel level, int cell, List<ImaginedBuff> buffs, ref ImmutableArray<ImaginedBuff> kept, Ground marks, int depth)
     {
         if (!_glyphs.Sets(level))
             return;
@@ -373,11 +373,11 @@ public sealed class Imagination
         {
             marks.Place(mark);
 
-            if (mark.Kind is not CellMarkKind.Aura || !_glyphs.TryGetLevel(mark, out var aura))
+            if (mark.Kind is not CellMarkKind.Aura || depth >= MostCastDepth || !_glyphs.TryGetLevel(mark, out var aura))
                 continue;
 
             // A glyph-aura casts its spell on its middle as it comes, its zone and masks choosing the fighters it covers.
-            Effects(map, fighters, casterIndex, aura, mark.Centre, 0, buffs, ref kept, marks, 1);
+            Effects(map, fighters, casterIndex, aura, mark.Centre, 0, buffs, ref kept, marks, depth + 1);
         }
     }
 
@@ -541,7 +541,7 @@ public sealed class Imagination
         Effects(map, fighters, by, level, on, 0, buffs, ref kept, marks, depth + 1);
 
         // Measured in the pack (D493): a Huppermage's spell sets its rune through the spell it casts, its own effect drawing it.
-        Marked(map, fighters, by, level, on, buffs, ref kept, marks);
+        Marked(map, fighters, by, level, on, buffs, ref kept, marks, depth + 1);
     }
 
     private void Triggered(FightMap map, List<Combatant> fighters, int casterIndex, in SpellLevel level, in ForeseenEffect effect, int cell, List<ImaginedBuff> buffs, ref ImmutableArray<ImaginedBuff> kept, Ground marks, int depth)
@@ -723,10 +723,10 @@ public sealed class Imagination
             // The references move the caster as the fighter reached would pull or push it (D3): towards it, stopping beside it,
             // or away from it, a caster stopped short taking a push's damage as it would push itself.
             case EffectKind.CasterPulled when effect.IsCertain && index != casterIndex && target.Cell is not Combatant.NoCell:
-                Slide(map, fighters, index, casterIndex, target.Cell, value, away: false);
+                Slide(map, fighters, index, casterIndex, target.Cell, value, away: false, marks: marks);
                 break;
             case EffectKind.CasterPushed when effect.IsCertain && index != casterIndex && target.Cell is not Combatant.NoCell:
-                Slide(map, fighters, index, casterIndex, target.Cell, value, away: true, itself: true);
+                Slide(map, fighters, index, casterIndex, target.Cell, value, away: true, itself: true, marks: marks);
                 break;
             case EffectKind.Swap when target.IsAlive && fighters[casterIndex].Cell is not Combatant.NoCell:
                 {
@@ -979,7 +979,7 @@ public sealed class Imagination
             if (kind is EffectKind.Teleport)
                 fighters[casterIndex] = fighters[casterIndex] with { Cell = cell };
             else if (kind is EffectKind.PushToCell)
-                PushedTo(map, fighters, casterIndex, cell);
+                PushedTo(map, fighters, casterIndex, cell, marks);
             else if (kind is EffectKind.Summon && Summoned(fighters, fighters[casterIndex], effect, cell) is ({ } summoned, var starting))
             {
                 fighters.Add(summoned);
@@ -992,7 +992,7 @@ public sealed class Imagination
         }
     }
 
-    private void PushedTo(FightMap map, List<Combatant> fighters, int casterIndex, int cell)
+    private void PushedTo(FightMap map, List<Combatant> fighters, int casterIndex, int cell, Ground marks)
     {
         // Measured (9f3): a Roublabot's Poussette, cast in line on a free cell, pushed the first fighter on that line to it.
         var caster = fighters[casterIndex];
@@ -1016,7 +1016,7 @@ public sealed class Imagination
 
             if (index >= 0)
             {
-                Slide(map, fighters, casterIndex, index, cell, MapGeometry.Distance(on, cell), away: false, upTo: true);
+                Slide(map, fighters, casterIndex, index, cell, MapGeometry.Distance(on, cell), away: false, upTo: true, marks: marks);
 
                 return;
             }
