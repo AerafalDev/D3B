@@ -72,7 +72,7 @@ public static class FightCombatants
             ReceivedDamageShares = [.. fighter.Buffs.Where(buff => buff.ActionId is MultiplyReceivedDamage).Select(buff => buff.Value)],
 
             // Measured on the captures of 3.7.14.18: a monster's buff of 105 names its points by its parameter, the effect's value.
-            ReceivedDamageReduction = EffectFormulas.Reduction(fighter.Buffs.Where(buff => buff.ActionId is ReduceReceivedDamage).Sum(buff => buff.Parameter), fighter.Level ?? 0),
+            ReceivedDamageReduction = fighter.Buffs.Where(buff => buff.ActionId is ReduceReceivedDamage).Sum(buff => EffectFormulas.Reduction(buff.Parameter, fighter.Level ?? 0)),
             Level = fighter.Level ?? 0,
             Characteristics = characteristics,
         };

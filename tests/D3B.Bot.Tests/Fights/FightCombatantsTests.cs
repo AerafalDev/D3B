@@ -51,8 +51,8 @@ public sealed class FightCombatantsTests
         Assert.Equal([new SpellModifier(SpellModifierKind.Range, 12_832, 3)], combatant.Modifiers);
         Assert.Equal([new HeldBuff(12_787, 950, 3), new HeldBuff(12_787, 281, 12_832, 3), new HeldBuff(13_386, 111, 1)], combatant.Buffs);
         Assert.Equal([85], combatant.ReceivedDamageShares);
-        // 4 and 5 points at level 19, raised by 19 twentieths: 17.
-        Assert.Equal(17, combatant.ReceivedDamageReduction);
+        // 4 and 5 points at level 19, each raised by 19 twentieths and rounded down, as the AI imagines them: 7 and 9.
+        Assert.Equal(16, combatant.ReceivedDamageReduction);
         Assert.True(combatant.IsCharacter);
     }
 

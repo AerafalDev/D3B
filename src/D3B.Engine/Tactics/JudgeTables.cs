@@ -300,6 +300,12 @@ internal sealed class JudgeTables
         return true;
     }
 
+    private static bool Unchanged(Combatant now, Combatant start)
+    {
+        return ReferenceEquals(now.Characteristics, start.Characteristics) && now.States == start.States && now.ReceivedDamageShares == start.ReceivedDamageShares
+            && now.ReceivedDamageReduction == start.ReceivedDamageReduction;
+    }
+
     /// <summary>Gets the damage of the best turn of a fighter on another as the search left them, for every number of AP.</summary>
     /// <param name="one">The attacker's place in the tables.</param>
     /// <param name="attacker">The attacker as it is now.</param>
@@ -310,8 +316,8 @@ internal sealed class JudgeTables
     public double[] Turns(int one, Combatant attacker, int other, Combatant target, ulong landing)
     {
         // The fighters as the search left them: the tables of the start, unless a buff changed what their damage reads.
-        var attackerSignature = ReferenceEquals(attacker.Characteristics, _fighters[one].Characteristics) && attacker.States == _fighters[one].States ? _signatures[one] : Signature(attacker);
-        var targetSignature = ReferenceEquals(target.Characteristics, _fighters[other].Characteristics) && target.States == _fighters[other].States ? _signatures[other] : Signature(target);
+        var attackerSignature = Unchanged(attacker, _fighters[one]) ? _signatures[one] : Signature(attacker);
+        var targetSignature = Unchanged(target, _fighters[other]) ? _signatures[other] : Signature(target);
 
         if (attackerSignature == _signatures[one] && targetSignature == _signatures[other])
             return LandingTurns(one, other, landing);
