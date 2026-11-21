@@ -17,7 +17,9 @@ namespace D3B.Scripts.Fights;
 /// An attack D3B sent is an <see cref="CaptureRecordKind.Injected"/> frame, the player's the client's. One is accepted when a
 /// fight starts within the server's answer delay, 3 s (D152), unanswered otherwise. Its group is judged as the fighting
 /// activity judges it (<see cref="GroupJudge.Beats"/>), the character from the characteristics the server last gave it out of fights (D263),
-/// by levels before. It prints counts and times, never a value of one fight.
+/// by levels before. It prints counts and times, never a value of one fight; with --details, also each attack left unanswered
+/// and each wait of more than a minute from D3B's fight to its next attack, by capture and time, with what D3B and the client
+/// asked meanwhile, by message (D480).
 /// </remarks>
 internal sealed class HuntBench
 {
@@ -25,19 +27,22 @@ internal sealed class HuntBench
     private const string Player = "the player's";
 
     private static readonly TimeSpan _answer = TimeSpan.FromSeconds(3);
+    private static readonly TimeSpan _longWait = TimeSpan.FromMinutes(1);
 
     private readonly GameTables _tables;
     private readonly GameMaps _maps;
     private readonly FightTactics _tactics;
     private readonly List<double> _toAttack = [];
     private readonly List<double> _toFight = [];
+    private readonly TextWriter? _details;
     private TimeSpan _hunting;
     private int _fights;
 
     public Tally Tally { get; } = new();
 
-    public HuntBench(GameTables tables, GameMaps maps)
+    public HuntBench(GameTables tables, GameMaps maps, TextWriter? details = null)
     {
+        _details = details;
         _tables = tables;
         _maps = maps;
         _tactics = new FightTactics(tables);
@@ -53,8 +58,11 @@ internal sealed class HuntBench
         return string.Create(CultureInfo.InvariantCulture, $"{values.Count}, halfway {sorted[sorted.Count / 2]:0.##} {unit}, 90 % {sorted[Math.Min(sorted.Count - 1, sorted.Count * 9 / 10)]:0.##} {unit}, most {sorted[^1]:0.##} {unit}");
     }
 
-    public void Replay(List<(TimeSpan Offset, CaptureRecordKind Kind, IMessage Message)> messages)
+    public void Replay(List<(TimeSpan Offset, CaptureRecordKind Kind, IMessage Message)> messages, string name = "")
     {
+        // What D3B and the client asked between D3B's fight's end and its next attack, for the long waits (--details).
+        var between = new Dictionary<string, int>();
+
         CharacterState? state = null;
         Attack? attack = null;
         Attack? fought = null;
@@ -79,6 +87,13 @@ internal sealed class HuntBench
                 if (kind is CaptureRecordKind.Injected)
                     Tally.Count($"D3B's requests out of fights: {message.Descriptor.Name}");
 
+                if (ended is not null)
+                {
+                    var asked = $"{(kind is CaptureRecordKind.Injected ? "D3B" : "the client")} {message.Descriptor.Name}";
+
+                    between[asked] = between.GetValueOrDefault(asked) + 1;
+                }
+
                 if (kind is CaptureRecordKind.Injected && message is MapMovementRequest)
                     walks++;
 
@@ -93,9 +108,15 @@ internal sealed class HuntBench
                         last = offset;
 
                         if (ended is { } end)
+                        {
                             _toAttack.Add((offset - end).TotalSeconds);
 
+                            if (_details is not null && offset - end > _longWait)
+                                _details.WriteLine(string.Create(CultureInfo.InvariantCulture, $"long wait: {name}, {end.TotalSeconds:0} s in, {(offset - end).TotalSeconds:0} s to the next attack: {string.Join(", ", between.OrderByDescending(pair => pair.Value).Take(12).Select(pair => $"{pair.Key} {pair.Value}"))}"));
+                        }
+
                         ended = null;
+                        between.Clear();
                     }
                 }
 
@@ -124,6 +145,7 @@ internal sealed class HuntBench
                 else if (offset - pending.Offset > _answer)
                 {
                     Tally.Count($"attacks: {pending.Who}, unanswered");
+                    _details?.WriteLine(string.Create(CultureInfo.InvariantCulture, $"unanswered attack: {name}, {pending.Offset.TotalSeconds:0} s in, {pending.Who}"));
                     attack = null;
                 }
             }

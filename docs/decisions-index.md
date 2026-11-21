@@ -798,3 +798,8 @@ or refines another says so in its own entry. Add a line here with every new deci
 
 - [D479](decisions/d479-fight-turn-pace.md#d479-the-fights-pace-03-s-and-no-pace-before-the-turns-end) The fight's pace 0.3 s, and no pace before the turn's end (2026-11-21)
   - 0.5 s, no pace at all, waiting less for the client's display.
+
+## Fights, the server's cooldowns merged (D480)
+
+- [D480](decisions/d480-cooldowns-merged.md#d480-the-cooldowns-the-server-gives-are-merged-spell-by-spell-not-replaced) The cooldowns the server gives are merged spell by spell, not replaced (2026-11-21)
+  - A snapshot decreased at each turn, the refused spell left out by the refusals' cap.
