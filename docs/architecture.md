@@ -1185,7 +1185,9 @@ Pure logic with no I/O, in `D3B.Engine`, which references `D3B.Data` for the cel
   - `Carrying`, in `D3B.Engine.Fights` (D474): a carry (effect 50) takes the fighter reached off its cell, its carrier's
     (`Combatant.CarrierId`), the carrier in state 3 and the carried in 8 and 3579, as the server sets them; a throw (51) lands
     the carried on the free cell cast on, still carried for the throw's own effects there, then ends the carry
-    (`Imagination.Cast`). A carried monster must be one the pack lets be. `FightTactics` never ends a turn carrying: a node
+    (`Imagination.Cast`). A carried monster must be one the pack lets be, and no fighter is carried while a state of its holds the state effect 3,
+    which keeps it from being moved, or 4, nor while it is Enraciné or under Pesanteur, the owner's word
+    (`CastRules.StatesLetCarry`, D483). `FightTactics` never ends a turn carrying: a node
     that carries is ranked but is no end, and a turn that began carrying ends so only when no other end exists; a throw is
     tried on the free cells in its range, half the nearest to the enemies and half the farthest (`ThrowCells`).
   - `Portals` and `PortalPassage`, in `D3B.Engine.Fights` (D468): an Eliotrope's portals, marks of effect 1181 kept the
