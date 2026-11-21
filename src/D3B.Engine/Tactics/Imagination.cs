@@ -619,7 +619,7 @@ public sealed class Imagination
             case EffectKind.Kill:
                 fighters[index] = target with { Life = 0, IsAlive = false, Cell = Combatant.NoCell };
                 break;
-            case EffectKind.Carry when effect.IsCertain && index != casterIndex && fighters[casterIndex].Cell is not Combatant.NoCell && Carrying.CanBeCarried(fighters, target) && !Carrying.Carries(fighters, fighters[casterIndex].Id):
+            case EffectKind.Carry when effect.IsCertain && index != casterIndex && fighters[casterIndex].Cell is not Combatant.NoCell && Carrying.CanBeCarried(fighters, target) && _rules.StatesLetCarry(target) && !Carrying.Carries(fighters, fighters[casterIndex].Id):
                 (fighters[casterIndex], fighters[index]) = Carrying.Carry(fighters[casterIndex], target);
                 break;
         }

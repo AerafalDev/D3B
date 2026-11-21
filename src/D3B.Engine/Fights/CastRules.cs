@@ -32,6 +32,10 @@ public sealed class CastRules
     private const int BombSummon = 1008;
     private const int MaxBombs = 93;
 
+    // A state's effects that keep its fighter from being moved and from being carried, as the references read them (D482).
+    private const int CantBeMovedEffect = 3;
+    private const int CantBeCarriedEffect = 4;
+
     private static readonly int[] _summons = [181, 1011];
 
     private readonly SpellCatalog _spells;
@@ -387,6 +391,33 @@ public sealed class CastRules
         {
             if (Has(state, SpellStateProperties.CantBeMoved) || Has(state, SpellStateProperties.CantBePushed))
                 return false;
+        }
+
+        return true;
+    }
+
+    /// <summary>Tells whether a fighter's states let it be carried: none of them keeps it from being moved or carried.</summary>
+    /// <param name="fighter">The fighter.</param>
+    /// <returns>Whether its states let it be carried.</returns>
+    /// <remarks>
+    /// The references read a state's effects so (D482): in the pack of 3.7.14.18, the 22 states that cannot be moved hold the
+    /// first, and 5 others the second, the carrier's among them; state 6, which no push nor swap moves, holds neither and is
+    /// carried. No capture holds a carry tried on such a fighter.
+    /// </remarks>
+    public bool StatesLetCarry(Combatant fighter)
+    {
+        ArgumentNullException.ThrowIfNull(fighter);
+
+        foreach (var state in fighter.States)
+        {
+            if (!_states.TryGetState(state, out var found))
+                continue;
+
+            foreach (var effect in _states.EffectsOf(found))
+            {
+                if (effect is CantBeMovedEffect or CantBeCarriedEffect)
+                    return false;
+            }
         }
 
         return true;

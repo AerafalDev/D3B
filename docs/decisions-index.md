@@ -803,3 +803,8 @@ or refines another says so in its own entry. Add a line here with every new deci
 
 - [D480](decisions/d480-cooldowns-merged.md#d480-the-cooldowns-the-server-gives-are-merged-spell-by-spell-not-replaced) The cooldowns the server gives are merged spell by spell, not replaced (2026-11-21)
   - A snapshot decreased at each turn, the refused spell left out by the refusals' cap.
+
+## Fights, a carry and the states that forbid it (D482)
+
+- [D482](decisions/d482-carry-states.md#d481-a-carry-takes-no-fighter-whose-state-keeps-it-from-being-moved-or-carried) A carry takes no fighter whose state keeps it from being moved or carried (2026-11-21)
+  - The cast refused in the rules, the flag "cannot be moved" alone.

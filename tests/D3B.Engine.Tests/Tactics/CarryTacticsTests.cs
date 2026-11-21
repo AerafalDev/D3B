@@ -16,6 +16,13 @@ public sealed class CarryTacticsTests
     private const int Throw = 20;
     private const int Strike = 40;
 
+    // As the pack of 3.7.14.18 writes them: state 252 cannot be moved, its state effects 3 and 17; state 63 has effect 4
+    // alone; state 6 is not pushed nor swapped, its effects 0, 1, 2, 17 and 18, here 0 and 18.
+    private const int Rooted = 252;
+    private const int Uncarriable = 63;
+    private const int Anchored = 6;
+
+    private static readonly int[] _stateEffects = [0, 18, 4, 3, 17];
     private static readonly SpellCatalog _spells = Catalog();
 
     private static readonly FightTactics _tactics = new(_spells, CarryStates(), new EffectCatalog(new Effect[]
@@ -96,10 +103,13 @@ public sealed class CarryTacticsTests
             new SpellState[]
             {
                 new(Carrying.CarrierState, 1, SpellStateProperties.PreventsSpellCast | SpellStateProperties.PreventsFight, 0, 0, 0),
-                new(Carrying.CarriedState, 2, SpellStateProperties.None, 0, 0, 0),
-                new(Carrying.HalvedState, 3, SpellStateProperties.None, 0, 0, 0),
+                new(Anchored, 6, SpellStateProperties.CantBePushed | SpellStateProperties.CantSwitchPosition, 0, 2, 0),
+                new(Carrying.CarriedState, 2, SpellStateProperties.None, 2, 0, 0),
+                new(Uncarriable, 5, SpellStateProperties.None, 2, 1, 0),
+                new(Rooted, 4, SpellStateProperties.CantBeMoved, 3, 2, 0),
+                new(Carrying.HalvedState, 3, SpellStateProperties.None, 5, 0, 0),
             },
-            ReadOnlyMemory<int>.Empty);
+            _stateEffects);
     }
 
     private static Combatant Pandawa(int actionPoints)
@@ -148,6 +158,23 @@ public sealed class CarryTacticsTests
         Assert.Equal([Carrying.CarriedState, Carrying.HalvedState], carried.Find(ally.Id)!.States);
         Assert.Equal([Carrying.CarrierState], carried.Actor.States);
         Assert.Equal(5, carried.Actor.ActionPoints);
+    }
+
+    [Theory]
+    [InlineData(Rooted, false)]
+    [InlineData(Uncarriable, false)]
+    [InlineData(Anchored, true)]
+    public void AFighterIsCarriedUnlessOneOfItsStatesKeepsItFromBeingMovedOrCarried(int state, bool carried)
+    {
+        // The references read a state's effects 3 and 4 so (D482): a carry takes no fighter in such a state, and still takes one
+        // in a state that only stops pushes and swaps.
+        var pandawa = Pandawa(6);
+        var ally = Ally(2, Off(1, 0)) with { States = [state] };
+
+        var cast = _tactics.Imagination.Cast(Fight(pandawa, ally), Level(_spells, Karcham), ally.Cell);
+
+        Assert.Equal(carried, cast.Find(ally.Id)!.CarrierId == pandawa.Id);
+        Assert.Equal(carried ? Combatant.NoCell : ally.Cell, cast.Find(ally.Id)!.Cell);
     }
 
     [Theory]
