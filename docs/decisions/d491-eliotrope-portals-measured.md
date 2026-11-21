@@ -1,10 +1,10 @@
-# Fights, an Eliotrope's portals measured (D490)
+# Fights, an Eliotrope's portals measured (D491)
 
 A part of [the decisions](README.md); each decision has one line in [the index](../decisions-index.md). The portals in the
 AI are [D468](d468-eliotrope-portals.md#d468-an-eliotropes-portals-in-the-ai-cast-through-by-every-character-of-the-bot),
 the marks on the cells [D280](d253-d292-step-9.md#d280-glyphs-walls-and-the-marks-as-a-turn-begins-and-ends).
 
-## D490: An Eliotrope's portals measured, a walk or a push that ends on one sent through it
+## D491: An Eliotrope's portals measured, a walk or a push that ends on one sent through it
 
 *2026-11-21, the owner's ask ("voir comment fonctionnent les portails et les sorts à travers dans Bubble, voir si tout est
 ok car j'en avais pas l'impression"), the lead's task; settled by the session, measured rules. Refines D468.*

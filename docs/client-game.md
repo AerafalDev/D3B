@@ -1260,7 +1260,7 @@ committed that print fighters by aliases, never an actor's id or name.
   third field, a list of numbers D3B maps as the portals' ids (mapping format 23), as the references name the portals a cast
   went through; the client's schema also holds a fight event of a flag and two numbers shaped as Dofus 2's mark activation,
   which no capture carries.
-- **Portals, measured** (D490). In the 217 game connections of 3.7.14.18 of 2026-11-18 to 21, each group fight recorded
+- **Portals, measured** (D491). In the 217 game connections of 3.7.14.18 of 2026-11-18 to 21, each group fight recorded
   by its 8 accounts, with `scripts/fights.cs`: 2,178 casts of Portail (14574) and 32 of 14582, whose effect 1183 closes a
   portal. 1,329 casts named 2 to 4 portals, the one cast on first and the exit last; 937 by the Eliotrope, the others by
   six other breeds of its group, none by an enemy; the cell they landed on is where the caster's offset from the first

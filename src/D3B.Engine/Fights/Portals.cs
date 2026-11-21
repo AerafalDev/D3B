@@ -7,7 +7,7 @@ namespace D3B.Engine.Fights;
 /// <summary>An Eliotrope's portals: the way a cast or a move on one goes through them, and how many a team keeps.</summary>
 /// <remarks>
 /// <para>
-/// The references' model (D3, D468), measured on the captures of 3.7.14.18 of 2026-11-18 to 21 (D490). A portal is a mark of
+/// The references' model (D3, D468), measured on the captures of 3.7.14.18 of 2026-11-18 to 21 (D491). A portal is a mark of
 /// effect 1181 on one cell, kept the whole fight; a team keeps four, a fifth taking the oldest's place. A portal is open while
 /// no fighter stands on it, no fighter went through it this turn, and its team has another open. A cast on an open portal
 /// goes along its chain, from it to the nearest of its team's other open portals, then to the nearest of those left, and so
@@ -67,7 +67,7 @@ public static class Portals
     /// <param name="cell">The cell its move ends on.</param>
     /// <returns>The cell it ends on, and the marks: the two portals closed when it went through, else the same.</returns>
     /// <remarks>
-    /// Measured on 3.7.14.18 (D490): 777 of 818 walks and slides that ended on an open portal, by both teams, were teleported
+    /// Measured on 3.7.14.18 (D491): 777 of 818 walks and slides that ended on an open portal, by both teams, were teleported
     /// onto the cell of the portal a cast on it comes out of; none of 152 over a portal on its way; none of 64 onto a portal
     /// one went through that turn. The mover's own cell, left, no longer closes the portal there. A monster goes through when
     /// its properties let it, as the references ask.
@@ -185,7 +185,7 @@ public static class Portals
 
     private static CellMark Tied(CellMark current, List<CellMark> tied)
     {
-        // Measured on 3.7.14.18 (D490), as the references break it (D3): of the portals as near, turning from the map's bottom,
+        // Measured on 3.7.14.18 (D491), as the references break it (D3): of the portals as near, turning from the map's bottom,
         // x falling first, the last of an arc narrower than a half turn, or the first when they lie all around, or two opposite.
         var centre = MapGeometry.PointOf(current.Centre);
         var vectors = tied.ConvertAll(mark => Vector(centre, mark.Centre));
