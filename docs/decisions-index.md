@@ -814,7 +814,27 @@ or refines another says so in its own entry. Add a line here with every new deci
 - [D482](decisions/d482-group-exchange-one-request.md#d482-a-follower-moves-its-whole-stacks-into-the-exchange-in-one-request-a-part-of-a-stack-by-a-move) A follower moves its whole stacks into the exchange in one request, a part of a stack by a move (2026-11-21)
   - A move a stack with a shorter wait, the empty request not paired, every stack by the transfer.
 
-## Fights, the Forgelance's spells cast on its lance (D483)
+## Fights, a carry and the states that forbid it (D483)
 
-- [D483](decisions/d483-forgelance-lance-reach.md#d483-the-lance-gives-each-spell-it-names-its-reach-and-a-summon-on-a-free-cell-asks-its-casters-conditions) The lance gives each spell it names its reach, and a summon on a free cell asks its caster's conditions (2026-11-21)
+- [D483](decisions/d483-carry-states.md#d483-a-carry-takes-no-fighter-whose-state-keeps-it-from-being-moved-or-carried-nor-one-enraciné-or-under-pesanteur) A carry takes no fighter whose state keeps it from being moved or carried, nor one Enraciné or under Pesanteur (2026-11-21)
+  - Bubble's reading alone, the cast refused in the rules, the flag "cannot be moved" alone.
+
+## Activities, the wait for a busy character bounded (D484)
+
+- [D484](decisions/d484-busy-wait-bounded.md#d484-a-character-busy-a-minute-at-a-steps-start-is-put-back-in-order-and-still-busy-a-minute-later-the-harvest-or-the-hunt-fails-saying-why) A character busy a minute at a step's start is put back in order, and still busy a minute later the harvest or the hunt fails saying why (2026-11-21)
+  - Failing at the bound, putting in order without end, the harvest alone.
+
+## Fights, the blows on the character's own allies (D485)
+
+- [D485](decisions/d485-ally-strikes.md#d485-a-blow-on-an-ally-costs-what-it-takes-and-a-push-a-fighter-stops-strikes-that-fighter-too) A blow on an ally costs what it takes, and a push a fighter stops strikes that fighter too (2026-11-21)
+  - The comfortable life for the character alone, the ally's loss from the turn's start, a rule in the search, the pushes left.
+
+## Fights, a dispel keeps the buffs the server keeps (D486)
+
+- [D486](decisions/d486-dispel-keeps-undispellable-buffs.md#d486-a-dispel-takes-only-the-buffs-the-server-ends-and-a-removal-naming-a-spell-that-spells-alone-the-pandawa-keeps-sobre-and-casts-in-its-element) A dispel takes only the buffs the server ends, and a removal naming a spell that spell's alone: the Pandawa keeps Sobre and casts in its element (2026-11-21)
+  - Reading the buff's own field 9, the pack's dispellable, a rule for the Pandawa.
+
+## Fights, the Forgelance's spells cast on its lance (D487)
+
+- [D487](decisions/d487-forgelance-lance-reach.md#d487-the-lance-gives-each-spell-it-names-its-reach-and-a-summon-on-a-free-cell-asks-its-casters-conditions) The lance gives each spell it names its reach, and a summon on a free cell asks its caster's conditions (2026-11-21)
   - A rule naming the 13 spells, leaving 314 to the server's refusal.

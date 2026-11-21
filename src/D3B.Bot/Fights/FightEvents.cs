@@ -244,7 +244,9 @@ public static class FightEvents
             GameActionFightEvent.ActionOneofCase.Slide when IsCell(action.Slide.ToCell) => Moved(fight, action.Slide.TargetId, action.Slide.ToCell),
             GameActionFightEvent.ActionOneofCase.Carry => Changed(fight, action.Carry.TargetId, carried => carried with { Cell = null, CarrierId = action.SourceId }),
             GameActionFightEvent.ActionOneofCase.Throw when IsCell(action.Throw.CellId) => Thrown(fight, action.SourceId, action.Throw),
-            GameActionFightEvent.ActionOneofCase.BuffsRemoval when action.BuffsRemoval.All => Changed(fight, action.BuffsRemoval.TargetId, fighter => fighter with { Buffs = [] }),
+            // Measured (D486): a dispel names no spell, and the server ends each buff it takes, those not dispellable kept, such
+            // as a Pandawa's Sobre; a removal naming a spell takes that spell's buffs alone, the flag of a dispel set or not.
+            GameActionFightEvent.ActionOneofCase.BuffsRemoval when action.BuffsRemoval.SpellId is 0 => fight,
             GameActionFightEvent.ActionOneofCase.BuffsRemoval => Changed(fight, action.BuffsRemoval.TargetId, fighter => fighter with
             {
                 Buffs = [.. fighter.Buffs.Where(buff => buff.SpellId != action.BuffsRemoval.SpellId)],

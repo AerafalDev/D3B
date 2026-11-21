@@ -20,7 +20,7 @@ public sealed class RelayInjectionTests
     {
         using var timeout = CancellationTokenSource.CreateLinkedTokenSource(TestContext.Current.CancellationToken);
 
-        timeout.CancelAfter(TimeSpan.FromSeconds(30));
+        timeout.CancelAfter(Polling.Deadline);
 
         while (interceptor.Connections.Count is 0)
             await Task.Delay(10, timeout.Token);

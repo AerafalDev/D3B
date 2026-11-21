@@ -1,8 +1,10 @@
 using System.Buffers;
 using System.Net.Sockets;
+using D3B.Data.Tests;
 using D3B.Network.Framing;
 using D3B.Network.Relay;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Time.Testing;
 
 namespace D3B.Network.Tests.Relay;
 
@@ -264,7 +266,7 @@ public sealed class RelayInterceptorTests
         var interceptor = new RecordingInterceptor { Holding = RelayDirection.FromServer, Rewrite = _ => [1, 2, 3] };
         var bytes = Framed(Payload(100, 15));
 
-        await using var relay = await TestRelay.StartAsync(interceptor: interceptor);
+        await using var relay = await TestRelay.StartAsync(interceptor: interceptor, holdTimeout: TimeSpan.FromMilliseconds(500));
         var (client, server) = await relay.ConnectAsync();
 
         using (client)
@@ -295,7 +297,9 @@ public sealed class RelayInterceptorTests
         var bytes = Framed(first, second);
         var expected = Framed([.. first, 0], [.. second, 0]);
 
-        await using var relay = await TestRelay.StartAsync(interceptor: interceptor, holdTimeout: TimeSpan.FromSeconds(1));
+        var time = new FakeTimeProvider();
+
+        await using var relay = await TestRelay.StartAsync(interceptor: interceptor, holdTimeout: TimeSpan.FromSeconds(1), time: time);
         var (client, server) = await relay.ConnectAsync();
 
         using (client)
@@ -304,10 +308,14 @@ public sealed class RelayInterceptorTests
             var clientReceives = TestRelay.ReadExactlyAsync(client, expected.Length);
 
             // The second frame starts 0.7 s after the first, and is whole 0.5 s later: past the first's time, within its own.
+            // The relay's clock is the test's, moved once the relay read what came before: a loaded machine slows the
+            // relay's reads, never its clock. Read late, the first part only shortens the first frame's time.
             await server.SendAsync(bytes.AsMemory(0, 30), TestContext.Current.CancellationToken);
-            await Task.Delay(700, TestContext.Current.CancellationToken);
+            await Task.Delay(50, TestContext.Current.CancellationToken);
+            time.Advance(TimeSpan.FromMilliseconds(700));
             await server.SendAsync(bytes.AsMemory(30, 61), TestContext.Current.CancellationToken);
-            await Task.Delay(500, TestContext.Current.CancellationToken);
+            await Polling.UntilAsync(() => interceptor.Held.Count == 1);
+            time.Advance(TimeSpan.FromMilliseconds(500));
             await server.SendAsync(bytes.AsMemory(91), TestContext.Current.CancellationToken);
 
             Assert.Equal(expected, await clientReceives);

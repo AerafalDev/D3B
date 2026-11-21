@@ -16,6 +16,14 @@ dotnet test                           # every test project, on Microsoft.Testing
 dotnet format --verify-no-changes     # CI checks it
 ```
 
+CI runs the same on Windows ([ci.yml](../.github/workflows/ci.yml)), builds every tool of `scripts/` and every hook, and
+runs the tests with `--hangdump --hangdump-timeout 5m --crashdump`: a test host that hangs five minutes or crashes leaves
+a dump, uploaded as the run's `test-dumps` artifact with the hang's log of the tests then running. Under
+Microsoft.Testing.Platform a host that died reports exit code 1 and no failed test, so the dump is what is left to read.
+The same options work after a local `dotnet test`. [docs.yml](../.github/workflows/docs.yml) runs
+`dotnet run --file scripts/docs.cs -- check` on every push and pull request, those that change only Markdown included,
+which `ci.yml` skips.
+
 ## Run from source
 
 ```powershell

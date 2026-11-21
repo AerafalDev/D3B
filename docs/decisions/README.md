@@ -103,4 +103,8 @@ Each file holds the decisions of one group of [the index](../decisions-index.md)
 - [Fights, the server's cooldowns merged (D480)](d480-cooldowns-merged.md): 1 decision, 4 KB.
 - [The harvest, fights lost in a row (D481)](d481-harvest-losses-go-on.md): 1 decision, 3 KB.
 - [Groups, the exchange's stacks in one request (D482)](d482-group-exchange-one-request.md): 1 decision, 3 KB.
-- [Fights, the Forgelance's spells cast on its lance (D483)](d483-forgelance-lance-reach.md): 1 decision, 5 KB.
+- [Fights, a carry and the states that forbid it (D483)](d483-carry-states.md): 1 decision, 2 KB.
+- [Activities, the wait for a busy character bounded (D484)](d484-busy-wait-bounded.md): 1 decision, 3 KB.
+- [Fights, the blows on the character's own allies (D485)](d485-ally-strikes.md): 1 decision, 7 KB.
+- [Fights, a dispel keeps the buffs the server keeps (D486)](d486-dispel-keeps-undispellable-buffs.md): 1 decision, 5 KB.
+- [Fights, the Forgelance's spells cast on its lance (D487)](d487-forgelance-lance-reach.md): 1 decision, 5 KB.

@@ -641,6 +641,18 @@ internal sealed class CastBench
             if (cast.TriggeredCasts is 0 && main)
                 Tally.Count($"damage alone, by element: {key.Element}, {outcome}");
 
+            // A character's blows by its breed and spell: what the formulas foresaw against what the server announced, so
+            // that a breed whose spells are foreseen far from what they deal shows apart.
+            if (main && cast.Caster.IsCharacter && !WeaponBlows.IsBlow(cast.Level))
+            {
+                var by = $"damage by breed and spell: breed {cast.Caster.BreedId,2}, spell {cast.Level.SpellId} {key.Element}";
+
+                Tally.Count($"{by}, {outcome}");
+                Tally.Count($"{by}, foreseen at most, summed", range.Max);
+                Tally.Count($"{by}, foreseen at least, summed", range.Min);
+                Tally.Count($"{by}, dealt, summed", total);
+            }
+
             if (outcome is "below" or "above" && main)
                 _details?.WriteLine($"damage {outcome}: spell {cast.Level.SpellId} level {cast.Level.Id}{(cast.Critical ? " critical" : "")} element {key.Element}: {total} against {range.Min}..{range.Max}, {alone}; {Why(cast, foreseen, key.Target, key.Element)}");
         }
@@ -807,6 +819,25 @@ internal sealed class CastBench
 
             Tally.Count($"push damage: {(formula == damage ? (damage is 0 ? "none, as foreseen" : "as foreseen") : capped && damage <= formula ? "as foreseen, capped by the target's life" : damage < formula ? "below" : "above")}");
 
+            // A push stopped by a fighter: what the fighter right behind the target lost, against the target's own damage (the
+            // owner's report of a character striking its ally, D485).
+            if (steps < cells && damage > 0 && Behind(cast, from, landed) is { } behind)
+            {
+                var lost = cast.Actions.Where(action => action.ActionCase is GameActionFightEvent.ActionOneofCase.LifeLost && action.LifeLost.TargetId == behind.Id && action.LifeLost.Element < 0)
+                    .Sum(action => action.LifeLost.Loss + (action.LifeLost.HasShieldLoss ? action.LifeLost.ShieldLoss : 0));
+                var side = behind.Team == cast.Caster.Team ? "the caster's side" : "the other side";
+                var quarter = damage / 4.0;
+                var own = EffectFormulas.PushDamage(cells - steps, cast.Caster, level, behind) / 2;
+                var share = lost is 0 ? "nothing" : Math.Abs(lost - quarter) <= 1 ? "a quarter of the target's" : Math.Abs(lost - (damage / 2.0)) <= 1 ? "half the target's" : lost == damage ? "as much as the target" : "other";
+
+                Tally.Count($"push into a fighter: the fighter behind, of {side}, against half its own formula: {(lost == own ? "as much" : Math.Abs(lost - own) <= 1 ? "within a point" : lost < own ? "less" : "more")}, {(damage == formula ? "the target's as foreseen" : "the target's not as foreseen")}");
+
+                Tally.Count($"push into a fighter: the fighter behind, of {side}, took {share}, {(foreseen.Count(effect => effect.Action.Kind is EffectKind.Push) is 1 ? "one fighter pushed" : "several pushed")}");
+
+                if (share is "other")
+                    _details?.WriteLine($"push into a fighter: spell {cast.Level.SpellId}, target {damage}, behind {lost}, {cells - steps} cells short, behind {(behind.IsCharacter ? "character" : "monster")} res85 {behind.Characteristic(85)} target res85 {target.Characteristic(85)}");
+            }
+
             if (formula != damage && !capped)
                 _details?.WriteLine($"push damage: spell {cast.Level.SpellId}, {cells} cells, {steps} moved: {damage} against {formula}; target {(target.IsCharacter ? "character" : "monster")} lvl {target.Level} props {target.MonsterProperties} states {string.Join(",", target.States)} res85 {target.Characteristic(85)} caster lvl {level} bonus84 {cast.Caster.Characteristic(84)} shares {string.Join(",", target.ReceivedDamageShares)} slides {cast.Actions.Count(action => action.ActionCase is GameActionFightEvent.ActionOneofCase.Slide)} hits80 {cast.Actions.Count(action => action.ActionId is 80)}");
         }
@@ -845,6 +876,18 @@ internal sealed class CastBench
         }
 
         return $", beside the step {What(x, 0)} and {What(0, y)}";
+    }
+
+    private static Combatant? Behind(Cast cast, int from, int landed)
+    {
+        // The fighter on the cell past the one the target stopped on, along the slide, or along the caster's line when it did not move.
+        var a = MapGeometry.PointOf(from == landed ? cast.Caster.Cell : from);
+        var b = MapGeometry.PointOf(landed);
+
+        if (a == b || !MapGeometry.TryGetCell(new MapPoint(b.X + Math.Sign(b.X - a.X), b.Y + Math.Sign(b.Y - a.Y)), out var next))
+            return null;
+
+        return cast.Fighters.FirstOrDefault(fighter => fighter.IsAlive && fighter.Cell == next);
     }
 
     private static string Next(Cast cast, int from, int landed)

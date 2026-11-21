@@ -1,12 +1,11 @@
 using System.Collections.Concurrent;
 using D3B.App.Controls.WorldMaps;
+using D3B.Data.Tests;
 
 namespace D3B.App.Tests.Controls;
 
 public sealed class TileStoreTests
 {
-    private static readonly TimeSpan _patience = TimeSpan.FromSeconds(10);
-
     private static WorldMapTileKey Key(int index, int zoom = 100)
     {
         return new WorldMapTileKey(1, zoom, index);
@@ -14,7 +13,7 @@ public sealed class TileStoreTests
 
     private static async Task WaitForAsync(Func<bool> condition)
     {
-        var until = DateTime.UtcNow + _patience;
+        var until = DateTime.UtcNow + Polling.Deadline;
 
         while (!condition() && DateTime.UtcNow < until)
             await Task.Delay(5, TestContext.Current.CancellationToken);
@@ -40,7 +39,7 @@ public sealed class TileStoreTests
         store.Want([], [Key(1), Key(2), Key(3)]);
 
         // The caller's thread waits where it stands: awaiting would hand it back to the pool, which may then load a tile on it.
-        Assert.True(SpinWait.SpinUntil(() => store.Count == 3, TimeSpan.FromSeconds(10)));
+        Assert.True(SpinWait.SpinUntil(() => store.Count == 3, Polling.Deadline));
         Assert.True(store.TryGet(Key(2), out var tile));
         Assert.Equal("tile2", tile);
         Assert.Equal(3, loads.Count);

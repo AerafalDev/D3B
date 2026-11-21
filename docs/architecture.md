@@ -200,6 +200,11 @@ The bots run in `D3B.Bot`: what each part does today, with the decisions that ma
   module lists them in the `ActivityCatalog`; one is made, with the host's services and its settings, for each start.
 - **Recovery** (D89): before going on after an interruption, `Recovery.SettleAsync` lets a use and a walk end, leaves a
   dialog or exchange still open, and lets go of a walk the server holds, each wait bounded.
+- **A busy character at a step's start** (D484): the harvest's and the hunt's steps wait through a `BusyWait` for a
+  character walking, using, in a dialog or exchange, or on a map not known yet, 10 s a step. Busy a minute
+  (`BusyWait.Bound`), it is put back in order with `Recovery.SettleAsync`; still busy a minute later, the activity fails
+  saying what held (`BusyKind`). A step finding the character free, an interruption, or steps stopped over 20 s (a pause between two)
+  starts the count again.
 - **An activity's report** (D131): what it does, how far it is, what it counts, its warnings and what it looks at on the
   map (`BotActivity.Report`, `ActivityReport`), replaced whole and read by the app; its texts name the game's values by
   their ids (`GameText`, in `D3B.Bot.Localization`). One that cannot go on says why (`ActivityException`); a run keeps the
@@ -281,7 +286,8 @@ The bots run in `D3B.Bot`: what each part does today, with the decisions that ma
   (`FightEndEntry`). The client acknowledges the sequences and says it is ready for each turn by itself; the bot sends
   nothing in a fight until 9e. Since 9d (D193), each fighter also holds its characteristics as the server last gave them,
   its buffs (`FightBuff`), from which its states and spells' modifiers come, each ending as the turn the server named
-  begins or as the server ends it (`FightBuffEndEvent`, D225), its cooldowns, each spell as the server last named it (D480), the casts it chose (`CastHistory`), and who carries it; the state holds the sequences open
+  begins or as the server ends it (`FightBuffEndEvent`, D225), a removal of a spell's buffs taking that spell's alone and
+  a dispel taking none itself, the server ending each buff it takes and keeping those not dispellable (D486), its cooldowns, each spell as the server last named it (D480), the casts it chose (`CastHistory`), and who carries it; the state holds the sequences open
   (`FightSequence`), and moves a fighter on a slide, a carry and a throw. `FightCombatants` gives the engine the fighters.
   Since 9e (D199, D203), the character's state holds its spells as the server listed them and its transformed form's, the
   fight's state the spells the server's context lists for the fight, the character's own and not a summon's it controls
@@ -1114,7 +1120,7 @@ Pure logic with no I/O, in `D3B.Engine`, which references `D3B.Data` for the cel
   - `SpellZones`: the cells each of the 26 shapes covers, centred on the cell cast on and directed from the caster, a fork
     a row past its size (D473). `TargetMask`: an effect's mask parsed once, answering on three values whether it selects a fighter; `C` names the
     caster wherever it stands, `c` in the zone only (D226); `R` asks a cast through a portal and `r` a cast through none,
-    which every cast tells (D468); `K` names the fighter the caster carries, or throws as the throw's own effects land (D474); `CasterAllows` reads the conditions on the caster alone, which an effect on a free cell, such as a summon, asks (D483).
+    which every cast tells (D468); `K` names the fighter the caster carries, or throws as the throw's own effects land (D474); `CasterAllows` reads the conditions on the caster alone, which an effect on a free cell, such as a summon, asks (D487).
   - `CastRules`, built once per pack: whether a fighter may cast a level on a cell, the refusal named (`CastRefusal`)
     in the order the checks run, from its `CastHistory`, the level as the caster's spell modifiers change it
     (`SpellModifier`, `CastRules.Modified`); the cells it may cast on; the fighters each effect reaches. The level's
@@ -1147,7 +1153,8 @@ Pure logic with no I/O, in `D3B.Engine`, which references `D3B.Data` for the cel
     buffs dispelled and a buff past its stacks replacing the oldest, as a Zobal's masks do (D227); a malus of AP or MP
     takes the points below 0, as the server keeps them, so that its end gives back only what it took (D470).
   - `FightJudge`: an imagined fight's worth for the side playing, in life: allies' life concave and a quarter as steep above
-    60% of its most (`TacticWeights.Comfort`, D407), enemies' weighed by how hard they hit; the enemies' threat and the next turn's approach with the spells that land, from a cell walked to, in
+    60% of its most (`TacticWeights.Comfort`, D407), and what the side's own casts took from its other fighters again
+    (`ImaginedFight.StruckBySide`, `TacticWeights.AlliesStruck`, D485), enemies' weighed by how hard they hit; the enemies' threat and the next turn's approach with the spells that land, from a cell walked to, in
     range and in sight (D208), bounded by a kill, each cell nearer an enemy no spell reaches yet counting a little, within
     the spells' range and MP too (D472); the fighters read as the search left them, states that prevent casting
     or damage and invulnerability included, a spell its states forbid dealing nothing (D228), a buff worth what it does
@@ -1165,7 +1172,7 @@ Pure logic with no I/O, in `D3B.Engine`, which references `D3B.Data` for the cel
   - `ForgelanceLance`: a rule the pack does not hold, measured on the captures, and the AI's only one naming a breed's
     states and monster: a throw takes the lance out of the Forgelance's hand (states 3360 and 3590 ended, 3361 given), so
     that no spell asking it follows that turn, and `Imagination.TurnStarted` and the judge's next turn put it back, the
-    lance gone from the map (D465), and the reach its spell 24591 gave its thrower's spells with it (D483).
+    lance gone from the map (D465), and the reach its spell 24591 gave its thrower's spells with it (D487).
   - `Glyphs`, `CellMark` and `CellMarkKind`, in `D3B.Engine.Fights` (D280): the marks the pack's effects set on the cells of
     a zone, a glyph struck as a turn begins (401) or ends (402), a glyph-aura (1091), a trap (400), their spell, grade
     and end; the imagined fight's marks, the server's and those the casts set (`ImaginedFight.Marks`).
@@ -1174,10 +1181,11 @@ Pure logic with no I/O, in `D3B.Engine`, which references `D3B.Data` for the cel
     strikes who it covers as it comes and who a cast or a walk brings into it. The reply begins and ends each fighter's
     turn so, and the fighter playing's next turn begins so; the judge counts a side's marks on the other's fighters, sure
     on an enemy, feared on an ally, and the bombs' promise on an enemy with the approach, its kill once (D281). A summon
-    casts its grade's starting spell, a spell modifier is imagined for the spell its effect's first die names (D483), and a fighter's death takes back the buffs it gave
+    casts its grade's starting spell, a spell modifier is imagined for the spell its effect's first die names (D487), and a fighter's death takes back the buffs it gave
     (`HeldBuff.CasterId`, D282). Pushes and pulls go along the farthest axis, the cast's way for a line across it, never
     moving a fighter `CastRules.CanBePushed` refuses nor one the mask only maybe selects (D283); a push moves as far as its
-    cells, a step along a diagonal of the coordinates as far as two, and a step so only between two free cells (D289). The
+    cells, a step along a diagonal of the coordinates as far as two, and a step so only between two free cells (D289); a
+    push a fighter stops strikes that fighter with half the target's push damage (D485). The
     judge weighs a mark of the side playing on an enemy over the rounds the fight is foreseen to last, a glyph until it
     goes, a wall while its bombs live, its blow rising with their combos, each blow as likely as the enemy stays, measured
     on the monsters' turns (D288); it reckons the walls once a judgement, and a turn's start only for a fighter on the
@@ -1185,7 +1193,9 @@ Pure logic with no I/O, in `D3B.Engine`, which references `D3B.Data` for the cel
   - `Carrying`, in `D3B.Engine.Fights` (D474): a carry (effect 50) takes the fighter reached off its cell, its carrier's
     (`Combatant.CarrierId`), the carrier in state 3 and the carried in 8 and 3579, as the server sets them; a throw (51) lands
     the carried on the free cell cast on, still carried for the throw's own effects there, then ends the carry
-    (`Imagination.Cast`). A carried monster must be one the pack lets be. `FightTactics` never ends a turn carrying: a node
+    (`Imagination.Cast`). A carried monster must be one the pack lets be, and no fighter is carried while a state of its holds the state effect 3,
+    which keeps it from being moved, or 4, nor while it is Enraciné or under Pesanteur, the owner's word
+    (`CastRules.StatesLetCarry`, D483). `FightTactics` never ends a turn carrying: a node
     that carries is ranked but is no end, and a turn that began carrying ends so only when no other end exists; a throw is
     tried on the free cells in its range, half the nearest to the enemies and half the farthest (`ThrowCells`).
   - `Portals` and `PortalPassage`, in `D3B.Engine.Fights` (D468): an Eliotrope's portals, marks of effect 1181 kept the
@@ -1289,7 +1299,8 @@ interface's recast (D292).
   removed and erosion left to captures (9d, built, D195, D196).
 - A fight is decided by simulating candidate actions and scoring them (D13): each turn the AI searches the best sequences
   of moves and casts and thinks again after each answer of the server (9e, built, D201, D202), its judgement measured on
-  the captures turn by turn (9e2, D206 to D212), and breed by breed since D463. The simulator applies spell
+  the captures turn by turn (9e2, D206 to D212), and breed by breed since D463, with the element of each blow against
+  the caster's best and the states each breed holds as its turns begin since D486. The simulator applies spell
   effects read from the game data. It lives in `D3B.Engine`, with no I/O, so it is tested on its own.
 - The hard cases through the effects, measured one at a time (9f): a fighter's states, as the server sets and ends them
   and as the effects set and end them through the spells they cast, the Zobal's masks first (built, D224 to D229);
@@ -1338,7 +1349,9 @@ character's (D279). The character's spells by the
   Its replays of the turns (`--turns`) and of the fights (`--live`) print their main counts again by the character's breed,
   a section each, so that a change of the AI is read class by class and on what a farm needs: the plans, the damage, kills
   and heals planned against played, the reply's blows against the enemies' alone and in a group, the spells planned against
-  played; the turns and rounds a fight won takes, the turns idle, the life lost and the deaths (D463). `--turns` also
+  played; the turns and rounds a fight won takes, the turns idle, the life lost and the deaths (D463); the life the
+  character's own casts took from its team, by spell, and with `--turns` what the engine foresaw of it against what came
+  (D485). `--turns` also
   replays every placement by the character's place in the turn order: its cell as placed, with every enemy's threat and
   by the turn order, each judged by the threat of the enemies playing before it and the damage it may strike (D478).
 - Logic code in `D3B.Engine` and the state handlers is tested directly, with property tests on CsCheck for cell and
@@ -1377,7 +1390,13 @@ character's (D279). The character's spells by the
   fighters, a fight's and a missing map, and what a cell holds, in both languages; its drawing without a screen, a pixel of each mark checked in each
   theme's palette and the cell under the pointer described; its layout's cells found back from their centres (D120 to
   D122).
-- Time is controlled through `FakeTimeProvider`.
+- Time is controlled through `FakeTimeProvider`. A delay starts on the bot's thread a moment after what a test sees (a
+  wait's timer once the step before it is journaled, the pause between two steps once their count went up), so a test
+  that moves the clock past one moves it a step at a time until what follows the delay is seen
+  (`TestPlay.AdvanceUntilAsync`), each step shorter than any delay that must not pass. What runs off a test's thread is
+  waited for with one deadline, `Polling.Deadline`, 30 s, which only bounds a condition that never holds: linked from
+  `tests/D3B.Data.Tests` into the projects that wait. The relay's tests hold a frame five seconds unless they test the
+  hold's end, and the one that times two frames' holds moves a clock of its own (`TestRelay.StartAsync`'s `time`).
 - The Claude Code hooks (D398) are tested where they ship from: `tests/D3B.Hooks.Tests` compiles the files of
   `.claude/hooks/shared/`, which hold every decision, and checks them on commands and paths as Claude Code sends them: which
   pushes are refused or asked, which writes are refused, which changes need a build, a build that fails only on files the
