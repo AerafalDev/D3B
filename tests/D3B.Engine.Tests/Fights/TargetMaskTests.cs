@@ -25,7 +25,7 @@ public sealed class TargetMaskTests
     [Fact]
     public void TheCastersConditionsAreReadWithoutATarget()
     {
-        // An effect on a free cell reaches no fighter, but asks its caster's states still: Épilogue's lance, 3360 (D482).
+        // An effect on a free cell reaches no fighter, but asks its caster's states still: Épilogue's lance, 3360 (D483).
         var holding = _caster with { States = [3360] };
 
         Assert.Equal(CriterionAnswer.True, TargetMask.Parse("a,A,*E3360").CasterAllows(holding, _fighters));

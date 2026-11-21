@@ -813,3 +813,8 @@ or refines another says so in its own entry. Add a line here with every new deci
 
 - [D482](decisions/d482-group-exchange-one-request.md#d482-a-follower-moves-its-whole-stacks-into-the-exchange-in-one-request-a-part-of-a-stack-by-a-move) A follower moves its whole stacks into the exchange in one request, a part of a stack by a move (2026-11-21)
   - A move a stack with a shorter wait, the empty request not paired, every stack by the transfer.
+
+## Fights, the Forgelance's spells cast on its lance (D483)
+
+- [D483](decisions/d483-forgelance-lance-reach.md#d483-the-lance-gives-each-spell-it-names-its-reach-and-a-summon-on-a-free-cell-asks-its-casters-conditions) The lance gives each spell it names its reach, and a summon on a free cell asks its caster's conditions (2026-11-21)
+  - A rule naming the 13 spells, leaving 314 to the server's refusal.

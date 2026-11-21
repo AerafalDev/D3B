@@ -25,7 +25,7 @@ internal static class ForgelanceLance
     /// <summary>The state the lance's coming takes from its thrower and its return gives back.</summary>
     public const int Carried = 3590;
 
-    /// <summary>The spell the lance's coming casts on its thrower, setting the range of the spells cast on the lance (D482).</summary>
+    /// <summary>The spell the lance's coming casts on its thrower, setting the range of the spells cast on the lance (D483).</summary>
     /// <remarks>Read from the pack: the lance's starting spell casts it, and Armé, which the server casts as the lance returns, dispels it.</remarks>
     public const int Reach = 24591;
 
