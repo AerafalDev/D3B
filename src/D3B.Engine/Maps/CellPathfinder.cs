@@ -47,7 +47,7 @@ public static class CellPathfinder
     /// <param name="cells">The map's cells, by identifier.</param>
     /// <param name="from">The cell the walk starts on: where the character stands, walkable or not.</param>
     /// <param name="to">The cell to walk to, even one to avoid.</param>
-    /// <param name="avoided">The cells the walk goes round, such as the cells of the map's actions, which move a character that only crosses them (D485).</param>
+    /// <param name="avoided">The cells the walk goes round, such as the cells of the map's actions, which move a character that only crosses them (D486).</param>
     /// <param name="path">The path, when there is one: a single cell when both are the same.</param>
     /// <returns>Whether the character can walk there without stepping on a cell to avoid.</returns>
     /// <exception cref="ArgumentException">The map does not have <see cref="MapData.CellCount"/> cells.</exception>
@@ -74,7 +74,7 @@ public static class CellPathfinder
     /// <param name="cells">The map's cells, by identifier.</param>
     /// <param name="from">The cell the walk starts on: where the character stands, walkable or not.</param>
     /// <param name="destinations">The cells to walk to any of, even ones to avoid; those that cannot be walked on are no destination, but the start.</param>
-    /// <param name="avoided">The cells the walk goes round, such as the cells of the map's actions, which move a character that only crosses them (D485).</param>
+    /// <param name="avoided">The cells the walk goes round, such as the cells of the map's actions, which move a character that only crosses them (D486).</param>
     /// <param name="path">The path to the one reached quickest, when there is one: a single cell when the start is one of them.</param>
     /// <returns>Whether the character can walk to any of them without stepping on a cell to avoid.</returns>
     /// <exception cref="ArgumentException">The map does not have <see cref="MapData.CellCount"/> cells.</exception>

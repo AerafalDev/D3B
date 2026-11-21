@@ -349,7 +349,7 @@ public sealed class WorldPathfinder
     /// <param name="mapId">The map.</param>
     /// <returns>The cells, whatever their criteria, none for a map the graph lacks.</returns>
     /// <remarks>
-    /// Measured on a mine's map (D485): the harvest's walk to an ore crossed its map action's cell, and the server moved the
+    /// Measured on a mine's map (D486): the harvest's walk to an ore crossed its map action's cell, and the server moved the
     /// character to the next map at once, 61 times in two runs. A walk goes round these cells, whether their criteria would
     /// hold or not, since what the server answers to one whose criterion fails is not measured.
     /// </remarks>

@@ -5,7 +5,7 @@ using D3B.Engine.Maps;
 
 namespace D3B.Bot.Movement;
 
-/// <summary>The paths a character walks on a map out of fights: round the cells of the map's actions when it can (D485).</summary>
+/// <summary>The paths a character walks on a map out of fights: round the cells of the map's actions when it can (D486).</summary>
 /// <remarks>
 /// Measured on two runs' captures in a mine: the harvest's walk to an ore crossed the cell of the map's action, and the server
 /// moved the character to the next map there, before the walk's end, every one of 61 times; the ore was never reached, and the

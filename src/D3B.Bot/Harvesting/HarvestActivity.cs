@@ -585,7 +585,7 @@ public sealed class HarvestActivity : BotActivity
         }
 
         // Moved to another map on the way, the server's doing as on a map action's cell, the character left the map it was going
-        // through: it is gone through, or the tour would come back to it again and again, the element as far out of reach (D485).
+        // through: it is gone through, or the tour would come back to it again and again, the element as far out of reach (D486).
         if (inZone && state.MapId is { } left && context.State.MapId != left)
             _current?.Tour.Visit(left);
 
@@ -746,7 +746,7 @@ public sealed class HarvestActivity : BotActivity
     }
 
     // A tour going round gets nowhere, whatever keeps it from going through the map it comes back to: its other maps are left for
-    // this tour, which then ends as any other, waiting or moving on when nothing was harvested, and the card says so (D485).
+    // this tour, which then ends as any other, waiting or moving on when nothing was harvested, and the card says so (D486).
     private void GoneRound(BotContext context, HarvestRotationZone current)
     {
         var state = context.State;

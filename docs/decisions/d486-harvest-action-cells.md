@@ -1,10 +1,10 @@
-# Movement and the harvest, a map action's cell crossed (D485)
+# Movement and the harvest, a map action's cell crossed (D486)
 
 A part of [the decisions](README.md); each decision has one line in [the index](../decisions-index.md). The map's actions in
 the world graph are [D71](d064-d090-step-4.md) and its steps; the harvest's tour is [D128](d126-d175-step-6.md); the
 inactivity kick, [D481](d481-harvest-losses-go-on.md) and [D484](d484-busy-wait-bounded.md).
 
-## D485: A walk goes round the map's action cells, a harvest the server cuts by moving the character leaves its map gone through, and a tour going round ends
+## D486: A walk goes round the map's action cells, a harvest the server cuts by moving the character leaves its map gone through, and a tour going round ends
 
 *2026-11-21, the lead's task: another player reported a character stuck, then disconnected for inactivity, and gave the
 owner two captures. The session measured the loop and settled the answer, a bug fix, within the task's scope. Builds D27,
