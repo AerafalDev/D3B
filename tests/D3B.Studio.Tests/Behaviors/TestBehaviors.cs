@@ -158,15 +158,9 @@ internal sealed class TestBehaviors : IAsyncDisposable
         return start.Run!;
     }
 
-    public static async Task UntilAsync(Func<bool> condition)
+    public static Task UntilAsync(Func<bool> condition)
     {
-        var deadline = DateTime.UtcNow + TimeSpan.FromSeconds(10);
-
-        while (!condition())
-        {
-            Assert.True(DateTime.UtcNow < deadline, "The condition did not hold in time.");
-            await Task.Delay(5, TestContext.Current.CancellationToken);
-        }
+        return Polling.UntilAsync(condition);
     }
 
     /// <summary>The notes the bot's behaviors wrote, in order.</summary>

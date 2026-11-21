@@ -43,7 +43,7 @@ public sealed class MainViewModelTests : IAsyncDisposable
         var main = new MainViewModel(runner, _localizer);
 
         runner.Start();
-        await Waiting.UntilAsync(() => runner.Status is HostStatus.Failed, TimeSpan.FromSeconds(10));
+        await Waiting.UntilAsync(() => runner.Status is HostStatus.Failed);
         main.Refresh();
 
         Assert.True(main.IsFailed);

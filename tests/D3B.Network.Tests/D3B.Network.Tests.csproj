@@ -10,6 +10,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Compile Include="..\D3B.Data.Tests\Polling.cs" Link="Polling.cs" />
     <Compile Include="..\D3B.Data.Tests\TemporaryDirectory.cs" Link="TemporaryDirectory.cs" />
   </ItemGroup>
 

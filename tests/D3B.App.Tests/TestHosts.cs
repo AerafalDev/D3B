@@ -70,7 +70,7 @@ internal static class TestHosts
         var runner = new HostRunner(_ => Task.FromResult(new BotHostStart(host, null)));
 
         runner.Start();
-        await Waiting.UntilAsync(() => runner.Status is HostStatus.Running, TimeSpan.FromSeconds(10));
+        await Waiting.UntilAsync(() => runner.Status is HostStatus.Running);
 
         return runner;
     }

@@ -72,6 +72,7 @@ public sealed class HarvestActivity : BotActivity
     private readonly HarvestBalance _balance;
     private readonly HarvestUpkeep _upkeep;
     private readonly HarvestReporter _reporter;
+    private readonly BusyWait _busy = new();
     private readonly HashSet<int> _skipped = [];
     private List<HarvestRotationZone> _rotation = [];
     private HarvestRotationZone? _current;
@@ -200,14 +201,8 @@ public sealed class HarvestActivity : BotActivity
         _context = context;
         _reporter.Begin(context);
 
-        var state = context.State;
-
-        if (state.IsBusy || state.MapId is not { } mapId)
-        {
-            await context.WaitUntilAsync(waited => !waited.IsBusy && waited.MapId is not null, _busyDelay, cancellationToken).ConfigureAwait(false);
-
+        if (await _busy.WaitAsync(context, Failure, cancellationToken).ConfigureAwait(false) || context.State is not { MapId: { } mapId } state)
             return true;
-        }
 
         var current = CurrentOf(context);
         var zone = current.Zone;
@@ -306,6 +301,7 @@ public sealed class HarvestActivity : BotActivity
     public override InterruptionResponse OnInterrupted(Interruption reason)
     {
         _fight = null;
+        _busy.Reset();
 
         if (reason is Interruption.Fight)
         {

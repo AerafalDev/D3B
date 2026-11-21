@@ -116,14 +116,14 @@ public sealed class CharactersViewModelTests : IAsyncDisposable
         var version = _store.Accounts.Version;
 
         _panel.AssignCommand.Execute(_panel.MyProfiles.Single(choice => choice.Id == stroll.Id));
-        await Waiting.UntilAsync(() => _store.Accounts.Version > version, TimeSpan.FromSeconds(10));
+        await Waiting.UntilAsync(() => _store.Accounts.Version > version);
         Refresh();
 
         Assert.True(_panel.ChosenHasProfile);
 
         version = _store.Accounts.Version;
         _panel.ToggleStartsOnConnectionCommand.Execute(null);
-        await Waiting.UntilAsync(() => _store.Accounts.Version > version, TimeSpan.FromSeconds(10));
+        await Waiting.UntilAsync(() => _store.Accounts.Version > version);
         Refresh();
 
         Assert.True(_panel.ChosenStartsOnConnection);
@@ -140,7 +140,7 @@ public sealed class CharactersViewModelTests : IAsyncDisposable
         version = _store.Accounts.Version;
         _panel.ForgetCommand.Execute(null);
         Assert.IsType<QuestionViewModel>(_dialogs.Current).ConfirmCommand.Execute(null);
-        await Waiting.UntilAsync(() => _store.Accounts.Version > version, TimeSpan.FromSeconds(10));
+        await Waiting.UntilAsync(() => _store.Accounts.Version > version);
         Refresh();
 
         Assert.True(_panel.IsEmpty);

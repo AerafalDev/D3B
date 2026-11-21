@@ -1,6 +1,7 @@
 using System.Buffers;
 using D3B.Bot.Network;
 using D3B.Bot.Tests.Network;
+using D3B.Data.Tests;
 using D3B.Network.Relay;
 using D3B.Protocol.Translation;
 using Google.Protobuf;
@@ -50,7 +51,7 @@ internal sealed class TestConnection : IDisposable
     /// <summary>Waits until D3B sent a number of requests, and gives the last.</summary>
     public async Task<IMessage> SentAsync(int count)
     {
-        var deadline = DateTime.UtcNow + TimeSpan.FromSeconds(10);
+        var deadline = DateTime.UtcNow + Polling.Deadline;
 
         while (_connection.Sent.Count < count)
         {

@@ -7,6 +7,7 @@ using Avalonia.Media.Imaging;
 using Avalonia.Platform;
 using Avalonia.Threading;
 using D3B.App.Controls.WorldMaps;
+using D3B.Data.Tests;
 
 namespace D3B.App.Tests.Controls;
 
@@ -44,9 +45,12 @@ public sealed class WorldMapViewTests
         });
     }
 
+    // The caller asserts what it waited for: a settle that runs out only stops, so the assertion says what is missing.
     private static async Task SettleAsync(Func<bool> done)
     {
-        for (var i = 0; i < 200 && !done(); i++)
+        var deadline = DateTime.UtcNow + Polling.Deadline;
+
+        while (!done() && DateTime.UtcNow < deadline)
         {
             await Task.Delay(10);
             Dispatcher.UIThread.RunJobs();

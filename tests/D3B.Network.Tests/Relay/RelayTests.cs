@@ -6,8 +6,6 @@ namespace D3B.Network.Tests.Relay;
 
 public sealed class RelayTests
 {
-    private static readonly TimeSpan _timeout = TimeSpan.FromSeconds(30);
-
     private static byte[] Bytes(int length, int seed)
     {
         var bytes = new byte[length];
@@ -68,7 +66,7 @@ public sealed class RelayTests
                 return (Sent: sent, Answer: await TestRelay.ReadExactlyAsync(connection.Client, sent.Length));
             });
 
-            foreach (var (sent, answer) in await Task.WhenAll(exchanges).WaitAsync(_timeout, TestContext.Current.CancellationToken))
+            foreach (var (sent, answer) in await Task.WhenAll(exchanges).WaitAsync(Polling.Deadline, TestContext.Current.CancellationToken))
                 Assert.Equal(sent.Reverse(), answer);
         }
         finally
