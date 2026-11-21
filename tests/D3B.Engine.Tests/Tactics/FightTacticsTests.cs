@@ -151,6 +151,15 @@ public sealed class FightTacticsTests
     }
 
     [Fact]
+    public void ACharacterOnNoCellEndsItsTurn()
+    {
+        // Replayed on the captures: a character carried stands on no cell, which the walks nearer the enemies measure from.
+        var (fight, knowledge) = Fight(Caster() with { Cell = Combatant.NoCell, ActionPoints = 1 }, Biter(-1, Off(12, 0)));
+
+        Assert.True(Plan(fight, knowledge).IsEmpty);
+    }
+
+    [Fact]
     public void ABadlyHurtCharacterHealsItself()
     {
         var (fight, knowledge) = Fight(Caster() with { Life = 20, MovementPoints = 0 }, Biter(-1, Off(12, 0)));

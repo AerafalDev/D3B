@@ -41,6 +41,11 @@ namespace D3B.Scripts.Fights;
 /// enemies', alone and in a group (D463).
 /// </para>
 /// <para>
+/// Each plan of nothing with MP left is counted by what the turn held as it began, as the live bench counts the idle turns
+/// (D480); one far from the enemies with no spell landing, by whether a walk beat ending the turn now before the reply,
+/// after it, or neither, and what the threat and next turn's damage did to its best walk nearer (D486).
+/// </para>
+/// <para>
 /// Each cast played that took life from the character's team but itself, what the engine foresaw of it against what the
 /// server announced, then the casts planned that it foresees doing so, by spell, on the whole team and on its characters
 /// alone (D485).

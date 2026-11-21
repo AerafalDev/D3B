@@ -570,7 +570,7 @@ public sealed class FightTactics
         // them the approach weighed better before the reply did no better after it, next turn's search gaining as much from
         // either cell and the approach then left out, and ending the turn now won the tie. A walk nearer the enemies that
         // the judge weighed better before the reply wins a tie within a point after it.
-        if (best == standing)
+        if (best == standing && standing.End.Actor.Cell is not Combatant.NoCell)
         {
             var from = Nearest(standing.End, standing.End.Actor.Team, standing.End.Actor.Cell);
             var nearer = double.NegativeInfinity;
