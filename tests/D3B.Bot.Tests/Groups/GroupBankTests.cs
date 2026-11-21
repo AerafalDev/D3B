@@ -64,7 +64,8 @@ public sealed class GroupBankTests
         connection.Server(new StorageContentEvent());
     }
 
-    // The follower asks, the master accepts, the follower moves its ash in and says it is ready, then the master: the exchange as captured.
+    // The follower asks, the master accepts, the follower moves its whole stack of ash in and says it is ready, then the
+    // master: the exchange as captured.
     private static async Task ExchangedAsync(TestPlay play, TestConnection master, TestConnection follower, int masterSent, int followerSent, int quantity)
     {
         Assert.Equal(new ExchangePlayerRequest { TargetId = TestGroup.MasterId }, await TestGroup.SentAsync(play, follower, followerSent + 1));
@@ -73,7 +74,7 @@ public sealed class GroupBankTests
         Assert.IsType<ExchangeAcceptRequest>(await TestGroup.SentAsync(play, master, masterSent + 1));
         Both(master, follower, new ExchangeStartedWithPlayerEvent { Type = ExchangeType.Player });
 
-        Assert.Equal(new ExchangeObjectMoveRequest { Uid = AshUid, Quantity = quantity }, await TestGroup.SentAsync(play, follower, followerSent + 2));
+        Assert.Equal(new ExchangeTransferFromInventoryRequest { Uids = { AshUid } }, await TestGroup.SentAsync(play, follower, followerSent + 2));
         Both(master, follower, new ExchangeObjectsAddedEvent());
 
         var changed = play.Time.GetUtcNow();
@@ -123,7 +124,8 @@ public sealed class GroupBankTests
         await TestGroup.SettleAsync(master);
 
         Assert.DoesNotContain(connection.Sent, request => request is ExchangeKamasRequest);
-        Assert.DoesNotContain(connection.Sent, request => request is ExchangeObjectMoveRequest { Uid: 41 });
+        Assert.DoesNotContain(connection.Sent, request => request is ExchangeTransferFromInventoryRequest transfer && transfer.Uids.Contains(41));
+        Assert.DoesNotContain(connection.Sent, request => request is ExchangeObjectMoveRequest);
         Assert.Equal(0, activity.OwnUnloads);
         leading.Stop();
         run.Stop();
@@ -200,12 +202,11 @@ public sealed class GroupBankTests
         Both(masterConnection, connection, new ExchangeRequestedEvent { Type = ExchangeType.Player, SourceId = TestGroup.FollowerId, TargetId = TestGroup.MasterId });
         Assert.IsType<ExchangeAcceptRequest>(await TestGroup.SentAsync(play, masterConnection, 5));
         Both(masterConnection, connection, new ExchangeStartedWithPlayerEvent { Type = ExchangeType.Player });
-        Assert.Equal(new ExchangeObjectMoveRequest { Uid = AshUid, Quantity = 10 }, await TestGroup.SentAsync(play, connection, 4));
-        Both(masterConnection, connection, new ExchangeObjectsAddedEvent());
 
-        // The chestnut moved, and nothing told: the server took it not.
-        Assert.Equal(new ExchangeObjectMoveRequest { Uid = 44, Quantity = 1 }, await TestGroup.SentAsync(play, connection, 5));
-        Assert.Equal(new ExchangeReadyRequest { Step = 1, Ready = true }, await TestGroup.SentAsync(play, connection, 6));
+        // Both moved in one request, and the server took the ash alone: the chestnut stays with the follower.
+        Assert.Equal(new ExchangeTransferFromInventoryRequest { Uids = { AshUid, 44 } }, await TestGroup.SentAsync(play, connection, 4));
+        Both(masterConnection, connection, new ExchangeObjectsAddedEvent());
+        Assert.Equal(new ExchangeReadyRequest { Step = 1, Ready = true }, await TestGroup.SentAsync(play, connection, 5));
         Both(masterConnection, connection, new ExchangeReadyEvent { Ready = true, CharacterId = TestGroup.FollowerId });
         Assert.Equal(new ExchangeReadyRequest { Step = 1, Ready = true }, await TestGroup.SentAsync(play, masterConnection, 6));
         masterConnection.Server(new ObjectAddedEvent { Object = Stack(GivenUid, TestPlay.Ash, 10) });
@@ -249,7 +250,9 @@ public sealed class GroupBankTests
         Both(masterConnection, connection, new ExchangeRequestedEvent { Type = ExchangeType.Player, SourceId = TestGroup.FollowerId, TargetId = TestGroup.MasterId });
         Assert.IsType<ExchangeAcceptRequest>(await TestGroup.SentAsync(play, masterConnection, 5));
         Both(masterConnection, connection, new ExchangeStartedWithPlayerEvent { Type = ExchangeType.Player });
-        Assert.Equal(new ExchangeObjectMoveRequest { Uid = 39, Quantity = 1 }, await TestGroup.SentAsync(play, connection, 4));
+        // The whole chestnut in one request, then the part of the ash the master's pods hold by a move, as the client moves
+        // part of a stack.
+        Assert.Equal(new ExchangeTransferFromInventoryRequest { Uids = { 39 } }, await TestGroup.SentAsync(play, connection, 4));
         Assert.Equal(new ExchangeObjectMoveRequest { Uid = AshUid, Quantity = 29 }, await TestGroup.SentAsync(play, connection, 5));
         Both(masterConnection, connection, new ExchangeObjectsAddedEvent());
         Assert.Equal(new ExchangeReadyRequest { Step = 1, Ready = true }, await TestGroup.SentAsync(play, connection, 6));
@@ -267,8 +270,7 @@ public sealed class GroupBankTests
         Both(masterConnection, connection, new ExchangeRequestedEvent { Type = ExchangeType.Player, SourceId = TestGroup.FollowerId, TargetId = TestGroup.MasterId });
         Assert.IsType<ExchangeAcceptRequest>(await TestGroup.SentAsync(play, masterConnection, 11));
         Both(masterConnection, connection, new ExchangeStartedWithPlayerEvent { Type = ExchangeType.Player });
-        Assert.Equal(new ExchangeObjectMoveRequest { Uid = AshUid, Quantity = 71 }, await TestGroup.SentAsync(play, connection, 8));
-        Assert.Single(connection.Sent, request => request is ExchangeObjectMoveRequest { Uid: 39 });
+        Assert.Equal(new ExchangeTransferFromInventoryRequest { Uids = { AshUid } }, await TestGroup.SentAsync(play, connection, 8));
         leading.Stop();
         run.Stop();
     }
@@ -292,9 +294,7 @@ public sealed class GroupBankTests
         Both(masterConnection, connection, new ExchangeRequestedEvent { Type = ExchangeType.Player, SourceId = TestGroup.FollowerId, TargetId = TestGroup.MasterId });
         Assert.IsType<ExchangeAcceptRequest>(await TestGroup.SentAsync(play, masterConnection, 5));
         Both(masterConnection, connection, new ExchangeStartedWithPlayerEvent { Type = ExchangeType.Player });
-        Assert.Equal(new ExchangeObjectMoveRequest { Uid = AshUid, Quantity = 10 }, await TestGroup.SentAsync(play, connection, 4));
-        Both(masterConnection, connection, new ExchangeObjectsAddedEvent());
-        Assert.Equal(new ExchangeObjectMoveRequest { Uid = 45, Quantity = 3 }, await TestGroup.SentAsync(play, connection, 5));
+        Assert.Equal(new ExchangeTransferFromInventoryRequest { Uids = { AshUid, 45 } }, await TestGroup.SentAsync(play, connection, 4));
         leading.Stop();
         run.Stop();
     }
@@ -335,13 +335,73 @@ public sealed class GroupBankTests
     }
 
     [Fact]
-    public async Task AMasterWaitsForAFollowerMovingManyStacksAsLongAsEachMoveComes()
+    public async Task AFollowerMovesAllItsWholeStacksInOneRequest()
     {
-        // Each move after the client's display time, here 20 s: three take longer than one wait of 30 s, which each move renews.
+        // Measured on the owner's captures of 2026-11-21 (D482): the client moves many stacks into an exchange with a player
+        // in one request, which the server answers with one change, 28 to 169 ms after. One by one, 86 stacks took 54 s (D458).
         await using var play = new TestPlay();
         var (masterConnection, master, connection, follower, run) = await InTheBankAsync(play, 100);
 
         connection.Server(new InventoryContentEvent { Objects = { Stack(AshUid, TestPlay.Ash, 2), Stack(42, TestPlay.Chestnut, 2), Stack(43, TestPlay.WheatBag, 2) } });
+        await follower.ProcessedAsync();
+
+        var leading = master.StartActivity(new BankingActivity { Loot = new HashSet<int> { MastersLoot } });
+
+        await DepositedAsync(play, masterConnection, 0, 12, 14);
+
+        Assert.IsType<ExchangePlayerRequest>(await TestGroup.SentAsync(play, connection, 3));
+        Both(masterConnection, connection, new ExchangeRequestedEvent { Type = ExchangeType.Player, SourceId = TestGroup.FollowerId, TargetId = TestGroup.MasterId });
+        Assert.IsType<ExchangeAcceptRequest>(await TestGroup.SentAsync(play, masterConnection, 5));
+        Both(masterConnection, connection, new ExchangeStartedWithPlayerEvent { Type = ExchangeType.Player });
+
+        Assert.Equal(new ExchangeTransferFromInventoryRequest { Uids = { AshUid, 42, 43 } }, await TestGroup.SentAsync(play, connection, 4));
+        Both(masterConnection, connection, new ExchangeObjectsAddedEvent());
+
+        Assert.Equal(new ExchangeReadyRequest { Step = 1, Ready = true }, await TestGroup.SentAsync(play, connection, 5));
+        Assert.DoesNotContain(connection.Sent, request => request is ExchangeObjectMoveRequest);
+        leading.Stop();
+        run.Stop();
+    }
+
+    [Fact]
+    public async Task AWholeTransferAnsweredByNothingGoesAgainAStackAMove()
+    {
+        // Not measured (D482): whether the server refuses a transfer between players whole for one stack it may not take,
+        // such as one bound to the account (D153); the ash would stay with the follower in every exchange of the unloading.
+        await using var play = new TestPlay();
+        var (masterConnection, master, connection, follower, run) = await InTheBankAsync(play, 100);
+
+        connection.Server(new ObjectAddedEvent { Object = Stack(44, TestPlay.Chestnut, 1) });
+        await follower.ProcessedAsync();
+
+        var leading = master.StartActivity(new BankingActivity { Loot = new HashSet<int> { MastersLoot } });
+
+        await DepositedAsync(play, masterConnection, 0, 12, 14);
+
+        Assert.IsType<ExchangePlayerRequest>(await TestGroup.SentAsync(play, connection, 3));
+        Both(masterConnection, connection, new ExchangeRequestedEvent { Type = ExchangeType.Player, SourceId = TestGroup.FollowerId, TargetId = TestGroup.MasterId });
+        Assert.IsType<ExchangeAcceptRequest>(await TestGroup.SentAsync(play, masterConnection, 5));
+        Both(masterConnection, connection, new ExchangeStartedWithPlayerEvent { Type = ExchangeType.Player });
+
+        // The transfer answered by nothing, then each stack by a move: the ash taken, the chestnut not.
+        Assert.Equal(new ExchangeTransferFromInventoryRequest { Uids = { AshUid, 44 } }, await TestGroup.SentAsync(play, connection, 4));
+        Assert.Equal(new ExchangeObjectMoveRequest { Uid = AshUid, Quantity = 10 }, await TestGroup.SentAsync(play, connection, 5));
+        Both(masterConnection, connection, new ExchangeObjectsAddedEvent());
+        Assert.Equal(new ExchangeObjectMoveRequest { Uid = 44, Quantity = 1 }, await TestGroup.SentAsync(play, connection, 6));
+        Assert.Equal(new ExchangeReadyRequest { Step = 1, Ready = true }, await TestGroup.SentAsync(play, connection, 7));
+        leading.Stop();
+        run.Stop();
+    }
+
+    [Fact]
+    public async Task AFollowerWaitsTheDisplayTimeOnlyBetweenItsRequests()
+    {
+        // The client's display time, here 20 s, between the transfer of its whole stacks and the move of a part of one, and
+        // none before the first.
+        await using var play = new TestPlay();
+        var (masterConnection, master, connection, follower, run) = await InTheBankAsync(play, 100);
+
+        connection.Server(new InventoryContentEvent { Objects = { Stack(39, TestPlay.Chestnut, 1), Stack(AshUid, TestPlay.Ash, 300) } });
         await follower.ProcessedAsync();
 
         var leading = master.StartActivity(new BankingActivity { Loot = new HashSet<int> { MastersLoot } });
@@ -356,17 +416,54 @@ public sealed class GroupBankTests
 
         var opened = play.Time.GetUtcNow();
 
-        for (var move = 0; move < 3; move++)
+        Assert.Equal(new ExchangeTransferFromInventoryRequest { Uids = { 39 } }, await TestGroup.SentAsync(play, connection, 4));
+        Assert.True(play.Time.GetUtcNow() - opened < TimeSpan.FromSeconds(20));
+        Both(masterConnection, connection, new ExchangeObjectsAddedEvent());
+
+        var transferred = play.Time.GetUtcNow();
+
+        // The master's pods hold 980 after its deposit: the chestnut's 5, then 195 ash of 5.
+        Assert.Equal(new ExchangeObjectMoveRequest { Uid = AshUid, Quantity = 195 }, await TestGroup.SentAsync(play, connection, 5));
+        Assert.True(play.Time.GetUtcNow() - transferred >= TimeSpan.FromSeconds(20));
+        leading.Stop();
+        run.Stop();
+    }
+
+    [Fact]
+    public async Task AMasterWaitsForItsFollowerAsLongAsTheExchangeChanges()
+    {
+        // The player's hand moving objects in too: each change renews the master's wait of 30 s, and the follower says it is
+        // ready only 3.5 s after the last (D458), naming every change.
+        await using var play = new TestPlay();
+        var (masterConnection, master, connection, follower, run) = await InTheBankAsync(play, 100);
+        var leading = master.StartActivity(new BankingActivity { Loot = new HashSet<int> { MastersLoot } });
+
+        await DepositedAsync(play, masterConnection, 0, 12, 14);
+
+        Assert.IsType<ExchangePlayerRequest>(await TestGroup.SentAsync(play, connection, 3));
+        Both(masterConnection, connection, new ExchangeRequestedEvent { Type = ExchangeType.Player, SourceId = TestGroup.FollowerId, TargetId = TestGroup.MasterId });
+        Assert.IsType<ExchangeAcceptRequest>(await TestGroup.SentAsync(play, masterConnection, 5));
+        Both(masterConnection, connection, new ExchangeStartedWithPlayerEvent { Type = ExchangeType.Player });
+
+        var opened = play.Time.GetUtcNow();
+
+        Assert.IsType<ExchangeTransferFromInventoryRequest>(await TestGroup.SentAsync(play, connection, 4));
+        Both(masterConnection, connection, new ExchangeObjectsAddedEvent());
+        await TestGroup.SettleAsync(master, follower);
+
+        for (var change = 0; change < 11; change++)
         {
-            Assert.IsType<ExchangeObjectMoveRequest>(await TestGroup.SentAsync(play, connection, 4 + move));
+            play.Time.Advance(TimeSpan.FromSeconds(3));
             Both(masterConnection, connection, new ExchangeObjectsAddedEvent());
+            await TestGroup.SettleAsync(master, follower);
         }
 
-        Assert.Equal(new ExchangeReadyRequest { Step = 3, Ready = true }, await TestGroup.SentAsync(play, connection, 7));
+        Assert.Equal(4, connection.Sent.Count);
+        Assert.Equal(new ExchangeReadyRequest { Step = 12, Ready = true }, await TestGroup.SentAsync(play, connection, 5));
         Assert.True(play.Time.GetUtcNow() - opened > TimeSpan.FromSeconds(30));
         Both(masterConnection, connection, new ExchangeReadyEvent { Ready = true, CharacterId = TestGroup.FollowerId });
 
-        Assert.Equal(new ExchangeReadyRequest { Step = 3, Ready = true }, await TestGroup.SentAsync(play, masterConnection, 6));
+        Assert.Equal(new ExchangeReadyRequest { Step = 12, Ready = true }, await TestGroup.SentAsync(play, masterConnection, 6));
         leading.Stop();
         run.Stop();
     }
@@ -386,7 +483,7 @@ public sealed class GroupBankTests
         Both(masterConnection, connection, new ExchangeRequestedEvent { Type = ExchangeType.Player, SourceId = TestGroup.FollowerId, TargetId = TestGroup.MasterId });
         Assert.IsType<ExchangeAcceptRequest>(await TestGroup.SentAsync(play, masterConnection, 5));
         Both(masterConnection, connection, new ExchangeStartedWithPlayerEvent { Type = ExchangeType.Player });
-        Assert.IsType<ExchangeObjectMoveRequest>(await TestGroup.SentAsync(play, connection, 4));
+        Assert.IsType<ExchangeTransferFromInventoryRequest>(await TestGroup.SentAsync(play, connection, 4));
         Both(masterConnection, connection, new ExchangeObjectsAddedEvent());
 
         for (var ready = 5; ready <= 7; ready++)
