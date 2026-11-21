@@ -27,6 +27,7 @@ namespace D3B.Engine.Effects;
 public sealed class SpellEffects
 {
     private const string AtOnce = "I";
+    private const string OnDamage = "D";
 
     // Zones this large reach the whole map: their damage does not decrease (D195).
     private const int MaxDecreasingSize = 50;
@@ -167,7 +168,7 @@ public sealed class SpellEffects
                 continue;
 
             var action = _actions.Of(effect.EffectId);
-            var immediate = effect.Delay is 0 && _spells.TriggersOf(effect) == AtOnce;
+            var immediate = effect.Delay is 0 && (_spells.TriggersOf(effect) == AtOnce || (action.Kind is EffectKind.ReceivedDamageShare or EffectKind.ReceivedDamageReduction && OnEveryBlow(_spells.TriggersOf(effect))));
             var element = EffectFormulas.Resolve(action.Element, caster);
 
             reached.Clear();
@@ -196,6 +197,19 @@ public sealed class SpellEffects
         }
 
         reached.Clear();
+    }
+
+    private static bool OnEveryBlow(string triggers)
+    {
+        // A buff on the damage received that waits for any damage (D) changes every blow from its giving, as one given at once
+        // would; one waiting for some damage only, such as a distance's (DR), is left out.
+        foreach (var trigger in triggers.Split('|'))
+        {
+            if (trigger == OnDamage)
+                return true;
+        }
+
+        return false;
     }
 
     private static int LevelShare(int level, int value)

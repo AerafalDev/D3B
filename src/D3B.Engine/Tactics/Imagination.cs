@@ -581,6 +581,15 @@ public sealed class Imagination
             case EffectKind.Pull when effect.IsCertain:
                 Slide(map, fighters, casterIndex, index, cell, value, away: false, across: Across(level, effect.EffectId), from: exit);
                 break;
+
+            // The references move the caster as the fighter reached would pull or push it (D3): towards it, stopping beside it,
+            // or away from it, a caster stopped short taking a push's damage.
+            case EffectKind.CasterPulled when effect.IsCertain && index != casterIndex && target.Cell is not Combatant.NoCell:
+                Slide(map, fighters, index, casterIndex, target.Cell, value, away: false);
+                break;
+            case EffectKind.CasterPushed when effect.IsCertain && index != casterIndex && target.Cell is not Combatant.NoCell:
+                Slide(map, fighters, index, casterIndex, target.Cell, value, away: true);
+                break;
             case EffectKind.Swap when target.IsAlive && fighters[casterIndex].Cell is not Combatant.NoCell:
                 {
                     var from = fighters[casterIndex].Cell;
@@ -615,6 +624,13 @@ public sealed class Imagination
                     Modifiers = target.Modifiers.Add(modifier),
                     Buffs = effect.Duration is 0 ? target.Buffs : target.Buffs.Add(new HeldBuff(level.SpellId, effect.EffectId, modifier.SpellId, modifier.Value, fighters[casterIndex].Id)),
                 };
+                break;
+            // A share is a factor, not an amount: one only maybe given is left out rather than halved.
+            case EffectKind.ReceivedDamageShare when effect.IsCertain && !effect.IsRandom && effect.Value.Min > 0:
+                fighters[index] = target with { ReceivedDamageShares = target.ReceivedDamageShares.Add(effect.Value.Min) };
+                break;
+            case EffectKind.ReceivedDamageReduction when effect.IsCertain && !effect.IsRandom:
+                fighters[index] = target with { ReceivedDamageReduction = target.ReceivedDamageReduction + EffectFormulas.Reduction(effect.Value.Min, target.Level) };
                 break;
             case EffectKind.Kill:
                 fighters[index] = target with { Life = 0, IsAlive = false, Cell = Combatant.NoCell };

@@ -83,6 +83,10 @@ public sealed class EffectActions
         [783] = new(EffectKind.PushToCell, EffectElement.None, 0),
         [50] = new(EffectKind.Carry, EffectElement.None, 0),
         [51] = new(EffectKind.Throw, EffectElement.None, 0),
+        [1163] = new(EffectKind.ReceivedDamageShare, EffectElement.None, 0),
+        [105] = new(EffectKind.ReceivedDamageReduction, EffectElement.None, 0),
+        [1042] = new(EffectKind.CasterPulled, EffectElement.None, 0),
+        [1041] = new(EffectKind.CasterPushed, EffectElement.None, 0),
 
         // The pack names no characteristic for these, its texts do (9f3): a bomb's combo, characteristic 94, and AP given back.
         [1027] = new(EffectKind.Boost, EffectElement.None, FightCharacteristic.BombComboBonus),

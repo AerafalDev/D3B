@@ -1,5 +1,6 @@
 using System.Collections.Immutable;
 using D3B.Data.Monsters;
+using D3B.Engine.Effects;
 using D3B.Engine.Fights;
 using D3B.Protocol.Game;
 
@@ -18,6 +19,7 @@ public static class FightCombatants
     private const int Dodge = 78;
     private const int Lock = 79;
     private const int MultiplyReceivedDamage = 1163;
+    private const int ReduceReceivedDamage = 105;
 
     /// <summary>Gets every fighter of a fight as the engine sees it.</summary>
     /// <param name="fight">The fight's state.</param>
@@ -68,6 +70,9 @@ public static class FightCombatants
             Modifiers = fighter.Modifiers,
             Buffs = [.. fighter.Buffs.Where(buff => buff.Kind is FightBuffKind.Boost or FightBuffKind.State or FightBuffKind.SpellModifier).Select(Held)],
             ReceivedDamageShares = [.. fighter.Buffs.Where(buff => buff.ActionId is MultiplyReceivedDamage).Select(buff => buff.Value)],
+
+            // Measured on the captures of 3.7.14.18: a monster's buff of 105 names its points by its parameter, the effect's value.
+            ReceivedDamageReduction = EffectFormulas.Reduction(fighter.Buffs.Where(buff => buff.ActionId is ReduceReceivedDamage).Sum(buff => buff.Parameter), fighter.Level ?? 0),
             Level = fighter.Level ?? 0,
             Characteristics = characteristics,
         };
