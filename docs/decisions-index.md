@@ -793,3 +793,8 @@ or refines another says so in its own entry. Add a line here with every new deci
 
 - [D478](decisions/d478-placement-turn-order.md#d478-a-placement-weighs-only-the-threat-of-the-enemies-playing-before-the-characters-first-turn) A placement weighs only the threat of the enemies playing before the character's first turn (2026-11-20)
   - A fixed rule by the turn order, the group placed together.
+
+## The harvest, fights lost in a row (D479)
+
+- [D479](decisions/d479-harvest-losses-go-on.md#d479-fights-lost-in-a-row-no-longer-end-the-harvest-and-a-loss-is-followed-by-the-whole-life-regained) Fights lost in a row no longer end the harvest, and a loss is followed by the whole life regained (2026-11-21)
+  - Leaving out the resource whose protector won, the profile's share after a loss, keeping the connection alive, closing it or the haven bag once an activity failed.

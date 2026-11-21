@@ -388,3 +388,8 @@ follower) on the same map, the capture of every connection on; a capture's conte
 - **The mines** (D444), the owner's report that the automatic harvest gathers much less as a miner, made on 2026-11-18 in code and
   tests from the pack's measure: the tour goes into an interior, last, while its sub-area lists a resource at the character's level
   that no map of it showed, so that it finds the ore of the mines D416 left out. Left: measured in game.
+- **Fights lost in a row while harvesting** (D479), the owner's report of a farmer disconnected several times, made on
+  2026-11-21 in code and tests from the night's captures: a level 30 scarecrow, the cereals' protector, beat the Pandawa of
+  level 21 11 times in 14, the third loss in a row stopped the harvest and the server closed the idle connection 30 minutes
+  later. The harvest now goes on however many are lost and regains its whole life after each, the owner's choices; the hunt keeps
+  its three. Left: seen in game.
