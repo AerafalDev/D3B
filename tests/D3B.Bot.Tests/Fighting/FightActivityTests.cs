@@ -509,6 +509,37 @@ public sealed class FightActivityTests : IAsyncDisposable
     }
 
     [Fact]
+    public async Task ADialogTheServerNeverLetsGoFailsTheHuntSayingWhyOnceTheCharacterWasPutBackInOrder()
+    {
+        var (connection, bot) = await _play.EnterAsync(GroupCell);
+
+        connection.Server(new NpcDialogCreationEvent { MapId = TestPlay.MapId, NpcActorId = TestPlay.WayActorId });
+        await bot.ProcessedAsync();
+
+        var started = _play.Time.GetUtcNow();
+        var run = bot.StartActivity(Activity(new FightSettings { Place = FightPlace.Chosen, SubAreas = [TestPlay.SubAreaId], Heal = false }));
+
+        // The owner's choice (D483): busy a minute, the character is put back in order; still busy a minute later, the hunt fails.
+        Assert.Equal(new DialogLeaveRequest(), await TestWalks.SentAsync(_play, connection, 1));
+        Assert.True(_play.Time.GetUtcNow() - started >= TimeSpan.FromMinutes(1));
+
+        while (!run.IsOver)
+        {
+            Assert.True(_play.Time.GetUtcNow() - started < TimeSpan.FromMinutes(5), "The hunt still waits.");
+            _play.Time.Advance(TimeSpan.FromSeconds(1));
+            await Task.Delay(5, TestContext.Current.CancellationToken);
+        }
+
+        Assert.Equal(ActivityOutcome.Failed, await run.Completion);
+
+        var reason = Assert.IsType<ActivityException>(run.Failure).Reason!;
+
+        Assert.Equal("Still in a dialog or an exchange after two minutes, even once put back in order.", reason.Format.In(System.Globalization.CultureInfo.GetCultureInfo("en")));
+        Assert.True(_play.Time.GetUtcNow() - started >= TimeSpan.FromMinutes(2));
+        Assert.Single(connection.Sent);
+    }
+
+    [Fact]
     public async Task AGroupTheServerAnswersNothingForIsLeftAndTheTourGoesOn()
     {
         var (connection, bot) = await _play.EnterAsync(GroupCell);

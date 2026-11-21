@@ -200,6 +200,11 @@ The bots run in `D3B.Bot`: what each part does today, with the decisions that ma
   module lists them in the `ActivityCatalog`; one is made, with the host's services and its settings, for each start.
 - **Recovery** (D89): before going on after an interruption, `Recovery.SettleAsync` lets a use and a walk end, leaves a
   dialog or exchange still open, and lets go of a walk the server holds, each wait bounded.
+- **A busy character at a step's start** (D483): the harvest's and the hunt's steps wait through a `BusyWait` for a
+  character walking, using, in a dialog or exchange, or on a map not known yet, 10 s a step. Busy a minute
+  (`BusyWait.Bound`), it is put back in order with `Recovery.SettleAsync`; still busy a minute later, the activity fails
+  saying what held (`BusyKind`). A step finding the character free, an interruption, or steps stopped over 20 s (a pause between two)
+  starts the count again.
 - **An activity's report** (D131): what it does, how far it is, what it counts, its warnings and what it looks at on the
   map (`BotActivity.Report`, `ActivityReport`), replaced whole and read by the app; its texts name the game's values by
   their ids (`GameText`, in `D3B.Bot.Localization`). One that cannot go on says why (`ActivityException`); a run keeps the

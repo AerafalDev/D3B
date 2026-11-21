@@ -808,3 +808,8 @@ or refines another says so in its own entry. Add a line here with every new deci
 
 - [D481](decisions/d481-harvest-losses-go-on.md#d481-fights-lost-in-a-row-no-longer-end-the-harvest-and-a-loss-is-followed-by-the-whole-life-regained) Fights lost in a row no longer end the harvest, and a loss is followed by the whole life regained (2026-11-21)
   - Leaving out the resource whose protector won, the profile's share after a loss, keeping the connection alive, closing it or the haven bag once an activity failed.
+
+## Activities, the wait for a busy character bounded (D483)
+
+- [D483](decisions/d483-busy-wait-bounded.md#d483-a-character-busy-a-minute-at-a-steps-start-is-put-back-in-order-and-still-busy-a-minute-later-the-harvest-or-the-hunt-fails-saying-why) A character busy a minute at a step's start is put back in order, and still busy a minute later the harvest or the hunt fails saying why (2026-11-21)
+  - Failing at the bound, putting in order without end, the harvest alone.
