@@ -19,8 +19,9 @@ from the enemies with no spell landing and MP left), the lead's task. Refines D4
   it gained as much from either cell, a heal or an enemy reached next turn from both, so D472's slope was left out and the
   walk tied ending the turn now, which wins a tie.
 - **Made.** When ending the turn now is the best plan, a plan of a single walk ending nearer the nearest enemy, weighed
-  better than standing before the reply, wins if it is within a point (`Tie`) of standing after it, the best of them. A
-  character on no cell, carried, measures nothing. Tests (`FightTacticsTests`): a hurt character with 1 AP, its enemy 12
+  better than standing before the reply, wins if it is within a point (`Tie`) of standing after it, the best of them, and is
+  never swapped for a plan of as few actions that ending the turn now beat (the review's finding, made after the replay
+  below, which it can only change where such a plan took the walk's place). A character on no cell, carried, measures nothing. Tests (`FightTacticsTests`): a hurt character with 1 AP, its enemy 12
   cells away, healing next turn from either cell, walks nearer; a character on no cell ends its turn. `--turns` counts each
   plan of nothing with MP by the buckets of D480's live idle turns, and the far ones by these stages.
 - **Replayed** on the same captures, main's counts before the fix in brackets: plans of nothing 190 (243), walks only 539
