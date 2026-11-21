@@ -6,7 +6,7 @@ namespace D3B.Data.Spells;
 /// <remarks>
 /// Its flags say what it does; its effects, numbers the client lists for some states, are a slice of
 /// <see cref="SpellStateCatalog.StateEffects"/>: 3 keeps the fighter from being moved and 4 from being carried, as the
-/// references read them (D482); the others' meaning is not measured. Unmanaged and packed, as <see cref="SpellLevel"/>.
+/// references read them (D483); the others' meaning is not measured. Unmanaged and packed, as <see cref="SpellLevel"/>.
 /// </remarks>
 [StructLayout(LayoutKind.Sequential, Pack = 1)]
 public readonly struct SpellState

@@ -1,9 +1,9 @@
-# Fights, a carry and the states that forbid it (D482)
+# Fights, a carry and the states that forbid it (D483)
 
 A part of [the decisions](README.md); each decision has one line in [the index](../decisions-index.md). The carrying is
 [D474](d474-pandawa-carrying.md); the audit that led here is [D480](d480-cooldowns-merged.md).
 
-## D482: A carry takes no fighter whose state keeps it from being moved or carried, nor one Enraciné or under Pesanteur
+## D483: A carry takes no fighter whose state keeps it from being moved or carried, nor one Enraciné or under Pesanteur
 
 *2026-11-21, step 10, the owner's hint while the session looked at Karcham's refusals ("faut pas qu'elle ait l'état
 enraciné et autre, ou état lourd"), the owner's ask to read Bubble for what looks wrong, and the owner's answer that

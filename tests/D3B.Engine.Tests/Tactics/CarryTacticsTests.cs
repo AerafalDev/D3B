@@ -173,7 +173,7 @@ public sealed class CarryTacticsTests
     [InlineData(Deafened, true)]
     public void AFighterIsCarriedUnlessOneOfItsStatesKeepsItFromBeingMovedOrCarried(int state, bool carried)
     {
-        // The references read a state's effects 3 and 4 so (D482), and the owner said Enraciné and Pesanteur keep a fighter from
+        // The references read a state's effects 3 and 4 so (D483), and the owner said Enraciné and Pesanteur keep a fighter from
         // being carried too: a carry takes no fighter in such a state, and still takes one a state only keeps from being pushed.
         var pandawa = Pandawa(6);
         var ally = Ally(2, Off(1, 0)) with { States = [state] };

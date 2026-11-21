@@ -46,7 +46,7 @@ namespace D3B.Engine.Tactics;
 /// </para>
 /// <para>
 /// Carrying (<see cref="Carrying"/>, D474): a carry takes the fighter it surely reaches off its cell, its caster's, unless its
-/// states keep it from being carried (<see cref="CastRules.StatesLetCarry"/>, D482); a throw cast
+/// states keep it from being carried (<see cref="CastRules.StatesLetCarry"/>, D483); a throw cast
 /// on a free cell lands the fighter its caster carries there before its effects, so that those of mask <c>K</c> reach it, then
 /// ends the carry.
 /// </para>

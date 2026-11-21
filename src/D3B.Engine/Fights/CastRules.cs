@@ -33,7 +33,7 @@ public sealed class CastRules
     private const int MaxBombs = 93;
 
     // A state's effects that keep its fighter from being moved and from being carried, as the references read them, and the
-    // states Enraciné and Pesanteur, which the owner says keep it from being carried though the pack gives them neither (D482).
+    // states Enraciné and Pesanteur, which the owner says keep it from being carried though the pack gives them neither (D483).
     private const int CantBeMovedEffect = 3;
     private const int CantBeCarriedEffect = 4;
     private const int RootedState = 6;
@@ -403,7 +403,7 @@ public sealed class CastRules
     /// <param name="fighter">The fighter.</param>
     /// <returns>Whether its states let it be carried.</returns>
     /// <remarks>
-    /// The references read a state's effects so (D482): in the pack of 3.7.14.18, the 22 states that cannot be moved hold the
+    /// The references read a state's effects so (D483): in the pack of 3.7.14.18, the 22 states that cannot be moved hold the
     /// first, and 5 others the second, Lourd (63) and the carrier's among them. Enraciné (6) and Pesanteur (7) hold neither;
     /// the owner says neither is carried in the game. No capture holds a carry tried on such a fighter.
     /// </remarks>
