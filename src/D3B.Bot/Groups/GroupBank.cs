@@ -17,9 +17,9 @@ namespace D3B.Bot.Groups;
 /// </para>
 /// <para>
 /// Measured on 3.7.14.18 (D435, D442): the follower asks the master for an exchange; the master accepts and the exchange
-/// opens for both; the follower moves its stacks in one by one, each change told to both; it says it is ready naming how
-/// many changes the exchange had, then the master the same; the exchange concludes as both are, the objects in the master's
-/// inventory. A follower gives every stack it carries and does not wear, never its kamas, at most what the master's pods
+/// opens for both; the follower moves its whole stacks in with one request (D482), a part of one by a move, each change told
+/// to both; it says it is ready naming how many changes the exchange had, then the master the same; the exchange concludes
+/// as both are, the objects in the master's inventory. A follower gives every stack it carries and does not wear, never its kamas, at most what the master's pods
 /// still hold (<see cref="GroupGifts"/>): the master deposits first when they hold none of the follower's next stack. Then
 /// the master deposits what it was given and what its own profile banks (<see cref="BotActivity.Deposits"/>), in one opening
 /// of the bank, the owner's choice.
@@ -35,7 +35,7 @@ internal sealed class GroupBank : IGroupBank
     private const int MostJourneys = 3;
 
     // How long the master waits for its follower's asking, then for each of its moves and its readiness: each move is
-    // answered within 30 ms (D442), the client's display time between them.
+    // answered within 30 ms (D442), many stacks' within 169 ms (D482), the client's display time between them.
     private static readonly TimeSpan _exchangeWait = TimeSpan.FromSeconds(30);
 
     private static readonly TimeSpan _busyWait = TimeSpan.FromSeconds(10);
@@ -280,8 +280,8 @@ internal sealed class GroupBank : IGroupBank
         return grew;
     }
 
-    // Until the follower says it is ready, as long as each of its moves comes within the wait: a follower carrying many
-    // stacks moves them one by one, the client's display time between them.
+    // Until the follower says it is ready, as long as each change comes within the wait: the follower's own moves, a part
+    // of a stack after its whole ones the client's display time apart, and the player's hand moving more in.
     private static async Task<PlayerExchange?> ReadiedAsync(BotContext context, CancellationToken cancellationToken)
     {
         while (context.State.Exchange is { IsOpen: true, IsOtherReady: false } waiting)
