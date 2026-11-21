@@ -281,7 +281,7 @@ The bots run in `D3B.Bot`: what each part does today, with the decisions that ma
   (`FightEndEntry`). The client acknowledges the sequences and says it is ready for each turn by itself; the bot sends
   nothing in a fight until 9e. Since 9d (D193), each fighter also holds its characteristics as the server last gave them,
   its buffs (`FightBuff`), from which its states and spells' modifiers come, each ending as the turn the server named
-  begins or as the server ends it (`FightBuffEndEvent`, D225), its cooldowns, the casts it chose (`CastHistory`), and who carries it; the state holds the sequences open
+  begins or as the server ends it (`FightBuffEndEvent`, D225), its cooldowns, each spell as the server last named it (D480), the casts it chose (`CastHistory`), and who carries it; the state holds the sequences open
   (`FightSequence`), and moves a fighter on a slide, a carry and a throw. `FightCombatants` gives the engine the fighters.
   Since 9e (D199, D203), the character's state holds its spells as the server listed them and its transformed form's, the
   fight's state the spells the server's context lists for the fight, the character's own and not a summon's it controls
@@ -320,7 +320,8 @@ The bots run in `D3B.Bot`: what each part does today, with the decisions that ma
   the journal says (`BotEvent.ClientInactive`, D366), and which the game session withholds from the server while the AI
   plays, so that the AI's turn goes on (`IRequestWithholder`, D367). An activity that fights its own has the fight
   answered once over (`BotActivity.OnFightOver`, `BotActor.LastFightEnd`): harvesting resumes, pauses or stops as "After a
-  fight" says, a lost fight as "After a lost fight" says, resumed once its life is regained, three in a row ending it. The
+  fight" says, a lost fight as "After a lost fight" says, resumed once its whole life is regained, however
+  many in a row (D481); the hunt's three in a row end it (D198). The
   character's state keeps every characteristic the server gives out of fights (`CharacterState.Characteristics`,
   `CharacteristicTotals`, D263). The strategies of 9g, a profile each character played, are gone (D244).
 - **Groups** (D430 to D432, D437), in `D3B.Bot.Groups`, registered by `GroupsModule`: `FollowActivity`, the "Follow"
@@ -379,7 +380,8 @@ The bots run in `D3B.Bot`: what each part does today, with the decisions that ma
   those of at least 10 maps on a world map; a sub-area that also holds maps on a world map loses its interiors, D388; the maps reached only far round left out, `IsolatedMaps`, shared with
   harvesting's zone), the tour starting again once every map was; chosen by the activity, the ground is a rotation of sub-areas
   as harvesting's (`HuntingGround.Rank`, `FightRotationZone`, D391). Its fights are its own, the AI playing them; it counts
-  them won and lost, banks its loot, and answers a lost fight as harvesting does. Its sub-areas are suggested by the
+  them won and lost, banks its loot, and answers a lost fight as harvesting does, three in a row ending it. Its
+  sub-areas are suggested by the
   monsters chosen (`GameReferences.SubAreasLiving`). `FightPreviews`, one per host, says in the profile editor what the
   settings lead to: the ground's mini-map, its maps, monsters and their levels, the nearest bank (`NearestBank`, shared
   with harvesting's) and isolated maps, and the place for each character (D246). Harvesting's fights are the AI's as its
@@ -1323,7 +1325,8 @@ the fighter whose turn begins or ends in them alone, an aura striking who a push
 counting them (D280). A mark kept and taken back as the server says, and a summon's spells list left out of the
 character's (D279). The character's spells by the
   list, its level, a pair and the fight's own; the fight's options and context; the player's requests in a fight; a
-  harvest's fight answered once over, a lost fight and three in a row (D198, D202). A fight is played end to end through
+  harvest's fight answered once over, a lost fight, and losses in a row the harvest goes on through (D198, D202, D481).
+  A fight is played end to end through
   `TestPlay`, whose pack carries a spell: the AI closes it, places the character, readies it, casts and ends its turn;
   without the switch it sends nothing; the player's hand pauses it (D213); a worn sword is struck as spell 0 beside the
   spell, its weapon's sequence shown (D221). The switch is kept and given back by the

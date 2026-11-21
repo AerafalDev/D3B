@@ -1,5 +1,11 @@
+using System.Globalization;
 using D3B.Bot.Characters;
 using D3B.Bot.Fights;
+using D3B.Data;
+using D3B.Data.Maps;
+using D3B.Engine.Fights;
+using D3B.Engine.Maps;
+using D3B.Engine.Tactics;
 using D3B.Network.Captures;
 using D3B.Network.Relay;
 using D3B.Protocol.Game;
@@ -13,12 +19,25 @@ namespace D3B.Scripts.Fights;
 /// frame), the player's otherwise; a request of the fight's the client sent in an AI's fight is the player's hand (D202). A
 /// cast D3B sent is cast when the server announces the character's cast before anything else answers it, refused when an
 /// error text comes first (D203). The AI's fights are counted again by the character's breed, with what matters to a farm:
-/// the turns and rounds a fight won takes, the turns idle, the life lost and the deaths (D463). It prints counts, never a
-/// value of one fight.
+/// the turns and rounds a fight won takes, the turns idle, the life lost and the deaths (D463). Given the pack's tables and
+/// maps (--details), it counts each cast the server refused again by its spell and by what D3B's own rules said of it as it
+/// was asked, and each idle turn of the AI's by what the turn held as it began (D480). It prints counts, never a value of
+/// one fight.
 /// </remarks>
 internal sealed class LiveBench
 {
     private readonly BreedSections _byBreed = new();
+    private readonly GameTables? _tables;
+    private readonly GameMaps? _maps;
+    private readonly FightTactics? _tactics;
+    private readonly Dictionary<long, FightMap> _fightMaps = [];
+
+    public LiveBench(GameTables? tables = null, GameMaps? maps = null)
+    {
+        _tables = tables;
+        _maps = maps;
+        _tactics = tables is null ? null : new FightTactics(tables);
+    }
 
     public Tally Tally { get; } = new();
 
@@ -51,7 +70,7 @@ internal sealed class LiveBench
             if (kind is not CaptureRecordKind.FromServer)
             {
                 if (fight is not null && OfTheFight(message))
-                    Request(fight, kind, message);
+                    Request(fight, kind, message, state);
 
                 // The fight's options D3B set, in the order it set them, and what the server answered each (D216).
                 if (fight is not null && message is FightOptionToggleRequest toggle)
@@ -96,10 +115,17 @@ internal sealed class LiveBench
 
                 fight.Breed ??= playing.Fighters.GetValueOrDefault(self)?.BreedId;
                 fight.Life ??= playing.Fighters.GetValueOrDefault(self)?.Life;
+                fight.Finished = false;
+                fight.TurnStart = playing.PlayingId == self ? TurnAtStart(state) : null;
             }
 
             if (message is FightTurnEndEvent ended && ended.FighterId == self && fight.Acted is 0)
+            {
                 fight.Idle++;
+
+                if (_tables is not null && fight.Requests.Count > 0)
+                    Tally.Count($"idle turns of the AI's, by breed {fight.Breed?.ToString(CultureInfo.InvariantCulture) ?? "unknown"}: {fight.TurnStart ?? "no turn start seen"}, {(fight.Finished ? "ended by D3B" : "not ended by D3B")}");
+            }
 
             if (message is FightEndEvent)
             {
@@ -119,11 +145,17 @@ internal sealed class LiveBench
         };
     }
 
-    private static void Request(Fight fight, CaptureRecordKind kind, IMessage message)
+    private void Request(Fight fight, CaptureRecordKind kind, IMessage message, CharacterState state)
     {
         if (kind is CaptureRecordKind.Injected)
         {
             fight.Requests[message.Descriptor.Name] = fight.Requests.GetValueOrDefault(message.Descriptor.Name) + 1;
+
+            if (message is GameActionFightCastRequest asked && _tables is not null)
+                fight.Asking = (asked.SpellId, state.Fight?.Fighters.GetValueOrDefault(state.Fight.PlayingId ?? state.Key.CharacterId)?.BreedId, RulesSay(state, asked.SpellId, asked.CellId));
+
+            if (message is FightTurnFinishRequest)
+                fight.Finished = true;
 
             if (message is GameActionFightCastRequest or MapMovementRequest)
                 fight.Acted++;
@@ -148,10 +180,25 @@ internal sealed class LiveBench
             fight.ClientReady++;
     }
 
-    private static void Answer(Fight fight, long self, IMessage message, CharacterState state)
+    private void Answer(Fight fight, long self, IMessage message, CharacterState state)
     {
         if (!fight.Pending)
             return;
+
+        if (fight.Asking is { } asking)
+        {
+            if (message is TextInformationEvent { Type: TextInformationType.Error } text)
+            {
+                Tally.Count($"casts refused, by D3B's rules: text {text.TextId}, {asking.RulesSay}");
+                Tally.Count($"casts refused, by spell: text {text.TextId}, spell {asking.SpellId} of breed {asking.Breed?.ToString(CultureInfo.InvariantCulture) ?? "unknown"}, {asking.RulesSay}");
+                fight.Asking = null;
+            }
+            else if (message is GameActionFightEvent { ActionCase: GameActionFightEvent.ActionOneofCase.Cast } announced && announced.SourceId == self)
+            {
+                Tally.Count($"casts cast, by D3B's rules: {asking.RulesSay}");
+                fight.Asking = null;
+            }
+        }
 
         if (message is GameActionFightEvent { ActionCase: GameActionFightEvent.ActionOneofCase.Cast } cast && cast.SourceId == self)
         {
@@ -170,6 +217,61 @@ internal sealed class LiveBench
             fight.Unanswered++;
             fight.Pending = false;
         }
+    }
+
+    // What D3B's own rules said of a cast as it asked it: a refusal they foresaw, or one they missed (D480).
+    private string RulesSay(CharacterState state, int spellId, int cell)
+    {
+        if (Imagined(state) is not var (fight, knowledge))
+            return "no fight imagined";
+
+        var level = knowledge.SpellsOf(fight.ActorId).FirstOrDefault(known => known.SpellId == spellId);
+
+        if (level.SpellId != spellId)
+            return "a spell the caster lacks";
+
+        var refusal = _tactics!.Rules.Check(fight.Map, fight.Fighters, fight.Marks, fight.Actor, level, cell, fight.History, fight.Round);
+
+        return knowledge.Cooldowns.GetValueOrDefault(spellId) > 0 ? $"{refusal}, on the server's cooldown" : $"{refusal}";
+    }
+
+    // The turn as it began, for the turns D3B neither casts nor walks in: the MP, the nearest enemy, a spell landing (D480).
+    private string TurnAtStart(CharacterState state)
+    {
+        if (Imagined(state) is not var (fight, knowledge))
+            return "no fight imagined";
+
+        var actor = fight.Actor;
+
+        if (actor.Cell is Combatant.NoCell)
+            return "on no cell";
+
+        var enemies = fight.Fighters.Where(fighter => fighter.IsAlive && fighter.Team != actor.Team && fighter.Cell is not Combatant.NoCell).ToList();
+        var nearest = enemies.Count is 0 ? -1 : enemies.Min(enemy => MapGeometry.Distance(actor.Cell, enemy.Cell));
+        var lands = knowledge.SpellsOf(actor.Id).Any(level => knowledge.Cooldowns.GetValueOrDefault(level.SpellId) is 0 && actor.ActionPoints >= CastRules.Modified(level, actor).ApCost
+            && _tactics!.Rules.Targets(fight.Map, fight.Fighters, actor, level, fight.History, fight.Round) is var cells && enemies.Any(enemy => cells.Contains(enemy.Cell)));
+        var away = nearest switch
+        {
+            < 0 => "no enemy",
+            <= 1 => "an enemy beside",
+            <= 4 => "the nearest enemy 2 to 4 cells away",
+            <= 8 => "the nearest enemy 5 to 8 cells away",
+            _ => "the nearest enemy 9 cells away or more",
+        };
+        var held = (actor.CarrierId is null ? "" : "carried, ") + (actor.HasState(Carrying.CarrierState) ? "carrying, " : "");
+
+        return $"{held}{Math.Min(actor.MovementPoints, 5)} MP, {away}, {(lands ? "a spell landing on one from its cell" : "no spell landing on one from its cell")}";
+    }
+
+    private (ImaginedFight Fight, FightKnowledge Knowledge)? Imagined(CharacterState state)
+    {
+        if (_tables is null || _maps is null || _tactics is null || state.MapId is not { } mapId || !_maps.TryGet(mapId, out var data))
+            return null;
+
+        if (!_fightMaps.TryGetValue(mapId, out var map))
+            _fightMaps[mapId] = map = FightMap.Of(data);
+
+        return ImaginedFights.Of(state, map, _tables, _tactics.Blows, null);
     }
 
     public void WriteBreeds(TextWriter writer)
@@ -289,5 +391,11 @@ internal sealed class LiveBench
         public int Toggled { get; set; }
 
         public FightOption? Toggling { get; set; }
+
+        public (int SpellId, int? Breed, string RulesSay)? Asking { get; set; }
+
+        public bool Finished { get; set; }
+
+        public string? TurnStart { get; set; }
     }
 }
