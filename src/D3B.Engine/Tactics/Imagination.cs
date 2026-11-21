@@ -128,7 +128,12 @@ public sealed class Imagination
     {
         ArgumentNullException.ThrowIfNull(fight);
 
-        var walked = fight.With(fight.Actor with { Cell = cell, MovementPoints = left.MovementPoints, ActionPoints = left.ActionPoints });
+        // A walk that ends on an open portal comes out of the last of its chain, the two closed until a turn begins (D482).
+        var (at, marks) = Portals.Moved(fight.Marks, fight.Fighters, fight.Actor, cell);
+        var walked = fight.With(fight.Actor with { Cell = at, MovementPoints = left.MovementPoints, ActionPoints = left.ActionPoints });
+
+        if (at != cell)
+            walked = walked with { Marks = marks };
 
         if (!_bombs.Any(walked.Fighters) && !HasAura(walked.Marks))
             return walked;
@@ -186,7 +191,7 @@ public sealed class Imagination
         if (BringsLance(level))
             fighters[casterIndex] = ForgelanceLance.Thrown(fighters[casterIndex]);
 
-        var marks = Marked(fight, fighters, casterIndex, level, at, buffs, ref kept);
+        var marks = ThroughPortals(fighters, fight.Fighters, Marked(fight, fighters, casterIndex, level, at, buffs, ref kept));
 
         Walled(fight.Map, fighters, fight.Fighters, buffs, ref kept);
         Entered(fight.Map, fighters, fight.Fighters, marks, buffs, ref kept);
@@ -214,9 +219,10 @@ public sealed class Imagination
 
         // Measured (9f4): the server took a glyph back as its author's turn began, after the glyphs struck that author. A portal
         // stays the whole fight, the server naming no end for it (D468).
-        var kept = struck.Marks.RemoveAll(mark => mark.AuthorId == fighterId && mark.EndRound <= round && mark.Kind is not CellMarkKind.Portal);
+        // A portal a fighter went through opens again as any turn begins, as the references reopen it (D3, D482).
+        var kept = Portals.Reopened(struck.Marks.RemoveAll(mark => mark.AuthorId == fighterId && mark.EndRound <= round && mark.Kind is not CellMarkKind.Portal));
 
-        return kept.Length == struck.Marks.Length ? struck : struck with { Marks = kept };
+        return kept == struck.Marks ? struck : struck with { Marks = kept };
     }
 
     /// <summary>Gets the fight as a fighter's turn ends: the glyphs struck as a turn ends that cover its cell, struck on it.</summary>
@@ -228,6 +234,29 @@ public sealed class Imagination
         ArgumentNullException.ThrowIfNull(fight);
 
         return Struck(fight, fighterId, CellMarkKind.TurnEnd, walls: false);
+    }
+
+    private static ImmutableArray<CellMark> ThroughPortals(List<Combatant> fighters, ImmutableArray<Combatant> before, ImmutableArray<CellMark> marks)
+    {
+        // Measured on 3.7.14.18 (D482): a fighter a push or a pull left on an open portal came out of the last of its chain, 200
+        // slides of 224; one a cast moved otherwise is taken as one.
+        if (!marks.Any(mark => mark.Kind is CellMarkKind.Portal))
+            return marks;
+
+        for (var index = 0; index < before.Length && index < fighters.Count; index++)
+        {
+            var moved = fighters[index];
+
+            if (moved.Id != before[index].Id || !moved.IsAlive || moved.Cell is Combatant.NoCell || moved.Cell == before[index].Cell)
+                continue;
+
+            var (cell, after) = Portals.Moved(marks, fighters, moved, moved.Cell);
+
+            fighters[index] = moved with { Cell = cell };
+            marks = after;
+        }
+
+        return marks;
     }
 
     private static bool HasAura(ImmutableArray<CellMark> marks)

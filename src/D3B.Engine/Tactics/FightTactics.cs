@@ -139,11 +139,12 @@ public sealed class FightTactics
             hash.Add(fighter.MovementPoints);
         }
 
-        // Two portals set on two cells leave the fighters alike: their cells tell the sequences apart (D468).
+        // Two portals set on two cells leave the fighters alike: their cells tell the sequences apart (D468), and so do the
+        // portals a walk closed (D482).
         foreach (var mark in fight.Marks)
         {
             if (mark.Kind is CellMarkKind.Portal)
-                hash.Add(mark.Centre);
+                hash.Add(mark.IsUsed ? ~mark.Centre : mark.Centre);
         }
 
         return hash.ToHashCode();
@@ -777,12 +778,14 @@ public sealed class FightTactics
             {
                 foreach (var (from, left) in cells)
                 {
-                    var moved = enemy with { Cell = from, MovementPoints = left.MovementPoints, ActionPoints = left.ActionPoints };
+                    // An enemy that walks onto an open portal strikes from the one it comes out of (D482).
+                    var (landed, marks) = Portals.Moved(view.Marks, view.Fighters, enemy, from);
+                    var moved = enemy with { Cell = landed, MovementPoints = left.MovementPoints, ActionPoints = left.ActionPoints };
 
                     if (moved.ActionPoints < CastRules.Modified(level, moved).ApCost)
                         continue;
 
-                    var there = view.With(moved);
+                    var there = landed == from ? view.With(moved) : view.With(moved) with { Marks = marks };
 
                     foreach (var target in targets)
                     {
@@ -848,13 +851,15 @@ public sealed class FightTactics
                     if (found >= limits.WalksPerTarget)
                         break;
 
-                    var moved = actor with { Cell = from, MovementPoints = left.MovementPoints, ActionPoints = left.ActionPoints };
+                    // A walk that ends on an open portal casts from the portal it comes out of (D482).
+                    var (landed, marks) = Portals.Moved(fight.Marks, fight.Fighters, actor, from);
+                    var moved = actor with { Cell = landed, MovementPoints = left.MovementPoints, ActionPoints = left.ActionPoints };
                     var modified = Rules.Cast(level, fight.Fighters, moved);
 
-                    if (!SpellRange.Reaches(modified, moved.RangeBonus, from, cell))
+                    if (!SpellRange.Reaches(modified, moved.RangeBonus, landed, cell))
                         continue;
 
-                    var there = fight.With(moved);
+                    var there = landed == from ? fight.With(moved) : fight.With(moved) with { Marks = marks };
 
                     if (Rules.Check(there.Map, there.Fighters, there.Marks, moved, level, cell, there.History, there.Round) is not CastRefusal.None)
                         continue;

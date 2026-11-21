@@ -14,6 +14,9 @@ namespace D3B.Engine.Fights;
 /// <param name="EndRound">The round it goes in, as its author's turn of that round begins.</param>
 public sealed record CellMark(int Id, long AuthorId, int Team, CellMarkKind Kind, int SpellId, int Grade, int Centre, ImmutableArray<int> Cells, int EndRound)
 {
+    /// <summary>Gets whether a fighter went through this portal this turn, which closes it until a turn begins (<see cref="Portals"/>).</summary>
+    public bool IsUsed { get; init; }
+
     /// <summary>Tells whether the mark covers a cell.</summary>
     /// <param name="cell">The cell.</param>
     /// <returns>Whether it does.</returns>
