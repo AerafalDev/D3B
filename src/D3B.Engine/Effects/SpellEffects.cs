@@ -170,6 +170,16 @@ public sealed class SpellEffects
             var immediate = effect.Delay is 0 && _spells.TriggersOf(effect) == AtOnce;
             var element = EffectFormulas.Resolve(action.Element, caster);
 
+            // A mark's trigger acts on the marks of the cell or the zone, whoever stands there (D493): foreseen once, on the
+            // caster, as the conditions its mask names on the caster allow it.
+            if (action.Kind is EffectKind.TriggerRunes or EffectKind.TriggerGlyphs)
+            {
+                if (_rules.MaskOf(effect).CasterAllows(caster, fighters) is not CriterionAnswer.False and var allowed)
+                    foreseen.Add(new ForeseenEffect(caster.Id, effect.EffectId, action, element, new LifeRange(effect.Value, effect.Value), allowed is CriterionAnswer.True, effect.Random > 0, immediate, effect.Duration));
+
+                continue;
+            }
+
             reached.Clear();
             _rules.Reached(map, fighters, occupied, origin, effect, cell, reached, through is not null);
 

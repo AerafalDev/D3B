@@ -94,4 +94,10 @@ public enum EffectKind
 
     /// <summary>The fighter the caster carries thrown onto the cell cast on: 51 (<see cref="Fights.Carrying"/>).</summary>
     Throw,
+
+    /// <summary>The caster's runes on the cell cast on, or in the effect's zone around it, triggered: 2023 (<see cref="Fights.Glyphs"/>).</summary>
+    TriggerRunes,
+
+    /// <summary>The caster's glyphs set by the spell the effect names, on the cell cast on, triggered: 1026 (<see cref="Fights.Glyphs"/>).</summary>
+    TriggerGlyphs,
 }

@@ -17,6 +17,7 @@ public sealed class GlyphTacticsTests
     private const int Push = 23;
     private const int Defiance = 24;
     private const int Ended = 25;
+    private const int Herding = 26;
 
     private static readonly SpellCatalog _spells = Catalog();
 
@@ -26,13 +27,15 @@ public sealed class GlyphTacticsTests
         new(99, 0, 0, '\0', 0, 2, 0, 0, 0, 0, EffectProperties.UseInFight),
         new(401, 0, 0, '\0', 0, -1, 0, 0, 0, 0, EffectProperties.UseInFight),
         new(402, 0, 0, '\0', 0, -1, 0, 0, 0, 0, EffectProperties.UseInFight),
+        new(1026, 0, 0, '\0', 0, -1, 0, 0, 0, 0, EffectProperties.UseInFight),
         new(1091, 0, 0, '\0', 0, -1, 0, 0, 0, 0, EffectProperties.UseInFight),
     }), new MonsterCatalog(Array.Empty<Monster>(), Array.Empty<MonsterGrade>(), Array.Empty<MonsterSpell>(), Array.Empty<byte>(), Array.Empty<MonsterRatio>(), Array.Empty<MonsterRace>(), Array.Empty<MonsterRace>()));
 
     /// <summary>
     /// Spell 20 sets, for 2 rounds, a glyph struck as a turn begins casting 21, 10 fire on an enemy, and a glyph-aura casting
     /// 22, 5 fire on an enemy, both on a cross of 1, as a Féca's glyphs; 23 pushes an enemy 2 cells; 24 sets, for 1 round, a
-    /// glyph struck as a turn ends casting 25, 7 fire, on its cell alone.
+    /// glyph struck as a turn ends casting 25, 7 fire, on its cell alone; 26 triggers, on the cell cast on, its caster's glyphs
+    /// that 20 set, as a Féca's Transhumance.
     /// </summary>
     private static SpellCatalog Catalog()
     {
@@ -47,6 +50,7 @@ public sealed class GlyphTacticsTests
             new SpellLevel { Id = 1023, SpellId = Push, Grade = 1, ApCost = 2, MinRange = 1, Range = 3, StatesCriterion = SpellLevel.NoCriterion, FirstEffect = 4, EffectCount = 1 },
             new SpellLevel { Id = 1024, SpellId = Defiance, Grade = 1, ApCost = 2, MinRange = 0, Range = 6, StatesCriterion = SpellLevel.NoCriterion, FirstEffect = 5, EffectCount = 1 },
             new SpellLevel { Id = 1025, SpellId = Ended, Grade = 1, ApCost = 0, StatesCriterion = SpellLevel.NoCriterion, FirstEffect = 6, EffectCount = 1 },
+            new SpellLevel { Id = 1026, SpellId = Herding, Grade = 1, ApCost = 2, MinRange = 0, Range = 6, StatesCriterion = SpellLevel.NoCriterion, FirstEffect = 7, EffectCount = 1 },
         ];
         SpellEffect[] effects =
         [
@@ -57,6 +61,7 @@ public sealed class GlyphTacticsTests
             new SpellEffect { Uid = 5, EffectId = 5, TargetMask = 0, Triggers = 2, DiceNum = 2, Zone = point },
             new SpellEffect { Uid = 6, EffectId = 402, TargetMask = 0, Triggers = 2, Duration = 1, DiceNum = Ended, DiceSide = 1, Zone = point },
             new SpellEffect { Uid = 7, EffectId = 99, TargetMask = 0, Triggers = 2, DiceNum = 7, DiceSide = 7, Zone = point },
+            new SpellEffect { Uid = 8, EffectId = 1026, TargetMask = 4, Triggers = 2, Value = Glyph, Zone = point },
         ];
         Spell[] spells = [.. levels.Select((level, index) => new Spell { Id = level.SpellId, NameId = level.SpellId, FirstLevel = index, LevelCount = 1 })];
 
@@ -174,5 +179,29 @@ public sealed class GlyphTacticsTests
         var judge = _tactics.JudgeOf(Fight(enemy), knowledge, TacticWeights.Default);
 
         Assert.Equal(judge.Judge(Fight(enemy) with { Marks = [GlyphOn(enemy.Cell, 2)] }), judge.Judge(Fight(enemy) with { Marks = [GlyphOn(enemy.Cell, 4)] }), 6);
+    }
+
+    [Fact]
+    public void ATriggerOfAFecasGlyphsCastsTheirSpellOnTheirMiddleAndKeepsThem()
+    {
+        // As the references trigger a glyph (D3, D493): its spell cast by its author on its middle, its zone choosing whom.
+        var enemy = Enemy(-1, Off(3, 0)) with { Life = 100 };
+        var glyphed = _tactics.Imagination.Cast(Fight(enemy), Level(_spells, Glyph), Off(3, 0));
+
+        var triggered = _tactics.Imagination.Cast(glyphed with { Fighters = [Caster(Off(0, 0)) with { ActionPoints = 6 }, glyphed.Find(enemy.Id)!] }, Level(_spells, Herding), Off(3, 0));
+
+        Assert.Equal(glyphed.Find(enemy.Id)!.Life - 10, triggered.Find(enemy.Id)!.Life);
+        Assert.Equal(2, triggered.Marks.Length);
+    }
+
+    [Fact]
+    public void ATriggerOfAFecasGlyphsOnACellNoneCoversTriggersNothing()
+    {
+        var enemy = Enemy(-1, Off(3, 0)) with { Life = 100 };
+        var glyphed = _tactics.Imagination.Cast(Fight(enemy), Level(_spells, Glyph), Off(3, 0));
+
+        var triggered = _tactics.Imagination.Cast(glyphed with { Fighters = [Caster(Off(0, 0)) with { ActionPoints = 6 }, glyphed.Find(enemy.Id)!] }, Level(_spells, Herding), Off(-3, 0));
+
+        Assert.Equal(glyphed.Find(enemy.Id)!.Life, triggered.Find(enemy.Id)!.Life);
     }
 }

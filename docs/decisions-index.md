@@ -853,3 +853,8 @@ or refines another says so in its own entry. Add a line here with every new deci
 
 - [D490](decisions/d490-groups-left-behind.md#d490-a-master-goes-on-without-a-follower-missing-five-minutes-but-fighting-or-healing-and-waits-for-it-again-once-it-is-back) A master goes on without a follower missing five minutes, but fighting or healing, and waits for it again once it is back (2026-11-21)
   - Failing the master's activity at the bound, keeping the endless wait, two or ten minutes.
+
+## Fights, the Huppermage's runes, the Sram's traps and the Féca's glyphs triggered (D493)
+
+- [D493](decisions/d493-runes-traps-glyph-triggers.md#d493-a-huppermages-runes-set-and-triggered-a-trap-set-off-by-whoever-comes-onto-it-and-a-fécas-glyphs-triggered) A Huppermage's runes set and triggered, a trap set off by whoever comes onto it, and a Féca's glyphs triggered (2026-11-21)
+  - The elemental spell's own rune, a trap set off by a walk passing over it.
