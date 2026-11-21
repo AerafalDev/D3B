@@ -341,6 +341,9 @@ internal sealed class TurnBench
         if (!turn.Start.Actor.IsSummon)
             _byBreed.Add(turn.Start.Actor.BreedId, $"plans: {kind}");
 
+        if (plan.IsEmpty && !turn.Start.Actor.IsSummon && turn.Start.Actor.MovementPoints > 0)
+            Passed(turn);
+
         // The fight's first easy challenge neither decided nor left, as the bot plays for it.
         var played = fight?.Challenges.FirstOrDefault(challenge => challenge.Succeeded is null && !_left.Contains(challenge.Id) && TurnChallenge.Of(_tables.Challenges.CompletionOf(challenge.Id), challenge.Bonus) is not null);
 
@@ -360,6 +363,115 @@ internal sealed class TurnBench
 
         Tally.Count($"challenge {played.Id,4}: turns {how}");
         Tally.Count($"challenges: turns {how}");
+    }
+
+    private void Passed(Turn turn)
+    {
+        var fight = turn.Start;
+        var actor = fight.Actor;
+        var knowledge = turn.Knowledge;
+
+        if (actor.Cell is Combatant.NoCell)
+            return;
+
+        var enemies = fight.Fighters.Where(fighter => fighter.IsAlive && fighter.Team != actor.Team && fighter.Cell is not Combatant.NoCell).ToList();
+        var nearest = enemies.Count is 0 ? -1 : enemies.Min(enemy => MapGeometry.Distance(actor.Cell, enemy.Cell));
+        var lands = knowledge.SpellsOf(actor.Id).Any(level => knowledge.Cooldowns.GetValueOrDefault(level.SpellId) is 0 && actor.ActionPoints >= CastRules.Modified(level, actor).ApCost
+            && _tactics.Rules.Targets(fight.Map, fight.Fighters, actor, level, fight.History, fight.Round) is var cells && enemies.Any(enemy => cells.Contains(enemy.Cell)));
+        var away = nearest switch
+        {
+            < 0 => "no enemy",
+            <= 1 => "an enemy beside",
+            <= 4 => "the nearest enemy 2 to 4 cells away",
+            <= 8 => "the nearest enemy 5 to 8 cells away",
+            _ => "the nearest enemy 9 cells away or more",
+        };
+        var breed = actor.BreedId is { } id ? BreedSections.Name(id) : "unknown breed";
+
+        Tally.Count($"plans of nothing with MP: {away}, {(lands ? "a spell landing" : "no spell landing")}");
+
+        if (nearest < 5 || lands)
+            return;
+
+        var judge = _tactics.JudgeOf(fight, knowledge, _weights);
+        var later = knowledge with { Cooldowns = knowledge.Cooldowns.Where(pair => pair.Value > 1).ToImmutableDictionary(pair => pair.Key, pair => pair.Value - 1) };
+        var here = judge.Judge(fight);
+        var (hereReplied, hereStanding, hereGain) = Replied(fight);
+        var bestBefore = double.NegativeInfinity;
+        var bestAfter = double.NegativeInfinity;
+        var nearerBefore = double.NegativeInfinity;
+        (double Score, double Standing, double Gain, int Distance) atBestBefore = default;
+        var nearerWalk = (Threat: 0.0, Next: 0.0);
+        var hereThreat = judge.Threat(fight, actor.Id);
+        var hereNext = judge.NextTurnDamage(fight);
+        var reachable = _tactics.Moves.Reachable(fight.Map, fight.Fighters, actor);
+
+        foreach (var (cell, left) in reachable)
+        {
+            if (cell == actor.Cell)
+                continue;
+
+            var walked = _tactics.Imagination.Walked(fight, cell, left);
+            var before = judge.Judge(walked);
+            var distance = enemies.Min(enemy => MapGeometry.Distance(cell, enemy.Cell));
+            var (after, standing, gain) = Replied(walked);
+
+            if (distance < nearest && before > nearerBefore)
+            {
+                nearerBefore = before;
+                nearerWalk = (judge.Threat(walked, actor.Id) - hereThreat, judge.NextTurnDamage(walked) - hereNext);
+            }
+
+            if (before > bestBefore)
+            {
+                bestBefore = before;
+                atBestBefore = (after, standing, gain, distance);
+            }
+
+            bestAfter = Math.Max(bestAfter, after);
+        }
+
+        var stage = reachable.Count <= 1 ? "no cell to walk to"
+            : bestBefore <= here + 0.01 ? "no walk better than standing before the reply"
+            : bestAfter <= hereReplied + 0.01 ? "walks better before the reply, none after"
+            : "a walk better after the reply, the search missed it";
+
+        Tally.Count($"far plans of nothing: {stage}");
+        Tally.Count($"far plans of nothing: {stage}, {breed}");
+
+        if (nearerBefore > double.NegativeInfinity)
+        {
+            var than = nearerBefore > here + 0.01 ? "better" : nearerBefore >= here - 0.01 ? "as good" : "worse";
+
+            Tally.Count($"far plans of nothing: the best nearer walk before the reply {than} than standing");
+            Tally.Count($"far plans of nothing: the best nearer walk {than}, its threat {(nearerWalk.Threat > 0.5 ? "more" : nearerWalk.Threat < -0.5 ? "less" : "the same")}, its next turn's damage {(nearerWalk.Next > 0.5 ? "more" : nearerWalk.Next < -0.5 ? "less" : "the same")}");
+            Add($"far plans of nothing, the best nearer walk {than}: judged less standing's", nearerBefore - here);
+            Add($"far plans of nothing, the best nearer walk {than}: threat less standing's", nearerWalk.Threat);
+            Add($"far plans of nothing, the best nearer walk {than}: next turn's damage less standing's", nearerWalk.Next);
+            Add($"far plans of nothing, the best nearer walk {than}: standing's next turn's damage", hereNext);
+        }
+
+        Add($"far plans of nothing, {stage}: standing, judged", here);
+        Add($"far plans of nothing, {stage}: best walk, judged", bestBefore);
+        Add($"far plans of nothing, {stage}: standing, replied", hereReplied);
+        Add($"far plans of nothing, {stage}: best walk, replied", bestAfter);
+
+        if (bestBefore > double.NegativeInfinity)
+        {
+            Add($"far plans of nothing, {stage}: best walk before, replied", atBestBefore.Score);
+            Add($"far plans of nothing, {stage}: best walk before, standing after the reply less standing's", atBestBefore.Standing - hereStanding);
+            Add($"far plans of nothing, {stage}: best walk before, next turn's gain less standing's", atBestBefore.Gain - hereGain);
+            Tally.Count($"far plans of nothing, {stage}: best walk before, next turn {(atBestBefore.Gain > 0 ? "gains" : "gains nothing")}, standing's {(hereGain > 0 ? "gains" : "gains nothing")}");
+            Tally.Count($"far plans of nothing, {stage}: best walk before, {(atBestBefore.Distance < nearest ? "nearer" : atBestBefore.Distance == nearest ? "as near" : "farther")}");
+        }
+
+        (double Score, double Standing, double Gain) Replied(ImaginedFight end)
+        {
+            var replied = _tactics.Replies(end, knowledge, judge);
+            var gain = _tactics.NextTurn(replied, later, judge, _limits).Gain;
+
+            return (judge.JudgeReplied(replied, gain), judge.Standing(replied), gain);
+        }
     }
 
     private static void Observe(FightState fight, long self, IMessage message, Turn turn, SpellLevel? blow)
