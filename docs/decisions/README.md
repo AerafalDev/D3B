@@ -107,3 +107,4 @@ Each file holds the decisions of one group of [the index](../decisions-index.md)
 - [Activities, the wait for a busy character bounded (D484)](d484-busy-wait-bounded.md): 1 decision, 3 KB.
 - [Fights, the blows on the character's own allies (D485)](d485-ally-strikes.md): 1 decision, 7 KB.
 - [Fights, a dispel keeps the buffs the server keeps (D486)](d486-dispel-keeps-undispellable-buffs.md): 1 decision, 5 KB.
+- [Groups, a follower left behind (D487)](d487-groups-left-behind.md): 1 decision, 3 KB.

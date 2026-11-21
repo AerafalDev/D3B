@@ -1,4 +1,6 @@
+using System.Globalization;
 using D3B.Bot.Characters;
+using D3B.Bot.Journal;
 using D3B.Bot.Runtime;
 using D3B.Protocol.Game;
 using Google.Protobuf;
@@ -19,8 +21,12 @@ namespace D3B.Bot.Groups;
 /// its own activity heals before each step (D433, D441); each follower heals by itself.
 /// </para>
 /// <para>
-/// It waits as long as it takes, with no delay (D87): a follower disconnected, paused, fighting, on its way or stuck. The
-/// bot's card says whom it waits for (<see cref="BotActor.WaitingFor"/>).
+/// It waits for a follower fighting as long as it takes, as a fight ends by itself; for a follower missing otherwise,
+/// disconnected, paused, on its way, stuck or out of its party, five minutes at most, then goes on without it and says so in
+/// its journal and the host's log, the owner's choice (D487): measured on the owner's captures of 2026-11-19 (D464), a master
+/// waited 30 minutes for a follower the server held until the server closed every connection of the group. A follower left
+/// behind still comes after its master, and is waited for again once it is with it. The bot's card says whom it waits for
+/// (<see cref="BotActor.WaitingFor"/>).
 /// </para>
 /// <para>
 /// The party: the master invites each follower connected and not in its party by its name (D431), again once the
@@ -43,11 +49,15 @@ internal sealed class GroupGate : IActionGate
     /// <summary>How long the master waits before it asks its members to follow it again, while one with it does not (D476).</summary>
     public static readonly TimeSpan CallAgainAfter = TimeSpan.FromSeconds(30);
 
+    /// <summary>How long the master waits for a follower missing, but fighting or healing, before it goes on without it, the owner's choice (D487).</summary>
+    public static readonly TimeSpan LeaveBehindAfter = TimeSpan.FromMinutes(5);
+
     private readonly BotActor _bot;
     private readonly GroupDirectory _groups;
 
     // Only the bot's behaviors, one at a time, read and write them.
     private readonly Dictionary<CharacterKey, Invitation> _invited = [];
+    private readonly Dictionary<CharacterKey, long?> _behind = [];
     private (int Party, DateTimeOffset At)? _left;
     private (string? Connection, int Party)? _optionsOff;
     private (int Party, DateTimeOffset At)? _called;
@@ -100,6 +110,7 @@ internal sealed class GroupGate : IActionGate
             return;
 
         IReadOnlyList<MissingMember> said = [];
+        var since = new Dictionary<CharacterKey, DateTimeOffset>();
 
         try
         {
@@ -117,14 +128,14 @@ internal sealed class GroupGate : IActionGate
                 var left = await LeaveOthersAsync(context, state, followers, cancellationToken).ConfigureAwait(false);
                 var invited = await InviteAsync(context, state, followers, cancellationToken).ConfigureAwait(false);
                 var called = await CallAsync(context, state, followers, cancellationToken).ConfigureAwait(false);
-                var missing = GroupChain.Missing(state, followers);
+                var (missing, due) = LeaveBehind(Regroup(state, followers), since);
                 var healed = (DateTimeOffset?)null;
 
                 // Each follower's life over the share the master's profile heals under, before any action, as an activity heals
                 // before its step (D433, D441); before an attack, the master waits before its walk to the group of monsters,
                 // which leaves its cell meanwhile (D447).
                 if (missing.Count is 0 && GroupLife.ShareOf(_bot) is { } share)
-                    (missing, healed) = Healing(state, followers, share);
+                    (missing, healed) = Healing(state, [.. followers.Where(follower => !_behind.ContainsKey(follower.Key))], share);
 
                 if (missing.Count is 0)
                 {
@@ -147,13 +158,82 @@ internal sealed class GroupGate : IActionGate
                     }
                 }
 
-                await ChangedAsync(changed, state, seen, Earliest(Earliest(Earliest(invited, left), healed), called), cancellationToken).ConfigureAwait(false);
+                await ChangedAsync(changed, state, seen, Earliest(Earliest(Earliest(Earliest(invited, left), healed), called), due), cancellationToken).ConfigureAwait(false);
             }
         }
         finally
         {
             _bot.WaitFor([]);
         }
+    }
+
+    /// <summary>Tells whether the master went on without a follower, which it waits for again once it is back (D487).</summary>
+    /// <param name="follower">The follower's character.</param>
+    /// <returns>Whether it is left behind.</returns>
+    internal bool IsBehind(CharacterKey follower)
+    {
+        return _behind.ContainsKey(follower);
+    }
+
+    // The followers missing; a follower left behind found with the master, or on another map than the one it was left on, is
+    // waited for again (D487): one that catches its master up as it walks on, one map behind, is on its way again.
+    private IReadOnlyList<MissingMember> Regroup(CharacterState state, IReadOnlyList<BotActor> followers)
+    {
+        var missing = GroupChain.Missing(state, followers);
+
+        foreach (var (key, map) in _behind.ToList())
+        {
+            if (!missing.Any(member => member.Key == key) || followers.FirstOrDefault(follower => follower.Key == key) is not { } follower || follower.State.MapId != map)
+                _behind.Remove(key);
+        }
+
+        return missing;
+    }
+
+    // The members the master still waits for, and when the first of them has been missing for the bound: a follower missing
+    // but in a fight for five minutes of this wait is left behind (D487). A fight starts its count again, as it ends by itself.
+    private (IReadOnlyList<MissingMember> Missing, DateTimeOffset? Due) LeaveBehind(IReadOnlyList<MissingMember> missing, Dictionary<CharacterKey, DateTimeOffset> since)
+    {
+        var now = _bot.Time.GetUtcNow();
+        var kept = new List<MissingMember>();
+        DateTimeOffset? due = null;
+
+        foreach (var key in since.Keys.Where(key => !missing.Any(member => member.Key == key && member.Absence is not MemberAbsence.Fighting)).ToList())
+            since.Remove(key);
+
+        foreach (var member in missing)
+        {
+            if (_behind.ContainsKey(member.Key))
+                continue;
+
+            if (member.Absence is MemberAbsence.Fighting)
+            {
+                kept.Add(member);
+
+                continue;
+            }
+
+            if (!since.TryGetValue(member.Key, out var first))
+                since[member.Key] = first = now;
+
+            if (now - first < LeaveBehindAfter)
+            {
+                kept.Add(member);
+                due = Earliest(due, first + LeaveBehindAfter);
+
+                continue;
+            }
+
+            _behind[member.Key] = _groups.FollowersOf(_bot.Key).FirstOrDefault(follower => follower.Key == member.Key)?.State.MapId;
+            GroupLog.LeftBehind(_bot.Log, _bot.Key.CharacterId, member.Key.CharacterId, member.Absence);
+
+            var culture = CultureInfo.CurrentUICulture;
+            var text = string.Format(culture, GroupTexts.Text("LeftBehind").In(culture), member.Name);
+
+            _bot.Journal.Add(new NoteEntry(now, _bot.Activity?.Activity.Name ?? string.Empty, text));
+        }
+
+        return (kept, due);
     }
 
     // The party kept as the master goes, outside a fight: a party another leads left, its followers invited.
@@ -165,6 +245,7 @@ internal sealed class GroupGate : IActionGate
         if (followers.Count is 0 || state.IsFighting)
             return;
 
+        Regroup(state, followers);
         await LeaveOthersAsync(context, state, followers, cancellationToken).ConfigureAwait(false);
         await InviteAsync(context, state, followers, cancellationToken).ConfigureAwait(false);
         await CallAsync(context, state, followers, cancellationToken).ConfigureAwait(false);

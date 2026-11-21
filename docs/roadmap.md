@@ -405,3 +405,7 @@ follower) on the same map, the capture of every connection on; a capture's conte
   dialog or on a map not known yet. Busy a minute, the character is now put back in order as after an interruption; still busy
   a minute later, the activity fails saying what held, the owner's choices. Not seen on the 216 captures of 18 to 21 November.
   Left: seen in game, which needs the state to stick.
+- **A follower left behind** (D487), the groups' stall D484 left, made on 2026-11-21 in code and tests: the master's gate
+  waited without end for a follower missing, the two groups of 2026-11-19 idle 30 minutes until the server closed every
+  connection (D464). A follower missing five minutes of one wait, but fighting or healing, is now left behind, the master acting
+  without it and saying so in its journal, and waited for again once it is back, the owner's choices. Left: seen in game.

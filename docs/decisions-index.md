@@ -833,3 +833,8 @@ or refines another says so in its own entry. Add a line here with every new deci
 
 - [D486](decisions/d486-dispel-keeps-undispellable-buffs.md#d486-a-dispel-takes-only-the-buffs-the-server-ends-and-a-removal-naming-a-spell-that-spells-alone-the-pandawa-keeps-sobre-and-casts-in-its-element) A dispel takes only the buffs the server ends, and a removal naming a spell that spell's alone: the Pandawa keeps Sobre and casts in its element (2026-11-21)
   - Reading the buff's own field 9, the pack's dispellable, a rule for the Pandawa.
+
+## Groups, a follower left behind (D487)
+
+- [D487](decisions/d487-groups-left-behind.md#d487-a-master-goes-on-without-a-follower-missing-five-minutes-but-fighting-or-healing-and-waits-for-it-again-once-it-is-back) A master goes on without a follower missing five minutes, but fighting or healing, and waits for it again once it is back (2026-11-21)
+  - Failing the master's activity at the bound, keeping the endless wait, two or ten minutes.

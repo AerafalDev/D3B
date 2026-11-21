@@ -339,7 +339,9 @@ The bots run in `D3B.Bot`: what each part does today, with the decisions that ma
   and for those it holds leaves such a party, invites its followers by name, and waits with no delay until each is connected, not
   paused, out of a fight, on its map and in its party (`GroupChain.Missing`), the party it is in whoever leads it, one
   another leads kept while it holds each follower (`GroupChain.HoldsAll`, D471), the card saying whom for
-  (`BotActor.WaitingFor`); its own requests go past it (`BotContext.SendNowAsync`). So every profile leads unchanged. The
+  (`BotActor.WaitingFor`); a follower missing five minutes of one wait, but fighting or healing, is left behind, and out of the
+  group's bank, until the master finds it with it or it leaves the map it was left on (`GroupGate.LeaveBehindAfter`, D487),
+  the journal saying so; its own requests go past it (`BotContext.SendNowAsync`). So every profile leads unchanged. The
   follower's steps keep the party (its master's invitation accepted, others refused, a party its master is not in left, the automatic
   options turned off at each party joined, D437's measure), then follow in real time (D447): with its master it copies
   each of its walks as the server shows it, to the cell the master walks to, else it changes maps towards the master by
