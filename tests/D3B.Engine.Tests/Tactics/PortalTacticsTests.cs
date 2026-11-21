@@ -180,4 +180,37 @@ public sealed class PortalTacticsTests
 
         Assert.Equal(Off(6, 8), after.Find(there.Id)!.Cell);
     }
+
+    [Fact]
+    public void AWalkEndingOnAnOpenPortalComesOutOfTheOtherBothClosedUntilTheNextTurnBegins()
+    {
+        var walked = _tactics.Imagination.Walked(Fight([Portal(1, Off(1, 0)), Portal(2, Off(1, 9))]), Off(1, 0), (2, 6));
+
+        Assert.Equal(Off(1, 9), walked.Actor.Cell);
+        Assert.All(walked.Marks, mark => Assert.True(mark.IsUsed));
+        Assert.All(_tactics.Imagination.TurnStarted(walked, 1, 1).Marks, mark => Assert.False(mark.IsUsed));
+    }
+
+    [Fact]
+    public void APushEndingOnAnOpenPortalTakesAMonsterThatMayUseThemOutOfTheOther()
+    {
+        var beside = Enemy(-1, Off(1, 0)) with { Life = 100, MonsterProperties = MonsterProperties.CanBePushed | MonsterProperties.CanUsePortal };
+
+        var after = _tactics.Imagination.Cast(Fight([Portal(1, Off(3, 0)), Portal(2, Off(3, 9))], beside), Level(_spells, Shove), Off(1, 0));
+
+        Assert.Equal(Off(3, 9), after.Find(beside.Id)!.Cell);
+    }
+
+    [Fact]
+    public void AnAllyWalksOntoAPortalToStrikeAnEnemyOutOfReachOtherwise()
+    {
+        // Measured on 3.7.14.18 (D492): a walk that ends on an open portal comes out of the last of its chain.
+        var iop = Caster(Off(0, 0)) with { BreedId = 8, MovementPoints = 1 };
+        var there = Enemy(-1, Off(15, 0)) with { Life = 100 };
+
+        var plan = Plan(iop, [Portal(1, Off(1, 0)), Portal(2, Off(12, 0))], [Level(_spells, Blow)], there);
+
+        Assert.Equal(TacticAction.Walk(Off(1, 0)), plan[0]);
+        Assert.All(plan.Skip(1), action => Assert.Equal(TacticAction.Cast(Blow, 1031, Off(15, 0)), action));
+    }
 }

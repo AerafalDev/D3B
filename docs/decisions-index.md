@@ -858,3 +858,8 @@ or refines another says so in its own entry. Add a line here with every new deci
 
 - [D491](decisions/d491-unhandled-effects.md#d491-the-damage-received-reads-every-resistance-reduction-and-share-and-a-cast-moves-its-caster) The damage received reads every resistance, reduction and share, and a cast moves its caster (2026-11-21)
   - Every effect of the audit at once, a share ended with its buff's rounds.
+
+## Fights, an Eliotrope's portals measured (D492)
+
+- [D492](decisions/d492-eliotrope-portals-measured.md#d492-an-eliotropes-portals-measured-a-walk-or-a-push-that-ends-on-one-sent-through-it) An Eliotrope's portals measured, a walk or a push that ends on one sent through it (2026-11-21)
+  - Bubble's share, a portal's cell out of the walks, reading the action 1181's payload first.

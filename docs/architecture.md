@@ -301,7 +301,8 @@ The bots run in `D3B.Bot`: what each part does today, with the decisions that ma
   fight's state the spells the server's context lists for the fight, the character's own and not a summon's it controls
   (D279), and the team's options; a turn puts the fight in its fighting phase, as a client that rejoins a fight gets no
   fight's start. Since 9f4 (D279), the fight's state holds the marks on the cells as the server sets and takes them back,
-  glyphs, traps, bombs' walls and portals (`GroundMark`), which `ImaginedFights.MarksOf` gives the engine. Since D461, it
+  glyphs, traps, bombs' walls and portals (`GroundMark`), which `ImaginedFights.MarksOf` gives the engine; since D492, a
+  teleport from a portal onto another of its team closes both until a turn begins (`GroundMark.IsUsed`). Since D461, it
   holds the fight's challenges (`FightChallenge`), each with its bonus, its targets as the server last named them
   (`FightChallengeTarget`, with the fighters allowed to strike it) and its result; `FightPlay` logs each challenge once, as its
   loop next sees it or at the latest as the fight ends, then its result as the fight ends. The bot sends none of the challenges' requests yet. Since D466, each turn plays for the fight's
@@ -1216,10 +1217,14 @@ Pure logic with no I/O, in `D3B.Engine`, which references `D3B.Data` for the cel
     that carries is ranked but is no end, and a turn that began carrying ends so only when no other end exists; a throw is
     tried on the free cells in its range, half the nearest to the enemies and half the farthest (`ThrowCells`).
   - `Portals` and `PortalPassage`, in `D3B.Engine.Fights` (D468): an Eliotrope's portals, marks of effect 1181 kept the
-    whole fight, four a team, as the references model them, no capture having measured one in Dofus 3. A cast on an open
-    portal, by any fighter, goes along its chain, each portal to the nearest of its team's left, and lands as far from the
-    last one as the caster stands from the first, its zone and pushes from that exit, its damage, steals and heals raised
-    by 2% a cell between the portals, the effects of mask `R` or `r` chosen so (`Imagination.Cast`, `SpellEffects.Foresee`).
+    whole fight, four a team, as the references model them and the captures of 3.7.14.18 measured (D492). A cast on an open
+    portal, by any fighter, goes along its chain, each portal to the nearest of its team's left, two as near told apart by
+    their angle as the server does, and lands as far from the last one as the caster stands from the first, its zone and
+    pushes from that exit, its damage, steals and heals raised by 2% a cell between the portals, the effects of mask `R` or
+    `r` chosen so (`Imagination.Cast`, `SpellEffects.Foresee`). A walk or a push that ends on an open portal sends its
+    fighter onto the chain's last (`Portals.Moved`, in `Imagination.Walked`, `Imagination.Cast` and the search's walks
+    before a cast and the reply's), and the two portals stay closed until a turn begins (`CellMark.IsUsed`,
+    `Portals.Reopened` in `Imagination.TurnStarted`).
   - `FightTactics`, built once per pack: `Plan`, a beam search of walks and casts, each step keeping beside its best
     sequences the best of each set of states the character holds, so that a Zobal's mask lives to the spells it opens
     (`WithEachStates`, D255), and the best of other sets of the team's portals, those whose ways land on an enemy first,
@@ -1324,8 +1329,8 @@ interface's recast (D292).
   summons, those the AI brings and those the client controls (built, D269 to D271); the Roublard's bombs, their chains,
   combos and walls, every move that brings a fighter into a wall counted (built, D276, D277); the marks on the cells,
   glyphs and walls struck as a turn begins and ends, the Féca's to measure in game (built, D280), weighed over the rounds
-  they strike (built, D288); an Eliotrope's portals, set and cast through by any fighter of the bot (built, D468), the walk
-  through one and the enemies' casts through them left; then runes,
+  they strike (built, D288); an Eliotrope's portals, set and cast through by any fighter of the bot (built, D468), walked
+  and pushed through, measured on the captures (built, D492), the closing effect and the enemies' casts through them left; then runes,
   telefrags, traps, carrying, each taken in through every move that brings fighters into it (D277): one AI for every breed, through the effects, never per class (D244); and the fighting activity, which attacks the groups its profile
   allows (9g, built, D236 to D241, D245).
 

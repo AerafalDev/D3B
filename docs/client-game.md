@@ -1260,6 +1260,16 @@ committed that print fighters by aliases, never an actor's id or name.
   third field, a list of numbers D3B maps as the portals' ids (mapping format 23), as the references name the portals a cast
   went through; the client's schema also holds a fight event of a flag and two numbers shaped as Dofus 2's mark activation,
   which no capture carries.
+- **Portals, measured** (D492). In the 217 game connections of 3.7.14.18 of 2026-11-18 to 21, each group fight recorded
+  by its 8 accounts, with `scripts/fights.cs`: 2,178 casts of Portail (14574) and 32 of 14582, whose effect 1183 closes a
+  portal. 1,329 casts named 2 to 4 portals, the one cast on first and the exit last; 937 by the Eliotrope, the others by
+  six other breeds of its group, none by an enemy; the cell they landed on is where the caster's offset from the first
+  portal puts it from the last, along the chain each portal to the nearest left, a tie broken by the angle around the
+  portal. Each of the Eliotrope's cast 14631 on it (2% more damage and heals dealt for 3 turns, effects 1171 and 2971).
+  The damage fits 2% a cell between the portals best. A walk or a slide that ends on an open portal, by any fighter, is
+  answered by a 307 striking it, an action 1181 whose payload D3B does not map, and a teleport (action 4) onto the
+  chain's last portal: 777 of 818 times; never for a walk that passes over a portal on its way (152), nor onto a portal a
+  fighter went through in that turn (64).
 - **Glyphs.** On 5 casts of a monster's *Gare aux Glyphes* (10241, four glyphs a cast, of grades 2 to 5, a point, a
   cross and rings of 2 and 3 cells) and 2 of *Particules Spirituelles* (5868): as a fighter's turn began on one, before
   its turn's own sequence, the server struck it in a sequence of type 2, its glyph-and-trap sequence, action 307, then

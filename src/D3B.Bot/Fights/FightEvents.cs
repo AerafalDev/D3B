@@ -202,6 +202,10 @@ public static class FightEvents
         var place = fight.TurnOrder.IndexOf(turn.FighterId);
         var turned = fight with { Phase = FightPhase.Fighting, PlayingId = turn.FighterId, Round = round, IsOwnTurn = false };
 
+        // A portal a fighter went through opens again as any turn begins (D492).
+        if (turned.Marks.Values.Any(mark => mark.IsUsed))
+            turned = turned with { Marks = turned.Marks.ToImmutableSortedDictionary(pair => pair.Key, pair => pair.Value with { IsUsed = false }) };
+
         if (place < 0)
             return turned;
 
@@ -240,7 +244,7 @@ public static class FightEvents
         {
             GameActionFightEvent.ActionOneofCase.Cast => Cast(fight, action.SourceId, action.Cast),
             GameActionFightEvent.ActionOneofCase.Death => Changed(fight, action.Death.TargetId, Died),
-            GameActionFightEvent.ActionOneofCase.Teleport when IsCell(action.Teleport.CellId) => Moved(fight, action.Teleport.TargetId, action.Teleport.CellId),
+            GameActionFightEvent.ActionOneofCase.Teleport when IsCell(action.Teleport.CellId) => Teleported(fight, action.Teleport),
             GameActionFightEvent.ActionOneofCase.Slide when IsCell(action.Slide.ToCell) => Moved(fight, action.Slide.TargetId, action.Slide.ToCell),
             GameActionFightEvent.ActionOneofCase.Carry => Changed(fight, action.Carry.TargetId, carried => carried with { Cell = null, CarrierId = action.SourceId }),
             GameActionFightEvent.ActionOneofCase.Throw when IsCell(action.Throw.CellId) => Thrown(fight, action.SourceId, action.Throw),
@@ -356,6 +360,24 @@ public static class FightEvents
             return fight;
 
         return fight with { Fighters = fight.Fighters.SetItem(sourceId, source with { Cell = target.Cell }).SetItem(targetId, target with { Cell = source.Cell }) };
+    }
+
+    private static FightState Teleported(FightState fight, FightTeleport teleport)
+    {
+        // Measured on 3.7.14.18 (D492): a fighter whose walk or push ends on an open portal is teleported onto the last of its
+        // chain, and neither portal sends anyone through again until a turn begins.
+        var moved = Moved(fight, teleport.TargetId, teleport.CellId);
+
+        if (!fight.Fighters.TryGetValue(teleport.TargetId, out var fighter) || fighter.Cell is not { } from
+            || PortalOn(fight, from) is not { } entry || PortalOn(fight, teleport.CellId) is not { } exit || entry.Team != exit.Team)
+            return moved;
+
+        return moved with { Marks = moved.Marks.SetItem(entry.Id, entry with { IsUsed = true }).SetItem(exit.Id, exit with { IsUsed = true }) };
+    }
+
+    private static GroundMark? PortalOn(FightState fight, int cell)
+    {
+        return fight.Marks.Values.FirstOrDefault(mark => mark.Type is FightMarkType.Portal && mark.Centre == cell);
     }
 
     private static FightState Moved(FightState fight, long fighterId, int cell)
