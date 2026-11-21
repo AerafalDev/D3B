@@ -54,6 +54,13 @@ public sealed class HarvestViewsTests : IAsyncDisposable
         return HeadlessUnitTestSession.GetOrStartForAssembly(typeof(HarvestViewsTests).Assembly).Dispatch(action, TestContext.Current.CancellationToken);
     }
 
+    // Awaited on the interface's thread: given as a value, the task would be done with once started, and what it resumes
+    // after a save that ends late posted to a thread that no longer runs it.
+    private static Task<T> OnTheUIThreadAsync<T>(Func<Task<T>> action)
+    {
+        return HeadlessUnitTestSession.GetOrStartForAssembly(typeof(HarvestViewsTests).Assembly).Dispatch(action, TestContext.Current.CancellationToken);
+    }
+
     public async ValueTask DisposeAsync()
     {
         await _play.DisposeAsync();
@@ -204,7 +211,7 @@ public sealed class HarvestViewsTests : IAsyncDisposable
     {
         using var host = await HostAsync();
         var assets = host.Services.GetRequiredService<AssetLibrary>();
-        var copied = await OnTheUIThreadAsync(async () =>
+        var (givenId, own) = await OnTheUIThreadAsync(async () =>
         {
             var page = new ProfilesViewModel(new Localizer(Localizer.English), new Dialogs(), new Toasts());
 
@@ -223,7 +230,6 @@ public sealed class HarvestViewsTests : IAsyncDisposable
 
             return (Given: given.Id, Own: page.Items.Single(item => item.Name == "Auto lumberjack (copy)").IsOwn);
         });
-        var (givenId, own) = await copied;
         var copy = assets.OfType<ProfileAsset>().Single(profile => !profile.IsGiven);
         var original = assets.Find<ProfileAsset>(givenId)!;
 

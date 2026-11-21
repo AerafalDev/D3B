@@ -359,7 +359,12 @@ Q16 (casts and walks the server refuses that the rules allow), Q17 (a build that
   end, before the delay that followed set its timer, which then waited for a clock that never moved again:
   `BehaviorActivityTests.AListThatRepeatsReportsItsFirstStepAgainWhenItStartsOver` and eight more of its class, one of
   `FollowRouteTests`, two of `ActivityRunTests`. Eight of them then awaited the run's end or its next step with no deadline,
-  which hangs the host rather than failing a test: the likely cause of `D3B.Studio.Tests`' 14-minute hang. Not explained:
-  `D3B.Studio.Tests` once ending with zero tests and exit code 1; its next occurrence leaves a dump. Not looked at: the
-  group and fight tests that move the clock once after a settle (about 25 places in `Groups/` and `FightPlayTests`), which
-  assert what was sent rather than wait on it, so they could fail but not hang.
+  which hangs the host rather than failing a test: the likely cause of `D3B.Studio.Tests`' 14-minute hang. And
+  `HarvestViewsTests.AGivenProfileIsReadOnlyAndItsCopyIsTheProjectsOwnWithItsValues`, which hung three runs of six under
+  load: its asynchronous block was dispatched as a value, so what it resumed after a save ending late went to an interface
+  thread no longer running it. Not explained: `D3B.Studio.Tests` once ending with zero tests and exit code 1; its next
+  occurrence leaves a dump. Seen failing under load (ten test hosts at once) and not fixed:
+  `GroupGateTests.AFollowerOnTheMapButOutOfThePartyIsWaitedForAndInvitedAgainEveryTenSeconds` (seven runs of twenty-one, its
+  clock read some tenths late as the bot lags), two of `GroupFightTests` and
+  `FrameRecorderTests.ABotsFramesAreRecordedFromItsConnectionsFirstFrameBothSidesAndD3BsOwn` once each; the group and
+  fight tests move the clock once after a settle in about 25 places, not looked at.
