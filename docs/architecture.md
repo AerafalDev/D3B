@@ -144,7 +144,10 @@ The bots run in `D3B.Bot`: what each part does today, with the decisions that ma
   or claim (`BotContext.TakenCells`). A walk of no
   step is never sent: the server closes the connection of one. The client does not follow a walk ending on the cell its
   previous walk ended on, even on another map (D260): the state keeps that cell (`CharacterState.LastWalkEnd`), and such a
-  walk goes in two, to the path's cell before its last, or a step aside first when it has one step.
+  walk goes in two, to the path's cell before its last, or a step aside first when it has one step. Out of fights every
+  path goes round the map's action cells (`RoleplayPaths`, `WorldPathfinder.ActionCells`, the cells `CellPathfinder` avoids
+  but as its start or destination), crossing one only when no other way is left: the server moves a character that only
+  crosses one, measured in a mine (D488).
 - **Using an element** (D75): `ElementUse`, in `D3B.Bot.Interactives`, walks to the nearest cell the client uses the
   element from, asks for the skill by the id the server gave it on the element, and waits for the start or the refusal,
   then for the end of a use that lasts, such as a harvest. Nothing is sent for an element the map does not offer the
@@ -268,6 +271,11 @@ The bots run in `D3B.Bot`: what each part does today, with the decisions that ma
   through, where the server offers a wanted element, even one the tour holds back as growing (D392), and even out of the zone
   (D439): there the step takes the profile's resources once a tour and marks the map `HarvestTour.Cross`, apart from the maps
   gone through, so the tour's progress and `HasHarvested` stay the zone's. The journey to the bank stops nowhere.
+  A use whose walk the server cut by moving the character to another map, as a map action's cell does, leaves the map it
+  began on gone through, or crossed out of the zone (D488). A tour whose journeys arrive three times in a row with nothing done since the one before
+  (`HarvestTour.Arrived`, `IdleArrivals`: no harvest, no map gone through, left out or crossed, no zone entered) goes round:
+  it gives up its other maps and zones (`GiveUpRemaining`), ends as any other, and the journal (`TourGoneRound`) and the
+  card (`HarvestReporter.RoundWarning`, until the next harvest) say so.
 - **A zone as the place** (D415): `HarvestPlace.Zone` and `FightPlace.Zone`, beside Automatic and Chosen (the sub-areas, stored as before), with a
   `Zone` setting, a zone's id (`SettingKind.Zone`, `ActivitySettingsBuilder.Zone`, a rule asking one). The zone is the studio's file, which `D3B.Bot`
   does not see (D393), so the activities read it through `IPlaceZones` (`D3B.Bot.Activities`), an optional parameter of their constructors as

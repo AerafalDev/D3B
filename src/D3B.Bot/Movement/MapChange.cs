@@ -215,7 +215,7 @@ public static class MapChange
         var left = exits.ToList();
         CellPath? first = null;
 
-        while (left.Count > 0 && CellPathfinder.TryFindNearest(map.Cells.Span, cell, [.. left], out var path))
+        while (left.Count > 0 && RoleplayPaths.TryFindNearest(context, map, cell, [.. left], out var path))
         {
             first ??= path;
 

@@ -136,7 +136,7 @@ public static class ForcedMoves
         if (exits.Any(exit => exit != state.LastWalkEnd))
             exits = [.. exits.Where(exit => exit != state.LastWalkEnd)];
 
-        if (!CellPathfinder.TryFindNearest(cells, here, [.. exits], out var path))
+        if (!RoleplayPaths.TryFindNearest(context, map, here, [.. exits], out var path))
             return MapChangeOutcome.NoPath;
 
         chose(neighbour);
@@ -176,7 +176,7 @@ public static class ForcedMoves
 
         var cells = map.Cells.Span;
 
-        if (!CellPathfinder.TryFindNearest(cells, here, [.. ElementCells.UsedFrom(cells, elementCell, cells[here].Zone)], out var path))
+        if (!RoleplayPaths.TryFindNearest(context, map, here, [.. ElementCells.UsedFrom(cells, elementCell, cells[here].Zone)], out var path))
             return MapChangeOutcome.NoPath;
 
         return await MapChange.UseDoorAsync(context, mapId, path, element.ElementId, skill.SkillId, cancellationToken).ConfigureAwait(false);

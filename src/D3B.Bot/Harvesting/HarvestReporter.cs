@@ -30,6 +30,9 @@ internal sealed class HarvestReporter
     /// <summary>Gets or sets the warning the guild chest gave, by its text's key: what it refused, or that none was reached (D147).</summary>
     public string? ChestWarning { get; set; }
 
+    /// <summary>Gets or sets the warning of a tour that went round and was ended, until the next harvest (D488).</summary>
+    public GameText? RoundWarning { get; set; }
+
     /// <summary>Initializes a new instance of the <see cref="HarvestReporter"/> class.</summary>
     /// <param name="settings">What the profile harvests.</param>
     /// <param name="upkeep">The upkeep, whose bags and food count in the figures.</param>
@@ -54,6 +57,7 @@ internal sealed class HarvestReporter
     public void Harvested(int itemId, long gained)
     {
         _harvested[itemId] = _harvested.GetValueOrDefault(itemId) + gained;
+        RoundWarning = null;
     }
 
     /// <summary>Counts a banking done.</summary>
@@ -201,6 +205,9 @@ internal sealed class HarvestReporter
 
         if (ChestWarning is { } chest)
             warnings.Add(GameText.Of(HarvestTexts.Text(chest)));
+
+        if (RoundWarning is { } round)
+            warnings.Add(round);
 
         if (_settings.Mode is HarvestMode.ByProfession)
             return [.. warnings];

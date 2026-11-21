@@ -113,7 +113,7 @@ public static class MapWalk
         var fit = all.Where(neighbour => neighbour != state.LastWalkEnd && !LeadsAway(context, mapId, neighbour)).ToArray();
         var neighbours = Clear(context, fit.Length > 0 ? fit : all);
 
-        if (!context.Maps.TryGet(mapId, out var map) || !CellPathfinder.TryFindNearest(map.Cells.Span, from, neighbours, out var aside))
+        if (!context.Maps.TryGet(mapId, out var map) || !RoleplayPaths.TryFindNearest(context, map, from, neighbours, out var aside))
             return WalkOutcome.NoPath;
 
         return await WalkAlongAsync(context, mapId, aside, cancellationToken).ConfigureAwait(false);
@@ -183,7 +183,7 @@ public static class MapWalk
             from = stepped;
         }
 
-        if (!context.Maps.TryGet(mapId, out var map) || !CellPathfinder.TryFind(map.Cells.Span, from, cell, out var path))
+        if (!context.Maps.TryGet(mapId, out var map) || !RoleplayPaths.TryFind(context, map, from, cell, out var path))
             return WalkOutcome.NoPath;
 
         if (path.End == context.State.LastWalkEnd && await AwayFromLastEndAsync(context, mapId, map, path, cancellationToken).ConfigureAwait(false) is { } away)
@@ -191,7 +191,7 @@ public static class MapWalk
             if (away is not WalkOutcome.Arrived || context.State.Cell is not { } between || context.State.MapId != mapId)
                 return away;
 
-            if (!CellPathfinder.TryFind(map.Cells.Span, between, cell, out path))
+            if (!RoleplayPaths.TryFind(context, map, between, cell, out path))
                 return WalkOutcome.NoPath;
         }
 
@@ -202,12 +202,11 @@ public static class MapWalk
     // path's cell before its last, or a step aside when the path has one step; none when no other cell can be reached.
     private static async Task<WalkOutcome?> AwayFromLastEndAsync(BotContext context, long mapId, MapData map, CellPath path, CancellationToken cancellationToken)
     {
-        var cells = map.Cells.Span;
         CellPath? away;
 
         if (path.Steps > 1)
         {
-            if (!CellPathfinder.TryFind(cells, path.Start, path.Cells.Span[^2], out away))
+            if (!RoleplayPaths.TryFind(context, map, path.Start, path.Cells.Span[^2], out away))
                 return null;
         }
         else
@@ -216,7 +215,7 @@ public static class MapWalk
                 .Select(direction => MapGeometry.Neighbour(path.Start, direction))
                 .Where(neighbour => neighbour >= 0 && neighbour != path.End));
 
-            if (!CellPathfinder.TryFindNearest(cells, path.Start, neighbours, out away) || away.Steps is 0)
+            if (!RoleplayPaths.TryFindNearest(context, map, path.Start, neighbours, out away) || away.Steps is 0)
                 return null;
         }
 
