@@ -24,6 +24,9 @@ namespace D3B.Bot.Harvesting;
 /// </remarks>
 internal sealed class HarvestTour
 {
+    /// <summary>How many journeys in a row may arrive with nothing done since the one before, before the tour is said to go round (D488).</summary>
+    public const int MostRounds = 3;
+
     private readonly HashSet<long> _visited = [];
     private readonly HashSet<long> _crossed = [];
     private readonly HashSet<long> _unreachable = [];
@@ -34,12 +37,17 @@ internal sealed class HarvestTour
     private readonly Regrowths? _regrowths;
     private readonly TimeProvider _time;
     private Func<int, int>? _levelOf;
+    private int _harvests;
+    private int _doneAtArrival = -1;
 
     /// <summary>Gets the tour's number, from 1.</summary>
     public int Round { get; private set; } = 1;
 
     /// <summary>Gets whether anything was harvested in this tour.</summary>
     public bool HasHarvested { get; private set; }
+
+    /// <summary>Gets how many journeys in a row arrived with nothing done since the one before: no harvest, and no map gone through, left out, crossed or zone entered (D488).</summary>
+    public int IdleArrivals { get; private set; }
 
     /// <summary>Gets the vertices of the world graph, zones of maps already gone through, where a wanted resource was left that the character's own zone could not reach (D425).</summary>
     public IReadOnlySet<int> OtherZones => _wanted;
@@ -229,6 +237,40 @@ internal sealed class HarvestTour
     public void Harvested()
     {
         HasHarvested = true;
+        _harvests++;
+    }
+
+    /// <summary>Counts a journey of the tour that arrived.</summary>
+    /// <returns>Whether the tour goes round: <see cref="MostRounds"/> journeys in a row arrived with nothing done since the one before.</returns>
+    /// <remarks>
+    /// Measured in a mine (D488): each journey arrived on the map whose ore the character never reached, the server moving it on
+    /// as it walked there; the map was never gone through, and the tour went round its eight maps 58 times in 18 minutes, nothing
+    /// harvested. Every journey of a tour otherwise ends on a map it goes through, harvests on, or leaves.
+    /// </remarks>
+    public bool Arrived()
+    {
+        var done = _visited.Count + _crossed.Count + _unreachable.Count + _entered.Count + _harvests;
+
+        IdleArrivals = done == _doneAtArrival ? IdleArrivals + 1 : 0;
+        _doneAtArrival = done;
+
+        return IdleArrivals >= MostRounds;
+    }
+
+    /// <summary>Gives up every map and zone this tour still goes to: left out of the rest of the tour, which then ends.</summary>
+    /// <param name="zone">The zone.</param>
+    public void GiveUpRemaining(HarvestZone zone)
+    {
+        ArgumentNullException.ThrowIfNull(zone);
+
+        foreach (var map in zone.Maps.Keys)
+        {
+            if (!_visited.Contains(map))
+                _unreachable.Add(map);
+        }
+
+        foreach (var vertex in _wanted.ToList())
+            Enter(vertex);
     }
 
     /// <summary>Begins the next tour, once this one went through every map.</summary>
@@ -245,6 +287,9 @@ internal sealed class HarvestTour
         _wanted.Clear();
         _entered.Clear();
         HasHarvested = false;
+        _harvests = 0;
+        _doneAtArrival = -1;
+        IdleArrivals = 0;
         Round++;
 
         return true;

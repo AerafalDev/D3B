@@ -106,7 +106,7 @@ public static class ElementUse
 
         var cells = map.Cells.Span;
 
-        if (!CellPathfinder.TryFindNearest(cells, cell, [.. ElementCells.UsedFrom(cells, elementCell, cells[cell].Zone)], out var path))
+        if (!RoleplayPaths.TryFindNearest(context, map, cell, [.. ElementCells.UsedFrom(cells, elementCell, cells[cell].Zone)], out var path))
             return UseOutcome.NoPath;
 
         BotLog.Using(context.Log, state.Key.CharacterId, elementId, skillId, path.End);

@@ -779,7 +779,12 @@ each cast and walk checked against `D3B.Engine`'s rules, with a measuring tool n
 - **States and buffs.** `FightEffectsEvent`, as BillBot's mapping names it, carries a buff: its action, its source, and
   in the buff its value, its target, the spell it changes and the spell that gave it, its triggers and a uid; 950 sets a
   state. `RefreshCooldownEvent` carries a fighter's spells' cooldowns. Action 406 removes the buffs a spell gave a fighter,
-  132 all of its buffs. Read raw by the measuring tool, never written down; 9d names them.
+  132 all of its buffs. Read raw by the measuring tool, never written down; 9d names them. Measured again on the 216 game
+  connections of 3.7.14.18 (D486): 132, a dispel, takes only the buffs that are dispellable, the server ending each by
+  `FightBuffEndEvent` before the next turn (22 of 22), and keeps the others (506 of 510 still held then, a Pandawa's
+  Sobre among them); 406 carries 132's flag 441 times, naming a spell whose buffs no fighter held. The buff's field 9,
+  not read by D3B, holds the pack's `dispellable` less 1 (0 dispellable, 1 by death, 2 not), and 3 on 8,396 buffs the
+  pack holds dispellable.
 - **No refusal.** The client never sends a cast or a walk its own rules refuse: no capture holds the server refusing one,
   so what D3B refuses is measured only where the server accepted (Q16).
 
@@ -1578,3 +1583,19 @@ never a message's content.
   option shown set twice: the server saying what changed, never a refusal. The client's own toggle opening a fight got
   text 96.
 - **Attacks.** 3 of D3B's 518 attacks unanswered: each time the monster group walked away as D3B attacked it.
+
+## The game, a map action crossed
+
+Measured on 2026-11-21 for D488: two game connections of another player on 3.7.14.18, given to the owner, with
+`scripts/capture.cs --messages` and probes printing ids and counts only, never committed.
+
+- **A map action acts on a walk that crosses it.** On a mine's map, 168034306, D3B's walk from cell 457 to 297, to use an
+  ore from there, crossed cell 341, the map's action to 168034308: the server answered the client's confirmation with
+  `MapMovementRefusedEvent` naming (18, -7), the walk's cell before 341, and `MapCurrentEvent` of 168034308 in the same
+  millisecond, the walk's end never reached. 58 times in a row on the first connection, 3 on the second; the ore stayed out
+  of reach, a way round 341 being open.
+- **The mine's ring.** The world graph's eight maps of that mine, 168034304, 306, 308, 310, 312, 168167424, 166912 and
+  165888, form a ring that goes one way only at 306, left for 308 by the map action alone; a round by five doors, the map
+  action and two scrolls took 18.5 s.
+- **A connection closed.** On the first connection, at 42:43.8, the server answered neither the client's confirmation of a
+  walk nor D3B's five walks over the next 20 s, then closed the connection first; nothing it sent before says why.

@@ -723,6 +723,18 @@ internal sealed class CastBench
             if (cast.TriggeredCasts is 0 && main)
                 Tally.Count($"damage alone, by element: {key.Element}, {outcome}");
 
+            // A character's blows by its breed and spell: what the formulas foresaw against what the server announced, so
+            // that a breed whose spells are foreseen far from what they deal shows apart.
+            if (main && cast.Caster.IsCharacter && !WeaponBlows.IsBlow(cast.Level))
+            {
+                var by = $"damage by breed and spell: breed {cast.Caster.BreedId,2}, spell {cast.Level.SpellId} {key.Element}";
+
+                Tally.Count($"{by}, {outcome}");
+                Tally.Count($"{by}, foreseen at most, summed", range.Max);
+                Tally.Count($"{by}, foreseen at least, summed", range.Min);
+                Tally.Count($"{by}, dealt, summed", total);
+            }
+
             if (outcome is "below" or "above" && (main || details))
                 _details?.WriteLine($"damage {outcome}{(details ? $" through portals, bonus {cast.Through?.Bonus}" : "")}: spell {cast.Level.SpellId} level {cast.Level.Id}{(cast.Critical ? " critical" : "")} element {key.Element}: {total} against {range.Min}..{range.Max}, {alone}; {Why(cast, foreseen, key.Target, key.Element)}");
         }

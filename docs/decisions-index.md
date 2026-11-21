@@ -829,6 +829,21 @@ or refines another says so in its own entry. Add a line here with every new deci
 - [D485](decisions/d485-ally-strikes.md#d485-a-blow-on-an-ally-costs-what-it-takes-and-a-push-a-fighter-stops-strikes-that-fighter-too) A blow on an ally costs what it takes, and a push a fighter stops strikes that fighter too (2026-11-21)
   - The comfortable life for the character alone, the ally's loss from the turn's start, a rule in the search, the pushes left.
 
+## Fights, a dispel keeps the buffs the server keeps (D486)
+
+- [D486](decisions/d486-dispel-keeps-undispellable-buffs.md#d486-a-dispel-takes-only-the-buffs-the-server-ends-and-a-removal-naming-a-spell-that-spells-alone-the-pandawa-keeps-sobre-and-casts-in-its-element) A dispel takes only the buffs the server ends, and a removal naming a spell that spell's alone: the Pandawa keeps Sobre and casts in its element (2026-11-21)
+  - Reading the buff's own field 9, the pack's dispellable, a rule for the Pandawa.
+
+## Fights, a walk nearer far enemies after the reply (D487)
+
+- [D487](decisions/d487-far-walk-wins-tie.md#d487-a-walk-nearer-the-enemies-that-the-judge-weighs-better-before-the-reply-wins-a-tie-within-a-point-after-it) A walk nearer the enemies that the judge weighs better before the reply wins a tie within a point after it (2026-11-21)
+  - The approach added to next turn's gain, more walks weighed after the reply, any walk nearest winning a tie.
+
+## Movement and the harvest, a map action's cell crossed (D488)
+
+- [D488](decisions/d488-harvest-action-cells.md#d488-a-walk-goes-round-the-maps-action-cells-a-harvest-the-server-cuts-by-moving-the-character-leaves-its-map-gone-through-and-a-tour-going-round-ends) A walk goes round the map's action cells, a harvest the server cuts by moving the character leaves its map gone through, and a tour going round ends (2026-11-21)
+  - Going round alone, a watchdog alone, stopping the activity, counting dry tours, never crossing with no fall back.
+
 ## Fights, an Eliotrope's portals measured (D489)
 
 - [D489](decisions/d489-eliotrope-portals-measured.md#d489-an-eliotropes-portals-measured-a-walk-or-a-push-that-ends-on-one-sent-through-it) An Eliotrope's portals measured, a walk or a push that ends on one sent through it (2026-11-21)
