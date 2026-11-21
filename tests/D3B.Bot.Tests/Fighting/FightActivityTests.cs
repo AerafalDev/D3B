@@ -519,7 +519,7 @@ public sealed class FightActivityTests : IAsyncDisposable
         var started = _play.Time.GetUtcNow();
         var run = bot.StartActivity(Activity(new FightSettings { Place = FightPlace.Chosen, SubAreas = [TestPlay.SubAreaId], Heal = false }));
 
-        // The owner's choice (D483): busy a minute, the character is put back in order; still busy a minute later, the hunt fails.
+        // The owner's choice (D484): busy a minute, the character is put back in order; still busy a minute later, the hunt fails.
         Assert.Equal(new DialogLeaveRequest(), await TestWalks.SentAsync(_play, connection, 1));
         Assert.True(_play.Time.GetUtcNow() - started >= TimeSpan.FromMinutes(1));
 

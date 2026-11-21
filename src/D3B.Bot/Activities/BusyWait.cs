@@ -3,7 +3,7 @@ using D3B.Bot.Runtime;
 
 namespace D3B.Bot.Activities;
 
-/// <summary>An activity's wait, at its step's start, for a character busy or on a map not known yet: bounded (D483).</summary>
+/// <summary>An activity's wait, at its step's start, for a character busy or on a map not known yet: bounded (D484).</summary>
 /// <remarks>
 /// <para>
 /// A step waits <see cref="Delay"/> at most, then the activity steps again. Nothing measured left a character busy so

@@ -1,6 +1,6 @@
 namespace D3B.Bot.Activities;
 
-/// <summary>What keeps a character from a step's action, as <see cref="BusyWait"/> tells it (D483).</summary>
+/// <summary>What keeps a character from a step's action, as <see cref="BusyWait"/> tells it (D484).</summary>
 public enum BusyKind
 {
     /// <summary>The character's map is not known yet.</summary>

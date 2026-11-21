@@ -1,9 +1,9 @@
-# Activities, the wait for a busy character bounded (D483)
+# Activities, the wait for a busy character bounded (D484)
 
 A part of [the decisions](README.md); each decision has one line in [the index](../decisions-index.md). The recovery after
 an interruption is [D89](d064-d090-step-4.md); the harvest's losses and the inactivity kick, [D481](d481-harvest-losses-go-on.md).
 
-## D483: A character busy a minute at a step's start is put back in order, and still busy a minute later the harvest or the hunt fails saying why
+## D484: A character busy a minute at a step's start is put back in order, and still busy a minute later the harvest or the hunt fails saying why
 
 *2026-11-21, the lead's task after D481: a study read a second way to Ankama's inactivity kick in the harvest's step,
 which waited for a busy character without end. The owner chose the answer and its reach among the options the session

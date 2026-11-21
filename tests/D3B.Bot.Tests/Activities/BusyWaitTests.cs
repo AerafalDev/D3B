@@ -6,7 +6,7 @@ using D3B.Protocol.Game;
 
 namespace D3B.Bot.Tests.Activities;
 
-/// <summary>The bounded wait for a busy character at a step's start (D483): what it names, and when its count starts again.</summary>
+/// <summary>The bounded wait for a busy character at a step's start (D484): what it names, and when its count starts again.</summary>
 public sealed class BusyWaitTests : IAsyncDisposable
 {
     private readonly TestPlay _play = new();
