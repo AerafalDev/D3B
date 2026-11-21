@@ -828,3 +828,8 @@ or refines another says so in its own entry. Add a line here with every new deci
 
 - [D485](decisions/d485-ally-strikes.md#d485-a-blow-on-an-ally-costs-what-it-takes-and-a-push-a-fighter-stops-strikes-that-fighter-too) A blow on an ally costs what it takes, and a push a fighter stops strikes that fighter too (2026-11-21)
   - The comfortable life for the character alone, the ally's loss from the turn's start, a rule in the search, the pushes left.
+
+## Fights, a dispel keeps the buffs the server keeps (D486)
+
+- [D486](decisions/d486-dispel-keeps-undispellable-buffs.md#d486-a-dispel-takes-only-the-buffs-the-server-ends-and-a-removal-naming-a-spell-that-spells-alone-the-pandawa-keeps-sobre-and-casts-in-its-element) A dispel takes only the buffs the server ends, and a removal naming a spell that spell's alone: the Pandawa keeps Sobre and casts in its element (2026-11-21)
+  - Reading the buff's own field 9, the pack's dispellable, a rule for the Pandawa.
