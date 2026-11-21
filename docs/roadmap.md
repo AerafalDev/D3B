@@ -412,3 +412,7 @@ follower) on the same map, the capture of every connection on; a capture's conte
   out of fights now goes round the map's action cells when it can, a harvest cut so leaves its map gone through, and a tour
   whose journeys arrive three times in a row with nothing done gives up its other maps, saying so on the card. Left: seen in
   game.
+- **A follower left behind** (D490), the groups' stall D484 left, made on 2026-11-21 in code and tests: the master's gate
+  waited without end for a follower missing, the two groups of 2026-11-19 idle 30 minutes until the server closed every
+  connection (D464). A follower missing five minutes of one wait, but fighting or healing, is now left behind, the master acting
+  without it and saying so in its journal, and waited for again once it is back, the owner's choices. Left: seen in game.

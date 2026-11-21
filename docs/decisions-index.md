@@ -848,3 +848,8 @@ or refines another says so in its own entry. Add a line here with every new deci
 
 - [D489](decisions/d489-forgelance-lance-reach.md#d489-the-lance-gives-each-spell-it-names-its-reach-and-a-summon-on-a-free-cell-asks-its-casters-conditions) The lance gives each spell it names its reach, and a summon on a free cell asks its caster's conditions (2026-11-21)
   - A rule naming the 13 spells, leaving 314 to the server's refusal.
+
+## Groups, a follower left behind (D490)
+
+- [D490](decisions/d490-groups-left-behind.md#d490-a-master-goes-on-without-a-follower-missing-five-minutes-but-fighting-or-healing-and-waits-for-it-again-once-it-is-back) A master goes on without a follower missing five minutes, but fighting or healing, and waits for it again once it is back (2026-11-21)
+  - Failing the master's activity at the bound, keeping the endless wait, two or ten minutes.
