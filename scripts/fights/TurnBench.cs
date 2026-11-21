@@ -367,7 +367,11 @@ internal sealed class TurnBench
         Tally.Count($"{(turn.Start.Actor.IsSummon ? "summon plans" : "plans")}: {kind}");
 
         if (!turn.Start.Actor.IsSummon)
+        {
             _byBreed.Add(turn.Start.Actor.BreedId, $"plans: {kind}");
+            Tally.Count($"states at a turn's start: breed {turn.Start.Actor.BreedId,2}, [{string.Join(",", turn.Start.Actor.States.Order())}]");
+            Tally.Count($"states at a turn's start: breed {turn.Start.Actor.BreedId,2}, round {Math.Min(turn.Start.Round, 3)}, [{string.Join(",", turn.Start.Actor.States.Order())}]");
+        }
 
         if (plan.IsEmpty && !turn.Start.Actor.IsSummon && turn.Start.Actor.MovementPoints > 0)
             Passed(turn);
@@ -624,6 +628,17 @@ internal sealed class TurnBench
                 }
 
                 Tally.Count($"blows {whose}: {outcome}");
+
+                // By breed, the element each blow is of against the caster's best and what it was foreseen dealing, so that a
+                // breed casting off its element shows apart, and whether its formulas or its judge chose so.
+                var breed = actor.BreedId is { } id ? $"breed {id,2}" : "breed unknown";
+
+                Tally.Count($"blows {whose} by breed: {breed}, {(element == best ? "best element" : "another element")}");
+                Tally.Count($"blows {whose} by breed: {breed}, {(element == best ? "best element" : "another element")}, damage foreseen summed", (int)Math.Round(dealt));
+                Tally.Count($"blows {whose} by breed and spell: {breed}, spell {chosen.SpellId} {element}, best {best}");
+
+                if (element != best)
+                    Tally.Count($"blows {whose} by breed, in another element: {breed}, {outcome}");
             }
 
             fight = Act(fight, [action]);
