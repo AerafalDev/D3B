@@ -1,3 +1,4 @@
+using D3B.Engine.Fights;
 using D3B.Engine.Tactics;
 
 namespace D3B.Engine.Tests.Tactics;
@@ -23,5 +24,16 @@ public sealed class JudgeTurnsTests
         Assert.Equal(0.425, JudgeTurns.Nearing(11, 9), 6);
         Assert.True(JudgeTurns.Nearing(1, 20) is > 0.5 and <= 0.55);
         Assert.True(JudgeTurns.Nearing(0, 20) <= 0.55);
+    }
+
+    [Fact]
+    public void AShareOrAReductionOfTheDamageReceivedChangesWhatTheJudgesTablesRead()
+    {
+        // D491: a cast giving a share of 1163 or a reduction of 105 changes the damage its fighter receives in the judge's tables.
+        var fighter = new Combatant { Id = 1 };
+
+        Assert.NotEqual(JudgeTurns.Signature(fighter), JudgeTurns.Signature(fighter with { ReceivedDamageShares = [120] }));
+        Assert.NotEqual(JudgeTurns.Signature(fighter), JudgeTurns.Signature(fighter with { ReceivedDamageReduction = 8 }));
+        Assert.Equal(JudgeTurns.Signature(fighter), JudgeTurns.Signature(fighter with { Life = 10 }));
     }
 }

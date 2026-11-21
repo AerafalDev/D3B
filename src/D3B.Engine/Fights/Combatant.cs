@@ -98,6 +98,9 @@ public sealed record Combatant
     /// <summary>Gets the shares of the damage it receives the fighter takes, in percent, one for each buff multiplying it: effect 1163.</summary>
     public ImmutableArray<int> ReceivedDamageShares { get; init; } = [];
 
+    /// <summary>Gets the life taken off each blow the fighter receives by its buffs, before its resistance in percent: effect 105.</summary>
+    public int ReceivedDamageReduction { get; init; }
+
     /// <summary>Gets the fighter's characteristics as the server gave them, by id, which the effects' formulas read.</summary>
     /// <remarks>Those the rules of a cast read are the properties above; a characteristic left out counts as 0.</remarks>
     public ImmutableSortedDictionary<int, int> Characteristics { get; init; } = ImmutableSortedDictionary<int, int>.Empty;

@@ -79,6 +79,27 @@ public sealed class EffectFormulasTests
     }
 
     [Fact]
+    public void TheResistanceToEveryElementAddsToTheElementsOwn()
+    {
+        var caster = Fighter();
+        var target = Fighter((55, 2), (34, 25)) with { Id = 2 };
+
+        // 47 to 52 less 2, then 25% of fire less 10% of every element: 85% of 45 to 50.
+        Assert.Equal(new LifeRange(38, 42), EffectFormulas.Received(new LifeRange(47, 52), caster, target with { Characteristics = target.Characteristics.SetItem(FightCharacteristic.ResistPercent, -10) }, EffectElement.Fire, melee: false));
+        Assert.Equal(new LifeRange(29, 32), EffectFormulas.Received(new LifeRange(47, 52), caster, target with { Characteristics = target.Characteristics.SetItem(FightCharacteristic.ResistPercent, 10) }, EffectElement.Fire, melee: false));
+    }
+
+    [Fact]
+    public void AReductionOfTheDamageReceivedIsTakenOffEachBlowBeforeTheResistanceInPercent()
+    {
+        var target = Fighter((55, 2), (34, 25)) with { Id = 2, ReceivedDamageReduction = 4 };
+
+        // 47 to 52 less 2 and 4, then 75% of 41 to 46; a blow under the reduction deals nothing.
+        Assert.Equal(new LifeRange(30, 34), EffectFormulas.Received(new LifeRange(47, 52), Fighter(), target, EffectElement.Fire, melee: false));
+        Assert.Equal(new LifeRange(0, 0), EffectFormulas.Received(new LifeRange(3, 6), Fighter(), target, EffectElement.Fire, melee: false));
+    }
+
+    [Fact]
     public void AMultiplierTheServerLeftOutChangesNothing()
     {
         var target = Fighter() with { Id = 2 };
