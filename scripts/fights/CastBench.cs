@@ -575,6 +575,7 @@ internal sealed class CastBench
             Heals(cast, completed, $"the character's {kind}, out of fights", main: false);
         }
         Pushes(cast, foreseen);
+        LeftOut(cast);
         Points(cast, foreseen, alone);
         Buffs(cast, foreseen);
         Moves(cast, foreseen);
@@ -680,6 +681,7 @@ internal sealed class CastBench
         return $"caster {(caster.IsCharacter ? "character" : caster.IsSummon ? "summon" : "monster")} lvl {caster.Level} c={caster.Characteristic(stat)} p={caster.Characteristic(25)} all={caster.Characteristic(16)} el={caster.Characteristic(88 + offset)} crit={caster.Characteristic(86)} [{changed}] mods {caster.Modifiers.Length}; "
             + $"all caster [{string.Join(",", caster.Characteristics.Where(pair => pair.Value != 0).Select(pair => $"{pair.Key}={pair.Value}"))}] losses [{string.Join(",", cast.Actions.Where(action => action.ActionCase is GameActionFightEvent.ActionOneofCase.LifeLost && action.LifeLost.TargetId == targetId && action.LifeLost.Element == (int)element).Select(action => $"{action.ActionId}:{action.LifeLost.Loss}+{action.LifeLost.ShieldLoss}"))}] "
             + $"caster buffs [{string.Join(",", cast.Held.GetValueOrDefault(caster.Id).Select(buff => $"{buff.ActionId}/{buff.Kind}:{buff.Value}"))}] target buffs [{string.Join(",", cast.Held.GetValueOrDefault(targetId).Select(buff => $"{buff.ActionId}/{buff.Kind}:{buff.Value}"))}] "
+            + $"reductions [{string.Join(",", cast.Held.GetValueOrDefault(targetId).Where(buff => buff.ActionId is 105 or 265).Select(buff => _blows.Spells.TryGetLevel(buff.SpellId, buff.Grade, out var held) ? $"{buff.ActionId}:v{buff.Value}p{buff.Parameter}:{SourceOf(held, buff.EffectUid).DiceNum}-{SourceOf(held, buff.EffectUid).DiceSide}/{SourceOf(held, buff.EffectUid).Value} t{_blows.Spells.TriggersOf(SourceOf(held, buff.EffectUid))} src{cast.Fighters.FirstOrDefault(f => f.Id == buff.SourceId)?.Level}" : "?"))}] tlvl {target.Level} "
             + $"target {(target.IsCharacter ? "character" : target.IsSummon ? "summon" : "monster")} res%={target.Characteristic(33 + offset)} fixed={target.Characteristic(54 + offset)} [{targetChanged}] away {(target.Cell < 0 ? -1 : MapGeometry.Distance(cast.Cell, target.Cell))} melee {(caster.Cell >= 0 && target.Cell >= 0 ? MapGeometry.Distance(caster.Cell, target.Cell) : -1)}; {rolls}";
     }
 
@@ -905,11 +907,43 @@ internal sealed class CastBench
         return !cast.Map.IsWalkable(next) ? "not walkable" : cast.Fighters.Any(fighter => fighter.IsAlive && fighter.Cell == next) ? "a fighter" : "free";
     }
 
+    private void LeftOut(Cast cast)
+    {
+        // The effects the engine does not foresee (EffectKind.Other), by id, as the casts chosen hold them and as the server
+        // gives them as buffs: the weight of each in the fights played, which ranks what to model next.
+        var caster = cast.Caster.IsCharacter ? "a character" : cast.Caster.IsSummon ? "a summon" : "a monster";
+
+        foreach (var effect in cast.Critical && cast.Level.CriticalEffectCount > 0 ? _blows.Spells.CriticalEffectsOf(cast.Level) : _blows.Spells.EffectsOf(cast.Level))
+        {
+            if ((effect.Properties & SpellEffectProperties.ForClientOnly) is 0 && _actions.Of(effect.EffectId).Kind is EffectKind.Other)
+                Tally.Count($"effects left out, cast by {caster}: {effect.EffectId}");
+        }
+
+        foreach (var (actionId, buff) in cast.Buffs)
+        {
+            if (_actions.Of(actionId).Kind is EffectKind.Other)
+                Tally.Count($"effects left out, given as buffs by {caster}: {actionId}, {buff.Kind}");
+
+            if (actionId is 105 or 1163)
+                Tally.Count($"buffs on the damage received, their ends: {actionId}, {(buff.End is { Round: >= 0 } at ? $"{at.Round - cast.Round} rounds, {(at.Turn == cast.Turn ? "at the caster's turn" : "at another turn")}" : "the whole fight")}, the effect lasting {SourceOf(cast.Level, buff.EffectUid).Duration}, triggers {_blows.Spells.TriggersOf(SourceOf(cast.Level, buff.EffectUid))}");
+        }
+
+        foreach (var action in cast.Actions)
+        {
+            if (action.ActionCase is not (GameActionFightEvent.ActionOneofCase.LifeLost or GameActionFightEvent.ActionOneofCase.LifeGained or GameActionFightEvent.ActionOneofCase.Points))
+                Tally.Count($"actions announced, by kind and id: {action.ActionCase} {action.ActionId}");
+        }
+    }
+
     private void Points(Cast cast, IReadOnlyList<ForeseenEffect> foreseen, string alone)
     {
-        foreach (var (characteristic, lostId, dodgedId, name) in new[] { (1, 101, 308, "AP"), (23, 127, 309, "MP") })
+        foreach (var (characteristic, lostId, buffId, dodgedId, name) in new[] { (1, 101, 168, 308, "AP"), (23, 127, 169, 309, "MP") })
         {
-            var lost = cast.Actions.Where(action => action.ActionId == lostId && action.ActionCase is GameActionFightEvent.ActionOneofCase.Points).GroupBy(action => action.Points.TargetId).ToDictionary(group => group.Key, group => -group.Sum(action => action.Points.Delta));
+            // Measured on the captures of 3.7.14.18: a removal of 1079 or 1080 comes as a buff of 168 or 169 for the points left
+            // after the dodge, never as points lost; one of the fighter playing comes as points lost.
+            var lost = cast.Actions.Where(action => action.ActionId == lostId && action.ActionCase is GameActionFightEvent.ActionOneofCase.Points).Select(action => (Target: action.Points.TargetId, Points: -action.Points.Delta))
+                .Concat(cast.Buffs.Where(pair => pair.ActionId == buffId || pair.ActionId == lostId).Select(pair => (Target: pair.Buff.TargetId, Points: Math.Abs(pair.Buff.Value))))
+                .GroupBy(pair => pair.Target).ToDictionary(group => group.Key, group => group.Sum(pair => pair.Points));
             var dodged = cast.Actions.Where(action => action.ActionId == dodgedId && action.ActionCase is GameActionFightEvent.ActionOneofCase.PointsDodged).GroupBy(action => action.PointsDodged.TargetId).ToDictionary(group => group.Key, group => group.Sum(action => action.PointsDodged.Amount));
             var expected = foreseen.Where(effect => effect.IsImmediate && effect.Action.Kind is EffectKind.Deboost && effect.Action.Characteristic == characteristic)
                 .GroupBy(effect => effect.TargetId).ToDictionary(group => group.Key, group => new LifeRange(group.Sum(effect => effect.Value.Min), group.Sum(effect => effect.Value.Max)));
@@ -927,6 +961,9 @@ internal sealed class CastBench
                 }
 
                 Tally.Count($"{name} removed, {alone}: {(range.Contains(taken + escaped) ? (escaped > 0 ? "within, some dodged" : "within") : taken + escaped < range.Min ? "below" : "above")}");
+
+                if (!range.Contains(taken + escaped))
+                    _details?.WriteLine($"{name} removed off: spell {cast.Level.SpellId} level {cast.Level.Id}: lost {taken} dodged {escaped} against {range.Min}..{range.Max}; effects [{string.Join(",", foreseen.Where(effect => effect.TargetId == target && effect.Action.Kind is EffectKind.Deboost && effect.Action.Characteristic == characteristic).Select(effect => $"{effect.EffectId}:{effect.Value.Min}-{effect.Value.Max}{(effect.IsImmediate ? "" : " later")}"))}] actions [{string.Join(",", cast.Actions.Where(action => action.ActionCase is GameActionFightEvent.ActionOneofCase.Points or GameActionFightEvent.ActionOneofCase.PointsDodged).Select(action => $"{action.ActionId}"))}]");
             }
         }
     }
@@ -949,6 +986,31 @@ internal sealed class CastBench
         var imagined = _imagination.Cast(new ImaginedFight { Map = cast.Map, Fighters = [.. cast.Fighters], ActorId = cast.Caster.Id, Round = cast.Round, History = CastHistory.Empty, Marks = cast.Marks }, cast.Level, cast.Through?.Entry ?? cast.Cell);
         var casts = CastsSpells(cast.Level) ? "casting spells at once" : "casting none";
         int lostImagined = 0, lostAnnounced = 0;
+
+        // A cast moving its caster towards or away from the fighter it reaches (1042, 1041): the cell the caster ends on.
+        var moving = _blows.Spells.EffectsOf(cast.Level).ToArray().FirstOrDefault(effect => _actions.Of(effect.EffectId).Kind is EffectKind.CasterPulled or EffectKind.CasterPushed && (effect.Properties & SpellEffectProperties.ForClientOnly) is 0);
+
+        if (moving.EffectId is not 0 && after.Fighters.TryGetValue(cast.Caster.Id, out var landed) && landed.IsAlive && imagined.Find(cast.Caster.Id) is { } went)
+        {
+            var kind = _actions.Of(moving.EffectId).Kind is EffectKind.CasterPulled ? "towards" : "away";
+            var moved = landed.Cell != cast.Caster.Cell;
+            var hurt = cast.Actions.Any(action => action.ActionId is 80 && action.ActionCase is GameActionFightEvent.ActionOneofCase.LifeLost && action.LifeLost.TargetId == cast.Caster.Id);
+
+            Tally.Count($"the caster moved by its cast, {kind}: {(landed.Cell == went.Cell ? "on the cell imagined" : moved ? (went.Cell == cast.Caster.Cell ? "moved, imagined staying" : "on another cell") : "stayed, imagined moving")}{(hurt ? ", push damage on it" : "")}");
+
+            if (hurt)
+            {
+                var taken = cast.Actions.Where(action => action.ActionId is 80 && action.ActionCase is GameActionFightEvent.ActionOneofCase.LifeLost && action.LifeLost.TargetId == cast.Caster.Id).Sum(action => action.LifeLost.Loss + action.LifeLost.ShieldLoss);
+                var pusher = cast.Fighters.FirstOrDefault(fighter => fighter.Id != cast.Caster.Id && fighter.Cell == cast.Cell);
+                var imaginedLoss = cast.Caster.Life - went.Life;
+
+                Tally.Count($"the caster moved by its cast, away, its push damage: {(taken == imaginedLoss ? "as imagined" : "otherwise")}");
+                _details?.WriteLine($"caster push damage: spell {cast.Level.SpellId}, {moving.DiceNum} cells, {MapGeometry.Distance(cast.Caster.Cell, landed.Cell ?? cast.Caster.Cell)} moved: {taken} imagined {imaginedLoss}, caster lvl {cast.Caster.Level} bonus84 {cast.Caster.Characteristic(84)} res85 {cast.Caster.Characteristic(85)}, pusher lvl {pusher?.Level} bonus84 {pusher?.Characteristic(84)}");
+            }
+
+            if (landed.Cell != went.Cell)
+                _details?.WriteLine($"caster moved off: spell {cast.Level.SpellId} effect {moving.EffectId} {moving.DiceNum} cells, from {cast.Caster.Cell} to {landed.Cell} imagined {went.Cell}, cast on {cast.Cell}");
+        }
 
         foreach (var before in cast.Fighters)
         {
@@ -1112,7 +1174,10 @@ internal sealed class CastBench
                 continue;
             }
 
-            var matching = foreseen.Where(effect => effect.TargetId == buff.TargetId && effect.EffectId == actionId).ToList();
+            // The server names some buffs by another action than their effect's: a shield of 1020 as 1040, AP and MP removed by
+            // 1079 and 1080 as 168 and 169, so a buff is matched by its source effect too.
+            var sourceId = SourceOf(cast.Level, buff.EffectUid).EffectId;
+            var matching = foreseen.Where(effect => effect.TargetId == buff.TargetId && (effect.EffectId == actionId || effect.EffectId == sourceId)).ToList();
 
             if (matching.Count is 0)
             {

@@ -853,3 +853,8 @@ or refines another says so in its own entry. Add a line here with every new deci
 
 - [D490](decisions/d490-groups-left-behind.md#d490-a-master-goes-on-without-a-follower-missing-five-minutes-but-fighting-or-healing-and-waits-for-it-again-once-it-is-back) A master goes on without a follower missing five minutes, but fighting or healing, and waits for it again once it is back (2026-11-21)
   - Failing the master's activity at the bound, keeping the endless wait, two or ten minutes.
+
+## Fights, the effects the engine left out (D491)
+
+- [D491](decisions/d491-unhandled-effects.md#d491-the-damage-received-reads-every-resistance-reduction-and-share-and-a-cast-moves-its-caster) The damage received reads every resistance, reduction and share, and a cast moves its caster (2026-11-21)
+  - Every effect of the audit at once, a share ended with its buff's rounds.

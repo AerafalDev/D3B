@@ -1149,7 +1149,10 @@ Pure logic with no I/O, in `D3B.Engine`, which references `D3B.Data` for the cel
     characteristic it changes, from the pack and D3B's table of the client's actions, and who casts the spell an effect
     casts, where (`SpellCaster`, D227); `FightCharacteristic` names the characteristics the formulas read.
   - `EffectFormulas`: the roll, damage dealt and received, the zone's decrease, heals, erosion and a push's damage, each
-    step rounded down, as measured; `LifeRange`, a value's least and most.
+    step rounded down, as measured; `LifeRange`, a value's least and most. A blow received takes off the fixed resistance
+    and a buff's reduction of 105 (`Combatant.ReceivedDamageReduction`, its points raised by a twentieth of the level,
+    `EffectFormulas.Reduction`), then the element's resistance in percent plus the resistance to every element
+    (`FightCharacteristic.ResistPercent`, 101), then the multipliers and the shares of 1163 (D491).
   - `SpellEffects`, built once per pack: what each effect of a cast does to each fighter it reaches (`ForeseenEffect`),
     the critical effects on a critical hit, nothing drawn. A mask naming the caster reaches it outside the zone.
   - Benchmarked on a captured fight's map: a cast foreseen in 0.69 µs, 0.66 µs into a list it reuses, its zones kept per
@@ -1161,7 +1164,10 @@ Pure logic with no I/O, in `D3B.Engine`, which references `D3B.Data` for the cel
     hit weighed by its chance (`EffectFormulas.CriticalChance`, D207), each lasting buff kept with its rounds (D209); the
     spells its effects cast at once cast in turn on the fight as the effects before left it, states ended, a spell's
     buffs dispelled and a buff past its stacks replacing the oldest, as a Zobal's masks do (D227); a malus of AP or MP
-    takes the points below 0, as the server keeps them, so that its end gives back only what it took (D470).
+    takes the points below 0, as the server keeps them, so that its end gives back only what it took (D470); a cast giving
+    a buff on the damage received that waits for any damage (trigger `D`), a share of 1163 or a reduction of 105, changes
+    every blow after it, and one moving its caster towards or away from the fighter it reaches (1042, 1041) slides the
+    caster as that fighter would pull or push it, a caster stopped short taking the push damage of its own level (D491).
   - `FightJudge`: an imagined fight's worth for the side playing, in life: allies' life concave and a quarter as steep above
     60% of its most (`TacticWeights.Comfort`, D407), and what the side's own casts took from its other fighters again
     (`ImaginedFight.StruckBySide`, `TacticWeights.AlliesStruck`, D485), enemies' weighed by how hard they hit; the enemies' threat and the next turn's approach with the spells that land, from a cell walked to, in

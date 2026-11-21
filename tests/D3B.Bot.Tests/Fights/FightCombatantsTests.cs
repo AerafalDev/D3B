@@ -18,7 +18,7 @@ public sealed class FightCombatantsTests
         ReadOnlyMemory<MonsterRace>.Empty);
 
     [Fact]
-    public void AFighterGivesTheEngineItsCellCharacteristicsStatesModifiersBuffsAndDamageShares()
+    public void AFighterGivesTheEngineItsCellCharacteristicsStatesModifiersBuffsDamageSharesAndReductions()
     {
         var fighter = new Fighter
         {
@@ -38,6 +38,8 @@ public sealed class FightCombatantsTests
                 new Bot.Fights.FightBuff { Uid = 2, ActionId = 281, Kind = FightBuffKind.SpellModifier, SpellId = 12_787, Value = 12_832, Parameter = 3 },
                 new Bot.Fights.FightBuff { Uid = 3, ActionId = 1163, Kind = FightBuffKind.Triggered, Value = 85 },
                 new Bot.Fights.FightBuff { Uid = 4, ActionId = 111, Kind = FightBuffKind.Boost, SpellId = 13_386, Value = 1 },
+                new Bot.Fights.FightBuff { Uid = 5, ActionId = 105, Kind = FightBuffKind.Triggered, Parameter = 4 },
+                new Bot.Fights.FightBuff { Uid = 6, ActionId = 105, Kind = FightBuffKind.Triggered, Parameter = 5 },
             ],
         };
 
@@ -49,6 +51,8 @@ public sealed class FightCombatantsTests
         Assert.Equal([new SpellModifier(SpellModifierKind.Range, 12_832, 3)], combatant.Modifiers);
         Assert.Equal([new HeldBuff(12_787, 950, 3), new HeldBuff(12_787, 281, 12_832, 3), new HeldBuff(13_386, 111, 1)], combatant.Buffs);
         Assert.Equal([85], combatant.ReceivedDamageShares);
+        // 4 and 5 points at level 19, each raised by 19 twentieths and rounded down, as the AI imagines them: 7 and 9.
+        Assert.Equal(16, combatant.ReceivedDamageReduction);
         Assert.True(combatant.IsCharacter);
     }
 
