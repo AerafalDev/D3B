@@ -361,7 +361,8 @@ The bots run in `D3B.Bot`: what each part does today, with the decisions that ma
   `IsPlaced`): the master waits for it placed, its being placed waking that wait (`GroupDirectory.Touch`).
   A master whose activity banks unloads through its group's bank (D442, `IGroupBank`, `BotActor.Bank`, `GroupBank`), which
   its run asks before each step: a follower full at the pods the activity watches takes the group to the bank, each
-  follower gives the master what it carries by an exchange, its readiness once 3.5 s passed with no change (D458)
+  follower gives the master what it carries by an exchange, its whole stacks in one request and a part of one by a move
+  (D482), its readiness once 3.5 s passed with no change (D458)
   (`CharacterState.Exchange`, `GroupGifts`, the round in
   `GroupDirectory.Collect`), and the master deposits, first and again when an exchange does not conclude, all it does not wear but its food (D452),
   the stacks the bank left, such as a quest's objects, left for the rest of that unloading (D457); the stacks an exchange

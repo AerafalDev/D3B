@@ -809,6 +809,11 @@ or refines another says so in its own entry. Add a line here with every new deci
 - [D481](decisions/d481-harvest-losses-go-on.md#d481-fights-lost-in-a-row-no-longer-end-the-harvest-and-a-loss-is-followed-by-the-whole-life-regained) Fights lost in a row no longer end the harvest, and a loss is followed by the whole life regained (2026-11-21)
   - Leaving out the resource whose protector won, the profile's share after a loss, keeping the connection alive, closing it or the haven bag once an activity failed.
 
+## Groups, the exchange's stacks in one request (D482)
+
+- [D482](decisions/d482-group-exchange-one-request.md#d482-a-follower-moves-its-whole-stacks-into-the-exchange-in-one-request-a-part-of-a-stack-by-a-move) A follower moves its whole stacks into the exchange in one request, a part of a stack by a move (2026-11-21)
+  - A move a stack with a shorter wait, the empty request not paired, every stack by the transfer.
+
 ## Fights, a carry and the states that forbid it (D483)
 
 - [D483](decisions/d483-carry-states.md#d483-a-carry-takes-no-fighter-whose-state-keeps-it-from-being-moved-or-carried-nor-one-enraciné-or-under-pesanteur) A carry takes no fighter whose state keeps it from being moved or carried, nor one Enraciné or under Pesanteur (2026-11-21)
