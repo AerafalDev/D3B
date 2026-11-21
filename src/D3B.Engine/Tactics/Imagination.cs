@@ -45,7 +45,8 @@ namespace D3B.Engine.Tactics;
 /// a turn ends does.
 /// </para>
 /// <para>
-/// Carrying (<see cref="Carrying"/>, D474): a carry takes the fighter it surely reaches off its cell, its caster's; a throw cast
+/// Carrying (<see cref="Carrying"/>, D474): a carry takes the fighter it surely reaches off its cell, its caster's, unless its
+/// states keep it from being carried (<see cref="CastRules.StatesLetCarry"/>, D483); a throw cast
 /// on a free cell lands the fighter its caster carries there before its effects, so that those of mask <c>K</c> reach it, then
 /// ends the carry.
 /// </para>
@@ -619,7 +620,7 @@ public sealed class Imagination
             case EffectKind.Kill:
                 fighters[index] = target with { Life = 0, IsAlive = false, Cell = Combatant.NoCell };
                 break;
-            case EffectKind.Carry when effect.IsCertain && index != casterIndex && fighters[casterIndex].Cell is not Combatant.NoCell && Carrying.CanBeCarried(fighters, target) && !Carrying.Carries(fighters, fighters[casterIndex].Id):
+            case EffectKind.Carry when effect.IsCertain && index != casterIndex && fighters[casterIndex].Cell is not Combatant.NoCell && Carrying.CanBeCarried(fighters, target) && _rules.StatesLetCarry(target) && !Carrying.Carries(fighters, fighters[casterIndex].Id):
                 (fighters[casterIndex], fighters[index]) = Carrying.Carry(fighters[casterIndex], target);
                 break;
         }

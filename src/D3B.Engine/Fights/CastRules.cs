@@ -32,6 +32,13 @@ public sealed class CastRules
     private const int BombSummon = 1008;
     private const int MaxBombs = 93;
 
+    // A state's effects that keep its fighter from being moved and from being carried, as the references read them, and the
+    // states Enraciné and Pesanteur, which the owner says keep it from being carried though the pack gives them neither (D483).
+    private const int CantBeMovedEffect = 3;
+    private const int CantBeCarriedEffect = 4;
+    private const int RootedState = 6;
+    private const int GravityState = 7;
+
     private static readonly int[] _summons = [181, 1011];
 
     private readonly SpellCatalog _spells;
@@ -387,6 +394,36 @@ public sealed class CastRules
         {
             if (Has(state, SpellStateProperties.CantBeMoved) || Has(state, SpellStateProperties.CantBePushed))
                 return false;
+        }
+
+        return true;
+    }
+
+    /// <summary>Tells whether a fighter's states let it be carried: none of them keeps it from being moved or carried, nor is Enraciné or Pesanteur.</summary>
+    /// <param name="fighter">The fighter.</param>
+    /// <returns>Whether its states let it be carried.</returns>
+    /// <remarks>
+    /// The references read a state's effects so (D483): in the pack of 3.7.14.18, the 22 states that cannot be moved hold the
+    /// first, and 5 others the second, Lourd (63) and the carrier's among them. Enraciné (6) and Pesanteur (7) hold neither;
+    /// the owner says neither is carried in the game. No capture holds a carry tried on such a fighter.
+    /// </remarks>
+    public bool StatesLetCarry(Combatant fighter)
+    {
+        ArgumentNullException.ThrowIfNull(fighter);
+
+        foreach (var state in fighter.States)
+        {
+            if (state is RootedState or GravityState)
+                return false;
+
+            if (!_states.TryGetState(state, out var found))
+                continue;
+
+            foreach (var effect in _states.EffectsOf(found))
+            {
+                if (effect is CantBeMovedEffect or CantBeCarriedEffect)
+                    return false;
+            }
         }
 
         return true;

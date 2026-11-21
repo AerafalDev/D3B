@@ -92,7 +92,7 @@ public sealed class UpdatesViewModelTests
         var main = new MainViewModel(runner, _localizer, null, new AppUpdates(new FakeUpdateClient()));
 
         runner.Start();
-        await Waiting.UntilAsync(() => runner.Status is HostStatus.Failed, TimeSpan.FromSeconds(10));
+        await Waiting.UntilAsync(() => runner.Status is HostStatus.Failed);
         main.Refresh();
 
         Assert.True(main.IsMissingBuild);
@@ -106,7 +106,7 @@ public sealed class UpdatesViewModelTests
         var main = new MainViewModel(runner, _localizer, null, new AppUpdates(new FakeUpdateClient { IsInstalled = false }));
 
         runner.Start();
-        await Waiting.UntilAsync(() => runner.Status is HostStatus.Failed, TimeSpan.FromSeconds(10));
+        await Waiting.UntilAsync(() => runner.Status is HostStatus.Failed);
         main.Refresh();
 
         Assert.False(main.IsMissingBuild);

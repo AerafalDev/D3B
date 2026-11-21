@@ -814,6 +814,11 @@ or refines another says so in its own entry. Add a line here with every new deci
 - [D482](decisions/d482-group-exchange-one-request.md#d482-a-follower-moves-its-whole-stacks-into-the-exchange-in-one-request-a-part-of-a-stack-by-a-move) A follower moves its whole stacks into the exchange in one request, a part of a stack by a move (2026-11-21)
   - A move a stack with a shorter wait, the empty request not paired, every stack by the transfer.
 
+## Fights, a carry and the states that forbid it (D483)
+
+- [D483](decisions/d483-carry-states.md#d483-a-carry-takes-no-fighter-whose-state-keeps-it-from-being-moved-or-carried-nor-one-enraciné-or-under-pesanteur) A carry takes no fighter whose state keeps it from being moved or carried, nor one Enraciné or under Pesanteur (2026-11-21)
+  - Bubble's reading alone, the cast refused in the rules, the flag "cannot be moved" alone.
+
 ## Activities, the wait for a busy character bounded (D484)
 
 - [D484](decisions/d484-busy-wait-bounded.md#d484-a-character-busy-a-minute-at-a-steps-start-is-put-back-in-order-and-still-busy-a-minute-later-the-harvest-or-the-hunt-fails-saying-why) A character busy a minute at a step's start is put back in order, and still busy a minute later the harvest or the hunt fails saying why (2026-11-21)
