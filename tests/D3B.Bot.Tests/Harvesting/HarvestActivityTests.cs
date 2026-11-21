@@ -12,6 +12,7 @@ using D3B.Bot.Localization;
 using D3B.Bot.Runtime;
 using D3B.Bot.Tests.Movement;
 using D3B.Bot.Tests.Runtime;
+using D3B.Data.Tests;
 using D3B.Protocol.Game;
 
 namespace D3B.Bot.Tests.Harvesting;
@@ -36,7 +37,7 @@ public sealed class HarvestActivityTests : IAsyncDisposable
 
     private static async Task<ActivityReport> ReportedAsync(BotActivity activity, Func<ActivityReport, bool> condition)
     {
-        var deadline = DateTime.UtcNow + TimeSpan.FromSeconds(10);
+        var deadline = DateTime.UtcNow + Polling.Deadline;
 
         while (activity.Report is not { } report || !condition(report))
         {
@@ -49,7 +50,7 @@ public sealed class HarvestActivityTests : IAsyncDisposable
 
     private static async Task WaitForAsync(Func<bool> condition)
     {
-        var deadline = DateTime.UtcNow + TimeSpan.FromSeconds(10);
+        var deadline = DateTime.UtcNow + Polling.Deadline;
 
         while (!condition())
         {
@@ -728,7 +729,7 @@ public sealed class HarvestActivityTests : IAsyncDisposable
         connection.Server(new LifeRegenEndEvent { Life = 416, MaxLife = 1_000 });
 
         // Nothing left that heals: the life regenerates, the potion left alone.
-        var deadline = DateTime.UtcNow + TimeSpan.FromSeconds(10);
+        var deadline = DateTime.UtcNow + Polling.Deadline;
 
         while (activity.Report is not { } report || !Say(report.Doing).StartsWith("Waiting for its life to regenerate", StringComparison.Ordinal))
         {

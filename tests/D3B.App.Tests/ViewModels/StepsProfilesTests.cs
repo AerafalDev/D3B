@@ -67,7 +67,7 @@ public sealed class StepsProfilesTests : IAsyncDisposable
         Assert.True(dialog.CanCreate);
 
         dialog.CreateCommand.Execute(null);
-        await Waiting.UntilAsync(() => opened.Count == 2, TimeSpan.FromSeconds(10));
+        await Waiting.UntilAsync(() => opened.Count == 2);
 
         var profile = Assert.IsType<ProfileViewModel>(page.Editing);
         var list = Assert.Single(sequences.Open);

@@ -2,6 +2,7 @@ using D3B.Bot.Activities;
 using D3B.Bot.Harvesting;
 using D3B.Bot.Interactives;
 using D3B.Bot.Tests.Runtime;
+using D3B.Data.Tests;
 using D3B.Protocol.Game;
 using Microsoft.Extensions.Time.Testing;
 
@@ -13,7 +14,7 @@ public sealed class RegrowthsTests
 
     private static async Task UntilAsync(Func<bool> condition)
     {
-        var deadline = DateTime.UtcNow + TimeSpan.FromSeconds(10);
+        var deadline = DateTime.UtcNow + Polling.Deadline;
 
         while (!condition())
         {

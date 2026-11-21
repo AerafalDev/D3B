@@ -2,6 +2,7 @@ using D3B.Bot.Activities;
 using D3B.Bot.Journal;
 using D3B.Bot.Runtime;
 using D3B.Bot.Tests.Runtime;
+using D3B.Data.Tests;
 using D3B.Protocol.Game;
 
 namespace D3B.Bot.Tests.Activities;
@@ -51,12 +52,13 @@ public sealed class ActivityRunTests : IAsyncDisposable
         connection.Server(new KamasUpdateEvent { Kamas = 1 });
         await WaitForAsync(() => run.Steps is 1);
 
-        // The client's display time at least, measured: the next step starts once it passed.
+        // The client's display time at least, measured: the next step starts once it passed. The pause starts a moment after
+        // the count went up, so the clock then moves a step at a time: moved once, it could move before the pause began.
         _play.Time.Advance(BotDelays.Measured.BetweenSteps - TimeSpan.FromMilliseconds(1));
         await Task.Delay(20, TestContext.Current.CancellationToken);
         Assert.Equal(1, activity.Started);
 
-        _play.Time.Advance(TimeSpan.FromMilliseconds(1));
+        await _play.AdvanceUntilAsync(() => activity.Started == 2, TimeSpan.FromMilliseconds(50));
 
         Assert.Equal(2, await activity.SteppingAsync(bot));
         run.Stop();
@@ -265,7 +267,7 @@ public sealed class ActivityRunTests : IAsyncDisposable
         connection.Server(new MapCurrentEvent { MapId = TestPlay.MapId });
         connection.Server(TestPlay.Information(358));
         await bot.ProcessedAsync();
-        _play.Time.Advance(BotDelays.Measured.BetweenSteps);
+        await _play.AdvanceUntilAsync(() => activity.Started == 2, TimeSpan.FromMilliseconds(500));
 
         Assert.Equal(2, await activity.SteppingAsync(bot));
         Assert.Equal([Interruption.Fight], activity.Interruptions);
@@ -371,7 +373,7 @@ public sealed class ActivityRunTests : IAsyncDisposable
 
     private static async Task WaitForAsync(Func<bool> condition)
     {
-        var deadline = DateTime.UtcNow + TimeSpan.FromSeconds(10);
+        var deadline = DateTime.UtcNow + Polling.Deadline;
 
         while (!condition())
         {

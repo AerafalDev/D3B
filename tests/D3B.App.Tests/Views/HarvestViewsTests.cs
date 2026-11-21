@@ -337,7 +337,7 @@ public sealed class HarvestViewsTests : IAsyncDisposable
         var (_, bot) = await _play.EnterAsync(433);
         var run = bot.StartActivity(definition.Create(host.Services, new HarvestSettings { Resources = [TestPlay.Ash, TestPlay.Chestnut], SubAreas = [TestPlay.SubAreaId] }));
 
-        await Waiting.UntilAsync(() => run.Activity.Report?.Focus?.TargetElementId is not null, TimeSpan.FromSeconds(10));
+        await Waiting.UntilAsync(() => run.Activity.Report?.Focus?.TargetElementId is not null);
 
         var (english, french, map, icons) = await OnTheUIThreadAsync(() =>
         {

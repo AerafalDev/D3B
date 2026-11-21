@@ -1,5 +1,6 @@
 using System.Net;
 using System.Net.Sockets;
+using D3B.Data.Tests;
 using D3B.Network.Relay;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -11,8 +12,6 @@ namespace D3B.Network.Tests.Relay;
 internal sealed class TestRelay : IAsyncDisposable
 {
     public const string Host = "connection.test";
-
-    private static readonly TimeSpan _timeout = TimeSpan.FromSeconds(30);
 
     private readonly ServiceProvider _services;
     private readonly RelayServer _server;
@@ -41,9 +40,10 @@ internal sealed class TestRelay : IAsyncDisposable
     /// <param name="capturesDirectory">Where captures go, or null when none is recorded.</param>
     /// <param name="interceptor">What watches the connections.</param>
     /// <param name="findingGameServers">Whether game connections find their server through the selections, as the host's do, rather than the test's server always.</param>
-    /// <param name="holdTimeout">How long a frame is held, half a second by default.</param>
+    /// <param name="holdTimeout">How long a frame is held, five seconds by default: far past what a test's frame takes to come whole on a loaded machine, so only a test of the hold's end sets it.</param>
     /// <param name="recordsCaptures">Whether connections are recorded in the captures directory, or it only holds what was left there.</param>
-    public static async Task<TestRelay> StartAsync(bool withServer = true, string? capturesDirectory = null, IRelayInterceptor? interceptor = null, bool findingGameServers = false, TimeSpan? holdTimeout = null, bool recordsCaptures = true)
+    /// <param name="time">The relay's clock, the machine's by default.</param>
+    public static async Task<TestRelay> StartAsync(bool withServer = true, string? capturesDirectory = null, IRelayInterceptor? interceptor = null, bool findingGameServers = false, TimeSpan? holdTimeout = null, bool recordsCaptures = true, TimeProvider? time = null)
     {
         var upstream = new TcpListener(IPAddress.Loopback, 0);
 
@@ -60,12 +60,16 @@ internal sealed class TestRelay : IAsyncDisposable
             RecordsGame = capturesDirectory is not null && recordsCaptures,
             RecordsConnection = capturesDirectory is not null && recordsCaptures,
             CloseTimeout = TimeSpan.FromSeconds(2),
-            HoldTimeout = holdTimeout ?? TimeSpan.FromMilliseconds(500),
+            HoldTimeout = holdTimeout ?? TimeSpan.FromSeconds(5),
         };
         var log = new FakeLogCollector();
         var collection = new ServiceCollection()
-            .AddLogging(logging => logging.AddProvider(new FakeLoggerProvider(log)))
-            .AddRelay(settings, _ => "3.7.12.12");
+            .AddLogging(logging => logging.AddProvider(new FakeLoggerProvider(log)));
+
+        if (time is not null)
+            collection.AddSingleton(time);
+
+        collection.AddRelay(settings, _ => "3.7.12.12");
 
         if (!findingGameServers)
             collection.AddSingleton<IUpstreamLocator>(new FixedUpstreamLocator(withServer ? new Upstream(Host, [(IPEndPoint)upstream.LocalEndpoint]) : null));
@@ -88,7 +92,7 @@ internal sealed class TestRelay : IAsyncDisposable
 
         while (true)
         {
-            var read = await socket.ReceiveAsync(buffer, TestContext.Current.CancellationToken).AsTask().WaitAsync(_timeout, TestContext.Current.CancellationToken);
+            var read = await socket.ReceiveAsync(buffer, TestContext.Current.CancellationToken).AsTask().WaitAsync(Polling.Deadline, TestContext.Current.CancellationToken);
 
             if (read is 0)
                 return bytes.ToArray();
@@ -104,7 +108,7 @@ internal sealed class TestRelay : IAsyncDisposable
 
         while (read < count)
         {
-            var received = await socket.ReceiveAsync(bytes.AsMemory(read), TestContext.Current.CancellationToken).AsTask().WaitAsync(_timeout, TestContext.Current.CancellationToken);
+            var received = await socket.ReceiveAsync(bytes.AsMemory(read), TestContext.Current.CancellationToken).AsTask().WaitAsync(Polling.Deadline, TestContext.Current.CancellationToken);
 
             if (received is 0)
                 throw new EndOfStreamException($"The connection closed after {read} of {count} bytes.");
@@ -137,7 +141,7 @@ internal sealed class TestRelay : IAsyncDisposable
     /// <summary>Accepts the relay's connection to the test's server.</summary>
     public async Task<Socket> AcceptAsync()
     {
-        return await _upstream.AcceptSocketAsync(TestContext.Current.CancellationToken).AsTask().WaitAsync(_timeout, TestContext.Current.CancellationToken);
+        return await _upstream.AcceptSocketAsync(TestContext.Current.CancellationToken).AsTask().WaitAsync(Polling.Deadline, TestContext.Current.CancellationToken);
     }
 
     /// <summary>Waits until the relay has logged a message.</summary>
@@ -145,7 +149,7 @@ internal sealed class TestRelay : IAsyncDisposable
     {
         using var timeout = CancellationTokenSource.CreateLinkedTokenSource(TestContext.Current.CancellationToken);
 
-        timeout.CancelAfter(_timeout);
+        timeout.CancelAfter(Polling.Deadline);
 
         while (!Log.GetSnapshot().Any(predicate))
             await Task.Delay(20, timeout.Token);

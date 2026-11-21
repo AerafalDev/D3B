@@ -98,7 +98,7 @@ public sealed class StudioViewsTests : IAsyncDisposable
         // The pause goes through the bot's loop: once there, play and stop show.
         var bot = Assert.Single(_play.Bots.All);
 
-        await Waiting.UntilAsync(() => bot.IsPaused, TimeSpan.FromSeconds(10));
+        await Waiting.UntilAsync(() => bot.IsPaused);
 
         var resumed = await OnTheUIThreadAsync(() =>
         {

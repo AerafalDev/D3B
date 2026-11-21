@@ -22,19 +22,6 @@ public sealed class BehaviorSequencesTests : IAsyncDisposable
         return new NodeCall(node, Values(values));
     }
 
-    // The clock moves until the condition holds: a wait registers its timer a moment after the step before it is journaled.
-    private async Task AdvanceUntilAsync(Func<bool> condition)
-    {
-        var deadline = DateTime.UtcNow + TimeSpan.FromSeconds(10);
-
-        while (!condition())
-        {
-            Assert.True(DateTime.UtcNow < deadline, "The condition did not hold in time.");
-            _behaviors.Play.Time.Advance(TimeSpan.FromSeconds(5));
-            await Task.Delay(5, TestContext.Current.CancellationToken);
-        }
-    }
-
     private static BehaviorAsset Empty()
     {
         return new BehaviorAsset { Id = AssetLibrary.NewId(), Name = "List" };
@@ -222,7 +209,7 @@ public sealed class BehaviorSequencesTests : IAsyncDisposable
         var run = await _behaviors.StartAsync(bot, behavior);
 
         await UntilAsync(() => Notes(bot).Count == 1);
-        await AdvanceUntilAsync(() => run.Completion.IsCompleted);
+        await _behaviors.Play.AdvanceUntilAsync(() => run.Completion.IsCompleted, TimeSpan.FromSeconds(5));
 
         Assert.Equal(ActivityOutcome.Done, await run.Completion);
         Assert.Equal(["first", "second"], Notes(bot));
@@ -238,7 +225,7 @@ public sealed class BehaviorSequencesTests : IAsyncDisposable
         var run = await _behaviors.StartAsync(bot, behavior);
 
         await UntilAsync(() => Notes(bot).Count == 1);
-        await AdvanceUntilAsync(() => Notes(bot).Count >= 2);
+        await _behaviors.Play.AdvanceUntilAsync(() => Notes(bot).Count >= 2, TimeSpan.FromSeconds(5));
         run.Stop();
         await run.Completion;
 

@@ -527,6 +527,26 @@ internal sealed class TestPlay : IAsyncDisposable
         return path.Steps[0];
     }
 
+    /// <summary>Moves the clock a step at a time until a condition holds, whenever the delays it waits for started.</summary>
+    /// <param name="condition">What is waited for.</param>
+    /// <param name="step">How far the clock moves each time: shorter than any delay that must not pass once the condition holds.</param>
+    /// <remarks>
+    /// A delay starts on the bot's thread a moment after what the test sees: a wait registers its timer once the step before
+    /// it is journaled, the pause between steps once the step's count went up. Moved once, the clock can move before the
+    /// timer exists, which then waits a whole delay that never comes.
+    /// </remarks>
+    public async Task AdvanceUntilAsync(Func<bool> condition, TimeSpan step)
+    {
+        var deadline = DateTime.UtcNow + Polling.Deadline;
+
+        while (!condition())
+        {
+            Assert.True(DateTime.UtcNow < deadline, "The condition did not hold in time.");
+            Time.Advance(step);
+            await Task.Delay(5, TestContext.Current.CancellationToken);
+        }
+    }
+
     public async ValueTask DisposeAsync()
     {
         await Bots.DisposeAsync();
