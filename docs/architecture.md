@@ -281,7 +281,7 @@ The bots run in `D3B.Bot`: what each part does today, with the decisions that ma
   (`FightEndEntry`). The client acknowledges the sequences and says it is ready for each turn by itself; the bot sends
   nothing in a fight until 9e. Since 9d (D193), each fighter also holds its characteristics as the server last gave them,
   its buffs (`FightBuff`), from which its states and spells' modifiers come, each ending as the turn the server named
-  begins or as the server ends it (`FightBuffEndEvent`, D225), its cooldowns, the casts it chose (`CastHistory`), and who carries it; the state holds the sequences open
+  begins or as the server ends it (`FightBuffEndEvent`, D225), its cooldowns, each spell as the server last named it (D480), the casts it chose (`CastHistory`), and who carries it; the state holds the sequences open
   (`FightSequence`), and moves a fighter on a slide, a carry and a throw. `FightCombatants` gives the engine the fighters.
   Since 9e (D199, D203), the character's state holds its spells as the server listed them and its transformed form's, the
   fight's state the spells the server's context lists for the fight, the character's own and not a summon's it controls

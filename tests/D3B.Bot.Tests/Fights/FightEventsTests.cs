@@ -777,6 +777,24 @@ public sealed class FightEventsTests
     }
 
     [Fact]
+    public void ACooldownTheServerGivesAloneKeepsTheSpellsItLeavesOut()
+    {
+        // Measured on the captures of 2026-11-20 and 21 (D480): a Zobal putting on Pleutre is told Intrépide's mask waits a
+        // round, then its variant does, each alone; the AI then cast Intrépide's 133 times and the server refused it.
+        var masked = Apply(
+            Playing(),
+            new RefreshCooldownEvent { FighterId = Self, Cooldowns = { new FightSpellCooldown { SpellId = 13_386, Rounds = 1 } } },
+            new RefreshCooldownEvent { FighterId = Self, Cooldowns = { new FightSpellCooldown { SpellId = 13_409, Rounds = 1 } } },
+            new RefreshCooldownEvent { FighterId = Self });
+
+        Assert.Equal([KeyValuePair.Create(13_386, 1), KeyValuePair.Create(13_409, 1)], masked.Fight!.Fighters[Self].Cooldowns.ToArray());
+
+        var ended = Apply(masked, new RefreshCooldownEvent { FighterId = Self, Cooldowns = { new FightSpellCooldown { SpellId = 13_386 }, new FightSpellCooldown { SpellId = 13_409 } } });
+
+        Assert.Equal([KeyValuePair.Create(13_386, 0), KeyValuePair.Create(13_409, 0)], ended.Fight!.Fighters[Self].Cooldowns.ToArray());
+    }
+
+    [Fact]
     public void ASlideMovesItsFighterACarryTakesItOffItsCellAndAThrowLandsItWithoutTheCarrysStates()
     {
         var slid = Apply(Playing(), new GameActionFightEvent { ActionId = 5, SourceId = Self, Slide = new FightSlide { TargetId = Monster, FromCell = 385, ToCell = 399 } });
