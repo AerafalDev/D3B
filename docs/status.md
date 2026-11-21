@@ -360,9 +360,18 @@ Q16 (casts and walks the server refuses that the rules allow), Q17 (a build that
   with their tests; `Allows` and `Character` are alive.
 - `docs/decisions/` is cut in files by group of the index, about 100 KB at most each (D401): read the index, then the file of the area worked on.
 - The tests under load (2026-11-20): a test host that hangs, killed or timed out, leaves the summary's `failed` at 0 and lowers
-  its `total`, the lost host counted only on its `error` line: read that line before trusting a count. One cause is fixed (a
-  fight's pilot left waiting as its bot stopped held `Bots.DisposeAsync` forever). Seen once each under load and not fixed:
-  `BehaviorActivityTests.AListThatRepeatsReportsItsFirstStepAgainWhenItStartsOver` timing out (it advances the fake clock
-  once the run is stepping, perhaps before its wait step set its timer), and `D3B.Studio.Tests` ending with zero tests and
-  exit code 1, not explained; its host also hung once for 14 minutes during a full run beside other sessions' replays,
-  its 224 tests passing in 2 s when run again alone.
+  its `total`, the lost host counted only on its `error` line: read that line before trusting a count. CI now keeps a dump
+  of a host that hangs five minutes or crashes (the `test-dumps` artifact). Fixed: a fight's pilot left waiting as its bot
+  stopped held `Bots.DisposeAsync` forever; and, on 2026-11-21, a test moving the fake clock once just after it saw a step
+  end, before the delay that followed set its timer, which then waited for a clock that never moved again:
+  `BehaviorActivityTests.AListThatRepeatsReportsItsFirstStepAgainWhenItStartsOver` and eight more of its class, one of
+  `FollowRouteTests`, two of `ActivityRunTests`. Eight of them then awaited the run's end or its next step with no deadline,
+  which hangs the host rather than failing a test: the likely cause of `D3B.Studio.Tests`' 14-minute hang. And
+  `HarvestViewsTests.AGivenProfileIsReadOnlyAndItsCopyIsTheProjectsOwnWithItsValues`, which hung three runs of six under
+  load: its asynchronous block was dispatched as a value, so what it resumed after a save ending late went to an interface
+  thread no longer running it. Not explained: `D3B.Studio.Tests` once ending with zero tests and exit code 1; its next
+  occurrence leaves a dump. Seen failing under load (ten test hosts at once) and not fixed:
+  `GroupGateTests.AFollowerOnTheMapButOutOfThePartyIsWaitedForAndInvitedAgainEveryTenSeconds` (seven runs of twenty-one, its
+  clock read some tenths late as the bot lags), two of `GroupFightTests` and
+  `FrameRecorderTests.ABotsFramesAreRecordedFromItsConnectionsFirstFrameBothSidesAndD3BsOwn` once each; the group and
+  fight tests move the clock once after a settle in about 25 places, not looked at.

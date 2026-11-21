@@ -39,7 +39,7 @@ public sealed class FollowRouteTests : IAsyncDisposable
         Assert.Equal((route.Id, 0, 0, 1), (position.Route, position.Anchor, position.Played, position.Actions));
         Assert.Equal(0, run.Activity.Report?.Progress?.Done);
 
-        _behaviors.Play.Time.Advance(TimeSpan.FromSeconds(60));
+        await _behaviors.Play.AdvanceUntilAsync(() => run.Completion.IsCompleted, TimeSpan.FromSeconds(60));
 
         Assert.Equal(ActivityOutcome.Done, await run.Completion);
         Assert.Null(runs.Position(bot.State.Key));
@@ -66,11 +66,7 @@ public sealed class FollowRouteTests : IAsyncDisposable
         var run = await _behaviors.StartAsync(bot, Behavior(
             new BehaviorState("only", "Only") { Actions = Chain(Node("f", RouteActions.Follow, ("Route", route.Id)) with { Repeat = StepRepeat.Times(2) }, Note("b", "after")) }));
 
-        while (!run.Completion.IsCompleted)
-        {
-            _behaviors.Play.Time.Advance(TimeSpan.FromSeconds(1));
-            await Task.Delay(5, TestContext.Current.CancellationToken);
-        }
+        await _behaviors.Play.AdvanceUntilAsync(() => run.Completion.IsCompleted, TimeSpan.FromSeconds(1));
 
         Assert.Equal(ActivityOutcome.Done, await run.Completion);
 

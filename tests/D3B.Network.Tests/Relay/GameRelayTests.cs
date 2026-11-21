@@ -69,7 +69,7 @@ public sealed class GameRelayTests
     [Fact]
     public async Task AGameConnectionSendingNoWholeFrameInTimeIsClosed()
     {
-        await using var relay = await TestRelay.StartAsync(findingGameServers: true);
+        await using var relay = await TestRelay.StartAsync(findingGameServers: true, holdTimeout: TimeSpan.FromMilliseconds(500));
 
         relay.Selections.Add(Ticket, "localhost", [relay.UpstreamPort]);
 
