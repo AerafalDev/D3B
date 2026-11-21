@@ -312,6 +312,7 @@ it grows. A client update before a session gets Q10's session first.
 | 10g | The fight's turns faster, the owner's report from game of 2026-11-21: the pace before each action 0.3 s instead of 0.8 s, none before the turn's end (D479), measured on the day's captures (a turn 3.7 to 5.2 s halfway for 2 to 3.5 actions) | Done on the fake game, to see in game: a turn of three actions about 1.5 s shorter |
 | 10h | A character no longer striking its allies, the owner's report from the group games of 2026-11-20 and 21: a blow on an ally costs what it takes, and a push a fighter stops strikes that fighter with half its own damage (D485), measured with `scripts/fights.cs --live` and `--turns` on the three runs' captures (the plans' blows on the other characters 12,035 to 2,581 in 6,074 turns) | Done in code and tests, to see in game in a group run |
 | 10i | The owner's report of a Pandawa casting spells off its element, measured with `scripts/fights.cs --turns` by breed on the captures of 20 and 21 November: a dispel, or a removal of a spell's buffs carrying its flag, no longer takes every buff of the fighter in the bot's fight state, the server ending those it takes and keeping Sobre (D486) | Done, to see in game on a Pandawa against monsters that dispel |
+| 10j | The AI's idle turns far from the enemies, left by the audit of the captures of 20 and 21 November (D480): a walk nearer the enemies the judge weighs better before the reply wins a tie within a point after it (D487), the far plans of nothing with no spell landing replayed from 182 to 132 | Done, to see in game: characters walking towards far monsters instead of passing |
 
 The captures 10a needs, made by the owner in game through the app, with two characters of their own (a master and a
 follower) on the same map, the capture of every connection on; a capture's content is never shown (only
@@ -405,7 +406,7 @@ follower) on the same map, the capture of every connection on; a capture's conte
   dialog or on a map not known yet. Busy a minute, the character is now put back in order as after an interruption; still busy
   a minute later, the activity fails saying what held, the owner's choices. Not seen on the 216 captures of 18 to 21 November.
   Left: seen in game, which needs the state to stick.
-- **A map action's cell crossed** (D487), another player's report of a character stuck then disconnected, made on
+- **A map action's cell crossed** (D488), another player's report of a character stuck then disconnected, made on
   2026-11-21 in code and tests from their two captures: in a mine, the harvest's walk to an ore crossed a map action's cell,
   the server moved the character on, the map was never gone through and the tour went round eight maps for 18 minutes. A walk
   out of fights now goes round the map's action cells when it can, a harvest cut so leaves its map gone through, and a tour

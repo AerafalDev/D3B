@@ -258,7 +258,7 @@ public sealed class HarvestActivityTests : IAsyncDisposable
     [Fact]
     public async Task AHarvestWhoseWalkTheServerCutsByMovingTheCharacterLeavesItsMapGoneThrough()
     {
-        // Measured in a mine (D487): the walk to the ore crossed a map action, and the server moved the character to the next
+        // Measured in a mine (D488): the walk to the ore crossed a map action, and the server moved the character to the next
         // map before it reached the ore; the map was never gone through, and the tour came back to it for 18 minutes.
         var (connection, bot) = await _play.EnterAsync(433);
         var activity = Activity(new HarvestSettings { Resources = [TestPlay.Ash], SubAreas = [TestPlay.SubAreaId] });

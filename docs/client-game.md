@@ -1576,7 +1576,7 @@ never a message's content.
 
 ## The game, a map action crossed
 
-Measured on 2026-11-21 for D487: two game connections of another player on 3.7.14.18, given to the owner, with
+Measured on 2026-11-21 for D488: two game connections of another player on 3.7.14.18, given to the owner, with
 `scripts/capture.cs --messages` and probes printing ids and counts only, never committed.
 
 - **A map action acts on a walk that crosses it.** On a mine's map, 168034306, D3B's walk from cell 457 to 297, to use an

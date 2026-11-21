@@ -18,7 +18,7 @@ public sealed class HarvestReporterTests : IAsyncDisposable
     [Fact]
     public void ATourThatWentRoundIsWarnedOfOnTheCardUntilTheNextHarvest()
     {
-        // D487: the tour gave up, and the card says why until something is harvested again.
+        // D488: the tour gave up, and the card says why until something is harvested again.
         var settings = new HarvestSettings { Resources = [TestPlay.Ash], SubAreas = [TestPlay.SubAreaId] };
         var zone = HarvestZone.Of(settings, _play.World.Atlas, _play.World.Graph, _play.Tables.Jobs, _play.Maps);
         var current = new HarvestRotationZone(null, zone, new HarvestTour(new HarvestSightings(), new GraphicSkills()));

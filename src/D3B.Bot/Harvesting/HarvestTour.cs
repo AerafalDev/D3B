@@ -24,7 +24,7 @@ namespace D3B.Bot.Harvesting;
 /// </remarks>
 internal sealed class HarvestTour
 {
-    /// <summary>How many journeys in a row may arrive with nothing done since the one before, before the tour is said to go round (D487).</summary>
+    /// <summary>How many journeys in a row may arrive with nothing done since the one before, before the tour is said to go round (D488).</summary>
     public const int MostRounds = 3;
 
     private readonly HashSet<long> _visited = [];
@@ -46,7 +46,7 @@ internal sealed class HarvestTour
     /// <summary>Gets whether anything was harvested in this tour.</summary>
     public bool HasHarvested { get; private set; }
 
-    /// <summary>Gets how many journeys in a row arrived with nothing done since the one before: no harvest, and no map gone through, left out, crossed or zone entered (D487).</summary>
+    /// <summary>Gets how many journeys in a row arrived with nothing done since the one before: no harvest, and no map gone through, left out, crossed or zone entered (D488).</summary>
     public int IdleArrivals { get; private set; }
 
     /// <summary>Gets the vertices of the world graph, zones of maps already gone through, where a wanted resource was left that the character's own zone could not reach (D425).</summary>
@@ -243,7 +243,7 @@ internal sealed class HarvestTour
     /// <summary>Counts a journey of the tour that arrived.</summary>
     /// <returns>Whether the tour goes round: <see cref="MostRounds"/> journeys in a row arrived with nothing done since the one before.</returns>
     /// <remarks>
-    /// Measured in a mine (D487): each journey arrived on the map whose ore the character never reached, the server moving it on
+    /// Measured in a mine (D488): each journey arrived on the map whose ore the character never reached, the server moving it on
     /// as it walked there; the map was never gone through, and the tour went round its eight maps 58 times in 18 minutes, nothing
     /// harvested. Every journey of a tour otherwise ends on a map it goes through, harvests on, or leaves.
     /// </remarks>

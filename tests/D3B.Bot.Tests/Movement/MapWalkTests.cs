@@ -215,7 +215,7 @@ public sealed class MapWalkTests
     [Fact]
     public async Task AWalkGoesRoundTheCellOfAMapActionItOnlyCrosses()
     {
-        // Measured (D487): a walk crossing a map action's cell is cut there, the server moving the character to the next map.
+        // Measured (D488): a walk crossing a map action's cell is cut there, the server moving the character to the next map.
         await using var play = new TestPlay();
         const int from = TestPlay.ActionCell + 2;
         const int to = TestPlay.ActionCell - 2;

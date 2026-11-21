@@ -151,7 +151,7 @@ public sealed class WorldPathfinderTests
     [Fact]
     public void AMapsActionCellsAreThoseOfItsMapActionsAlone()
     {
-        // A map action's cell moves the character even when a walk only crosses it: measured on a mine's map (D487).
+        // A map action's cell moves the character even when a walk only crosses it: measured on a mine's map (D488).
         var pathfinder = Grid().MapAction(1, 9, 300).MapAction(1, 5, 310, "Pm=1").Interactive(1, 2, 288).ScrollAction(1, 2, 5, East, 27).Pathfinder();
 
         Assert.Equal([300, 310], pathfinder.ActionCells(1).Order());

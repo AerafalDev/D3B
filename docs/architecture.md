@@ -147,7 +147,7 @@ The bots run in `D3B.Bot`: what each part does today, with the decisions that ma
   walk goes in two, to the path's cell before its last, or a step aside first when it has one step. Out of fights every
   path goes round the map's action cells (`RoleplayPaths`, `WorldPathfinder.ActionCells`, the cells `CellPathfinder` avoids
   but as its start or destination), crossing one only when no other way is left: the server moves a character that only
-  crosses one, measured in a mine (D487).
+  crosses one, measured in a mine (D488).
 - **Using an element** (D75): `ElementUse`, in `D3B.Bot.Interactives`, walks to the nearest cell the client uses the
   element from, asks for the skill by the id the server gave it on the element, and waits for the start or the refusal,
   then for the end of a use that lasts, such as a harvest. Nothing is sent for an element the map does not offer the
@@ -272,7 +272,7 @@ The bots run in `D3B.Bot`: what each part does today, with the decisions that ma
   (D439): there the step takes the profile's resources once a tour and marks the map `HarvestTour.Cross`, apart from the maps
   gone through, so the tour's progress and `HasHarvested` stay the zone's. The journey to the bank stops nowhere.
   A use whose walk the server cut by moving the character to another map, as a map action's cell does, leaves the map it
-  began on gone through, or crossed out of the zone (D487). A tour whose journeys arrive three times in a row with nothing done since the one before
+  began on gone through, or crossed out of the zone (D488). A tour whose journeys arrive three times in a row with nothing done since the one before
   (`HarvestTour.Arrived`, `IdleArrivals`: no harvest, no map gone through, left out or crossed, no zone entered) goes round:
   it gives up its other maps and zones (`GiveUpRemaining`), ends as any other, and the journal (`TourGoneRound`) and the
   card (`HarvestReporter.RoundWarning`, until the next harvest) say so.
@@ -1167,7 +1167,8 @@ Pure logic with no I/O, in `D3B.Engine`, which references `D3B.Data` for the cel
     the spells' range and MP too (D472); the fighters read as the search left them, states that prevent casting
     or damage and invulnerability included, a spell its states forbid dealing nothing (D228), a buff worth what it does
     over the rounds it lasts (D209), a state the fighter held as the search began being no gain (D420); once the enemies
-    replied, the character's next turn searched (`Standing`, `NextTurnStart`, D210). `Threat` and `NextTurnDamage` give
+    replied, the character's next turn searched (`Standing`, `NextTurnStart`, D210), a walk nearer the enemies weighed better
+    before the reply winning a tie within a point with ending the turn now after it (`FightTactics`, D487). `Threat` and `NextTurnDamage` give
     the bench what it measures (D206). What it reckons once from where the fight starts and keeps is `JudgeTables` (each
     fighter's damaging spells, the damage of its best turn on every other for every number of AP, which spells land from where
     it walks), the odds are `JudgeOdds`, and the pure turn arithmetic is `JudgeTurns` (D399).
