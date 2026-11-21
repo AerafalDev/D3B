@@ -57,6 +57,9 @@ public static class FightCharacteristic
     /// <summary>The shield's points.</summary>
     public const int Shield = 96;
 
+    /// <summary>The resistance to every element in percent, added to each element's own (effects 1076 and 1077).</summary>
+    public const int ResistPercent = 101;
+
     /// <summary>The client's "Bonus de puissance pour les armes": a percentage added to a weapon's blow as power is.</summary>
     public const int WeaponPower = 103;
 

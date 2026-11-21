@@ -126,7 +126,7 @@ public static class ImaginedFights
 
             var kind = mark.Type is FightMarkType.Trap ? CellMarkKind.Trap : glyphs.KindOf(mark.SetterId, mark.SpellId);
 
-            marks.Add(new CellMark(mark.Id, mark.AuthorId, (int)mark.Team, kind, mark.SpellId, mark.Grade, mark.Centre, mark.Cells, mark.EndRound));
+            marks.Add(new CellMark(mark.Id, mark.AuthorId, (int)mark.Team, kind, mark.SpellId, mark.Grade, mark.Centre, mark.Cells, mark.EndRound) { IsUsed = mark.IsUsed });
         }
 
         return marks.DrainToImmutable();

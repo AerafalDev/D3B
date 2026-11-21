@@ -43,6 +43,11 @@ the Bubble emulator; the lead's plan, the owner's choice of all three. Builds D3
   on its cell or over the map, its author's alone, replaced; the elements combined; the server's rune known; a trap
   kept, set off by a walk and by a push that stops on it, a walk stopping on it, none set off by a trap set around a
   fighter; a Féca's glyphs triggered on their cell and kept.
+- **Measured with `scripts/fights.cs --turns`** on the 217 captures, against `main` at the session's start, each run on
+  its own tree: the Huppermage's 70 turns plan Runification 7 times instead of none, its damage foreseen 2,517 then 2,573,
+  its heals 18 then 47, the rune healing its allies, its kills over two turns 125 then 126, the life the reply takes 262
+  then 337; runes set by its plans 76, by its turns played 49. The Féca's 274 turns: damage over two turns 20,666 then
+  20,710, kills 230 then 231, plans of nothing 36 then 35. No other breed moved; searches 177 ms halfway as before.
 - **Left**: a rune or a trap left on the ground weighed for the rounds to come, as D288 weighs a glyph: the judge counts a
   rune only once a plan triggers it in the same turn, and a trap only as the reply walks onto it; the enemies' traps,
   which the server does not show; a glyph-aura's buffs taken back as a fighter leaves it; a rune triggered, a trap and

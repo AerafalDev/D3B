@@ -130,9 +130,14 @@ public sealed class Imagination
     {
         ArgumentNullException.ThrowIfNull(fight);
 
-        var walked = fight.With(fight.Actor with { Cell = cell, MovementPoints = left.MovementPoints, ActionPoints = left.ActionPoints });
+        // A walk that ends on an open portal comes out of the last of its chain, the two closed until a turn begins (D492).
+        var (at, through) = Portals.Moved(fight.Marks, fight.Fighters, fight.Actor, cell);
+        var walked = fight.With(fight.Actor with { Cell = at, MovementPoints = left.MovementPoints, ActionPoints = left.ActionPoints });
 
-        if (!_bombs.Any(walked.Fighters) && !HasAura(walked.Marks) && !Glyphs.TrapCells(walked.Marks).Contains(cell))
+        if (at != cell)
+            walked = walked with { Marks = through };
+
+        if (!_bombs.Any(walked.Fighters) && !HasAura(walked.Marks) && !Glyphs.TrapCells(walked.Marks).Contains(at))
             return walked;
 
         var fighters = new List<Combatant>(walked.Fighters);
@@ -192,6 +197,7 @@ public sealed class Imagination
             fighters[casterIndex] = ForgelanceLance.Thrown(fighters[casterIndex]);
 
         Marked(fight.Map, fighters, casterIndex, level, at, buffs, ref kept, marks);
+        ThroughPortals(fighters, fight.Fighters, marks);
 
         Walled(fight.Map, fighters, fight.Fighters, buffs, ref kept, marks);
         Entered(fight.Map, fighters, fight.Fighters, marks, buffs, ref kept);
@@ -221,9 +227,11 @@ public sealed class Imagination
 
         // Measured (9f4): the server took a glyph back as its author's turn began, after the glyphs struck that author. A portal
         // stays the whole fight, the server naming no end for it (D468).
-        var kept = struck.Marks.RemoveAll(mark => mark.AuthorId == fighterId && mark.EndRound <= round && mark.Kind is not (CellMarkKind.Portal or CellMarkKind.Trap));
+        // A portal a fighter went through opens again as any turn begins, as the references reopen it (D3, D492). A trap stays
+        // until it is set off (D493).
+        var kept = Portals.Reopened(struck.Marks.RemoveAll(mark => mark.AuthorId == fighterId && mark.EndRound <= round && mark.Kind is not (CellMarkKind.Portal or CellMarkKind.Trap)));
 
-        return kept.Length == struck.Marks.Length ? struck : struck with { Marks = kept };
+        return kept == struck.Marks ? struck : struck with { Marks = kept };
     }
 
     /// <summary>Gets the fight as a fighter's turn ends: the glyphs struck as a turn ends that cover its cell, struck on it.</summary>
@@ -235,6 +243,33 @@ public sealed class Imagination
         ArgumentNullException.ThrowIfNull(fight);
 
         return Struck(fight, fighterId, CellMarkKind.TurnEnd, walls: false);
+    }
+
+    private static void ThroughPortals(List<Combatant> fighters, ImmutableArray<Combatant> before, Ground ground)
+    {
+        // Measured on 3.7.14.18 (D492): a fighter a push or a pull left on an open portal came out of the last of its chain, 200
+        // slides of 224; one a cast moved otherwise is taken as one.
+        if (!ground.Marks.Exists(mark => mark.Kind is CellMarkKind.Portal))
+            return;
+
+        var marks = ground.Result;
+        var was = marks;
+
+        for (var index = 0; index < before.Length && index < fighters.Count; index++)
+        {
+            var moved = fighters[index];
+
+            if (moved.Id != before[index].Id || !moved.IsAlive || moved.Cell is Combatant.NoCell || moved.Cell == before[index].Cell)
+                continue;
+
+            var (cell, after) = Portals.Moved(marks, fighters, moved with { Cell = before[index].Cell }, moved.Cell);
+
+            fighters[index] = moved with { Cell = cell };
+            marks = after;
+        }
+
+        if (marks != was)
+            ground.Replace(marks);
     }
 
     private static bool HasAura(IEnumerable<CellMark> marks)
@@ -684,6 +719,15 @@ public sealed class Imagination
             case EffectKind.Pull when effect.IsCertain:
                 Slide(map, fighters, casterIndex, index, cell, value, away: false, across: Across(level, effect.EffectId), from: exit, marks: marks);
                 break;
+
+            // The references move the caster as the fighter reached would pull or push it (D3): towards it, stopping beside it,
+            // or away from it, a caster stopped short taking a push's damage as it would push itself.
+            case EffectKind.CasterPulled when effect.IsCertain && index != casterIndex && target.Cell is not Combatant.NoCell:
+                Slide(map, fighters, index, casterIndex, target.Cell, value, away: false);
+                break;
+            case EffectKind.CasterPushed when effect.IsCertain && index != casterIndex && target.Cell is not Combatant.NoCell:
+                Slide(map, fighters, index, casterIndex, target.Cell, value, away: true, itself: true);
+                break;
             case EffectKind.Swap when target.IsAlive && fighters[casterIndex].Cell is not Combatant.NoCell:
                 {
                     var from = fighters[casterIndex].Cell;
@@ -718,6 +762,13 @@ public sealed class Imagination
                     Modifiers = target.Modifiers.Add(modifier),
                     Buffs = effect.Duration is 0 ? target.Buffs : target.Buffs.Add(new HeldBuff(level.SpellId, effect.EffectId, modifier.SpellId, modifier.Value, fighters[casterIndex].Id)),
                 };
+                break;
+            // A share is a factor, not an amount: one only maybe given is left out rather than halved.
+            case EffectKind.ReceivedDamageShare when effect.IsCertain && !effect.IsRandom && effect.Value.Min > 0:
+                fighters[index] = target with { ReceivedDamageShares = target.ReceivedDamageShares.Add(effect.Value.Min) };
+                break;
+            case EffectKind.ReceivedDamageReduction when effect.IsCertain && !effect.IsRandom:
+                fighters[index] = target with { ReceivedDamageReduction = target.ReceivedDamageReduction + EffectFormulas.Reduction(effect.Value.Min, target.Level) };
                 break;
             case EffectKind.Kill:
                 fighters[index] = target with { Life = 0, IsAlive = false, Cell = Combatant.NoCell };
@@ -808,7 +859,7 @@ public sealed class Imagination
         return false;
     }
 
-    private void Slide(FightMap map, List<Combatant> fighters, int casterIndex, int index, int cell, int cells, bool away, bool upTo = false, bool across = false, bool harmless = false, int? from = null, Ground? marks = null)
+    private void Slide(FightMap map, List<Combatant> fighters, int casterIndex, int index, int cell, int cells, bool away, bool upTo = false, bool across = false, bool harmless = false, int? from = null, bool itself = false, Ground? marks = null)
     {
         var target = fighters[index];
         var caster = fighters[casterIndex];
@@ -874,13 +925,17 @@ public sealed class Imagination
 
         if (away && !harmless && blocked && walls?.Exists(wall => wall.Cell == position) is not true && !traps.Contains(position))
         {
-            fighters[index] = Hurt(fighters[index], EffectFormulas.PushDamage(cells - used, caster, caster.Level, target));
+            // Measured on the captures of 3.7.14.18: a caster its own cast moved away and stopped short took the push damage of
+            // its own level and bonus, not those of the fighter it moved away from.
+            var pusher = itself ? target : caster;
+
+            fighters[index] = Hurt(fighters[index], EffectFormulas.PushDamage(cells - used, pusher, pusher.Level, target));
 
             // Measured on the 213 captures of 3.7.14.18 (D485): the fighter right behind took half the push damage the formula
             // gives against itself, 932 times in 1,012 on the caster's other side, 692 in 756 on its own; a push into an ally
             // struck it unforeseen.
             if (stopper >= 0 && stopper != index)
-                fighters[stopper] = Hurt(fighters[stopper], EffectFormulas.PushDamage(cells - used, caster, caster.Level, fighters[stopper]) / 2);
+                fighters[stopper] = Hurt(fighters[stopper], EffectFormulas.PushDamage(cells - used, pusher, pusher.Level, fighters[stopper]) / 2);
         }
     }
 
@@ -1101,6 +1156,13 @@ public sealed class Imagination
         public void Remove(CellMark mark)
         {
             _changed |= Marks.Remove(mark);
+        }
+
+        public void Replace(ImmutableArray<CellMark> marks)
+        {
+            Marks.Clear();
+            Marks.AddRange(marks);
+            _changed = true;
         }
     }
 }

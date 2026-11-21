@@ -44,6 +44,7 @@ internal sealed class CastBench
     private readonly Dictionary<(long Fighter, int Spell), int> _turnsEnded = [];
     private readonly Dictionary<long, StruckBefore> _struckLast = [];
     private (long FighterId, int Cell, string What)? _turnBegun;
+    private (long FighterId, int Cell, int Foreseen, string How)? _onto;
     private Starting? _starting;
 
     public Tally Tally { get; } = new();
@@ -343,6 +344,8 @@ internal sealed class CastBench
         if (message is MapMovementEvent walked && walked.Cells.Count > 0 && fight.Phase is FightPhase.Fighting)
             Tally.Count($"positions: a walk from {(fight.Fighters.TryGetValue(walked.ActorId, out var walker) && walker.Cell == walked.Cells[0] ? "the cell the state holds" : "another cell")}");
 
+        Onto(fight, message);
+
         switch (message)
         {
             case GameActionFightEvent { ActionCase: GameActionFightEvent.ActionOneofCase.Cast } action when action.Cast.Spell is not null
@@ -354,7 +357,14 @@ internal sealed class CastBench
                 if (!chosen)
                 {
                     foreach (var cast in open)
+                    {
                         cast.TriggeredCasts++;
+
+                        // Measured (D492): each of an Eliotrope's casts through portals cast 14631 on it, 2% more damage and
+                        // heals dealt for 3 turns, effects 1171 and 2971.
+                        if (cast.Through is not null)
+                            Tally.Count($"casts through portals: casting spell {action.Cast.Spell?.SpellId}, by {(action.SourceId == cast.Caster.Id ? "the caster" : "another fighter")}");
+                    }
 
                     break;
                 }
@@ -384,6 +394,13 @@ internal sealed class CastBench
                     Tally.Count("casts: level or caster unknown");
 
                     break;
+                }
+
+                foreach (var effect in _blows.Spells.EffectsOf(level))
+                {
+                    // The portals' effects the spells cast hold (D468): 1181 sets one, 1182 sends a fighter through, 1183 closes.
+                    if (effect.EffectId is Portals.SetEffect or 1182 or Portals.CloseEffect)
+                        Tally.Count($"portals' effects cast: spell {level.SpellId}, effect {effect.EffectId} {effect.DiceNum}-{effect.DiceSide} value {effect.Value}, mask {_blows.Spells.TargetMaskOf(effect)}{((effect.Properties & SpellEffectProperties.ForClientOnly) is 0 ? "" : ", for the client only")}");
                 }
 
                 levels[(action.SourceId, level.SpellId)] = level;
@@ -493,6 +510,52 @@ internal sealed class CastBench
         }
     }
 
+    private void Onto(FightState fight, IMessage message)
+    {
+        // Where a fighter whose walk or slide ends on a portal's cell, or walks over one, ends, as the server teleports it before
+        // its next move, cast or turn's end, against where the engine foresees it (D492).
+        if (_onto is { } onto)
+        {
+            int? landed = message switch
+            {
+                GameActionFightEvent { ActionCase: GameActionFightEvent.ActionOneofCase.Teleport } teleported when teleported.Teleport.TargetId == onto.FighterId => teleported.Teleport.CellId,
+                MapMovementEvent or FightTurnEndEvent or GameActionFightEvent { ActionCase: GameActionFightEvent.ActionOneofCase.Cast or GameActionFightEvent.ActionOneofCase.Slide } => onto.Cell,
+                _ => null,
+            };
+
+            if (landed is { } cell)
+            {
+                var outcome = cell == onto.Foreseen ? onto.Foreseen == onto.Cell ? "stayed, as foreseen" : "teleported, as foreseen"
+                    : cell == onto.Cell ? "stayed, foreseen teleported" : onto.Foreseen == onto.Cell ? "teleported, foreseen staying" : "teleported elsewhere";
+
+                Tally.Count($"portals moved onto: {onto.How}, {outcome}");
+                _onto = null;
+            }
+        }
+
+        var (moverId, cells, kind) = message switch
+        {
+            MapMovementEvent { Cells.Count: > 0 } walk when fight.Phase is FightPhase.Fighting => (walk.ActorId, walk.Cells.ToList(), "a walk"),
+            GameActionFightEvent { ActionCase: GameActionFightEvent.ActionOneofCase.Slide } slide => (slide.Slide.TargetId, [slide.Slide.ToCell], "a slide"),
+            _ => (0L, new List<int>(), ""),
+        };
+
+        if (cells.Count is 0)
+            return;
+
+        var portal = fight.Marks.Values.FirstOrDefault(mark => mark.Type is FightMarkType.Portal && mark.Centre == cells[^1]);
+        var over = cells.Skip(1).SkipLast(1).Any(cell => fight.Marks.Values.Any(mark => mark.Type is FightMarkType.Portal && mark.Centre == cell));
+        var fighters = FightCombatants.Of(fight, _tables.Monsters);
+
+        if ((portal is null && !over) || fighters.FirstOrDefault(fighter => fighter.Id == moverId) is not { } moving)
+            return;
+
+        var foreseen = Portals.Moved(ImaginedFights.MarksOf(fight, _glyphs), fighters, moving, cells[^1]).Cell;
+        var how = portal is null ? "a walk over a portal on its way" : $"{kind} ending on a portal{((int)portal.Team == moving.Team ? " of its team" : " of the other team")}";
+
+        _onto = (moverId, cells[^1], foreseen, how);
+    }
+
     private static Combatant? OutOfFights(Combatant caster, CharacterState character)
     {
         // The character as the AI would see it with what the server gives out of fights only, when it changes something.
@@ -518,13 +581,14 @@ internal sealed class CastBench
     private (PortalPassage? Through, ImmutableArray<CellMark> Marks, int Cell) Through(FightState fight, IReadOnlyList<Combatant> fighters, Combatant caster, in SpellLevel level, GameActionFightEvent action, CharacterState? character)
     {
         // The way the engine foresees through the portals the server named, against the cell it announced and the last portal
-        // it named (D468): no capture of 3.7.13.17 or 3.7.14.18 holds one yet.
+        // it named (D468), 1,329 of 1,329 as named on the captures of 3.7.14.18 of 2026-11-18 to 21 (D492).
         if (action.Cast.Spell is not { PortalIds.Count: > 0 } spell)
             return (null, [], action.Cast.CellId);
 
         var who = caster.Id == character?.Key.CharacterId ? "the character" : caster.Team == (int)fight.Team ? "an ally" : "an enemy";
 
         Tally.Count($"casts through portals: by {who}, portals named {spell.PortalIds.Count}");
+        Tally.Count($"casts through portals: spell {level.SpellId}, by breed {caster.BreedId}");
 
         if (!fight.Marks.TryGetValue(spell.PortalIds[0], out var entry) || !fight.Marks.TryGetValue(spell.PortalIds[^1], out var last))
         {
@@ -538,6 +602,14 @@ internal sealed class CastBench
 
         Tally.Count($"casts through portals: the cell foreseen {(through is not { } way ? "none, no way found" : way.Target == action.Cast.CellId ? "as announced" : "otherwise")}");
         Tally.Count($"casts through portals: the exit foreseen {(through is { } exit && exit.Exit == last.Centre ? "as named" : "otherwise")}");
+
+        if (through is not { } seen || seen.Target != action.Cast.CellId || seen.Exit != last.Centre)
+        {
+            var named = string.Join(">", spell.PortalIds.Select(id => fight.Marks.TryGetValue(id, out var mark) ? mark.Centre : -1));
+            var set = string.Join(",", marks.Where(mark => mark.Kind is CellMarkKind.Portal).Select(mark => $"{mark.Centre}/t{mark.Team}"));
+
+            _details?.WriteLine($"through portals otherwise: spell {level.SpellId} by {who} from {caster.Cell} on {entry.Centre}, named {named}, landed {action.Cast.CellId}; foreseen exit {through?.Exit} landing {through?.Target}; portals {set}; fighters on {string.Join(",", fighters.Where(fighter => fighter.Cell >= 0).Select(fighter => fighter.Cell))}");
+        }
 
         if (through is { } found)
             Tally.Count("casts through portals: the bonus foreseen, in percent, summed", found.Bonus);
@@ -560,6 +632,16 @@ internal sealed class CastBench
 
         States(cast, after);
         Damage(cast, foreseen, alone);
+
+        // The share a cast through portals gains (D468), against the references' count, 2 more, and against none.
+        if (cast.Through is { } way)
+        {
+            Damage(cast, foreseen, $"through portals, {alone}, the bonus foreseen", main: false, details: true);
+            Damage(cast, _effects.Foresee(cast.Map, cast.Fighters, cast.Caster, cast.Level, cast.Cell, cast.Critical, way with { Bonus = way.Bonus + 2 }), $"through portals, {alone}, the bonus 2 more", main: false);
+            Damage(cast, _effects.Foresee(cast.Map, cast.Fighters, cast.Caster, cast.Level, cast.Cell, cast.Critical, way with { Bonus = 0 }), $"through portals, {alone}, no bonus", main: false);
+            Shares(cast, way, alone);
+        }
+
         Heals(cast, foreseen, alone);
 
         // The character's casts, foreseen from the characteristics the fight gives, then with heals and the critical hits'
@@ -575,12 +657,13 @@ internal sealed class CastBench
             Heals(cast, completed, $"the character's {kind}, out of fights", main: false);
         }
         Pushes(cast, foreseen);
+        LeftOut(cast);
         Points(cast, foreseen, alone);
         Buffs(cast, foreseen);
         Moves(cast, foreseen);
     }
 
-    private void Damage(Cast cast, IReadOnlyList<ForeseenEffect> foreseen, string alone, bool main = true)
+    private void Damage(Cast cast, IReadOnlyList<ForeseenEffect> foreseen, string alone, bool main = true, bool details = false)
     {
         var dealt = new Dictionary<(long Target, EffectElement Element), (int Total, bool Capped)>();
 
@@ -653,8 +736,48 @@ internal sealed class CastBench
                 Tally.Count($"{by}, dealt, summed", total);
             }
 
-            if (outcome is "below" or "above" && main)
-                _details?.WriteLine($"damage {outcome}: spell {cast.Level.SpellId} level {cast.Level.Id}{(cast.Critical ? " critical" : "")} element {key.Element}: {total} against {range.Min}..{range.Max}, {alone}; {Why(cast, foreseen, key.Target, key.Element)}");
+            if (outcome is "below" or "above" && (main || details))
+                _details?.WriteLine($"damage {outcome}{(details ? $" through portals, bonus {cast.Through?.Bonus}" : "")}: spell {cast.Level.SpellId} level {cast.Level.Id}{(cast.Critical ? " critical" : "")} element {key.Element}: {total} against {range.Min}..{range.Max}, {alone}; {Why(cast, foreseen, key.Target, key.Element)}");
+        }
+    }
+
+    private void Shares(Cast cast, PortalPassage way, string alone)
+    {
+        // The shares, in percent, that make each damage dealt through portals and not capped foreseen, against the one the
+        // engine counts (D468).
+        var dealt = cast.Actions.Where(action => action.ActionCase is GameActionFightEvent.ActionOneofCase.LifeLost && action.LifeLost.Element >= 0)
+            .GroupBy(action => (action.LifeLost.TargetId, Element: (EffectElement)action.LifeLost.Element))
+            .Select(group => (group.Key, Total: group.Sum(action => action.LifeLost.Loss + (action.LifeLost.HasShieldLoss ? action.LifeLost.ShieldLoss : 0))))
+            .Where(pair => !cast.Lives.TryGetValue(pair.Key.TargetId, out var lives) || pair.Total < lives.Life)
+            .ToList();
+
+        if (dealt.Count is 0)
+            return;
+
+        var fits = dealt.Select(_ => new List<int>()).ToList();
+
+        for (var share = 0; share <= 100; share++)
+        {
+            var foreseen = _effects.Foresee(cast.Map, cast.Fighters, cast.Caster, cast.Level, cast.Cell, cast.Critical, way with { Bonus = share });
+
+            for (var index = 0; index < dealt.Count; index++)
+            {
+                var (key, total) = dealt[index];
+                var effects = foreseen.Where(effect => effect.IsImmediate && effect.TargetId == key.TargetId && effect.Element == key.Element && effect.Action.Kind is EffectKind.Damage or EffectKind.Steal or EffectKind.FixedDamage).ToList();
+                var range = new LifeRange(effects.Where(effect => effect.IsCertain && !effect.IsRandom).Sum(effect => effect.Value.Min), effects.Sum(effect => effect.Value.Max));
+
+                if (effects.Count > 0 && range.Contains(total))
+                    fits[index].Add(share);
+            }
+        }
+
+        for (var index = 0; index < dealt.Count; index++)
+        {
+            var fit = fits[index];
+            var outcome = fit.Count is 0 ? "no share fits" : way.Bonus < fit[0] ? "the share foreseen below those that fit" : way.Bonus > fit[^1] ? "the share foreseen above those that fit" : "the share foreseen among those that fit";
+
+            Tally.Count($"casts through portals: damage not capped, {alone}, {outcome}");
+            _details?.WriteLine($"portal share, {alone}: spell {cast.Level.SpellId} level {cast.Level.Id}{(cast.Critical ? " critical" : "")} element {dealt[index].Key.Element}: dealt {dealt[index].Total}, share foreseen {way.Bonus}, fit {(fit.Count is 0 ? "none" : $"{fit[0]}..{fit[^1]}")}, from {cast.Caster.Cell} on {way.Entry} out of {way.Exit}");
         }
     }
 
@@ -680,6 +803,7 @@ internal sealed class CastBench
         return $"caster {(caster.IsCharacter ? "character" : caster.IsSummon ? "summon" : "monster")} lvl {caster.Level} c={caster.Characteristic(stat)} p={caster.Characteristic(25)} all={caster.Characteristic(16)} el={caster.Characteristic(88 + offset)} crit={caster.Characteristic(86)} [{changed}] mods {caster.Modifiers.Length}; "
             + $"all caster [{string.Join(",", caster.Characteristics.Where(pair => pair.Value != 0).Select(pair => $"{pair.Key}={pair.Value}"))}] losses [{string.Join(",", cast.Actions.Where(action => action.ActionCase is GameActionFightEvent.ActionOneofCase.LifeLost && action.LifeLost.TargetId == targetId && action.LifeLost.Element == (int)element).Select(action => $"{action.ActionId}:{action.LifeLost.Loss}+{action.LifeLost.ShieldLoss}"))}] "
             + $"caster buffs [{string.Join(",", cast.Held.GetValueOrDefault(caster.Id).Select(buff => $"{buff.ActionId}/{buff.Kind}:{buff.Value}"))}] target buffs [{string.Join(",", cast.Held.GetValueOrDefault(targetId).Select(buff => $"{buff.ActionId}/{buff.Kind}:{buff.Value}"))}] "
+            + $"reductions [{string.Join(",", cast.Held.GetValueOrDefault(targetId).Where(buff => buff.ActionId is 105 or 265).Select(buff => _blows.Spells.TryGetLevel(buff.SpellId, buff.Grade, out var held) ? $"{buff.ActionId}:v{buff.Value}p{buff.Parameter}:{SourceOf(held, buff.EffectUid).DiceNum}-{SourceOf(held, buff.EffectUid).DiceSide}/{SourceOf(held, buff.EffectUid).Value} t{_blows.Spells.TriggersOf(SourceOf(held, buff.EffectUid))} src{cast.Fighters.FirstOrDefault(f => f.Id == buff.SourceId)?.Level}" : "?"))}] tlvl {target.Level} "
             + $"target {(target.IsCharacter ? "character" : target.IsSummon ? "summon" : "monster")} res%={target.Characteristic(33 + offset)} fixed={target.Characteristic(54 + offset)} [{targetChanged}] away {(target.Cell < 0 ? -1 : MapGeometry.Distance(cast.Cell, target.Cell))} melee {(caster.Cell >= 0 && target.Cell >= 0 ? MapGeometry.Distance(caster.Cell, target.Cell) : -1)}; {rolls}";
     }
 
@@ -905,11 +1029,43 @@ internal sealed class CastBench
         return !cast.Map.IsWalkable(next) ? "not walkable" : cast.Fighters.Any(fighter => fighter.IsAlive && fighter.Cell == next) ? "a fighter" : "free";
     }
 
+    private void LeftOut(Cast cast)
+    {
+        // The effects the engine does not foresee (EffectKind.Other), by id, as the casts chosen hold them and as the server
+        // gives them as buffs: the weight of each in the fights played, which ranks what to model next.
+        var caster = cast.Caster.IsCharacter ? "a character" : cast.Caster.IsSummon ? "a summon" : "a monster";
+
+        foreach (var effect in cast.Critical && cast.Level.CriticalEffectCount > 0 ? _blows.Spells.CriticalEffectsOf(cast.Level) : _blows.Spells.EffectsOf(cast.Level))
+        {
+            if ((effect.Properties & SpellEffectProperties.ForClientOnly) is 0 && _actions.Of(effect.EffectId).Kind is EffectKind.Other)
+                Tally.Count($"effects left out, cast by {caster}: {effect.EffectId}");
+        }
+
+        foreach (var (actionId, buff) in cast.Buffs)
+        {
+            if (_actions.Of(actionId).Kind is EffectKind.Other)
+                Tally.Count($"effects left out, given as buffs by {caster}: {actionId}, {buff.Kind}");
+
+            if (actionId is 105 or 1163)
+                Tally.Count($"buffs on the damage received, their ends: {actionId}, {(buff.End is { Round: >= 0 } at ? $"{at.Round - cast.Round} rounds, {(at.Turn == cast.Turn ? "at the caster's turn" : "at another turn")}" : "the whole fight")}, the effect lasting {SourceOf(cast.Level, buff.EffectUid).Duration}, triggers {_blows.Spells.TriggersOf(SourceOf(cast.Level, buff.EffectUid))}");
+        }
+
+        foreach (var action in cast.Actions)
+        {
+            if (action.ActionCase is not (GameActionFightEvent.ActionOneofCase.LifeLost or GameActionFightEvent.ActionOneofCase.LifeGained or GameActionFightEvent.ActionOneofCase.Points))
+                Tally.Count($"actions announced, by kind and id: {action.ActionCase} {action.ActionId}");
+        }
+    }
+
     private void Points(Cast cast, IReadOnlyList<ForeseenEffect> foreseen, string alone)
     {
-        foreach (var (characteristic, lostId, dodgedId, name) in new[] { (1, 101, 308, "AP"), (23, 127, 309, "MP") })
+        foreach (var (characteristic, lostId, buffId, dodgedId, name) in new[] { (1, 101, 168, 308, "AP"), (23, 127, 169, 309, "MP") })
         {
-            var lost = cast.Actions.Where(action => action.ActionId == lostId && action.ActionCase is GameActionFightEvent.ActionOneofCase.Points).GroupBy(action => action.Points.TargetId).ToDictionary(group => group.Key, group => -group.Sum(action => action.Points.Delta));
+            // Measured on the captures of 3.7.14.18: a removal of 1079 or 1080 comes as a buff of 168 or 169 for the points left
+            // after the dodge, never as points lost; one of the fighter playing comes as points lost.
+            var lost = cast.Actions.Where(action => action.ActionId == lostId && action.ActionCase is GameActionFightEvent.ActionOneofCase.Points).Select(action => (Target: action.Points.TargetId, Points: -action.Points.Delta))
+                .Concat(cast.Buffs.Where(pair => pair.ActionId == buffId || pair.ActionId == lostId).Select(pair => (Target: pair.Buff.TargetId, Points: Math.Abs(pair.Buff.Value))))
+                .GroupBy(pair => pair.Target).ToDictionary(group => group.Key, group => group.Sum(pair => pair.Points));
             var dodged = cast.Actions.Where(action => action.ActionId == dodgedId && action.ActionCase is GameActionFightEvent.ActionOneofCase.PointsDodged).GroupBy(action => action.PointsDodged.TargetId).ToDictionary(group => group.Key, group => group.Sum(action => action.PointsDodged.Amount));
             var expected = foreseen.Where(effect => effect.IsImmediate && effect.Action.Kind is EffectKind.Deboost && effect.Action.Characteristic == characteristic)
                 .GroupBy(effect => effect.TargetId).ToDictionary(group => group.Key, group => new LifeRange(group.Sum(effect => effect.Value.Min), group.Sum(effect => effect.Value.Max)));
@@ -927,6 +1083,9 @@ internal sealed class CastBench
                 }
 
                 Tally.Count($"{name} removed, {alone}: {(range.Contains(taken + escaped) ? (escaped > 0 ? "within, some dodged" : "within") : taken + escaped < range.Min ? "below" : "above")}");
+
+                if (!range.Contains(taken + escaped))
+                    _details?.WriteLine($"{name} removed off: spell {cast.Level.SpellId} level {cast.Level.Id}: lost {taken} dodged {escaped} against {range.Min}..{range.Max}; effects [{string.Join(",", foreseen.Where(effect => effect.TargetId == target && effect.Action.Kind is EffectKind.Deboost && effect.Action.Characteristic == characteristic).Select(effect => $"{effect.EffectId}:{effect.Value.Min}-{effect.Value.Max}{(effect.IsImmediate ? "" : " later")}"))}] actions [{string.Join(",", cast.Actions.Where(action => action.ActionCase is GameActionFightEvent.ActionOneofCase.Points or GameActionFightEvent.ActionOneofCase.PointsDodged).Select(action => $"{action.ActionId}"))}]");
             }
         }
     }
@@ -949,6 +1108,31 @@ internal sealed class CastBench
         var imagined = _imagination.Cast(new ImaginedFight { Map = cast.Map, Fighters = [.. cast.Fighters], ActorId = cast.Caster.Id, Round = cast.Round, History = CastHistory.Empty, Marks = cast.Marks }, cast.Level, cast.Through?.Entry ?? cast.Cell);
         var casts = CastsSpells(cast.Level) ? "casting spells at once" : "casting none";
         int lostImagined = 0, lostAnnounced = 0;
+
+        // A cast moving its caster towards or away from the fighter it reaches (1042, 1041): the cell the caster ends on.
+        var moving = _blows.Spells.EffectsOf(cast.Level).ToArray().FirstOrDefault(effect => _actions.Of(effect.EffectId).Kind is EffectKind.CasterPulled or EffectKind.CasterPushed && (effect.Properties & SpellEffectProperties.ForClientOnly) is 0);
+
+        if (moving.EffectId is not 0 && after.Fighters.TryGetValue(cast.Caster.Id, out var landed) && landed.IsAlive && imagined.Find(cast.Caster.Id) is { } went)
+        {
+            var kind = _actions.Of(moving.EffectId).Kind is EffectKind.CasterPulled ? "towards" : "away";
+            var moved = landed.Cell != cast.Caster.Cell;
+            var hurt = cast.Actions.Any(action => action.ActionId is 80 && action.ActionCase is GameActionFightEvent.ActionOneofCase.LifeLost && action.LifeLost.TargetId == cast.Caster.Id);
+
+            Tally.Count($"the caster moved by its cast, {kind}: {(landed.Cell == went.Cell ? "on the cell imagined" : moved ? (went.Cell == cast.Caster.Cell ? "moved, imagined staying" : "on another cell") : "stayed, imagined moving")}{(hurt ? ", push damage on it" : "")}");
+
+            if (hurt)
+            {
+                var taken = cast.Actions.Where(action => action.ActionId is 80 && action.ActionCase is GameActionFightEvent.ActionOneofCase.LifeLost && action.LifeLost.TargetId == cast.Caster.Id).Sum(action => action.LifeLost.Loss + action.LifeLost.ShieldLoss);
+                var pusher = cast.Fighters.FirstOrDefault(fighter => fighter.Id != cast.Caster.Id && fighter.Cell == cast.Cell);
+                var imaginedLoss = cast.Caster.Life - went.Life;
+
+                Tally.Count($"the caster moved by its cast, away, its push damage: {(taken == imaginedLoss ? "as imagined" : "otherwise")}");
+                _details?.WriteLine($"caster push damage: spell {cast.Level.SpellId}, {moving.DiceNum} cells, {MapGeometry.Distance(cast.Caster.Cell, landed.Cell ?? cast.Caster.Cell)} moved: {taken} imagined {imaginedLoss}, caster lvl {cast.Caster.Level} bonus84 {cast.Caster.Characteristic(84)} res85 {cast.Caster.Characteristic(85)}, pusher lvl {pusher?.Level} bonus84 {pusher?.Characteristic(84)}");
+            }
+
+            if (landed.Cell != went.Cell)
+                _details?.WriteLine($"caster moved off: spell {cast.Level.SpellId} effect {moving.EffectId} {moving.DiceNum} cells, from {cast.Caster.Cell} to {landed.Cell} imagined {went.Cell}, cast on {cast.Cell}");
+        }
 
         foreach (var before in cast.Fighters)
         {
@@ -1112,7 +1296,10 @@ internal sealed class CastBench
                 continue;
             }
 
-            var matching = foreseen.Where(effect => effect.TargetId == buff.TargetId && effect.EffectId == actionId).ToList();
+            // The server names some buffs by another action than their effect's: a shield of 1020 as 1040, AP and MP removed by
+            // 1079 and 1080 as 168 and 169, so a buff is matched by its source effect too.
+            var sourceId = SourceOf(cast.Level, buff.EffectUid).EffectId;
+            var matching = foreseen.Where(effect => effect.TargetId == buff.TargetId && (effect.EffectId == actionId || effect.EffectId == sourceId)).ToList();
 
             if (matching.Count is 0)
             {

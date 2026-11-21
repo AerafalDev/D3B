@@ -694,6 +694,33 @@ public sealed class FightEventsTests
     }
 
     [Fact]
+    public void TwoPortalsAFighterWentThroughAreClosedUntilATurnBegins()
+    {
+        // Measured on 3.7.14.18 (D492): the server teleports a fighter whose walk ends on an open portal onto the last of its chain.
+        static GameActionFightEvent Portal(int id, int cell)
+        {
+            var mark = new FightMark { MarkId = id, AuthorId = Self, Team = FightTeam.Challenger, Type = FightMarkType.Portal, ImpactCell = cell, SpellId = 14_574, CastSpellId = 2, Grade = 44_338, Cells = { new FightMarkedCell { CellId = cell } } };
+
+            return new GameActionFightEvent { ActionId = 1181, SourceId = Self, MarkSet = new FightMarkSet { Mark = mark } };
+        }
+
+        var through = Apply(
+            Playing(),
+            Portal(5, 329),
+            Portal(6, 384),
+            Portal(7, 400),
+            new MapMovementEvent { ActorId = Self, Cells = { 314, 329 } },
+            new GameActionFightEvent { ActionId = 4, SourceId = Self, Teleport = new FightTeleport { TargetId = Self, CellId = 384 } });
+
+        Assert.Equal(384, through.Fight!.Fighters[Self].Cell);
+        Assert.Equal([true, true, false], through.Fight.Marks.Values.Select(mark => mark.IsUsed));
+
+        var turned = Apply(through, new FightTurnEndEvent { FighterId = Self }, new FightTurnEvent { FighterId = Monster, Round = 1 });
+
+        Assert.All(turned.Fight!.Marks.Values, mark => Assert.False(mark.IsUsed));
+    }
+
+    [Fact]
     public void TheTeamsOptionsAreKeptAsTheServerSaysThem()
     {
         var closed = Apply(

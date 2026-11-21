@@ -854,6 +854,16 @@ or refines another says so in its own entry. Add a line here with every new deci
 - [D490](decisions/d490-groups-left-behind.md#d490-a-master-goes-on-without-a-follower-missing-five-minutes-but-fighting-or-healing-and-waits-for-it-again-once-it-is-back) A master goes on without a follower missing five minutes, but fighting or healing, and waits for it again once it is back (2026-11-21)
   - Failing the master's activity at the bound, keeping the endless wait, two or ten minutes.
 
+## Fights, the effects the engine left out (D491)
+
+- [D491](decisions/d491-unhandled-effects.md#d491-the-damage-received-reads-every-resistance-reduction-and-share-and-a-cast-moves-its-caster) The damage received reads every resistance, reduction and share, and a cast moves its caster (2026-11-21)
+  - Every effect of the audit at once, a share ended with its buff's rounds.
+
+## Fights, an Eliotrope's portals measured (D492)
+
+- [D492](decisions/d492-eliotrope-portals-measured.md#d492-an-eliotropes-portals-measured-a-walk-or-a-push-that-ends-on-one-sent-through-it) An Eliotrope's portals measured, a walk or a push that ends on one sent through it (2026-11-21)
+  - Bubble's share, a portal's cell out of the walks, reading the action 1181's payload first.
+
 ## Fights, the Huppermage's runes, the Sram's traps and the Féca's glyphs triggered (D493)
 
 - [D493](decisions/d493-runes-traps-glyph-triggers.md#d493-a-huppermages-runes-set-and-triggered-a-trap-set-off-by-whoever-comes-onto-it-and-a-fécas-glyphs-triggered) A Huppermage's runes set and triggered, a trap set off by whoever comes onto it, and a Féca's glyphs triggered (2026-11-21)

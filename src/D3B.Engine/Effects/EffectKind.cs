@@ -95,6 +95,18 @@ public enum EffectKind
     /// <summary>The fighter the caster carries thrown onto the cell cast on: 51 (<see cref="Fights.Carrying"/>).</summary>
     Throw,
 
+    /// <summary>The damage the target receives multiplied, in percent of itself: 1163, a buff waiting for the damage it changes.</summary>
+    ReceivedDamageShare,
+
+    /// <summary>Points taken off each blow the target receives: 105, a buff waiting for the damage it changes.</summary>
+    ReceivedDamageReduction,
+
+    /// <summary>The caster moved towards the fighter reached, by cells, stopping beside it: 1042.</summary>
+    CasterPulled,
+
+    /// <summary>The caster moved away from the fighter reached, by cells: 1041.</summary>
+    CasterPushed,
+
     /// <summary>The caster's runes on the cell cast on, or in the effect's zone around it, triggered: 2023 (<see cref="Fights.Glyphs"/>).</summary>
     TriggerRunes,
 

@@ -83,6 +83,10 @@ public sealed class EffectActions
         [783] = new(EffectKind.PushToCell, EffectElement.None, 0),
         [50] = new(EffectKind.Carry, EffectElement.None, 0),
         [51] = new(EffectKind.Throw, EffectElement.None, 0),
+        [1163] = new(EffectKind.ReceivedDamageShare, EffectElement.None, 0),
+        [105] = new(EffectKind.ReceivedDamageReduction, EffectElement.None, 0),
+        [1042] = new(EffectKind.CasterPulled, EffectElement.None, 0),
+        [1041] = new(EffectKind.CasterPushed, EffectElement.None, 0),
         [2023] = new(EffectKind.TriggerRunes, EffectElement.None, 0),
         [1026] = new(EffectKind.TriggerGlyphs, EffectElement.None, 0),
 

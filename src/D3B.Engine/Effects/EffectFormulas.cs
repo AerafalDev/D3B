@@ -198,8 +198,10 @@ public static class EffectFormulas
         ArgumentNullException.ThrowIfNull(caster);
         ArgumentNullException.ThrowIfNull(target);
 
-        var reduction = target.Characteristic(ElementalId(FightCharacteristic.EarthReduction, element));
-        var resisted = Percent - target.Characteristic(ElementalId(FightCharacteristic.EarthResistPercent, element));
+        // A buff reducing the damage received takes its points off after the fixed resistance, as the references order them.
+        var reduction = target.Characteristic(ElementalId(FightCharacteristic.EarthReduction, element)) + target.ReceivedDamageReduction;
+        // The resistance to every element adds to the element's own, as the references count it.
+        var resisted = Percent - target.Characteristic(ElementalId(FightCharacteristic.EarthResistPercent, element)) - target.Characteristic(FightCharacteristic.ResistPercent);
         var dealtMultiplier = Multiplier(caster, FightCharacteristic.DealtDamageMultiplier);
         var spells = Multiplier(caster, weapon ? FightCharacteristic.DealtDamageMultiplierWeapons : FightCharacteristic.DealtDamageMultiplierSpells);
         var reach = Multiplier(caster, melee ? FightCharacteristic.DealtDamageMultiplierMelee : FightCharacteristic.DealtDamageMultiplierDistance);
@@ -240,6 +242,19 @@ public static class EffectFormulas
         var multiplier = Multiplier(caster, FightCharacteristic.DealtHealMultiplier);
 
         return new LifeRange(((roll.Min * raise / Percent) + bonus) * multiplier / Percent, ((roll.Max * raise / Percent) + bonus) * multiplier / Percent);
+    }
+
+    /// <summary>Gets the points a buff reducing the damage received takes off each blow its fighter receives.</summary>
+    /// <param name="points">The buff's points, its effect's value.</param>
+    /// <param name="level">The level of the fighter it is on.</param>
+    /// <returns>The points raised by a twentieth of the level, rounded down.</returns>
+    /// <remarks>
+    /// The references' reductor (D3): its points times the level over 20 plus 1. Measured on the captures of 3.7.14.18, the
+    /// monsters' buff of 105 at 4 points, levels 16 to 20.
+    /// </remarks>
+    public static int Reduction(int points, int level)
+    {
+        return points * (20 + Math.Max(0, level)) / 20;
     }
 
     /// <summary>Gets the part of a loss of life lost for the rest of the fight.</summary>
