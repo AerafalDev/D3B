@@ -202,7 +202,7 @@ public static class FightEvents
         var place = fight.TurnOrder.IndexOf(turn.FighterId);
         var turned = fight with { Phase = FightPhase.Fighting, PlayingId = turn.FighterId, Round = round, IsOwnTurn = false };
 
-        // A portal a fighter went through opens again as any turn begins (D491).
+        // A portal a fighter went through opens again as any turn begins (D492).
         if (turned.Marks.Values.Any(mark => mark.IsUsed))
             turned = turned with { Marks = turned.Marks.ToImmutableSortedDictionary(pair => pair.Key, pair => pair.Value with { IsUsed = false }) };
 
@@ -364,7 +364,7 @@ public static class FightEvents
 
     private static FightState Teleported(FightState fight, FightTeleport teleport)
     {
-        // Measured on 3.7.14.18 (D491): a fighter whose walk or push ends on an open portal is teleported onto the last of its
+        // Measured on 3.7.14.18 (D492): a fighter whose walk or push ends on an open portal is teleported onto the last of its
         // chain, and neither portal sends anyone through again until a turn begins.
         var moved = Moved(fight, teleport.TargetId, teleport.CellId);
 

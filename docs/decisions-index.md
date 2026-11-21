@@ -854,7 +854,7 @@ or refines another says so in its own entry. Add a line here with every new deci
 - [D490](decisions/d490-groups-left-behind.md#d490-a-master-goes-on-without-a-follower-missing-five-minutes-but-fighting-or-healing-and-waits-for-it-again-once-it-is-back) A master goes on without a follower missing five minutes, but fighting or healing, and waits for it again once it is back (2026-11-21)
   - Failing the master's activity at the bound, keeping the endless wait, two or ten minutes.
 
-## Fights, an Eliotrope's portals measured (D491)
+## Fights, an Eliotrope's portals measured (D492)
 
-- [D491](decisions/d491-eliotrope-portals-measured.md#d491-an-eliotropes-portals-measured-a-walk-or-a-push-that-ends-on-one-sent-through-it) An Eliotrope's portals measured, a walk or a push that ends on one sent through it (2026-11-21)
+- [D492](decisions/d492-eliotrope-portals-measured.md#d492-an-eliotropes-portals-measured-a-walk-or-a-push-that-ends-on-one-sent-through-it) An Eliotrope's portals measured, a walk or a push that ends on one sent through it (2026-11-21)
   - Bubble's share, a portal's cell out of the walks, reading the action 1181's payload first.
