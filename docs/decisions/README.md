@@ -102,3 +102,4 @@ Each file holds the decisions of one group of [the index](../decisions-index.md)
 - [Fights, the turn's pace (D479)](d479-fight-turn-pace.md): 1 decision, 2 KB.
 - [Fights, the server's cooldowns merged (D480)](d480-cooldowns-merged.md): 1 decision, 4 KB.
 - [The harvest, fights lost in a row (D481)](d481-harvest-losses-go-on.md): 1 decision, 3 KB.
+- [Groups, the exchange's stacks in one request (D482)](d482-group-exchange-one-request.md): 1 decision, 3 KB.

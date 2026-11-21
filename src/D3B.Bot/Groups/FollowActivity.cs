@@ -11,6 +11,7 @@ using D3B.Data;
 using D3B.Data.Maps;
 using D3B.Engine.Maps;
 using D3B.Protocol.Game;
+using Google.Protobuf;
 
 namespace D3B.Bot.Groups;
 
@@ -647,9 +648,9 @@ public sealed class FollowActivity : BotActivity, IDisposable
     }
 
     // Whether it gave this step: its master taking its objects at the bank (D433, D442), it asks the master for an exchange
-    // once a round, moves in, one by one, what the master's pods still hold of the stacks it does not wear, never its kamas,
-    // then says it is ready naming how many changes the server told it of, as the client did (D442), no sooner than the
-    // server takes it (D458). Its master accepts and concludes.
+    // once a round, moves in what the master's pods still hold of the stacks it does not wear, never its kamas, the whole
+    // stacks in one request (D482), then says it is ready naming how many changes the server told it of, as the client did
+    // (D442), no sooner than the server takes it (D458). Its master accepts and concludes.
     private async Task<bool> GiveAsync(BotContext context, BotSeen master, CancellationToken cancellationToken)
     {
         var me = context.Actor;
@@ -679,14 +680,34 @@ public sealed class FollowActivity : BotActivity, IDisposable
 
         // What its master reckons it gives: its food too as the master's profile banks all but what is worn, and not the
         // stacks an exchange of that unloading left (D459).
-        foreach (var (uid, quantity) in GroupGifts.Of(state, master.Bot.State, _tables.Items, collect.Food, collect.Left))
+        var gifts = GroupGifts.Of(state, master.Bot.State, _tables.Items, collect.Food, collect.Left);
+
+        // Measured on the owner's captures of 2026-11-21 (D482): the client moves whole stacks in one request, which the
+        // server answers with one change; one by one, 86 stacks took 54 s (D458). A part of a stack, as the master's pods
+        // hold, goes by a move, which alone says a quantity.
+        var whole = gifts.Where(gift => state.Inventory.TryGetValue(gift.Uid, out var stack) && stack.Quantity == gift.Quantity).ToList();
+        var moves = new Queue<IMessage>();
+
+        if (whole.Count > 0)
+            moves.Enqueue(new ExchangeTransferFromInventoryRequest { Uids = { whole.Select(gift => gift.Uid) } });
+
+        foreach (var (uid, quantity) in gifts.Except(whole))
+            moves.Enqueue(new ExchangeObjectMoveRequest { Uid = uid, Quantity = quantity });
+
+        for (var sent = false; moves.TryDequeue(out var move); sent = true)
         {
+            if (sent)
+                await Task.Delay(context.Delays.Display, context.Time, cancellationToken).ConfigureAwait(false);
+
             // Its master gave up the exchange, or the player closed it: nothing more goes in.
             if (context.State.Exchange is not { IsOpen: true })
                 return true;
 
-            await MovedAsync(context, new ExchangeObjectMoveRequest { Uid = uid, Quantity = quantity }, cancellationToken).ConfigureAwait(false);
-            await Task.Delay(context.Delays.Display, context.Time, cancellationToken).ConfigureAwait(false);
+            // A transfer of several answered by nothing goes again a stack a move: in an exchange with a player, whether the
+            // server takes part of a transfer, as the bank does, or refuses it whole for one stack it may not take, such
+            // as one bound to the account (D153), is not measured (D482).
+            if (!await MovedAsync(context, move, cancellationToken).ConfigureAwait(false) && move is ExchangeTransferFromInventoryRequest && whole.Count > 1)
+                moves = new Queue<IMessage>(whole.Select(gift => new ExchangeObjectMoveRequest { Uid = gift.Uid, Quantity = gift.Quantity }).Concat(moves));
         }
 
         if (context.State.Exchange is not { IsOpen: true })
@@ -714,14 +735,17 @@ public sealed class FollowActivity : BotActivity, IDisposable
         return true;
     }
 
-    // A move into the exchange, until the server told its change, measured 28 ms after (D442), or did not, such as for an
-    // object bound to the account (D153), which changes nothing and the next goes on.
-    private static async Task MovedAsync(BotContext context, ExchangeObjectMoveRequest move, CancellationToken cancellationToken)
+    // A move into the exchange, until the server told its change, measured 28 ms after a stack's move (D442) and 28 to
+    // 169 ms after many (D482), or did not, such as for an object bound to the account (D153), which changes nothing and
+    // the next goes on. Gives whether it told one.
+    private static async Task<bool> MovedAsync(BotContext context, IMessage move, CancellationToken cancellationToken)
     {
         var changes = context.State.Exchange?.Changes ?? 0;
 
         await context.SendAsync(move, cancellationToken).ConfigureAwait(false);
         await context.WaitUntilAsync(now => now.Exchange is not { IsOpen: true } open || open.Changes > changes, context.Delays.Answer, cancellationToken).ConfigureAwait(false);
+
+        return context.State.Exchange is { } exchange && exchange.Changes > changes;
     }
 
     // One change towards the master's map a step, so that a change failing tries the same way again at the next step: a
