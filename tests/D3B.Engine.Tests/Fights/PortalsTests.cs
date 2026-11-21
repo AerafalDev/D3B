@@ -107,6 +107,16 @@ public sealed class PortalsTests
     }
 
     [Fact]
+    public void AFighterThatStaysOnTheOpenPortalItStandsOnGoesThroughNothing()
+    {
+        // The reply tries an enemy's own cell among the cells it may strike from: staying is no move onto the portal.
+        var standing = _caster with { Cell = Off(2, 0) };
+        ImmutableArray<CellMark> marks = [Portal(1, Off(2, 0)), Portal(2, Off(2, 8))];
+
+        Assert.Equal((Off(2, 0), marks), Portals.Moved(marks, [standing], standing, Off(2, 0)));
+    }
+
+    [Fact]
     public void AFighterLeavingAPortalForAnotherMayComeOutOfTheOneItLeft()
     {
         var walker = _caster with { Cell = Off(2, 5) };

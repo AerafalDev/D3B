@@ -77,7 +77,8 @@ public static class Portals
         ArgumentNullException.ThrowIfNull(fighters);
         ArgumentNullException.ThrowIfNull(mover);
 
-        if (!HasPortal(marks) || (mover.MonsterId is not null && (mover.MonsterProperties & MonsterProperties.CanUsePortal) is 0))
+        // A fighter that stays where it stands moves onto no portal, such as an enemy of the reply striking from its own cell.
+        if (mover.Cell == cell || !HasPortal(marks) || (mover.MonsterId is not null && (mover.MonsterProperties & MonsterProperties.CanUsePortal) is 0))
             return (cell, marks);
 
         var occupied = default(CellSet);

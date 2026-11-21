@@ -253,7 +253,7 @@ public sealed class Imagination
             if (moved.Id != before[index].Id || !moved.IsAlive || moved.Cell is Combatant.NoCell || moved.Cell == before[index].Cell)
                 continue;
 
-            var (cell, after) = Portals.Moved(marks, fighters, moved, moved.Cell);
+            var (cell, after) = Portals.Moved(marks, fighters, moved with { Cell = before[index].Cell }, moved.Cell);
 
             fighters[index] = moved with { Cell = cell };
             marks = after;

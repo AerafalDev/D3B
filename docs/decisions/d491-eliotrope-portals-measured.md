@@ -45,7 +45,9 @@ ok car j'en avais pas l'impression"), the lead's task; settled by the session, m
   Zobal's 0.8%, its kills 243 to 247; the Forgelance's 0.4%, 361 kills to 365; the Enutrof, the Iop and the Sacrieur
   within 0.2%; the Féca, the Cra and the Huppermage line for line. All breeds: 318,635 damage planned for 317,577, 2,430
   kills for 2,410, plans doing nothing 392 to 379. The searches 163 ms then 161 halfway, 337 then 318 at 90%.
-- **Not measured in game**: the AI walking onto a portal on purpose. **Left**: the closing effect 1183, which the AI
+- **Not measured in game**: the AI walking onto a portal on purpose. **Not measured at all**: a fighter a cast moves onto an
+  open portal otherwise than by a push or a pull, a spell's teleport, a swap or a throw, which the engine sends through as a
+  push, the references doing so. **Left**: the closing effect 1183, which the AI
   never casts; 14631 imagined; the action 1181's payload, which would give the server's own word on a portal open or
   closed; the 33 monsters' moves onto an open portal the server did not send through.
 - **Rejected.**
