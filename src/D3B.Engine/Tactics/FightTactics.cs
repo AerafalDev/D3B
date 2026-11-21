@@ -566,12 +566,37 @@ public sealed class FightTactics
             }
         }
 
+        // Measured on the captures of 2026-11-20 and 21: in 75 of the 182 turns D3B passed far from the enemies, a walk nearer
+        // them the approach weighed better before the reply did no better after it, next turn's search gaining as much from
+        // either cell and the approach then left out, and ending the turn now won the tie. A walk nearer the enemies that
+        // the judge weighed better before the reply wins a tie within a point after it; scoring under standing, it is never
+        // swapped below for a plan of as few actions that ending the turn now beat, a walk away from the enemies among them.
+        var walkedNearer = false;
+
+        if (best == standing && standing.End.Actor.Cell is not Combatant.NoCell)
+        {
+            var from = Nearest(standing.End, standing.End.Actor.Team, standing.End.Actor.Cell);
+            var nearer = double.NegativeInfinity;
+
+            foreach (var (finalist, score) in scored)
+            {
+                if (finalist.Actions is [{ Kind: TacticActionKind.Walk }] && finalist.Score > standing.Score + Better && score >= standingScore - Tie && score > nearer
+                    && Nearest(finalist.End, finalist.End.Actor.Team, finalist.End.Actor.Cell) < from)
+                {
+                    best = finalist;
+                    bestScore = score;
+                    nearer = score;
+                    walkedNearer = true;
+                }
+            }
+        }
+
         // Ending the turn now keeps its tie; between plans that act and leave the same enemies alive, the one with the fewest actions
         // wins one within a point.
         var chosen = best;
         var chosenScore = bestScore;
 
-        if (best != standing)
+        if (best != standing && !walkedNearer)
         {
             var alive = EnemiesAlive(best.End);
 
