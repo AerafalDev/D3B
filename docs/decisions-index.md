@@ -823,3 +823,8 @@ or refines another says so in its own entry. Add a line here with every new deci
 
 - [D484](decisions/d484-busy-wait-bounded.md#d484-a-character-busy-a-minute-at-a-steps-start-is-put-back-in-order-and-still-busy-a-minute-later-the-harvest-or-the-hunt-fails-saying-why) A character busy a minute at a step's start is put back in order, and still busy a minute later the harvest or the hunt fails saying why (2026-11-21)
   - Failing at the bound, putting in order without end, the harvest alone.
+
+## Movement and the harvest, a map action's cell crossed (D485)
+
+- [D485](decisions/d485-harvest-action-cells.md#d485-a-walk-goes-round-the-maps-action-cells-a-harvest-the-server-cuts-by-moving-the-character-leaves-its-map-gone-through-and-a-tour-going-round-ends) A walk goes round the map's action cells, a harvest the server cuts by moving the character leaves its map gone through, and a tour going round ends (2026-11-21)
+  - Going round alone, a watchdog alone, stopping the activity, counting dry tours, never crossing with no fall back.

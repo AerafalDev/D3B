@@ -17,6 +17,23 @@ public sealed class MapWalkTests
         return path;
     }
 
+    // Every cell a request walks: from each turning point, straight on in its direction to the next.
+    private static List<int> Walked(MapMovementRequest request)
+    {
+        var cells = new List<int> { request.KeyMovements[0] & 0xFFF };
+
+        for (var turn = 0; turn + 1 < request.KeyMovements.Count; turn++)
+        {
+            var direction = request.KeyMovements[turn] >> 12;
+            var next = request.KeyMovements[turn + 1] & 0xFFF;
+
+            while (cells[^1] != next && cells.Count <= MapData.CellCount)
+                cells.Add(MapGeometry.Neighbour(cells[^1], direction));
+        }
+
+        return cells;
+    }
+
     [Fact]
     public void ARequestNamesThePathsTurningPointsAsTheDirectionTimes4096PlusTheCell()
     {
@@ -193,6 +210,38 @@ public sealed class MapWalkTests
         Assert.Equal(WalkOutcome.Arrived, await again);
         Assert.False(bot.State.IsWalkHeld);
         Assert.Equal(388, bot.State.Cell);
+    }
+
+    [Fact]
+    public async Task AWalkGoesRoundTheCellOfAMapActionItOnlyCrosses()
+    {
+        // Measured (D485): a walk crossing a map action's cell is cut there, the server moving the character to the next map.
+        await using var play = new TestPlay();
+        const int from = TestPlay.ActionCell + 2;
+        const int to = TestPlay.ActionCell - 2;
+        var (connection, bot) = await play.EnterAsync(from);
+
+        Assert.Contains(TestPlay.ActionCell, PathOn(play, from, to).Cells.ToArray());
+
+        var walk = bot.WalkAsync(to, TestContext.Current.CancellationToken);
+        var sent = Assert.IsType<MapMovementRequest>(await TestWalks.SentAsync(play, connection, 1));
+
+        Assert.Equal(to, sent.KeyMovements[^1] & 0xFFF);
+        Assert.DoesNotContain(TestPlay.ActionCell, Walked(sent));
+
+        await TestWalks.WalkedAsync(play, connection, 1);
+        Assert.Equal(WalkOutcome.Arrived, await walk);
+    }
+
+    [Fact]
+    public async Task AWalkToTheCellOfAMapActionStillEndsOnIt()
+    {
+        await using var play = new TestPlay();
+        var (connection, bot) = await play.EnterAsync(TestPlay.ActionCell + 2);
+        var walk = bot.WalkAsync(TestPlay.ActionCell, TestContext.Current.CancellationToken);
+
+        Assert.Equal(TestPlay.ActionCell, await TestWalks.WalkedAsync(play, connection, 1));
+        Assert.Equal(WalkOutcome.Arrived, await walk);
     }
 
     [Fact]

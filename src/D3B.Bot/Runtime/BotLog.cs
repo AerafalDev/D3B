@@ -76,6 +76,9 @@ internal static partial class BotLog
     [LoggerMessage(Level = LogLevel.Debug, Message = "Bot {Character}: the tour leaves zone {Zone} of map {Map} alone: no way of at most {Most} map changes leads there from the zone it stands in")]
     public static partial void ZoneLeftAlone(ILogger logger, long character, long map, int zone, int most);
 
+    [LoggerMessage(Level = LogLevel.Warning, Message = "Bot {Character}: tour {Round} goes round, {Journeys} journeys in a row back on map {Map} with nothing harvested and no map gone through: its other maps are left for this tour")]
+    public static partial void TourGoneRound(ILogger logger, long character, int round, long map, int journeys);
+
     [LoggerMessage(Level = LogLevel.Information, Message = "Bot {Character}: travels from map {From}, {Changes} map changes away")]
     public static partial void Travelling(ILogger logger, long character, long from, int changes);
 

@@ -584,6 +584,10 @@ public sealed class HarvestActivity : BotActivity
             _skipped.Add(elementId);
         }
 
+        // Moved to another map on the way, the server's doing as on a map action's cell, the character left the map it was going
+        // through: it is gone through, or the tour would come back to it again and again, the element as far out of reach (D485).
+        if (inZone && state.MapId is { } left && context.State.MapId != left)
+            _current?.Tour.Visit(left);
 
         Publish(context.State, doing);
 
@@ -634,6 +638,10 @@ public sealed class HarvestActivity : BotActivity
         {
             case TravelOutcome.Arrived:
                 _failedJourneys = 0;
+
+                if (tour.Arrived())
+                    GoneRound(context, current);
+
                 break;
             case TravelOutcome.NoPath:
                 foreach (var map in remaining)
@@ -735,6 +743,19 @@ public sealed class HarvestActivity : BotActivity
 
         Publish(context.State, GameText.Of(HarvestTexts.Text("DoingWaitGrow")));
         await context.WaitUntilAsync(state => HasWanted(zone, state), _regrowthDelay, cancellationToken).ConfigureAwait(false);
+    }
+
+    // A tour going round gets nowhere, whatever keeps it from going through the map it comes back to: its other maps are left for
+    // this tour, which then ends as any other, waiting or moving on when nothing was harvested, and the card says so (D485).
+    private void GoneRound(BotContext context, HarvestRotationZone current)
+    {
+        var state = context.State;
+        var tour = current.Tour;
+        var mapId = state.MapId ?? 0;
+
+        BotLog.TourGoneRound(context.Log, state.Key.CharacterId, tour.Round, mapId, tour.IdleArrivals);
+        _reporter.RoundWarning = GameText.Of(HarvestTexts.Text("WarningGoneRound"), GameTextValue.Number(tour.Round), GameTextValue.Map(mapId));
+        tour.GiveUpRemaining(current.Zone);
     }
 
     // The vertex the journey will end on, and the map it goes to first.
