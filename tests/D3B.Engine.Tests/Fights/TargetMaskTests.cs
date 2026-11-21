@@ -23,6 +23,19 @@ public sealed class TargetMaskTests
     }
 
     [Fact]
+    public void TheCastersConditionsAreReadWithoutATarget()
+    {
+        // An effect on a free cell reaches no fighter, but asks its caster's states still: Épilogue's lance, 3360 (D489).
+        var holding = _caster with { States = [3360] };
+
+        Assert.Equal(CriterionAnswer.True, TargetMask.Parse("a,A,*E3360").CasterAllows(holding, _fighters));
+        Assert.Equal(CriterionAnswer.False, TargetMask.Parse("a,A,*E3360").CasterAllows(_caster, _fighters));
+        Assert.Equal(CriterionAnswer.False, TargetMask.Parse("a,A,*E3360,*e3589").CasterAllows(holding with { States = [3360, 3589] }, _fighters));
+        Assert.Equal(CriterionAnswer.True, TargetMask.Parse("a,A,E3360").CasterAllows(_caster, _fighters));
+        Assert.Equal(CriterionAnswer.True, TargetMask.Parse("a,A").CasterAllows(_caster, _fighters));
+    }
+
+    [Fact]
     public void AnUppercaseCNamesTheCasterWhereverItStandsAndALowercaseOneInTheZoneOnly()
     {
         Assert.True(TargetMask.Parse("C").NamesTheCaster);

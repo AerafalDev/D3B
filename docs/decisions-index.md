@@ -843,3 +843,8 @@ or refines another says so in its own entry. Add a line here with every new deci
 
 - [D488](decisions/d488-harvest-action-cells.md#d488-a-walk-goes-round-the-maps-action-cells-a-harvest-the-server-cuts-by-moving-the-character-leaves-its-map-gone-through-and-a-tour-going-round-ends) A walk goes round the map's action cells, a harvest the server cuts by moving the character leaves its map gone through, and a tour going round ends (2026-11-21)
   - Going round alone, a watchdog alone, stopping the activity, counting dry tours, never crossing with no fall back.
+
+## Fights, the Forgelance's spells cast on its lance (D489)
+
+- [D489](decisions/d489-forgelance-lance-reach.md#d489-the-lance-gives-each-spell-it-names-its-reach-and-a-summon-on-a-free-cell-asks-its-casters-conditions) The lance gives each spell it names its reach, and a summon on a free cell asks its caster's conditions (2026-11-21)
+  - A rule naming the 13 spells, leaving 314 to the server's refusal.
