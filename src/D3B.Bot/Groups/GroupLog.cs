@@ -11,6 +11,9 @@ internal static partial class GroupLog
     [LoggerMessage(Level = LogLevel.Information, Message = "Bot {Character}: its followers are with it, it acts")]
     public static partial void Gathered(ILogger logger, long character);
 
+    [LoggerMessage(Level = LogLevel.Warning, Message = "Bot {Character}: goes on without its follower {Follower}, {Absence} for five minutes")]
+    public static partial void LeftBehind(ILogger logger, long character, long follower, MemberAbsence absence);
+
     [LoggerMessage(Level = LogLevel.Information, Message = "Bot {Character}: invites its follower {Follower} into its party")]
     public static partial void Inviting(ILogger logger, long character, long follower);
 

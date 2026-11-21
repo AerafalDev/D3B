@@ -347,7 +347,9 @@ The bots run in `D3B.Bot`: what each part does today, with the decisions that ma
   and for those it holds leaves such a party, invites its followers by name, and waits with no delay until each is connected, not
   paused, out of a fight, on its map and in its party (`GroupChain.Missing`), the party it is in whoever leads it, one
   another leads kept while it holds each follower (`GroupChain.HoldsAll`, D471), the card saying whom for
-  (`BotActor.WaitingFor`); its own requests go past it (`BotContext.SendNowAsync`). So every profile leads unchanged. The
+  (`BotActor.WaitingFor`); a follower missing five minutes of one wait, but fighting or healing, is left behind, and out of the
+  group's bank, until the master finds it with it or it leaves the map it was left on (`GroupGate.LeaveBehindAfter`, D490),
+  the journal saying so; its own requests go past it (`BotContext.SendNowAsync`). So every profile leads unchanged. The
   follower's steps keep the party (its master's invitation accepted, others refused, a party its master is not in left, the automatic
   options turned off at each party joined, D437's measure), then follow in real time (D447): with its master it copies
   each of its walks as the server shows it, to the cell the master walks to, else it changes maps towards the master by
@@ -1150,7 +1152,7 @@ Pure logic with no I/O, in `D3B.Engine`, which references `D3B.Data` for the cel
     step rounded down, as measured; `LifeRange`, a value's least and most. A blow received takes off the fixed resistance
     and a buff's reduction of 105 (`Combatant.ReceivedDamageReduction`, its points raised by a twentieth of the level,
     `EffectFormulas.Reduction`), then the element's resistance in percent plus the resistance to every element
-    (`FightCharacteristic.ResistPercent`, 101), then the multipliers and the shares of 1163 (D490).
+    (`FightCharacteristic.ResistPercent`, 101), then the multipliers and the shares of 1163 (D491).
   - `SpellEffects`, built once per pack: what each effect of a cast does to each fighter it reaches (`ForeseenEffect`),
     the critical effects on a critical hit, nothing drawn. A mask naming the caster reaches it outside the zone.
   - Benchmarked on a captured fight's map: a cast foreseen in 0.69 µs, 0.66 µs into a list it reuses, its zones kept per
@@ -1165,7 +1167,7 @@ Pure logic with no I/O, in `D3B.Engine`, which references `D3B.Data` for the cel
     takes the points below 0, as the server keeps them, so that its end gives back only what it took (D470); a cast giving
     a buff on the damage received that waits for any damage (trigger `D`), a share of 1163 or a reduction of 105, changes
     every blow after it, and one moving its caster towards or away from the fighter it reaches (1042, 1041) slides the
-    caster as that fighter would pull or push it, a caster stopped short taking the push damage of its own level (D490).
+    caster as that fighter would pull or push it, a caster stopped short taking the push damage of its own level (D491).
   - `FightJudge`: an imagined fight's worth for the side playing, in life: allies' life concave and a quarter as steep above
     60% of its most (`TacticWeights.Comfort`, D407), and what the side's own casts took from its other fighters again
     (`ImaginedFight.StruckBySide`, `TacticWeights.AlliesStruck`, D485), enemies' weighed by how hard they hit; the enemies' threat and the next turn's approach with the spells that land, from a cell walked to, in

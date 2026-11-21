@@ -110,4 +110,5 @@ Each file holds the decisions of one group of [the index](../decisions-index.md)
 - [Fights, a walk nearer far enemies after the reply (D487)](d487-far-walk-wins-tie.md): 1 decision, 4 KB.
 - [Movement and the harvest, a map action's cell crossed (D488)](d488-harvest-action-cells.md): 1 decision, 5 KB.
 - [Fights, the Forgelance's spells cast on its lance (D489)](d489-forgelance-lance-reach.md): 1 decision, 5 KB.
-- [Fights, the effects the engine left out (D490)](d490-unhandled-effects.md): 1 decision, 5 KB.
+- [Groups, a follower left behind (D490)](d490-groups-left-behind.md): 1 decision, 3 KB.
+- [Fights, the effects the engine left out (D491)](d491-unhandled-effects.md): 1 decision, 5 KB.

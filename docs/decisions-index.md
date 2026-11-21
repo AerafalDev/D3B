@@ -849,7 +849,12 @@ or refines another says so in its own entry. Add a line here with every new deci
 - [D489](decisions/d489-forgelance-lance-reach.md#d489-the-lance-gives-each-spell-it-names-its-reach-and-a-summon-on-a-free-cell-asks-its-casters-conditions) The lance gives each spell it names its reach, and a summon on a free cell asks its caster's conditions (2026-11-21)
   - A rule naming the 13 spells, leaving 314 to the server's refusal.
 
-## Fights, the effects the engine left out (D490)
+## Groups, a follower left behind (D490)
 
-- [D490](decisions/d490-unhandled-effects.md#d490-the-damage-received-reads-every-resistance-reduction-and-share-and-a-cast-moves-its-caster) The damage received reads every resistance, reduction and share, and a cast moves its caster (2026-11-21)
+- [D490](decisions/d490-groups-left-behind.md#d490-a-master-goes-on-without-a-follower-missing-five-minutes-but-fighting-or-healing-and-waits-for-it-again-once-it-is-back) A master goes on without a follower missing five minutes, but fighting or healing, and waits for it again once it is back (2026-11-21)
+  - Failing the master's activity at the bound, keeping the endless wait, two or ten minutes.
+
+## Fights, the effects the engine left out (D491)
+
+- [D491](decisions/d491-unhandled-effects.md#d491-the-damage-received-reads-every-resistance-reduction-and-share-and-a-cast-moves-its-caster) The damage received reads every resistance, reduction and share, and a cast moves its caster (2026-11-21)
   - Every effect of the audit at once, a share ended with its buff's rounds.

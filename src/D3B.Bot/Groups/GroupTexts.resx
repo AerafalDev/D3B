@@ -110,6 +110,9 @@
   <data name="DoingRegenerate" xml:space="preserve">
     <value>Waits for its life to regenerate, {0} s</value>
   </data>
+  <data name="LeftBehind" xml:space="preserve">
+    <value>Goes on without {0}, missing for five minutes</value>
+  </data>
   <data name="WaitingSeveral" xml:space="preserve">
     <value>Waits for {0}</value>
   </data>
