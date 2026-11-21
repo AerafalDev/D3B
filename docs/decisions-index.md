@@ -833,6 +833,7 @@ or refines another says so in its own entry. Add a line here with every new deci
 
 - [D486](decisions/d486-dispel-keeps-undispellable-buffs.md#d486-a-dispel-takes-only-the-buffs-the-server-ends-and-a-removal-naming-a-spell-that-spells-alone-the-pandawa-keeps-sobre-and-casts-in-its-element) A dispel takes only the buffs the server ends, and a removal naming a spell that spell's alone: the Pandawa keeps Sobre and casts in its element (2026-11-21)
   - Reading the buff's own field 9, the pack's dispellable, a rule for the Pandawa.
+
 ## Movement and the harvest, a map action's cell crossed (D487)
 
 - [D487](decisions/d487-harvest-action-cells.md#d487-a-walk-goes-round-the-maps-action-cells-a-harvest-the-server-cuts-by-moving-the-character-leaves-its-map-gone-through-and-a-tour-going-round-ends) A walk goes round the map's action cells, a harvest the server cuts by moving the character leaves its map gone through, and a tour going round ends (2026-11-21)
