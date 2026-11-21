@@ -23,7 +23,7 @@ namespace D3B.Bot.Groups;
 /// <para>
 /// It waits for a follower fighting as long as it takes, as a fight ends by itself; for a follower missing otherwise,
 /// disconnected, paused, on its way, stuck or out of its party, five minutes at most, then goes on without it and says so in
-/// its journal and the host's log, the owner's choice (D489): measured on the owner's captures of 2026-11-19 (D464), a master
+/// its journal and the host's log, the owner's choice (D490): measured on the owner's captures of 2026-11-19 (D464), a master
 /// waited 30 minutes for a follower the server held until the server closed every connection of the group. A follower left
 /// behind still comes after its master, and is waited for again once it is with it. The bot's card says whom it waits for
 /// (<see cref="BotActor.WaitingFor"/>).
@@ -49,7 +49,7 @@ internal sealed class GroupGate : IActionGate
     /// <summary>How long the master waits before it asks its members to follow it again, while one with it does not (D476).</summary>
     public static readonly TimeSpan CallAgainAfter = TimeSpan.FromSeconds(30);
 
-    /// <summary>How long the master waits for a follower missing, but fighting or healing, before it goes on without it, the owner's choice (D489).</summary>
+    /// <summary>How long the master waits for a follower missing, but fighting or healing, before it goes on without it, the owner's choice (D490).</summary>
     public static readonly TimeSpan LeaveBehindAfter = TimeSpan.FromMinutes(5);
 
     private readonly BotActor _bot;
@@ -167,7 +167,7 @@ internal sealed class GroupGate : IActionGate
         }
     }
 
-    /// <summary>Tells whether the master went on without a follower, which it waits for again once it is back (D489).</summary>
+    /// <summary>Tells whether the master went on without a follower, which it waits for again once it is back (D490).</summary>
     /// <param name="follower">The follower's character.</param>
     /// <returns>Whether it is left behind.</returns>
     internal bool IsBehind(CharacterKey follower)
@@ -176,7 +176,7 @@ internal sealed class GroupGate : IActionGate
     }
 
     // The followers missing; a follower left behind found with the master, or on another map than the one it was left on, is
-    // waited for again (D489): one that catches its master up as it walks on, one map behind, is on its way again.
+    // waited for again (D490): one that catches its master up as it walks on, one map behind, is on its way again.
     private IReadOnlyList<MissingMember> Regroup(CharacterState state, IReadOnlyList<BotActor> followers)
     {
         var missing = GroupChain.Missing(state, followers);
@@ -191,7 +191,7 @@ internal sealed class GroupGate : IActionGate
     }
 
     // The members the master still waits for, and when the first of them has been missing for the bound: a follower missing
-    // but in a fight for five minutes of this wait is left behind (D489). A fight starts its count again, as it ends by itself.
+    // but in a fight for five minutes of this wait is left behind (D490). A fight starts its count again, as it ends by itself.
     private (IReadOnlyList<MissingMember> Missing, DateTimeOffset? Due) LeaveBehind(IReadOnlyList<MissingMember> missing, Dictionary<CharacterKey, DateTimeOffset> since)
     {
         var now = _bot.Time.GetUtcNow();

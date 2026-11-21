@@ -1,10 +1,10 @@
-# Groups, a follower left behind (D489)
+# Groups, a follower left behind (D490)
 
 A part of [the decisions](README.md); each decision has one line in [the index](../decisions-index.md). The master's gate
 is [D437](d437-step-10-the-chain.md); the follower the server holds, [D464](d464-groups-held-follower.md); the wait for a
 busy character, [D484](d484-busy-wait-bounded.md).
 
-## D489: A master goes on without a follower missing five minutes, but fighting or healing, and waits for it again once it is back
+## D490: A master goes on without a follower missing five minutes, but fighting or healing, and waits for it again once it is back
 
 *2026-11-21, the lead's task after D484, which left the groups' stall of 2026-11-19 unlooked at. The owner chose the
 answer and the bound among the options the session put. Supersedes D437's wait "as long as it takes" and the option D464

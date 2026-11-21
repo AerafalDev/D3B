@@ -89,7 +89,7 @@ internal sealed class GroupBank : IGroupBank
         if (ShareOf(activity) is not { } share)
             return false;
 
-        // A follower left behind takes nothing to the bank, which would wait for it in vain (D489).
+        // A follower left behind takes nothing to the bank, which would wait for it in vain (D490).
         return _groups.FollowersOf(_bot.Key).Any(follower => !_gate.IsBehind(follower.Key) && follower.State is { MaxWeight: > 0 } state && state.Weight * 100L >= (long)share * state.MaxWeight);
     }
 

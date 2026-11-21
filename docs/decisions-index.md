@@ -844,7 +844,12 @@ or refines another says so in its own entry. Add a line here with every new deci
 - [D488](decisions/d488-harvest-action-cells.md#d488-a-walk-goes-round-the-maps-action-cells-a-harvest-the-server-cuts-by-moving-the-character-leaves-its-map-gone-through-and-a-tour-going-round-ends) A walk goes round the map's action cells, a harvest the server cuts by moving the character leaves its map gone through, and a tour going round ends (2026-11-21)
   - Going round alone, a watchdog alone, stopping the activity, counting dry tours, never crossing with no fall back.
 
-## Groups, a follower left behind (D489)
+## Fights, the Forgelance's spells cast on its lance (D489)
 
-- [D489](decisions/d489-groups-left-behind.md#d489-a-master-goes-on-without-a-follower-missing-five-minutes-but-fighting-or-healing-and-waits-for-it-again-once-it-is-back) A master goes on without a follower missing five minutes, but fighting or healing, and waits for it again once it is back (2026-11-21)
+- [D489](decisions/d489-forgelance-lance-reach.md#d489-the-lance-gives-each-spell-it-names-its-reach-and-a-summon-on-a-free-cell-asks-its-casters-conditions) The lance gives each spell it names its reach, and a summon on a free cell asks its caster's conditions (2026-11-21)
+  - A rule naming the 13 spells, leaving 314 to the server's refusal.
+
+## Groups, a follower left behind (D490)
+
+- [D490](decisions/d490-groups-left-behind.md#d490-a-master-goes-on-without-a-follower-missing-five-minutes-but-fighting-or-healing-and-waits-for-it-again-once-it-is-back) A master goes on without a follower missing five minutes, but fighting or healing, and waits for it again once it is back (2026-11-21)
   - Failing the master's activity at the bound, keeping the endless wait, two or ten minutes.

@@ -114,7 +114,7 @@ public sealed class GroupGateTests
     [Fact]
     public async Task AMasterGoesOnWithoutAFollowerMissingFiveMinutesAndWaitsForItAgainOnceItIsBack()
     {
-        // Measured on the owner's captures of 2026-11-19 (D464, D489): a master waited for a follower whose map change the
+        // Measured on the owner's captures of 2026-11-19 (D464, D490): a master waited for a follower whose map change the
         // server refused about 210 times, until the server closed every connection of the group 30 minutes on.
         await using var play = new TestPlay();
         var (masterConnection, master) = await TestGroup.MasterAsync(play, 300);
