@@ -312,7 +312,7 @@
     <value>Après un combat perdu</value>
   </data>
   <data name="AfterLostFightHelp" xml:space="preserve">
-    <value>Le perso revient à son point de sauvegarde avec peu de vie : en reprenant, il regagne d'abord la part de vie sous laquelle il se soigne, en mangeant ou en attendant. Trois combats perdus d'affilée arrêtent la récolte.</value>
+    <value>Le perso revient avec la moitié de sa vie : en reprenant, il regagne d'abord toute sa vie, en mangeant ou en attendant. La récolte continue, quel que soit le nombre de combats perdus d'affilée.</value>
   </data>
   <data name="AfterLostFightResume" xml:space="preserve">
     <value>Reprendre une fois soigné</value>
@@ -523,5 +523,17 @@
   </data>
   <data name="FailZoneGone" xml:space="preserve">
     <value>La zone que ce profil nomme n'est plus dans le projet.</value>
+  </data>
+  <data name="FailStuckMapUnknown" xml:space="preserve">
+    <value>La carte du perso est toujours inconnue après deux minutes.</value>
+  </data>
+  <data name="FailStuckUsing" xml:space="preserve">
+    <value>Toujours en train d'utiliser un élément après deux minutes, même remis en ordre.</value>
+  </data>
+  <data name="FailStuckInDialog" xml:space="preserve">
+    <value>Toujours dans un dialogue ou un échange après deux minutes, même remis en ordre.</value>
+  </data>
+  <data name="FailStuckWalking" xml:space="preserve">
+    <value>Toujours en train de marcher après deux minutes, même remis en ordre.</value>
   </data>
 </root>

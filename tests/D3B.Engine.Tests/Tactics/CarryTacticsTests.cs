@@ -16,6 +16,16 @@ public sealed class CarryTacticsTests
     private const int Throw = 20;
     private const int Strike = 40;
 
+    // As the pack of 3.7.14.18 writes them: Enraciné (6), not pushed nor swapped, its state effects 0, 1, 2, 17 and 18, here 0
+    // and 18; Pesanteur (7), not swapped, effect 18; Lourd (63), effect 4 alone; Emprisonné (252), which cannot be moved,
+    // effects 3 and 17; Assourdi (1349), not pushed, effect 0.
+    private const int Rooted = 6;
+    private const int Gravity = 7;
+    private const int Heavy = 63;
+    private const int Imprisoned = 252;
+    private const int Deafened = 1349;
+
+    private static readonly int[] _stateEffects = [0, 18, 18, 4, 3, 17, 0];
     private static readonly SpellCatalog _spells = Catalog();
 
     private static readonly FightTactics _tactics = new(_spells, CarryStates(), new EffectCatalog(new Effect[]
@@ -96,10 +106,15 @@ public sealed class CarryTacticsTests
             new SpellState[]
             {
                 new(Carrying.CarrierState, 1, SpellStateProperties.PreventsSpellCast | SpellStateProperties.PreventsFight, 0, 0, 0),
-                new(Carrying.CarriedState, 2, SpellStateProperties.None, 0, 0, 0),
-                new(Carrying.HalvedState, 3, SpellStateProperties.None, 0, 0, 0),
+                new(Rooted, 4, SpellStateProperties.CantBePushed | SpellStateProperties.CantSwitchPosition, 0, 2, 0),
+                new(Gravity, 5, SpellStateProperties.CantSwitchPosition, 2, 1, 0),
+                new(Carrying.CarriedState, 2, SpellStateProperties.None, 3, 0, 0),
+                new(Heavy, 6, SpellStateProperties.None, 3, 1, 0),
+                new(Imprisoned, 7, SpellStateProperties.CantBeMoved, 4, 2, 0),
+                new(Deafened, 8, SpellStateProperties.CantBePushed, 6, 1, 0),
+                new(Carrying.HalvedState, 3, SpellStateProperties.None, 7, 0, 0),
             },
-            ReadOnlyMemory<int>.Empty);
+            _stateEffects);
     }
 
     private static Combatant Pandawa(int actionPoints)
@@ -148,6 +163,25 @@ public sealed class CarryTacticsTests
         Assert.Equal([Carrying.CarriedState, Carrying.HalvedState], carried.Find(ally.Id)!.States);
         Assert.Equal([Carrying.CarrierState], carried.Actor.States);
         Assert.Equal(5, carried.Actor.ActionPoints);
+    }
+
+    [Theory]
+    [InlineData(Imprisoned, false)]
+    [InlineData(Heavy, false)]
+    [InlineData(Rooted, false)]
+    [InlineData(Gravity, false)]
+    [InlineData(Deafened, true)]
+    public void AFighterIsCarriedUnlessOneOfItsStatesKeepsItFromBeingMovedOrCarried(int state, bool carried)
+    {
+        // The references read a state's effects 3 and 4 so (D483), and the owner said Enraciné and Pesanteur keep a fighter from
+        // being carried too: a carry takes no fighter in such a state, and still takes one a state only keeps from being pushed.
+        var pandawa = Pandawa(6);
+        var ally = Ally(2, Off(1, 0)) with { States = [state] };
+
+        var cast = _tactics.Imagination.Cast(Fight(pandawa, ally), Level(_spells, Karcham), ally.Cell);
+
+        Assert.Equal(carried, cast.Find(ally.Id)!.CarrierId == pandawa.Id);
+        Assert.Equal(carried ? Combatant.NoCell : ally.Cell, cast.Find(ally.Id)!.Cell);
     }
 
     [Theory]

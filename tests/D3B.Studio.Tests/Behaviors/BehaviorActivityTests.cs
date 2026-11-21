@@ -71,8 +71,7 @@ public sealed class BehaviorActivityTests : IAsyncDisposable
         await UntilAsync(() => Notes(bot).Count == 1);
         connection.Server(new KamasUpdateEvent { Kamas = 10 });
         await bot.ProcessedAsync();
-        _behaviors.Play.Time.Advance(TimeSpan.FromSeconds(60));
-        await UntilAsync(() => Notes(bot).Count == 2);
+        await _behaviors.Play.AdvanceUntilAsync(() => Notes(bot).Count == 2, TimeSpan.FromSeconds(1));
 
         Assert.Equal(["poor", "rich"], Notes(bot));
         Assert.Equal(["Poor", "Rich"], States(bot));
@@ -88,7 +87,7 @@ public sealed class BehaviorActivityTests : IAsyncDisposable
             new BehaviorState("only", "Only") { Actions = Chain(Note("a", "a"), Node("w", "wait", ("Seconds", 5)), Note("b", "b")) }));
 
         await UntilAsync(() => Notes(bot).Count == 1);
-        _behaviors.Play.Time.Advance(TimeSpan.FromSeconds(5));
+        await _behaviors.Play.AdvanceUntilAsync(() => run.Completion.IsCompleted, TimeSpan.FromSeconds(5));
 
         Assert.Equal(ActivityOutcome.Done, await run.Completion);
         Assert.Equal(["a", "b"], Notes(bot));
@@ -110,7 +109,7 @@ public sealed class BehaviorActivityTests : IAsyncDisposable
         await UntilAsync(() => run.Status is ActivityStatus.Stepping);
 
         // The wait the player cut starts again whole: a minute more, then the way goes on.
-        _behaviors.Play.Time.Advance(TimeSpan.FromSeconds(60));
+        await _behaviors.Play.AdvanceUntilAsync(() => run.Completion.IsCompleted, TimeSpan.FromSeconds(60));
 
         Assert.Equal(ActivityOutcome.Done, await run.Completion);
         Assert.Equal(["a", "b"], Notes(bot));
@@ -124,9 +123,9 @@ public sealed class BehaviorActivityTests : IAsyncDisposable
         var run = await _behaviors.StartAsync(bot, Behavior(
             new BehaviorState("loop", "Loop") { Repeat = StepRepeat.Forever, Actions = Chain(Note("a", "again"), Node("w", "wait", ("Seconds", 1))) }));
 
+        // A tenth of the wait at a time: the clock cannot pass the next lap's wait before the second note is seen.
         await UntilAsync(() => Notes(bot).Count == 1);
-        _behaviors.Play.Time.Advance(TimeSpan.FromSeconds(1));
-        await UntilAsync(() => Notes(bot).Count == 2);
+        await _behaviors.Play.AdvanceUntilAsync(() => Notes(bot).Count == 2, TimeSpan.FromMilliseconds(100));
         run.Stop();
         await run.Completion;
 
@@ -176,12 +175,7 @@ public sealed class BehaviorActivityTests : IAsyncDisposable
 
         connection.Server(new KamasUpdateEvent { Kamas = 50 });
         await bot.ProcessedAsync();
-
-        while (!run.Completion.IsCompleted)
-        {
-            _behaviors.Play.Time.Advance(TimeSpan.FromSeconds(1));
-            await Task.Delay(5, TestContext.Current.CancellationToken);
-        }
+        await _behaviors.Play.AdvanceUntilAsync(() => run.Completion.IsCompleted, TimeSpan.FromSeconds(1));
 
         Assert.Equal(["after"], Notes(bot));
     }
@@ -220,17 +214,11 @@ public sealed class BehaviorActivityTests : IAsyncDisposable
             new BehaviorState("list", "List") { Repeat = StepRepeat.Until(new NodeCall("kamas.atLeast", Values(("Amount", 10)))), Actions = Chain(Note("a", "a"), Node("w", "wait", ("Seconds", 1))) }));
 
         await UntilAsync(() => Notes(bot).Count == 1);
-        _behaviors.Play.Time.Advance(TimeSpan.FromSeconds(1));
-        await UntilAsync(() => Notes(bot).Count == 2);
+        await _behaviors.Play.AdvanceUntilAsync(() => Notes(bot).Count >= 2, TimeSpan.FromMilliseconds(100));
 
         connection.Server(new KamasUpdateEvent { Kamas = 50 });
         await bot.ProcessedAsync();
-
-        while (!run.Completion.IsCompleted)
-        {
-            _behaviors.Play.Time.Advance(TimeSpan.FromSeconds(1));
-            await Task.Delay(5, TestContext.Current.CancellationToken);
-        }
+        await _behaviors.Play.AdvanceUntilAsync(() => run.Completion.IsCompleted, TimeSpan.FromSeconds(1));
 
         Assert.Equal(ActivityOutcome.Done, await run.Completion);
         Assert.Equal(["a", "a"], Notes(bot).Take(2));
@@ -372,8 +360,7 @@ public sealed class BehaviorActivityTests : IAsyncDisposable
             new BehaviorState("only", "Only") { Actions = Chain(Note("a", "a"), Node("w", "wait", ("Seconds", 5))) }));
 
         await UntilAsync(() => Notes(bot).Count == 1);
-        _behaviors.Play.Time.Advance(TimeSpan.FromSeconds(5));
-        await run.Completion;
+        await _behaviors.Play.AdvanceUntilAsync(() => run.Completion.IsCompleted, TimeSpan.FromSeconds(5));
 
         var trace = bot.Trace.All();
 
@@ -438,7 +425,7 @@ public sealed class BehaviorActivityTests : IAsyncDisposable
         Assert.Equal((1, 3), (progress?.Done, progress?.Total));
         Assert.Equal([2L, 3L], progress?.Text.Values.Select(value => value.Id));
 
-        _behaviors.Play.Time.Advance(TimeSpan.FromSeconds(60));
+        await _behaviors.Play.AdvanceUntilAsync(() => run.Completion.IsCompleted, TimeSpan.FromSeconds(60));
 
         Assert.Equal(ActivityOutcome.Done, await run.Completion);
         Assert.Equal(["a", "b"], Notes(bot));
@@ -457,7 +444,7 @@ public sealed class BehaviorActivityTests : IAsyncDisposable
         Assert.Equal(ChallengeReward.Client, run.Activity.ChallengeReward);
         Assert.Equal(ChallengePlay.None, run.Activity.Challenges);
 
-        _behaviors.Play.Time.Advance(TimeSpan.FromSeconds(60));
+        await _behaviors.Play.AdvanceUntilAsync(() => run.Completion.IsCompleted, TimeSpan.FromSeconds(60));
 
         Assert.Equal(ActivityOutcome.Done, await run.Completion);
     }
@@ -469,12 +456,10 @@ public sealed class BehaviorActivityTests : IAsyncDisposable
         var run = await _behaviors.StartAsync(bot, Behavior(
             new BehaviorState("loop", "Loop") { Repeat = StepRepeat.Forever, Actions = Chain(Node("w", "wait", ("Seconds", 1)), Node("v", "wait", ("Seconds", 60))) }));
 
+        // Steps of half the first wait: the clock cannot pass it again, once the list starts over, before that is seen.
         await UntilAsync(() => run.Status is ActivityStatus.Stepping);
-        _behaviors.Play.Time.Advance(TimeSpan.FromSeconds(1));
-        await UntilAsync(() => run.Activity.Report?.Progress?.Done == 1);
-
-        _behaviors.Play.Time.Advance(TimeSpan.FromSeconds(60));
-        await UntilAsync(() => run.Activity.Report?.Progress?.Done == 0);
+        await _behaviors.Play.AdvanceUntilAsync(() => run.Activity.Report?.Progress?.Done == 1, TimeSpan.FromMilliseconds(500));
+        await _behaviors.Play.AdvanceUntilAsync(() => run.Activity.Report?.Progress?.Done == 0, TimeSpan.FromMilliseconds(500));
 
         run.Stop();
         await run.Completion;

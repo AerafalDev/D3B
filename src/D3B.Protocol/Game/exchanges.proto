@@ -59,7 +59,9 @@ message StorageContentEvent {
 
 // Moves stacks of the inventory into the storage, whole. The server takes those it may and answers with the inventory's
 // stacks deleted, those of the storage changed and the weight; it leaves the others, such as a quest's objects or a stack
-// the inventory lacks, and answers nothing when it takes none, or outside the storage's exchange.
+// the inventory lacks, and answers nothing when it takes none. In an exchange with another character it moves them into
+// the exchange: measured on the owner's captures of 2026-11-21 (D482), 31 requests each answered 28 to 169 ms later by
+// one ExchangeObjectsAddedEvent listing up to 33 stacks.
 message ExchangeTransferFromInventoryRequest {
   repeated int32 uids = 1;
 }
@@ -196,6 +198,7 @@ message ExchangeStartedWithPlayerEvent {
 // Objects went into the exchange between two characters: to both, 28 ms after each move of one side's, one event a move.
 // Measured on 3.7.14.18 (D442): three moves, two by ExchangeObjectMoveRequest and one by
 // ExchangeTransferFromInventoryRequest, three events to each side; each lists the stacks moved, which no step reads yet.
+// A transfer of many stacks makes one event listing them all, an object and a number each (D482).
 message ExchangeObjectsAddedEvent {
   option (d3b.readable.partial) = true;
 }

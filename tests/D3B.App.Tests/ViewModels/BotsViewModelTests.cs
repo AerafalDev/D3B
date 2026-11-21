@@ -162,7 +162,7 @@ public sealed class BotsViewModelTests : IAsyncDisposable
         await activity.SteppingAsync(bot);
         connection.Client(new InteractiveUseRequest { ElementId = 1, SkillInstanceId = 2 });
         await bot.ProcessedAsync();
-        await Waiting.UntilAsync(() => bot.Activity?.Status is ActivityStatus.Waiting, TimeSpan.FromSeconds(10));
+        await Waiting.UntilAsync(() => bot.Activity?.Status is ActivityStatus.Waiting);
         page.Refresh(host.Services);
 
         Assert.True(item.IsPaused);
@@ -200,7 +200,7 @@ public sealed class BotsViewModelTests : IAsyncDisposable
         page.Refresh(host.Services);
         connection.Client(new InteractiveUseRequest { ElementId = 1, SkillInstanceId = 2 });
         await bot.ProcessedAsync();
-        await Waiting.UntilAsync(() => bot.Activity?.Status is ActivityStatus.Waiting, TimeSpan.FromSeconds(10));
+        await Waiting.UntilAsync(() => bot.Activity?.Status is ActivityStatus.Waiting);
         page.Refresh(host.Services);
         page.Refresh(host.Services);
 

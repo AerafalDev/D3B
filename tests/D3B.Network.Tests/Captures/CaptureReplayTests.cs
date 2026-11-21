@@ -1,5 +1,6 @@
 using System.Buffers;
 using System.IO.Pipelines;
+using D3B.Data.Tests;
 using D3B.Network.Captures;
 using D3B.Network.Framing;
 using Microsoft.Extensions.Time.Testing;
@@ -8,8 +9,6 @@ namespace D3B.Network.Tests.Captures;
 
 public sealed class CaptureReplayTests
 {
-    private static readonly TimeSpan _timeout = TimeSpan.FromSeconds(30);
-
     private static async Task<byte[]> ReadToEndAsync(PipeReader reader)
     {
         using var bytes = new MemoryStream();
@@ -78,7 +77,7 @@ public sealed class CaptureReplayTests
         var client = ReadToEndAsync(fromClient.Reader);
         var server = ReadToEndAsync(fromServer.Reader);
 
-        await replay.WaitAsync(_timeout, TestContext.Current.CancellationToken);
+        await replay.WaitAsync(Polling.Deadline, TestContext.Current.CancellationToken);
 
         Assert.Equal([1, 2, 3], await client);
         Assert.Equal([4, 5, 6, .. new byte[300]], await server);
@@ -108,7 +107,7 @@ public sealed class CaptureReplayTests
         var server = ReadToEndAsync(fromServer.Reader);
         var d3b = ReadToEndAsync(injected.Reader);
 
-        await replay.WaitAsync(_timeout, TestContext.Current.CancellationToken);
+        await replay.WaitAsync(Polling.Deadline, TestContext.Current.CancellationToken);
 
         Assert.Equal([1, 2], await client);
         Assert.Equal([1, 3], await server);
@@ -117,7 +116,7 @@ public sealed class CaptureReplayTests
         // Replayed through the relay, which sends its own, they are left out.
         var withoutInjected = new Pipe();
 
-        await CaptureReplay.PlayAsync(records, withoutInjected.Writer, new Pipe().Writer, TestContext.Current.CancellationToken).WaitAsync(_timeout, TestContext.Current.CancellationToken);
+        await CaptureReplay.PlayAsync(records, withoutInjected.Writer, new Pipe().Writer, TestContext.Current.CancellationToken).WaitAsync(Polling.Deadline, TestContext.Current.CancellationToken);
 
         Assert.Equal([1, 2], await ReadToEndAsync(withoutInjected.Reader));
     }
@@ -163,7 +162,7 @@ public sealed class CaptureReplayTests
         var read = ReadFramesAsync(fromServer.Reader);
 
         await fromClient.Reader.CompleteAsync();
-        await replay.WaitAsync(_timeout, TestContext.Current.CancellationToken);
+        await replay.WaitAsync(Polling.Deadline, TestContext.Current.CancellationToken);
 
         Assert.Equal(frames, await read);
     }

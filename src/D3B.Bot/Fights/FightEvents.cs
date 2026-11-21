@@ -74,9 +74,11 @@ public static class FightEvents
 
             // Measured (D224): the state of a Zobal's mask goes so as another is put on, which the server then checks.
             FightBuffEndEvent ended => Changed(fight, ended.TargetId, fighter => fighter with { Buffs = [.. fighter.Buffs.Where(buff => buff.Uid != ended.Uid)] }),
+            // Measured (D480): the server names only the spells whose cooldown changes, one at a time as a Zobal changes mask,
+            // and every spell it counts down at a turn's end, those back at 0 too.
             RefreshCooldownEvent cooldowns => Changed(fight, cooldowns.FighterId, fighter => fighter with
             {
-                Cooldowns = cooldowns.Cooldowns.GroupBy(cooldown => cooldown.SpellId).ToImmutableSortedDictionary(group => group.Key, group => group.Last().Rounds),
+                Cooldowns = fighter.Cooldowns.SetItems(cooldowns.Cooldowns.GroupBy(cooldown => cooldown.SpellId).Select(group => KeyValuePair.Create(group.Key, group.Last().Rounds))),
             }),
             SequenceStartEvent started => fight with { Sequences = fight.Sequences.Add(new FightSequence(started.Type, started.AuthorId, HasCast: false)) },
             SequenceEndEvent => fight.Sequences.IsEmpty ? fight : fight with { Sequences = fight.Sequences.RemoveAt(fight.Sequences.Length - 1) },

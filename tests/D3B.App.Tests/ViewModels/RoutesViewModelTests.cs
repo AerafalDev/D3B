@@ -95,8 +95,9 @@ public sealed class RoutesViewModelTests : IAsyncDisposable
 
         Assert.True(routes.IsAnyDirty);
 
+        // The saves run off the command: what they leave is waited for, the toast last.
         routes.SaveAll();
-        await Task.Delay(100, TestContext.Current.CancellationToken);
+        await Waiting.UntilAsync(() => routes.Toasts.Recent.Any(toast => toast.Text.Contains("North", StringComparison.Ordinal)));
 
         Assert.False(routes.IsAnyDirty);
         Assert.Equal([1L], Assert.IsType<RouteAsset>(_store.Assets.Find("r1")).Anchors.Select(anchor => anchor.MapId));

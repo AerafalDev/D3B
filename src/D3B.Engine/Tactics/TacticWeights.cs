@@ -62,6 +62,15 @@ public sealed record TacticWeights
     /// <summary>Gets the part of a life point's worth that remains above <see cref="Comfort"/>, 1 keeping the curve whole.</summary>
     public double ComfortWorth { get; init; } = 0.25;
 
+    /// <summary>Gets the weight of the life the side playing's own casts take from its other fighters, on top of what that life is worth to them.</summary>
+    /// <remarks>
+    /// The owner's report from a group game (D485), a character striking its ally: above <see cref="Comfort"/> of its most life
+    /// an ally's point is worth a quarter of the curve's, 0.16 at its most, where a point dealt an enemy is worth 0.6 to 1, so a
+    /// zone striking an enemy and its ally beat a blow on the enemy alone. At 1, a point taken from an ally costs at least what
+    /// a point dealt the hardest-hitting enemy is worth; a summon's life, worth nothing of itself (D270), costs nothing more.
+    /// </remarks>
+    public double AlliesStruck { get; init; } = 1;
+
     /// <summary>Gets how much dearer the fighter playing holds its own life than an ally's: its death ends its fight.</summary>
     public double Survival { get; init; } = 2;
 }

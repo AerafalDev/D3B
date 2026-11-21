@@ -100,3 +100,9 @@ Each file holds the decisions of one group of [the index](../decisions-index.md)
 - [Groups, the game's following not paused and its readiness left to the server (D477)](d477-game-following-pause-and-ready.md): 1 decision, 2 KB.
 - [Fights, the placement weighed by the turn order (D478)](d478-placement-turn-order.md): 1 decision, 2 KB.
 - [Fights, the turn's pace (D479)](d479-fight-turn-pace.md): 1 decision, 2 KB.
+- [Fights, the server's cooldowns merged (D480)](d480-cooldowns-merged.md): 1 decision, 4 KB.
+- [The harvest, fights lost in a row (D481)](d481-harvest-losses-go-on.md): 1 decision, 3 KB.
+- [Groups, the exchange's stacks in one request (D482)](d482-group-exchange-one-request.md): 1 decision, 3 KB.
+- [Fights, a carry and the states that forbid it (D483)](d483-carry-states.md): 1 decision, 2 KB.
+- [Activities, the wait for a busy character bounded (D484)](d484-busy-wait-bounded.md): 1 decision, 3 KB.
+- [Fights, the blows on the character's own allies (D485)](d485-ally-strikes.md): 1 decision, 7 KB.

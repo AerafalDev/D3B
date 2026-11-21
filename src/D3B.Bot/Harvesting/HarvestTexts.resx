@@ -312,7 +312,7 @@
     <value>After a lost fight</value>
   </data>
   <data name="AfterLostFightHelp" xml:space="preserve">
-    <value>The character comes back to its save point with little life: on resuming, it first regains the share of life under which it heals, eating its food or waiting. Three fights lost in a row stop harvesting.</value>
+    <value>The character comes back with half its life: on resuming, it first regains its whole life, eating its food or waiting. Harvesting goes on however many fights are lost in a row.</value>
   </data>
   <data name="AfterLostFightResume" xml:space="preserve">
     <value>Resume once healed</value>
@@ -523,5 +523,17 @@
   </data>
   <data name="FailZoneGone" xml:space="preserve">
     <value>The zone this profile names is not in the project.</value>
+  </data>
+  <data name="FailStuckMapUnknown" xml:space="preserve">
+    <value>The character's map is still unknown after two minutes.</value>
+  </data>
+  <data name="FailStuckUsing" xml:space="preserve">
+    <value>Still using an element after two minutes, even once put back in order.</value>
+  </data>
+  <data name="FailStuckInDialog" xml:space="preserve">
+    <value>Still in a dialog or an exchange after two minutes, even once put back in order.</value>
+  </data>
+  <data name="FailStuckWalking" xml:space="preserve">
+    <value>Still walking after two minutes, even once put back in order.</value>
   </data>
 </root>

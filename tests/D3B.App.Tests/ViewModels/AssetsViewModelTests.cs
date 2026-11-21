@@ -83,7 +83,7 @@ public sealed class AssetsViewModelTests : IAsyncDisposable
         sequences.Opened = editor => opened.Add(editor.Name);
         assets.Sequences = sequences;
         assets.New(AssetKind.Behavior);
-        await Waiting.UntilAsync(() => opened.Count == 1, TimeSpan.FromSeconds(10));
+        await Waiting.UntilAsync(() => opened.Count == 1);
         sequences.Refresh(null);
         assets.Refresh(_store.Host.Services);
 
@@ -238,7 +238,7 @@ public sealed class AssetsViewModelTests : IAsyncDisposable
         Assert.Equal("Its 1 asset is deleted with it. It goes to the Windows recycle bin.", question.Message);
 
         question.ConfirmCommand.Execute(null);
-        await Waiting.UntilAsync(() => _store.Assets.Find(walker.Id) is null, TimeSpan.FromSeconds(10));
+        await Waiting.UntilAsync(() => _store.Assets.Find(walker.Id) is null);
 
         Assert.Empty(profiles.Open);
         Assert.DoesNotContain(assets.Rows, row => row.Name == "Fields");

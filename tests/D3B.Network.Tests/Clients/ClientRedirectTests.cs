@@ -1,4 +1,5 @@
 using System.Net;
+using D3B.Data.Tests;
 using D3B.Network.Clients;
 using D3B.Network.Relay;
 
@@ -6,8 +7,6 @@ namespace D3B.Network.Tests.Clients;
 
 public sealed class ClientRedirectTests : IDisposable
 {
-    private static readonly TimeSpan _timeout = TimeSpan.FromSeconds(30);
-
     private readonly TestClient _client = new();
 
     public void Dispose()
@@ -145,7 +144,7 @@ public sealed class ClientRedirectTests : IDisposable
 
         using var timeout = CancellationTokenSource.CreateLinkedTokenSource(TestContext.Current.CancellationToken);
 
-        timeout.CancelAfter(_timeout);
+        timeout.CancelAfter(Polling.Deadline);
 
         while (ClientVersionFile.ReadConfigUrl(_client.VersionFile) != _client.D3BConfigUrl || redirect.ConnectionHost?.Host != "127.0.0.1")
             await Task.Delay(50, timeout.Token);

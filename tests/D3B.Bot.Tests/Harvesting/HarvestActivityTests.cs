@@ -12,6 +12,7 @@ using D3B.Bot.Localization;
 using D3B.Bot.Runtime;
 using D3B.Bot.Tests.Movement;
 using D3B.Bot.Tests.Runtime;
+using D3B.Data.Tests;
 using D3B.Protocol.Game;
 
 namespace D3B.Bot.Tests.Harvesting;
@@ -36,7 +37,7 @@ public sealed class HarvestActivityTests : IAsyncDisposable
 
     private static async Task<ActivityReport> ReportedAsync(BotActivity activity, Func<ActivityReport, bool> condition)
     {
-        var deadline = DateTime.UtcNow + TimeSpan.FromSeconds(10);
+        var deadline = DateTime.UtcNow + Polling.Deadline;
 
         while (activity.Report is not { } report || !condition(report))
         {
@@ -49,7 +50,7 @@ public sealed class HarvestActivityTests : IAsyncDisposable
 
     private static async Task WaitForAsync(Func<bool> condition)
     {
-        var deadline = DateTime.UtcNow + TimeSpan.FromSeconds(10);
+        var deadline = DateTime.UtcNow + Polling.Deadline;
 
         while (!condition())
         {
@@ -620,7 +621,7 @@ public sealed class HarvestActivityTests : IAsyncDisposable
     }
 
     [Fact]
-    public async Task ALostFightIsAnsweredAsTheProfileSaysAndThreeInARowEndTheActivity()
+    public async Task ALostFightIsAnsweredAsTheProfileSaysHoweverManyCameInARow()
     {
         var (connection, bot) = await _play.EnterAsync(433);
         var activity = Activity(new HarvestSettings { Resources = [TestPlay.Ash], SubAreas = [TestPlay.SubAreaId], AfterLostFight = HarvestAfterFight.Pause });
@@ -635,14 +636,138 @@ public sealed class HarvestActivityTests : IAsyncDisposable
         await WaitForAsync(() => bot.IsPaused);
 
         Assert.Equal(InterruptionResponse.Resume, bot.Journal.All().OfType<ActivityInterruptedEntry>().Single().Response);
+
+        // The owner's choice (D481): losses in a row no longer end the harvest, the third as the first.
         Assert.Equal(InterruptionResponse.Pause, activity.OnFightOver(new FightEnd(FightOutcome.Lost, 0, 0, ImmutableSortedDictionary<int, int>.Empty), InterruptionResponse.Resume));
-        Assert.Equal(InterruptionResponse.Stop, activity.OnFightOver(new FightEnd(FightOutcome.Lost, 0, 0, ImmutableSortedDictionary<int, int>.Empty), InterruptionResponse.Resume));
+        Assert.Equal(InterruptionResponse.Pause, activity.OnFightOver(new FightEnd(FightOutcome.Lost, 0, 0, ImmutableSortedDictionary<int, int>.Empty), InterruptionResponse.Resume));
+        Assert.Equal(InterruptionResponse.Pause, activity.OnFightOver(new FightEnd(FightOutcome.Lost, 0, 0, ImmutableSortedDictionary<int, int>.Empty), InterruptionResponse.Resume));
         Assert.Equal(InterruptionResponse.Resume, activity.OnFightOver(new FightEnd(FightOutcome.Won, 0, 0, ImmutableSortedDictionary<int, int>.Empty), InterruptionResponse.Resume));
         Assert.False(run.IsOver);
 
         run.Stop();
 
         Assert.Equal(ActivityOutcome.Stopped, await run.Completion);
+    }
+
+    [Fact]
+    public async Task ProtectorsBeatingTheCharacterAgainAndAgainNeverEndTheHarvest()
+    {
+        var (connection, bot) = await _play.EnterAsync(433);
+        var activity = Activity(new HarvestSettings { Resources = [TestPlay.Ash], SubAreas = [TestPlay.SubAreaId] });
+        var run = bot.StartActivity(activity);
+
+        await TestWalks.WalkedAsync(_play, connection, 1);
+        await connection.SentAsync(2);
+
+        // Measured on the owner's game of 2026-11-21: a scarecrow beat the farmer 11 times in 14, three in a row ending the
+        // harvest until the server closed the idle connection 30 minutes later.
+        for (var lost = 1; lost <= 4; lost++)
+        {
+            var sent = connection.Sent.Count;
+
+            connection.Server(new InteractiveUsedEvent { ActorId = TestPlay.CharacterId, ElementId = TestPlay.TreeElementId, SkillId = TestPlay.TreeSkillId, Duration = 30 });
+            connection.Server(new InteractiveUseEndedEvent { ElementId = TestPlay.TreeElementId, SkillId = TestPlay.TreeSkillId });
+            connection.Server(new ContextDestroyEvent());
+            connection.Server(new ContextCreationEvent { Context = ContextCreationEvent.Types.GameContext.Fight });
+            connection.Server(Ended(FightOutcome.Lost));
+            connection.Server(new ContextDestroyEvent());
+            connection.Server(new ContextCreationEvent { Context = ContextCreationEvent.Types.GameContext.Roleplay });
+
+            await connection.SentAsync(sent + 1);
+
+            Assert.False(run.IsOver, $"The harvest ended after {lost} fights lost in a row.");
+        }
+
+        run.Stop();
+
+        Assert.Equal(ActivityOutcome.Stopped, await run.Completion);
+    }
+
+    [Fact]
+    public async Task AfterALostFightTheCharacterWaitsForItsWholeLifeBeforeItGoesOn()
+    {
+        var (connection, bot) = await _play.EnterAsync(433);
+        var activity = Activity(new HarvestSettings { Resources = [TestPlay.Ash], SubAreas = [TestPlay.SubAreaId] });
+        var run = bot.StartActivity(activity);
+
+        await TestWalks.WalkedAsync(_play, connection, 1);
+        await connection.SentAsync(2);
+
+        // Measured on the owner's game of 2026-11-21: a lost fight leaves half the life, 105 of 209, never under the default
+        // share of 50; the owner's choice (D481), the character waits for its whole life, a point each half second.
+        connection.Server(new InteractiveUsedEvent { ActorId = TestPlay.CharacterId, ElementId = TestPlay.TreeElementId, SkillId = TestPlay.TreeSkillId, Duration = 30 });
+        connection.Server(new InteractiveUseEndedEvent { ElementId = TestPlay.TreeElementId, SkillId = TestPlay.TreeSkillId });
+        connection.Server(new ContextDestroyEvent());
+        connection.Server(new ContextCreationEvent { Context = ContextCreationEvent.Types.GameContext.Fight });
+        connection.Server(Ended(FightOutcome.Lost));
+        connection.Server(new LifeRegenEndEvent { Life = 105, MaxLife = 209 });
+        connection.Server(new ContextDestroyEvent());
+        connection.Server(new ContextCreationEvent { Context = ContextCreationEvent.Types.GameContext.Roleplay });
+        connection.Server(new LifeRegenStartEvent { Interval = 5 });
+
+        await ReportedAsync(activity, report => Say(report.Doing) == "Regaining life after a lost fight: 105 of 209");
+
+        _play.Time.Advance(TimeSpan.FromSeconds(50));
+        await ReportedAsync(activity, report => Say(report.Doing) == "Regaining life after a lost fight: 205 of 209");
+        Assert.Equal(2, connection.Sent.Count);
+
+        _play.Time.Advance(TimeSpan.FromSeconds(2));
+        await connection.SentAsync(3);
+        Assert.False(run.IsOver);
+
+        run.Stop();
+
+        Assert.Equal(ActivityOutcome.Stopped, await run.Completion);
+    }
+
+    [Fact]
+    public async Task ADialogLeftOpenAMinuteIsLeftAndTheHarvestGoesOn()
+    {
+        var (connection, bot) = await _play.EnterAsync(433);
+
+        connection.Server(new NpcDialogCreationEvent { MapId = TestPlay.MapId, NpcActorId = TestPlay.WayActorId });
+        await bot.ProcessedAsync();
+
+        var started = _play.Time.GetUtcNow();
+        var run = bot.StartActivity(Activity(new HarvestSettings { Resources = [TestPlay.Ash], SubAreas = [TestPlay.SubAreaId] }));
+
+        // The owner's choice (D484): a minute busy at a step's start, the character is put back in order as after an interruption.
+        Assert.Equal(new DialogLeaveRequest(), await TestWalks.SentAsync(_play, connection, 1));
+        Assert.True(_play.Time.GetUtcNow() - started >= TimeSpan.FromMinutes(1));
+
+        connection.Server(new DialogLeaveEvent());
+
+        await TestWalks.WalkedAsync(_play, connection, 2);
+        Assert.False(run.IsOver);
+
+        run.Stop();
+
+        Assert.Equal(ActivityOutcome.Stopped, await run.Completion);
+    }
+
+    [Fact]
+    public async Task AUseThatNeverEndsFailsTheHarvestSayingWhyAMinuteAfterTheCharacterWasPutBackInOrder()
+    {
+        var (connection, bot) = await _play.EnterAsync(433);
+
+        connection.Server(new InteractiveUsedEvent { ActorId = TestPlay.CharacterId, ElementId = TestPlay.TreeElementId, SkillId = TestPlay.TreeSkillId, Duration = 30 });
+        await bot.ProcessedAsync();
+
+        var started = _play.Time.GetUtcNow();
+        var run = bot.StartActivity(Activity(new HarvestSettings { Resources = [TestPlay.Ash], SubAreas = [TestPlay.SubAreaId] }));
+        var deadline = started + TimeSpan.FromMinutes(5);
+
+        while (!run.IsOver)
+        {
+            Assert.True(_play.Time.GetUtcNow() < deadline, "The harvest still waits.");
+            _play.Time.Advance(TimeSpan.FromSeconds(1));
+            await Task.Delay(5, TestContext.Current.CancellationToken);
+        }
+
+        Assert.Equal(ActivityOutcome.Failed, await run.Completion);
+        Assert.Equal("Still using an element after two minutes, even once put back in order.", Say(Assert.IsType<ActivityException>(run.Failure).Reason!));
+        Assert.True(_play.Time.GetUtcNow() - started >= TimeSpan.FromMinutes(2));
+        Assert.Empty(connection.Sent);
     }
 
     private static FightEndEvent Ended(FightOutcome outcome)
@@ -728,7 +853,7 @@ public sealed class HarvestActivityTests : IAsyncDisposable
         connection.Server(new LifeRegenEndEvent { Life = 416, MaxLife = 1_000 });
 
         // Nothing left that heals: the life regenerates, the potion left alone.
-        var deadline = DateTime.UtcNow + TimeSpan.FromSeconds(10);
+        var deadline = DateTime.UtcNow + Polling.Deadline;
 
         while (activity.Report is not { } report || !Say(report.Doing).StartsWith("Waiting for its life to regenerate", StringComparison.Ordinal))
         {

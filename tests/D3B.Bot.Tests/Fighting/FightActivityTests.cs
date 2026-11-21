@@ -509,6 +509,37 @@ public sealed class FightActivityTests : IAsyncDisposable
     }
 
     [Fact]
+    public async Task ADialogTheServerNeverLetsGoFailsTheHuntSayingWhyOnceTheCharacterWasPutBackInOrder()
+    {
+        var (connection, bot) = await _play.EnterAsync(GroupCell);
+
+        connection.Server(new NpcDialogCreationEvent { MapId = TestPlay.MapId, NpcActorId = TestPlay.WayActorId });
+        await bot.ProcessedAsync();
+
+        var started = _play.Time.GetUtcNow();
+        var run = bot.StartActivity(Activity(new FightSettings { Place = FightPlace.Chosen, SubAreas = [TestPlay.SubAreaId], Heal = false }));
+
+        // The owner's choice (D484): busy a minute, the character is put back in order; still busy a minute later, the hunt fails.
+        Assert.Equal(new DialogLeaveRequest(), await TestWalks.SentAsync(_play, connection, 1));
+        Assert.True(_play.Time.GetUtcNow() - started >= TimeSpan.FromMinutes(1));
+
+        while (!run.IsOver)
+        {
+            Assert.True(_play.Time.GetUtcNow() - started < TimeSpan.FromMinutes(5), "The hunt still waits.");
+            _play.Time.Advance(TimeSpan.FromSeconds(1));
+            await Task.Delay(5, TestContext.Current.CancellationToken);
+        }
+
+        Assert.Equal(ActivityOutcome.Failed, await run.Completion);
+
+        var reason = Assert.IsType<ActivityException>(run.Failure).Reason!;
+
+        Assert.Equal("Still in a dialog or an exchange after two minutes, even once put back in order.", reason.Format.In(System.Globalization.CultureInfo.GetCultureInfo("en")));
+        Assert.True(_play.Time.GetUtcNow() - started >= TimeSpan.FromMinutes(2));
+        Assert.Single(connection.Sent);
+    }
+
+    [Fact]
     public async Task AGroupTheServerAnswersNothingForIsLeftAndTheTourGoesOn()
     {
         var (connection, bot) = await _play.EnterAsync(GroupCell);
@@ -629,7 +660,7 @@ public sealed class FightActivityTests : IAsyncDisposable
         Assert.Equal(InterruptionResponse.Resume, activity.OnFightOver(Ended(FightOutcome.Lost), InterruptionResponse.Resume));
         Assert.Equal(InterruptionResponse.Resume, activity.OnFightOver(Ended(FightOutcome.Lost), InterruptionResponse.Resume));
 
-        // Three lost in a row stop it, as harvesting (D198).
+        // Three lost in a row stop it (D198); harvesting goes on (D481).
         Assert.Equal(InterruptionResponse.Stop, activity.OnFightOver(Ended(FightOutcome.Lost), InterruptionResponse.Resume));
         // Counted: one fight won, three lost.
         Assert.Equal(["1 fight won", "3 fights lost"], activity.Report!.Counts.Select(count => string.Format(System.Globalization.CultureInfo.InvariantCulture, (count.Text.Many is { } many && count.Text.Count != 1 ? many : count.Text.Format).In(System.Globalization.CultureInfo.InvariantCulture), [.. count.Text.Values.Select(value => value.Text ?? value.Id.ToString(System.Globalization.CultureInfo.InvariantCulture))])));

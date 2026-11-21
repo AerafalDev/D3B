@@ -9,7 +9,8 @@ at the pull request. One branch and one pull request per session.
 
 1. Work on a branch cut from an up-to-date `main`, named as the `git` skill says.
 2. Run the checks that CI runs, and read their output: `dotnet build`, `dotnet test`, `dotnet format --verify-no-changes`,
-   and `dotnet build scripts/<tool>.cs` or `dotnet build .claude/hooks/<hook>.cs` for each one the branch changed.
+   `dotnet build scripts/<tool>.cs` or `dotnet build .claude/hooks/<hook>.cs` for each one the branch changed, and
+   `dotnet run --file scripts/docs.cs -- check` when it changed a Markdown file.
 3. Bring the docs level with the code: `docs/status.md`, the step's row in `docs/roadmap.md`, a line in
    `docs/decisions-index.md` for each decision, and the sections of `docs/architecture.md` the change touches.
 4. Run `/review`; fix its blocking findings; run step 2 again.

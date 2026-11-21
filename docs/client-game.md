@@ -1475,6 +1475,12 @@ failure; without the captures, the pins and the structure pair the same.
 - **The exchange's readiness** (D458), on the owner's test of 2026-11-19: a follower moving 67 stacks one by one, each after
   the client's display time, took 39 s. A readiness sent 0.5 s after the exchange's last change was never answered, twice;
   every one sent 3.5 to 4 s after was answered 28 ms later, and the master's, sent 60 ms after its follower's, was taken.
+- **Many stacks in one request** (D482), on the owner's captures of 2026-11-21 (18:28, 18:32 and 18:43 local time), the
+  owner moving stacks by hand in exchanges between two of their characters: the client moved several stacks at once with
+  `ExchangeTransferFromInventoryRequest`, of the shape the bank's exchange takes, one packed list of ids. Each of the 31 was
+  answered by one `ExchangeObjectsAddedEvent`, 28 to 169 ms later, listing up to 33 stacks, each an object and a number;
+  a single stack went either that way or by `ExchangeObjectMoveRequest`. 16 more of those events came 28 to 41 ms after an
+  empty request the build does not pair; what it moves was not measured.
 
 
 ## The game, the challenges' bonus
@@ -1544,3 +1550,21 @@ play the Astrub Knight: no capture holds a companion.
 
 **Mapped** (D443): the companion's kind and its master. Format 21, 255 messages and 556 fields paired, no failure, the
 same bytes twice; without the captures, the pins and the structure pair the same 255.
+
+## The game, cooldowns and refusals
+
+Measured on 2026-11-21 for D480: the 130 game connections of 2026-11-20 and 21 on 3.7.14.18, with
+`scripts/fights.cs --live --details`, which prints counts, and the unanswered attacks and long waits by capture and time,
+never a message's content.
+
+- **Cooldowns.** `RefreshCooldownEvent` names only the spells whose cooldown changes. A Zobal putting on a mask gets two,
+  one spell each, the old mask's and its variant's, 1 round each (13386 then 13409 as Pleutre goes on). At a turn's end
+  the server names every spell it counts down, those back at 0 among them, each round one less: 2, 1, 0. An event naming
+  none comes in fights where nothing waits. Merged spell by spell, no cooldown the bot held stood on any of the 12,605
+  casts the server announced, and all 167 of the masks' refusals stood on one.
+- **Refusals.** 184 of the AI's 12,791 casts refused, all with text 175 of the error kind: the 167 masks, and 17 of the
+  Pandawa's Karcham on allies and enemies the rules allow, cast on such targets 300 times more, unexplained.
+- **The fight's options.** Toggling Closed is answered with text 95 of the message kind, NoSpectators with text 40, the
+  option shown set twice: the server saying what changed, never a refusal. The client's own toggle opening a fight got
+  text 96.
+- **Attacks.** 3 of D3B's 518 attacks unanswered: each time the monster group walked away as D3B attacked it.

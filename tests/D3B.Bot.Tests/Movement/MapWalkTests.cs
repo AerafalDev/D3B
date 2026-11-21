@@ -5,7 +5,6 @@ using D3B.Bot.Tests.Runtime;
 using D3B.Data.Maps;
 using D3B.Engine.Maps;
 using D3B.Protocol.Game;
-using Microsoft.Extensions.Time.Testing;
 
 namespace D3B.Bot.Tests.Movement;
 
@@ -16,18 +15,6 @@ public sealed class MapWalkTests
         Assert.True(CellPathfinder.TryFind(play.Maps.Get(TestPlay.MapId).Cells.Span, from, to, out var path));
 
         return path;
-    }
-
-    private static async Task<T> AdvanceUntilDoneAsync<T>(FakeTimeProvider time, Task<T> task)
-    {
-        // The walk starts its delays as it goes: the clock moves until it is over, whenever each delay started.
-        while (!task.IsCompleted)
-        {
-            time.Advance(TimeSpan.FromMilliseconds(250));
-            await Task.Delay(5, TestContext.Current.CancellationToken);
-        }
-
-        return await task;
     }
 
     [Fact]
@@ -88,7 +75,7 @@ public sealed class MapWalkTests
         Assert.Equal(before, await TestWalks.WalkedAsync(play, connection, 1));
         Assert.Equal(MapWalk.Request(TestPlay.MapId, PathOn(play, before, 388)), await TestWalks.SentAsync(play, connection, 2));
         Assert.Equal(388, await TestWalks.WalkedAsync(play, connection, 2));
-        Assert.Equal(WalkOutcome.Arrived, await AdvanceUntilDoneAsync(play.Time, walk));
+        Assert.Equal(WalkOutcome.Arrived, await TestWalks.AdvanceUntilDoneAsync(play.Time, walk));
         Assert.Equal(2, connection.Sent.Count);
     }
 
@@ -123,7 +110,7 @@ public sealed class MapWalkTests
         connection.Server(new MapMovementEvent { ActorId = 42, Cells = { 100, 101 } });
         connection.Response(new MapMovementConfirmResponse());
 
-        Assert.Equal(WalkOutcome.NoAnswer, await AdvanceUntilDoneAsync(play.Time, walk));
+        Assert.Equal(WalkOutcome.NoAnswer, await TestWalks.AdvanceUntilDoneAsync(play.Time, walk));
     }
 
     [Fact]
@@ -151,7 +138,7 @@ public sealed class MapWalkTests
 
         await connection.SentAsync(1);
 
-        Assert.Equal(WalkOutcome.NoAnswer, await AdvanceUntilDoneAsync(play.Time, walk));
+        Assert.Equal(WalkOutcome.NoAnswer, await TestWalks.AdvanceUntilDoneAsync(play.Time, walk));
     }
 
     [Fact]
@@ -166,7 +153,7 @@ public sealed class MapWalkTests
         connection.Server(new MapMovementEvent { ActorId = TestPlay.CharacterId, Cells = { path.Cells.ToArray() } });
         await bot.ProcessedAsync();
 
-        Assert.Equal(WalkOutcome.NotConfirmed, await AdvanceUntilDoneAsync(play.Time, walk));
+        Assert.Equal(WalkOutcome.NotConfirmed, await TestWalks.AdvanceUntilDoneAsync(play.Time, walk));
         Assert.False(bot.State.IsWalking);
         Assert.Equal(388, bot.State.Cell);
     }
@@ -190,7 +177,7 @@ public sealed class MapWalkTests
         connection.Server(new MapMovementEvent { ActorId = TestPlay.CharacterId, Cells = { path.Cells.ToArray() } });
         await bot.ProcessedAsync();
 
-        Assert.Equal(WalkOutcome.NotConfirmed, await AdvanceUntilDoneAsync(play.Time, walk));
+        Assert.Equal(WalkOutcome.NotConfirmed, await TestWalks.AdvanceUntilDoneAsync(play.Time, walk));
         Assert.True(bot.State.IsWalkHeld);
 
         // Already on the cell, the bot still walks: from it to a neighbour, which the server takes, then back.
@@ -405,7 +392,7 @@ public sealed class MapWalkTests
 
         await connection.SentAsync(1);
         connection.Server(new MapMovementEvent { ActorId = TestPlay.CharacterId, Cells = { PathOn(play, 48, 20).Cells.ToArray() } });
-        Assert.Equal(WalkOutcome.NotConfirmed, await AdvanceUntilDoneAsync(play.Time, walk));
+        Assert.Equal(WalkOutcome.NotConfirmed, await TestWalks.AdvanceUntilDoneAsync(play.Time, walk));
 
         var aside = bot.RunAsync((context, token) => context.ReleaseHeldWalkAsync(token), TestContext.Current.CancellationToken);
         var request = Assert.IsType<MapMovementRequest>(await connection.SentAsync(2));

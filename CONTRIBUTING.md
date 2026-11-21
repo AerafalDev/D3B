@@ -111,6 +111,7 @@ dotnet test                           # every test project
 dotnet format --verify-no-changes     # the formatting CI checks
 dotnet build scripts/<tool>.cs        # each tool you changed
 dotnet build .claude/hooks/<hook>.cs  # each hook you changed
+dotnet run --file scripts/docs.cs -- check   # the links of the Markdown files, when you changed one
 ```
 
 - **Changes to `src/` come with their tests.** A bug fix comes with a test that failed before it.

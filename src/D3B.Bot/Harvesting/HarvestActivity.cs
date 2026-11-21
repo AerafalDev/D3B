@@ -43,7 +43,6 @@ namespace D3B.Bot.Harvesting;
 /// </remarks>
 public sealed class HarvestActivity : BotActivity
 {
-    private const int MostLostInARow = 3;
     private const int MostFailedJourneys = 3;
     private const int MostBankings = 3;
 
@@ -73,6 +72,7 @@ public sealed class HarvestActivity : BotActivity
     private readonly HarvestBalance _balance;
     private readonly HarvestUpkeep _upkeep;
     private readonly HarvestReporter _reporter;
+    private readonly BusyWait _busy = new();
     private readonly HashSet<int> _skipped = [];
     private List<HarvestRotationZone> _rotation = [];
     private HarvestRotationZone? _current;
@@ -83,7 +83,6 @@ public sealed class HarvestActivity : BotActivity
     private int? _lastTarget;
     private FightKind? _fight;
     private int? _fightItem;
-    private int _lostInARow;
     private bool _regaining;
 
     private HarvestZone? Zone => _current?.Zone;
@@ -202,14 +201,8 @@ public sealed class HarvestActivity : BotActivity
         _context = context;
         _reporter.Begin(context);
 
-        var state = context.State;
-
-        if (state.IsBusy || state.MapId is not { } mapId)
-        {
-            await context.WaitUntilAsync(waited => !waited.IsBusy && waited.MapId is not null, _busyDelay, cancellationToken).ConfigureAwait(false);
-
+        if (await _busy.WaitAsync(context, Failure, cancellationToken).ConfigureAwait(false) || context.State is not { MapId: { } mapId } state)
             return true;
-        }
 
         var current = CurrentOf(context);
         var zone = current.Zone;
@@ -308,6 +301,7 @@ public sealed class HarvestActivity : BotActivity
     public override InterruptionResponse OnInterrupted(Interruption reason)
     {
         _fight = null;
+        _busy.Reset();
 
         if (reason is Interruption.Fight)
         {
@@ -344,24 +338,17 @@ public sealed class HarvestActivity : BotActivity
 
     /// <inheritdoc/>
     /// <remarks>
-    /// A fight lost, the character comes back to its save point with little life (D178): the activity answers it as its
-    /// settings say, resumed once it regained its share of life, the owner's choice; three lost in a row stop it, so that it
-    /// does not lose again and again (D198).
+    /// A fight lost, the character comes back with half its life (D481): the activity answers it as its settings say,
+    /// resumed once it regained its whole life (D198, D481). However many are lost in a row, the harvest
+    /// goes on: measured, a protector beat a farmer 11 times in 14, and the harvest D198 stopped at the third idled until the
+    /// server closed the connection, the owner's choice (D481).
     /// </remarks>
     public override InterruptionResponse OnFightOver(FightEnd? ending, InterruptionResponse response)
     {
         if (ending is not { Outcome: FightOutcome.Lost })
-        {
-            _lostInARow = 0;
-
             return response;
-        }
 
-        _lostInARow++;
         _regaining = true;
-
-        if (_lostInARow >= MostLostInARow)
-            return InterruptionResponse.Stop;
 
         return _settings.AfterLostFight switch
         {
