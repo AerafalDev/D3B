@@ -129,7 +129,7 @@ internal sealed class HarvestUpkeep
     /// <returns>A task that completes once the life is whole, or once the next step will eat.</returns>
     /// <remarks>
     /// Measured: a lost fight leaves half the life, rounded up, never under the default share of 50 the character heals
-    /// under, so that it went on at once; the owner's choice (D480), it regains the whole after a loss, by its food when the
+    /// under, so that it went on at once; the owner's choice (D481), it regains the whole after a loss, by its food when the
     /// profile heals (D148), else a point each interval (D153).
     /// </remarks>
     public async Task RegainAsync(BotContext context, CancellationToken cancellationToken)

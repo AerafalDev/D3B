@@ -636,7 +636,7 @@ public sealed class HarvestActivityTests : IAsyncDisposable
 
         Assert.Equal(InterruptionResponse.Resume, bot.Journal.All().OfType<ActivityInterruptedEntry>().Single().Response);
 
-        // The owner's choice (D480): losses in a row no longer end the harvest, the third as the first.
+        // The owner's choice (D481): losses in a row no longer end the harvest, the third as the first.
         Assert.Equal(InterruptionResponse.Pause, activity.OnFightOver(new FightEnd(FightOutcome.Lost, 0, 0, ImmutableSortedDictionary<int, int>.Empty), InterruptionResponse.Resume));
         Assert.Equal(InterruptionResponse.Pause, activity.OnFightOver(new FightEnd(FightOutcome.Lost, 0, 0, ImmutableSortedDictionary<int, int>.Empty), InterruptionResponse.Resume));
         Assert.Equal(InterruptionResponse.Pause, activity.OnFightOver(new FightEnd(FightOutcome.Lost, 0, 0, ImmutableSortedDictionary<int, int>.Empty), InterruptionResponse.Resume));
@@ -693,7 +693,7 @@ public sealed class HarvestActivityTests : IAsyncDisposable
         await connection.SentAsync(2);
 
         // Measured on the owner's game of 2026-11-21: a lost fight leaves half the life, 105 of 209, never under the default
-        // share of 50; the owner's choice (D480), the character waits for its whole life, a point each half second.
+        // share of 50; the owner's choice (D481), the character waits for its whole life, a point each half second.
         connection.Server(new InteractiveUsedEvent { ActorId = TestPlay.CharacterId, ElementId = TestPlay.TreeElementId, SkillId = TestPlay.TreeSkillId, Duration = 30 });
         connection.Server(new InteractiveUseEndedEvent { ElementId = TestPlay.TreeElementId, SkillId = TestPlay.TreeSkillId });
         connection.Server(new ContextDestroyEvent());

@@ -1,9 +1,9 @@
-# The harvest, fights lost in a row (D480)
+# The harvest, fights lost in a row (D481)
 
 A part of [the decisions](README.md); each decision has one line in [the index](../decisions-index.md). A fight while
 harvesting is [D144](d126-d175-step-6.md); a fight lost and the three in a row, [D198](d176-d208-step-9.md).
 
-## D480: Fights lost in a row no longer end the harvest, and a loss is followed by the whole life regained
+## D481: Fights lost in a row no longer end the harvest, and a loss is followed by the whole life regained
 
 *2026-11-21, the owner's report from game: "the Pandawa levelling its farmer was disconnected several times, find the
 cause"; the lead added that the Pandawa's AI, not its level, loses these fights (a session of its own). The owner chose

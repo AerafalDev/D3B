@@ -342,10 +342,10 @@ public sealed class HarvestActivity : BotActivity
 
     /// <inheritdoc/>
     /// <remarks>
-    /// A fight lost, the character comes back with half its life (D480): the activity answers it as its settings say,
-    /// resumed once it regained its whole life (D198, D480). However many are lost in a row, the harvest
+    /// A fight lost, the character comes back with half its life (D481): the activity answers it as its settings say,
+    /// resumed once it regained its whole life (D198, D481). However many are lost in a row, the harvest
     /// goes on: measured, a protector beat a farmer 11 times in 14, and the harvest D198 stopped at the third idled until the
-    /// server closed the connection, the owner's choice (D480).
+    /// server closed the connection, the owner's choice (D481).
     /// </remarks>
     public override InterruptionResponse OnFightOver(FightEnd? ending, InterruptionResponse response)
     {
