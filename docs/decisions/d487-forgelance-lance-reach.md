@@ -25,7 +25,7 @@ the six reports of 20 and 21 November. Refines D465. Builds D187, D193, D227, D4
   out, for a second lance.
 - **Made**: a modifier names the spell its effect's first die names; `SpellModifierKind.TakenCellEnabled` (314) asks a taken
   cell; `TargetMask.CasterAllows` reads a mask's conditions on its caster, which every effect on a free cell asks; the
-  lance's return takes back 24591's modifiers, as Armé dispels it. Five tests: a taken cell asked, the caster's conditions
+  lance's return takes back 24591's modifiers, as Armé dispels it. Six tests: a taken cell asked, the caster's conditions
   read without a target, each spell given its reach, the reach taken back, the AI throwing then striking around its lance
   from afar, no second lance while the first is out.
 - **Replayed** with `scripts/fights.cs --turns` on the same captures, before and after, its new "lance out" section
