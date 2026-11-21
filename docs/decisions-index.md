@@ -793,3 +793,8 @@ or refines another says so in its own entry. Add a line here with every new deci
 
 - [D478](decisions/d478-placement-turn-order.md#d478-a-placement-weighs-only-the-threat-of-the-enemies-playing-before-the-characters-first-turn) A placement weighs only the threat of the enemies playing before the character's first turn (2026-11-20)
   - A fixed rule by the turn order, the group placed together.
+
+## Fights, the turn's pace (D479)
+
+- [D479](decisions/d479-fight-turn-pace.md#d479-the-fights-pace-03-s-and-no-pace-before-the-turns-end) The fight's pace 0.3 s, and no pace before the turn's end (2026-11-21)
+  - 0.5 s, no pace at all, waiting less for the client's display.

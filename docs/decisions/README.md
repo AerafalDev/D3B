@@ -99,3 +99,4 @@ Each file holds the decisions of one group of [the index](../decisions-index.md)
 - [Groups, the game's own following for a subscribed group (D476)](d476-groups-game-following.md): 1 decision, 4 KB.
 - [Groups, the game's following not paused and its readiness left to the server (D477)](d477-game-following-pause-and-ready.md): 1 decision, 2 KB.
 - [Fights, the placement weighed by the turn order (D478)](d478-placement-turn-order.md): 1 decision, 2 KB.
+- [Fights, the turn's pace (D479)](d479-fight-turn-pace.md): 1 decision, 2 KB.
