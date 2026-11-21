@@ -1,6 +1,7 @@
 using System.Collections.Concurrent;
 using D3B.Bot.Interactives;
 using D3B.Bot.Tests.Runtime;
+using D3B.Data.Tests;
 using D3B.Engine.World;
 
 namespace D3B.Bot.Tests.Interactives;
@@ -9,7 +10,7 @@ public sealed class GraphicLearnerTests
 {
     private static async Task CountedAsync(GraphicSkills graphics, int count)
     {
-        var deadline = DateTime.UtcNow + TimeSpan.FromSeconds(10);
+        var deadline = DateTime.UtcNow + Polling.Deadline;
 
         while (graphics.Count < count)
         {

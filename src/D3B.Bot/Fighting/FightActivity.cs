@@ -54,6 +54,7 @@ public sealed class FightActivity : BotActivity
     private readonly Random _random;
     private readonly BankingPreferences _banking;
     private readonly IPlaceZones? _zones;
+    private readonly BusyWait _busy = new();
     private readonly HashSet<long> _skipped = [];
     private readonly HashSet<int> _unusable = [];
     private readonly Dictionary<int, long> _loot = [];
@@ -140,14 +141,8 @@ public sealed class FightActivity : BotActivity
     {
         ArgumentNullException.ThrowIfNull(context);
 
-        var state = context.State;
-
-        if (state.IsBusy || state.MapId is not { } mapId)
-        {
-            await context.WaitUntilAsync(waited => !waited.IsBusy && waited.MapId is not null, _busyDelay, cancellationToken).ConfigureAwait(false);
-
+        if (await _busy.WaitAsync(context, Failure, cancellationToken).ConfigureAwait(false) || context.State is not { MapId: { } mapId })
             return true;
-        }
 
         if (await HealAsync(context, cancellationToken).ConfigureAwait(false))
             return true;
@@ -229,6 +224,8 @@ public sealed class FightActivity : BotActivity
     /// <inheritdoc/>
     public override InterruptionResponse OnInterrupted(Interruption reason)
     {
+        _busy.Reset();
+
         if (reason is Interruption.Fight)
             Publish(GameText.Of(FightTexts.Text("DoingFight")));
 

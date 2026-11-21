@@ -1,6 +1,7 @@
 using D3B.Bot.Fights;
 using D3B.Bot.Runtime;
 using D3B.Bot.Tests.Runtime;
+using D3B.Data.Tests;
 using D3B.Engine.Maps;
 using D3B.Protocol.Game;
 using Google.Protobuf;
@@ -158,7 +159,7 @@ public sealed class FightPlayTests : IAsyncDisposable
     private async Task<IMessage> SentAsync(TestConnection connection, int count)
     {
         // The AI waits the client's display and the fight's pace before each request: the clock moves until it sent.
-        var deadline = DateTime.UtcNow + TimeSpan.FromSeconds(10);
+        var deadline = DateTime.UtcNow + Polling.Deadline;
 
         while (connection.Sent.Count < count)
         {
@@ -218,7 +219,7 @@ public sealed class FightPlayTests : IAsyncDisposable
 
     private async Task LoggedAsync(string message)
     {
-        var deadline = DateTime.UtcNow + TimeSpan.FromSeconds(10);
+        var deadline = DateTime.UtcNow + Polling.Deadline;
 
         while (!_play.Log.GetSnapshot().Any(record => record.Message == message))
         {
@@ -293,7 +294,7 @@ public sealed class FightPlayTests : IAsyncDisposable
         Cast(connection, monster, apLeft: 0, actionId: 2);
 
         // The clock stands still: the turn's end waits for nothing once the last blow was shown (D479).
-        var deadline = DateTime.UtcNow + TimeSpan.FromSeconds(10);
+        var deadline = DateTime.UtcNow + Polling.Deadline;
 
         while (connection.Sent.Count < sent + 7)
         {

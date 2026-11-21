@@ -45,7 +45,8 @@ namespace D3B.Engine.Tactics;
 /// a turn ends does.
 /// </para>
 /// <para>
-/// Carrying (<see cref="Carrying"/>, D474): a carry takes the fighter it surely reaches off its cell, its caster's; a throw cast
+/// Carrying (<see cref="Carrying"/>, D474): a carry takes the fighter it surely reaches off its cell, its caster's, unless its
+/// states keep it from being carried (<see cref="CastRules.StatesLetCarry"/>, D483); a throw cast
 /// on a free cell lands the fighter its caster carries there before its effects, so that those of mask <c>K</c> reach it, then
 /// ends the carry.
 /// </para>
@@ -198,6 +199,7 @@ public sealed class Imagination
             History = fight.History.Cast(level.SpellId, target?.Id, fight.Round),
             Buffs = buffs.Count is 0 ? kept : kept.AddRange(buffs),
             Marks = marks,
+            StruckBySide = StruckBySide(fight.StruckBySide, fight.Fighters, fighters, caster),
         };
     }
 
@@ -635,7 +637,7 @@ public sealed class Imagination
             case EffectKind.Kill:
                 fighters[index] = target with { Life = 0, IsAlive = false, Cell = Combatant.NoCell };
                 break;
-            case EffectKind.Carry when effect.IsCertain && index != casterIndex && fighters[casterIndex].Cell is not Combatant.NoCell && Carrying.CanBeCarried(fighters, target) && !Carrying.Carries(fighters, fighters[casterIndex].Id):
+            case EffectKind.Carry when effect.IsCertain && index != casterIndex && fighters[casterIndex].Cell is not Combatant.NoCell && Carrying.CanBeCarried(fighters, target) && _rules.StatesLetCarry(target) && !Carrying.Carries(fighters, fighters[casterIndex].Id):
                 (fighters[casterIndex], fighters[index]) = Carrying.Carry(fighters[casterIndex], target);
                 break;
         }
@@ -755,6 +757,7 @@ public sealed class Imagination
         var step = (away || upTo) && diagonal ? 2 : 1;
         var used = 0;
         var blocked = false;
+        var stopper = -1;
         var position = target.Cell;
 
         while (used + step <= cells)
@@ -767,6 +770,7 @@ public sealed class Imagination
                 || (diagonal && !(IsFree(map, fighters, new MapPoint(here.X + x, here.Y)) && IsFree(map, fighters, new MapPoint(here.X, here.Y + y)))))
             {
                 blocked = true;
+                stopper = MapGeometry.TryGetCell(next, out var stopped) && map.IsWalkable(stopped) ? fighters.FindIndex(fighter => fighter.IsAlive && fighter.Cell == stopped) : -1;
 
                 break;
             }
@@ -778,12 +782,18 @@ public sealed class Imagination
                 break;
         }
 
-        target = target with { Cell = position };
+        fighters[index] = target with { Cell = position };
 
         if (away && !harmless && blocked && walls?.Exists(wall => wall.Cell == position) is not true)
-            target = Hurt(target, EffectFormulas.PushDamage(cells - used, caster, caster.Level, target));
+        {
+            fighters[index] = Hurt(fighters[index], EffectFormulas.PushDamage(cells - used, caster, caster.Level, target));
 
-        fighters[index] = target;
+            // Measured on the 213 captures of 3.7.14.18 (D485): the fighter right behind took half the push damage the formula
+            // gives against itself, 932 times in 1,012 on the caster's other side, 692 in 756 on its own; a push into an ally
+            // struck it unforeseen.
+            if (stopper >= 0 && stopper != index)
+                fighters[stopper] = Hurt(fighters[stopper], EffectFormulas.PushDamage(cells - used, caster, caster.Level, fighters[stopper]) / 2);
+        }
     }
 
     private void OnCell(FightMap map, List<Combatant> fighters, int casterIndex, in SpellLevel level, int cell, List<ImaginedBuff> buffs, ref ImmutableArray<ImaginedBuff> kept)
@@ -898,6 +908,27 @@ public sealed class Imagination
         }
 
         return false;
+    }
+
+    private static ImmutableDictionary<long, double> StruckBySide(ImmutableDictionary<long, double> struck, ImmutableArray<Combatant> before, List<Combatant> after, Combatant caster)
+    {
+        // What a cast took from the caster's side but itself, a zone, a push into an ally or a bomb's explosion: measured on the
+        // owner's group runs (D485), the characters' casts took 13,600 life from the other characters in 4,240 fights.
+        for (var index = 0; index < before.Length; index++)
+        {
+            var was = before[index];
+
+            if (!was.IsAlive || was.Team != caster.Team || was.Id == caster.Id)
+                continue;
+
+            var now = after[index];
+            var lost = JudgeTurns.Effective(was) - (now.IsAlive ? JudgeTurns.Effective(now) : 0);
+
+            if (lost > 0)
+                struck = struck.SetItem(was.Id, struck.GetValueOrDefault(was.Id) + lost);
+        }
+
+        return struck;
     }
 
     private void Departed(List<Combatant> fighters, ImmutableArray<Combatant> before)

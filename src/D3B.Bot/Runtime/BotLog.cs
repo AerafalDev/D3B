@@ -112,6 +112,9 @@ internal static partial class BotLog
     [LoggerMessage(Level = LogLevel.Warning, Message = "Bot {Character}: activity {Activity} left the character full after unloading it")]
     public static partial void ActivityStillFull(ILogger logger, long character, string activity);
 
+    [LoggerMessage(Level = LogLevel.Warning, Message = "Bot {Character}: busy, {Kind}, for a minute at a step's start; the character is put back in order")]
+    public static partial void ActivityBusy(ILogger logger, long character, BusyKind kind);
+
     [LoggerMessage(Level = LogLevel.Error, Message = "Bot {Character}: activity {Activity} failed")]
     public static partial void ActivityFailed(ILogger logger, long character, string activity, Exception exception);
 

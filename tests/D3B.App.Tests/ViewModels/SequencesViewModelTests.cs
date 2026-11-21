@@ -372,7 +372,7 @@ public sealed class SequencesViewModelTests : IAsyncDisposable
 
         page.Dialogs.Close();
         page.SaveAll();
-        await Waiting.UntilAsync(() => !page.IsAnyDirty, TimeSpan.FromSeconds(10));
+        await Waiting.UntilAsync(() => !page.IsAnyDirty);
 
         Assert.Empty(BehaviorSequences.Read(_store.Assets.Find<BehaviorAsset>(first.Id)!)!.Steps);
         Assert.True(BehaviorSequences.Read(_store.Assets.Find<BehaviorAsset>(second.Id)!)!.Repeats);

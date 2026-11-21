@@ -21,8 +21,8 @@ namespace D3B.Scripts.Fights;
 /// error text comes first (D203). The AI's fights are counted again by the character's breed, with what matters to a farm:
 /// the turns and rounds a fight won takes, the turns idle, the life lost and the deaths (D463). Given the pack's tables and
 /// maps (--details), it counts each cast the server refused again by its spell and by what D3B's own rules said of it as it
-/// was asked, and each idle turn of the AI's by what the turn held as it began (D480). It prints counts, never a value of
-/// one fight.
+/// was asked, and each idle turn of the AI's by what the turn held as it began (D480). It counts the life the character's
+/// casts and its summons' took from its team, by spell and action (D485). It prints counts, never a value of one fight.
 /// </remarks>
 internal sealed class LiveBench
 {
@@ -97,7 +97,10 @@ internal sealed class LiveBench
                 fight = new Fight();
 
             if (fight is not null)
+            {
                 Answer(fight, self, message, state);
+                OnAllies(fight, self, message, state);
+            }
 
             state = CharacterEvents.Apply(state, RelayDirection.FromServer, message);
 
@@ -118,6 +121,9 @@ internal sealed class LiveBench
                 fight.Finished = false;
                 fight.TurnStart = playing.PlayingId == self ? TurnAtStart(state) : null;
             }
+
+            if (message is FightTurnEndEvent { FighterId: var finished } && finished == self)
+                fight.Spell = null;
 
             if (message is FightTurnEndEvent ended && ended.FighterId == self && fight.Acted is 0)
             {
@@ -274,6 +280,28 @@ internal sealed class LiveBench
         return ImaginedFights.Of(state, map, _tables, _tactics.Blows, null);
     }
 
+    private static void OnAllies(Fight fight, long self, IMessage message, CharacterState state)
+    {
+        if (state.Fight is not { } before)
+            return;
+
+        // The spell the character chose, the first of its sequence (client.md): the others are the casts its effects make.
+        if (message is GameActionFightEvent { ActionCase: GameActionFightEvent.ActionOneofCase.Cast } cast && cast.SourceId == self
+            && before.Sequences is [.., { Type: SequenceType.Spell or SequenceType.Weapon, HasCast: false } innermost] && innermost.AuthorId == self)
+            fight.Spell = cast.Cast.Spell?.SpellId ?? WeaponBlows.SpellId;
+
+        // The life the character's own casts and its summons' took from fighters of its team, as the server announced it.
+        if (message is not GameActionFightEvent { ActionCase: GameActionFightEvent.ActionOneofCase.LifeLost } lost
+            || !before.Fighters.TryGetValue(self, out var own) || !before.Fighters.TryGetValue(lost.LifeLost.TargetId, out var hit) || hit.Team != own.Team
+            || !before.Fighters.TryGetValue(lost.SourceId, out var source) || source.Id != self && source.SummonerId != self)
+            return;
+
+        var on = hit.Id == self ? "itself" : hit.SummonerId is not null ? "a summon" : "another character";
+        var by = source.Id != self ? "its summons" : before.PlayingId == self && fight.Spell is { } spell ? $"spell {spell.ToString(CultureInfo.InvariantCulture)}" : "outside its casts";
+
+        fight.OnAllies.Add((on, by, lost.ActionId, lost.LifeLost.Loss + (lost.LifeLost.HasShieldLoss ? lost.LifeLost.ShieldLoss : 0)));
+    }
+
     public void WriteBreeds(TextWriter writer)
     {
         foreach (var breed in _byBreed.Breeds)
@@ -289,6 +317,20 @@ internal sealed class LiveBench
             writer.WriteLine($"  the character's turns: {turns:F0}, with no cast nor walk {_byBreed.Of(breed, "idle"):F0} ({Per(100 * _byBreed.Of(breed, "idle"), turns)}%)");
             writer.WriteLine($"  the character's life lost a fight: {Per(_byBreed.Of(breed, "life lost"), known)}, over {known:F0} fights it played a turn of");
             writer.WriteLine($"  the character's deaths: {_byBreed.Of(breed, "deaths"):F0}");
+
+            // The damage its own casts dealt its team (the owner's report of a character striking its ally): by whom, then by spell.
+            foreach (var on in new[] { "another character", "a summon", "itself" })
+            {
+                var blows = _byBreed.Of(breed, $"on allies: blows on {on}");
+
+                if (blows is 0)
+                    continue;
+
+                writer.WriteLine($"  life its casts took from {on}: {_byBreed.Of(breed, $"on allies: life on {on}"):F0} in {blows:F0} blows, over {_byBreed.Of(breed, $"on allies: fights on {on}"):F0} fights");
+
+                foreach (var by in _byBreed.Suffixes(breed, $"on allies: life on {on}, by ").Order(StringComparer.Ordinal))
+                    writer.WriteLine($"    by {by,-34}{_byBreed.Of(breed, $"on allies: life on {on}, by {by}"),8:F0} in {_byBreed.Of(breed, $"on allies: blows on {on}, by {by}"),4:F0} blows");
+            }
         }
 
         static string Per(double sum, double count)
@@ -347,6 +389,20 @@ internal sealed class LiveBench
             _byBreed.Add(breed, "rounds in fights won", state?.Round ?? 0);
         }
 
+        foreach (var (on, by, action, taken) in fight.OnAllies)
+        {
+            var actionBy = $"{by}, action {action.ToString(CultureInfo.InvariantCulture)}";
+
+            _byBreed.Add(breed, $"on allies: blows on {on}");
+            _byBreed.Add(breed, $"on allies: life on {on}", taken);
+            _byBreed.Add(breed, $"on allies: blows on {on}, by {actionBy}");
+            _byBreed.Add(breed, $"on allies: life on {on}, by {actionBy}", taken);
+            Tally.Count($"the AI's casts on its team: life on {on}", taken);
+        }
+
+        foreach (var on in fight.OnAllies.Select(hit => hit.On).Distinct())
+            _byBreed.Add(breed, $"on allies: fights on {on}");
+
         foreach (var (name, count) in fight.Requests)
             Tally.Count($"D3B's requests: {name}", count);
 
@@ -397,5 +453,9 @@ internal sealed class LiveBench
         public bool Finished { get; set; }
 
         public string? TurnStart { get; set; }
+
+        public int? Spell { get; set; }
+
+        public List<(string On, string By, int Action, int Life)> OnAllies { get; } = [];
     }
 }

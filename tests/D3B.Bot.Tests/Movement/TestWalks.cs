@@ -1,4 +1,5 @@
 using D3B.Bot.Tests.Runtime;
+using D3B.Data.Tests;
 using D3B.Engine.Maps;
 using D3B.Protocol.Game;
 using Google.Protobuf;
@@ -63,8 +64,11 @@ internal static class TestWalks
     /// <summary>Moves the clock until a behavior is over, whenever each of its delays started.</summary>
     public static async Task<T> AdvanceUntilDoneAsync<T>(FakeTimeProvider time, Task<T> task)
     {
+        var deadline = DateTime.UtcNow + Polling.Deadline;
+
         while (!task.IsCompleted)
         {
+            Assert.True(DateTime.UtcNow < deadline, "The behavior was not over in time.");
             time.Advance(TimeSpan.FromMilliseconds(250));
             await Task.Delay(5, TestContext.Current.CancellationToken);
         }
