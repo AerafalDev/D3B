@@ -404,3 +404,9 @@ follower) on the same map, the capture of every connection on; a capture's conte
   dialog or on a map not known yet. Busy a minute, the character is now put back in order as after an interruption; still busy
   a minute later, the activity fails saying what held, the owner's choices. Not seen on the 216 captures of 18 to 21 November.
   Left: seen in game, which needs the state to stick.
+- **A map action's cell crossed** (D486), another player's report of a character stuck then disconnected, made on
+  2026-11-21 in code and tests from their two captures: in a mine, the harvest's walk to an ore crossed a map action's cell,
+  the server moved the character on, the map was never gone through and the tour went round eight maps for 18 minutes. A walk
+  out of fights now goes round the map's action cells when it can, a harvest cut so leaves its map gone through, and a tour
+  whose journeys arrive three times in a row with nothing done gives up its other maps, saying so on the card. Left: seen in
+  game.

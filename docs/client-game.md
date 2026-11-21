@@ -1568,3 +1568,19 @@ never a message's content.
   option shown set twice: the server saying what changed, never a refusal. The client's own toggle opening a fight got
   text 96.
 - **Attacks.** 3 of D3B's 518 attacks unanswered: each time the monster group walked away as D3B attacked it.
+
+## The game, a map action crossed
+
+Measured on 2026-11-21 for D486: two game connections of another player on 3.7.14.18, given to the owner, with
+`scripts/capture.cs --messages` and probes printing ids and counts only, never committed.
+
+- **A map action acts on a walk that crosses it.** On a mine's map, 168034306, D3B's walk from cell 457 to 297, to use an
+  ore from there, crossed cell 341, the map's action to 168034308: the server answered the client's confirmation with
+  `MapMovementRefusedEvent` naming (18, -7), the walk's cell before 341, and `MapCurrentEvent` of 168034308 in the same
+  millisecond, the walk's end never reached. 58 times in a row on the first connection, 3 on the second; the ore stayed out
+  of reach, a way round 341 being open.
+- **The mine's ring.** The world graph's eight maps of that mine, 168034304, 306, 308, 310, 312, 168167424, 166912 and
+  165888, form a ring that goes one way only at 306, left for 308 by the map action alone; a round by five doors, the map
+  action and two scrolls took 18.5 s.
+- **A connection closed.** On the first connection, at 42:43.8, the server answered neither the client's confirmation of a
+  walk nor D3B's five walks over the next 20 s, then closed the connection first; nothing it sent before says why.

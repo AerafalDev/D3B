@@ -29,7 +29,7 @@ D71, D128, D145, D425, D439, D444, D481, D484.*
   every walk out of fights (`RoleplayPaths`: walks, steps aside, the way to an element, a door or a map's exit) goes round
   them when it can, else crosses them as before.
 - **Made, the harvest**: a use whose walk the server cut by moving the character to another map leaves the map it began on
-  gone through for the tour. A tour whose journeys arrive three times in a row with nothing done since the one before (no
+  gone through for the tour, or crossed when it lies out of the zone (D439). A tour whose journeys arrive three times in a row with nothing done since the one before (no
   harvest, no map gone through, left out or crossed, no zone entered) goes round: its other maps and zones are given up for
   this tour, which ends as any other, the dry tour's wait or the next zone of the rotation then following. The journal
   says so (`TourGoneRound`), and the character's card warns until the next harvest.

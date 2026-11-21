@@ -189,7 +189,7 @@
     <value>{0} needs {1} {2}, the character is {3}</value>
   </data>
   <data name="WarningGoneRound" xml:space="preserve">
-    <value>Tour {0} went round through map {1}, nothing harvested and no new map gone through: it ended there</value>
+    <value>Tour {0} went round, nothing harvested and no new map gone through, and ended on map {1}</value>
   </data>
   <data name="FailNoZone" xml:space="preserve">
     <value>The zone holds no map to harvest.</value>
