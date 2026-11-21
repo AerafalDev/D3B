@@ -696,7 +696,7 @@ public sealed class FightEventsTests
     [Fact]
     public void TwoPortalsAFighterWentThroughAreClosedUntilATurnBegins()
     {
-        // Measured on 3.7.14.18 (D489): the server teleports a fighter whose walk ends on an open portal onto the last of its chain.
+        // Measured on 3.7.14.18 (D490): the server teleports a fighter whose walk ends on an open portal onto the last of its chain.
         static GameActionFightEvent Portal(int id, int cell)
         {
             var mark = new FightMark { MarkId = id, AuthorId = Self, Team = FightTeam.Challenger, Type = FightMarkType.Portal, ImpactCell = cell, SpellId = 14_574, CastSpellId = 2, Grade = 44_338, Cells = { new FightMarkedCell { CellId = cell } } };

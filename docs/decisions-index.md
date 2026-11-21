@@ -844,7 +844,7 @@ or refines another says so in its own entry. Add a line here with every new deci
 - [D488](decisions/d488-harvest-action-cells.md#d488-a-walk-goes-round-the-maps-action-cells-a-harvest-the-server-cuts-by-moving-the-character-leaves-its-map-gone-through-and-a-tour-going-round-ends) A walk goes round the map's action cells, a harvest the server cuts by moving the character leaves its map gone through, and a tour going round ends (2026-11-21)
   - Going round alone, a watchdog alone, stopping the activity, counting dry tours, never crossing with no fall back.
 
-## Fights, an Eliotrope's portals measured (D489)
+## Fights, an Eliotrope's portals measured (D490)
 
-- [D489](decisions/d489-eliotrope-portals-measured.md#d489-an-eliotropes-portals-measured-a-walk-or-a-push-that-ends-on-one-sent-through-it) An Eliotrope's portals measured, a walk or a push that ends on one sent through it (2026-11-21)
+- [D490](decisions/d490-eliotrope-portals-measured.md#d490-an-eliotropes-portals-measured-a-walk-or-a-push-that-ends-on-one-sent-through-it) An Eliotrope's portals measured, a walk or a push that ends on one sent through it (2026-11-21)
   - Bubble's share, a portal's cell out of the walks, reading the action 1181's payload first.

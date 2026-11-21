@@ -360,7 +360,7 @@ internal sealed class CastBench
                     {
                         cast.TriggeredCasts++;
 
-                        // Measured (D489): each of an Eliotrope's casts through portals cast 14631 on it, 2% more damage and
+                        // Measured (D490): each of an Eliotrope's casts through portals cast 14631 on it, 2% more damage and
                         // heals dealt for 3 turns, effects 1171 and 2971.
                         if (cast.Through is not null)
                             Tally.Count($"casts through portals: casting spell {action.Cast.Spell?.SpellId}, by {(action.SourceId == cast.Caster.Id ? "the caster" : "another fighter")}");
@@ -513,7 +513,7 @@ internal sealed class CastBench
     private void Onto(FightState fight, IMessage message)
     {
         // Where a fighter whose walk or slide ends on a portal's cell, or walks over one, ends, as the server teleports it before
-        // its next move, cast or turn's end, against where the engine foresees it (D489).
+        // its next move, cast or turn's end, against where the engine foresees it (D490).
         if (_onto is { } onto)
         {
             int? landed = message switch
@@ -581,7 +581,7 @@ internal sealed class CastBench
     private (PortalPassage? Through, ImmutableArray<CellMark> Marks, int Cell) Through(FightState fight, IReadOnlyList<Combatant> fighters, Combatant caster, in SpellLevel level, GameActionFightEvent action, CharacterState? character)
     {
         // The way the engine foresees through the portals the server named, against the cell it announced and the last portal
-        // it named (D468), 1,329 of 1,329 as named on the captures of 3.7.14.18 of 2026-11-18 to 21 (D489).
+        // it named (D468), 1,329 of 1,329 as named on the captures of 3.7.14.18 of 2026-11-18 to 21 (D490).
         if (action.Cast.Spell is not { PortalIds.Count: > 0 } spell)
             return (null, [], action.Cast.CellId);
 
