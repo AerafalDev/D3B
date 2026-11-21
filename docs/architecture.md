@@ -1152,7 +1152,8 @@ Pure logic with no I/O, in `D3B.Engine`, which references `D3B.Data` for the cel
     buffs dispelled and a buff past its stacks replacing the oldest, as a Zobal's masks do (D227); a malus of AP or MP
     takes the points below 0, as the server keeps them, so that its end gives back only what it took (D470).
   - `FightJudge`: an imagined fight's worth for the side playing, in life: allies' life concave and a quarter as steep above
-    60% of its most (`TacticWeights.Comfort`, D407), enemies' weighed by how hard they hit; the enemies' threat and the next turn's approach with the spells that land, from a cell walked to, in
+    60% of its most (`TacticWeights.Comfort`, D407), and what the side's own casts took from its other fighters again
+    (`ImaginedFight.StruckBySide`, `TacticWeights.AlliesStruck`, D485), enemies' weighed by how hard they hit; the enemies' threat and the next turn's approach with the spells that land, from a cell walked to, in
     range and in sight (D208), bounded by a kill, each cell nearer an enemy no spell reaches yet counting a little, within
     the spells' range and MP too (D472); the fighters read as the search left them, states that prevent casting
     or damage and invulnerability included, a spell its states forbid dealing nothing (D228), a buff worth what it does
@@ -1182,7 +1183,8 @@ Pure logic with no I/O, in `D3B.Engine`, which references `D3B.Data` for the cel
     casts its grade's starting spell, a spell modifier is imagined, and a fighter's death takes back the buffs it gave
     (`HeldBuff.CasterId`, D282). Pushes and pulls go along the farthest axis, the cast's way for a line across it, never
     moving a fighter `CastRules.CanBePushed` refuses nor one the mask only maybe selects (D283); a push moves as far as its
-    cells, a step along a diagonal of the coordinates as far as two, and a step so only between two free cells (D289). The
+    cells, a step along a diagonal of the coordinates as far as two, and a step so only between two free cells (D289); a
+    push a fighter stops strikes that fighter with half the target's push damage (D485). The
     judge weighs a mark of the side playing on an enemy over the rounds the fight is foreseen to last, a glyph until it
     goes, a wall while its bombs live, its blow rising with their combos, each blow as likely as the enemy stays, measured
     on the monsters' turns (D288); it reckons the walls once a judgement, and a turn's start only for a fighter on the
@@ -1345,7 +1347,9 @@ character's (D279). The character's spells by the
   Its replays of the turns (`--turns`) and of the fights (`--live`) print their main counts again by the character's breed,
   a section each, so that a change of the AI is read class by class and on what a farm needs: the plans, the damage, kills
   and heals planned against played, the reply's blows against the enemies' alone and in a group, the spells planned against
-  played; the turns and rounds a fight won takes, the turns idle, the life lost and the deaths (D463). `--turns` also
+  played; the turns and rounds a fight won takes, the turns idle, the life lost and the deaths (D463); the life the
+  character's own casts took from its team, by spell, and with `--turns` what the engine foresaw of it against what came
+  (D485). `--turns` also
   replays every placement by the character's place in the turn order: its cell as placed, with every enemy's threat and
   by the turn order, each judged by the threat of the enemies playing before it and the damage it may strike (D478).
 - Logic code in `D3B.Engine` and the state handlers is tested directly, with property tests on CsCheck for cell and

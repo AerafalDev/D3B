@@ -34,7 +34,7 @@ internal static class FightsCommand
         };
         var turns = new Option<bool>("--turns")
         {
-            Description = "Replays every turn the characters played through the fight's AI instead: its plan against the turn played, and what its judge foresaw against what came (D206); then by breed, the plans, damage, kills, heals, reply, judgement and spells planned against played, and the reply's blows against the enemies', alone and in a group (D463); and every placement, by the character's place in the turn order (D478).",
+            Description = "Replays every turn the characters played through the fight's AI instead: its plan against the turn played, and what its judge foresaw against what came (D206); then by breed, the plans, damage, kills, heals, reply, judgement and spells planned against played, and the reply's blows against the enemies', alone and in a group (D463); and every placement, by the character's place in the turn order (D478); and by spell, what the engine foresaw the character's casts take from its team against what the server announced, played and planned (D485).",
         };
         var enemyLife = new Option<double>("--enemy-life")
         {
@@ -47,7 +47,7 @@ internal static class FightsCommand
         };
         var live = new Option<bool>("--live")
         {
-            Description = "Counts what D3B did in the fights instead: who played each, how it ended, and what came of the AI's requests (D206); then by breed, the turns and rounds a fight won takes, the turns idle, the life lost and the deaths (D463).",
+            Description = "Counts what D3B did in the fights instead: who played each, how it ended, and what came of the AI's requests (D206); then by breed, the turns and rounds a fight won takes, the turns idle, the life lost and the deaths (D463), and the life the character's casts took from its team, by spell (D485).",
         };
         var command = new RootCommand("Replays the captured fights and compares what D3B.Engine foresees with what the server announced, action by action.")
         {

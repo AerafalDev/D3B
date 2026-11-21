@@ -823,3 +823,8 @@ or refines another says so in its own entry. Add a line here with every new deci
 
 - [D484](decisions/d484-busy-wait-bounded.md#d484-a-character-busy-a-minute-at-a-steps-start-is-put-back-in-order-and-still-busy-a-minute-later-the-harvest-or-the-hunt-fails-saying-why) A character busy a minute at a step's start is put back in order, and still busy a minute later the harvest or the hunt fails saying why (2026-11-21)
   - Failing at the bound, putting in order without end, the harvest alone.
+
+## Fights, the blows on the character's own allies (D485)
+
+- [D485](decisions/d485-ally-strikes.md#d485-a-blow-on-an-ally-costs-what-it-takes-and-a-push-a-fighter-stops-strikes-that-fighter-too) A blow on an ally costs what it takes, and a push a fighter stops strikes that fighter too (2026-11-21)
+  - The comfortable life for the character alone, the ally's loss from the turn's start, a rule in the search, the pushes left.

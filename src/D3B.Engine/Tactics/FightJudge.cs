@@ -17,7 +17,8 @@ namespace D3B.Engine.Tactics;
 /// <item><description>An ally's life, shields counted, worth less as it grows: a point healed on a fighter at a quarter of its
 /// life is worth twice one at its most, so that the AI heals who needs it, and above <see cref="TacticWeights.Comfort"/> of
 /// its most life a quarter of that, so that it never trades damage for a heal it hardly needs (D407); its being alive, half its
-/// most life; the fighter playing's counted <see cref="TacticWeights.Survival"/> times.</description></item>
+/// most life; the fighter playing's counted <see cref="TacticWeights.Survival"/> times; and what the side's own casts took
+/// from its fighters but the caster, again at <see cref="TacticWeights.AlliesStruck"/> (D485).</description></item>
 /// <item><description>An enemy's life, each point weighed by how hard it hits, so that the AI turns on the dangerous ones; its
 /// being alive, one and a half of its best turn's damage, so that the AI finishes a fighter off.</description></item>
 /// <item><description>The threat: what each living enemy may take next from the ally it hits hardest, with the spells that
@@ -212,7 +213,7 @@ public sealed class FightJudge
         return Standing(fight) + (_weights.Approach * next) + (fight.Buffs.IsEmpty ? 0 : Lasting(fight)) + Lingered(fight);
     }
 
-    /// <summary>Gets what a fight is worth as it stands for the fighter playing's side: its fighters' life and being alive, less what the enemies' cost.</summary>
+    /// <summary>Gets what a fight is worth as it stands for the fighter playing's side: its fighters' life and being alive, less what its own casts took from them (D485) and what the enemies' cost.</summary>
     /// <param name="fight">The fight.</param>
     /// <returns>The worth, neither the threat nor the next turn counted.</returns>
     public double Standing(ImaginedFight fight)
@@ -231,7 +232,7 @@ public sealed class FightJudge
                 : -Cost(fighter, _tables.IndexOf(fighter), Effective(fighter));
         }
 
-        return worth;
+        return worth - StruckBySide(fight);
     }
 
     /// <summary>Gets the fight as the fighter playing's next turn begins: its turn's AP and MP, the next round, and the buffs it gave for one round gone.</summary>
@@ -399,7 +400,25 @@ public sealed class FightJudge
             worth -= _weights.Threat * loss;
         }
 
-        return worth + (_weights.Approach * Approach(fight, blasted, sure)) + (fight.Buffs.IsEmpty ? 0 : Lasting(fight));
+        return worth - StruckBySide(fight) + (_weights.Approach * Approach(fight, blasted, sure)) + (fight.Buffs.IsEmpty ? 0 : Lasting(fight));
+    }
+
+    private double StruckBySide(ImaginedFight fight)
+    {
+        // The life the side's own casts took from its fighters, on top of what it is worth to them: above its comfortable
+        // share an ally's point is worth a quarter of the curve's (D407), and a blow on an ally cost next to nothing (D485).
+        if (fight.StruckBySide.IsEmpty)
+            return 0;
+
+        var cost = 0.0;
+
+        foreach (var fighter in fight.Fighters)
+        {
+            if (fighter.Team == _team && fight.StruckBySide.TryGetValue(fighter.Id, out var lost))
+                cost += Weight(fighter) * lost;
+        }
+
+        return _weights.AlliesStruck * cost;
     }
 
     private double Cost(Combatant enemy, int known, double life)
