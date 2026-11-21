@@ -40,6 +40,11 @@ namespace D3B.Scripts.Fights;
 /// The main counts are printed again by the character's breed, a section each, with the reply's blows against the
 /// enemies', alone and in a group (D463).
 /// </para>
+/// <para>
+/// Each cast played that took life from the character's team but itself, what the engine foresaw of it against what the
+/// server announced, then the casts planned that it foresees doing so, by spell, on the whole team and on its characters
+/// alone (D485).
+/// </para>
 /// </remarks>
 internal sealed class TurnBench
 {
@@ -286,6 +291,24 @@ internal sealed class TurnBench
                 }
             }
 
+            var hitting = _byBreed.Suffixes(breed, "on allies, played: casts, spell ").Union(_byBreed.Suffixes(breed, "on allies, planned: casts, spell ")).OrderBy(id => int.Parse(id, System.Globalization.CultureInfo.InvariantCulture)).ToList();
+
+            if (hitting.Count > 0)
+            {
+                // Each sum twice: on the whole team but the character, then on its characters alone, no summon.
+                writer.WriteLine($"  {"its casts on its team but itself",-40}{"played",8}{"foreseen",14}{"announced",14}{"planned",8}{"foreseen",14}");
+
+                foreach (var spell in hitting)
+                {
+                    string Both(string key)
+                    {
+                        return $"{_byBreed.Of(breed, $"on allies, {key}, spell {spell}"),7:F0}/{_byBreed.Of(breed, $"on allies, {key.Replace(": foreseen", ": foreseen on characters", StringComparison.Ordinal).Replace(": announced", ": announced on characters", StringComparison.Ordinal)}, spell {spell}"),-6:F0}";
+                    }
+
+                    writer.WriteLine($"    {"spell " + spell,-38}{_byBreed.Of(breed, $"on allies, played: casts, spell {spell}"),8:F0} {Both("played: foreseen")} {Both("played: announced")}{_byBreed.Of(breed, $"on allies, planned: casts, spell {spell}"),8:F0} {Both("planned: foreseen")}");
+                }
+            }
+
             writer.WriteLine($"  {"spells, by id",-40}{"planned",10}{"played",10}");
 
             var spells = _byBreed.Suffixes(breed, "spells planned: ").Union(_byBreed.Suffixes(breed, "spells played: ")).OrderBy(id => int.Parse(id, System.Globalization.CultureInfo.InvariantCulture));
@@ -387,6 +410,16 @@ internal sealed class TurnBench
 
             case MapMovementEvent walked when walked.ActorId == self && walked.Cells.Count > 1:
                 turn.Played.Add(TacticAction.Walk(walked.Cells[^1]));
+
+                break;
+
+            // The life the character's casts took from its team but itself, by the cast played it came of (the owner's report).
+            case GameActionFightEvent { ActionCase: GameActionFightEvent.ActionOneofCase.LifeLost } lost when lost.SourceId == self && turn.Played.FindLastIndex(action => action.Kind is TacticActionKind.Cast) is >= 0 and var cast
+                && lost.LifeLost.TargetId != self && fight.Fighters.TryGetValue(self, out var own) && fight.Fighters.TryGetValue(lost.LifeLost.TargetId, out var hit) && hit.Team == own.Team:
+                turn.OnAllies[cast] = turn.OnAllies.GetValueOrDefault(cast) + lost.LifeLost.Loss + (lost.LifeLost.HasShieldLoss ? lost.LifeLost.ShieldLoss : 0);
+
+                if (hit.SummonerId is null)
+                    turn.OnCharacters[cast] = turn.OnCharacters.GetValueOrDefault(cast) + lost.LifeLost.Loss + (lost.LifeLost.HasShieldLoss ? lost.LifeLost.ShieldLoss : 0);
 
                 break;
         }
@@ -685,6 +718,7 @@ internal sealed class TurnBench
         }
 
         Compare(turn, judge, played, planned);
+        Allies(turn);
         Elements(turn, turn.Played, "played");
 
         if (turn.Planned is { } elementsPlanned)
@@ -745,6 +779,74 @@ internal sealed class TurnBench
     private static int Kills(ImaginedFight start, ImaginedFight end)
     {
         return start.Fighters.Count(enemy => enemy.IsAlive && enemy.Team != start.Actor.Team && end.Find(enemy.Id) is { IsAlive: false });
+    }
+
+    private static (double Team, double Characters) OnTeam(ImaginedFight start, ImaginedFight end)
+    {
+        // The life a turn's casts take from the fighter's team but itself, as the engine imagines them, and of it from no summon.
+        double taken = 0, characters = 0;
+
+        foreach (var ally in start.Fighters)
+        {
+            if (ally.IsAlive && ally.Team == start.Actor.Team && ally.Id != start.ActorId && end.Find(ally.Id) is { } then)
+            {
+                taken += Math.Max(0, Effective(ally) - Effective(then));
+                characters += ally.IsSummon ? 0 : Math.Max(0, Effective(ally) - Effective(then));
+            }
+        }
+
+        return (taken, characters);
+    }
+
+    private void Allies(Turn turn)
+    {
+        // Each cast played, what the engine foresaw it take from the character's team against what the server announced,
+        // then the casts the AI plans, foreseen: a cast that strikes an ally is told by its spell (the owner's report).
+        var breed = turn.Start.Actor.BreedId;
+        var fight = turn.Start;
+
+        for (var index = 0; index < turn.Played.Count; index++)
+        {
+            var action = turn.Played[index];
+            var after = Act(fight, [action]);
+
+            if (action.Kind is TacticActionKind.Cast)
+            {
+                var (foreseen, characters) = OnTeam(fight, after);
+                var announced = turn.OnAllies.GetValueOrDefault(index);
+                var spell = action.SpellId.ToString(System.Globalization.CultureInfo.InvariantCulture);
+
+                if (foreseen >= 1 || announced > 0)
+                {
+                    _byBreed.Add(breed, $"on allies, played: foreseen, spell {spell}", foreseen);
+                    _byBreed.Add(breed, $"on allies, played: announced, spell {spell}", announced);
+                    _byBreed.Add(breed, $"on allies, played: foreseen on characters, spell {spell}", characters);
+                    _byBreed.Add(breed, $"on allies, played: announced on characters, spell {spell}", turn.OnCharacters.GetValueOrDefault(index));
+                    _byBreed.Add(breed, $"on allies, played: casts, spell {spell}");
+                    Tally.Count($"casts played on the character's team: {(foreseen < 1 ? "none foreseen, some announced" : announced is 0 ? "some foreseen, none announced" : "some foreseen, some announced")}");
+                }
+            }
+
+            fight = after;
+        }
+
+        fight = turn.Start;
+
+        foreach (var action in turn.Planned?.Actions ?? [])
+        {
+            var after = Act(fight, [action]);
+
+            if (action.Kind is TacticActionKind.Cast && OnTeam(fight, after) is { Team: >= 1 } foreseen)
+            {
+                var spell = action.SpellId.ToString(System.Globalization.CultureInfo.InvariantCulture);
+
+                _byBreed.Add(breed, $"on allies, planned: foreseen, spell {spell}", foreseen.Team);
+                _byBreed.Add(breed, $"on allies, planned: foreseen on characters, spell {spell}", foreseen.Characters);
+                _byBreed.Add(breed, $"on allies, planned: casts, spell {spell}");
+            }
+
+            fight = after;
+        }
     }
 
     private static double Dealt(ImaginedFight start, ImaginedFight end)
@@ -878,6 +980,10 @@ internal sealed class TurnBench
         public double? Foreseen { get; set; }
 
         public double? Searched { get; set; }
+
+        public Dictionary<int, int> OnAllies { get; } = [];
+
+        public Dictionary<int, int> OnCharacters { get; } = [];
     }
 
     private sealed record Ending(double Life, double Threat, double Replied, double NextTurn, double Searched, int? Breed, bool Group);

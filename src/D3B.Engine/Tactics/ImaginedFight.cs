@@ -32,6 +32,10 @@ public sealed record ImaginedFight
     /// <summary>Gets the marks on the fight's cells, glyphs and traps, the server's and those the casts imagined set.</summary>
     public ImmutableArray<CellMark> Marks { get; init; } = [];
 
+    /// <summary>Gets the life, shields counted, each fighter lost to the casts the search imagined of the other fighters of its side, by its id.</summary>
+    /// <remarks>The judge weighs it apart from the fighter's life (D485): a blow on an ally is the side's own doing, which a heal never undoes.</remarks>
+    public ImmutableDictionary<long, double> StruckBySide { get; init; } = ImmutableDictionary<long, double>.Empty;
+
     /// <summary>Gets the fighter playing.</summary>
     /// <exception cref="InvalidOperationException">No fighter has its id.</exception>
     public Combatant Actor => Find(ActorId) ?? throw new InvalidOperationException($"No fighter {ActorId} in the fight.");
