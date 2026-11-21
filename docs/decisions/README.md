@@ -113,3 +113,4 @@ Each file holds the decisions of one group of [the index](../decisions-index.md)
 - [Groups, a follower left behind (D490)](d490-groups-left-behind.md): 1 decision, 3 KB.
 - [Fights, the effects the engine left out (D491)](d491-unhandled-effects.md): 1 decision, 5 KB.
 - [Fights, an Eliotrope's portals measured (D492)](d492-eliotrope-portals-measured.md): 1 decision, 5 KB.
+- [Fights, the Huppermage's runes, the Sram's traps and the Féca's glyphs triggered (D493)](d493-runes-traps-glyph-triggers.md): 1 decision, 5 KB.

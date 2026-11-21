@@ -712,7 +712,7 @@ public sealed class FightTactics
     {
         ArgumentNullException.ThrowIfNull(fight);
 
-        return Moves.Path(fight.Map, fight.Fighters, fight.Actor, cell);
+        return Moves.Path(fight.Map, fight.Fighters, fight.Actor, cell, Glyphs.TrapCells(fight.Marks));
     }
 
     private double Ends(Node node, FightJudge judge, FightKnowledge knowledge, TurnChallenge? challenge, List<Finalist> finalists, int most, ref int weighed)
@@ -733,7 +733,7 @@ public sealed class FightTactics
 
         if (!carrying && actor.MovementPoints > 0 && actor.Cell is not Combatant.NoCell)
         {
-            foreach (var (cell, left) in Moves.Reachable(node.Fight.Map, node.Fight.Fighters, actor))
+            foreach (var (cell, left) in Moves.Reachable(node.Fight.Map, node.Fight.Fighters, actor, Glyphs.TrapCells(node.Fight.Marks)))
             {
                 if (cell == actor.Cell)
                     continue;
@@ -787,7 +787,8 @@ public sealed class FightTactics
                 break;
 
             var mobile = !enemy.IsStatic && (enemy.MonsterId is null || (enemy.MonsterProperties & MonsterProperties.CanMove) is not 0);
-            var reachable = mobile && enemy.MovementPoints > 0 ? Moves.Reachable(view.Map, view.Fighters, enemy) : new Dictionary<int, (int, int)> { [enemy.Cell] = (enemy.MovementPoints, enemy.ActionPoints) };
+            var traps = Glyphs.TrapCells(view.Marks);
+            var reachable = mobile && enemy.MovementPoints > 0 ? Moves.Reachable(view.Map, view.Fighters, enemy, traps) : new Dictionary<int, (int, int)> { [enemy.Cell] = (enemy.MovementPoints, enemy.ActionPoints) };
             var foes = view.Fighters.Where(fighter => fighter.IsAlive && fighter.Team != enemy.Team && fighter.Cell is not Combatant.NoCell).Select(fighter => fighter.Cell).ToList();
             var targets = strikesOnly ? foes : [.. view.Fighters.Where(fighter => fighter.IsAlive && fighter.Cell is not Combatant.NoCell).Select(fighter => fighter.Cell)];
 
@@ -811,6 +812,16 @@ public sealed class FightTactics
                         continue;
 
                     var there = landed == from ? view.With(moved) : view.With(moved) with { Marks = marks };
+
+                    // An enemy that walks onto a trap sets it off before it strikes, and may die of it (D493).
+                    if (from != enemy.Cell && traps.Contains(from))
+                    {
+                        there = Imagination.Walked(view, from, left);
+                        moved = there.Actor;
+
+                        if (!moved.IsAlive)
+                            continue;
+                    }
 
                     foreach (var target in targets)
                     {
@@ -845,7 +856,7 @@ public sealed class FightTactics
         if (!actor.IsAlive || actor.Cell is Combatant.NoCell)
             yield break;
 
-        var reachable = actor.MovementPoints > 0 ? Moves.Reachable(fight.Map, fight.Fighters, actor) : new Dictionary<int, (int, int)> { [actor.Cell] = (actor.MovementPoints, actor.ActionPoints) };
+        var reachable = actor.MovementPoints > 0 ? Moves.Reachable(fight.Map, fight.Fighters, actor, Glyphs.TrapCells(fight.Marks)) : new Dictionary<int, (int, int)> { [actor.Cell] = (actor.MovementPoints, actor.ActionPoints) };
         var walks = reachable
             .Where(pair => pair.Key != actor.Cell && challenge?.AllowsWalk(fight, knowledge, pair.Value.MovementPoints) is not false)
             .OrderByDescending(pair => pair.Value.MovementPoints)

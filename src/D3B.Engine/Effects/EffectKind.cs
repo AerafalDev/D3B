@@ -106,4 +106,10 @@ public enum EffectKind
 
     /// <summary>The caster moved away from the fighter reached, by cells: 1041.</summary>
     CasterPushed,
+
+    /// <summary>The caster's runes on the cell cast on, or in the effect's zone around it, triggered: 2023 (<see cref="Fights.Glyphs"/>).</summary>
+    TriggerRunes,
+
+    /// <summary>The caster's glyphs set by the spell the effect names, on the cell cast on, triggered: 1026 (<see cref="Fights.Glyphs"/>).</summary>
+    TriggerGlyphs,
 }

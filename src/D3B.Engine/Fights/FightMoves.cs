@@ -96,12 +96,13 @@ public sealed class FightMoves
     /// <param name="map">The fight's map.</param>
     /// <param name="fighters">Every fighter of the fight, the walker among them.</param>
     /// <param name="walker">The fighter walking, on a cell.</param>
+    /// <param name="stops">The cells a walk stops on as it comes, a trap's (D493).</param>
     /// <returns>Each cell it reaches, its own first, with the points left by the path that keeps the most MP, then AP.</returns>
-    public IReadOnlyDictionary<int, (int MovementPoints, int ActionPoints)> Reachable(FightMap map, IReadOnlyList<Combatant> fighters, Combatant walker)
+    public IReadOnlyDictionary<int, (int MovementPoints, int ActionPoints)> Reachable(FightMap map, IReadOnlyList<Combatant> fighters, Combatant walker, CellSet stops = default)
     {
         var reached = new Dictionary<int, (int MovementPoints, int ActionPoints)>();
 
-        Explore(map, fighters, walker, reached, previous: null);
+        Explore(map, fighters, walker, reached, previous: null, stops);
 
         return reached;
     }
@@ -111,14 +112,15 @@ public sealed class FightMoves
     /// <param name="fighters">Every fighter of the fight, the walker among them.</param>
     /// <param name="walker">The fighter walking, on a cell.</param>
     /// <param name="cell">The cell it walks to.</param>
+    /// <param name="stops">The cells a walk stops on as it comes, a trap's (D493).</param>
     /// <returns>Every cell of the path, the walker's first and the cell last; empty when it does not reach the cell.</returns>
     /// <remarks>A walk in a fight names every cell it steps on, one MP each (client.md), so that the bot sends this path's turning points.</remarks>
-    public ImmutableArray<int> Path(FightMap map, IReadOnlyList<Combatant> fighters, Combatant walker, int cell)
+    public ImmutableArray<int> Path(FightMap map, IReadOnlyList<Combatant> fighters, Combatant walker, int cell, CellSet stops = default)
     {
         var reached = new Dictionary<int, (int MovementPoints, int ActionPoints)>();
         var previous = new Dictionary<int, int>();
 
-        Explore(map, fighters, walker, reached, previous);
+        Explore(map, fighters, walker, reached, previous, stops);
 
         if (!reached.ContainsKey(cell))
             return [];
@@ -133,7 +135,7 @@ public sealed class FightMoves
         return [.. path];
     }
 
-    private void Explore(FightMap map, IReadOnlyList<Combatant> fighters, Combatant walker, Dictionary<int, (int MovementPoints, int ActionPoints)> reached, Dictionary<int, int>? previous)
+    private void Explore(FightMap map, IReadOnlyList<Combatant> fighters, Combatant walker, Dictionary<int, (int MovementPoints, int ActionPoints)> reached, Dictionary<int, int>? previous, CellSet stops)
     {
         ArgumentNullException.ThrowIfNull(map);
         ArgumentNullException.ThrowIfNull(fighters);
@@ -168,7 +170,8 @@ public sealed class FightMoves
             var leftMp = mp - Lost(mp, kept) - 1;
             var leftAp = ap - Lost(ap, kept);
 
-            if (leftMp < 0)
+            // Measured in the references (D3, D493): the server cuts a walk on the first trap cell it steps on.
+            if (leftMp < 0 || (cell != walker.Cell && stops.Contains(cell)))
                 continue;
 
             var count = Steps(cell, steps);

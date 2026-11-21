@@ -863,3 +863,8 @@ or refines another says so in its own entry. Add a line here with every new deci
 
 - [D492](decisions/d492-eliotrope-portals-measured.md#d492-an-eliotropes-portals-measured-a-walk-or-a-push-that-ends-on-one-sent-through-it) An Eliotrope's portals measured, a walk or a push that ends on one sent through it (2026-11-21)
   - Bubble's share, a portal's cell out of the walks, reading the action 1181's payload first.
+
+## Fights, the Huppermage's runes, the Sram's traps and the Féca's glyphs triggered (D493)
+
+- [D493](decisions/d493-runes-traps-glyph-triggers.md#d493-a-huppermages-runes-set-and-triggered-a-trap-set-off-by-whoever-comes-onto-it-and-a-fécas-glyphs-triggered) A Huppermage's runes set and triggered, a trap set off by whoever comes onto it, and a Féca's glyphs triggered (2026-11-21)
+  - The elemental spell's own rune, a trap set off by a walk passing over it.

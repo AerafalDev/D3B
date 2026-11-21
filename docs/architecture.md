@@ -1208,6 +1208,17 @@ Pure logic with no I/O, in `D3B.Engine`, which references `D3B.Data` for the cel
     goes, a wall while its bombs live, its blow rising with their combos, each blow as likely as the enemy stays, measured
     on the monsters' turns (D288); it reckons the walls once a judgement, and a turn's start only for a fighter on the
     other side's mark, its own side's left to the reply as the cost measured (D290).
+    Since D493, as the pack of 3.7.14.18 and the references set and trigger them: a Huppermage's rune (2022,
+    `CellMarkKind.Rune`, the server's mark of type 4) is set by the spell its elemental spell casts, a rune taking the place of one on its
+    cell, and strikes only when its author triggers it (2023, `EffectKind.TriggerRunes`), the runes covering the cell cast on
+    or whose middle a larger zone covers, its spell cast by its author on its middle, then gone; a Féca's 1026
+    (`EffectKind.TriggerGlyphs`) casts the spell of its glyphs set by the spell it names, on the cell cast on, keeping them.
+    A trigger is foreseen once, on its caster, as its mask's conditions on the caster allow (`SpellEffects.Foresee`). A trap
+    stays until it is set off: a fighter a walk, a slide or a teleport brings onto its cells sets it off, its author casting
+    its spell on its middle, its zone choosing whom it strikes, and it goes; a slide stops on a trap's first cell with no
+    push damage, and `FightMoves.Reachable` and `Path` stop a walk on the first trap cell it steps on (`Glyphs.TrapCells`).
+    `Imagination` carries the marks through a cast's effects (its private `Ground`), so that a spell an effect casts sets and
+    triggers marks too.
   - `Carrying`, in `D3B.Engine.Fights` (D474): a carry (effect 50) takes the fighter reached off its cell, its carrier's
     (`Combatant.CarrierId`), the carrier in state 3 and the carried in 8 and 3579, as the server sets them; a throw (51) lands
     the carried on the free cell cast on, still carried for the throw's own effects there, then ends the carry

@@ -34,6 +34,9 @@ public sealed class Glyphs
     /// <summary>The effect that sets a glyph-aura.</summary>
     public const int Aura = 1091;
 
+    /// <summary>The effect that sets a Huppermage's rune.</summary>
+    public const int Rune = 2022;
+
     // The rounds a mark of the whole fight lasts, past any fight's end.
     private const int WholeFight = 1_000;
 
@@ -59,9 +62,31 @@ public sealed class Glyphs
             TurnEnd => CellMarkKind.TurnEnd,
             Aura => CellMarkKind.Aura,
             Trap => CellMarkKind.Trap,
+            Rune => CellMarkKind.Rune,
             Portals.SetEffect => CellMarkKind.Portal,
             _ => CellMarkKind.Other,
         };
+    }
+
+    /// <summary>Gets the cells of the traps among marks, where a walk stops and the trap is triggered (D493).</summary>
+    /// <param name="marks">The marks.</param>
+    /// <returns>Their cells.</returns>
+    public static CellSet TrapCells(IEnumerable<CellMark> marks)
+    {
+        ArgumentNullException.ThrowIfNull(marks);
+
+        var cells = default(CellSet);
+
+        foreach (var mark in marks)
+        {
+            if (mark.Kind is not CellMarkKind.Trap)
+                continue;
+
+            foreach (var cell in mark.Cells)
+                cells.Add(cell);
+        }
+
+        return cells;
     }
 
     /// <summary>Tells whether a level sets any mark.</summary>
@@ -116,6 +141,15 @@ public sealed class Glyphs
         return CellMarkKind.Other;
     }
 
+    /// <summary>Tells whether a spell sets marks casting a spell, as a Féca's glyph spell its glyphs' (D493).</summary>
+    /// <param name="setterId">The spell that sets the marks.</param>
+    /// <param name="spellId">The spell the marks cast.</param>
+    /// <returns>Whether one of the setter's effects sets such a mark.</returns>
+    public bool CastsFrom(int setterId, int spellId)
+    {
+        return KindOf(setterId, spellId) is not CellMarkKind.Other;
+    }
+
     /// <summary>Adds the marks a level cast on a cell sets to a list.</summary>
     /// <param name="map">The fight's map.</param>
     /// <param name="fighters">Every fighter of the fight.</param>
@@ -154,8 +188,9 @@ public sealed class Glyphs
                     cells.Add(covered);
             }
 
-            // Measured (9f4): a glyph of duration 2 set in round 2 went as its author's turn of round 4 began.
-            var rounds = effect.Duration < 0 ? WholeFight : Math.Max(1, (int)effect.Duration);
+            // Measured (9f4): a glyph of duration 2 set in round 2 went as its author's turn of round 4 began. A trap stays until
+            // it is triggered, as the references keep it (D3, D493).
+            var rounds = effect.Duration < 0 || kind is CellMarkKind.Trap ? WholeFight : Math.Max(1, (int)effect.Duration);
 
             marks.Add(new CellMark(id++, caster.Id, caster.Team, kind, effect.DiceNum, Math.Max(1, effect.DiceSide), cell, cells.DrainToImmutable(), round + rounds));
         }

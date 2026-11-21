@@ -20,4 +20,7 @@ public enum CellMarkKind
 
     /// <summary>An Eliotrope's portal, which casts nothing: a cast on it comes out of another (<see cref="Portals"/>), effect 1181.</summary>
     Portal,
+
+    /// <summary>A Huppermage's rune, cast only when its author triggers it (effect 2023, <see cref="Glyphs"/>), then gone: effect 2022.</summary>
+    Rune,
 }
