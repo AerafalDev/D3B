@@ -123,26 +123,34 @@ internal sealed class HarvestUpkeep
         return true;
     }
 
-    /// <summary>Waits for the character's life to regenerate up to the share it heals under, once a fight was lost, unless it carries food that heals it at the next step.</summary>
+    /// <summary>Gives the character its whole life back once a fight was lost: the food it carries heals it at the next step, else it waits for the regeneration.</summary>
     /// <param name="context">The bot's context.</param>
     /// <param name="cancellationToken">Stops the wait.</param>
-    /// <returns>A task that completes once the life is back.</returns>
+    /// <returns>A task that completes once the life is whole, or once the next step will eat.</returns>
+    /// <remarks>
+    /// Measured: a lost fight leaves half the life, rounded up, never under the default share of 50 the character heals
+    /// under, so that it went on at once; the owner's choice (D481), it regains the whole after a loss, by its food when the
+    /// profile heals (D148), else a point each interval (D153).
+    /// </remarks>
     public async Task RegainAsync(BotContext context, CancellationToken cancellationToken)
     {
-        // Food the profile carries heals at the next step (D148); else the life regenerates, a point each interval (D153).
         var state = context.State;
 
         if (_settings.Heal && Food.StackToEat(state, _settings.Food, _tables.Items, _unusable) is not null)
-            return;
+        {
+            // Once healing, the next steps eat until the life is whole (D148).
+            _healing = true;
 
-        for (var life = context.Life; life is { } now && state.MaxLife is { } most && now * 100L < (long)_settings.HealBelow * most; life = context.Life)
+            return;
+        }
+
+        for (var life = context.Life; life is { } now && state.MaxLife is { } most && now < most; life = context.Life)
         {
             _publish(state, GameText.Of(HarvestTexts.Text("DoingRegain"), GameTextValue.Number(now), GameTextValue.Number(most)));
 
             var interval = TimeSpan.FromMilliseconds(100 * (state.LifeRegenInterval ?? RegainPoll));
-            var missing = (((long)_settings.HealBelow * most) + 99) / 100 - now;
 
-            await Task.Delay(TimeSpan.FromTicks(Math.Min(interval.Ticks * Math.Max(1, missing), _regainStep.Ticks)), context.Time, cancellationToken).ConfigureAwait(false);
+            await Task.Delay(TimeSpan.FromTicks(Math.Min(interval.Ticks * (most - now), _regainStep.Ticks)), context.Time, cancellationToken).ConfigureAwait(false);
             state = context.State;
         }
     }

@@ -793,3 +793,18 @@ or refines another says so in its own entry. Add a line here with every new deci
 
 - [D478](decisions/d478-placement-turn-order.md#d478-a-placement-weighs-only-the-threat-of-the-enemies-playing-before-the-characters-first-turn) A placement weighs only the threat of the enemies playing before the character's first turn (2026-11-20)
   - A fixed rule by the turn order, the group placed together.
+
+## Fights, the turn's pace (D479)
+
+- [D479](decisions/d479-fight-turn-pace.md#d479-the-fights-pace-03-s-and-no-pace-before-the-turns-end) The fight's pace 0.3 s, and no pace before the turn's end (2026-11-21)
+  - 0.5 s, no pace at all, waiting less for the client's display.
+
+## Fights, the server's cooldowns merged (D480)
+
+- [D480](decisions/d480-cooldowns-merged.md#d480-the-cooldowns-the-server-gives-are-merged-spell-by-spell-not-replaced) The cooldowns the server gives are merged spell by spell, not replaced (2026-11-21)
+  - A snapshot decreased at each turn, the refused spell left out by the refusals' cap.
+
+## The harvest, fights lost in a row (D481)
+
+- [D481](decisions/d481-harvest-losses-go-on.md#d481-fights-lost-in-a-row-no-longer-end-the-harvest-and-a-loss-is-followed-by-the-whole-life-regained) Fights lost in a row no longer end the harvest, and a loss is followed by the whole life regained (2026-11-21)
+  - Leaving out the resource whose protector won, the profile's share after a loss, keeping the connection alive, closing it or the haven bag once an activity failed.

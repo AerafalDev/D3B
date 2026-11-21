@@ -102,13 +102,14 @@ public sealed record BotDelays
     /// <remarks>Measured through the app: steps sent one after another went faster than the client showed them; the client's display time, half a second, is the least.</remarks>
     public TimeSpan BetweenSteps { get; init; } = TimeSpan.FromMilliseconds(500);
 
-    /// <summary>Gets how long the fight's AI lets pass before each of its actions, its placement, its readiness and its turn's end, once the client showed what came before (D202).</summary>
+    /// <summary>Gets how long the fight's AI lets pass before each of its actions, its placement and its readiness, once the client showed what came before (D202).</summary>
     /// <remarks>
     /// Measured on the owner's 49 captured fights, the player's pace: 1.3 s halfway from a turn's start to its first action and
     /// from an action shown to the next, 0.6 s before ending a turn, 1.2 s from the placement's cells to the first move. The owner,
-    /// who asked to see what the AI does, chose 0.9 s, then 0.8 s (D368), the least: above the client's display time, below the player's median.
+    /// who asked to see what the AI does, chose 0.9 s, then 0.8 s (D368), then 0.3 s (D479), the least: each action already waits
+    /// for the client to have shown the last, measured at about half a second, so that the turns went 3.7 to 5.2 s halfway for 2 to 3.5 actions.
     /// </remarks>
-    public TimeSpan FightAction { get; init; } = TimeSpan.FromMilliseconds(800);
+    public TimeSpan FightAction { get; init; } = TimeSpan.FromMilliseconds(300);
 
     /// <summary>Reads the delays from a configuration, in seconds, the measured ones for what it does not set.</summary>
     /// <param name="configuration">The configuration.</param>
