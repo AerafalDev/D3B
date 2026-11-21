@@ -25,6 +25,10 @@ internal static class ForgelanceLance
     /// <summary>The state the lance's coming takes from its thrower and its return gives back.</summary>
     public const int Carried = 3590;
 
+    /// <summary>The spell the lance's coming casts on its thrower, setting the range of the spells cast on the lance (D481).</summary>
+    /// <remarks>Read from the pack: the lance's starting spell casts it, and Armé, which the server casts as the lance returns, dispels it.</remarks>
+    public const int Reach = 24591;
+
     /// <summary>Gets the thrower once its lance is out of its hand.</summary>
     /// <param name="thrower">The fighter that threw it.</param>
     /// <returns>The fighter without the lance in hand; the same when it did not hold it.</returns>
@@ -41,7 +45,7 @@ internal static class ForgelanceLance
     /// <summary>Gets the fight once a fighter's lance came back to its hand, as its turn begins.</summary>
     /// <param name="fight">The fight.</param>
     /// <param name="fighterId">The fighter whose turn begins.</param>
-    /// <returns>The fight without its lance on the map; the same when its lance was in its hand.</returns>
+    /// <returns>The fight without its lance on the map nor the reach it gave; the same when its lance was in its hand.</returns>
     public static ImaginedFight Returned(ImaginedFight fight, long fighterId)
     {
         if (fight.Find(fighterId) is not { IsAlive: true } thrower || !thrower.HasState(Out))
@@ -52,7 +56,12 @@ internal static class ForgelanceLance
         states = states.Contains(InHand) ? states : states.Add(InHand);
         states = states.Contains(Carried) ? states : states.Add(Carried);
 
-        var back = thrower with { States = states };
+        var modifiers = thrower.Modifiers;
+
+        foreach (var held in thrower.Buffs.Where(held => held.SpellId == Reach))
+            modifiers = modifiers.Remove(new SpellModifier((SpellModifierKind)held.EffectId, held.Value, held.Parameter));
+
+        var back = thrower with { States = states, Modifiers = modifiers, Buffs = thrower.Buffs.RemoveAll(held => held.SpellId == Reach) };
 
         return fight with { Fighters = [.. fight.Fighters.Where(fighter => !(fighter.MonsterId == Monster && fighter.SummonerId == fighterId)).Select(fighter => fighter.Id == fighterId ? back : fighter)] };
     }

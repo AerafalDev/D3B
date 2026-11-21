@@ -522,6 +522,25 @@ internal sealed class TurnBench
         return true;
     }
 
+    private void Lance(ImaginedFight before, ImaginedFight after, in SpellLevel level, int cell, string whose)
+    {
+        // A Forgelance's casts with its lance out (D481): on the lance, where the server casts their spell around it, or
+        // elsewhere, where it strikes nothing; the lance's ids are 3.7.14.18's, as D465 reads them.
+        const int lance = 7139, outOfHand = 3361;
+
+        if (!before.Actor.HasState(outOfHand) || before.Fighters.FirstOrDefault(fighter => fighter.IsAlive && fighter.MonsterId == lance && fighter.SummonerId == before.ActorId) is not { } thrown)
+            return;
+
+        var on = before.On(cell);
+        var where = thrown.Cell == cell ? "on the lance" : on is null ? "on a free cell" : on.Team == before.Actor.Team ? "on an ally" : "on an enemy";
+
+        Tally.Count($"lance out: casts {whose}, {where}");
+        Tally.Count($"lance out: casts {whose}, {where}, spell {level.SpellId}");
+
+        if (Idle(before, after))
+            Tally.Count($"lance out: casts {whose}, {where}, foreseen to do nothing but spend AP");
+    }
+
     private void States(ImaginedFight fight, IEnumerable<TacticAction> actions, string whose)
     {
         // The casts asking a state, those changing the character's states, as a Zobal's masks do, and those the engine
@@ -568,6 +587,8 @@ internal sealed class TurnBench
 
             if (Idle(fight, after))
                 Tally.Count($"states: casts {whose}, foreseen to do nothing but spend AP, {breed}");
+
+            Lance(fight, after, level, action.Cell, whose);
 
             fight = after;
         }

@@ -100,6 +100,16 @@ public sealed class CastRulesTests
     }
 
     [Fact]
+    public void ATakenCellAModifierAsksRefusesAFreeCell()
+    {
+        // Effect 314, which the Forgelance's lance gives its spells cast on it (D481).
+        var taken = _caster with { Modifiers = [new(SpellModifierKind.TakenCellEnabled, 10, 1)] };
+
+        Assert.Equal(CastRefusal.CellNotTaken, Check(10, Off(3, 0), caster: taken));
+        Assert.Equal(CastRefusal.None, Check(10, Off(2, 0), caster: taken));
+    }
+
+    [Fact]
     public void TheLevelsCriterionAsksTheCastersStates()
     {
         Assert.Equal(CastRefusal.StatesForbid, Check(30, Off(1, 0), round: 2));

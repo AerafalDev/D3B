@@ -109,6 +109,7 @@ public sealed class CastRules
                 case SpellModifierKind.CastsPerTurn when perTurn > 0: perTurn += modifier.Value; break;
                 case SpellModifierKind.CastsPerTarget when perTarget > 0: perTarget += modifier.Value; break;
                 case SpellModifierKind.TakenCellDisabled: properties &= ~SpellLevelProperties.NeedTakenCell; break;
+                case SpellModifierKind.TakenCellEnabled: properties |= SpellLevelProperties.NeedTakenCell; break;
                 case SpellModifierKind.FreeCellDisabled: properties &= ~SpellLevelProperties.NeedFreeCell; break;
                 case SpellModifierKind.FreeCellEnabled: properties |= SpellLevelProperties.NeedFreeCell; break;
                 case SpellModifierKind.RangeSet: setRange = modifier.Value; break;
