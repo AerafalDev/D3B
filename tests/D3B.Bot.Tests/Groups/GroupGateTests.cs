@@ -1,4 +1,5 @@
 using D3B.Bot.Groups;
+using D3B.Bot.Journal;
 using D3B.Bot.Runtime;
 using D3B.Bot.Tests.Runtime;
 using D3B.Protocol.Game;
@@ -108,6 +109,109 @@ public sealed class GroupGateTests
 
         Assert.Equal(_act, masterConnection.Sent[^1]);
         Assert.Empty(master.WaitingFor);
+    }
+
+    [Fact]
+    public async Task AMasterGoesOnWithoutAFollowerMissingFiveMinutesAndWaitsForItAgainOnceItIsBack()
+    {
+        // Measured on the owner's captures of 2026-11-19 (D464, D489): a master waited for a follower whose map change the
+        // server refused about 210 times, until the server closed every connection of the group 30 minutes on.
+        await using var play = new TestPlay();
+        var (masterConnection, master) = await TestGroup.MasterAsync(play, 300);
+        var (followerConnection, follower) = await TestGroup.FollowerAsync(play, 300, TestPlay.NorthMapId);
+
+        using var membership = play.Bots.Groups.Follow(follower, TestGroup.Master, out _);
+
+        Joined(masterConnection, followerConnection);
+        await TestGroup.SettleAsync(master, follower);
+
+        var acting = Act(master, _act);
+
+        await TestGroup.UntilAsync(play, () => master.WaitingFor.Count > 0, "waiting");
+        play.Time.Advance(GroupGate.LeaveBehindAfter - TimeSpan.FromSeconds(1));
+        await TestGroup.SettleAsync(master, follower);
+
+        Assert.False(acting.IsCompleted);
+
+        play.Time.Advance(TimeSpan.FromSeconds(1));
+        await acting;
+
+        Assert.Equal(_act, masterConnection.Sent[^1]);
+        Assert.Empty(master.WaitingFor);
+        Assert.Contains(master.Journal.All(), entry => entry is NoteEntry note && note.Text.Contains("Follower", StringComparison.Ordinal));
+
+        // Left behind, it holds no action more.
+        await Act(master, _act);
+
+        Assert.Equal(2, masterConnection.Sent.Count(request => request.Equals(_act)));
+
+        // Back with its master as it walks, a request the gate does not hold, it is waited for again as it is away again,
+        // even on the map it was left on.
+        TestGroup.Arrive(followerConnection, TestGroup.FollowerId, TestPlay.MapId, 301);
+        await TestGroup.SettleAsync(master, follower);
+        await Act(master, new MapMovementRequest { MapId = TestPlay.MapId });
+        TestGroup.Arrive(followerConnection, TestGroup.FollowerId, TestPlay.NorthMapId, 300);
+        await TestGroup.SettleAsync(master, follower);
+        acting = Act(master, _act);
+
+        await TestGroup.UntilAsync(play, () => master.WaitingFor.Count > 0, "waiting again");
+
+        Assert.False(acting.IsCompleted);
+    }
+
+    [Fact]
+    public async Task AFollowerLeftBehindIsWaitedForAgainOnceItLeftTheMapItWasLeftOn()
+    {
+        // On its way again, such as a map behind its master walking on: it is no longer held where it was.
+        await using var play = new TestPlay();
+        var (masterConnection, master) = await TestGroup.MasterAsync(play, 300);
+        var (followerConnection, follower) = await TestGroup.FollowerAsync(play, 300, TestPlay.NorthMapId);
+
+        using var membership = play.Bots.Groups.Follow(follower, TestGroup.Master, out _);
+
+        Joined(masterConnection, followerConnection);
+        await TestGroup.SettleAsync(master, follower);
+
+        var acting = Act(master, _act);
+
+        await TestGroup.UntilAsync(play, () => master.WaitingFor.Count > 0, "waiting");
+        play.Time.Advance(GroupGate.LeaveBehindAfter);
+        await acting;
+
+        TestGroup.Arrive(followerConnection, TestGroup.FollowerId, TestPlay.EastMapId, 300);
+        await TestGroup.SettleAsync(master, follower);
+        acting = Act(master, _act);
+
+        await TestGroup.UntilAsync(play, () => master.WaitingFor.Count > 0, "waiting again");
+
+        Assert.Equal(MemberAbsence.Away, Assert.Single(master.WaitingFor).Absence);
+        Assert.False(acting.IsCompleted);
+    }
+
+    [Fact]
+    public async Task AMasterNeverGoesOnWithoutAFollowerInAFight()
+    {
+        // A fight ends by itself: the time a follower spends in one counts for nothing.
+        await using var play = new TestPlay();
+        var (masterConnection, master) = await TestGroup.MasterAsync(play, 300);
+        var (followerConnection, follower) = await TestGroup.FollowerAsync(play, 301);
+
+        using var membership = play.Bots.Groups.Follow(follower, TestGroup.Master, out _);
+
+        Joined(masterConnection, followerConnection);
+        followerConnection.Server(new ContextCreationEvent { Context = ContextCreationEvent.Types.GameContext.Fight });
+        await TestGroup.SettleAsync(master, follower);
+
+        var acting = Act(master, _act);
+
+        await TestGroup.UntilAsync(play, () => master.WaitingFor.Count > 0, "waiting");
+
+        Assert.Equal(MemberAbsence.Fighting, Assert.Single(master.WaitingFor).Absence);
+
+        play.Time.Advance(GroupGate.LeaveBehindAfter * 2);
+        await TestGroup.SettleAsync(master, follower);
+
+        Assert.False(acting.IsCompleted);
     }
 
     [Fact]

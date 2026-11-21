@@ -843,3 +843,8 @@ or refines another says so in its own entry. Add a line here with every new deci
 
 - [D488](decisions/d488-harvest-action-cells.md#d488-a-walk-goes-round-the-maps-action-cells-a-harvest-the-server-cuts-by-moving-the-character-leaves-its-map-gone-through-and-a-tour-going-round-ends) A walk goes round the map's action cells, a harvest the server cuts by moving the character leaves its map gone through, and a tour going round ends (2026-11-21)
   - Going round alone, a watchdog alone, stopping the activity, counting dry tours, never crossing with no fall back.
+
+## Groups, a follower left behind (D489)
+
+- [D489](decisions/d489-groups-left-behind.md#d489-a-master-goes-on-without-a-follower-missing-five-minutes-but-fighting-or-healing-and-waits-for-it-again-once-it-is-back) A master goes on without a follower missing five minutes, but fighting or healing, and waits for it again once it is back (2026-11-21)
+  - Failing the master's activity at the bound, keeping the endless wait, two or ten minutes.
