@@ -309,6 +309,7 @@ it grows. A client update before a session gets Q10's session first.
 | 10d | Measured in game on the owner's characters, two then three, each in its own client: the party, the chain, the fights, the bank, a disconnection; the group's fights captured and the AI corrected from them (D434). | In progress: the enemies' target in the group's reply (D467); the party formed by hand kept and the fight's lock kept by the server undone, the owner's report (D471); the AI corrected from the owner's run of 2026-11-20 (D470, D472); a follower joining once the server listed its master's fight open (D475); next, the allies' spells and turns in the reply, the group's threat, the measure in game |
 | 10e | The game's own following for a group whose accounts are all subscribed, its followers of level 10 or more and its master leading the party: the three options on, the master's "follow me", the bot watching each follower and turning them on again (D476), mapping format 24; the followers not paused by their clients' walks, their readiness left to the server (D477) | Done on the fake game, to measure in game across maps, a door and a zaap |
 | 10f | A group's placement by the turn order: each character weighs only the threat of the enemies playing before its first turn (D478), checked with `scripts/fights.cs --turns` on the 07:46 UTC game | Done, to see in game on placement cells within the enemies' first reach |
+| 10g | The fight's turns faster, the owner's report from game of 2026-11-21: the pace before each action 0.3 s instead of 0.8 s, none before the turn's end (D479), measured on the day's captures (a turn 3.7 to 5.2 s halfway for 2 to 3.5 actions) | Done on the fake game, to see in game: a turn of three actions about 1.5 s shorter |
 
 The captures 10a needs, made by the owner in game through the app, with two characters of their own (a master and a
 follower) on the same map, the capture of every connection on; a capture's content is never shown (only
@@ -388,7 +389,7 @@ follower) on the same map, the capture of every connection on; a capture's conte
 - **The mines** (D444), the owner's report that the automatic harvest gathers much less as a miner, made on 2026-11-18 in code and
   tests from the pack's measure: the tour goes into an interior, last, while its sub-area lists a resource at the character's level
   that no map of it showed, so that it finds the ore of the mines D416 left out. Left: measured in game.
-- **Fights lost in a row while harvesting** (D479), the owner's report of a farmer disconnected several times, made on
+- **Fights lost in a row while harvesting** (D480), the owner's report of a farmer disconnected several times, made on
   2026-11-21 in code and tests from the night's captures: a level 30 scarecrow, the cereals' protector, beat the Pandawa of
   level 21 11 times in 14, the third loss in a row stopped the harvest and the server closed the idle connection 30 minutes
   later. The harvest now goes on however many are lost and regains its whole life after each, the owner's choices; the hunt keeps

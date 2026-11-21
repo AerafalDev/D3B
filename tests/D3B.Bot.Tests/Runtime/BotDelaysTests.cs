@@ -28,7 +28,7 @@ public sealed class BotDelaysTests
         Assert.Equal(TimeSpan.FromSeconds(2), measured.UseEnd);
         Assert.Equal(TimeSpan.FromSeconds(1), measured.BankFollow);
         Assert.Equal(TimeSpan.FromSeconds(30), measured.Recovery);
-        Assert.Equal(TimeSpan.FromMilliseconds(800), measured.FightAction);
+        Assert.Equal(TimeSpan.FromMilliseconds(300), measured.FightAction);
         Assert.Equal(TimeSpan.FromSeconds(3), BotDelays.Most.Display);
         Assert.Equal(TimeSpan.FromSeconds(3.5), measured.Confirmation(5));
         Assert.Equal(measured, BotDelays.Read(Configuration()));
@@ -56,7 +56,7 @@ public sealed class BotDelaysTests
     [InlineData(BotDelays.AnswerKey, "00:00:05")]
     [InlineData(BotDelays.RecoveryKey, "NaN")]
     [InlineData(BotDelays.WalkStepKey, "1e400")]
-    [InlineData(BotDelays.FightActionKey, "0.5")]
+    [InlineData(BotDelays.FightActionKey, "0.2")]
     public void ADelayBelowItsMeasuredValueOrAboveItsMostIsRefused(string key, string value)
     {
         var exception = Assert.Throws<InvalidOperationException>(() => BotDelays.Read(Configuration((key, value))));

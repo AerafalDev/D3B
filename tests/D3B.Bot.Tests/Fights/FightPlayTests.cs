@@ -281,6 +281,56 @@ public sealed class FightPlayTests : IAsyncDisposable
     }
 
     [Fact]
+    public async Task TheAIEndsItsTurnWithoutTheFightsPaceOnceItsLastActionIsShown()
+    {
+        var (connection, bot) = await _play.EnterAsync(Far);
+        var monster = Beside(Far, 8, 0);
+        var sent = await StartTurnAsync(connection, bot, monster);
+
+        Assert.IsType<GameActionFightCastRequest>(await SentAsync(connection, sent + 5));
+        Cast(connection, monster, apLeft: 3, actionId: 1);
+        Assert.IsType<GameActionFightCastRequest>(await SentAsync(connection, sent + 6));
+        Cast(connection, monster, apLeft: 0, actionId: 2);
+
+        // The clock stands still: the turn's end waits for nothing once the last blow was shown (D479).
+        var deadline = DateTime.UtcNow + TimeSpan.FromSeconds(10);
+
+        while (connection.Sent.Count < sent + 7)
+        {
+            Assert.True(DateTime.UtcNow < deadline, "The turn's end waited for the clock.");
+            await Task.Delay(5, TestContext.Current.CancellationToken);
+        }
+
+        Assert.IsType<FightTurnFinishRequest>(connection.Sent[sent + 6]);
+    }
+
+    [Fact]
+    public async Task ATurnThatKilledTheLastEnemyLeavesTheFightsEndToTheServer()
+    {
+        var (connection, bot) = await _play.EnterAsync(Far);
+        var monster = Beside(Far, 8, 0);
+        var sent = await StartTurnAsync(connection, bot, monster);
+
+        Assert.IsType<GameActionFightCastRequest>(await SentAsync(connection, sent + 5));
+        Cast(connection, monster, apLeft: 3, actionId: 1);
+        Assert.IsType<GameActionFightCastRequest>(await SentAsync(connection, sent + 6));
+        connection.Server(new SequenceStartEvent { Type = SequenceType.Spell, AuthorId = Self });
+        connection.Server(new GameActionFightEvent { ActionId = 300, SourceId = Self, Cast = new FightCast { Spell = new FightCastSpell { SpellId = TestPlay.BlowSpellId, LevelId = TestPlay.BlowLevelId }, CellId = monster, TargetId = Monster } });
+        connection.Server(new GameActionFightEvent { ActionId = 103, SourceId = Self, Death = new FightDeath { TargetId = Monster } });
+        connection.Server(new SequenceEndEvent { ActionId = 2, Type = SequenceType.Spell, AuthorId = Self });
+        connection.Client(new GameActionAcknowledgementRequest { ActionId = 2, Valid = true });
+        await bot.ProcessedAsync();
+
+        // The server ends the fight within the pace: no turn's end follows it.
+        connection.Server(new FightEndEvent { Results = { new FightResult { Fighter = new FightResultFighter { FighterId = Monster } } } });
+        await bot.ProcessedAsync();
+        _play.Time.Advance(BotDelays.Measured.FightAction + BotDelays.Measured.Answer);
+        await bot.ProcessedAsync();
+
+        Assert.DoesNotContain(connection.Sent.Skip(sent + 6), message => message is FightTurnFinishRequest);
+    }
+
+    [Fact]
     public async Task TheTurnsEndTheClientSendsByItselfIsWithheldAndTheAIPlaysOn()
     {
         var (connection, bot) = await _play.EnterAsync(Far);

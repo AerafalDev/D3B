@@ -312,8 +312,8 @@ The bots run in `D3B.Bot`: what each part does today, with the decisions that ma
   empty. A summon of the character's the client controls plays its turns the same, the fight imagined from its view, its
   spells its grade's (`FightState.IsOwnTurn`, D271), and so does a companion of the character's, such as the Astrub Knight
   (`Fighter.MasterId`), its spells those the server lists for it (`FightState.ListedSpells`, D443), protecting its master
-  as a summon protects its summoner (`Combatant.MasterId`). Every request waits `BotDelays.FightAction` first, the owner's
-  0.8 s (D368), and every wait ends with the fight. A cast the server refuses with an error text is not weighed again that turn
+  as a summon protects its summoner (`Combatant.MasterId`). Every request but the turn's end waits `BotDelays.FightAction` first, the owner's
+  0.3 s (D479), and every wait ends with the fight. A cast the server refuses with an error text is not weighed again that turn
   on that cell, and the next turn weighs it anew, since what the server refuses depends on what it sees (D407); one it
   leaves unanswered is not cast again that fight. The player's placement, readiness, casts, walks and turn's ends pause the bot
   (`PlayerActions`), not a turn's end the client marks as its own (D252): in its inactive state, whose first in a fight
@@ -321,7 +321,7 @@ The bots run in `D3B.Bot`: what each part does today, with the decisions that ma
   plays, so that the AI's turn goes on (`IRequestWithholder`, D367). An activity that fights its own has the fight
   answered once over (`BotActivity.OnFightOver`, `BotActor.LastFightEnd`): harvesting resumes, pauses or stops as "After a
   fight" says, a lost fight as "After a lost fight" says, resumed once its whole life is regained, however
-  many in a row (D479); the hunt's three in a row end it (D198). The
+  many in a row (D480); the hunt's three in a row end it (D198). The
   character's state keeps every characteristic the server gives out of fights (`CharacterState.Characteristics`,
   `CharacteristicTotals`, D263). The strategies of 9g, a profile each character played, are gone (D244).
 - **Groups** (D430 to D432, D437), in `D3B.Bot.Groups`, registered by `GroupsModule`: `FollowActivity`, the "Follow"
@@ -1325,7 +1325,7 @@ the fighter whose turn begins or ends in them alone, an aura striking who a push
 counting them (D280). A mark kept and taken back as the server says, and a summon's spells list left out of the
 character's (D279). The character's spells by the
   list, its level, a pair and the fight's own; the fight's options and context; the player's requests in a fight; a
-  harvest's fight answered once over, a lost fight, and losses in a row the harvest goes on through (D198, D202, D479).
+  harvest's fight answered once over, a lost fight, and losses in a row the harvest goes on through (D198, D202, D480).
   A fight is played end to end through
   `TestPlay`, whose pack carries a spell: the AI closes it, places the character, readies it, casts and ends its turn;
   without the switch it sends nothing; the player's hand pauses it (D213); a worn sword is struck as spell 0 beside the

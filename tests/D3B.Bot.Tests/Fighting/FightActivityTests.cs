@@ -629,7 +629,7 @@ public sealed class FightActivityTests : IAsyncDisposable
         Assert.Equal(InterruptionResponse.Resume, activity.OnFightOver(Ended(FightOutcome.Lost), InterruptionResponse.Resume));
         Assert.Equal(InterruptionResponse.Resume, activity.OnFightOver(Ended(FightOutcome.Lost), InterruptionResponse.Resume));
 
-        // Three lost in a row stop it (D198); harvesting goes on (D479).
+        // Three lost in a row stop it (D198); harvesting goes on (D480).
         Assert.Equal(InterruptionResponse.Stop, activity.OnFightOver(Ended(FightOutcome.Lost), InterruptionResponse.Resume));
         // Counted: one fight won, three lost.
         Assert.Equal(["1 fight won", "3 fights lost"], activity.Report!.Counts.Select(count => string.Format(System.Globalization.CultureInfo.InvariantCulture, (count.Text.Many is { } many && count.Text.Count != 1 ? many : count.Text.Format).In(System.Globalization.CultureInfo.InvariantCulture), [.. count.Text.Values.Select(value => value.Text ?? value.Id.ToString(System.Globalization.CultureInfo.InvariantCulture))])));

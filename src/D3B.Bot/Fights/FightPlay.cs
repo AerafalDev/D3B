@@ -414,7 +414,12 @@ public static class FightPlay
             }
         }
 
-        if (context.State.Fight is not { IsOwnTurn: true } || !await PacedAsync(context, Playing, cancellationToken).ConfigureAwait(false))
+        // The owner's ask (D479): the turn's end waits for no pace once the turn acted. A turn with no action keeps it, and so
+        // does one that killed the last enemy, whose fight the server may end meanwhile: a request sent after its end left
+        // the bot waiting (D203).
+        var paced = acted is 0 || context.State.Fight is { } after && !after.Fighters.Values.Any(fighter => fighter.IsAlive && fighter.Team != after.Team);
+
+        if (context.State.Fight is not { Phase: not FightPhase.Ended, IsOwnTurn: true } || (paced && !await PacedAsync(context, Playing, cancellationToken).ConfigureAwait(false)))
             return;
 
         var ended = context.Expect((side, message, state) => side is RelayDirection.FromServer && (message is FightTurnEndEvent { FighterId: var fighter } && fighter == self || state.Fight is not { IsOwnTurn: true }));
