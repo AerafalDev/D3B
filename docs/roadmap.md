@@ -398,3 +398,8 @@ follower) on the same map, the capture of every connection on; a capture's conte
   tests from the owner's captures of that evening: the client moves many stacks into an exchange with a player in one
   `ExchangeTransferFromInventoryRequest`, answered by one change; a follower now sends its whole stacks so, a part of one by a
   move, where one move a stack took 54 s for 86 (D458). Left: seen in game.
+- **The wait for a busy character bounded** (D484), the second way to the inactivity kick a study read after D481, made on
+  2026-11-21 in code and tests: the harvest's and the hunt's steps waited without end for a character walking, using, in a
+  dialog or on a map not known yet. Busy a minute, the character is now put back in order as after an interruption; still busy
+  a minute later, the activity fails saying what held, the owner's choices. Not seen on the 216 captures of 18 to 21 November.
+  Left: seen in game, which needs the state to stick.

@@ -524,4 +524,16 @@
   <data name="FailZoneGone" xml:space="preserve">
     <value>The zone this profile names is not in the project.</value>
   </data>
+  <data name="FailStuckMapUnknown" xml:space="preserve">
+    <value>The character's map is still unknown after two minutes.</value>
+  </data>
+  <data name="FailStuckUsing" xml:space="preserve">
+    <value>Still using an element after two minutes, even once put back in order.</value>
+  </data>
+  <data name="FailStuckInDialog" xml:space="preserve">
+    <value>Still in a dialog or an exchange after two minutes, even once put back in order.</value>
+  </data>
+  <data name="FailStuckWalking" xml:space="preserve">
+    <value>Still walking after two minutes, even once put back in order.</value>
+  </data>
 </root>
