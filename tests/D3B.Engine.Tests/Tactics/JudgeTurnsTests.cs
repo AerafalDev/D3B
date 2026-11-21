@@ -29,7 +29,7 @@ public sealed class JudgeTurnsTests
     [Fact]
     public void AShareOrAReductionOfTheDamageReceivedChangesWhatTheJudgesTablesRead()
     {
-        // D487: a cast giving a share of 1163 or a reduction of 105 changes the damage its fighter receives in the judge's tables.
+        // D490: a cast giving a share of 1163 or a reduction of 105 changes the damage its fighter receives in the judge's tables.
         var fighter = new Combatant { Id = 1 };
 
         Assert.NotEqual(JudgeTurns.Signature(fighter), JudgeTurns.Signature(fighter with { ReceivedDamageShares = [120] }));

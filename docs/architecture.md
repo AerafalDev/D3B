@@ -144,7 +144,10 @@ The bots run in `D3B.Bot`: what each part does today, with the decisions that ma
   or claim (`BotContext.TakenCells`). A walk of no
   step is never sent: the server closes the connection of one. The client does not follow a walk ending on the cell its
   previous walk ended on, even on another map (D260): the state keeps that cell (`CharacterState.LastWalkEnd`), and such a
-  walk goes in two, to the path's cell before its last, or a step aside first when it has one step.
+  walk goes in two, to the path's cell before its last, or a step aside first when it has one step. Out of fights every
+  path goes round the map's action cells (`RoleplayPaths`, `WorldPathfinder.ActionCells`, the cells `CellPathfinder` avoids
+  but as its start or destination), crossing one only when no other way is left: the server moves a character that only
+  crosses one, measured in a mine (D488).
 - **Using an element** (D75): `ElementUse`, in `D3B.Bot.Interactives`, walks to the nearest cell the client uses the
   element from, asks for the skill by the id the server gave it on the element, and waits for the start or the refusal,
   then for the end of a use that lasts, such as a harvest. Nothing is sent for an element the map does not offer the
@@ -268,6 +271,11 @@ The bots run in `D3B.Bot`: what each part does today, with the decisions that ma
   through, where the server offers a wanted element, even one the tour holds back as growing (D392), and even out of the zone
   (D439): there the step takes the profile's resources once a tour and marks the map `HarvestTour.Cross`, apart from the maps
   gone through, so the tour's progress and `HasHarvested` stay the zone's. The journey to the bank stops nowhere.
+  A use whose walk the server cut by moving the character to another map, as a map action's cell does, leaves the map it
+  began on gone through, or crossed out of the zone (D488). A tour whose journeys arrive three times in a row with nothing done since the one before
+  (`HarvestTour.Arrived`, `IdleArrivals`: no harvest, no map gone through, left out or crossed, no zone entered) goes round:
+  it gives up its other maps and zones (`GiveUpRemaining`), ends as any other, and the journal (`TourGoneRound`) and the
+  card (`HarvestReporter.RoundWarning`, until the next harvest) say so.
 - **A zone as the place** (D415): `HarvestPlace.Zone` and `FightPlace.Zone`, beside Automatic and Chosen (the sub-areas, stored as before), with a
   `Zone` setting, a zone's id (`SettingKind.Zone`, `ActivitySettingsBuilder.Zone`, a rule asking one). The zone is the studio's file, which `D3B.Bot`
   does not see (D393), so the activities read it through `IPlaceZones` (`D3B.Bot.Activities`), an optional parameter of their constructors as
@@ -1120,7 +1128,7 @@ Pure logic with no I/O, in `D3B.Engine`, which references `D3B.Data` for the cel
   - `SpellZones`: the cells each of the 26 shapes covers, centred on the cell cast on and directed from the caster, a fork
     a row past its size (D473). `TargetMask`: an effect's mask parsed once, answering on three values whether it selects a fighter; `C` names the
     caster wherever it stands, `c` in the zone only (D226); `R` asks a cast through a portal and `r` a cast through none,
-    which every cast tells (D468); `K` names the fighter the caster carries, or throws as the throw's own effects land (D474).
+    which every cast tells (D468); `K` names the fighter the caster carries, or throws as the throw's own effects land (D474); `CasterAllows` reads the conditions on the caster alone, which an effect on a free cell, such as a summon, asks (D489).
   - `CastRules`, built once per pack: whether a fighter may cast a level on a cell, the refusal named (`CastRefusal`)
     in the order the checks run, from its `CastHistory`, the level as the caster's spell modifiers change it
     (`SpellModifier`, `CastRules.Modified`); the cells it may cast on; the fighters each effect reaches. The level's
@@ -1142,7 +1150,7 @@ Pure logic with no I/O, in `D3B.Engine`, which references `D3B.Data` for the cel
     step rounded down, as measured; `LifeRange`, a value's least and most. A blow received takes off the fixed resistance
     and a buff's reduction of 105 (`Combatant.ReceivedDamageReduction`, its points raised by a twentieth of the level,
     `EffectFormulas.Reduction`), then the element's resistance in percent plus the resistance to every element
-    (`FightCharacteristic.ResistPercent`, 101), then the multipliers and the shares of 1163 (D487).
+    (`FightCharacteristic.ResistPercent`, 101), then the multipliers and the shares of 1163 (D490).
   - `SpellEffects`, built once per pack: what each effect of a cast does to each fighter it reaches (`ForeseenEffect`),
     the critical effects on a critical hit, nothing drawn. A mask naming the caster reaches it outside the zone.
   - Benchmarked on a captured fight's map: a cast foreseen in 0.69 µs, 0.66 µs into a list it reuses, its zones kept per
@@ -1157,7 +1165,7 @@ Pure logic with no I/O, in `D3B.Engine`, which references `D3B.Data` for the cel
     takes the points below 0, as the server keeps them, so that its end gives back only what it took (D470); a cast giving
     a buff on the damage received that waits for any damage (trigger `D`), a share of 1163 or a reduction of 105, changes
     every blow after it, and one moving its caster towards or away from the fighter it reaches (1042, 1041) slides the
-    caster as that fighter would pull or push it, a caster stopped short taking the push damage of its own level (D487).
+    caster as that fighter would pull or push it, a caster stopped short taking the push damage of its own level (D490).
   - `FightJudge`: an imagined fight's worth for the side playing, in life: allies' life concave and a quarter as steep above
     60% of its most (`TacticWeights.Comfort`, D407), and what the side's own casts took from its other fighters again
     (`ImaginedFight.StruckBySide`, `TacticWeights.AlliesStruck`, D485), enemies' weighed by how hard they hit; the enemies' threat and the next turn's approach with the spells that land, from a cell walked to, in
@@ -1165,7 +1173,8 @@ Pure logic with no I/O, in `D3B.Engine`, which references `D3B.Data` for the cel
     the spells' range and MP too (D472); the fighters read as the search left them, states that prevent casting
     or damage and invulnerability included, a spell its states forbid dealing nothing (D228), a buff worth what it does
     over the rounds it lasts (D209), a state the fighter held as the search began being no gain (D420); once the enemies
-    replied, the character's next turn searched (`Standing`, `NextTurnStart`, D210). `Threat` and `NextTurnDamage` give
+    replied, the character's next turn searched (`Standing`, `NextTurnStart`, D210), a walk nearer the enemies weighed better
+    before the reply winning a tie within a point with ending the turn now after it (`FightTactics`, D487). `Threat` and `NextTurnDamage` give
     the bench what it measures (D206). What it reckons once from where the fight starts and keeps is `JudgeTables` (each
     fighter's damaging spells, the damage of its best turn on every other for every number of AP, which spells land from where
     it walks), the odds are `JudgeOdds`, and the pure turn arithmetic is `JudgeTurns` (D399).
@@ -1178,7 +1187,7 @@ Pure logic with no I/O, in `D3B.Engine`, which references `D3B.Data` for the cel
   - `ForgelanceLance`: a rule the pack does not hold, measured on the captures, and the AI's only one naming a breed's
     states and monster: a throw takes the lance out of the Forgelance's hand (states 3360 and 3590 ended, 3361 given), so
     that no spell asking it follows that turn, and `Imagination.TurnStarted` and the judge's next turn put it back, the
-    lance gone from the map (D465).
+    lance gone from the map (D465), and the reach its spell 24591 gave its thrower's spells with it (D489).
   - `Glyphs`, `CellMark` and `CellMarkKind`, in `D3B.Engine.Fights` (D280): the marks the pack's effects set on the cells of
     a zone, a glyph struck as a turn begins (401) or ends (402), a glyph-aura (1091), a trap (400), their spell, grade
     and end; the imagined fight's marks, the server's and those the casts set (`ImaginedFight.Marks`).
@@ -1187,7 +1196,7 @@ Pure logic with no I/O, in `D3B.Engine`, which references `D3B.Data` for the cel
     strikes who it covers as it comes and who a cast or a walk brings into it. The reply begins and ends each fighter's
     turn so, and the fighter playing's next turn begins so; the judge counts a side's marks on the other's fighters, sure
     on an enemy, feared on an ally, and the bombs' promise on an enemy with the approach, its kill once (D281). A summon
-    casts its grade's starting spell, a spell modifier is imagined, and a fighter's death takes back the buffs it gave
+    casts its grade's starting spell, a spell modifier is imagined for the spell its effect's first die names (D489), and a fighter's death takes back the buffs it gave
     (`HeldBuff.CasterId`, D282). Pushes and pulls go along the farthest axis, the cast's way for a line across it, never
     moving a fighter `CastRules.CanBePushed` refuses nor one the mask only maybe selects (D283); a push moves as far as its
     cells, a step along a diagonal of the coordinates as far as two, and a step so only between two free cells (D289); a

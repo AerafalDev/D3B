@@ -1,11 +1,11 @@
-# Fights, the effects the engine left out (D487)
+# Fights, the effects the engine left out (D490)
 
 A part of [the decisions](README.md); each decision has one line in [the index](../decisions-index.md). The formulas are
 [D195](d176-d208-step-9.md); a push's damage [D214](d209-d252-step-9.md) and [D289](d253-d292-step-9.md); the bench by
 breed [D463](d463-fights-by-breed.md); the blows a push stops [D485](d485-ally-strikes.md); open question Q5 in
 [the open questions](open-questions.md).
 
-## D487: The damage received reads every resistance, reduction and share, and a cast moves its caster
+## D490: The damage received reads every resistance, reduction and share, and a cast moves its caster
 
 *2026-11-21, step 9, the owner's ask for an audit of the effects and states the engine does not handle; the first batch
 chosen by the owner ("1+2+3 puis 4") among the audit's ranked list. Refines D195, D214. Builds D3, D463.*

@@ -63,6 +63,9 @@ public enum SpellModifierKind
     /// <summary>A free cell needed: effect 299.</summary>
     FreeCellEnabled = 299,
 
+    /// <summary>A taken cell needed: effect 314, which the Forgelance's lance gives the spells cast on it (D489).</summary>
+    TakenCellEnabled = 314,
+
     /// <summary>The most range set: effect 2905, measured twice (D193).</summary>
     RangeSet = 2905,
 

@@ -1,4 +1,5 @@
 using System.Collections.Frozen;
+using System.Collections.Immutable;
 using System.Diagnostics.CodeAnalysis;
 using D3B.Data.Maps;
 using D3B.Data.World;
@@ -59,6 +60,7 @@ public sealed class WorldPathfinder
     private readonly Dictionary<long, int> _onlyVertices;
     private readonly Dictionary<long, List<int>> _npcWaysFrom;
     private readonly int[] _npcWayTo;
+    private readonly FrozenDictionary<long, ImmutableArray<int>> _actionCells;
 
     /// <summary>Gets the world graph the paths go through.</summary>
     public WorldGraph Graph { get; }
@@ -134,6 +136,8 @@ public sealed class WorldPathfinder
 
             ways.Add(i);
         }
+
+        _actionCells = ActionCellsOf(graph);
     }
 
     /// <summary>Gets what teleporting from a map to a zaap's costs, in kamas.</summary>
@@ -152,6 +156,31 @@ public sealed class WorldPathfinder
         var cost = KamasPerCoordinate * (long)Math.Floor(Math.Sqrt((dx * dx) + (dy * dy)));
 
         return from.WorldMap >= 0 && to.WorldMap >= 0 && from.WorldMap != to.WorldMap ? cost + OtherWorldMapCost : cost;
+    }
+
+    private static FrozenDictionary<long, ImmutableArray<int>> ActionCellsOf(WorldGraph graph)
+    {
+        var vertices = graph.Vertices.Span;
+        var cells = new Dictionary<long, SortedSet<int>>();
+
+        for (var vertex = 0; vertex < vertices.Length; vertex++)
+        {
+            foreach (var edge in graph.EdgesFrom(vertex))
+            {
+                foreach (var transition in graph.TransitionsOf(edge))
+                {
+                    if (transition.Type is not WorldTransitionType.MapAction)
+                        continue;
+
+                    if (!cells.TryGetValue(vertices[vertex].MapId, out var mapCells))
+                        cells[vertices[vertex].MapId] = mapCells = [];
+
+                    mapCells.Add(transition.CellId);
+                }
+            }
+        }
+
+        return cells.ToFrozenDictionary(pair => pair.Key, pair => pair.Value.ToImmutableArray());
     }
 
     private static bool IsFollowed(WorldTransition transition)
@@ -314,6 +343,19 @@ public sealed class WorldPathfinder
         path = reached < 0 ? null : PathTo(from, reached, through, origins);
 
         return path is not null;
+    }
+
+    /// <summary>Gets the cells of a map's actions: a character stepping on one is moved to another map, even on a walk that only crosses it.</summary>
+    /// <param name="mapId">The map.</param>
+    /// <returns>The cells, whatever their criteria, none for a map the graph lacks.</returns>
+    /// <remarks>
+    /// Measured on a mine's map (D488): the harvest's walk to an ore crossed its map action's cell, and the server moved the
+    /// character to the next map at once, 61 times in two runs. A walk goes round these cells, whether their criteria would
+    /// hold or not, since what the server answers to one whose criterion fails is not measured.
+    /// </remarks>
+    public ImmutableArray<int> ActionCells(long mapId)
+    {
+        return _actionCells.TryGetValue(mapId, out var cells) ? cells : [];
     }
 
     /// <summary>Finds the cells a step's map is left from: where to walk before asking for the next map or using a door, or the cell to step on.</summary>

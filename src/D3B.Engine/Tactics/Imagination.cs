@@ -1,6 +1,7 @@
 using System.Collections.Immutable;
 using D3B.Data.Monsters;
 using D3B.Data.Spells;
+using D3B.Engine.Criteria;
 using D3B.Engine.Effects;
 using D3B.Engine.Fights;
 using D3B.Engine.Maps;
@@ -620,7 +621,7 @@ public sealed class Imagination
             case EffectKind.DispelSpell:
                 fighters[index] = Dispelled(target, effect.Value.Min, buffs, ref kept);
                 break;
-            case EffectKind.SpellModifier when ModifierOf(level, effect.EffectId) is { } modifier:
+            case EffectKind.SpellModifier when ModifierOf(level, effect.EffectId, effect.Value.Min) is { } modifier:
                 fighters[index] = target with
                 {
                     Modifiers = target.Modifiers.Add(modifier),
@@ -818,6 +819,10 @@ public sealed class Imagination
             if (effect.Delay is not 0 || (effect.Properties & SpellEffectProperties.ForClientOnly) is not 0)
                 continue;
 
+            // Measured (D489): an effect on a free cell asks its caster's conditions still, Épilogue bringing no lance while one was out.
+            if (_rules.MaskOf(effect).CasterAllows(fighters[casterIndex], fighters) is CriterionAnswer.False)
+                continue;
+
             // Measured (9f3): a bomb cast on a fighter does not come, its caster casting the bomb's instant spell there instead.
             if (kind is EffectKind.Summon && !IsFree(map, fighters, cell) && _spells.TryGetBomb(effect.DiceNum, out var bomb)
                 && _bombs.TryGetLevel(bomb.InstantSpellId, effect.DiceSide, out var instant))
@@ -891,16 +896,25 @@ public sealed class Imagination
         return (Summons.Of(caster, monster, grade, FirstImaginedSummon - fighters.Count, cell), grade.StartingSpellLevelId);
     }
 
-    private SpellModifier? ModifierOf(in SpellLevel level, int effectId)
+    private SpellModifier? ModifierOf(in SpellLevel level, int effectId, int spellId)
     {
-        // A spell modifier names the spell it changes by its first die and how much by its value, as the server gives it.
+        // A spell modifier names the spell it changes by its first die and how much by its value, as the server gives it. A
+        // level may hold one effect id for many spells, as the Forgelance's lance gives 13 their range (D489): the effect
+        // foreseen names its spell by its roll, the first die.
+        SpellModifier? first = null;
+
         foreach (var effect in _spells.EffectsOf(level))
         {
-            if (effect.EffectId == effectId)
+            if (effect.EffectId != effectId)
+                continue;
+
+            if (effect.DiceNum == spellId)
                 return new SpellModifier((SpellModifierKind)effectId, effect.DiceNum, effect.Value);
+
+            first ??= new SpellModifier((SpellModifierKind)effectId, effect.DiceNum, effect.Value);
         }
 
-        return null;
+        return first;
     }
 
     private bool BringsLance(in SpellLevel level)

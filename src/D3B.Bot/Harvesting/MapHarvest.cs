@@ -1,6 +1,7 @@
 using System.Collections.Frozen;
 using D3B.Bot.Characters;
 using D3B.Bot.Interactives;
+using D3B.Bot.Movement;
 using D3B.Bot.Runtime;
 using D3B.Engine.Maps;
 
@@ -62,7 +63,7 @@ public static class MapHarvest
                 continue;
 
             if (!ElementUse.TryGetCell(map, element.ElementId, out var elementCell)
-                || !CellPathfinder.TryFindNearest(cells, cell, [.. ElementCells.UsedFrom(cells, elementCell, cells[cell].Zone)], out var path))
+                || !RoleplayPaths.TryFindNearest(context, map, cell, [.. ElementCells.UsedFrom(cells, elementCell, cells[cell].Zone)], out var path))
             {
                 skipped.Add(element.ElementId);
                 BotLog.OutOfReach(context.Log, state.Key.CharacterId, element.ElementId, cells[cell].Zone);

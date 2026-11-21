@@ -98,7 +98,7 @@ internal static class JudgeTurns
     public static int Signature(Combatant fighter)
     {
         // What a fighter's damage dealt and received reads: its characteristics but the shield, which blows take, its states,
-        // and the shares and reduction of the damage it receives (D487).
+        // and the shares and reduction of the damage it receives (D490).
         var hash = new HashCode();
 
         hash.Add(fighter.ReceivedDamageReduction);

@@ -34,7 +34,7 @@ internal static class FightsCommand
         };
         var turns = new Option<bool>("--turns")
         {
-            Description = "Replays every turn the characters played through the fight's AI instead: its plan against the turn played, and what its judge foresaw against what came (D206); then by breed, the plans, damage, kills, heals, reply, judgement and spells planned against played, and the reply's blows against the enemies', alone and in a group (D463); and every placement, by the character's place in the turn order (D478); and by spell, what the engine foresaw the character's casts take from its team against what the server announced, played and planned (D485).",
+            Description = "Replays every turn the characters played through the fight's AI instead: its plan against the turn played, and what its judge foresaw against what came (D206); then by breed, the plans, damage, kills, heals, reply, judgement and spells planned against played, and the reply's blows against the enemies', alone and in a group (D463); and every placement, by the character's place in the turn order (D478); and by spell, what the engine foresaw the character's casts take from its team against what the server announced, played and planned (D485); and each plan of nothing with MP left, by the nearest enemy and a spell landing, those far from the enemies by what the judge weighed for its best walk against ending the turn now, before and after the reply (D487).",
         };
         var enemyLife = new Option<double>("--enemy-life")
         {
