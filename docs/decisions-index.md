@@ -803,3 +803,8 @@ or refines another says so in its own entry. Add a line here with every new deci
 
 - [D480](decisions/d480-cooldowns-merged.md#d480-the-cooldowns-the-server-gives-are-merged-spell-by-spell-not-replaced) The cooldowns the server gives are merged spell by spell, not replaced (2026-11-21)
   - A snapshot decreased at each turn, the refused spell left out by the refusals' cap.
+
+## The harvest, fights lost in a row (D481)
+
+- [D481](decisions/d481-harvest-losses-go-on.md#d481-fights-lost-in-a-row-no-longer-end-the-harvest-and-a-loss-is-followed-by-the-whole-life-regained) Fights lost in a row no longer end the harvest, and a loss is followed by the whole life regained (2026-11-21)
+  - Leaving out the resource whose protector won, the profile's share after a loss, keeping the connection alive, closing it or the haven bag once an activity failed.
