@@ -110,6 +110,9 @@ public sealed record CharacterState
     /// <summary>Gets whether the character is in the middle of something a behavior must not start over: a walk, a use, a dialog or exchange, or a fight.</summary>
     public bool IsBusy => IsWalking || IsUsing || IsInDialog || IsFighting;
 
+    /// <summary>Gets whether the minor elixir has fights remaining, or null until reported by the server.</summary>
+    public bool? HasMinorElixir { get; init; }
+
     /// <summary>Gets the stacks the character carries, by their own id.</summary>
     public ImmutableSortedDictionary<int, InventoryItem> Inventory { get; init; } = ImmutableSortedDictionary<int, InventoryItem>.Empty;
 

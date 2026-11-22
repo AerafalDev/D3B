@@ -39,6 +39,24 @@ public sealed class BehaviorActivityTests : IAsyncDisposable
     }
 
     [Fact]
+    public async Task TheRunningProfileDeliversTheElixirLossToItsActiveStep()
+    {
+        await _behaviors.PreparedAsync();
+        var (connection, bot) = await _behaviors.Play.EnterAsync(300);
+        var behavior = _behaviors.Assets.Find<BehaviorAsset>(GivenAssets.BehaviorOf(PlainActivityId))!;
+        var run = _behaviors.Starter.Start(bot, ProfileOf(behavior)).Run!;
+        await UntilAsync(() => !_behaviors.Activities.IsEmpty);
+        var activity = Assert.IsType<D3B.Bot.Tests.Activities.TestActivity>(Assert.Single(_behaviors.Activities));
+        await _behaviors.Play.AdvanceUntilAsync(() => activity.Started > 0, TimeSpan.FromMilliseconds(100));
+        var lost = new TextInformationEvent { TextId = 1665, Parameters = { "50" } };
+        connection.Server(lost);
+        await bot.ProcessedAsync();
+        run.Stop();
+        await run.Completion;
+        Assert.Equal(lost, Assert.Single(activity.ServerTexts));
+    }
+
+    [Fact]
     public async Task AnActivityStartedFullUnloadsBeforeItsFirstStep()
     {
         // The owner's report from game (D458): the master's profile travelled to its zone before it saw its full mule, the

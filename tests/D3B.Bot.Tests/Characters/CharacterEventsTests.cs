@@ -139,6 +139,7 @@ public sealed class CharacterEventsTests
               "Fight": null,
               "IsFighting": false,
               "IsBusy": false,
+              "HasMinorElixir": null,
               "Inventory": {
                 "12": {
                   "Uid": 12,

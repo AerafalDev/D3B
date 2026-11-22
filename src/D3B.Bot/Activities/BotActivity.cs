@@ -136,6 +136,11 @@ public abstract class BotActivity
         return null;
     }
 
+    /// <summary>Receives a system text from the server on the actor loop while this activity is running.</summary>
+    public virtual void OnServerText(D3B.Protocol.Game.TextInformationEvent text)
+    {
+    }
+
     /// <summary>Sees the bot as its loop leaves it after everything it handles, while the activity runs: a behavior's events and urgent states read it (D297).</summary>
     /// <param name="bot">The bot.</param>
     /// <remarks>Called on the bot's loop, which every message of its character goes through: quick, never waiting. Nothing, by default.</remarks>

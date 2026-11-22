@@ -33,6 +33,7 @@ namespace D3B.Bot.Fighting;
 /// </remarks>
 public sealed class FightActivity : BotActivity
 {
+    private const int MinorUchronicElixir = 20_962;
     private const int MostLostInARow = 3;
     private const int MostFailedJourneys = 3;
     private const int MostBankings = 3;
@@ -63,6 +64,9 @@ public sealed class FightActivity : BotActivity
     private long? _skippedOn;
     private ActivityReport? _report;
     private ActivityStatistics? _statistics;
+    private int _potionPending;
+    private bool _waitedForElixir;
+    private bool? _lastElixirActive;
     private bool _healing;
     private bool _regaining;
     private int _failedJourneys;
@@ -143,6 +147,14 @@ public sealed class FightActivity : BotActivity
 
         if (await _busy.WaitAsync(context, Failure, cancellationToken).ConfigureAwait(false) || context.State is not { MapId: { } mapId })
             return true;
+
+        if (_settings.FarmAnomalyFragments && !_waitedForElixir && context.State.HasMinorElixir is null)
+        {
+            _waitedForElixir = true;
+            await context.WaitUntilAsync(state => state.HasMinorElixir.HasValue, context.Delays.Answer, cancellationToken).ConfigureAwait(false);
+        }
+
+        await RenewElixirAsync(context, cancellationToken).ConfigureAwait(false);
 
         if (await HealAsync(context, cancellationToken).ConfigureAwait(false))
             return true;
@@ -283,6 +295,44 @@ public sealed class FightActivity : BotActivity
         _regaining = false;
     }
 
+    /// <inheritdoc/>
+    public override void OnServerText(TextInformationEvent text)
+    {
+        ArgumentNullException.ThrowIfNull(text);
+
+        // Message 1665 substitutes the alteration ID in its first parameter. The minor elixir grants alteration 50.
+        if (_settings.FarmAnomalyFragments && text is { Type: TextInformationType.Message, TextId: 1665, Parameters: ["50"] })
+            Interlocked.Exchange(ref _potionPending, 1);
+    }
+
+    private async Task RenewElixirAsync(BotContext context, CancellationToken cancellationToken)
+    {
+        if (!_settings.FarmAnomalyFragments)
+            return;
+
+        var lost = Interlocked.Exchange(ref _potionPending, 0) != 0;
+        var active = context.State.HasMinorElixir;
+        if (active == true)
+        {
+            _lastElixirActive = true;
+            return;
+        }
+
+        if (!lost && (active is null || _lastElixirActive == false))
+            return;
+
+        var potion = context.State.Inventory.Values.FirstOrDefault(stack =>
+            stack.ItemId == MinorUchronicElixir && !stack.IsWorn && stack.Quantity > 0);
+        if (potion is null)
+        {
+            _lastElixirActive = null;
+            return;
+        }
+
+        await context.SendAsync(new ObjectUseRequest { Uid = potion.Uid }, cancellationToken).ConfigureAwait(false);
+        _lastElixirActive = false;
+    }
+
     private FightRotationZone CurrentOf(BotContext context)
     {
         if (_current is { } current)
@@ -396,6 +446,8 @@ public sealed class FightActivity : BotActivity
 
             if (!context.State.MonsterGroups.TryGetValue(group.ActorId, out now) || now.Cell != context.State.Cell)
                 continue;
+
+            await RenewElixirAsync(context, cancellationToken).ConfigureAwait(false);
 
             var fought = context.Expect((side, _, state) => state.Fight is not null);
 

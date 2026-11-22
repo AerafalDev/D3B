@@ -249,6 +249,12 @@ internal sealed class BehaviorActivity : BotActivity, IDisposable, IBehaviorCont
     }
 
     /// <inheritdoc/>
+    public override void OnServerText(D3B.Protocol.Game.TextInformationEvent text)
+    {
+        _visit?.Current?.OnServerText(text);
+    }
+
+    /// <inheritdoc/>
     public override GameText? Describe(Interruption reason)
     {
         return _visit?.Current?.Describe(reason);
