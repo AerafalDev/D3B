@@ -413,6 +413,11 @@ follower) on the same map, the capture of every connection on; a capture's conte
   whose journeys arrive three times in a row with nothing done gives up its other maps, saying so on the card. On 2026-11-22,
   the next map the server names after a cut walk's end is seen at the next step too, a race one test hit under load. Left:
   seen in game.
+- **A mine's floors and a resource grown back** (D495), the owner's two harvest reports, made on 2026-11-22 in code and tests
+  from the captures of 18 to 22 November: the server refused 124 uses from a neighbour 100 to 190 above a mine's ore, which is
+  now used only from its own floor on a map with stairs; a ledge the character's floor cannot walk to is come onto from the
+  neighbouring map on its side, once a tour; and a journey stays on the map it is about to leave where a wanted resource grew
+  back since it came, 136 left so on the captures. Left: seen in game.
 - **A follower left behind** (D490), the groups' stall D484 left, made on 2026-11-21 in code and tests: the master's gate
   waited without end for a follower missing, the two groups of 2026-11-19 idle 30 minutes until the server closed every
   connection (D464). A follower missing five minutes of one wait, but fighting or healing, is now left behind, the master acting

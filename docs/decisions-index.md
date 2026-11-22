@@ -868,3 +868,8 @@ or refines another says so in its own entry. Add a line here with every new deci
 
 - [D493](decisions/d493-runes-traps-glyph-triggers.md#d493-a-huppermages-runes-set-and-triggered-a-trap-set-off-by-whoever-comes-onto-it-and-a-fécas-glyphs-triggered) A Huppermage's runes set and triggered, a trap set off by whoever comes onto it, and a Féca's glyphs triggered (2026-11-21)
   - The elemental spell's own rune, a trap set off by a walk passing over it.
+
+## The harvest, a mine's floors and a resource grown back (D495)
+
+- [D495](decisions/d495-harvest-floors-and-regrowth.md#d495-a-resource-is-used-from-its-own-floor-a-ledge-cut-from-the-characters-is-come-onto-from-the-side-it-touches-and-a-journey-stays-where-a-resource-grew-back) A resource is used from its own floor, a ledge cut from the character's is come onto from the side it touches, and a journey stays where a resource grew back (2026-11-22)
+  - A floor gap above 40 taken, splitting the world graph's vertices by floor, staying for any element offered.

@@ -59,6 +59,8 @@ internal sealed class TestPlay : IAsyncDisposable
     public const long OtherInsideMapId = 192_677_890;
     public const long HavenBagMapId = 162_791_424;
     public const int OtherActionCell = 400;
+    public const int LedgeFloor = -100;
+    public const int StairCell = 500;
     public const int EastOtherZoneActionCell = 100;
     public const int BankerNpcId = 520;
     public const int BankerActorId = -20_001;
@@ -165,11 +167,11 @@ internal sealed class TestPlay : IAsyncDisposable
     {
     }
 
-    private TestPlay(IReadOnlyList<IGameObserver> observers, IReadOnlyList<NpcWay> npcWays, int[] blocked, int[]? otherZone = null, bool otherZoneIsEntered = true)
+    private TestPlay(IReadOnlyList<IGameObserver> observers, IReadOnlyList<NpcWay> npcWays, int[] blocked, int[]? otherZone = null, bool otherZoneIsEntered = true, int[]? ledge = null)
     {
         var path = _directory.Combine("data-3.pack");
 
-        File.WriteAllBytes(path, Pack(blocked, otherZone ?? [], otherZoneIsEntered));
+        File.WriteAllBytes(path, Pack(blocked, otherZone ?? [], otherZoneIsEntered, ledge ?? []));
         _pack = GamePack.Open(path);
         Maps = new GameMaps(_pack);
         World = new GameWorld(_pack);
@@ -193,6 +195,13 @@ internal sealed class TestPlay : IAsyncDisposable
     public static TestPlay WithASecondZone(params int[] otherZone)
     {
         return new TestPlay([], [], [], otherZone);
+    }
+
+    /// <summary>A play whose first map holds stairs and a ledge, as a mine's (D495): the ledge's cells lie on <see cref="LedgeFloor"/>, the others on floor 0, cell <see cref="StairCell"/> a stair, so that floors count and no step joins the ledge to the rest (D86).</summary>
+    /// <param name="ledge">The ledge's cells, in the character's zone.</param>
+    public static TestPlay WithALedge(params int[] ledge)
+    {
+        return new TestPlay([], [], [], null, true, ledge);
     }
 
     /// <summary>A play like <see cref="WithASecondZone"/> whose second zone no way leads into: the graph holds its vertex, and nothing enters it.</summary>
@@ -315,9 +324,9 @@ internal sealed class TestPlay : IAsyncDisposable
             activations);
     }
 
-    private static byte[] Pack(int[] blocked, int[] otherZone, bool otherZoneIsEntered)
+    private static byte[] Pack(int[] blocked, int[] otherZone, bool otherZoneIsEntered, int[] ledge)
     {
-        var cells = Enumerable.Range(0, MapData.CellCount).Select(cell => blocked.Contains(cell) ? Wall() : Walkable(cell, otherZone.Contains(cell) ? 2 : 1)).ToArray();
+        var cells = Enumerable.Range(0, MapData.CellCount).Select(cell => blocked.Contains(cell) ? Wall() : Walkable(cell, otherZone.Contains(cell) ? 2 : 1, ledge.Contains(cell) ? LedgeFloor : 0, ledge.Length > 0 && cell == StairCell ? 1 : 0)).ToArray();
         var open = Enumerable.Range(0, MapData.CellCount).Select(cell => Walkable(cell)).ToArray();
         var info = new PackInfo { ClientVersion = TestInstall.Version, Fingerprint = "0123456789abcdef", ExtractorVersion = "0.0.0-test" };
 
@@ -392,11 +401,11 @@ internal sealed class TestPlay : IAsyncDisposable
         return new SpellCatalog(spells, levels, levelIds, effects, Array.Empty<SpellPreviewZone>(), Array.Empty<int>(), strings, Array.Empty<SpellVariant>(), Array.Empty<SpellBomb>(), Array.Empty<SpellBombWall>());
     }
 
-    private static MapCell Walkable(int cell, int zone = 1)
+    private static MapCell Walkable(int cell, int zone = 1, int floor = 0, int moveZone = 0)
     {
         var leaves = Enumerable.Range(0, MapCell.DirectionCount / 2).Select(side => 2 * side).Where(direction => MapGeometry.Neighbour(cell, direction) < 0);
 
-        return new MapCell(MapCellProperties.Walkable | MapCellProperties.LineOfSight, 0, 0, leaves.Sum(direction => 1 << direction), 0, zone << 4, 0);
+        return new MapCell(MapCellProperties.Walkable | MapCellProperties.LineOfSight, floor, 0, leaves.Sum(direction => 1 << direction), moveZone, zone << 4, 0);
     }
 
     private static MapCell Wall()
