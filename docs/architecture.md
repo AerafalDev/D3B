@@ -1167,7 +1167,7 @@ Pure logic with no I/O, in `D3B.Engine`, which references `D3B.Data` for the cel
     buffs dispelled and a buff past its stacks replacing the oldest, as a Zobal's masks do (D227); a malus of AP or MP
     takes the points below 0, as the server keeps them, so that its end gives back only what it took (D470); a cast giving
     a buff on the damage received that waits for any damage (trigger `D`), a share of 1163 or a reduction of 105, changes
-    every blow after it, and one moving its caster towards or away from the fighter it reaches (1042, 1041) slides the
+    every blow after it, held by its spell so that a dispel takes it back (D495), and one moving its caster towards or away from the fighter it reaches (1042, 1041) slides the
     caster as that fighter would pull or push it, a caster stopped short taking the push damage of its own level (D491).
   - `FightJudge`: an imagined fight's worth for the side playing, in life: allies' life concave and a quarter as steep above
     60% of its most (`TacticWeights.Comfort`, D407), and what the side's own casts took from its other fighters again
@@ -1175,7 +1175,7 @@ Pure logic with no I/O, in `D3B.Engine`, which references `D3B.Data` for the cel
     range and in sight (D208), bounded by a kill, each cell nearer an enemy no spell reaches yet counting a little, within
     the spells' range and MP too (D472); the fighters read as the search left them, states that prevent casting
     or damage and invulnerability included, a spell its states forbid dealing nothing (D228), a buff worth what it does
-    over the rounds it lasts (D209), a state the fighter held as the search began being no gain (D420); once the enemies
+    over the rounds it lasts (D209), a state the fighter held as the search began being no gain (D420), and a state set on an enemy adding to the side's blows on the next turn alone, the approach's, the effects that read it possibly taking it off (D494); once the enemies
     replied, the character's next turn searched (`Standing`, `NextTurnStart`, D210), a walk nearer the enemies weighed better
     before the reply winning a tie within a point with ending the turn now after it (`FightTactics`, D487). `Threat` and `NextTurnDamage` give
     the bench what it measures (D206). What it reckons once from where the fight starts and keeps is `JudgeTables` (each

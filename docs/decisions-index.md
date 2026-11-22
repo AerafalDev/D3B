@@ -868,3 +868,13 @@ or refines another says so in its own entry. Add a line here with every new deci
 
 - [D493](decisions/d493-runes-traps-glyph-triggers.md#d493-a-huppermages-runes-set-and-triggered-a-trap-set-off-by-whoever-comes-onto-it-and-a-fécas-glyphs-triggered) A Huppermage's runes set and triggered, a trap set off by whoever comes onto it, and a Féca's glyphs triggered (2026-11-21)
   - The elemental spell's own rune, a trap set off by a walk passing over it.
+
+## Fights, a state set on an enemy worth its next turn alone (D494)
+
+- [D494](decisions/d494-enemy-states-next-turn.md#d494-a-state-set-on-an-enemy-adds-to-the-sides-blows-on-the-next-turn-alone-so-that-a-huppermage-strikes-in-its-element) A state set on an enemy adds to the side's blows on the next turn alone, so that a Huppermage strikes in its element (2026-11-22)
+  - Naming the elemental states, reading which spells take a state off, one round for every buff on an enemy.
+
+## Fights, a share of the damage received dispelled with its spell (D495)
+
+- [D495](decisions/d495-damage-share-dispelled.md#d495-a-share-or-a-reduction-of-the-damage-received-is-held-by-its-spell-so-that-a-dispel-takes-it-back-the-pandawa-no-longer-drinks-three-times-for-one) A share or a reduction of the damage received is held by its spell, so that a dispel takes it back: the Pandawa no longer drinks three times for one (2026-11-22)
+  - A limit of Bombance's casts a turn.

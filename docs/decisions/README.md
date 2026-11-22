@@ -114,3 +114,5 @@ Each file holds the decisions of one group of [the index](../decisions-index.md)
 - [Fights, the effects the engine left out (D491)](d491-unhandled-effects.md): 1 decision, 5 KB.
 - [Fights, an Eliotrope's portals measured (D492)](d492-eliotrope-portals-measured.md): 1 decision, 5 KB.
 - [Fights, the Huppermage's runes, the Sram's traps and the Féca's glyphs triggered (D493)](d493-runes-traps-glyph-triggers.md): 1 decision, 5 KB.
+- [Fights, a state set on an enemy worth its next turn alone (D494)](d494-enemy-states-next-turn.md): 1 decision, 4 KB.
+- [Fights, a share of the damage received dispelled with its spell (D495)](d495-damage-share-dispelled.md): 1 decision, 3 KB.
