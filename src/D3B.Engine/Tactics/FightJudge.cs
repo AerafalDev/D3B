@@ -296,9 +296,6 @@ public sealed class FightJudge
     {
         ArgumentNullException.ThrowIfNull(fight);
 
-        // A Forgelance's lance is back in its hand as its next turn begins (D465).
-        fight = ForgelanceLance.Returned(fight, _actorId);
-
         var actor = fight.Find(_actorId);
         var known = _tables.IndexOf(_actorId);
 
@@ -815,9 +812,9 @@ public sealed class FightJudge
 
     private ImaginedFight NextTurnOf(ImaginedFight fight)
     {
-        // A buff the fighter playing gave for one round ends as its next turn begins: that turn does without it; a Forgelance's
-        // lance is back in its hand (D465).
-        var next = ForgelanceLance.Returned(fight, _actorId);
+        // A buff the fighter playing gave for one round ends as its next turn begins: that turn does without it. A Forgelance's
+        // lance stays where it lies, out of its hand (D498).
+        var next = fight;
 
         foreach (var buff in fight.Buffs)
         {

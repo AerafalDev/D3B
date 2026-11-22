@@ -148,6 +148,7 @@ public sealed class Imagination
         Walled(walked.Map, fighters, fight.Fighters, buffs, ref kept, marks);
         Entered(walked.Map, fighters, fight.Fighters, marks, buffs, ref kept);
         Trapped(walked.Map, fighters, fight.Fighters, buffs, ref kept, marks);
+        ForgelanceLance.Recovered(fighters, fight.Fighters);
 
         return walked with { Fighters = [.. fighters], Buffs = buffs.Count is 0 ? kept : kept.AddRange(buffs), Marks = marks.Result };
     }
@@ -203,6 +204,7 @@ public sealed class Imagination
         Entered(fight.Map, fighters, fight.Fighters, marks, buffs, ref kept);
         Trapped(fight.Map, fighters, fight.Fighters, buffs, ref kept, marks);
         Departed(fighters, fight.Fighters);
+        ForgelanceLance.Recovered(fighters, fight.Fighters);
 
         return fight with
         {
@@ -214,7 +216,7 @@ public sealed class Imagination
         };
     }
 
-    /// <summary>Gets the fight as a fighter's turn begins: a Forgelance's lance back in its hand (D465), its marks whose time is out gone, then the glyphs and bombs' walls on its cell struck on it.</summary>
+    /// <summary>Gets the fight as a fighter's turn begins: its marks whose time is out gone, then the glyphs and bombs' walls on its cell struck on it; a Forgelance's lance stays where it lies (D498).</summary>
     /// <param name="fight">The fight.</param>
     /// <param name="fighterId">The fighter whose turn begins.</param>
     /// <param name="round">The round its turn is in, which tells its marks whose time is out.</param>
@@ -223,7 +225,7 @@ public sealed class Imagination
     {
         ArgumentNullException.ThrowIfNull(fight);
 
-        var struck = Struck(ForgelanceLance.Returned(fight, fighterId), fighterId, CellMarkKind.TurnStart, walls: true);
+        var struck = Struck(fight, fighterId, CellMarkKind.TurnStart, walls: true);
 
         // Measured (9f4): the server took a glyph back as its author's turn began, after the glyphs struck that author. A portal
         // stays the whole fight, the server naming no end for it (D468).
@@ -322,6 +324,8 @@ public sealed class Imagination
 
         if (at >= 0)
             StrikeWall(fight.Map, fighters, wallCells![at], cell, buffs, ref kept, marks, fighterId);
+
+        ForgelanceLance.Recovered(fighters, fight.Fighters);
 
         return fight with { Fighters = [.. fighters], Buffs = buffs.Count is 0 ? kept : kept.AddRange(buffs), Marks = marks.Result };
     }

@@ -8,13 +8,15 @@ using static D3B.Engine.Tests.Fights.TestFights;
 
 namespace D3B.Engine.Tests.Tactics;
 
-/// <summary>The Forgelance's lance as the AI imagines it: out of its hand once thrown, back in it as its next turn begins (D465).</summary>
+/// <summary>The Forgelance's lance as the AI imagines it: out of its hand once thrown, on the map until it dies or is recalled (D465, D498).</summary>
 public sealed class LanceTacticsTests
 {
     private const int Throw = 40;
     private const int Collapse = 41;
     private const int Shield = 42;
     private const int Epilogue = 43;
+    private const int Recall = 44;
+    private const int Strike = 45;
     private const int Reach = 24591;
     private const int AroundLance = 51;
     private const int Lance = 7139;
@@ -28,6 +30,7 @@ public sealed class LanceTacticsTests
     private static readonly FightTactics _tactics = new(_spells, States(), new EffectCatalog(new Effect[]
     {
         new(97, 0, 0, '\0', 2, 1, 0, 0, 0, 0, EffectProperties.UseInFight),
+        new(141, 0, 0, '\0', 0, -1, 0, 0, 0, 0, EffectProperties.UseInFight),
         new(181, 0, 0, '\0', 0, -1, 0, 0, 0, 0, EffectProperties.UseInFight),
         new(314, 0, 0, '-', 3, -1, 0, 0, 0, 0, EffectProperties.UseInFight),
         new(1160, 0, 0, '/', 0, -1, 0, 0, 0, 0, EffectProperties.UseInFight),
@@ -40,7 +43,8 @@ public sealed class LanceTacticsTests
     /// 3589, striking 40 to 48 in a cross of 1 and bringing the lance, monster 7139, to its free cell. The lance's starting spell, 24591
     /// here as the one it casts in 3.7.14.18, gives its thrower's spells 41 and 42 a range of 1 to 63 and asks 41 a taken cell (D489). Spell
     /// 41, as Effondrement: 3 AP, range 0 to 1, its caster casting spell 51 on its own lance while it is out, which strikes 30 to 34
-    /// in a cross of 1 around it. Spell 43, as Épilogue: 1 AP, bringing the lance only while it is in hand.
+    /// in a cross of 1 around it. Spell 43, as Épilogue: 1 AP, bringing the lance only while it is in hand. Spell 44, as Épilogue cast
+    /// on the lance out: 1 AP, killing the lance it is cast on. Spell 45, an enemy's blow: 3 AP, range 1 to 6, 40 to 48 on one fighter.
     /// </summary>
     private static SpellCatalog Catalog()
     {
@@ -51,8 +55,10 @@ public sealed class LanceTacticsTests
             new SpellLevel { Id = 1000 + Collapse, SpellId = Collapse, Grade = 1, ApCost = 3, MinRange = 0, Range = 1, StatesCriterion = SpellLevel.NoCriterion, FirstEffect = 2, EffectCount = 1 },
             new SpellLevel { Id = 1000 + Shield, SpellId = Shield, Grade = 1, ApCost = 3, MinRange = 0, Range = 0, StatesCriterion = SpellLevel.NoCriterion, FirstEffect = 3, EffectCount = 0 },
             new SpellLevel { Id = 1000 + Epilogue, SpellId = Epilogue, Grade = 1, ApCost = 1, MinRange = 1, Range = 6, StatesCriterion = SpellLevel.NoCriterion, Properties = SpellLevelProperties.NeedFreeCell, FirstEffect = 3, EffectCount = 1 },
-            new SpellLevel { Id = 1000 + AroundLance, SpellId = AroundLance, Grade = 1, Range = 63, StatesCriterion = SpellLevel.NoCriterion, FirstEffect = 4, EffectCount = 1 },
-            new SpellLevel { Id = 1000 + Reach, SpellId = Reach, Grade = 1, Range = 63, StatesCriterion = SpellLevel.NoCriterion, FirstEffect = 5, EffectCount = 5 },
+            new SpellLevel { Id = 1000 + Recall, SpellId = Recall, Grade = 1, ApCost = 1, MinRange = 1, Range = 63, StatesCriterion = SpellLevel.NoCriterion, Properties = SpellLevelProperties.NeedTakenCell, FirstEffect = 4, EffectCount = 1 },
+            new SpellLevel { Id = 1000 + Strike, SpellId = Strike, Grade = 1, ApCost = 3, MinRange = 1, Range = 6, StatesCriterion = SpellLevel.NoCriterion, FirstEffect = 5, EffectCount = 1 },
+            new SpellLevel { Id = 1000 + AroundLance, SpellId = AroundLance, Grade = 1, Range = 63, StatesCriterion = SpellLevel.NoCriterion, FirstEffect = 6, EffectCount = 1 },
+            new SpellLevel { Id = 1000 + Reach, SpellId = Reach, Grade = 1, Range = 63, StatesCriterion = SpellLevel.NoCriterion, FirstEffect = 7, EffectCount = 5 },
         ];
         var whole = Zone(SpellZoneShape.WholeMap, 63);
         SpellEffect[] effects =
@@ -61,6 +67,8 @@ public sealed class LanceTacticsTests
             new SpellEffect { Uid = 2, EffectId = 181, TargetMask = 1, Triggers = 2, DiceNum = Lance, DiceSide = 1, Zone = Zone(SpellZoneShape.Point) },
             new SpellEffect { Uid = 3, EffectId = 1160, TargetMask = 5, Triggers = 2, DiceNum = AroundLance, DiceSide = 1, Zone = Zone(SpellZoneShape.Point) },
             new SpellEffect { Uid = 4, EffectId = 181, TargetMask = 6, Triggers = 2, DiceNum = Lance, DiceSide = 1, Zone = Zone(SpellZoneShape.Point) },
+            new SpellEffect { Uid = 11, EffectId = 141, TargetMask = 5, Triggers = 2, Zone = Zone(SpellZoneShape.Point) },
+            new SpellEffect { Uid = 12, EffectId = 97, TargetMask = 0, Triggers = 2, DiceNum = 40, DiceSide = 48, Zone = Zone(SpellZoneShape.Point) },
             new SpellEffect { Uid = 5, EffectId = 97, TargetMask = 0, Triggers = 2, DiceNum = 30, DiceSide = 34, Zone = Zone(SpellZoneShape.Cross) },
             new SpellEffect { Uid = 6, EffectId = 2905, TargetMask = 4, Triggers = 2, DiceNum = Shield, Value = 63, Duration = -1, Zone = whole },
             new SpellEffect { Uid = 7, EffectId = 2906, TargetMask = 4, Triggers = 2, DiceNum = Shield, Value = 1, Duration = -1, Zone = whole },
@@ -128,18 +136,49 @@ public sealed class LanceTacticsTests
     }
 
     [Fact]
-    public void TheLanceIsBackInHandAsItsThrowersNextTurnBegins()
+    public void TheLanceStaysOnTheMapAsItsThrowersNextTurnBegins()
     {
-        // Measured: 304 of the Forgelance's 308 turns in the captures began with states 3360 and 3590 and no lance on the map.
+        // Measured on the captures of 18 to 22 November 2026 (D498): of the 221 Forgelance turns that ended with its lance on
+        // the map, 199 began the next with it still there and the Forgelance without it in hand; the 22 others followed its death.
         var thrown = Thrown();
-
-        Assert.Contains(thrown.Fighters, fighter => fighter.MonsterId == Lance);
 
         var next = _tactics.Imagination.TurnStarted(thrown, 1, 2);
 
-        Assert.True(next.Actor.HasState(InHand) && next.Actor.HasState(Carried));
-        Assert.False(next.Actor.HasState(Out));
-        Assert.DoesNotContain(next.Fighters, fighter => fighter.MonsterId == Lance);
+        Assert.True(next.Actor.HasState(Out));
+        Assert.False(next.Actor.HasState(InHand));
+        Assert.Contains(next.Fighters, fighter => fighter.IsAlive && fighter.MonsterId == Lance);
+    }
+
+    [Fact]
+    public void AForgelanceHasItsLanceBackInHandOnceTheLanceDies()
+    {
+        var thrown = Thrown();
+        var lance = thrown.Fighters.Single(fighter => fighter.MonsterId == Lance);
+        var enemy = thrown.Fighters.Single(fighter => fighter.Id == -1) with { ActionPoints = 6 };
+        var view = thrown.With(enemy) with { ActorId = enemy.Id };
+
+        var struck = _tactics.Imagination.Cast(view, Level(_spells, Strike), lance.Cell);
+
+        var thrower = struck.Find(1)!;
+
+        Assert.DoesNotContain(struck.Fighters, fighter => fighter.IsAlive && fighter.MonsterId == Lance);
+        Assert.True(thrower.HasState(InHand) && thrower.HasState(Carried));
+        Assert.False(thrower.HasState(Out));
+    }
+
+    [Fact]
+    public void ARecalledLanceIsBackInHandAndTakesBackTheReachItGave()
+    {
+        // Measured (D498): a cast that kills the lance on the map, as Épilogue does with it out, left the Forgelance holding 3360 and 3590.
+        var thrown = Thrown();
+        var lance = thrown.Fighters.Single(fighter => fighter.MonsterId == Lance);
+
+        var recalled = _tactics.Imagination.Cast(thrown, Level(_spells, Recall), lance.Cell);
+
+        Assert.True(recalled.Actor.HasState(InHand));
+        Assert.False(recalled.Actor.HasState(Out));
+        Assert.Empty(recalled.Actor.Modifiers);
+        Assert.Equal(CastRefusal.None, _tactics.Rules.Check(recalled.Map, recalled.Fighters, recalled.Actor with { ActionPoints = 6 }, Level(_spells, Throw), Off(2, 0), recalled.History, recalled.Round));
     }
 
     [Fact]
@@ -154,28 +193,42 @@ public sealed class LanceTacticsTests
     }
 
     [Fact]
-    public void TheJudgeCountsNextTurnsThrowsOnceTheLanceIsOut()
+    public void TheJudgeFindsNoThrowNextTurnWhileTheLanceLiesOnTheMap()
     {
+        // The throws ask the lance in hand: one left on the map strikes nothing next turn, as it stays there.
         var fight = Fight();
         var judge = _tactics.JudgeOf(fight, Knowledge(fight), TacticWeights.Default);
 
-        Assert.True(judge.NextTurnDamage(Thrown()) > 0);
+        Assert.True(judge.NextTurnDamage(fight) > 0);
+        Assert.Equal(0, judge.NextTurnDamage(Thrown()));
     }
 
     [Fact]
-    public void AFightersTurnBringsBackItsOwnLanceAlone()
+    public void ASecondThrowTakesTheFirstLanceOffTheMap()
     {
-        // Two Forgelances, such as a character and an enemy's, each with its lance on the map.
-        var other = Thrower() with { Id = 2, Team = 1, Cell = Off(-3, 0) };
-        var fight = Fight() with { Fighters = [.. Fight().Fighters, other] };
-        var both = _tactics.Imagination.Cast(_tactics.Imagination.Cast(fight, Level(_spells, Throw), Off(2, 0)) with { ActorId = 2 }, Level(_spells, Throw), Off(-2, 0));
+        // Measured (D498): the 17 throws a Forgelance holding 3589 made with its lance down all ended the turn with one lance, the new one.
+        var holder = Thrown().Actor with { States = [Out, 3589], ActionPoints = 6 };
+        var fight = Thrown().With(holder);
 
-        var next = _tactics.Imagination.TurnStarted(both, 1, 2);
+        var again = _tactics.Imagination.Cast(fight, Level(_spells, Throw), Off(1, 1));
 
-        Assert.True(next.Find(1)!.HasState(InHand));
-        Assert.True(next.Find(2)!.HasState(Out));
-        Assert.Single(next.Fighters, fighter => fighter.MonsterId == Lance);
-        Assert.Contains(next.Fighters, fighter => fighter.MonsterId == Lance && fighter.SummonerId == 2);
+        Assert.Single(again.Fighters, fighter => fighter.IsAlive && fighter.MonsterId == Lance);
+        Assert.Contains(again.Fighters, fighter => fighter.IsAlive && fighter.MonsterId == Lance && fighter.Cell == Off(1, 1));
+    }
+
+    [Fact]
+    public void AForgelanceWhoseLanceLiesFarFromTheEnemiesRecallsIt()
+    {
+        // The owner's report of 22 November 2026: with its lance on the map and no enemy in reach, D3B ended 36 turns doing nothing.
+        var thrown = Thrown();
+        var lance = thrown.Fighters.Single(fighter => fighter.MonsterId == Lance);
+        var enemy = thrown.Fighters.Single(fighter => fighter.Id == -1) with { Cell = Off(9, 0) };
+        var fight = thrown.With(enemy).With(thrown.Actor with { ActionPoints = 6, MovementPoints = 3 }) with { Round = 2 };
+        var knowledge = new FightKnowledge { Spells = ImmutableDictionary<long, ImmutableArray<SpellLevel>>.Empty.Add(1, [Level(_spells, Throw), Level(_spells, Recall)]).Add(enemy.Id, []).Add(lance.Id, []) };
+
+        var plan = _tactics.Plan(fight, knowledge, TacticWeights.Default, TurnSearchLimits.Default with { Budget = TimeSpan.FromSeconds(30) });
+
+        Assert.Contains(plan.Actions, action => action.SpellId == Recall && action.Cell == lance.Cell);
     }
 
     [Fact]
@@ -215,15 +268,6 @@ public sealed class LanceTacticsTests
         Assert.Equal((1, 63), (collapse.MinRange, collapse.Range));
         Assert.Equal(SpellLevelProperties.NeedTakenCell, collapse.Properties & SpellLevelProperties.NeedTakenCell);
         Assert.Equal((1, 63), (shield.MinRange, shield.Range));
-    }
-
-    [Fact]
-    public void TheLanceTakesBackTheReachItGaveAsItReturns()
-    {
-        var next = _tactics.Imagination.TurnStarted(Thrown(), 1, 2);
-
-        Assert.Equal((0, 1), (CastRules.Modified(Level(_spells, Collapse), next.Actor).MinRange, CastRules.Modified(Level(_spells, Collapse), next.Actor).Range));
-        Assert.Empty(next.Actor.Modifiers);
     }
 
     [Fact]
