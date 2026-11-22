@@ -888,3 +888,8 @@ or refines another says so in its own entry. Add a line here with every new deci
 
 - [D497](decisions/d497-fights-challenges-more.md#d497-the-ai-plays-for-eleven-more-challenges-cast-by-cast-at-three-quarters-of-what-keeps-the-reward-a-minute-the-same) The AI plays for eleven more challenges, cast by cast, at three quarters of what keeps the reward a minute the same (2026-11-22)
   - The owner's other challenges, Hardi left out, the kills' order judged on the turn's end, one element for the team.
+
+## Fights, the Forgelance's lance left on the map (D498)
+
+- [D498](decisions/d498-forgelance-lance-stays.md#d498-the-forgelances-lance-stays-on-the-map-until-it-dies-or-a-cast-kills-it-then-is-back-in-its-hand-the-forgelance-no-longer-waits-for-a-lance-that-never-comes-back) The Forgelance's lance stays on the map until it dies or a cast kills it, then is back in its hand: the Forgelance no longer waits for a lance that never comes back (2026-11-22)
+  - A rule by spell or by element; D465 kept and the recall left to the server.
