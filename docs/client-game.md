@@ -576,6 +576,25 @@ never written down.
 - **Still full.** Once the harvest was put in, 3 stacks, the character still carried 4,958 of 7,590 pods, other things,
   above the share it banks at (D129).
 
+## The game, harvested on floors and grown back
+
+Measured on 2026-11-22 for D495: the 126 game connections D3B played of 18 to 22 November, client 3.7.14.18, mapping 24,
+pack 13, read with scratch probes printing counts, replayed through the bot's character state. By structure, counts and
+cells compared with the pack, never a capture's content.
+
+- **A use from another floor.** The server started 20,492 of D3B's uses and refused 179, each with
+  `InteractiveUseErrorEvent`. 124 of the refusals, on four maps of a mine with stairs, were asked from a neighbour of the ore
+  whose floor lay 100 to 190 above the ore's cell, the ore on a ledge below a cliff; on the maps with stairs the server
+  started 427 uses from a neighbour 40 or less from the ore's floor (384 on the same floor). The other 55 refusals were on
+  maps without stairs, 28 of them from a cell that was no neighbour.
+- **A resource grown back.** The server offers a harvested element's skill again by `InteractiveElementUpdatedEvent`, its
+  element on the current map, with a `StatedElementUpdatedEvent` of state 0 in the same millisecond; 757 elements of a
+  skill D3B harvested in that connection grew back so on the character's map, and the bot's state took each. The map's
+  information also lists elements of the neighbouring maps, not on the current map, which the updates of those maps name.
+- **Scrolls.** Of 52,658 scrolls, the character came onto the cell straight across the one it left from 46,900 times:
+  13 cells before it leaving east, 13 after leaving west, 532 before leaving south and 532 after leaving north. The cell
+  straight across could not be walked on for 2,094 of the others.
+
 ## The game, foretold
 
 Measured on 2026-10-29 for session 6b (D138, D142): a game connection of a client of 3.7.12.12 through the app, captures

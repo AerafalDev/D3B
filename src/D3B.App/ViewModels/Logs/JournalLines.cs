@@ -110,7 +110,7 @@ internal sealed class JournalLines
             _ => Side(change.From, change.To) is { } side ? Format("JournalScroll", from, to, side) : Format("JournalMapChange", from, to),
         };
 
-        return (text, Ended(change.Outcome.ToString(), change.Duration), ToneOf(change.Outcome is MapChangeOutcome.Changed));
+        return (text, Ended(change.Outcome.ToString(), change.Duration), ToneOf(change.Outcome is MapChangeOutcome.Changed or MapChangeOutcome.Stayed));
     }
 
     private (string, string?, Tone) Travel(TravelEntry travel)

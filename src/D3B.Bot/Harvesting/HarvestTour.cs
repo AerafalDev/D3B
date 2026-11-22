@@ -32,6 +32,7 @@ internal sealed class HarvestTour
     private readonly HashSet<long> _unreachable = [];
     private readonly HashSet<int> _wanted = [];
     private readonly HashSet<int> _entered = [];
+    private readonly HashSet<long> _levelsTried = [];
     private readonly HarvestSightings _sightings;
     private readonly GraphicSkills _graphics;
     private readonly Regrowths? _regrowths;
@@ -51,6 +52,9 @@ internal sealed class HarvestTour
 
     /// <summary>Gets the vertices of the world graph, zones of maps already gone through, where a wanted resource was left that the character's own zone could not reach (D425).</summary>
     public IReadOnlySet<int> OtherZones => _wanted;
+
+    /// <summary>Gets the part of a map gone through that the tour comes onto from a neighbouring map, for wanted resources its own part could not reach (D495).</summary>
+    public MapLevel? OtherLevel { get; private set; }
 
     /// <summary>Gets how many maps this tour went through.</summary>
     public int Visited => _visited.Count;
@@ -233,6 +237,32 @@ internal sealed class HarvestTour
         Enter(vertex);
     }
 
+    /// <summary>Wants a part of a map: the tour comes onto it once, before its next journey (D495).</summary>
+    /// <param name="level">The part. One of a map whose part was wanted already in this tour is not wanted again.</param>
+    /// <returns>Whether the tour wants it.</returns>
+    public bool WantLevel(MapLevel level)
+    {
+        ArgumentNullException.ThrowIfNull(level);
+
+        if (!_levelsTried.Add(level.MapId))
+            return false;
+
+        OtherLevel = level;
+
+        return true;
+    }
+
+    /// <summary>Takes the part of a map wanted, which the tour then goes to: wanted no more, whether the way there arrives or not.</summary>
+    /// <returns>The part, if one was wanted.</returns>
+    public MapLevel? TakeLevel()
+    {
+        var level = OtherLevel;
+
+        OtherLevel = null;
+
+        return level;
+    }
+
     /// <summary>Marks a harvest in this tour.</summary>
     public void Harvested()
     {
@@ -286,6 +316,8 @@ internal sealed class HarvestTour
         _unreachable.Clear();
         _wanted.Clear();
         _entered.Clear();
+        _levelsTried.Clear();
+        OtherLevel = null;
         HasHarvested = false;
         _harvests = 0;
         _doneAtArrival = -1;

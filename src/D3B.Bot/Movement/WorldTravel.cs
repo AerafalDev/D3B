@@ -90,7 +90,7 @@ public static class WorldTravel
     /// <returns>How the journey ended: <see cref="TravelOutcome.Arrived"/> on a map or a zone sought, or one <paramref name="stopAt"/> stopped on.</returns>
     public static Task<TravelOutcome> TravelAsync(this BotContext context, IReadOnlySet<long> maps, IReadOnlySet<int> zones, Func<CharacterState, bool>? stopAt, CancellationToken cancellationToken)
     {
-        return context.TravelAsync(maps, zones, stopAt, true, cancellationToken);
+        return context.TravelAsync(maps, zones, stopAt, null, true, cancellationToken);
     }
 
     /// <summary>Travels to the nearest of several maps or zones of maps, within a behavior, by foot alone when teleports are not wanted.</summary>
@@ -101,7 +101,21 @@ public static class WorldTravel
     /// <param name="useTeleports">Whether the journey may teleport to a zaap; else it walks, whatever the zaaps the character knows (D405).</param>
     /// <param name="cancellationToken">The behavior's token.</param>
     /// <returns>How the journey ended.</returns>
-    public static async Task<TravelOutcome> TravelAsync(this BotContext context, IReadOnlySet<long> maps, IReadOnlySet<int> zones, Func<CharacterState, bool>? stopAt, bool useTeleports, CancellationToken cancellationToken)
+    public static Task<TravelOutcome> TravelAsync(this BotContext context, IReadOnlySet<long> maps, IReadOnlySet<int> zones, Func<CharacterState, bool>? stopAt, bool useTeleports, CancellationToken cancellationToken)
+    {
+        return context.TravelAsync(maps, zones, stopAt, null, useTeleports, cancellationToken);
+    }
+
+    /// <summary>Travels to the nearest of several maps or zones of maps, within a behavior, staying on a map it is about to leave when something came there.</summary>
+    /// <param name="context">The behavior's context.</param>
+    /// <param name="maps">The maps sought, any of their zones.</param>
+    /// <param name="zones">The vertices of the world graph sought, each a zone of a map (D425).</param>
+    /// <param name="stopAt">Whether the journey ends on a map it reached, the map's information received; never asked of the map it starts from.</param>
+    /// <param name="stayOn">Whether the journey ends on the map it is about to leave, asked once the walk to a scroll's or a door's cell arrived, with the character's state as it came onto the map, or as the journey started there, and now (D495).</param>
+    /// <param name="useTeleports">Whether the journey may teleport to a zaap; else it walks, whatever the zaaps the character knows (D405).</param>
+    /// <param name="cancellationToken">The behavior's token.</param>
+    /// <returns>How the journey ended: <see cref="TravelOutcome.Arrived"/> on a map or a zone sought, or one <paramref name="stopAt"/> or <paramref name="stayOn"/> stopped on.</returns>
+    public static async Task<TravelOutcome> TravelAsync(this BotContext context, IReadOnlySet<long> maps, IReadOnlySet<int> zones, Func<CharacterState, bool>? stopAt, Func<CharacterState, CharacterState, bool>? stayOn, bool useTeleports, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(context);
         ArgumentNullException.ThrowIfNull(maps);
@@ -110,7 +124,7 @@ public static class WorldTravel
         using var action = context.BeginAction();
         var depth = action.Depth;
         var from = context.State.MapId;
-        var (outcome, changes) = await JourneyAsync(context, maps, zones, stopAt, useTeleports, cancellationToken).ConfigureAwait(false);
+        var (outcome, changes) = await JourneyAsync(context, maps, zones, stopAt, stayOn, useTeleports, cancellationToken).ConfigureAwait(false);
 
         context.Record(action, (at, took) => new TravelEntry(at, depth, from, SoughtOf(context, maps, zones), context.State.MapId, changes, outcome, took));
 
@@ -153,9 +167,10 @@ public static class WorldTravel
         };
     }
 
-    private static async Task<(TravelOutcome Outcome, int Changes)> JourneyAsync(BotContext context, IReadOnlySet<long> maps, IReadOnlySet<int> zones, Func<CharacterState, bool>? stopAt, bool useTeleports, CancellationToken cancellationToken)
+    private static async Task<(TravelOutcome Outcome, int Changes)> JourneyAsync(BotContext context, IReadOnlySet<long> maps, IReadOnlySet<int> zones, Func<CharacterState, bool>? stopAt, Func<CharacterState, CharacterState, bool>? stayOn, bool useTeleports, CancellationToken cancellationToken)
     {
         var banned = new HashSet<int>();
+        var came = context.State;
         var teleports = useTeleports;
         var failures = 0;
         var changes = 0;
@@ -170,6 +185,12 @@ public static class WorldTravel
 
             if (IsSought(context, state, maps, zones) || (changes > 0 && !state.IsInHavenBag && stopAt is not null && stopAt(state)))
                 return Over(context, state, TravelOutcome.Arrived, changes);
+
+            // The state the character came onto this map with, which what came since is told from.
+            if (came.MapId != mapId)
+                came = state;
+
+            var arrived = came;
 
             if (state.IsInHavenBag)
             {
@@ -202,11 +223,15 @@ public static class WorldTravel
 
             var step = path.Steps[0];
 
-            switch (await context.ChangeMapAsync(step, rules, cancellationToken).ConfigureAwait(false))
+            Func<CharacterState, bool>? stay = stayOn is null || state.IsInHavenBag ? null : now => stayOn(arrived, now);
+
+            switch (await context.ChangeMapAsync(step, rules, stay, cancellationToken).ConfigureAwait(false))
             {
                 case MapChangeOutcome.Changed or MapChangeOutcome.Elsewhere:
                     changes++;
                     break;
+                case MapChangeOutcome.Stayed:
+                    return Over(context, context.State, TravelOutcome.Arrived, changes);
                 case MapChangeOutcome.Busy or MapChangeOutcome.NotPlaced:
                     return Over(context, context.State, TravelOutcome.Failed, changes);
                 case var failed:
@@ -231,6 +256,11 @@ public static class WorldTravel
                         if (step.IsNpcWay && failed is MapChangeOutcome.Refused)
                             context.RefuseNpcWay(step.NpcWay);
                     }
+
+                    // A way whose cells the character cannot walk to sent nothing: left out, it counts no failure. The graph holds one
+                    // vertex for a map's floors, so a ledge of a mine offers every way of the map, most of them out of its reach (D495).
+                    if (failed is MapChangeOutcome.NoPath && !step.IsTeleport)
+                        break;
 
                     if (++failures >= MostFailures)
                         return Over(context, context.State, TravelOutcome.Failed, changes);

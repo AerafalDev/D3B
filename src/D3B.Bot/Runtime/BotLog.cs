@@ -70,6 +70,21 @@ internal static partial class BotLog
     [LoggerMessage(Level = LogLevel.Debug, Message = "Bot {Character}: element {Element} has no way to a cell beside it from zone {Zone} of its map")]
     public static partial void OutOfReach(ILogger logger, long character, int element, int zone);
 
+    [LoggerMessage(Level = LogLevel.Debug, Message = "Bot {Character}: the tour will come onto map {Map} from side {Side}, by map {Neighbour}, for resources the part it stands in cannot walk to")]
+    public static partial void LevelWanted(ILogger logger, long character, long map, int side, long neighbour);
+
+    [LoggerMessage(Level = LogLevel.Debug, Message = "Bot {Character}: the tour leaves the part of map {Map} on side {Side} alone: no way of fewer than {Most} map changes leads to its neighbour")]
+    public static partial void LevelLeftAlone(ILogger logger, long character, long map, int side, int most);
+
+    [LoggerMessage(Level = LogLevel.Information, Message = "Bot {Character}: came onto map {Map} from side {Side}, for resources the other part could not walk to")]
+    public static partial void LevelEntered(ILogger logger, long character, long map, int side);
+
+    [LoggerMessage(Level = LogLevel.Information, Message = "Bot {Character}: could not come onto map {Map} from side {Side}; its part there is left for this tour")]
+    public static partial void LevelNotEntered(ILogger logger, long character, long map, int side);
+
+    [LoggerMessage(Level = LogLevel.Information, Message = "Bot {Character}: stays on map {Map}, where a wanted resource grew back as it was leaving")]
+    public static partial void StayedForRegrowth(ILogger logger, long character, long map);
+
     [LoggerMessage(Level = LogLevel.Debug, Message = "Bot {Character}: the tour will go to zone {Zone} of map {Map}, {Changes} map changes away, for a resource the zone it stands in cannot reach")]
     public static partial void ZoneWanted(ILogger logger, long character, long map, int zone, int changes);
 

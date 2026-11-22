@@ -195,7 +195,8 @@ public static class CellPathfinder
         return (left >= 0 && cells[left].IsWalkable) || (right >= 0 && cells[right].IsWalkable);
     }
 
-    private static bool HasStairs(ReadOnlySpan<MapCell> cells)
+    /// <summary>Gets whether a map holds stairs, where floors count (D86).</summary>
+    internal static bool HasStairs(ReadOnlySpan<MapCell> cells)
     {
         // Client 3.7.12.12 holds moveZones 0 and 1 only: a map of one of them has no stair, and its floors never count.
         foreach (var cell in cells)
