@@ -1,15 +1,17 @@
+using D3B.Engine.Effects;
 using D3B.Engine.Fights;
 using D3B.Engine.Maps;
 
 namespace D3B.Engine.Tactics;
 
-/// <summary>A challenge that asks only of the turns of the fighter playing: its movement points, its casts, where it ends them (D466).</summary>
+/// <summary>A challenge the fighter playing keeps on its turn: its movement points, its casts, where it ends them (D466), what it strikes and kills (D497).</summary>
 /// <remarks>
 /// <para>
 /// The owner's list (D466), read from the client's completion criteria (client.md): Zombie, Statue, Nomade, Versatile,
 /// Collant, Misanthrope, Prudent, Raser les murs, De la même lignée, La diagonale du plein, En ligne de mire and Pas vu pas
-/// pris, 49% of the 2,976 fights captured. A search keeps it (<see cref="FightTactics.Plan"/>)
-/// only while the turn it costs stays under <see cref="MostLoss"/>.
+/// pris, 49% of the 2,976 fights captured; then (D497) Hardi, Élémentaire, Sans-cœur, Premier, Dernier, Élitiste, Tueur à
+/// gages, Tueur à vue, Cruel, Ordonné and Focus, which <see cref="Cast"/> judges cast by cast. A search keeps it
+/// (<see cref="FightTactics.Plan"/>) only while the turn it costs stays under <see cref="MostLoss"/>.
 /// </para>
 /// <para>
 /// The movement points used are those the fighter began its turn with, as the knowledge gives them, less those it holds: a
@@ -28,15 +30,37 @@ public sealed record TurnChallenge
     /// <summary>Gets where the turn ends.</summary>
     public TurnEnd End { get; init; }
 
+    /// <summary>Gets which enemies the fighter playing may kill.</summary>
+    public ChallengeKills Kills { get; init; }
+
+    /// <summary>Gets which enemies the fighter playing may strike.</summary>
+    public ChallengeStrikes Strikes { get; init; }
+
+    /// <summary>Gets the enemy the server named the challenge's target, null when it names none.</summary>
+    public long? TargetId { get; init; }
+
+    /// <summary>Gets whether the fighter strikes in one element the whole fight, the one its first blow struck in: Élémentaire.</summary>
+    public bool SameElement { get; init; }
+
+    /// <summary>Gets the element the fighter's first blow bound it to, null before it struck.</summary>
+    public EffectElement? Element { get; init; }
+
+    /// <summary>Gets whether the fighter heals no ally but itself: Sans-cœur.</summary>
+    public bool NoHealOnAllies { get; init; }
+
+    /// <summary>Gets the enemy Focus holds the fighters of the side to, struck and alive; null when none is.</summary>
+    public long? FocusId { get; init; }
+
     /// <summary>Gets the cell the fighter playing began its turn on, which Statue's turn ends on; null when not known.</summary>
     /// <remarks>A jump, a teleport or a push of its own spell moves the fighter with its movement points whole.</remarks>
     public int? StartCell { get; init; }
 
     /// <summary>Gets the most of the turn's gain the challenge may cost, from 0 to 1, or more once the turn played for it.</summary>
     /// <remarks>
-    /// The owner's choice (D466): half of what keeps the reward a minute the same. A challenge won adds its bonus b to the
-    /// fight's reward, so a fight slower by a share l of its pace still earns as much a minute while l ≤ b / (1 + b); half of it,
-    /// since a turn's challenge is lost at the first turn that breaks it, so that a costly turn may be paid for nothing.
+    /// The owner's choice (D497, after D466's half): three quarters of what keeps the reward a minute the same. A challenge won
+    /// adds its bonus b to the fight's reward, so a fight slower by a share l of its pace still earns as much a minute while
+    /// l ≤ b / (1 + b); less than all of it, since a challenge is lost at the first turn that breaks it, so that a costly turn
+    /// may be paid for nothing.
     /// </remarks>
     public double MostLoss { get; init; }
 
@@ -55,17 +79,28 @@ public sealed record TurnChallenge
             "TD<2,hc0,hc0" => new TurnChallenge { End = TurnEnd.BesideAnAlly },
             "TD>1,hc0,hc0" => new TurnChallenge { End = TurnEnd.AwayFromAllies },
             "TD>1,hc0,e1" => new TurnChallenge { End = TurnEnd.AwayFromEnemies },
+            "TD<2,hc0,e1" => new TurnChallenge { End = TurnEnd.BesideAnEnemy },
             "TD<2,hc0,whb" => new TurnChallenge { End = TurnEnd.BesideAnObstacle },
             "SP=te,l,hc0,hc0" => new TurnChallenge { End = TurnEnd.InLineWithAnAlly },
             "SP=te,d,hc0,hc0" => new TurnChallenge { End = TurnEnd.InDiagonalWithAnAlly },
             "SV=te,hc0,e1,s1,a" => new TurnChallenge { End = TurnEnd.InSightOfAnEnemy },
             "SV=te,hc0,e1,s0,v" => new TurnChallenge { End = TurnEnd.OutOfEnemiesSight },
+            "CK~1" => new TurnChallenge { Kills = ChallengeKills.TargetFirst },
+            "Ck~1" => new TurnChallenge { Kills = ChallengeKills.TargetLast },
+            "SL<1" => new TurnChallenge { Kills = ChallengeKills.LowestLevelFirst },
+            "SL>1" => new TurnChallenge { Kills = ChallengeKills.HighestLevelFirst },
+            "CC=e0,m1,k,k" => new TurnChallenge { Kills = ChallengeKills.TargetOnly },
+            "SC=hc0,e,s" => new TurnChallenge { SameElement = true },
+            "SO!e0,hc0,h" => new TurnChallenge { NoHealOnAllies = true },
+            "CK~!,1" => new TurnChallenge { Strikes = ChallengeStrikes.TargetOnly },
+            "SF=1" => new TurnChallenge { Strikes = ChallengeStrikes.OneAtATime },
+            "CO=e0,m1,tk,n" => new TurnChallenge { Strikes = ChallengeStrikes.NearestOnly },
             _ => null,
         };
 
         var share = Math.Max(0, bonus) / 100.0;
 
-        return challenge is null ? null : challenge with { MostLoss = 0.5 * share / (1 + share) };
+        return challenge is null ? null : challenge with { MostLoss = 0.75 * share / (1 + share) };
     }
 
     private static int Used(ImaginedFight fight, FightKnowledge knowledge, int movementPointsLeft)
@@ -154,6 +189,142 @@ public sealed record TurnChallenge
         return !EachActionOnce || fight.History.CastsIn(spellId, fight.Round) is 0;
     }
 
+    /// <summary>Gets the challenge once the fighter playing cast: as it stands after the cast, or null when the cast broke it.</summary>
+    /// <param name="before">The fight before the cast, the fighter on the cell it casts from.</param>
+    /// <param name="after">The fight once the cast is imagined.</param>
+    /// <param name="elements">The elements the cast strikes in.</param>
+    /// <returns>The challenge after the cast; null when broken.</returns>
+    public TurnChallenge? Cast(ImaginedFight before, ImaginedFight after, IReadOnlyCollection<EffectElement> elements)
+    {
+        ArgumentNullException.ThrowIfNull(before);
+        ArgumentNullException.ThrowIfNull(after);
+        ArgumentNullException.ThrowIfNull(elements);
+
+        var killed = new List<Combatant>();
+        var struck = new List<Combatant>();
+
+        foreach (var enemy in Enemies(before))
+        {
+            var now = after.Find(enemy.Id);
+
+            if (now is not { IsAlive: true })
+                killed.Add(enemy);
+
+            if (now is not { IsAlive: true } || now.Life < enemy.Life)
+                struck.Add(enemy);
+        }
+
+        if (!KillsAllowed(before, killed) || !StrikesAllowed(before, struck) || (NoHealOnAllies && HealsAnAlly(before, after)))
+            return null;
+
+        // Bubble's reading, the client's text alike: neutral is an element, and a cast striking in two breaks it.
+        if (SameElement && struck.Count > 0 && elements.Count > 0)
+        {
+            var element = elements.First();
+
+            if (elements.Count > 1 || (Element is { } bound && bound != element))
+                return null;
+
+            return this with { Element = element };
+        }
+
+        // Focus holds the side to the enemy struck until it is dead.
+        if (Strikes is ChallengeStrikes.OneAtATime)
+        {
+            var focus = FocusId is { } id && before.Find(id) is { IsAlive: true } ? id : struck.Count > 0 ? struck[0].Id : (long?)null;
+
+            return this with { FocusId = focus is { } held && after.Find(held) is { IsAlive: true } ? held : null };
+        }
+
+        // Tueur à vue's next target is the enemy nearest the fighter once its target is dead, as the server names it.
+        if (Strikes is ChallengeStrikes.NearestOnly && TargetId is { } target && after.Find(target) is not { IsAlive: true })
+            return this with { TargetId = Nearest(after)?.Id };
+
+        return this;
+    }
+
+    private bool StrikesAllowed(ImaginedFight before, List<Combatant> struck)
+    {
+        if (Strikes is ChallengeStrikes.Free || struck.Count is 0)
+            return true;
+
+        if (Strikes is ChallengeStrikes.OneAtATime)
+            return FocusId is { } focus && before.Find(focus) is { IsAlive: true } ? struck.TrueForAll(enemy => enemy.Id == focus) : struck.Count is 1;
+
+        var target = TargetId is { } id && before.Find(id) is { IsAlive: true } living ? living : null;
+
+        if (target is null && Strikes is ChallengeStrikes.NearestOnly)
+            target = Nearest(before);
+
+        return target is null || struck.TrueForAll(enemy => enemy.Id == target.Id);
+    }
+
+    private static bool HealsAnAlly(ImaginedFight before, ImaginedFight after)
+    {
+        var actor = before.Actor;
+
+        foreach (var ally in before.Fighters)
+        {
+            if (ally.Id != actor.Id && ally.Team == actor.Team && ally.IsAlive && after.Find(ally.Id) is { } now && now.Life > ally.Life)
+                return true;
+        }
+
+        return false;
+    }
+
+    private static Combatant? Nearest(ImaginedFight fight)
+    {
+        var cell = fight.Actor.Cell;
+
+        return cell is Combatant.NoCell ? null : Enemies(fight).Where(enemy => enemy.Cell is not Combatant.NoCell).MinBy(enemy => MapGeometry.Distance(cell, enemy.Cell));
+    }
+
+    private bool KillsAllowed(ImaginedFight before, List<Combatant> killed)
+    {
+        if (killed.Count is 0)
+            return true;
+
+        // The enemies' summons are left out, as Bubble leaves them, the kills' order asking of the fight's own enemies.
+        killed = killed.FindAll(enemy => enemy.SummonerId is null);
+
+        if (killed.Count is 0)
+            return true;
+
+        // The enemies a cast kills at once are killed in an order the server chooses: each is allowed when some order is.
+        var survivors = Enemies(before).Where(enemy => enemy.SummonerId is null && !killed.Exists(dead => dead.Id == enemy.Id)).ToList();
+
+        switch (Kills)
+        {
+            case ChallengeKills.LowestLevelFirst:
+                return survivors.Count is 0 || killed.Max(enemy => enemy.Level) <= survivors.Min(enemy => enemy.Level);
+            case ChallengeKills.HighestLevelFirst:
+                return survivors.Count is 0 || killed.Min(enemy => enemy.Level) >= survivors.Max(enemy => enemy.Level);
+        }
+
+        var named = TargetId is { } id && before.Find(id) is { IsAlive: true };
+
+        if (Kills is ChallengeKills.TargetOnly)
+            return named && killed.TrueForAll(enemy => enemy.Id == TargetId);
+
+        // A target the server named that is gone asks nothing more.
+        if (TargetId is not { } target || before.Find(target) is not { IsAlive: true })
+            return true;
+
+        return Kills switch
+        {
+            ChallengeKills.TargetFirst => killed.Exists(enemy => enemy.Id == target),
+            ChallengeKills.TargetLast => !killed.Exists(enemy => enemy.Id == target) || survivors.Count is 0,
+            _ => true,
+        };
+    }
+
+    private static IEnumerable<Combatant> Enemies(ImaginedFight fight)
+    {
+        var team = fight.Actor.Team;
+
+        return fight.Fighters.Where(fighter => fighter.Team != team && fighter.IsAlive);
+    }
+
     /// <summary>Tells whether the fighter playing may walk on its way to a cast, holding some movement points once there.</summary>
     /// <param name="fight">The fight as it stands.</param>
     /// <param name="knowledge">What the AI knows, the points the fighter began its turn with.</param>
@@ -208,6 +379,7 @@ public sealed record TurnChallenge
             TurnEnd.BesideAnAlly => Others(fight, actor, ally: true).Any(cell => MapGeometry.Distance(actor.Cell, cell) is 1),
             TurnEnd.AwayFromAllies => !Others(fight, actor, ally: true).Any(cell => MapGeometry.Distance(actor.Cell, cell) is 1),
             TurnEnd.AwayFromEnemies => !Others(fight, actor, ally: false).Any(cell => MapGeometry.Distance(actor.Cell, cell) is 1),
+            TurnEnd.BesideAnEnemy => Others(fight, actor, ally: false).Any(cell => MapGeometry.Distance(actor.Cell, cell) is 1),
             TurnEnd.BesideAnObstacle => BesideAnObstacle(fight.Map, actor.Cell),
             TurnEnd.InLineWithAnAlly => Others(fight, actor, ally: true).Any(cell => InLine(actor.Cell, cell)),
             TurnEnd.InDiagonalWithAnAlly => Others(fight, actor, ally: true).Any(cell => InDiagonal(actor.Cell, cell)),

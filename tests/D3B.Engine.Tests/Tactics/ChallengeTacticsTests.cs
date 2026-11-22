@@ -184,4 +184,46 @@ public sealed class ChallengeTacticsTests
         Assert.True(plan.KeepsChallenge);
         Assert.True(MapGeometry.Distance(end, Off(1, 0)) > 1);
     }
+
+    [Fact]
+    public void HardiEndsTheTurnBesideAnEnemy()
+    {
+        var (fight, knowledge) = Fight(Off(3, 0), 3, Blow, Other);
+
+        var plan = _tactics.Plan(fight, knowledge, TacticWeights.Default, _limits, challenge: TurnChallenge.Of("TD<2,hc0,e1", 100)!.KeptThisTurn());
+        var end = plan.Actions.Where(action => action.Kind is TacticActionKind.Walk).Select(action => action.Cell).DefaultIfEmpty(Middle).Last();
+
+        Assert.True(plan.KeepsChallenge);
+        Assert.Equal(1, MapGeometry.Distance(end, Off(3, 0)));
+    }
+
+    [Fact]
+    public void ElitisteStrikesOnlyItsTargetWhenAnotherEnemyIsEasierToKill()
+    {
+        var (fight, knowledge) = Fight(Off(3, 0), 0, Blow, Other);
+        var weak = Enemy(-2, Off(0, 3)) with { Life = 30, MaxLife = 200, ActionPoints = 3, MovementPoints = 0 };
+        var two = fight with { Fighters = [.. fight.Fighters, weak] };
+        var elitist = TurnChallenge.Of("CK~!,1", 100)! with { TargetId = -1 };
+
+        var free = _tactics.Plan(two, knowledge.With(weak.Id, []), TacticWeights.Default, _limits);
+        var kept = _tactics.Plan(two, knowledge.With(weak.Id, []), TacticWeights.Default, _limits, challenge: elitist.KeptThisTurn());
+
+        Assert.Contains(free.Actions, action => action.Kind is TacticActionKind.Cast && action.Cell == weak.Cell);
+        Assert.True(kept.KeepsChallenge);
+        Assert.All(kept.Actions.Where(action => action.Kind is TacticActionKind.Cast), action => Assert.Equal(Off(3, 0), action.Cell));
+    }
+
+    [Fact]
+    public void TheBestPlanThatKillsAnotherEnemyFirstBreaksPremier()
+    {
+        // A challenge that pays nothing is never kept at a cost: the best plan, which kills the weak enemy, is played and judged.
+        var (fight, knowledge) = Fight(Off(3, 0), 0, Blow, Other);
+        var weak = Enemy(-2, Off(0, 3)) with { Life = 30, MaxLife = 200, ActionPoints = 3, MovementPoints = 0 };
+        var two = fight with { Fighters = [.. fight.Fighters, weak] };
+
+        var plan = _tactics.Plan(two, knowledge.With(weak.Id, []), TacticWeights.Default, _limits, challenge: TurnChallenge.Of("CK~1", 0)! with { TargetId = -1 });
+
+        Assert.Contains(plan.Actions, action => action.Kind is TacticActionKind.Cast && action.Cell == weak.Cell);
+        Assert.False(plan.KeepsChallenge);
+    }
 }

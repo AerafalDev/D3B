@@ -134,7 +134,7 @@ public sealed class GroupGateTests
         Assert.False(acting.IsCompleted);
 
         play.Time.Advance(TimeSpan.FromSeconds(1));
-        await acting;
+        await acting.WaitAsync(TimeSpan.FromSeconds(10), TestContext.Current.CancellationToken);
 
         Assert.Equal(_act, masterConnection.Sent[^1]);
         Assert.Empty(master.WaitingFor);
@@ -176,7 +176,7 @@ public sealed class GroupGateTests
 
         await TestGroup.UntilAsync(play, () => master.WaitingFor.Count > 0, "waiting");
         play.Time.Advance(GroupGate.LeaveBehindAfter);
-        await acting;
+        await acting.WaitAsync(TimeSpan.FromSeconds(10), TestContext.Current.CancellationToken);
 
         TestGroup.Arrive(followerConnection, TestGroup.FollowerId, TestPlay.EastMapId, 300);
         await TestGroup.SettleAsync(master, follower);

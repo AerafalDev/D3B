@@ -13,6 +13,7 @@ using D3B.Bot.Runtime;
 using D3B.Bot.Tests.Movement;
 using D3B.Bot.Tests.Runtime;
 using D3B.Data.Tests;
+using D3B.Engine.Maps;
 using D3B.Protocol.Game;
 
 namespace D3B.Bot.Tests.Harvesting;
@@ -67,6 +68,22 @@ public sealed class HarvestActivityTests : IAsyncDisposable
     private HarvestActivity Activity(HarvestSettings settings, Regrowths? regrowths = null, BankingPreferences? banking = null, IPlaceZones? zones = null)
     {
         return new HarvestActivity(settings, _play.World, _play.Tables, _play.Maps, _sightings, _graphics, _play.Places, regrowths ?? new Regrowths(), _play.Time, banking: banking, zones: zones);
+    }
+
+    // The clock moves in small ticks until the report comes, whenever each of the bot's delays set its timer: moved once, it
+    // could pass before a delay began, which would then wait for ever.
+    private async Task<ActivityReport> ReportedAdvancingAsync(BotActivity activity, Func<ActivityReport, bool> condition)
+    {
+        var deadline = DateTime.UtcNow + Polling.Deadline;
+
+        while (activity.Report is not { } report || !condition(report))
+        {
+            Assert.True(DateTime.UtcNow < deadline, $"The activity still says {(activity.Report is { } last ? Say(last.Doing) : "nothing")}.");
+            _play.Time.Advance(TimeSpan.FromMilliseconds(100));
+            await Task.Delay(5, TestContext.Current.CancellationToken);
+        }
+
+        return activity.Report;
     }
 
     // The tour goes to the east map, through the middle one, which holds the tree: a journey from the north map crosses it.
@@ -258,19 +275,84 @@ public sealed class HarvestActivityTests : IAsyncDisposable
     [Fact]
     public async Task AHarvestWhoseWalkTheServerCutsByMovingTheCharacterLeavesItsMapGoneThrough()
     {
-        // Measured in a mine (D488): the walk to the ore crossed a map action, and the server moved the character to the next
-        // map before it reached the ore; the map was never gone through, and the tour came back to it for 18 minutes.
+        // Measured in a mine (D488): the walk to the ore crossed a map action; the server showed it, then answered the client's
+        // confirmation with the walk's refusal and the next map in the same millisecond, never the walk's end. The map was
+        // never gone through, and the tour came back to it for 18 minutes.
         var (connection, bot) = await _play.EnterAsync(433);
         var activity = Activity(new HarvestSettings { Resources = [TestPlay.Ash], SubAreas = [TestPlay.SubAreaId] });
         var run = bot.StartActivity(activity);
+        var walk = Assert.IsType<MapMovementRequest>(await TestWalks.SentAsync(_play, connection, 1));
 
-        Assert.IsType<MapMovementRequest>(await TestWalks.SentAsync(_play, connection, 1));
-        connection.Server(new MapMovementRefusedEvent { X = 0, Y = 0 });
+        Assert.True(CellPathfinder.TryFind(_play.Maps.Get(walk.MapId).Cells.Span, walk.KeyMovements[0] & 0xFFF, walk.KeyMovements[^1] & 0xFFF, out var path));
+
+        var before = MapGeometry.PointOf(path.Cells.Span[^2]);
+
+        connection.Server(new MapMovementEvent { ActorId = TestPlay.CharacterId, Cells = { path.Cells.ToArray() } });
+        connection.Client(new MapMovementConfirmRequest());
+        connection.Server(new MapMovementRefusedEvent { X = before.X, Y = before.Y });
         TestWalks.Arrive(connection, TestPlay.EastMapId, 20);
 
-        var report = await ReportedAsync(activity, report => report.Focus is { MapId: TestPlay.EastMapId } && Say(report.Doing) == "Heading to the next map");
+        // The walk ends on its confirmation's delay, on the clock, which moves only once the server named the next map.
+        var report = await ReportedAdvancingAsync(activity, report => report.Focus is { MapId: TestPlay.EastMapId } && Say(report.Doing) == "Heading to the next map");
 
         Assert.Contains(report.Focus!.Zone, map => map.MapId == TestPlay.MapId && map.State is ZoneMapState.Visited);
+
+        run.Stop();
+
+        Assert.Equal(ActivityOutcome.Stopped, await run.Completion);
+    }
+
+    [Fact]
+    public async Task AHarvestWhoseWalkWasRefusedLeavesItsMapGoneThroughWhenTheServerMovesTheCharacterOnlyAfterTheStep()
+    {
+        // The refusal ends the use at once, and what the server sends after it reaches the bot's state whenever it does: here
+        // only once the step that asked the use is over, the bot waiting between two steps on a clock the test holds.
+        _play.Bots.Delays = BotDelays.Measured with { BetweenSteps = TimeSpan.FromSeconds(1) };
+
+        var (connection, bot) = await _play.EnterAsync(433);
+        var activity = Activity(new HarvestSettings { Resources = [TestPlay.Ash], SubAreas = [TestPlay.SubAreaId] });
+        var run = bot.StartActivity(activity);
+        var walk = Assert.IsType<MapMovementRequest>(await TestWalks.SentAsync(_play, connection, 1));
+        var stood = MapGeometry.PointOf(walk.KeyMovements[0] & 0xFFF);
+
+        connection.Server(new MapMovementRefusedEvent { X = stood.X, Y = stood.Y });
+        await WaitForAsync(() => run.Steps >= 1);
+        TestWalks.Arrive(connection, TestPlay.EastMapId, 20);
+
+        var report = await ReportedAdvancingAsync(activity, report => report.Focus is { MapId: TestPlay.EastMapId } && Say(report.Doing) == "Heading to the next map");
+
+        Assert.Contains(report.Focus!.Zone, map => map.MapId == TestPlay.MapId && map.State is ZoneMapState.Visited);
+
+        run.Stop();
+
+        Assert.Equal(ActivityOutcome.Stopped, await run.Completion);
+    }
+
+    [Fact]
+    public async Task AMapLeftDuringAPauseAfterAHarvestsRefusedWalkIsNotTakenForGoneThrough()
+    {
+        // Paused between two steps, the bot runs no behavior to cut: what moved the character then may be the player's hand. A
+        // pause of a few seconds is longer than the delay between steps, the only wait the step after a use leaves.
+        _play.Bots.Delays = BotDelays.Measured with { BetweenSteps = TimeSpan.FromSeconds(1) };
+
+        var (connection, bot) = await _play.EnterAsync(433);
+        var activity = Activity(new HarvestSettings { Resources = [TestPlay.Ash], SubAreas = [TestPlay.SubAreaId] });
+        var run = bot.StartActivity(activity);
+        var walk = Assert.IsType<MapMovementRequest>(await TestWalks.SentAsync(_play, connection, 1));
+        var stood = MapGeometry.PointOf(walk.KeyMovements[0] & 0xFFF);
+
+        connection.Server(new MapMovementRefusedEvent { X = stood.X, Y = stood.Y });
+        await WaitForAsync(() => run.Steps >= 1);
+        bot.Pause();
+        await WaitForAsync(() => bot.IsPaused);
+        TestWalks.Arrive(connection, TestPlay.EastMapId, 20);
+        await bot.ProcessedAsync();
+        _play.Time.Advance(TimeSpan.FromSeconds(5));
+        bot.Resume();
+
+        var report = await ReportedAdvancingAsync(activity, report => report.Focus is { MapId: TestPlay.EastMapId } && Say(report.Doing) == "Heading to the next map");
+
+        Assert.Contains(report.Focus!.Zone, map => map.MapId == TestPlay.MapId && map.State is not ZoneMapState.Visited);
 
         run.Stop();
 

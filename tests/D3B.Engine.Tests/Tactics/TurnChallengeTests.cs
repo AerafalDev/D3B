@@ -12,7 +12,8 @@ public sealed class TurnChallengeTests
     public static TheoryData<string> Kept =>
     [
         "TM=1,0", "Tm<1,0", "TM=m,0&TT=0,0", "SAt0", "TD<2,hc0,hc0", "TD>1,hc0,hc0", "TD>1,hc0,e1", "TD<2,hc0,whb", "SP=te,l,hc0,hc0",
-        "SP=te,d,hc0,hc0", "SV=te,hc0,e1,s1,a", "SV=te,hc0,e1,s0,v",
+        "SP=te,d,hc0,hc0", "SV=te,hc0,e1,s1,a", "SV=te,hc0,e1,s0,v", "TD<2,hc0,e1", "SC=hc0,e,s",
+        "SO!e0,hc0,h", "CK~1", "Ck~1", "CK~!,1", "CC=e0,m1,k,k", "CO=e0,m1,tk,n", "SL<1", "SL>1", "SF=1",
     ];
 
     private static (ImaginedFight Fight, FightKnowledge Knowledge) Standing(int movementPoints, params Combatant[] others)
@@ -36,15 +37,14 @@ public sealed class TurnChallengeTests
 
     [Theory]
     [MemberData(nameof(Kept))]
-    public void TheOwnersTwelveCriteriaAreKept(string completion)
+    public void TheOwnersCriteriaAreKept(string completion)
     {
         Assert.NotNull(TurnChallenge.Of(completion, 100));
     }
 
     [Theory]
-    [InlineData("CK~1")]
+    [InlineData("CC=e0,m1,gk,d")]
     [InlineData("SD!hc0,e-1")]
-    [InlineData("TD<2,hc0,e1")]
     [InlineData("Ma=1")]
     [InlineData("")]
     [InlineData(null)]
@@ -54,10 +54,10 @@ public sealed class TurnChallengeTests
     }
 
     [Fact]
-    public void TheMostLossIsHalfOfWhatKeepsTheRewardAMinuteTheSame()
+    public void TheMostLossIsThreeQuartersOfWhatKeepsTheRewardAMinuteTheSame()
     {
-        Assert.Equal(0.25, TurnChallenge.Of("SAt0", 100)!.MostLoss, 6);
-        Assert.Equal(0.5 * 0.45 / 1.45, TurnChallenge.Of("SAt0", 45)!.MostLoss, 6);
+        Assert.Equal(0.375, TurnChallenge.Of("SAt0", 100)!.MostLoss, 6);
+        Assert.Equal(0.75 * 0.45 / 1.45, TurnChallenge.Of("SAt0", 45)!.MostLoss, 6);
         Assert.Equal(0, TurnChallenge.Of("SAt0", 0)!.MostLoss);
     }
 
@@ -142,6 +142,8 @@ public sealed class TurnChallengeTests
         Assert.False(Ends(TurnEnd.BesideAnAlly, apart));
         Assert.True(Ends(TurnEnd.AwayFromAllies, apart));
         Assert.False(Ends(TurnEnd.AwayFromEnemies, apart));
+        Assert.False(Ends(TurnEnd.BesideAnEnemy, beside));
+        Assert.True(Ends(TurnEnd.BesideAnEnemy, apart));
     }
 
     [Fact]

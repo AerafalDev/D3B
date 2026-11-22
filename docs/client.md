@@ -440,6 +440,15 @@ challenge number, nothing of the account printed.
   Intouchable 188 and 66%, Barbare (`Ma=1`, the kills by a weapon) 123 and none won, Mains propres 112 and 7%, Miroir 112 and
   none, Élémentaire 116 and 55%, Duel 124 and 74%, the targets' order (Premier, Dernier, Élitiste, Imprévisible, Tueur à
   gages, Cruel, Ordonné, Tueur à vue) 337, and Hardi (`TD<2,hc0,e1`) 4.
+- **The owner's second list** (D497), read on the same pack on 2026-11-22 with a tool never committed: Hardi 36
+  (`TD<2,hc0,e1`, activated by `GD<5,1`), Élémentaire 20 (`SC=hc0,e,s`), Sans-cœur 962 (`SO!e0,hc0,h`, activated only with an
+  allied breed among eleven), Premier 3 (`CK~1`), Dernier 4 (`Ck~1`), Élitiste 32 (`CK~!,1`), Tueur à gages 35 (`CC=e0,m1,k,k`),
+  Tueur à vue 967 (`CO=e0,m1,tk,n`), Cruel 10 (`SL<1`), Ordonné 25 (`SL>1`) and Focus 31 (`SF=1`). The descriptions say what
+  each asks: Élémentaire one element for each allied fighter, the one its first damage dealt; Sans-cœur no heal from an ally
+  other than the fighter itself; Tueur à vue the enemy nearest each fighter, named again as its turn begins or as that enemy
+  dies; Focus no other enemy attacked while the one attacked lives. Of the 43 fights' challenges, the others are Économe,
+  Barbare, Intouchable, Mains propres, Les petits d'abord, Survivant, Imprévisible, Blitzkrieg, Deux pour le prix d'un, Partage,
+  Duel, Chacun son monstre, Miroir, J'en ai fait un pin's, Conquérant, Doume, and the dungeons' Duo, Trio, Quatuor and Chrono.
 
 ### Fights' tables
 

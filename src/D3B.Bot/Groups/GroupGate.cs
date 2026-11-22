@@ -145,6 +145,10 @@ internal sealed class GroupGate : IActionGate
                     return;
                 }
 
+                // The wait and its delay are in place before the card says whom the master waits for: a clock moved once it
+                // says so, such as a test's, finds the delay counting, which would otherwise count from that move on.
+                var waiting = ChangedAsync(changed, state, seen, Earliest(Earliest(Earliest(Earliest(invited, left), healed), called), due), cancellationToken);
+
                 if (!missing.SequenceEqual(said))
                 {
                     said = missing;
@@ -158,7 +162,7 @@ internal sealed class GroupGate : IActionGate
                     }
                 }
 
-                await ChangedAsync(changed, state, seen, Earliest(Earliest(Earliest(Earliest(invited, left), healed), called), due), cancellationToken).ConfigureAwait(false);
+                await waiting.ConfigureAwait(false);
             }
         }
         finally
