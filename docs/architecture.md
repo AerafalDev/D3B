@@ -1205,8 +1205,9 @@ Pure logic with no I/O, in `D3B.Engine`, which references `D3B.Data` for the cel
     at random the likeliest alone comes.
   - `ForgelanceLance`: a rule the pack does not hold, measured on the captures, and the AI's only one naming a breed's
     states and monster: a throw takes the lance out of the Forgelance's hand (states 3360 and 3590 ended, 3361 given), so
-    that no spell asking it follows that turn, and `Imagination.TurnStarted` and the judge's next turn put it back, the
-    lance gone from the map (D465), and the reach its spell 24591 gave its thrower's spells with it (D489).
+    that no spell asking it follows that turn (D465); the lance stays on the map, out of its hand, until it dies or a cast
+    kills it, `ForgelanceLance.Recovered` then giving it back after each cast, walk and mark struck, and the reach its spell
+    24591 gave its thrower's spells with it (D489), a throw taking its thrower's older lance off (D498).
   - `Glyphs`, `CellMark` and `CellMarkKind`, in `D3B.Engine.Fights` (D280): the marks the pack's effects set on the cells of
     a zone, a glyph struck as a turn begins (401) or ends (402), a glyph-aura (1091), a trap (400), their spell, grade
     and end; the imagined fight's marks, the server's and those the casts set (`ImaginedFight.Marks`).
