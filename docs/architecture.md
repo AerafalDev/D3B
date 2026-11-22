@@ -319,7 +319,10 @@ The bots run in `D3B.Bot`: what each part does today, with the decisions that ma
   first easy challenge (`FightPlay.ChallengeOf`: its completion criterion in the pack's `ChallengeCatalog` read as a
   `TurnChallenge`) while the activity's profile asks it (`BotActivity.Challenges`, a follower its master's) and the fight is
   not judged risky; a plan that leaves it leaves it for the fight, and once a plan of the turn kept it, the turn's next plans
-  keep it at any price (`TurnChallenge.KeptThisTurn`).
+  keep it at any price (`TurnChallenge.KeptThisTurn`). Since D497, the owner's eleven more challenges of the blows and the
+  kills too: `FightState.FirstElements` keeps the element of each fighter's first blow on the other team and
+  `FightState.StruckEnemyId` the enemy the character's team struck last, and `FightChallenges.TurnOf` fills them in with the
+  target the server named, read again before each plan of the turn.
 - **The bot fights** (D198, D202, D235, D244), in `D3B.Bot.Fights`: `FightPilot`, one per bot, made by `Bots`, waits for
   a fight not over that the AI plays (`BotActor.Fights`): every fight under the host's `Fights:Alone`
   (`BotActor.FightsAlone`), else the running activity's own as its profile says (`BotActivity.FightsItsFights`); out of an
@@ -1260,13 +1263,16 @@ Pure logic with no I/O, in `D3B.Engine`, which references `D3B.Data` for the cel
     alive (D407), the summoning spells left out of the first search but for the Osamodas', the Roublard's, the Steamer's and the
     Forgelance's, whose lances strike (D462), and searched again with them when it finds nothing to do (D408); given a `TurnChallenge` (D466), the plan searched again
     keeping it when the best breaks it, its casts, walks and ends those the challenge allows, chosen while its loss stays
-    within `TurnChallenge.MostLoss` of the best's gain (`TurnPlan.KeepsChallenge`); `Place`; `Odds`; `OddsOverTheFight`, the enemies dying one after another (D249); `PathTo`.
+    within `TurnChallenge.MostLoss` of the best's gain (`TurnPlan.KeepsChallenge`); each cast judged by `TurnChallenge.Cast`
+    against the fight before and after it, which gives the challenge as it then stands (`ChallengeKills`, `ChallengeStrikes`,
+    the element bound, the enemy struck, the next target), the best plan watched for it on the way (D497); `Place`; `Odds`; `OddsOverTheFight`, the enemies dying one after another (D249); `PathTo`.
     `TacticWeights`, measured on 69 fights (D212), next turn's weight refused at 1 or more, which would leave a kill now for later (D460), `TurnSearchLimits`, `TurnPlan`, `TacticAction`.
   - Measured on the 166 turns of the characters captured: a search in 9 ms halfway, 158 ms at most (9e); on 204 searches
     of 61 captures, 56 ms halfway, 422 ms at most, and 86 ms halfway on the AI's own fights (9e2); benchmarked, a turn
     against four enemies in 1.6 ms (9e), 3.1 ms and 6.5 MB (9e2, D216), 3.1 ms and 4.79 MB (9f, D229), 2.83 ms and
     4.81 MB (9g4, D255); on 452 searches of 94 captures, 90 ms halfway, 538 ms at most (9g4); on 1,619 searches of 83
-    captures, 82 ms halfway, 711 ms at most, and on the 417 turns of an easy challenge, 90 ms and 786 ms given it (D466).
+    captures, 82 ms halfway, 711 ms at most, and on the 417 turns of an easy challenge, 90 ms and 786 ms given it (D466); on the 572 turns of the 23 challenges of the
+    same captures, 160 ms and 792 ms given it, the machine shared (D497).
 - The weapons' blows, in `D3B.Engine.Fights` (9e3, D220): `WeaponBlows`, each sword's blow a level of spell 0, the
   punch's with the sword's fields and its effects used in fights, after the pack's levels in one catalog the rules, the
   effects and the AI share (`SpellCatalog.WithLevels`); `EffectFormulas.DealtByWeapon` and the weapons' multipliers,

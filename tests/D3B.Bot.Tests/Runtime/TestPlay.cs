@@ -313,7 +313,7 @@ internal sealed class TestPlay : IAsyncDisposable
 
     private static ChallengeCatalog Challenges()
     {
-        // Zombie, Versatile and Prudent, as client 3.7.14.18 numbers them, and Premier, which is not easy (D466).
+        // Zombie, Versatile and Prudent, as client 3.7.14.18 numbers them, and Premier, played for since D497.
         string[] completions = ["TM=1,0", "CK~1", "SAt0", "TD>1,hc0,e1"];
         string[] activations = ["GL>4,0", "GL>4,0", "GL>4,0", "GL>4,0"];
 

@@ -269,6 +269,23 @@ public sealed class FightEventsTests
     }
 
     [Fact]
+    public void AFightersFirstBlowOnAnEnemyBindsItsElementAndTheEnemyItsSideStruckIsHeld()
+    {
+        // Élémentaire and Focus (D497): a push's damage, of element -1, binds nothing; an enemy's blow holds no enemy struck.
+        var struck = Apply(
+            Playing(),
+            new GameActionFightEvent { ActionId = 99, SourceId = Self, LifeLost = new FightLifeLost { TargetId = Monster, Loss = 4, Element = -1 } },
+            new GameActionFightEvent { ActionId = 99, SourceId = Monster, LifeLost = new FightLifeLost { TargetId = Self, Loss = 9, Element = 3 } },
+            new GameActionFightEvent { ActionId = 99, SourceId = Self, LifeLost = new FightLifeLost { TargetId = Monster, Loss = 15, Element = 2 } },
+            new GameActionFightEvent { ActionId = 99, SourceId = Self, LifeLost = new FightLifeLost { TargetId = Monster, Loss = 5, Element = 1 } });
+
+        Assert.Equal(2, struck.Fight!.FirstElements[Self]);
+        Assert.Equal(3, struck.Fight.FirstElements[Monster]);
+        Assert.Equal(Monster, struck.Fight.StruckEnemyId);
+        Assert.Null(Apply(Playing(), new GameActionFightEvent { ActionId = 99, SourceId = Monster, LifeLost = new FightLifeLost { TargetId = Self, Loss = 9 } }).Fight!.StruckEnemyId);
+    }
+
+    [Fact]
     public void AHealNeverGivesMoreThanTheMostLife()
     {
         var healed = Apply(

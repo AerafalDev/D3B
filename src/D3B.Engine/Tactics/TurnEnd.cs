@@ -15,6 +15,9 @@ public enum TurnEnd
     /// <summary>On no cell beside an enemy's: Prudent.</summary>
     AwayFromEnemies,
 
+    /// <summary>On a cell beside an enemy's: Hardi (D497).</summary>
+    BesideAnEnemy,
+
     /// <summary>On a cell beside an obstacle, a hole or the map's edge: Raser les murs.</summary>
     BesideAnObstacle,
 

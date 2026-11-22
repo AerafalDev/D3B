@@ -377,9 +377,9 @@ internal sealed class TurnBench
             Passed(turn);
 
         // The fight's first easy challenge neither decided nor left, as the bot plays for it.
-        var played = fight?.Challenges.FirstOrDefault(challenge => challenge.Succeeded is null && !_left.Contains(challenge.Id) && TurnChallenge.Of(_tables.Challenges.CompletionOf(challenge.Id), challenge.Bonus) is not null);
+        var played = fight?.Challenges.FirstOrDefault(challenge => challenge.Succeeded is null && !_left.Contains(challenge.Id) && FightChallenges.TurnOf(fight, challenge, _tables.Challenges, turn.Start.ActorId) is not null);
 
-        if (played is null || TurnChallenge.Of(_tables.Challenges.CompletionOf(played.Id), played.Bonus) is not { } easy)
+        if (fight is null || played is null || FightChallenges.TurnOf(fight, played, _tables.Challenges, turn.Start.ActorId) is not { } easy)
             return;
 
         clock.Restart();

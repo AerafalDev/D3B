@@ -117,3 +117,4 @@ Each file holds the decisions of one group of [the index](../decisions-index.md)
 - [Fights, a state set on an enemy worth its next turn alone (D494)](d494-enemy-states-next-turn.md): 1 decision, 4 KB.
 - [The harvest, a mine's floors and a resource grown back (D495)](d495-harvest-floors-and-regrowth.md): 1 decision, 6 KB.
 - [Fights, a share of the damage received dispelled with its spell (D496)](d496-damage-share-dispelled.md): 1 decision, 3 KB.
+- [Fights, more challenges (D497)](d497-fights-challenges-more.md): 1 decision, 5 KB.

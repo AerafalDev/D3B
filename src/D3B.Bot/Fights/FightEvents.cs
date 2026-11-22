@@ -260,11 +260,7 @@ public static class FightEvents
                 Buffs = [.. fighter.Buffs.Where(buff => buff.Uid != action.BuffRemoval.Uid)],
             }),
             GameActionFightEvent.ActionOneofCase.Swap => Swapped(fight, action.SourceId, action.Swap.TargetId),
-            GameActionFightEvent.ActionOneofCase.LifeLost => Changed(fight, action.LifeLost.TargetId, fighter => fighter with
-            {
-                Life = Math.Max(0, fighter.Life - action.LifeLost.Loss),
-                MaxLife = Math.Max(0, fighter.MaxLife - action.LifeLost.PermanentLoss),
-            }),
+            GameActionFightEvent.ActionOneofCase.LifeLost => Struck(fight, action.SourceId, action.LifeLost),
             GameActionFightEvent.ActionOneofCase.LifeGained => Changed(fight, action.LifeGained.TargetId, fighter => fighter with
             {
                 Life = Math.Min(fighter.MaxLife, fighter.Life + action.LifeGained.Amount),
@@ -274,6 +270,24 @@ public static class FightEvents
             GameActionFightEvent.ActionOneofCase.MarkRemoved => fight with { Marks = fight.Marks.Remove(action.MarkRemoved.MarkId) },
             _ => fight,
         };
+    }
+
+    private static FightState Struck(FightState fight, long sourceId, FightLifeLost lost)
+    {
+        var struck = Changed(fight, lost.TargetId, fighter => fighter with
+        {
+            Life = Math.Max(0, fighter.Life - lost.Loss),
+            MaxLife = Math.Max(0, fighter.MaxLife - lost.PermanentLoss),
+        });
+
+        // What Élémentaire and Focus ask of the fight so far (D497): a blow of one team on the other, a push's binding no element.
+        if (!fight.Fighters.TryGetValue(sourceId, out var source) || !fight.Fighters.TryGetValue(lost.TargetId, out var target) || source.Team == target.Team || lost.Loss + lost.ShieldLoss <= 0)
+            return struck;
+
+        if (lost.Element >= 0 && !struck.FirstElements.ContainsKey(sourceId))
+            struck = struck with { FirstElements = struck.FirstElements.Add(sourceId, lost.Element) };
+
+        return source.Team == fight.Team ? struck with { StruckEnemyId = lost.TargetId } : struck;
     }
 
     private static GroundMark Marked(FightMark mark)
