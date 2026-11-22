@@ -3,6 +3,7 @@ using D3B.Bot.Characters;
 using D3B.Bot.Fights;
 using D3B.Bot.Localization;
 using D3B.Bot.Runtime;
+using D3B.Protocol.Game;
 
 namespace D3B.Bot.Activities;
 
@@ -137,7 +138,8 @@ public abstract class BotActivity
     }
 
     /// <summary>Receives a system text from the server on the actor loop while this activity is running.</summary>
-    public virtual void OnServerText(D3B.Protocol.Game.TextInformationEvent text)
+    /// <param name="text">The system text reported for this character.</param>
+    public virtual void OnServerText(TextInformationEvent text)
     {
     }
 

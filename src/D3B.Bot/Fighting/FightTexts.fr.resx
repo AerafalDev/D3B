@@ -141,7 +141,7 @@
     <value>Nourriture</value>
   </data>
   <data name="FarmAnomalyFragments" xml:space="preserve">
-    <value>Farm Fragment d’anomalie</value>
+    <value>Farmer les fragments d’anomalie</value>
   </data>
   <data name="FarmAnomalyFragmentsHelp" xml:space="preserve">
     <value>Boit un Élixir uchronique mineur si son effet manque au démarrage ou expire ensuite, puis reprend la chasse.</value>

@@ -75,6 +75,25 @@ public sealed class CharacterEventsTests
     }
 
     [Fact]
+    public void AGrantChangesOneAlterationAndASnapshotReplacesTheList()
+    {
+        var granted = Apply(_chosen, Server(new AlterationAddedEvent { Alteration = new RoleplayAlteration { AlterationId = 51, Remaining = 9 } }));
+        Assert.False(granted.HasAlterationSnapshot);
+        Assert.Equal(9, granted.Alterations[51]);
+
+        var snapshot = Apply(granted, Server(new AlterationsSnapshotEvent
+        {
+            Alterations = { new RoleplayAlteration { AlterationId = 52, Remaining = 7 } },
+        }));
+        Assert.True(snapshot.HasAlterationSnapshot);
+        Assert.False(snapshot.Alterations.ContainsKey(51));
+        Assert.Equal(7, snapshot.Alterations[52]);
+
+        var expired = Apply(snapshot, Server(new TextInformationEvent { TextId = 1665, Parameters = { "52" } }));
+        Assert.Equal(0, expired.Alterations[52]);
+    }
+
+    [Fact]
     public void EnteringTheGameGivesTheCharactersState()
     {
         Assert.Equal(
@@ -139,7 +158,8 @@ public sealed class CharacterEventsTests
               "Fight": null,
               "IsFighting": false,
               "IsBusy": false,
-              "HasMinorElixir": null,
+              "Alterations": {},
+              "HasAlterationSnapshot": false,
               "Inventory": {
                 "12": {
                   "Uid": 12,

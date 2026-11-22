@@ -33,6 +33,7 @@ namespace D3B.Bot.Fighting;
 /// </remarks>
 public sealed class FightActivity : BotActivity
 {
+    private const int MinorElixirAlteration = 50;
     private const int MinorUchronicElixir = 20_962;
     private const int MostLostInARow = 3;
     private const int MostFailedJourneys = 3;
@@ -135,6 +136,14 @@ public sealed class FightActivity : BotActivity
         _report = new ActivityReport { Doing = GameText.Of(FightTexts.Text("DoingStart")) };
     }
 
+    private static bool? ElixirActive(CharacterState state)
+    {
+        if (state.Alterations.TryGetValue(MinorElixirAlteration, out var remaining))
+            return remaining > 0;
+
+        return state.HasAlterationSnapshot ? false : null;
+    }
+
     private static ActivityException Failure(string message, string key)
     {
         return new ActivityException(message, GameText.Of(FightTexts.Text(key)));
@@ -148,10 +157,10 @@ public sealed class FightActivity : BotActivity
         if (await _busy.WaitAsync(context, Failure, cancellationToken).ConfigureAwait(false) || context.State is not { MapId: { } mapId })
             return true;
 
-        if (_settings.FarmAnomalyFragments && !_waitedForElixir && context.State.HasMinorElixir is null)
+        if (_settings.FarmAnomalyFragments && !_waitedForElixir && ElixirActive(context.State) is null)
         {
             _waitedForElixir = true;
-            await context.WaitUntilAsync(state => state.HasMinorElixir.HasValue, context.Delays.Answer, cancellationToken).ConfigureAwait(false);
+            await context.WaitUntilAsync(state => ElixirActive(state).HasValue, context.Delays.Answer, cancellationToken).ConfigureAwait(false);
         }
 
         await RenewElixirAsync(context, cancellationToken).ConfigureAwait(false);
@@ -311,7 +320,7 @@ public sealed class FightActivity : BotActivity
             return;
 
         var lost = Interlocked.Exchange(ref _potionPending, 0) != 0;
-        var active = context.State.HasMinorElixir;
+        var active = ElixirActive(context.State);
         if (active == true)
         {
             _lastElixirActive = true;
