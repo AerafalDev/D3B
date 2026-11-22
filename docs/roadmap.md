@@ -424,7 +424,7 @@ follower) on the same map, the capture of every connection on; a capture's conte
 - **The zaaps' discovery** (D499), the owner's ask of 2026-11-22, made on 2026-11-22 in code and tests: an activity with no
   setting, « Découvrir les zaaps », walks to every activated zaap within reach the character does not know, the nearest first
   with the zaaps learnt so far, and ends once none is left, giving up for the run one it cannot reach or that the server does
-  not teach on its map. Left: seen in game; a node of the behaviors' catalog if a profile's list of steps should chain it.
+  not teach on its map. Left: seen in game; an entry of the list editor's menu if a profile's list of steps should offer it.
 - **A follower left behind** (D490), the groups' stall D484 left, made on 2026-11-21 in code and tests: the master's gate
   waited without end for a follower missing, the two groups of 2026-11-19 idle 30 minutes until the server closed every
   connection (D464). A follower missing five minutes of one wait, but fighting or healing, is now left behind, the master acting

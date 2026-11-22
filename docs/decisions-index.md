@@ -897,4 +897,4 @@ or refines another says so in its own entry. Add a line here with every new deci
 ## Zaaps, the discovery of those the character does not know (D499)
 
 - [D499](decisions/d499-zaap-discovery.md#d499-an-activity-walks-to-every-zaap-within-reach-the-character-does-not-know-the-nearest-first-and-ends-once-none-is-left) An activity walks to every zaap within reach the character does not know, the nearest first, and ends once none is left (2026-11-22)
-  - A tour computed once, a route asset generated, a node of the behaviors' catalog, the unactivated zaaps sought.
+  - A tour computed once, a route asset generated, an entry of the list editor's menu, the unactivated zaaps sought.

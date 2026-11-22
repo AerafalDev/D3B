@@ -19,7 +19,8 @@ namespace D3B.Bot.Zaaps;
 /// Within reach is what the world's path may follow (D74, D83): a sub-area closed to an account without a subscription,
 /// a transition whose criterion is false or that the bot cannot answer, such as a quest's, is not. A zaap no path leads
 /// to, whose journey fails, or that the server does not list once the character stands on its map, is given up for the
-/// run; the activity is done once no zaap is left.
+/// run, the card telling a zaap the server did not teach from one out of reach; the activity is done once no zaap is
+/// left, and fails in a haven bag it cannot leave.
 /// </para>
 /// </remarks>
 public sealed class ZaapDiscoveryActivity : BotActivity
@@ -30,7 +31,8 @@ public sealed class ZaapDiscoveryActivity : BotActivity
     // The list comes as the character enters the map, before what is on it, which the journey's arrival waited for.
     private static readonly TimeSpan _learning = TimeSpan.FromSeconds(5);
 
-    private readonly HashSet<long> _givenUp = [];
+    private readonly HashSet<long> _unreachable = [];
+    private readonly HashSet<long> _untaught = [];
     private readonly BusyWait _busy = new();
     private FrozenDictionary<long, int>? _sought;
     private volatile ActivityReport? _report;
@@ -40,6 +42,15 @@ public sealed class ZaapDiscoveryActivity : BotActivity
 
     /// <inheritdoc/>
     public override int TeleportChanges => ZaapSaving;
+
+    /// <inheritdoc/>
+    public override InterruptionResponse OnInterrupted(Interruption reason)
+    {
+        // The recovery after an interruption puts the character back in order: the bounded wait counts anew (D484).
+        _busy.Reset();
+
+        return base.OnInterrupted(reason);
+    }
 
     /// <inheritdoc/>
     public override async Task<bool> StepAsync(BotContext context, CancellationToken cancellationToken)
@@ -58,9 +69,11 @@ public sealed class ZaapDiscoveryActivity : BotActivity
             ZaapLog.Seeking(context.Log, character, _sought.Count);
         }
 
+        // Another's haven bag is never left (MapChange), and a leave the server refuses would be asked at every step.
         if (state.IsInHavenBag)
         {
-            await context.LeaveHavenBagAsync(cancellationToken).ConfigureAwait(false);
+            if (await context.LeaveHavenBagAsync(cancellationToken).ConfigureAwait(false) is not MapChangeOutcome.Changed)
+                throw Failure("The character cannot leave the haven bag it is in.", "FailHavenBag");
 
             return true;
         }
@@ -72,7 +85,7 @@ public sealed class ZaapDiscoveryActivity : BotActivity
             var discovered = Discovered(state);
 
             Publish(state, GameText.Of(ZaapTexts.Text("Over")));
-            ZaapLog.Over(context.Log, character, discovered, _sought.Count, _givenUp.Count);
+            ZaapLog.Over(context.Log, character, discovered, _sought.Count, _unreachable.Count, _untaught.Count);
 
             return false;
         }
@@ -80,7 +93,7 @@ public sealed class ZaapDiscoveryActivity : BotActivity
         if (NearestOf(context, state, left) is not { } target)
         {
             foreach (var map in left)
-                GiveUp(context, map, "no path leads there");
+                GiveUp(context, map, _unreachable, "no path leads there");
 
             return true;
         }
@@ -96,14 +109,14 @@ public sealed class ZaapDiscoveryActivity : BotActivity
                 if (await context.WaitUntilAsync(now => now.KnownZaaps.Contains(target), _learning, cancellationToken).ConfigureAwait(false))
                     ZaapLog.Learnt(context.Log, character, target);
                 else
-                    GiveUp(context, target, "the server did not list it on its map");
+                    GiveUp(context, target, _untaught, "the server did not list it on its map");
 
                 break;
             case TravelOutcome.Busy:
                 await context.WaitUntilAsync(now => !now.IsBusy, BusyWait.Delay, cancellationToken).ConfigureAwait(false);
                 break;
             case var outcome:
-                GiveUp(context, target, $"the journey ended {outcome}");
+                GiveUp(context, target, _unreachable, $"the journey ended {outcome}");
                 break;
         }
 
@@ -129,7 +142,7 @@ public sealed class ZaapDiscoveryActivity : BotActivity
 
     private FrozenSet<long> Left(CharacterState state)
     {
-        return _sought!.Keys.Where(map => !state.KnownZaaps.Contains(map) && !_givenUp.Contains(map)).ToFrozenSet();
+        return _sought!.Keys.Where(map => !state.KnownZaaps.Contains(map) && !_unreachable.Contains(map) && !_untaught.Contains(map)).ToFrozenSet();
     }
 
     private int Discovered(CharacterState state)
@@ -137,9 +150,9 @@ public sealed class ZaapDiscoveryActivity : BotActivity
         return _sought!.Keys.Count(state.KnownZaaps.Contains);
     }
 
-    private void GiveUp(BotContext context, long map, string why)
+    private void GiveUp(BotContext context, long map, HashSet<long> givenUp, string why)
     {
-        _givenUp.Add(map);
+        givenUp.Add(map);
         ZaapLog.GivenUp(context.Log, context.State.Key.CharacterId, map, why);
         Publish(context.State, _report?.Doing ?? GameText.Of(ZaapTexts.Text("Over")));
     }
@@ -152,7 +165,7 @@ public sealed class ZaapDiscoveryActivity : BotActivity
         {
             Doing = doing,
             Progress = new ActivityProgress(GameText.Of(ZaapTexts.Text("Discovered")), Discovered(state), sought.Count),
-            Warnings = [.. _givenUp.Order().Select(map => GameText.Of(ZaapTexts.Text("OutOfReach"), GameTextValue.SubArea(sought[map])))],
+            Warnings = [.. sought.Keys.Order().Where(map => _unreachable.Contains(map) || _untaught.Contains(map)).Select(map => GameText.Of(ZaapTexts.Text(_untaught.Contains(map) ? "Untaught" : "OutOfReach"), GameTextValue.SubArea(sought[map])))],
             Focus = new ActivityFocus { Zone = [.. sought.Keys.Order().Select(map => new ZoneMap(map, StateOf(state, map)))] },
         };
     }
@@ -162,6 +175,6 @@ public sealed class ZaapDiscoveryActivity : BotActivity
         if (state.KnownZaaps.Contains(map))
             return ZoneMapState.Visited;
 
-        return _givenUp.Contains(map) ? ZoneMapState.Unreachable : ZoneMapState.ToVisit;
+        return _unreachable.Contains(map) || _untaught.Contains(map) ? ZoneMapState.Unreachable : ZoneMapState.ToVisit;
     }
 }

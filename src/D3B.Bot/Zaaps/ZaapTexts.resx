@@ -71,4 +71,10 @@
   <data name="FailStuckWalking" xml:space="preserve">
     <value>Still walking after two minutes, even once put back in order.</value>
   </data>
+  <data name="Untaught" xml:space="preserve">
+    <value>The zaap of {0} was not learnt on its map</value>
+  </data>
+  <data name="FailHavenBag" xml:space="preserve">
+    <value>The character cannot leave the haven bag it is in.</value>
+  </data>
 </root>
