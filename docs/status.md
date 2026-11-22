@@ -441,7 +441,13 @@ Q16 (casts and walks the server refuses that the rules allow), Q17 (a build that
   (D488), once red in a whole run, its map left `Probable`: the walk's refusal ended the use, and the harvest looked at the map
   before the bot's state applied the next map, sent just after it. The test now plays the measured order, the refusal and the
   next map answering the walk's confirmation, which ends the walk on its delay; the harvest also looks again at the next step,
-  a test holding the next map until the step is over. Seen failing under load (ten test hosts at once) and not fixed:
+  a test holding the next map until the step is over. And
+  `GroupGateTests.AMasterGoesOnWithoutAFollowerMissingFiveMinutesAndWaitsForItAgainOnceItIsBack` (D490), which hung two
+  runs of sixteen under load, and its neighbour `AFollowerLeftBehindIsWaitedForAgainOnceItLeftTheMapItWasLeftOn` the same
+  way: the master's gate said whom it waited for before it set the delay it waits on, so that the test's jump of the clock
+  could fall between the delay's measure and its timer, which then counted five minutes from the jump. The gate now sets
+  its wait first; both tests await the master's action with a deadline. A wake of that wait between a test's two moves of
+  the clock, which says nothing new, still leaves the same gap, a red test now rather than a hung host. Seen failing under load (ten test hosts at once) and not fixed:
   `GroupGateTests.AFollowerOnTheMapButOutOfThePartyIsWaitedForAndInvitedAgainEveryTenSeconds` (seven runs of twenty-one, its
   clock read some tenths late as the bot lags), two of `GroupFightTests` and
   `FrameRecorderTests.ABotsFramesAreRecordedFromItsConnectionsFirstFrameBothSidesAndD3BsOwn` once each; the group and
