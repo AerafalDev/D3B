@@ -869,7 +869,17 @@ or refines another says so in its own entry. Add a line here with every new deci
 - [D493](decisions/d493-runes-traps-glyph-triggers.md#d493-a-huppermages-runes-set-and-triggered-a-trap-set-off-by-whoever-comes-onto-it-and-a-fécas-glyphs-triggered) A Huppermage's runes set and triggered, a trap set off by whoever comes onto it, and a Féca's glyphs triggered (2026-11-21)
   - The elemental spell's own rune, a trap set off by a walk passing over it.
 
+## Fights, a state set on an enemy worth its next turn alone (D494)
+
+- [D494](decisions/d494-enemy-states-next-turn.md#d494-a-state-set-on-an-enemy-adds-to-the-sides-blows-on-the-next-turn-alone-so-that-a-huppermage-strikes-in-its-element) A state set on an enemy adds to the side's blows on the next turn alone, so that a Huppermage strikes in its element (2026-11-22)
+  - Naming the elemental states, reading which spells take a state off, one round for every buff on an enemy.
+
 ## The harvest, a mine's floors and a resource grown back (D495)
 
 - [D495](decisions/d495-harvest-floors-and-regrowth.md#d495-a-resource-is-used-from-its-own-floor-a-ledge-cut-from-the-characters-is-come-onto-from-the-side-it-touches-and-a-journey-stays-where-a-resource-grew-back) A resource is used from its own floor, a ledge cut from the character's is come onto from the side it touches, and a journey stays where a resource grew back (2026-11-22)
   - A floor gap above 40 taken, splitting the world graph's vertices by floor, staying for any element offered.
+
+## Fights, a share of the damage received dispelled with its spell (D496)
+
+- [D496](decisions/d496-damage-share-dispelled.md#d496-a-share-or-a-reduction-of-the-damage-received-is-held-by-its-spell-so-that-a-dispel-takes-it-back-the-pandawa-no-longer-drinks-three-times-for-one) A share or a reduction of the damage received is held by its spell, so that a dispel takes it back: the Pandawa no longer drinks three times for one (2026-11-22)
+  - A limit of Bombance's casts a turn.
