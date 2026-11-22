@@ -281,7 +281,8 @@ The bots run in `D3B.Bot`: what each part does today, with the decisions that ma
   A use whose walk the server cut by moving the character to another map, as a map action's cell does, leaves the map it
   began on gone through, or crossed out of the zone (D488). The step's state is read once, and the server's map may reach it
   after the use ended, a walk's refusal coming first: a use whose walk did not arrive leaves its map (`_unarrivedOn`) for the
-  next step to look at again, unless the bank's journey, a recovery or a gap of `BusyWait.Gap`, a pause, came between. A tour whose journeys arrive three times in a row with nothing done since the one before
+  next step to look at again when it starts within `BotDelays.BetweenSteps` and a second: a bank's journey, a pause or a
+  recovery between takes longer, and may move the character itself. A tour whose journeys arrive three times in a row with nothing done since the one before
   (`HarvestTour.Arrived`, `IdleArrivals`: no harvest, no map gone through, left out or crossed, no zone entered) goes round:
   it gives up its other maps and zones (`GiveUpRemaining`), ends as any other, and the journal (`TourGoneRound`) and the
   card (`HarvestReporter.RoundWarning`, until the next harvest) say so.

@@ -57,6 +57,10 @@ public sealed class HarvestActivity : BotActivity
     // Measured: a protector attacks 2 ms after the harvest's end; a second leaves room for the objects' events between.
     private static readonly TimeSpan _protectorDelay = TimeSpan.FromSeconds(1);
 
+    // The next step starts the delay between steps after a step that used, on the bot's clock; a second more is that step's own
+    // end and start. Anything else between, the bank's journey, a pause, a recovery, takes longer and may move the character too.
+    private static readonly TimeSpan _nextStepSlack = TimeSpan.FromSeconds(1);
+
     private readonly HarvestSettings _settings;
     private readonly WorldAtlas _atlas;
     private readonly WorldGraph _graph;
@@ -283,8 +287,6 @@ public sealed class HarvestActivity : BotActivity
 
         var deposited = DepositedItems();
 
-        // The bank's journey moves the character, which no step after a walk cut must take for the server's move.
-        _unarrivedOn = null;
         Publish(context.State, GameText.Of(HarvestTexts.Text("DoingBank")));
 
         if (_settings.DepositTo is HarvestDepositPlace.GuildChest && await GuildChestAsync(context, deposited, cancellationToken).ConfigureAwait(false))
@@ -384,8 +386,6 @@ public sealed class HarvestActivity : BotActivity
     {
         ArgumentNullException.ThrowIfNull(context);
 
-        // What cut the step may have moved the character: the player, a fight.
-        _unarrivedOn = null;
         await Recovery.SettleAsync(context, cancellationToken).ConfigureAwait(false);
 
         if (_regaining)
@@ -623,11 +623,11 @@ public sealed class HarvestActivity : BotActivity
         return true;
     }
 
-    // The step after a use whose walk did not arrive, before anything of its own moves the character: on another map, the
-    // server moved it on the way. Only the next step, soon after: a pause between two steps lets the player move it.
+    // The step right after a use whose walk did not arrive, before anything of its own moves the character: on another map, the
+    // server moved it on the way.
     private void LookAgainWhereTheWalkEnded(BotContext context, CharacterState state)
     {
-        if (_unarrivedOn is { } unarrived && state.MapId != unarrived.MapId && context.Time.GetUtcNow() - unarrived.At <= BusyWait.Gap)
+        if (_unarrivedOn is { } unarrived && state.MapId != unarrived.MapId && context.Time.GetUtcNow() - unarrived.At <= context.Delays.BetweenSteps + _nextStepSlack)
             Leave(unarrived.Tour, unarrived.MapId, unarrived.InZone);
 
         _unarrivedOn = null;

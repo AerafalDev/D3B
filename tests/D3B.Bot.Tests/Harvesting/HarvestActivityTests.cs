@@ -331,7 +331,8 @@ public sealed class HarvestActivityTests : IAsyncDisposable
     [Fact]
     public async Task AMapLeftDuringAPauseAfterAHarvestsRefusedWalkIsNotTakenForGoneThrough()
     {
-        // Paused between two steps, the bot runs no behavior to cut: what moved the character then may be the player's hand.
+        // Paused between two steps, the bot runs no behavior to cut: what moved the character then may be the player's hand. A
+        // pause of a few seconds is longer than the delay between steps, the only wait the step after a use leaves.
         _play.Bots.Delays = BotDelays.Measured with { BetweenSteps = TimeSpan.FromSeconds(1) };
 
         var (connection, bot) = await _play.EnterAsync(433);
@@ -346,7 +347,7 @@ public sealed class HarvestActivityTests : IAsyncDisposable
         await WaitForAsync(() => bot.IsPaused);
         TestWalks.Arrive(connection, TestPlay.EastMapId, 20);
         await bot.ProcessedAsync();
-        _play.Time.Advance(BusyWait.Gap + TimeSpan.FromSeconds(1));
+        _play.Time.Advance(TimeSpan.FromSeconds(5));
         bot.Resume();
 
         var report = await ReportedAdvancingAsync(activity, report => report.Focus is { MapId: TestPlay.EastMapId } && Say(report.Doing) == "Heading to the next map");
