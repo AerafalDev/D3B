@@ -44,7 +44,8 @@ namespace D3B.Bot.Tests.Runtime;
 /// as the bank of Astrub's map and a map near it list them in the captures. The pack's bank stands in front of
 /// <see cref="MapId"/>; its banker, <see cref="BankerNpcId"/>, stands in <see cref="InsideMapId"/> beside an NPC who is
 /// none, and the other inside holds no NPC. A character teleports from the three maps outside; <see cref="EastMapId"/>
-/// holds a zaap, as Astrub's does, and <see cref="HavenBagMapId"/>, which the pack lacks, is a haven bag. Every map is of
+/// holds a zaap, as Astrub's does, and so does <see cref="NorthMapId"/>; the atlas lists them, an unactivated one in
+/// <see cref="InsideMapId"/> and one on <see cref="AwayZaapMapId"/>, which the graph does not hold; <see cref="HavenBagMapId"/>, which the pack lacks, is a haven bag. Every map is of
 /// <see cref="SubAreaId"/>, which lists <see cref="Ash"/>, which the tree's skill gathers, and <see cref="Chestnut"/>,
 /// which a lumberjack gathers from level 20. The pack's fight data holds one spell, <see cref="BlowSpellId"/>, an earth blow
 /// of 10 to 12 on an enemy for 3 AP at a range of 1 to 4, spell 0's punch, a sword, <see cref="SwordItemId"/>, striking
@@ -58,6 +59,11 @@ internal sealed class TestPlay : IAsyncDisposable
     public const long InsideMapId = 192_415_750;
     public const long OtherInsideMapId = 192_677_890;
     public const long HavenBagMapId = 162_791_424;
+    public const long AwayZaapMapId = 88_212_481;
+    public const int EastZaapId = 1;
+    public const int NorthZaapId = 2;
+    public const int InsideZaapId = 3;
+    public const int AwayZaapId = 4;
     public const int OtherActionCell = 400;
     public const int LedgeFloor = -100;
     public const int StairCell = 500;
@@ -470,7 +476,10 @@ internal sealed class TestPlay : IAsyncDisposable
         ];
         SubArea[] subAreas = [new(SubAreaId, 0, 1, 10, SubArea.NoZaap, true, 0, 2, 0, 1)];
 
-        return new WorldAtlas(positions, subAreas, new[] { new Area(1, 0, 0) }, Array.Empty<Waypoint>(), new[] { Ash, Chestnut }, new[] { LarvaId });
+        // The east map's zaap and the north map's, a zaap the client leaves unactivated, and one on a map the graph does not hold.
+        Waypoint[] waypoints = [new(EastZaapId, EastMapId, SubAreaId, true), new(NorthZaapId, NorthMapId, SubAreaId, true), new(InsideZaapId, InsideMapId, SubAreaId, false), new(AwayZaapId, AwayZaapMapId, SubAreaId, true)];
+
+        return new WorldAtlas(positions, subAreas, new[] { new Area(1, 0, 0) }, waypoints, new[] { Ash, Chestnut }, new[] { LarvaId });
     }
 
     /// <summary>A game connection, its first request presenting a ticket the connection phase gave an account, or none.</summary>

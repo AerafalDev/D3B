@@ -119,3 +119,4 @@ Each file holds the decisions of one group of [the index](../decisions-index.md)
 - [Fights, a share of the damage received dispelled with its spell (D496)](d496-damage-share-dispelled.md): 1 decision, 3 KB.
 - [Fights, more challenges (D497)](d497-fights-challenges-more.md): 1 decision, 5 KB.
 - [Fights, the Forgelance's lance left on the map (D498)](d498-forgelance-lance-stays.md): 1 decision, 5 KB.
+- [Zaaps, the discovery of those the character does not know (D499)](d499-zaap-discovery.md): 1 decision, 4 KB.
