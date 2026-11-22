@@ -429,7 +429,11 @@ Q16 (casts and walks the server refuses that the rules allow), Q17 (a build that
   `HarvestViewsTests.AGivenProfileIsReadOnlyAndItsCopyIsTheProjectsOwnWithItsValues`, which hung three runs of six under
   load: its asynchronous block was dispatched as a value, so what it resumed after a save ending late went to an interface
   thread no longer running it. Not explained: `D3B.Studio.Tests` once ending with zero tests and exit code 1; its next
-  occurrence leaves a dump. Seen failing under load (ten test hosts at once) and not fixed:
+  occurrence leaves a dump. Fixed on 2026-11-22: `HarvestActivityTests.AHarvestWhoseWalkTheServerCutsByMovingTheCharacterLeavesItsMapGoneThrough`
+  (D488), once red in a whole run, its map left `Probable`: the walk's refusal ended the use, and the harvest looked at the map
+  before the bot's state applied the next map, sent just after it. The test now plays the measured order, the refusal and the
+  next map answering the walk's confirmation, which ends the walk on its delay; the harvest also looks again at the next step,
+  a test holding the next map until the step is over. Seen failing under load (ten test hosts at once) and not fixed:
   `GroupGateTests.AFollowerOnTheMapButOutOfThePartyIsWaitedForAndInvitedAgainEveryTenSeconds` (seven runs of twenty-one, its
   clock read some tenths late as the bot lags), two of `GroupFightTests` and
   `FrameRecorderTests.ABotsFramesAreRecordedFromItsConnectionsFirstFrameBothSidesAndD3BsOwn` once each; the group and

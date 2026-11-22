@@ -57,6 +57,10 @@ public sealed class HarvestActivity : BotActivity
     // Measured: a protector attacks 2 ms after the harvest's end; a second leaves room for the objects' events between.
     private static readonly TimeSpan _protectorDelay = TimeSpan.FromSeconds(1);
 
+    // The next step starts the delay between steps after a step that used, on the bot's clock; a second more is that step's own
+    // end and start. Anything else between, the bank's journey, a pause, a recovery, takes longer and may move the character too.
+    private static readonly TimeSpan _nextStepSlack = TimeSpan.FromSeconds(1);
+
     private readonly HarvestSettings _settings;
     private readonly WorldAtlas _atlas;
     private readonly WorldGraph _graph;
@@ -79,6 +83,7 @@ public sealed class HarvestActivity : BotActivity
     private HarvestRotationZone? _current;
     private FrozenSet<int>? _deposited;
     private (long? Map, int? Zone) _skippedOn;
+    private (HarvestTour Tour, long MapId, bool InZone, DateTimeOffset At)? _unarrivedOn;
 
     // The map a journey stayed on for a resource grown back there (D495): harvested though the tour crossed it already.
     private long? _regrownOn;
@@ -192,6 +197,14 @@ public sealed class HarvestActivity : BotActivity
         return state.Elements.Values.Any(element => element.EnabledSkills.Any(skill => zone.Targets.TryGetValue(skill.SkillId, out var target) && LevelOf(state, target.JobId) >= target.Level));
     }
 
+    private static void Leave(HarvestTour tour, long mapId, bool inZone)
+    {
+        if (inZone)
+            tour.Visit(mapId);
+        else
+            tour.Cross(mapId);
+    }
+
     private static int? VertexOf(BotContext context, CharacterState state)
     {
         return state.MapId is { } mapId && state.Cell is { } cell && context.Maps.TryGet(mapId, out var map) && context.World.TryGetVertex(map, cell, out var vertex) ? vertex : null;
@@ -207,6 +220,8 @@ public sealed class HarvestActivity : BotActivity
 
         if (await _busy.WaitAsync(context, Failure, cancellationToken).ConfigureAwait(false) || context.State is not { MapId: { } mapId } state)
             return true;
+
+        LookAgainWhereTheWalkEnded(context, state);
 
         var current = CurrentOf(context);
         var zone = current.Zone;
@@ -225,7 +240,7 @@ public sealed class HarvestActivity : BotActivity
             if (VertexOf(context, state) is { } standing)
                 current.Tour.Enter(standing);
 
-            if (await HarvestAsync(context, zone, true, cancellationToken).ConfigureAwait(false))
+            if (await HarvestAsync(context, state, zone, true, cancellationToken).ConfigureAwait(false))
                 return true;
 
             current.Tour.Visit(mapId);
@@ -236,7 +251,7 @@ public sealed class HarvestActivity : BotActivity
         {
             // Out of the zone, the profile's resources the server offers are taken on the way, once a tour (D439), and again where a
             // journey stayed for one grown back (D495).
-            if (await HarvestAsync(context, zone, false, cancellationToken).ConfigureAwait(false))
+            if (await HarvestAsync(context, state, zone, false, cancellationToken).ConfigureAwait(false))
                 return true;
 
             current.Tour.Cross(mapId);
@@ -546,10 +561,9 @@ public sealed class HarvestActivity : BotActivity
         _sightings.SeenElements(mapId, elements, now);
     }
 
-    private async Task<bool> HarvestAsync(BotContext context, HarvestZone zone, bool inZone, CancellationToken cancellationToken)
+    // The state is the step's, read once: a map the server named since is seen after the use, against the map the step began on.
+    private async Task<bool> HarvestAsync(BotContext context, CharacterState state, HarvestZone zone, bool inZone, CancellationToken cancellationToken)
     {
-        var state = context.State;
-
         // What was left for a visit stays left on that map and in that zone of it only: another zone of the map has other neighbours (D425).
         if (_skippedOn != (state.MapId, VertexOf(context, state)))
         {
@@ -594,18 +608,29 @@ public sealed class HarvestActivity : BotActivity
 
         // Moved to another map on the way, the server's doing as on a map action's cell, the character left the map it was going
         // through: it is gone through, or crossed out of the zone, or the tour would come back to it again and again, the element
-        // as far out of reach (D488).
-        if (state.MapId is { } left && context.State.MapId != left)
+        // as far out of reach (D488). The move may reach the state after the walk ended, its refusal first, so a walk that did not
+        // arrive leaves its map for the next step to look at again.
+        if (state.MapId is { } left && _current is { } current)
         {
-            if (inZone)
-                _current?.Tour.Visit(left);
-            else
-                _current?.Tour.Cross(left);
+            if (context.State.MapId != left)
+                Leave(current.Tour, left, inZone);
+            else if (outcome is UseOutcome.NotWalked)
+                _unarrivedOn = (current.Tour, left, inZone, context.Time.GetUtcNow());
         }
 
         Publish(context.State, doing);
 
         return true;
+    }
+
+    // The step right after a use whose walk did not arrive, before anything of its own moves the character: on another map, the
+    // server moved it on the way.
+    private void LookAgainWhereTheWalkEnded(BotContext context, CharacterState state)
+    {
+        if (_unarrivedOn is { } unarrived && state.MapId != unarrived.MapId && context.Time.GetUtcNow() - unarrived.At <= context.Delays.BetweenSteps + _nextStepSlack)
+            Leave(unarrived.Tour, unarrived.MapId, unarrived.InZone);
+
+        _unarrivedOn = null;
     }
 
     private List<(int ElementId, HarvestTarget Target)> Candidates(BotContext context, HarvestZone zone, CharacterState state)
