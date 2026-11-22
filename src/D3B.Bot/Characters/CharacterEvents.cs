@@ -107,6 +107,9 @@ public static class CharacterEvents
 
         return message switch
         {
+            AlterationsSnapshotEvent snapshot => state with { HasMinorElixir = snapshot.Alterations.Any(effect => effect is { AlterationId: 50, Remaining: > 0 }) },
+            AlterationAddedEvent { Alteration: { AlterationId: 50 } addedElixir } => state with { HasMinorElixir = addedElixir.Remaining > 0 },
+            TextInformationEvent { Type: TextInformationType.Message, TextId: 1665, Parameters: ["50"] } => state with { HasMinorElixir = false },
             MapCurrentEvent current => state with
             {
                 MapId = current.MapId,

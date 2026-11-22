@@ -140,6 +140,12 @@
   <data name="Food" xml:space="preserve">
     <value>Food</value>
   </data>
+  <data name="FarmAnomalyFragments" xml:space="preserve">
+    <value>Farm anomaly fragments</value>
+  </data>
+  <data name="FarmAnomalyFragmentsHelp" xml:space="preserve">
+    <value>Drink a Minor Uchronic Elixir if its effect is missing at startup or expires later, then continue hunting.</value>
+  </data>
   <data name="FoodHelp" xml:space="preserve">
     <value>In order, until the life is whole; none chosen, what the inventory holds that only heals, the smallest heal first; else the life regenerates up to the share.</value>
   </data>

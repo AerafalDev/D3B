@@ -19,6 +19,9 @@ message TextInformationEvent {
   int32 text_id = 2;
 
   TextInformationType type = 3;
+
+  // Substitutions for the numbered placeholders of the localized information message.
+  repeated string parameters = 4;
 }
 
 // What kind of text. Thirteen values in this build, 0 to 13 but 9: 0 informed, and 1 refused, in the captures; the others
@@ -37,4 +40,22 @@ enum TextInformationType {
   TEXT_INFORMATION_TYPE_VALUE_11 = 11;
   TEXT_INFORMATION_TYPE_VALUE_12 = 12;
   TEXT_INFORMATION_TYPE_VALUE_13 = 13;
+}
+
+// Alterations reported on joining the game and refreshed between fights.
+message AlterationsSnapshotEvent {
+  option (d3b.readable.partial) = true;
+  repeated RoleplayAlteration alterations = 1;
+}
+
+// An alteration granted since the latest snapshot.
+message AlterationAddedEvent {
+  option (d3b.readable.partial) = true;
+  RoleplayAlteration alteration = 1;
+}
+
+message RoleplayAlteration {
+  option (d3b.readable.partial) = true;
+  int64 alteration_id = 2;
+  int64 remaining = 3;
 }

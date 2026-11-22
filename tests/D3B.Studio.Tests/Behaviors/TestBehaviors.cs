@@ -52,7 +52,7 @@ internal sealed class TestBehaviors : IAsyncDisposable
         // Made by the behavior as it plays the node, the activities are kept for the test to read their settings.
         services.AddSingleton(new ActivityCatalog(
         [
-            new ActivityDefinition(PlainActivityId, "Plain", _ => new TestActivity()),
+            new ActivityDefinition(PlainActivityId, "Plain", _ => Made(new TestActivity())),
             new ActivityDefinition(FullActivityId, "Full", _ => Made(new TestActivity { Full = _ => true, UnloadEmpties = false })),
             new ActivityDefinition(settings.Id, settings.Name, settings.Settings, (provider, values) => Made(settings.Create(provider, values))),
         ]));

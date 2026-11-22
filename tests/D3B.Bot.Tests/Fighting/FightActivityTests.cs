@@ -650,6 +650,79 @@ public sealed class FightActivityTests : IAsyncDisposable
         Assert.Equal(ActivityOutcome.Stopped, await run.Completion);
     }
 
+    [Theory]
+    [InlineData(true, true, 1665, "50", true)]
+    [InlineData(true, true, 1665, "51", false)]
+    [InlineData(true, true, 1664, "50", false)]
+    [InlineData(true, false, 1665, "50", false)]
+    [InlineData(false, true, 1665, "50", false)]
+    public async Task OnlyTheMinorElixirsLossWhileFarmingRenewsItBeforeAttacking(bool enabled, bool carried, int textId, string alteration, bool drinks)
+    {
+        var (connection, bot) = await _play.EnterAsync(433);
+        var activity = Activity(new FightSettings
+        {
+            FarmAnomalyFragments = enabled,
+            Place = FightPlace.Chosen,
+            SubAreas = [TestPlay.SubAreaId],
+            Heal = false,
+        });
+
+        connection.Server(new AlterationsSnapshotEvent { Alterations = { new RoleplayAlteration { AlterationId = 50, Remaining = 1 } } });
+        if (carried)
+        {
+            connection.Server(new InventoryContentEvent
+            {
+                Objects = { new InventoryObject { Item = new ObjectItem { Uid = 52, ItemId = 20_962, Quantity = 3 }, Position = InventoryItem.NotWorn } },
+            });
+        }
+
+        connection.Server(new MapActorShownEvent { Actors = { GroupActor(GroupId, GroupCell, (Larva, 20)) } });
+        await bot.ProcessedAsync();
+        var run = bot.StartActivity(activity);
+
+        Assert.IsType<MapMovementRequest>(await TestWalks.SentAsync(_play, connection, 1));
+        connection.Server(new TextInformationEvent { TextId = textId, Parameters = { alteration } });
+        await bot.ProcessedAsync();
+        Assert.Equal(GroupCell, await TestWalks.WalkedAsync(_play, connection, 1));
+
+        if (drinks)
+            Assert.Equal(new ObjectUseRequest { Uid = 52 }, await TestWalks.SentAsync(_play, connection, 2));
+
+        Assert.IsType<AttackMonsterRequest>(await connection.SentAsync(drinks ? 3 : 2));
+        run.Stop();
+        Assert.Equal(ActivityOutcome.Stopped, await run.Completion);
+    }
+
+    [Theory]
+    [InlineData(50, 0, true, true)]
+    [InlineData(50, 1, true, false)]
+    [InlineData(51, 15, true, true)]
+    [InlineData(51, 15, false, false)]
+    public async Task FragmentFarmingChecksTheElixirBeforeItsFirstFight(int alteration, int remaining, bool enabled, bool drinks)
+    {
+        var (connection, bot) = await _play.EnterAsync(433);
+        connection.Server(new InventoryContentEvent
+        {
+            Objects = { new InventoryObject { Item = new ObjectItem { Uid = 52, ItemId = 20_962, Quantity = 2 }, Position = InventoryItem.NotWorn } },
+        });
+        connection.Server(new MapActorShownEvent { Actors = { GroupActor(GroupId, GroupCell, (Larva, 20)) } });
+        await bot.ProcessedAsync();
+        var run = bot.StartActivity(Activity(new FightSettings
+        {
+            FarmAnomalyFragments = enabled,
+            Place = FightPlace.Chosen,
+            SubAreas = [TestPlay.SubAreaId],
+            Heal = false,
+        }));
+        connection.Server(new AlterationsSnapshotEvent { Alterations = { new RoleplayAlteration { AlterationId = alteration, Remaining = remaining } } });
+        if (drinks)
+            Assert.Equal(new ObjectUseRequest { Uid = 52 }, await TestWalks.SentAsync(_play, connection, 1));
+        Assert.Equal(GroupCell, await TestWalks.WalkedAsync(_play, connection, drinks ? 2 : 1));
+        Assert.IsType<AttackMonsterRequest>(await connection.SentAsync(drinks ? 3 : 2));
+        run.Stop();
+        Assert.Equal(ActivityOutcome.Stopped, await run.Completion);
+    }
+
     [Fact]
     public void TheActivityFightsItsOwnFightsAndCountsWonAndLost()
     {

@@ -545,6 +545,9 @@ public sealed class BotActor : IAsyncDisposable, IRequestWithholder
 
         _state = state;
 
+        if (side == RelayDirection.FromServer && message is TextInformationEvent text && _activity is { IsOver: false } run)
+            run.Activity.OnServerText(text);
+
         if (before.Use is not null && state.Use is null && message is InteractiveUseEndedEvent)
             Volatile.Write(ref _useEndedAt, Time.GetUtcNow().UtcTicks);
 
