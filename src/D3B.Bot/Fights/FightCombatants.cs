@@ -68,7 +68,7 @@ public static class FightCombatants
             CarrierId = fighter.CarrierId,
             States = fighter.States,
             Modifiers = fighter.Modifiers,
-            Buffs = [.. fighter.Buffs.Where(buff => buff.Kind is FightBuffKind.Boost or FightBuffKind.State or FightBuffKind.SpellModifier).Select(Held)],
+            Buffs = [.. fighter.Buffs.Where(buff => buff.Kind is FightBuffKind.Boost or FightBuffKind.State or FightBuffKind.SpellModifier || buff.ActionId is MultiplyReceivedDamage or ReduceReceivedDamage).Select(Held)],
             ReceivedDamageShares = [.. fighter.Buffs.Where(buff => buff.ActionId is MultiplyReceivedDamage).Select(buff => buff.Value)],
 
             // Measured on the captures of 3.7.14.18: a monster's buff of 105 names its points by its parameter, the effect's value.

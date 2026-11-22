@@ -49,7 +49,8 @@ public sealed class FightCombatantsTests
         Assert.Equal((2, 3, 4, 5, 140), (combatant.RangeBonus, combatant.MaxSummons, combatant.Dodge, combatant.Lock, combatant.Characteristic(15)));
         Assert.Equal([3], combatant.States);
         Assert.Equal([new SpellModifier(SpellModifierKind.Range, 12_832, 3)], combatant.Modifiers);
-        Assert.Equal([new HeldBuff(12_787, 950, 3), new HeldBuff(12_787, 281, 12_832, 3), new HeldBuff(13_386, 111, 1)], combatant.Buffs);
+        // The shares and reductions of the damage received held too, so that a dispel of their spell takes them back (D495).
+        Assert.Equal([new HeldBuff(12_787, 950, 3), new HeldBuff(12_787, 281, 12_832, 3), new HeldBuff(0, 1163, 85), new HeldBuff(13_386, 111, 1), new HeldBuff(0, 105, 0, 4), new HeldBuff(0, 105, 0, 5)], combatant.Buffs);
         Assert.Equal([85], combatant.ReceivedDamageShares);
         // 4 and 5 points at level 19, each raised by 19 twentieths and rounded down, as the AI imagines them: 7 and 9.
         Assert.Equal(16, combatant.ReceivedDamageReduction);
