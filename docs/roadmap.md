@@ -410,8 +410,9 @@ follower) on the same map, the capture of every connection on; a capture's conte
   2026-11-21 in code and tests from their two captures: in a mine, the harvest's walk to an ore crossed a map action's cell,
   the server moved the character on, the map was never gone through and the tour went round eight maps for 18 minutes. A walk
   out of fights now goes round the map's action cells when it can, a harvest cut so leaves its map gone through, and a tour
-  whose journeys arrive three times in a row with nothing done gives up its other maps, saying so on the card. Left: seen in
-  game.
+  whose journeys arrive three times in a row with nothing done gives up its other maps, saying so on the card. On 2026-11-22,
+  the next map the server names after a cut walk's end is seen at the next step too, a race one test hit under load. Left:
+  seen in game.
 - **A follower left behind** (D490), the groups' stall D484 left, made on 2026-11-21 in code and tests: the master's gate
   waited without end for a follower missing, the two groups of 2026-11-19 idle 30 minutes until the server closed every
   connection (D464). A follower missing five minutes of one wait, but fighting or healing, is now left behind, the master acting

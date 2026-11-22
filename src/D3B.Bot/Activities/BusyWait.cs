@@ -20,9 +20,6 @@ namespace D3B.Bot.Activities;
 /// </remarks>
 public sealed class BusyWait
 {
-    // Longer than two steps' starts ever lie apart while the activity steps: a wait of Delay, then BotDelays.BetweenSteps, 3 s at most.
-    private static readonly TimeSpan _gap = TimeSpan.FromSeconds(20);
-
     private DateTimeOffset? _since;
     private DateTimeOffset? _last;
     private bool _settled;
@@ -33,6 +30,10 @@ public sealed class BusyWait
     /// <summary>Gets how long the character may stay busy before it is put back in order, then again before the activity fails.</summary>
     /// <remarks>Longer than anything a step leaves going: a harvest lasts seconds, a walk's confirmation less (D85).</remarks>
     public static TimeSpan Bound { get; } = TimeSpan.FromMinutes(1);
+
+    /// <summary>Gets how far apart two steps' starts lie at most while the activity steps, unpaused.</summary>
+    /// <remarks>A wait of <see cref="Delay"/>, then <see cref="BotDelays.BetweenSteps"/>, 3 s at most: a longer gap is a pause.</remarks>
+    public static TimeSpan Gap { get; } = TimeSpan.FromSeconds(20);
 
     /// <summary>Tells what keeps a character from a step's action, if anything.</summary>
     /// <param name="state">The character's state.</param>
@@ -85,7 +86,7 @@ public sealed class BusyWait
         var now = context.Time.GetUtcNow();
 
         // A pause the app asks between two steps interrupts no behavior, so no interruption says it: the gap does.
-        if (_last is { } last && now - last > _gap)
+        if (_last is { } last && now - last > Gap)
             Reset();
 
         _since ??= now;
