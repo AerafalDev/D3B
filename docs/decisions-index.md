@@ -883,3 +883,8 @@ or refines another says so in its own entry. Add a line here with every new deci
 
 - [D496](decisions/d496-damage-share-dispelled.md#d496-a-share-or-a-reduction-of-the-damage-received-is-held-by-its-spell-so-that-a-dispel-takes-it-back-the-pandawa-no-longer-drinks-three-times-for-one) A share or a reduction of the damage received is held by its spell, so that a dispel takes it back: the Pandawa no longer drinks three times for one (2026-11-22)
   - A limit of Bombance's casts a turn.
+
+## Fights, more challenges (D497)
+
+- [D497](decisions/d497-fights-challenges-more.md#d497-the-ai-plays-for-eleven-more-challenges-cast-by-cast-at-three-quarters-of-what-keeps-the-reward-a-minute-the-same) The AI plays for eleven more challenges, cast by cast, at three quarters of what keeps the reward a minute the same (2026-11-22)
+  - The owner's other challenges, Hardi left out, the kills' order judged on the turn's end, one element for the team.
