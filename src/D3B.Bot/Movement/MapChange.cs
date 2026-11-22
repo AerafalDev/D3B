@@ -1,3 +1,4 @@
+using D3B.Bot.Characters;
 using D3B.Bot.Interactives;
 using D3B.Bot.Journal;
 using D3B.Bot.Runtime;
@@ -74,7 +75,19 @@ public static class MapChange
     /// <param name="rules">What the character may follow, which chooses the cell the map is left from.</param>
     /// <param name="cancellationToken">The behavior's token.</param>
     /// <returns>How the change ended.</returns>
-    public static async Task<MapChangeOutcome> ChangeMapAsync(this BotContext context, WorldStep step, WorldPathRules rules, CancellationToken cancellationToken)
+    public static Task<MapChangeOutcome> ChangeMapAsync(this BotContext context, WorldStep step, WorldPathRules rules, CancellationToken cancellationToken)
+    {
+        return context.ChangeMapAsync(step, rules, null, cancellationToken);
+    }
+
+    /// <summary>Follows one step of a path through the world, within a behavior, unless the character is to stay once it walked to where the map is left from.</summary>
+    /// <param name="context">The behavior's context.</param>
+    /// <param name="step">The step, leaving the vertex the character stands in.</param>
+    /// <param name="rules">What the character may follow, which chooses the cell the map is left from.</param>
+    /// <param name="stay">Whether the character stays on its map after all, asked once its walk to a scroll's or a door's cell arrived, before the change is asked for (D495); never asked of a map action, which moves the character as it walks onto it, a teleport or an NPC's way.</param>
+    /// <param name="cancellationToken">The behavior's token.</param>
+    /// <returns>How the change ended: <see cref="MapChangeOutcome.Stayed"/> when <paramref name="stay"/> held.</returns>
+    public static async Task<MapChangeOutcome> ChangeMapAsync(this BotContext context, WorldStep step, WorldPathRules rules, Func<CharacterState, bool>? stay, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(context);
         ArgumentNullException.ThrowIfNull(rules);
@@ -91,7 +104,7 @@ public static class MapChange
                 WorldTransitionType.Interactive => MapChangeKind.Door,
                 _ => MapChangeKind.Scroll,
             };
-        var outcome = await ChangeAsync(context, step, rules, destination, cancellationToken).ConfigureAwait(false);
+        var outcome = await ChangeAsync(context, step, rules, destination, stay, cancellationToken).ConfigureAwait(false);
 
         context.Record(action, (at, took) => new MapChangeEntry(at, depth, from, destination, context.State.MapId, kind, outcome, took));
 
@@ -116,7 +129,7 @@ public static class MapChange
         return outcome;
     }
 
-    private static async Task<MapChangeOutcome> ChangeAsync(BotContext context, WorldStep step, WorldPathRules rules, long destination, CancellationToken cancellationToken)
+    private static async Task<MapChangeOutcome> ChangeAsync(BotContext context, WorldStep step, WorldPathRules rules, long destination, Func<CharacterState, bool>? stay, CancellationToken cancellationToken)
     {
         // The server refuses a map change or a teleport while it holds a walk the client did not follow (D89), and still did
         // after a refusal: measured on the owner's runs of 2026-11-19, a door used from the cell a refusal named was refused
@@ -188,8 +201,8 @@ public static class MapChange
                 outcome = step.Transition.Type switch
                 {
                     WorldTransitionType.MapAction => await StepOnAsync(context, map, path, cancellationToken).ConfigureAwait(false),
-                    WorldTransitionType.Interactive => await UseDoorAsync(context, mapId, path, step.Transition.ElementId, step.Transition.SkillId, cancellationToken).ConfigureAwait(false),
-                    _ => await ScrollAsync(context, mapId, path, (int)step.Transition.MapId, cancellationToken).ConfigureAwait(false),
+                    WorldTransitionType.Interactive => await UseDoorAsync(context, mapId, path, step.Transition.ElementId, step.Transition.SkillId, stay, cancellationToken).ConfigureAwait(false),
+                    _ => await ScrollAsync(context, mapId, path, (int)step.Transition.MapId, stay, cancellationToken).ConfigureAwait(false),
                 };
             }
         }
@@ -264,7 +277,7 @@ public static class MapChange
         return (current, placed);
     }
 
-    internal static async Task<MapChangeOutcome> ScrollAsync(BotContext context, long mapId, CellPath path, int neighbour, CancellationToken cancellationToken)
+    internal static async Task<MapChangeOutcome> ScrollAsync(BotContext context, long mapId, CellPath path, int neighbour, Func<CharacterState, bool>? stay, CancellationToken cancellationToken)
     {
         // Expected before the walk: a walk onto a cell of the edge may end on a map action's, which moves the character as
         // its walk is confirmed (client.md). The request for the neighbour, then, would go unanswered.
@@ -272,6 +285,9 @@ public static class MapChange
 
         if (path.Steps > 0 && await context.WalkAsync(path.End, cancellationToken).ConfigureAwait(false) is not WalkOutcome.Arrived && context.State.MapId == mapId)
             return MapChangeOutcome.NotWalked;
+
+        if (Stays(context, mapId, stay))
+            return MapChangeOutcome.Stayed;
 
         if (context.State.MapId == mapId)
             await context.SendAsync(new MapChangeRequest { MapId = neighbour }, cancellationToken).ConfigureAwait(false);
@@ -305,7 +321,7 @@ public static class MapChange
         return await NewMapAsync(context, current, placed, cancellationToken).ConfigureAwait(false);
     }
 
-    internal static async Task<MapChangeOutcome> UseDoorAsync(BotContext context, long mapId, CellPath path, int elementId, int skillId, CancellationToken cancellationToken)
+    internal static async Task<MapChangeOutcome> UseDoorAsync(BotContext context, long mapId, CellPath path, int elementId, int skillId, Func<CharacterState, bool>? stay, CancellationToken cancellationToken)
     {
         // The server names the door's skill on its element in the map's information: without it, nothing can be asked.
         if (!context.State.Elements.TryGetValue(elementId, out var element) || !element.TryGetEnabled(skillId, out var skill))
@@ -315,6 +331,9 @@ public static class MapChange
 
         if (path.Steps > 0 && await context.WalkAsync(path.End, cancellationToken).ConfigureAwait(false) is not WalkOutcome.Arrived && context.State.MapId == mapId)
             return MapChangeOutcome.NotWalked;
+
+        if (Stays(context, mapId, stay))
+            return MapChangeOutcome.Stayed;
 
         if (context.State.MapId == mapId)
         {
@@ -328,6 +347,14 @@ public static class MapChange
         }
 
         return await NewMapAsync(context, current, placed, cancellationToken).ConfigureAwait(false);
+    }
+
+    // Still on the map once the walk to where it is left from arrived, the character stays there if the journey says so (D495).
+    private static bool Stays(BotContext context, long mapId, Func<CharacterState, bool>? stay)
+    {
+        var state = context.State;
+
+        return stay is not null && state.MapId == mapId && !state.IsBusy && stay(state);
     }
 
     private static async Task<MapChangeOutcome> TeleportAsync(BotContext context, long mapId, long zaap, CancellationToken cancellationToken)

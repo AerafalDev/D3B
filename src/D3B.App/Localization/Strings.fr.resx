@@ -731,6 +731,9 @@
   <data name="OutcomeElsewhere" xml:space="preserve">
     <value>arrivé ailleurs</value>
   </data>
+  <data name="OutcomeStayed" xml:space="preserve">
+    <value>resté</value>
+  </data>
   <data name="OutcomeNotWalked" xml:space="preserve">
     <value>marche échouée</value>
   </data>

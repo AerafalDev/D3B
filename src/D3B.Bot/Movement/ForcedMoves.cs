@@ -141,7 +141,7 @@ public static class ForcedMoves
 
         chose(neighbour);
 
-        var outcome = await MapChange.ScrollAsync(context, mapId, path, (int)neighbour, cancellationToken).ConfigureAwait(false);
+        var outcome = await MapChange.ScrollAsync(context, mapId, path, (int)neighbour, null, cancellationToken).ConfigureAwait(false);
 
         return outcome is MapChangeOutcome.Changed && context.State.MapId != neighbour ? MapChangeOutcome.Elsewhere : outcome;
     }
@@ -179,7 +179,7 @@ public static class ForcedMoves
         if (!RoleplayPaths.TryFindNearest(context, map, here, [.. ElementCells.UsedFrom(cells, elementCell, cells[here].Zone)], out var path))
             return MapChangeOutcome.NoPath;
 
-        return await MapChange.UseDoorAsync(context, mapId, path, element.ElementId, skill.SkillId, cancellationToken).ConfigureAwait(false);
+        return await MapChange.UseDoorAsync(context, mapId, path, element.ElementId, skill.SkillId, null, cancellationToken).ConfigureAwait(false);
     }
 
     private static async Task<MapChangeOutcome> EnterAsync(BotContext context, CancellationToken cancellationToken)
