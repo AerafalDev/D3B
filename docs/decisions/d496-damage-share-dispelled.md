@@ -1,4 +1,4 @@
-# Fights, a share of the damage received dispelled with its spell (D495)
+# Fights, a share of the damage received dispelled with its spell (D496)
 
 A part of [the decisions](README.md); each decision has one line in [the index](../decisions-index.md). The shares and
 reductions of the damage received are
@@ -6,7 +6,7 @@ reductions of the damage received are
 the Pandawa's drink, [D420](d420-step-9-the-pandawas-drink.md#d420-a-state-the-fighter-already-held-is-no-gain-when-a-cast-puts-it-back-the-pandawa-no-longer-swaps-sobre-and-saoul-instead-of-striking)
 and [D486](d486-dispel-keeps-undispellable-buffs.md#d486-a-dispel-takes-only-the-buffs-the-server-ends-and-a-removal-naming-a-spell-that-spells-alone-the-pandawa-keeps-sobre-and-casts-in-its-element).
 
-## D495: A share or a reduction of the damage received is held by its spell, so that a dispel takes it back: the Pandawa no longer drinks three times for one
+## D496: A share or a reduction of the damage received is held by its spell, so that a dispel takes it back: the Pandawa no longer drinks three times for one
 
 *2026-11-22, the owner's report from game: "le Panda fait encore Bombance pour rien souvent j'ai l'impression". Builds
 D227, D420, D486, D491.*

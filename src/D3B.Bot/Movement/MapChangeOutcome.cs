@@ -26,4 +26,7 @@ public enum MapChangeOutcome
 
     /// <summary>The server named the new map, but did not say what is on it in time: where the character stands is not known.</summary>
     NotPlaced,
+
+    /// <summary>The walk to the cell the map is left from arrived, and the character stays: what the journey was to stay for came meanwhile, such as a resource grown back (D495). Nothing was asked of the server.</summary>
+    Stayed,
 }

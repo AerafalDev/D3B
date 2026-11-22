@@ -7,7 +7,7 @@ using static D3B.Engine.Tests.Fights.TestFights;
 
 namespace D3B.Engine.Tests.Tactics;
 
-/// <summary>A share or a reduction of the damage received that a spell gives, taken back as that spell is dispelled, as a Pandawa's Saoul is by Sobre (D495).</summary>
+/// <summary>A share or a reduction of the damage received that a spell gives, taken back as that spell is dispelled, as a Pandawa's Saoul is by Sobre (D496).</summary>
 public sealed class DamageShareDispelTests
 {
     private const int Drink = 20;
@@ -88,7 +88,7 @@ public sealed class DamageShareDispelTests
     [Fact]
     public void ADispelTakesBackTheDamageShareItsSpellGave()
     {
-        // Reported by the owner (D495): a Pandawa cast Bombance three times, drunk, sober, drunk, for the turn's end of one cast,
+        // Reported by the owner (D496): a Pandawa cast Bombance three times, drunk, sober, drunk, for the turn's end of one cast,
         // the AI keeping Saoul's share of the damage received once Sobre dispelled it and adding a second.
         var fight = Fight(Caster() with { ActionPoints = 6 });
 
@@ -128,7 +128,7 @@ public sealed class DamageShareDispelTests
     [Fact]
     public void AShareCastAgainPastItsStacksReplacesTheOldest()
     {
-        // The review's case (D495): a spell of one stack cast twice gives its share once, as a boost past its stacks does (D227).
+        // The review's case (D496): a spell of one stack cast twice gives its share once, as a boost past its stacks does (D227).
         var fight = Fight(Caster() with { ActionPoints = 6 });
 
         var twice = Cast(Cast(fight, Ward), Ward);

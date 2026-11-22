@@ -12,6 +12,7 @@ using D3B.Data;
 using D3B.Data.Jobs;
 using D3B.Data.Maps;
 using D3B.Data.World;
+using D3B.Engine.Maps;
 using D3B.Protocol.Game;
 
 namespace D3B.Bot.Harvesting;
@@ -78,6 +79,9 @@ public sealed class HarvestActivity : BotActivity
     private HarvestRotationZone? _current;
     private FrozenSet<int>? _deposited;
     private (long? Map, int? Zone) _skippedOn;
+
+    // The map a journey stayed on for a resource grown back there (D495): harvested though the tour crossed it already.
+    private long? _regrownOn;
     private int _failedJourneys;
     private BotContext? _context;
     private int? _lastTarget;
@@ -226,15 +230,19 @@ public sealed class HarvestActivity : BotActivity
 
             current.Tour.Visit(mapId);
             WantOtherZones(context, zone, current.Tour);
+            WantOtherLevel(context, zone, current.Tour);
         }
-        else if (!state.IsInHavenBag && !current.Tour.IsCrossed(mapId))
+        else if (!state.IsInHavenBag && (!current.Tour.IsCrossed(mapId) || _regrownOn == mapId))
         {
-            // Out of the zone, the profile's resources the server offers are taken on the way, once a tour (D439).
+            // Out of the zone, the profile's resources the server offers are taken on the way, once a tour (D439), and again where a
+            // journey stayed for one grown back (D495).
             if (await HarvestAsync(context, zone, false, cancellationToken).ConfigureAwait(false))
                 return true;
 
             current.Tour.Cross(mapId);
         }
+
+        _regrownOn = null;
 
         await GoOnAsync(context, current, cancellationToken).ConfigureAwait(false);
 
@@ -614,6 +622,15 @@ public sealed class HarvestActivity : BotActivity
     {
         var zone = current.Zone;
         var tour = current.Tour;
+
+        // A part of the map just gone through that the character could not walk to comes first, a map away (D495).
+        if (tour.TakeLevel() is { } level)
+        {
+            await GoRoundAsync(context, level, cancellationToken).ConfigureAwait(false);
+
+            return;
+        }
+
         var remaining = tour.Remaining(zone);
 
         if (remaining.Count is 0 && tour.OtherZones.Count is 0)
@@ -640,7 +657,19 @@ public sealed class HarvestActivity : BotActivity
                 && MapHarvest.Candidates(context, TargetsOf(zone), crossed, []).Count > 0;
         }
 
-        switch (await context.TravelAsync(remaining, zones, Harvestable, cancellationToken).ConfigureAwait(false))
+        // The map the journey is about to leave holds a wanted element that grew back since the character came: it stays for it (D495).
+        bool Regrown(CharacterState came, CharacterState now)
+        {
+            if (!MapHarvest.Regrown(context, TargetsOf(zone), came, now))
+                return false;
+
+            _regrownOn = now.MapId;
+            BotLog.StayedForRegrowth(context.Log, now.Key.CharacterId, now.MapId ?? 0);
+
+            return true;
+        }
+
+        switch (await context.TravelAsync(remaining, zones, Harvestable, Regrown, true, cancellationToken).ConfigureAwait(false))
         {
             case TravelOutcome.Arrived:
                 _failedJourneys = 0;
@@ -808,6 +837,61 @@ public sealed class HarvestActivity : BotActivity
                 BotLog.ZoneLeftAlone(context.Log, state.Key.CharacterId, mapId, other, MostZoneChanges);
             }
         }
+    }
+
+    // A map done, the part of it where wanted resources stood that the character could not walk to, such as a mine's ledge below a
+    // cliff, becomes the tour's next place, once a tour: its neighbour on the side the part touches, then the scroll back onto it (D495).
+    private void WantOtherLevel(BotContext context, HarvestZone zone, HarvestTour tour)
+    {
+        var state = context.State;
+
+        if (VertexOf(context, state) is not { } here || MapHarvest.OtherLevel(context, TargetsOf(zone), state) is not { } level)
+            return;
+
+        // The way back onto the map is one more change: the detour costs no more than a zone's (D425).
+        if (level.MapId > int.MaxValue || !context.World.TryFind(here, new HashSet<long> { level.NeighbourId }, WorldTravel.RulesOf(context), out var path)
+            || path.Steps.Count >= MostZoneChanges)
+        {
+            BotLog.LevelLeftAlone(context.Log, state.Key.CharacterId, level.MapId, level.Side, MostZoneChanges);
+
+            return;
+        }
+
+        if (tour.WantLevel(level))
+            BotLog.LevelWanted(context.Log, state.Key.CharacterId, level.MapId, level.Side, level.NeighbourId);
+    }
+
+    // Goes to the neighbour on the part's side, then back onto the map by a cell of that side's edge that leads to the part. Either
+    // way fails, the part is given up for the tour and counts for nothing against the journeys that end the activity, as a zone's detour.
+    // Back on the ledge, the next journey leaves by the ways it can walk to, those it cannot being left out (WorldTravel).
+    private async Task GoRoundAsync(BotContext context, MapLevel level, CancellationToken cancellationToken)
+    {
+        Publish(context.State, GameText.Of(HarvestTexts.Text("DoingTravel")));
+
+        var outcome = await context.TravelAsync(new HashSet<long> { level.NeighbourId }, cancellationToken).ConfigureAwait(false);
+        var state = context.State;
+
+        if (outcome is not TravelOutcome.Arrived || state.MapId != level.NeighbourId || state.Cell is not { } cell || !context.Maps.TryGet(level.NeighbourId, out var neighbour)
+            || !RoleplayPaths.TryFindNearest(context, neighbour, cell, [.. level.Arrivals.Select(arrival => MapEntries.LeftFrom(arrival, level.Side))], out var path))
+        {
+            BotLog.LevelNotEntered(context.Log, state.Key.CharacterId, level.MapId, level.Side);
+
+            return;
+        }
+
+        var changed = await MapChange.ScrollAsync(context, level.NeighbourId, path, (int)level.MapId, null, cancellationToken).ConfigureAwait(false);
+
+        if (changed is not MapChangeOutcome.Changed || context.State.MapId != level.MapId)
+        {
+            BotLog.LevelNotEntered(context.Log, state.Key.CharacterId, level.MapId, level.Side);
+
+            return;
+        }
+
+        // A visit of its own, wherever on that edge the server placed the character: what the other part left out of reach is tried
+        // again from where it stands.
+        _skippedOn = default;
+        BotLog.LevelEntered(context.Log, state.Key.CharacterId, level.MapId, level.Side);
     }
 
     private async Task WaitGrowAsync(BotContext context, HarvestZone zone, DateTimeOffset ready, CancellationToken cancellationToken)

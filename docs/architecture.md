@@ -159,13 +159,14 @@ The bots run in `D3B.Bot`: what each part does today, with the decisions that ma
   new map, then for what is on it, which the client asks for. The server answers nothing to a change it refuses, which
   ends after its delay, and refuses a door's use with an event. A teleport (D83) is one request from where the character
   stands, refused with an error text (D84); `MapChange.LeaveHavenBagAsync` leaves the character's haven bag, back to the
-  map it was entered from. An NPC's way (D253) talks to the NPC from where the character stands, waits the client's display
+  map it was entered from. A journey may ask the character to stay once its walk to a scroll's or a door's cell arrived, before
+  the change is asked for (`MapChangeOutcome.Stayed`, D495). An NPC's way (D253) talks to the NPC from where the character stands, waits the client's display
   time before each reply, gives the offered reply that leads on, and waits for the new map, which comes with the dialog's
   end or as the NPC is talked to; a question offering none of the way's replies is left, the way refused, and one offering
   no reply that the client leaves open on the new map is left by the bot.
 - **Travelling** (D74): `WorldTravel` finds the path to the maps sought, follows its first step, and finds it again from
   where the character stands, until it arrives. A change that fails leaves its transition out of the journey, which
-  fails after three, or when it goes on too long; a teleport that fails leaves every teleport out, and one the server
+  fails after three, or when it goes on too long, a way none of whose cells the character can walk to counting none (D495); a teleport that fails leaves every teleport out, and one the server
   refuses from a map is never asked from it again for the bot's life (`BotActor.NoTeleportFrom`, D248), nor an NPC's way
   whose dialog offered none of its replies (`BotActor.NoNpcWays`, D253). The bots' pathfinder goes through the ways
   through an NPC's dialog measured in game (`NpcWays.Measured`), Incarnam's portal and the boat to Sarakech (D266), which
@@ -177,7 +178,8 @@ The bots run in `D3B.Bot`: what each part does today, with the decisions that ma
   the running activity says (`BotActivity.TeleportChanges`, `WorldPathRules.TeleportChanges`), so that a zaap is taken only
   when it saves that many, and never on a tie with a walk (D167). A journey may also seek zones of maps, vertices of the world graph
   (`TravelAsync(maps, zones, ...)`, D425): the character has arrived when its vertex, found from its cell, is one of them, so another zone
-  of its own map is reached by leaving the map and coming back.
+  of its own map is reached by leaving the map and coming back. An activity may also end a journey on the map it is about to leave,
+  asked at the walk's end with the state the character came onto it with and the state now (`stayOn`, D495).
 - **Banking** (D79, D80): `Banking`, in `D3B.Bot.Banks`, goes where a banker stands, the nearest bank's inside still
   sought, talks to him, gives the reply of his the question offers, puts the stacks asked for in by one request and the
   kamas by another, and leaves. `BankDirectory`, one per host and shared by its bots, holds the banks' insides
@@ -225,7 +227,10 @@ The bots run in `D3B.Bot`: what each part does today, with the decisions that ma
   harvest (`HarvestTour.Know`, given at each step, D417). An element beside cells of another zone of its map only is out of reach from the
   character's zone (`ElementCells.UsedFrom`, D424): once the map is done the tour wants that zone, a vertex of the graph, as one more place
   (`MapHarvest.OtherZones`, `HarvestTour.OtherZones`, once per tour, a way of six map changes at most, D425), the visited, regrowth and sighting
-  sets staying keyed by map, and the elements left for a visit by map and zone. Full at its
+  sets staying keyed by map, and the elements left for a visit by map and zone. A part of the character's zone it cannot walk to,
+  a mine's ledge below a cliff, holding wanted elements (`MapHarvest.OtherLevel`, `MapLevel`), is the tour's next place once the map
+  is done, once per tour (`HarvestTour.WantLevel`, `TakeLevel`): the journey goes to the neighbour on the side the ledge touches,
+  and the character scrolls back from a cell straight across one of that edge's cells leading to it (D495). Full at its
   share of pods, it banks at the nearest bank, what the settings say, and the next step goes back; still full, it says
   why. A fight, a new connection and the player's pause resume it. `HarvestPreviews` reckons what settings lead to for the
   app. Banking waits the client's display time, half a second measured, after the banker's question and after the bank
@@ -270,7 +275,9 @@ The bots run in `D3B.Bot`: what each part does today, with the decisions that ma
   the resources of a map their priority. The journey to the tour's next map stops on the first map it crosses, not yet gone
   through, where the server offers a wanted element, even one the tour holds back as growing (D392), and even out of the zone
   (D439): there the step takes the profile's resources once a tour and marks the map `HarvestTour.Cross`, apart from the maps
-  gone through, so the tour's progress and `HasHarvested` stay the zone's. The journey to the bank stops nowhere.
+  gone through, so the tour's progress and `HasHarvested` stay the zone's. The journey to the bank stops nowhere. Any journey
+  of the tour stays on the map it is about to leave where a wanted element it can reach is offered that was not as it came
+  (`MapHarvest.Regrown`), and harvests it there, crossed already or not (D495).
   A use whose walk the server cut by moving the character to another map, as a map action's cell does, leaves the map it
   began on gone through, or crossed out of the zone (D488). A tour whose journeys arrive three times in a row with nothing done since the one before
   (`HarvestTour.Arrived`, `IdleArrivals`: no harvest, no map gone through, left out or crossed, no zone entered) goes round:
@@ -1100,7 +1107,10 @@ Pure logic with no I/O, in `D3B.Engine`, which references `D3B.Data` for the cel
 - `ElementCells`: the cells a character uses an element from, as the client chooses them, the walkable neighbours of the
   element's cell in the character's zone; the zone's walkable cells nearest it only when the element has no walkable neighbour in any zone
   (water); none when its neighbours are all in another zone (D424), which `MapHarvest.Candidates` skips for the visit and `ElementUse`
-  answers `NoPath`; `NeighbourZones` lists the zones of an element's walkable neighbours (D425).
+  answers `NoPath`; `NeighbourZones` lists the zones of an element's walkable neighbours (D425). On a map with stairs only the
+  neighbours within 40 of the element's floor count, when it has some: the server refuses a use from above a cliff (D495).
+- `MapEntries`: the cells of a map's edges, side by side, from which a character walks to some cells, and the cell of the
+  neighbouring map a scroll leaves from to come onto a cell of an edge, the one straight across (D495).
 - `CellPathfinder`: A* over the cells a character may walk on, a step across passing beside at least one walkable cell,
   steps weighed by the time the character takes, to one cell or the nearest of several; on a map with stairs, cells of
   moveZone 1, a step changes floor by 10 at most but along a stair (D86). `CellPath` gives the turning points a request
@@ -1167,7 +1177,7 @@ Pure logic with no I/O, in `D3B.Engine`, which references `D3B.Data` for the cel
     buffs dispelled and a buff past its stacks replacing the oldest, as a Zobal's masks do (D227); a malus of AP or MP
     takes the points below 0, as the server keeps them, so that its end gives back only what it took (D470); a cast giving
     a buff on the damage received that waits for any damage (trigger `D`), a share of 1163 or a reduction of 105, changes
-    every blow after it, held by its spell so that a dispel takes it back (D495), and one moving its caster towards or away from the fighter it reaches (1042, 1041) slides the
+    every blow after it, held by its spell so that a dispel takes it back (D496), and one moving its caster towards or away from the fighter it reaches (1042, 1041) slides the
     caster as that fighter would pull or push it, a caster stopped short taking the push damage of its own level (D491).
   - `FightJudge`: an imagined fight's worth for the side playing, in life: allies' life concave and a quarter as steep above
     60% of its most (`TacticWeights.Comfort`, D407), and what the side's own casts took from its other fighters again

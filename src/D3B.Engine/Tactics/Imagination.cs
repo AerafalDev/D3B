@@ -764,7 +764,7 @@ public sealed class Imagination
                 };
                 break;
             // A share is a factor, not an amount: one only maybe given is left out rather than halved.
-            // Held by its spell, so that a dispel takes it back with the spell's other buffs (D495).
+            // Held by its spell, so that a dispel takes it back with the spell's other buffs (D496).
             case EffectKind.ReceivedDamageShare when effect.IsCertain && !effect.IsRandom && effect.Value.Min > 0:
                 target = Stacked(target, level, effect, buffs, ref kept);
                 fighters[index] = Held(target with { ReceivedDamageShares = target.ReceivedDamageShares.Add(effect.Value.Min) }, level, effect, effect.Value.Min, fighters[casterIndex].Id);

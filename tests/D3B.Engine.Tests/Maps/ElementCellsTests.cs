@@ -65,6 +65,59 @@ public sealed class ElementCellsTests
         Assert.All(used, cell => Assert.Equal(4, MapGeometry.Distance(cell, 408)));
     }
 
+    // A mine's map as the owner's captures of 21 November measured it: the ore on a ledge at floor -100, three of its
+    // neighbours there, the others up on the floor 0 above, a stair elsewhere on the map.
+    private static MapCell[] Ledge()
+    {
+        var cells = TestCells.OpenBut();
+
+        cells[500] = TestCells.At(0, 1);
+        cells[176] = TestCells.At(-100, 0);
+
+        foreach (var neighbour in new[] { 177, 190, 189 })
+            cells[neighbour] = TestCells.At(-100, 0);
+
+        return cells;
+    }
+
+    [Fact]
+    public void OnAMapWithStairsAnElementIsUsedOnlyFromTheNeighboursOnItsFloor()
+    {
+        // The server refused all 124 uses from a neighbour 100 to 190 above the ore, and took 427 from 40 or less (D495).
+        Assert.Equal([177, 190, 189], ElementCells.UsedFrom(Ledge(), 176, 1));
+    }
+
+    [Fact]
+    public void OnAMapWithStairsAnElementWithNoNeighbourOnItsFloorIsUsedFromAllOfThem()
+    {
+        var cells = Ledge();
+
+        foreach (var neighbour in new[] { 177, 190, 189 })
+            cells[neighbour] = TestCells.At(0, 0);
+
+        Assert.Equal(8, ElementCells.UsedFrom(cells, 176, 1).Count);
+    }
+
+    [Fact]
+    public void OnAMapWithoutStairsTheFloorsOfAnElementsNeighboursDoNotCount()
+    {
+        var cells = Ledge();
+
+        cells[500] = TestCells.At(0, 0);
+
+        Assert.Equal(8, ElementCells.UsedFrom(cells, 176, 1).Count);
+    }
+
+    [Fact]
+    public void AnElementsZonesAreThoseOfTheNeighboursOnItsFloor()
+    {
+        var cells = Ledge();
+
+        cells[161] = new MapCell(MapCellProperties.Walkable, 0, 0, 0, 0, 2 << 4, 0);
+
+        Assert.Equal([1], ElementCells.NeighbourZones(cells, 176));
+    }
+
     [Fact]
     public void TheZonesOfAnElementsWalkableNeighboursAreListedInAscendingOrder()
     {
