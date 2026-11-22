@@ -5,6 +5,7 @@ using D3B.Bot.Fights;
 using D3B.Bot.Journal;
 using D3B.Bot.Localization;
 using D3B.Bot.Runtime;
+using D3B.Protocol.Game;
 
 namespace D3B.Studio.Behaviors;
 
@@ -249,7 +250,7 @@ internal sealed class BehaviorActivity : BotActivity, IDisposable, IBehaviorCont
     }
 
     /// <inheritdoc/>
-    public override void OnServerText(D3B.Protocol.Game.TextInformationEvent text)
+    public override void OnServerText(TextInformationEvent text)
     {
         _visit?.Current?.OnServerText(text);
     }

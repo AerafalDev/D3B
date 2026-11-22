@@ -16,6 +16,7 @@ and fights, alone or in a group, and a desktop app shows what each bot does.
 
 - **Harvest**: tours the zones that suit your level and banks what it gathers. Ready-made profiles for each profession.
 - **Hunt**: attacks the groups of monsters your profile allows, only those it expects to beat.
+- **Anomaly fragments**: enable this hunt option to use a carried Minor Uchronic Elixir when its effect is missing at startup or expires between fights.
 - **Fight AI**: plays every class, and the fight's easy challenges.
 - **Groups**: one character leads, the others follow it, fight beside it and bank with it.
 - **Studio**: your characters live, profile and route editors, a journal per bot. In French and English.

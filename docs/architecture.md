@@ -279,7 +279,10 @@ The bots run in `D3B.Bot`: what each part does today, with the decisions that ma
   of the tour stays on the map it is about to leave where a wanted element it can reach is offered that was not as it came
   (`MapHarvest.Regrown`), and harvests it there, crossed already or not (D495).
   A use whose walk the server cut by moving the character to another map, as a map action's cell does, leaves the map it
-  began on gone through, or crossed out of the zone (D488). A tour whose journeys arrive three times in a row with nothing done since the one before
+  began on gone through, or crossed out of the zone (D488). The step's state is read once, and the server's map may reach it
+  after the use ended, a walk's refusal coming first: a use whose walk did not arrive leaves its map (`_unarrivedOn`) for the
+  next step to look at again when it starts within `BotDelays.BetweenSteps` and a second: a bank's journey, a pause or a
+  recovery between takes longer, and may move the character itself. A tour whose journeys arrive three times in a row with nothing done since the one before
   (`HarvestTour.Arrived`, `IdleArrivals`: no harvest, no map gone through, left out or crossed, no zone entered) goes round:
   it gives up its other maps and zones (`GiveUpRemaining`), ends as any other, and the journal (`TourGoneRound`) and the
   card (`HarvestReporter.RoundWarning`, until the next harvest) say so.
@@ -316,7 +319,10 @@ The bots run in `D3B.Bot`: what each part does today, with the decisions that ma
   first easy challenge (`FightPlay.ChallengeOf`: its completion criterion in the pack's `ChallengeCatalog` read as a
   `TurnChallenge`) while the activity's profile asks it (`BotActivity.Challenges`, a follower its master's) and the fight is
   not judged risky; a plan that leaves it leaves it for the fight, and once a plan of the turn kept it, the turn's next plans
-  keep it at any price (`TurnChallenge.KeptThisTurn`).
+  keep it at any price (`TurnChallenge.KeptThisTurn`). Since D497, the owner's eleven more challenges of the blows and the
+  kills too: `FightState.FirstElements` keeps the element of each fighter's first blow on the other team and
+  `FightState.StruckEnemyId` the enemy the character's team struck last, and `FightChallenges.TurnOf` fills them in with the
+  target the server named, read again before each plan of the turn.
 - **The bot fights** (D198, D202, D235, D244), in `D3B.Bot.Fights`: `FightPilot`, one per bot, made by `Bots`, waits for
   a fight not over that the AI plays (`BotActor.Fights`): every fight under the host's `Fights:Alone`
   (`BotActor.FightsAlone`), else the running activity's own as its profile says (`BotActivity.FightsItsFights`); out of an
@@ -514,7 +520,7 @@ Built in session 3b (D35 to D38): the relay of the connection phase, in `D3B.Net
   in its `game` directory, with the messages the game's frames carry), pairs every readable message and enum with its
   counterpart (`ProtocolMatcher`: pins, anchors, fields, then structural scores; `google.protobuf.Any` is its own
   counterpart), audits the result (`ContractAudit`, which counts what partial messages leave out apart from its notes),
-  and writes it beside the pack, `mapping-26.binpb` (`MappingFile`, D342, D383), only when it holds. For what is left open it
+  and writes it beside the pack, `mapping-25.binpb` (`MappingFile`, D342, D383), only when it holds. For what is left open it
   lists the build's messages that fit, which the maintainer pins (D54). The mapping records the schema's SHA-256 and the
   readable protocol's digest (`ProtocolDigest`); `MappingFile.FormatVersion` changes with `mapping.proto` or that
   digest.
@@ -1178,7 +1184,7 @@ Pure logic with no I/O, in `D3B.Engine`, which references `D3B.Data` for the cel
     buffs dispelled and a buff past its stacks replacing the oldest, as a Zobal's masks do (D227); a malus of AP or MP
     takes the points below 0, as the server keeps them, so that its end gives back only what it took (D470); a cast giving
     a buff on the damage received that waits for any damage (trigger `D`), a share of 1163 or a reduction of 105, changes
-    every blow after it, and one moving its caster towards or away from the fighter it reaches (1042, 1041) slides the
+    every blow after it, held by its spell so that a dispel takes it back (D496), and one moving its caster towards or away from the fighter it reaches (1042, 1041) slides the
     caster as that fighter would pull or push it, a caster stopped short taking the push damage of its own level (D491).
   - `FightJudge`: an imagined fight's worth for the side playing, in life: allies' life concave and a quarter as steep above
     60% of its most (`TacticWeights.Comfort`, D407), and what the side's own casts took from its other fighters again
@@ -1186,7 +1192,7 @@ Pure logic with no I/O, in `D3B.Engine`, which references `D3B.Data` for the cel
     range and in sight (D208), bounded by a kill, each cell nearer an enemy no spell reaches yet counting a little, within
     the spells' range and MP too (D472); the fighters read as the search left them, states that prevent casting
     or damage and invulnerability included, a spell its states forbid dealing nothing (D228), a buff worth what it does
-    over the rounds it lasts (D209), a state the fighter held as the search began being no gain (D420); once the enemies
+    over the rounds it lasts (D209), a state the fighter held as the search began being no gain (D420), and a state set on an enemy adding to the side's blows on the next turn alone, the approach's, the effects that read it possibly taking it off (D494); once the enemies
     replied, the character's next turn searched (`Standing`, `NextTurnStart`, D210), a walk nearer the enemies weighed better
     before the reply winning a tie within a point with ending the turn now after it (`FightTactics`, D487). `Threat` and `NextTurnDamage` give
     the bench what it measures (D206). What it reckons once from where the fight starts and keeps is `JudgeTables` (each
@@ -1200,8 +1206,9 @@ Pure logic with no I/O, in `D3B.Engine`, which references `D3B.Data` for the cel
     at random the likeliest alone comes.
   - `ForgelanceLance`: a rule the pack does not hold, measured on the captures, and the AI's only one naming a breed's
     states and monster: a throw takes the lance out of the Forgelance's hand (states 3360 and 3590 ended, 3361 given), so
-    that no spell asking it follows that turn, and `Imagination.TurnStarted` and the judge's next turn put it back, the
-    lance gone from the map (D465), and the reach its spell 24591 gave its thrower's spells with it (D489).
+    that no spell asking it follows that turn (D465); the lance stays on the map, out of its hand, until it dies or a cast
+    kills it, `ForgelanceLance.Recovered` then giving it back after each cast, walk and mark struck, and the reach its spell
+    24591 gave its thrower's spells with it (D489), a throw taking its thrower's older lance off (D498).
   - `Glyphs`, `CellMark` and `CellMarkKind`, in `D3B.Engine.Fights` (D280): the marks the pack's effects set on the cells of
     a zone, a glyph struck as a turn begins (401) or ends (402), a glyph-aura (1091), a trap (400), their spell, grade
     and end; the imagined fight's marks, the server's and those the casts set (`ImaginedFight.Marks`).
@@ -1258,13 +1265,16 @@ Pure logic with no I/O, in `D3B.Engine`, which references `D3B.Data` for the cel
     alive (D407), the summoning spells left out of the first search but for the Osamodas', the Roublard's, the Steamer's and the
     Forgelance's, whose lances strike (D462), and searched again with them when it finds nothing to do (D408); given a `TurnChallenge` (D466), the plan searched again
     keeping it when the best breaks it, its casts, walks and ends those the challenge allows, chosen while its loss stays
-    within `TurnChallenge.MostLoss` of the best's gain (`TurnPlan.KeepsChallenge`); `Place`; `Odds`; `OddsOverTheFight`, the enemies dying one after another (D249); `PathTo`.
+    within `TurnChallenge.MostLoss` of the best's gain (`TurnPlan.KeepsChallenge`); each cast judged by `TurnChallenge.Cast`
+    against the fight before and after it, which gives the challenge as it then stands (`ChallengeKills`, `ChallengeStrikes`,
+    the element bound, the enemy struck, the next target), the best plan watched for it on the way (D497); `Place`; `Odds`; `OddsOverTheFight`, the enemies dying one after another (D249); `PathTo`.
     `TacticWeights`, measured on 69 fights (D212), next turn's weight refused at 1 or more, which would leave a kill now for later (D460), `TurnSearchLimits`, `TurnPlan`, `TacticAction`.
   - Measured on the 166 turns of the characters captured: a search in 9 ms halfway, 158 ms at most (9e); on 204 searches
     of 61 captures, 56 ms halfway, 422 ms at most, and 86 ms halfway on the AI's own fights (9e2); benchmarked, a turn
     against four enemies in 1.6 ms (9e), 3.1 ms and 6.5 MB (9e2, D216), 3.1 ms and 4.79 MB (9f, D229), 2.83 ms and
     4.81 MB (9g4, D255); on 452 searches of 94 captures, 90 ms halfway, 538 ms at most (9g4); on 1,619 searches of 83
-    captures, 82 ms halfway, 711 ms at most, and on the 417 turns of an easy challenge, 90 ms and 786 ms given it (D466).
+    captures, 82 ms halfway, 711 ms at most, and on the 417 turns of an easy challenge, 90 ms and 786 ms given it (D466); on the 572 turns of the 23 challenges of the
+    same captures, 160 ms and 792 ms given it, the machine shared (D497).
 - The weapons' blows, in `D3B.Engine.Fights` (9e3, D220): `WeaponBlows`, each sword's blow a level of spell 0, the
   punch's with the sword's fields and its effects used in fights, after the pack's levels in one catalog the rules, the
   effects and the AI share (`SpellCatalog.WithLevels`); `EffectFormulas.DealtByWeapon` and the weapons' multipliers,

@@ -107,9 +107,14 @@ public static class CharacterEvents
 
         return message switch
         {
-            AlterationsSnapshotEvent snapshot => state with { HasMinorElixir = snapshot.Alterations.Any(effect => effect is { AlterationId: 50, Remaining: > 0 }) },
-            AlterationAddedEvent { Alteration: { AlterationId: 50 } addedElixir } => state with { HasMinorElixir = addedElixir.Remaining > 0 },
-            TextInformationEvent { Type: TextInformationType.Message, TextId: 1665, Parameters: ["50"] } => state with { HasMinorElixir = false },
+            AlterationsSnapshotEvent snapshot => state with
+            {
+                Alterations = ImmutableSortedDictionary<long, long>.Empty.SetItems(snapshot.Alterations.Select(effect => KeyValuePair.Create(effect.AlterationId, effect.Remaining))),
+                HasAlterationSnapshot = true,
+            },
+            AlterationAddedEvent { Alteration: { } effect } => state with { Alterations = state.Alterations.SetItem(effect.AlterationId, effect.Remaining) },
+            TextInformationEvent { Type: TextInformationType.Message, TextId: 1665, Parameters: [var id] } when
+                long.TryParse(id, System.Globalization.CultureInfo.InvariantCulture, out var expired) => state with { Alterations = state.Alterations.SetItem(expired, 0) },
             MapCurrentEvent current => state with
             {
                 MapId = current.MapId,
