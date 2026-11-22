@@ -855,6 +855,14 @@ public sealed class FightJudge
             var without = Without(fighter, buff);
             var (dealt, taken) = fighter.Team == _team ? AllyBuff(fight, known, fighter, without) : EnemyBuff(fight, known, fighter, without);
 
+            // The owner's report (D494): a Huppermage cycled its enemy's elemental states and struck off its element, each state
+            // credited for the whole fight as the blows it lets the Huppermage's spells deal more, while the combination those
+            // blows set off takes every state off. What a state on an enemy adds to the side's blows is the approach's, next
+            // turn's, alone: the effects reading a state on their target may take it off, which the judge cannot tell. A state that
+            // lowers the side's blows, such as one keeping the enemy from taking damage, still costs its rounds.
+            if (buff.IsState && fighter.Team != _team)
+                dealt = Math.Min(dealt, 0);
+
             worth += (DamageWorth * _weights.Approach * dealt * ours) + (_weights.Threat * taken * theirs);
         }
 
