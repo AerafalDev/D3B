@@ -270,6 +270,22 @@ public sealed class FightTactics
         return false;
     }
 
+    private ImmutableArray<EffectElement> BlowElements(SpellLevel level, Combatant caster)
+    {
+        // The elements a cast strikes in, its caster's best or worst resolved: Élémentaire binds a fighter to one (D497).
+        var elements = ImmutableArray.CreateBuilder<EffectElement>();
+
+        foreach (var effect in _spells.EffectsOf(level))
+        {
+            var action = _actions.Of(effect.EffectId);
+
+            if (action.Kind is EffectKind.Damage or EffectKind.Steal or EffectKind.FixedDamage && EffectFormulas.Resolve(action.Element, caster) is var element and not EffectElement.None && !elements.Contains(element))
+                elements.Add(element);
+        }
+
+        return elements.ToImmutable();
+    }
+
     private static HashSet<long> EnemiesAlive(ImaginedFight fight)
     {
         var team = fight.Actor.Team;
@@ -458,39 +474,38 @@ public sealed class FightTactics
         ArgumentNullException.ThrowIfNull(weights);
         ArgumentNullException.ThrowIfNull(limits);
 
-        var free = Search(fight, knowledge, weights, limits, refused, null) ?? throw new UnreachableException("A search with no challenge always ends the turn now among its finalists.");
+        // The best plan is watched for the challenge, never held to it: a challenge of the blows (D497) is broken by a cast on
+        // the way, not only where the turn ends.
+        var free = Search(fight, knowledge, weights, limits, refused, challenge, keep: false) ?? throw new UnreachableException("A search that keeps no challenge always ends the turn now among its finalists.");
 
-        if (challenge is null)
+        if (challenge is null || free.Plan.KeepsChallenge)
             return free.Plan;
 
-        if (challenge.IsKept(free.End, knowledge))
-            return free.Plan with { KeepsChallenge = true };
-
-        if (Search(fight, knowledge, weights, limits, refused, challenge) is not { } kept)
+        if (Search(fight, knowledge, weights, limits, refused, challenge, keep: true) is not { } kept)
             return free.Plan;
 
         var loss = free.Plan.Score - kept.Plan.Score;
         var gain = Math.Max(free.Plan.Score - free.Plan.Standing, Tie);
 
-        return loss <= challenge.MostLoss * gain ? kept.Plan with { KeepsChallenge = true } : free.Plan;
+        return loss <= challenge.MostLoss * gain ? kept.Plan : free.Plan;
     }
 
-    private (TurnPlan Plan, ImaginedFight End)? Search(ImaginedFight fight, FightKnowledge knowledge, TacticWeights weights, TurnSearchLimits limits, IReadOnlySet<(int SpellId, int Cell)>? refused, TurnChallenge? challenge)
+    private (TurnPlan Plan, ImaginedFight End)? Search(ImaginedFight fight, FightKnowledge knowledge, TacticWeights weights, TurnSearchLimits limits, IReadOnlySet<(int SpellId, int Cell)>? refused, TurnChallenge? challenge, bool keep)
     {
         // The owner's ask, for a fast farm (D408): but for the breeds of _summonsFirstBreeds, a summon is a last resort, brought when the
         // turn has nothing else worth doing; they slow a fight and rarely win it.
-        if (SummonsAreLastResort(fight, knowledge) && Search(fight, knowledge.With(fight.Actor.Id, knowledge.SpellsOf(fight.Actor.Id).RemoveAll(IsSummon)), weights, limits, refused, challenge) is { Plan.IsEmpty: false } plain)
+        if (SummonsAreLastResort(fight, knowledge) && Search(fight, knowledge.With(fight.Actor.Id, knowledge.SpellsOf(fight.Actor.Id).RemoveAll(IsSummon)), weights, limits, refused, challenge, keep) is { Plan.IsEmpty: false } plain)
             return plain;
 
         var clock = Stopwatch.StartNew();
         var judge = JudgeOf(fight, knowledge, weights);
         var weighed = 1;
-        var root = new Node(fight, [], judge.Judge(fight));
+        var root = new Node(fight, [], judge.Judge(fight), challenge);
         var finalists = new List<Finalist>();
         List<Node> frontier = [root];
 
         // Ending the turn now, and the best walks: ended so, the turn is weighed against the enemies' reply too.
-        Ends(root, judge, knowledge, challenge, finalists, RootEnds, ref weighed);
+        Ends(root, judge, knowledge, keep, finalists, RootEnds, ref weighed);
 
         for (var depth = 0; depth < limits.Depth && frontier.Count > 0 && clock.Elapsed < limits.Budget; depth++)
         {
@@ -498,7 +513,7 @@ public sealed class FightTactics
 
             foreach (var node in frontier)
             {
-                foreach (var (from, level, cell) in Casts(node.Fight, knowledge, limits, refused, challenge))
+                foreach (var (from, level, cell) in Casts(node.Fight, knowledge, limits, refused, keep ? node.Challenge : null))
                 {
                     if (clock.Elapsed >= limits.Budget)
                         break;
@@ -509,7 +524,13 @@ public sealed class FightTactics
                         ? [.. node.Actions, TacticAction.Walk(walk.Cell), TacticAction.Cast(level.SpellId, level.Id, cell)]
                         : [.. node.Actions, TacticAction.Cast(level.SpellId, level.Id, cell)];
 
-                    children.Add(new Node(cast, actions, judge.Judge(cast)));
+                    // A cast that breaks the challenge is no plan of a search that keeps it.
+                    var stepped = node.Challenge?.Cast(walked, cast, BlowElements(level, walked.Actor));
+
+                    if (keep && node.Challenge is not null && stepped is null)
+                        continue;
+
+                    children.Add(new Node(cast, actions, judge.Judge(cast), stepped, node.Broken || (node.Challenge is not null && stepped is null)));
                     weighed++;
                 }
             }
@@ -521,7 +542,7 @@ public sealed class FightTactics
             foreach (var child in WithEachPortals(WithEachStates(ranked, child => child.Fight.Actor, limits.Width * 2), ranked, limits.Width))
             {
                 if (seen.Add(Signature(child.Fight)))
-                    kept.Add((child, Ends(child, judge, knowledge, challenge, finalists, 1, ref weighed)));
+                    kept.Add((child, Ends(child, judge, knowledge, keep, finalists, 1, ref weighed)));
             }
 
             var leading = kept.OrderByDescending(pair => pair.Score).Select(pair => pair.Node).ToList();
@@ -614,7 +635,7 @@ public sealed class FightTactics
             }
         }
 
-        return (new TurnPlan(chosen.Actions, chosenScore, standingScore, weighed, clock.Elapsed), chosen.End);
+        return (new TurnPlan(chosen.Actions, chosenScore, standingScore, weighed, clock.Elapsed) { KeepsChallenge = challenge is not null && chosen.Keeps }, chosen.End);
     }
 
     /// <summary>Gets the fight once the fighter playing's summons, then the enemies, played their next turns after its, as greedily as the search imagines them.</summary>
@@ -715,7 +736,7 @@ public sealed class FightTactics
         return Moves.Path(fight.Map, fight.Fighters, fight.Actor, cell, Glyphs.TrapCells(fight.Marks));
     }
 
-    private double Ends(Node node, FightJudge judge, FightKnowledge knowledge, TurnChallenge? challenge, List<Finalist> finalists, int most, ref int weighed)
+    private double Ends(Node node, FightJudge judge, FightKnowledge knowledge, bool keep, List<Finalist> finalists, int most, ref int weighed)
     {
         // Ending where the fighter stands comes first, so that a tie keeps it there and no walk is sent; with a challenge, only
         // the ends that keep it, a walk worse than standing among them when standing breaks it.
@@ -728,8 +749,10 @@ public sealed class FightTactics
         if (carrying && !node.Actions.IsEmpty)
             return node.Score;
 
-        var here = challenge?.IsKept(node.Fight, knowledge) ?? true;
-        List<Finalist> ends = here ? [new Finalist(node.Actions, node.Fight, node.Score)] : [];
+        var challenge = node.Broken ? null : node.Challenge;
+        var keepsHere = challenge?.IsKept(node.Fight, knowledge) ?? false;
+        var here = !keep || keepsHere;
+        List<Finalist> ends = here ? [new Finalist(node.Actions, node.Fight, node.Score, keepsHere)] : [];
 
         if (!carrying && actor.MovementPoints > 0 && actor.Cell is not Combatant.NoCell)
         {
@@ -739,8 +762,9 @@ public sealed class FightTactics
                     continue;
 
                 var walked = Imagination.Walked(node.Fight, cell, left);
+                var keeps = challenge?.IsKept(walked, knowledge) ?? false;
 
-                if (challenge?.IsKept(walked, knowledge) is false)
+                if (keep && !keeps)
                     continue;
 
                 var score = judge.Judge(walked);
@@ -748,7 +772,7 @@ public sealed class FightTactics
                 weighed++;
 
                 if (!here || score > node.Score + Better)
-                    ends.Add(new Finalist([.. node.Actions, TacticAction.Walk(cell)], walked, score));
+                    ends.Add(new Finalist([.. node.Actions, TacticAction.Walk(cell)], walked, score, keeps));
             }
         }
 
@@ -1029,7 +1053,7 @@ public sealed class FightTactics
     }
 
 
-    private sealed record Node(ImaginedFight Fight, ImmutableArray<TacticAction> Actions, double Score);
+    private sealed record Node(ImaginedFight Fight, ImmutableArray<TacticAction> Actions, double Score, TurnChallenge? Challenge, bool Broken = false);
 
-    private sealed record Finalist(ImmutableArray<TacticAction> Actions, ImaginedFight End, double Score);
+    private sealed record Finalist(ImmutableArray<TacticAction> Actions, ImaginedFight End, double Score, bool Keeps);
 }

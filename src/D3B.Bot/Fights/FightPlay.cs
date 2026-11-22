@@ -23,8 +23,8 @@ namespace D3B.Bot.Fights;
 /// client controls plays its turns the same, with the same requests, which the server takes as the summon's (9f2).
 /// </para>
 /// <para>
-/// With a profile's challenges (D466), each turn plays for the fight's challenge while it is easy, asking only of the
-/// character's own turns (<see cref="TurnChallenge"/>): the search keeps it while what it costs the turn stays within what
+/// With a profile's challenges (D466), each turn plays for the fight's challenge while it is one the AI keeps: of the
+/// character's own turns, its blows or its kills (<see cref="TurnChallenge"/>, D497): the search keeps it while what it costs the turn stays within what
 /// its bonus pays, and once a turn leaves it, it is left for the fight, a turn's challenge being lost then. A fight judged too
 /// risky plays for none.
 /// </para>
@@ -134,7 +134,7 @@ public static class FightPlay
 
                 // The pack's challenges are read only once a turn may play for one.
                 var play = PlayOf(context);
-                var playedFor = play is ChallengePlay.None || risky || fight.Challenges.IsEmpty ? null : ChallengeOf(fight, tables.Challenges, play, risky, left);
+                var playedFor = play is ChallengePlay.None || risky || fight.Challenges.IsEmpty ? null : ChallengeOf(fight, tables.Challenges, play, risky, left, fight.PlayingId ?? self);
 
                 await PlayTurnAsync(context, tactics, tables, map, weights, refused, playedFor, left, cancellationToken).ConfigureAwait(false);
                 await context.WaitUntilAsync(next => next.Fight is not { IsOwnTurn: true }, context.Delays.Answer, cancellationToken).ConfigureAwait(false);
@@ -161,14 +161,15 @@ public static class FightPlay
         return allies ? TacticWeights.Group : TacticWeights.Default;
     }
 
-    /// <summary>Gets the challenge the AI plays for in a turn: the fight's first easy one not yet won, lost nor left (D466).</summary>
+    /// <summary>Gets the challenge the AI plays for in a turn: the fight's first one it keeps not yet won, lost nor left (D466, D497).</summary>
     /// <param name="fight">The fight, as the bot knows it.</param>
     /// <param name="catalog">The client's challenges, whose completion criteria say what each asks.</param>
     /// <param name="play">Which challenges the profile plays for.</param>
     /// <param name="risky">Whether the AI judged the fight too risky: then none, the fight's safety first.</param>
     /// <param name="left">The challenges a turn left this fight.</param>
+    /// <param name="fighterId">The fighter whose turn it is, the character or a summon it controls.</param>
     /// <returns>The challenge and what it asks of the turn; null when the AI plays for none.</returns>
-    internal static (int Id, TurnChallenge Challenge)? ChallengeOf(FightState fight, ChallengeCatalog catalog, ChallengePlay play, bool risky, IReadOnlySet<int> left)
+    internal static (int Id, TurnChallenge Challenge)? ChallengeOf(FightState fight, ChallengeCatalog catalog, ChallengePlay play, bool risky, IReadOnlySet<int> left, long fighterId)
     {
         ArgumentNullException.ThrowIfNull(fight);
         ArgumentNullException.ThrowIfNull(catalog);
@@ -179,11 +180,33 @@ public static class FightPlay
 
         foreach (var challenge in fight.Challenges)
         {
-            if (challenge.Succeeded is null && !left.Contains(challenge.Id) && TurnChallenge.Of(catalog.CompletionOf(challenge.Id), challenge.Bonus) is { } turn)
+            if (challenge.Succeeded is null && !left.Contains(challenge.Id) && FightChallenges.TurnOf(fight, challenge, catalog, fighterId) is { } turn)
                 return (challenge.Id, turn);
         }
 
         return null;
+    }
+
+    /// <summary>Gets the challenge a turn plays for as the server last told of it, before each plan of the turn (D497).</summary>
+    /// <param name="played">The challenge and what it asked of the turn so far.</param>
+    /// <param name="fight">The fight, as the bot knows it now.</param>
+    /// <param name="catalog">The client's challenges.</param>
+    /// <param name="fighterId">The fighter whose turn it is.</param>
+    /// <returns>The challenge with what the turn's casts bound it to, its price and the turn's start kept; null once the server decided it.</returns>
+    /// <remarks>The review's finding: a challenge the server said lost during the turn is no longer kept at any price.</remarks>
+    internal static (int Id, TurnChallenge Challenge)? Refreshed((int Id, TurnChallenge Challenge) played, FightState? fight, ChallengeCatalog catalog, long fighterId)
+    {
+        ArgumentNullException.ThrowIfNull(catalog);
+
+        if (fight?.Challenges.FirstOrDefault(known => known.Id == played.Id) is not { } known)
+            return played;
+
+        if (known.Succeeded is not null)
+            return null;
+
+        return FightChallenges.TurnOf(fight, known, catalog, fighterId) is { } fresh
+            ? (played.Id, fresh with { MostLoss = played.Challenge.MostLoss, StartCell = played.Challenge.StartCell })
+            : played;
     }
 
     private static ChallengePlay PlayOf(BotContext context)
@@ -367,6 +390,9 @@ public static class FightPlay
 
             if (refusedSpells.Count > 0)
                 imagined = (imagined.Fight, imagined.Knowledge.Without(refusedSpells));
+
+            if (challenge is { } going)
+                challenge = Refreshed(going, context.State.Fight, tables.Challenges, self);
 
             var plan = tactics.Plan(imagined.Fight, imagined.Knowledge, weights, TurnSearchLimits.Default, refused, challenge?.Challenge);
 

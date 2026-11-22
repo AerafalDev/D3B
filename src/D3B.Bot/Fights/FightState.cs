@@ -90,6 +90,13 @@ public sealed record FightState
     /// <remarks>Measured: the server names them as the fight starts, changes their targets as turns go, and gives each result before the fight's end.</remarks>
     public ImmutableArray<FightChallenge> Challenges { get; init; } = [];
 
+    /// <summary>Gets the element of each fighter's first blow on a fighter of the other team, as the server's ids give it: Élémentaire's (D497).</summary>
+    /// <remarks>0 neutral, 1 earth, 2 fire, 3 water, 4 air; a push's damage binds none.</remarks>
+    public ImmutableSortedDictionary<long, int> FirstElements { get; init; } = ImmutableSortedDictionary<long, int>.Empty;
+
+    /// <summary>Gets the enemy a fighter of the character's team struck last, or null: the one Focus holds the team to while it lives (D497).</summary>
+    public long? StruckEnemyId { get; init; }
+
     /// <summary>Gets how the fight ended for the character, once the server sent the results.</summary>
     public FightEnd? End { get; init; }
 }

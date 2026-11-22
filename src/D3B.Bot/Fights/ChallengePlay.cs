@@ -7,6 +7,6 @@ public enum ChallengePlay
     /// <summary>None: the AI plays as if the fight had no challenge.</summary>
     None,
 
-    /// <summary>The easy ones, which ask only of the character's own turns: the owner's choice of default.</summary>
+    /// <summary>The owner's list, which a turn keeps (D466, D497): the owner's choice of default.</summary>
     Easy,
 }
