@@ -16,7 +16,7 @@ mod version_file;
 pub(crate) mod wire;
 
 pub use error::RelayError;
-pub(crate) use game_connection::Side;
+pub(crate) use game_connection::{BotFrames, Side};
 
 use std::net::Ipv4Addr;
 use std::path::PathBuf;
@@ -121,8 +121,9 @@ impl Status {
     }
 }
 
-/// Makes the observer of the `number`th game connection's decoded messages, given the build it named.
-pub(crate) type Observe = Arc<dyn Fn(u64, Option<&str>) -> Box<dyn Observer> + Send + Sync>;
+/// Makes the observer of the `number`th game connection's decoded messages, given the build it named and the bot's
+/// frames to write to it (`docs/relay.md`, "The bot's frames").
+pub(crate) type Observe = Arc<dyn Fn(u64, Option<&str>, BotFrames) -> Box<dyn Observer> + Send + Sync>;
 
 /// The relay for the app's life: redirects the client and carries its connections from [`Relay::start`] to
 /// [`Relay::stop`]. Every change of its [`Status`] is told to the `notify` it was made with.
@@ -165,7 +166,7 @@ impl Relay {
     /// decoded messages to the observer `observe` makes for it.
     pub(crate) fn new(
         notify: impl Fn(Status) + Send + Sync + 'static,
-        observe: impl Fn(u64, Option<&str>) -> Box<dyn Observer> + Send + Sync + 'static,
+        observe: impl Fn(u64, Option<&str>, BotFrames) -> Box<dyn Observer> + Send + Sync + 'static,
     ) -> Self {
         Self {
             inner: Arc::new(Inner {
@@ -360,7 +361,7 @@ fn lock<T>(mutex: &Mutex<T>) -> std::sync::MutexGuard<'_, T> {
 mod status_tests {
     use super::*;
 
-    fn unobserved(_: u64, _: Option<&str>) -> Box<dyn Observer> {
+    fn unobserved(_: u64, _: Option<&str>, _: BotFrames) -> Box<dyn Observer> {
         Box::new(crate::protocol::Unobserved)
     }
 

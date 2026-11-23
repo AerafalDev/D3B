@@ -15,14 +15,17 @@ use super::relay::MapAt;
 use crate::data::{Breed, World, head_file};
 use crate::game::{ActorKind, Context, Live, Monster, Seen, Sex, View, Who};
 use crate::protocol::Observer;
+use crate::relay::BotFrames;
 
 /// Makes, for each game connection, the character the app follows: each change of its view goes to the webview as
 /// [`CharacterChanged`], its map named only when the game data's build is the one the connection named.
 pub(crate) fn follow(
     handle: tauri::AppHandle,
     inspector: Arc<Inspector>,
-) -> impl Fn(u64, Option<&str>) -> Box<dyn Observer> + Send + Sync + 'static {
-    move |number, build| {
+) -> impl Fn(u64, Option<&str>, BotFrames) -> Box<dyn Observer> + Send + Sync + 'static {
+    // The bot's frames are dropped, which closes their way: nothing writes to the game before the bot plays (step 4's
+    // R1, docs/play.md).
+    move |number, build, _bot| {
         let connection = u32::try_from(number).unwrap_or(u32::MAX);
         let streamed = handle.clone();
         let send = Box::new(move |frames: &_| inspector::emit(&streamed, frames));

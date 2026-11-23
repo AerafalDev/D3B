@@ -67,6 +67,7 @@ One line each: what is left to measure. Step 3's own measure is [bot.md](bot.md#
 - [renaming a blueprint of mine](checklists/rename-blueprint.md): open, the parts of 1 to 3 not tried.
 - [Advanced tools](checklists/advanced-tools.md): open, items 4 and 6.
 - [the Protocol panel's opening](checklists/protocol-panel.md): open, item 5, the parts of 1 and 3 not tried.
+- [the bot's frames in the relay](checklists/step4-bot-frames.md): open, items 1 and 2 (step 4's F2).
 - [a given blueprint's update](checklists/blueprint-update.md): open, items 1 to 3; 4 waits on a given v2.
 - [the `.d3b` file](checklists/d3b-file.md): open, items 4 and 6, and the rest of 5.
 - [the relay](checklists/relay.md): waiting, item 10's offer on the release after v0.14.0, 11 on an accented account.
