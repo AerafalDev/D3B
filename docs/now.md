@@ -32,9 +32,9 @@ One line per item, in order; each is designed in [bot.md](bot.md) or [play.md](p
 
 - v2.4: drawn compact.
 - v2.4: sentences in place, and its checklist; the language is frozen there (ADR 0019, the owner, 2026-11-23).
-- Step 4's first slice, F2 to F10: the game layer reading every family the C# version reads, paths, typed acts
+- Step 4's first slice, F3 to F7 and F10: the game layer reading every family the C# version reads, typed acts
   ([play.md](play.md#the-stack), ADR 0021); started on the owner's go of 2026-11-23, its PRs labelled `step-finish`;
-  F8 and F9, the paths, done ([game.md](game.md#the-paths)).
+  F1 ([protocol-coverage.md](protocol-coverage.md)), F2 (the bot's frames), F8 and F9 (the paths) done.
 - Step 4's first slice, R1 to R9: Récolte automatique playing on Windows; its measure, a 30-minute loop unblocked.
 - (26) events at run time: priorities, modes, thresholds, settings at safe points, When, Every, At, Trigger; an
   event cutting a long action at its next inner step (ADR 0020).
