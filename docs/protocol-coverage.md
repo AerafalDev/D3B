@@ -17,29 +17,29 @@ protocol's replay writes (`D3B_CAPTURES`, [protocol.md](protocol.md#tests)); CI 
 | Build | Pinned | Decoded | Encoded | Replayed | Measured in game |
 | --- | ---: | ---: | ---: | --- | ---: |
 | 3.7.13.17 | 24 of 141 | 24 | 2 | 2 connections, 345 frames | 15 |
-| 3.7.14.18 | 24 of 141 | 24 | 2 | 2 connections, 63,557 frames | 0 |
+| 3.7.14.18 | 24 of 141 | 24 | 2 | 243 connections, 12,152,831 frames | 0 |
 
 ## Movement
 
 | Message | Side | 3.7.13.17 | 3.7.14.18 | Lua |
 | --- | --- | --- | --- | --- |
-| MapMovementRequest | client | `jok`, decoded, encoded, 5 frames | `jok`, decoded, encoded, 12 frames | `map.moveToCell` |
-| MapMovementEvent | server | `jnz`, decoded, 13 frames, [measured](checklists/protocol.md) | `jnz`, decoded, 4,904 frames | `map.cellId` |
-| MapMovementConfirmRequest | client | `jny`, decoded, 5 frames | `jny`, decoded, 3,618 frames | `map.moveToCell` |
-| MapMovementConfirmResponse | server | `jpk`, decoded, 5 frames | `jpk`, decoded, 3,617 frames | — |
-| MapMovementRefusedEvent | server | `jpc`, decoded | `jpc`, decoded, 116 frames | `map.moveToCell` |
-| MapMovementCancelRequest | client | `jpj`, decoded | `jpj`, decoded, 2 frames | — |
-| MapChangeRequest | client | `joc`, decoded, encoded | `joc`, decoded, encoded | `map.changeMap`, `map.moveToward` |
+| MapMovementRequest | client | `jok`, decoded, encoded, 5 frames | `jok`, decoded, encoded, 8,599 frames | `map.moveToCell` |
+| MapMovementEvent | server | `jnz`, decoded, 13 frames, [measured](checklists/protocol.md) | `jnz`, decoded, 372,109 frames | `map.cellId` |
+| MapMovementConfirmRequest | client | `jny`, decoded, 5 frames | `jny`, decoded, 120,840 frames | `map.moveToCell` |
+| MapMovementConfirmResponse | server | `jpk`, decoded, 5 frames | `jpk`, decoded, 120,840 frames | — |
+| MapMovementRefusedEvent | server | `jpc`, decoded | `jpc`, decoded, 1,584 frames | `map.moveToCell` |
+| MapMovementCancelRequest | client | `jpj`, decoded | `jpj`, decoded, 66 frames | — |
+| MapChangeRequest | client | `joc`, decoded, encoded | `joc`, decoded, encoded, 3,575 frames | `map.changeMap`, `map.moveToward` |
 
 ## Maps
 
 | Message | Side | 3.7.13.17 | 3.7.14.18 | Lua |
 | --- | --- | --- | --- | --- |
-| MapCurrentEvent | server | `jow`, decoded, 5 frames, [measured](checklists/protocol.md) | `jow`, decoded, 3,285 frames | `map.currentMapId`, `map.currentMap` |
-| MapInformationRequest | client | `kjt`, decoded, 5 frames, [measured](checklists/protocol.md) | `kjt`, decoded, 3,285 frames | — |
-| MapInformationEvent | server | `jnj`, decoded, 5 frames, [measured](checklists/protocol.md) | `jnj`, decoded, 3,273 frames | `map.cellId`, `map.npcs`, `map.monsterGroups`, `map.getInteractives` |
-| MapActorShownEvent | server | `jns`, decoded, 10 frames, [measured](checklists/protocol.md) | `jns`, decoded, 703 frames | `map.monsterGroups`, `map.npcs` |
-| MapActorRemovedEvent | server | `kjz`, decoded, 5 frames, [measured](checklists/protocol.md) | `kjz`, decoded, 626 frames | `map.monsterGroups`, `map.npcs` |
+| MapCurrentEvent | server | `jow`, decoded, 5 frames, [measured](checklists/protocol.md) | `jow`, decoded, 104,054 frames | `map.currentMapId`, `map.currentMap` |
+| MapInformationRequest | client | `kjt`, decoded, 5 frames, [measured](checklists/protocol.md) | `kjt`, decoded, 104,051 frames | — |
+| MapInformationEvent | server | `jnj`, decoded, 5 frames, [measured](checklists/protocol.md) | `jnj`, decoded, 95,929 frames | `map.cellId`, `map.npcs`, `map.monsterGroups`, `map.getInteractives` |
+| MapActorShownEvent | server | `jns`, decoded, 10 frames, [measured](checklists/protocol.md) | `jns`, decoded, 122,313 frames | `map.monsterGroups`, `map.npcs` |
+| MapActorRemovedEvent | server | `kjz`, decoded, 5 frames, [measured](checklists/protocol.md) | `kjz`, decoded, 87,280 frames | `map.monsterGroups`, `map.npcs` |
 
 ## Interactives
 
@@ -49,8 +49,8 @@ protocol's replay writes (`D3B_CAPTURES`, [protocol.md](protocol.md#tests)); CI 
 | InteractiveUsedEvent | server | — | — | `map.gather`, `map.door` |
 | InteractiveUseErrorEvent | server | — | — | `map.gather`, `map.useInteractive` |
 | InteractiveUseEndedEvent | server | — | — | `map.gather` |
-| InteractiveElementUpdatedEvent | server | `itx`, decoded, [measured](checklists/protocol.md) | `itx`, decoded, 1,077 frames | `map.getInteractives`, `map.getResources` |
-| StatedElementUpdatedEvent | server | `itw`, decoded, [measured](checklists/protocol.md) | `itw`, decoded, 1,076 frames | `map.getResources`, `map.waitInteractiveState` |
+| InteractiveElementUpdatedEvent | server | `itx`, decoded, [measured](checklists/protocol.md) | `itx`, decoded, 76,799 frames | `map.getInteractives`, `map.getResources` |
+| StatedElementUpdatedEvent | server | `itw`, decoded, [measured](checklists/protocol.md) | `itw`, decoded, 76,571 frames | `map.getResources`, `map.waitInteractiveState` |
 
 ## NPCs
 
@@ -100,8 +100,8 @@ protocol's replay writes (`D3B_CAPTURES`, [protocol.md](protocol.md#tests)); CI 
 | ObjectObtainedEvent | server | — | — | `inventory.countItem` |
 | ObjectUseRequest | client | — | — | `inventory.useItem`, `inventory.useItemByGID` |
 | ObjectUseMultipleRequest | client | — | — | `inventory.useMultipleItem` |
-| InventoryWeightEvent | server | `iqq`, decoded, 2 frames, [measured](checklists/protocol.md) | `iqq`, decoded, 707 frames | `inventory.pods`, `inventory.podsMax` |
-| KamasUpdateEvent | server | `ith`, decoded, 2 frames, [measured](checklists/protocol.md) | `ith`, decoded, 430 frames | `character.kamas` |
+| InventoryWeightEvent | server | `iqq`, decoded, 2 frames, [measured](checklists/protocol.md) | `iqq`, decoded, 88,314 frames | `inventory.pods`, `inventory.podsMax` |
+| KamasUpdateEvent | server | `ith`, decoded, 2 frames, [measured](checklists/protocol.md) | `ith`, decoded, 1,055 frames | `character.kamas` |
 
 ## Jobs
 
@@ -169,7 +169,7 @@ protocol's replay writes (`D3B_CAPTURES`, [protocol.md](protocol.md#tests)); CI 
 | FightTurnFinishRequest | client | — | — | `fight.passTurn` |
 | FightRefreshCharacterStatsEvent | server | — | — | `fight.myAP`, `fight.myMP`, `fight.myHP` |
 | RefreshCooldownEvent | server | — | — | `fight.spellCooldown` |
-| FightEndEvent | server | `jwp`, decoded | `jwp`, decoded, 15 frames | `fight.waitForFightEnd` |
+| FightEndEvent | server | `jwp`, decoded | `jwp`, decoded, 8,751 frames | `fight.waitForFightEnd` |
 
 ## Fight actions
 
@@ -197,24 +197,24 @@ protocol's replay writes (`D3B_CAPTURES`, [protocol.md](protocol.md#tests)); CI 
 | CharacterListRequest | client | — | — | `character.list` |
 | CharacterListEvent | server | — | — | `character.list`, `character.count` |
 | CharacterSelectionRequest | client | — | — | `character.switch` |
-| CharacterSelectionEvent | server | `ksb`, decoded, 2 frames, [measured](checklists/protocol.md) | `ksb`, decoded, 2 frames | `character.name`, `character.breed`, `character.sex` |
+| CharacterSelectionEvent | server | `ksb`, decoded, 2 frames, [measured](checklists/protocol.md) | `ksb`, decoded, 226 frames | `character.name`, `character.breed`, `character.sex` |
 
 ## Characteristics
 
 | Message | Side | 3.7.13.17 | 3.7.14.18 | Lua |
 | --- | --- | --- | --- | --- |
-| CharacterStatsEvent | server | `krg`, decoded, 4 frames, [measured](checklists/protocol.md) | `krg`, decoded, 54 frames | `character.hp`, `character.ap`, `character.mp`, `character.energy`, `character.xp` |
-| LifeRegenStartEvent | server | `kqw`, decoded, 2 frames, [measured](checklists/live-view-life.md) | `kqw`, decoded, 17 frames | `character.hp` |
-| LifeRegenEndEvent | server | `kqo`, decoded | `kqo`, decoded, 15 frames | `character.hp`, `character.hpMax` |
-| CharacterLevelUpEvent | server | `kqp`, decoded | `kqp`, decoded | `character.level` |
+| CharacterStatsEvent | server | `krg`, decoded, 4 frames, [measured](checklists/protocol.md) | `krg`, decoded, 29,272 frames | `character.hp`, `character.ap`, `character.mp`, `character.energy`, `character.xp` |
+| LifeRegenStartEvent | server | `kqw`, decoded, 2 frames, [measured](checklists/live-view-life.md) | `kqw`, decoded, 9,061 frames | `character.hp` |
+| LifeRegenEndEvent | server | `kqo`, decoded | `kqo`, decoded, 8,844 frames | `character.hp`, `character.hpMax` |
+| CharacterLevelUpEvent | server | `kqp`, decoded | `kqp`, decoded, 582 frames | `character.level` |
 
 ## Context
 
 | Message | Side | 3.7.13.17 | 3.7.14.18 | Lua |
 | --- | --- | --- | --- | --- |
 | ContextCreationRequest | client | — | — | — |
-| ContextCreationEvent | server | `kjp`, decoded, 2 frames, [measured](checklists/protocol.md) | `kjp`, decoded, 32 frames | `fight.isInFight` |
-| ContextDestroyEvent | server | `kjy`, decoded, 2 frames, [measured](checklists/protocol.md) | `kjy`, decoded, 32 frames | `fight.isInFight` |
+| ContextCreationEvent | server | `kjp`, decoded, 2 frames, [measured](checklists/protocol.md) | `kjp`, decoded, 17,733 frames | `fight.isInFight` |
+| ContextDestroyEvent | server | `kjy`, decoded, 2 frames, [measured](checklists/protocol.md) | `kjy`, decoded, 17,733 frames | `fight.isInFight` |
 
 ## Party
 

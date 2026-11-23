@@ -119,8 +119,8 @@ the request refuses it, typed (`RequestError::NotPinned`). The relay writes the 
 ([relay.md](relay.md#the-bots-frames)); nothing sends it before the bot plays (step 4's R1).
 
 **Byte for byte**: the replay `the_c_sharp_bot_s_requests_encode_again_byte_for_byte` (`D3B_CAPTURES`) decodes each
-request the C# bot wrote itself (a capture's records of kind 5) and encodes it again: on 2026-11-23, on the 4 game
-connections on the owner's machine, all 3,806 walks and 1,615 map changes gave the same bytes, none other.
+request the C# bot wrote itself (a capture's records of kind 5) and encodes it again: on 2026-11-23, on the owner's
+243 game connections of 3.7.14.18, all 126,866 walks and 73,792 map changes gave the same bytes, none other.
 
 ## A new build
 
@@ -238,9 +238,9 @@ version's `.proto` files (its readable names, ours, kept with the Lua calls each
 it in `protocol::coverage::catalogue`), whether a build pins it, whether D3B decodes and encodes it, and its frames in
 the last local replay, which the replay above writes to `src-tauri/protocol/replay/<build>.json` (counts by readable
 name and outcome only); its checks, each with its failure case, are `protocol::coverage`'s tests.
-On 2026-11-23 only 4 game connections were on the owner's machine (2 of each build; the 54 above were gone): their
-counts are the report's, and the replay fails on them, since none gains a level and the client sends no map change
-there (the 1,615 are the C# bot's, checked by the replay of its requests below).
+On 2026-11-23, the owner's 243 game connections of 3.7.14.18 (`%LOCALAPPDATA%\D3B\captures\game`): of
+12,152,831 frames, 807,794 understood, 668,387 read and none not trusted, each of the 24 messages decoded; their counts
+are the report's. 3.7.13.17's in the report are those of 2 connections only, the 54 above being no longer at hand.
 
 The inspector's, each with its failure case: the frames kept bounded by count and by bytes (an 88 KB frame evicts the
 oldest), a secret's frame kept without its bytes, nothing kept for a connection whose protocol is off; a batch capped at
