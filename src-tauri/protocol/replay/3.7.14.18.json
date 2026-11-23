@@ -1,115 +1,125 @@
 {
   "build": "3.7.14.18",
-  "connections": 2,
-  "frames": 63557,
+  "connections": 243,
+  "frames": 12152831,
   "messages": {
+    "CharacterLevelUpEvent": {
+      "understood": 582,
+      "read": 0,
+      "notTrusted": 0
+    },
     "CharacterSelectionEvent": {
       "understood": 0,
-      "read": 2,
+      "read": 226,
       "notTrusted": 0
     },
     "CharacterStatsEvent": {
       "understood": 0,
-      "read": 54,
+      "read": 29272,
       "notTrusted": 0
     },
     "ContextCreationEvent": {
-      "understood": 32,
+      "understood": 17733,
       "read": 0,
       "notTrusted": 0
     },
     "ContextDestroyEvent": {
-      "understood": 32,
+      "understood": 17733,
       "read": 0,
       "notTrusted": 0
     },
     "FightEndEvent": {
       "understood": 0,
-      "read": 15,
+      "read": 8751,
       "notTrusted": 0
     },
     "InteractiveElementUpdatedEvent": {
-      "understood": 528,
-      "read": 549,
+      "understood": 37012,
+      "read": 39787,
       "notTrusted": 0
     },
     "InventoryWeightEvent": {
-      "understood": 707,
+      "understood": 88314,
       "read": 0,
       "notTrusted": 0
     },
     "KamasUpdateEvent": {
-      "understood": 430,
+      "understood": 1055,
       "read": 0,
       "notTrusted": 0
     },
     "LifeRegenEndEvent": {
-      "understood": 15,
+      "understood": 8844,
       "read": 0,
       "notTrusted": 0
     },
     "LifeRegenStartEvent": {
-      "understood": 17,
+      "understood": 9061,
       "read": 0,
       "notTrusted": 0
     },
     "MapActorRemovedEvent": {
-      "understood": 626,
+      "understood": 87280,
       "read": 0,
       "notTrusted": 0
     },
     "MapActorShownEvent": {
       "understood": 0,
-      "read": 703,
+      "read": 122313,
+      "notTrusted": 0
+    },
+    "MapChangeRequest": {
+      "understood": 3575,
+      "read": 0,
       "notTrusted": 0
     },
     "MapCurrentEvent": {
-      "understood": 3285,
+      "understood": 104054,
       "read": 0,
       "notTrusted": 0
     },
     "MapInformationEvent": {
       "understood": 0,
-      "read": 3273,
+      "read": 95929,
       "notTrusted": 0
     },
     "MapInformationRequest": {
-      "understood": 3285,
+      "understood": 104051,
       "read": 0,
       "notTrusted": 0
     },
     "MapMovementCancelRequest": {
-      "understood": 2,
+      "understood": 66,
       "read": 0,
       "notTrusted": 0
     },
     "MapMovementConfirmRequest": {
-      "understood": 3618,
+      "understood": 120840,
       "read": 0,
       "notTrusted": 0
     },
     "MapMovementConfirmResponse": {
-      "understood": 3617,
+      "understood": 120840,
       "read": 0,
       "notTrusted": 0
     },
     "MapMovementEvent": {
       "understood": 0,
-      "read": 4904,
+      "read": 372109,
       "notTrusted": 0
     },
     "MapMovementRefusedEvent": {
-      "understood": 116,
+      "understood": 1584,
       "read": 0,
       "notTrusted": 0
     },
     "MapMovementRequest": {
-      "understood": 12,
+      "understood": 8599,
       "read": 0,
       "notTrusted": 0
     },
     "StatedElementUpdatedEvent": {
-      "understood": 1076,
+      "understood": 76571,
       "read": 0,
       "notTrusted": 0
     }
