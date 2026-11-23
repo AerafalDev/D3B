@@ -123,7 +123,7 @@ status bar then says it has no data, and its hover why ([shell.md](shell.md)).
 
 ## The extractor
 
-`tools/extractor`, a .NET 10 console app and its test project, being built as a stack of PRs (`docs/now.md`). The
+`tools/extractor`, a .NET 10 console app and its test project, built as a stack of PRs, each format with the step that reads it. The
 owner chose its libraries: AssetsTools.NET for the client's bundles, Cpp2IL for the names of its enums and its protocol's schema, AssetRipper.TextureDecoder for the tiles' BC7,
 SkiaSharp to encode them (with its Linux native assets for CI), System.CommandLine for its options, xUnit v3 for its
 tests. CI and `bun run check` build it and run its tests, which need no client. It reads the client's facts as they are and fails when the client contradicts what it relies on (but for the two broken references above, left out and counted); what the

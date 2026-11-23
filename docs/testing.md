@@ -2,7 +2,7 @@
 
 The owner measures D3B on Windows x64. macOS (Intel and Apple Silicon), Linux (x64 and ARM64) and Windows ARM64 are
 measured by volunteers from the [Discord server](https://discord.com/invite/6A6Vw9Mn24), who report each result through
-the **Test report** issue form. A platform no tester has measured stays open in [checklists/platforms.md](checklists/platforms.md).
+the **Test report** issue form. A platform no tester has measured stays waiting in [checklists/platforms.md](checklists/platforms.md).
 
 ## How a round goes
 

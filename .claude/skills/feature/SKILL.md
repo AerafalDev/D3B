@@ -19,4 +19,4 @@ argument-hint: "The feature, such as 'the character's live view'"
 6. **Measure in game.** At the end of the stack, give the owner the checklist (its own file in `docs/checklists/`,
    `Status: open`, one line in `docs/now.md`) and wait for the result. A failed step becomes a bug (`diagnose`) in the
    same feature. The feature is done when every step passes; its file then says `Status: measured`, and `docs/now.md`
-   drops its line and names the next step.
+   moves its line to the measured ones and names the next step.
