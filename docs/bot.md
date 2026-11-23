@@ -66,11 +66,12 @@ As decided on 2026-11-12, on Unreal's event graph (ADR 0014):
 - Unlike Unreal's, a **function** may hold actions that last (2026-11-12): moving to a bank is one.
 - **Queries** are read when the node that uses them runs; the value used is kept for the debugger.
 - **Events the game forces**, when the blueprint does not handle them, have a default: a fight is fought by the
-  default AI (step 6), then the flow resumes; a death, a fight lost back at the save point, blocks the run unless the
-  blueprint holds "a fight ended" or "died" (D3B's do, through "after a lost fight": the owner, 2026-11-23); an invitation is refused and a dialog
+  default AI from step 6 (before it, the run sends nothing, notifies and lets the player fight by hand), then the flow
+  resumes; a death, a fight lost back at the save point, blocks the run unless the blueprint holds "a fight ended" or
+  "died" (D3B's will, through "after a lost fight", once (26) runs them: the owner, 2026-11-23); an invitation is refused and a dialog
   the server opens is closed, each noted in the History (the owner, 2026-11-23).
-- A setting changed while running applies at the next safe point, between nodes or a long action's inner steps, and
-  says so. The states: without
+- A setting changed while running applies at the next safe point, between nodes or a long action's inner steps, a
+  long action reading its inputs again at each inner step (settled alone), and says so. The states: without
   blueprint, ready, running, paused, finished, blocked (with its reason), disconnected (listed greyed, its blueprint
   and values kept). A blueprint with a problem cannot run.
 
@@ -120,7 +121,7 @@ flowchart LR
   step 4's actor answers from the game data and `storage`'s zones; unknown, an action waits and a query blocks.
 - **It blocks**, with the reason and the node, on an unlinked Failed outside any Retry's try (from (v2.3), one inside
   starts the next try), a death (the character's fights lost rising:
-  the forced default; a `died` event held by the blueprint is (26)'s), 10,000 nodes in a row without waiting ("runs
+  the forced default; "died" or "a fight ended" held by the blueprint is (26)'s), 10,000 nodes in a row without waiting ("runs
   without pause"), more than 64 calls at work one inside the other, a value that cannot be computed (on the node
   that computes it), or a Set out of its variable's bounds, which memory would lose at the next run (settled alone). Its states are ready, running, paused,
   finished and blocked; without blueprint and disconnected are the character's: no view holds the run, and the node
@@ -141,24 +142,32 @@ flowchart LR
   - **Hunt until** and **Attack a group**: the walk to a group or the map change; a fight is never cut, the events
     waiting for its end;
   - **the travels** (Go to a zone, a map, the bank; Follow a route; a zaap, the haven bag, a door, an NPC's way): the
-    current map change or teleport, a dialog given its replies to its end and left;
+    current map change or teleport, a dialog given its replies to its end and left (settled alone);
   - **the bank** (Deposit all but, Withdraw, the chests): once the window is open, the exchange to its end and the
     window closed;
-  - **Wait**, **Wait until** and **Wait for life** are cut at once, acting on nothing, and counted again as before.
+  - **Wait**, **Wait until** and **Wait for life** are cut at once, acting on nothing, and counted again as before
+    (settled alone).
 - **The four modes** then: **interrupt then resume** runs the event's flow after the inner step, then the action runs
   again from where it was, its progress kept in its node's slot (as it is goal-shaped, it checks what is already done);
   **wait for the current action** waits for the whole action, Done or Failed, then runs the event's flow before the
   next node; **interrupt and restart** cuts at the inner step, runs the event's flow, then starts the main flow from
   its On start (a node's memory kept, (v2.3)); **parallel** runs at once beside the flow at work, cutting nothing, and
-  an action in its flow is a problem.
-- **Several events** (the owner's choices of 2026-11-23): a priority from 1 to 8; the same priority in the graph's
-  order, the Summary's; only a strictly higher priority cuts a flow at work, an event's flow too, so the stack holds
-  at most nine flows; a lower one is kept pending, once, and runs when the flows above it end; the same event firing
-  again while its own flow runs is ignored (a threshold re-arms anyway). A fight and a death cut everything: in a
-  fight the events wait for its end, each pending once (before step 6 the run sends nothing there, notifies and lets
-  the player fight by hand, the action resuming after; from step 6, On my turn is the fight's own event); a timer
-  missed while paused, away or fighting fires once on return. Events triggering each other with no wait are caught by
-  the 10,000-node guard, counted across flows: Trigger at once does not wait.
+  an action or a wait in its flow is a problem, a new one (settled alone: it never acts).
+- **Several events** (the owner's choices of 2026-11-23): a priority from 1 to 8; events of one priority firing
+  together run in the order of the event graph's nodes, top to bottom (the declaration order; settled alone); only a
+  strictly higher priority cuts a flow at work, an event's flow too, so the stack holds at most nine flows; another
+  event of the same or a lower priority is kept pending, once, and runs when the flows above it end, those of one
+  priority in that order; the same event firing again while its own flow runs is ignored (a threshold re-arms anyway).
+- **A fight and a death cut everything**, at once, since the game forces them: "A fight starts" runs its flow as the
+  fight begins, its mode fixed, its nodes only those that do not act on the map (Notify, Set, Fight with's choice of a
+  fight blueprint; settled alone); "Died" runs once the character is back at its save point. **In a fight** the
+  character's other events wait for its end, each pending once: before step 6 the run sends nothing there, notifies
+  and lets the player fight by hand, the action resuming after; from step 6 the fight's own events (placement, On my
+  turn, a turn began, a fighter died, a challenge proposed) run inside it, in the fight's blueprint (step 6's design).
+- **A timer missed** while paused, away or fighting fires once on return, if it returns within its period: an At
+  less than an hour after its time, an Every less than its duration after it was due; later, it is skipped and the next
+  fires on time (the owner, 2026-11-23: a pause from 22:00 to 10:00 never logs off at 10:00). Events triggering each
+  other with no wait are caught by the 10,000-node guard, counted across flows: Trigger at once does not wait.
 - **On the owner's captures** (2026-11-16, the 54 game connections of 3.7.13.17): a blueprint waiting for full life,
   then a minute, then reading its life and looping ran on each of the 49 characters chosen, 6,900 turns, blocked
   only by the 6 deaths, each at its fight's end, and never "runs without pause".

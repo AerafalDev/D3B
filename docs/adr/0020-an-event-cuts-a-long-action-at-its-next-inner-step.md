@@ -6,9 +6,9 @@
 
 ## Context
 
-ADR 0017's seam puts a safe point between two nodes, but Harvest until and Hunt until last minutes: "Life below 30 %"
-would wait out a whole tour, and cutting at once would leave a walk, a use or the bank's window half done in the game.
-The catalogue (ADR 0019) makes events the hooks of long actions, so where they cut decides what a copy can do.
+(26)'s seam (`docs/bot.md`) puts a safe point between two nodes, but Harvest until lasts minutes: "Life below 30 %"
+would wait out a tour, and cutting at once would leave a walk, a use or the bank half done. Events are the hooks of
+long actions (ADR 0019), so where they cut decides what a copy can do.
 
 ## Decision
 
@@ -20,10 +20,11 @@ The catalogue (ADR 0019) makes events the hooks of long actions, so where they c
   from where it was, its progress in its node's slot. **Wait for the current action** waits for the whole action.
   **Interrupt and restart** cuts at the inner step, then the main flow starts again. **Parallel** never acts. A safe
   point (settings, memory) is between two nodes or two inner steps.
-- **Several events**: priorities 1 to 8, the same one in the graph's order; only a strictly higher one cuts, so at
-  most nine flows; a lower one is kept pending once; the same event firing again during its flow is ignored.
-- **In a fight** the events wait for its end, pending once (before step 6 the player fights by hand, notified; then
-  On my turn is the fight's event); a timer missed while paused, away or fighting fires once on return.
+- **Several events**: priorities 1 to 8, the graph's order within one; only a strictly higher one cuts, so at most
+  nine flows; one of the same or a lower priority is kept pending once; the same one again during its flow is ignored.
+- **A fight and a death cut everything**; in a fight the other events wait for its end, pending once (before step 6
+  the player fights by hand, notified; then the fight's events run in it); a timer missed fires once on return
+  within its period (an At within the hour, an Every within its duration), else is skipped.
 - **A death** is a lost fight, held by "a fight ended" or "died" (D3B's blueprints: "after a lost fight"); a
   blueprint holding neither blocks. **Loops of events** meet the 10,000-node guard, counted across flows.
 
@@ -35,6 +36,5 @@ The catalogue (ADR 0019) makes events the hooks of long actions, so where they c
 
 ## Consequences
 
-Each long action of steps 4 to 6 names its inner steps and keeps its progress in its node's slot, tested by an event
-cutting it at each step and the action resuming; review checks no action is cut between a request and the game's
-answer. The editor limits priorities to 1 to 8. (26) builds the stack of flows on these rules.
+Each long action names its inner steps and keeps its progress in its node's slot, tested by an event cutting it at
+each step and resuming; review checks no action is cut between a request and its answer. Priorities are 1 to 8.
