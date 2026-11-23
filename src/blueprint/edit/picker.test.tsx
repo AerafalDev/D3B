@@ -52,6 +52,21 @@ describe("the picker", () => {
     expect(screen.queryByText("Souvent ici")).toBeNull();
   });
 
+  it("names a kind of N inputs by its word, its sentence being only its inputs joined", () => {
+    const and: ChoiceView_Serialize = {
+      does: "kind",
+      kind: "and",
+      family: "value",
+      fromStep: null,
+      pins: [pin("value", "out", "bool")],
+    };
+    render(
+      <Picker at={{ x: 0, y: 0 }} choices={[and]} dragged={null} names={NAMES} onPick={vi.fn()} onClose={vi.fn()} />,
+    );
+    expect(screen.getByText("ET")).toBeTruthy();
+    expect(screen.queryByText("…")).toBeNull();
+  });
+
   it("puts first what often follows a Failed and leaves out what the wire does not fit", () => {
     render(
       <Picker

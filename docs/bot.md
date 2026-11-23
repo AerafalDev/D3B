@@ -649,7 +649,11 @@ flowchart LR
   compact (done in code: `src/blueprint/node/value-node.tsx`, the React Flow node type `value` for the family Value,
   the operators `<`, `≤`, `>`, `≥`, `=`, `≠`, `+`, `−`, `×`, `÷`, min and max in the middle with no labels, AND, OR
   and List by their word, the others by their icon with their inputs labelled; a chip for a value typed or a default
-  where no wire feeds; "+" among the inputs; the node components moved to `src/blueprint/node/`); sentences in place, the Summary, a run on the captures and the checklist. Each kind
+  where no wire feeds; "+" among the inputs; the node components moved to `src/blueprint/node/`); sentences in place,
+  the Summary, a run on the captures and the checklist (done in code: `node-sentence.ts`, a value of two values or more
+  read in parentheses inside another value, none in a flow node's, settled alone; AND's, OR's and a List's inputs
+  joined by their kind's `between`, the compact node's word its `word`; a Text's template filled as the run fills it, a
+  brace naming no input kept; `replay.rs`'s values blueprint; [the checklist](checklists/v2-4-values.md)). Each kind
   replaces the catalogue's test kinds (`test_equal`, `test_list`, `test_text`) as it comes.
 - **Measured** (nothing acts in the game before step 4): the picker's group; a compact `<` with a chip; "Tant que Pods
   % < 80" and parentheses read; a ÷ 0 problem; a list's "+" and Remove; a Text's holes; Choose typed by a wire;

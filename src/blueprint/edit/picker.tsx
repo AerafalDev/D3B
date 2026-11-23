@@ -36,7 +36,8 @@ function said(choice: ChoiceView_Serialize, names: ReadonlyMap<string, string>):
     case "call":
       return [names.get(choice.function) ?? choice.function, t("blueprint.picker.call")];
     case "kind": {
-      const sentence = nodeWord(`kinds.${choice.kind}.sentence`);
+      // A kind of N inputs is named by its word, "ET", its sentence being only its inputs joined.
+      const sentence = nodeWord(`kinds.${choice.kind}.word`) ?? nodeWord(`kinds.${choice.kind}.sentence`);
       return [
         sentence === null ? choice.kind : sentence.replace(/\{\{\w+\}\}/g, "…"),
         nodeWord(`kinds.${choice.kind}.description`) ?? "",

@@ -42,20 +42,39 @@ export function nodeSentence(
   if (node.family === null || raw === null) {
     return [{ text: i18next.t("blueprint.unknownKind", { kind: node.kind }) }];
   }
-  const sentence = raw;
+  const chipOf = (id: string): SentencePart => {
+    const pin = node.pins.find((one) => one.id === id && one.side === "in");
+    const valueType = pin?.carries ?? "text";
+    const typed = node.inputs[id];
+    const chip = wired.get(id) ?? valueText(valueType, typed ?? pin?.default ?? null, language);
+    return { chip, valueType };
+  };
+  const template = node.options?.text ?? "";
+  if (node.takesText === true && template !== "") {
+    return filled(template, node, chipOf);
+  }
   const parts: SentencePart[] = [];
-  for (const [index, piece] of sentence.split(/\{\{(\w+)\}\}/).entries()) {
+  for (const [index, piece] of raw.split(/\{\{(\w+)\}\}/).entries()) {
     if (index % 2 === 0) {
       if (piece !== "") {
         parts.push({ text: piece });
       }
       continue;
     }
-    const pin = node.pins.find((one) => one.id === piece && one.side === "in");
-    const valueType = pin?.carries ?? "text";
-    const typed = node.inputs[piece];
-    const chip = wired.get(piece) ?? valueText(valueType, typed ?? pin?.default ?? null, language);
-    parts.push({ chip, valueType });
+    const numbered = node.adds?.side === "in" && node.adds.pin === piece;
+    if (!numbered) {
+      parts.push(chipOf(piece));
+      continue;
+    }
+    // AND's, OR's and a List's inputs one after another, joined by the kind's word: "A ET B ET C".
+    const between = nodeWord(`kinds.${node.kind}.between`) ?? ", ";
+    const ins = node.pins.filter((one) => one.side === "in" && new RegExp(`^${piece}_[1-9][0-9]*$`).test(one.id));
+    for (const [at, pin] of ins.entries()) {
+      if (at > 0) {
+        parts.push({ text: between });
+      }
+      parts.push(chipOf(pin.id));
+    }
   }
   // Wait until's longest wait, 0 by default for none, said when it has one (the owner's mock-up of 2026-11-17).
   const longest = node.inputs["longest"] ?? node.pins.find((one) => one.id === "longest")?.default ?? "0";
@@ -74,15 +93,46 @@ export function nodeSentence(
   return parts;
 }
 
+/**
+ * A Text's template filled as the run fills it (`values/text.rs`): a `{hole}` naming one of its inputs is that input's
+ * chip, any other brace stays as written.
+ */
+function filled(template: string, node: GraphNode, chipOf: (id: string) => SentencePart): SentencePart[] {
+  const parts: SentencePart[] = [];
+  let words = "";
+  let rest = template;
+  for (let at = rest.indexOf("{"); at !== -1; at = rest.indexOf("{")) {
+    words += rest.slice(0, at);
+    const end = rest.indexOf("}", at);
+    const hole = end === -1 ? null : rest.slice(at + 1, end);
+    if (hole !== null && node.pins.some((pin) => pin.id === hole && pin.side === "in")) {
+      if (words !== "") {
+        parts.push({ text: words });
+      }
+      words = "";
+      parts.push(chipOf(hole));
+      rest = rest.slice(end + 1);
+    } else {
+      words += "{";
+      rest = rest.slice(at + 1);
+    }
+  }
+  words += rest;
+  if (words !== "") {
+    parts.push({ text: words });
+  }
+  return parts;
+}
+
 /** A sentence read as plain words, its chips' values among them. */
 function plain(parts: SentencePart[]): string {
   return parts.map((part) => ("text" in part ? part.text : part.chip)).join("");
 }
 
 /**
- * Every node's sentence in `graph`, each wired input saying what it brings: a variable's name, a query's own sentence
- * ("Ressources de Métier"), else its source pin's label ("Récoltes"). A loop of queries, which no graph should hold,
- * says the pin's label.
+ * Every node's sentence in `graph`, each wired input saying what it brings: a variable's name, a query's or a value's
+ * own sentence read in place ("Ressources de Métier", "Pods % < 80"), else its source pin's label ("Récoltes"). A
+ * loop of queries, which no graph should hold, says the pin's label.
  */
 export function graphSentences(
   graph: GraphView_Serialize,
@@ -104,7 +154,13 @@ export function graphSentences(
       if (source?.does === "get") {
         wired.set(wire.to[1], names.get(source.variable) ?? source.variable);
       } else if ((source?.family === "query" || source?.family === "value") && !reading.has(source.id)) {
-        wired.set(wire.to[1], plain(sentence(source)));
+        const nested = sentence(source);
+        // A value of two values or more read inside another value is put in parentheses, so "(Récoltes + 5) × 2" reads
+        // as it computes (settled alone); a flow node's sentence needs none, "Tant que Pods % < 80", nor a Text's, which
+        // reads as the run fills it.
+        const inner = node.family === "value" && node.takesText !== true;
+        const grouped = inner && nested.filter((part) => "chip" in part).length > 1;
+        wired.set(wire.to[1], grouped ? `(${plain(nested)})` : plain(nested));
       } else {
         wired.set(wire.to[1], label);
       }
