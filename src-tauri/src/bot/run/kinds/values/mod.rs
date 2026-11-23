@@ -5,6 +5,7 @@
 mod arithmetic;
 mod compare;
 mod logic;
+mod random;
 
 #[cfg(test)]
 mod tests;
@@ -38,6 +39,9 @@ pub(super) fn behaviour(kind: &str) -> Option<&'static dyn Behaviour> {
         "max" => &arithmetic::Arithmetic(arithmetic::Operation::Max),
         "clamp" => &arithmetic::Clamp,
         "percent_of" => &arithmetic::PercentOf,
+        "random_number" => &random::Number,
+        "chance" => &random::Chance,
+        "random_element" => &random::Element,
         _ => return None,
     })
 }

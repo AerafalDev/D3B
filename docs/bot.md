@@ -580,7 +580,10 @@ flowchart LR
   comes by a wire blocking on the ÷; ÷ by 1 and the remainder by 2 by default, "N % of" 50 %, N seconds 30, the other
   inputs to fill, a value read only from what is wired or typed; "N % of" a whole number of percent, 150 % too, its
   product computed wide (settled alone));
-  randomness; lists;
+  randomness (done in code: `bot/run/random.rs`, SplitMix64, each run's seed from the standard library's
+  `RandomState`, its keys drawn from the system, and kept with the run, `Run::seeded` replaying one; the value a random
+  node gives traced whatever the depth it is read at, once per node at work; a number from 1 to 6 and a chance of
+  50 % by default); lists;
   Text and Join; drawn compact; sentences in place, the Summary, a run on the captures and the checklist. Each kind
   replaces the catalogue's test kinds (`test_equal`, `test_list`, `test_text`) as it comes.
 - **Measured** (nothing acts in the game before step 4): the picker's group; a compact `<` with a chip; "Tant que Pods

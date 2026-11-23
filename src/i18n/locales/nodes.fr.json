@@ -243,6 +243,18 @@
     "seconds": {
       "sentence": "{{seconds}} s",
       "description": "Une durée de tant de secondes."
+    },
+    "random_number": {
+      "sentence": "Au hasard de {{low}} à {{high}}",
+      "description": "Un nombre entier tiré au hasard entre les deux bornes, comprises, à chaque lecture."
+    },
+    "chance": {
+      "sentence": "Vrai {{percent}} du temps",
+      "description": "Vrai ce pourcentage de fois, tiré au hasard à chaque lecture : jamais à 0, toujours à 100."
+    },
+    "random_element": {
+      "sentence": "Un élément au hasard de {{list}}",
+      "description": "Un élément de la liste tiré au hasard à chaque lecture ; une liste vide bloque le personnage."
     }
   },
   "pins": {

@@ -7,6 +7,7 @@ mod frame;
 mod kinds;
 mod knows;
 mod program;
+mod random;
 mod values;
 mod variables;
 
@@ -30,6 +31,7 @@ use super::catalogue::{DONE, FAILED, REASON};
 use crate::game::View;
 use frame::{Body, Call, Chain, Slot};
 use program::{Doing, Program, compile};
+use random::Random;
 use variables::Variables;
 
 /// How many nodes may run in a row without the flow waiting: more "runs without pause" (the owner, 2026-11-16).
@@ -89,6 +91,8 @@ pub(crate) struct Run {
     again: bool,
     /// What the nodes that remember keep for the whole run, by graph and node: Do N times', Alternate's, Pick's.
     kept: HashMap<(usize, usize), Slot>,
+    /// Its random source, seeded fresh, kept so that a run replays from its seed.
+    random: Random,
 }
 
 /// What the run does after a step.
@@ -132,7 +136,27 @@ impl Run {
             wake: None,
             again: false,
             kept: HashMap::new(),
+            random: Random::fresh(),
         }
+    }
+
+    /// The run drawing from `seed`'s stream, so that it replays: tests', and a run replayed from its seed.
+    #[cfg_attr(
+        not(test),
+        expect(dead_code, reason = "step 4's actor keeps a run's seed and replays it")
+    )]
+    pub(crate) fn seeded(mut self, seed: u64) -> Self {
+        self.random = Random::new(seed);
+        self
+    }
+
+    /// The seed its random source started from.
+    #[cfg_attr(
+        not(test),
+        expect(dead_code, reason = "step 4's actor keeps a run's seed and replays it")
+    )]
+    pub(crate) fn seed(&self) -> u64 {
+        self.random.seed()
     }
 
     pub(crate) fn state(&self) -> &State {
@@ -250,6 +274,7 @@ impl Run {
             call,
             variables: &mut self.variables,
             kept: &mut self.kept,
+            random: &mut self.random,
             trace: &mut self.trace,
             notices: &mut self.notices,
             view,
