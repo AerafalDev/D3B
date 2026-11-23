@@ -26,23 +26,24 @@ import {
   ContextMenuShortcut,
   ContextMenuTrigger,
 } from "@/components/ui/context-menu.tsx";
-import type { BoxNode } from "./blueprint-node.tsx";
-import { BlueprintNode } from "./blueprint-node.tsx";
 import { ConnectionLine } from "./edit/connection-line.tsx";
-import { deletion, type MenuTarget, menuDeletion } from "./edit/deletion.ts";
+import { deletion, type MenuTarget, menuDeletion, rightClicked } from "./edit/deletion.ts";
 import { GraphPins, type PinOf, pinFinder } from "./edit/graph-pins.ts";
 import { type LinkEnd, linkRefusal } from "./edit/link-check.ts";
-import { NodeEdit, optionPin, pinRemoval } from "./edit/node-options.ts";
+import { NodeEdit, pinRemoval } from "./edit/node-options.ts";
 import { Picker } from "./edit/picker.tsx";
 import { keptSelection } from "./edit/selection.ts";
 import { GRAPH_DROP, type Pointer, variableDropped } from "./edit/variable-drop.ts";
 import { VariableMenu } from "./edit/variable-menu.tsx";
 import { chosenNode, graphElements } from "./graph-elements.ts";
+import type { BoxNode } from "./node/blueprint-node.tsx";
+import { BlueprintNode } from "./node/blueprint-node.tsx";
+import { ValueNode, type ValueNodeType } from "./node/value-node.tsx";
+import { type PillNode, VariablePill } from "./node/variable-pill.tsx";
 import { pinLabel } from "./pin-label.ts";
-import { type PillNode, VariablePill } from "./variable-pill.tsx";
 import { WireEdge } from "./wire-edge.tsx";
 
-const TYPES = { box: BlueprintNode, pill: VariablePill };
+const TYPES = { box: BlueprintNode, pill: VariablePill, value: ValueNode };
 const WIRES = { wire: WireEdge };
 
 interface BlueprintGraphProps {
@@ -169,7 +170,7 @@ function Graph({ graph, names, faulty, chosen = null, onChoose, onEdit }: Bluepr
     [graph, names, faultyKey, chosen, i18n.language],
   );
   // The nodes as dragged and the nodes and wires as chosen, until the graph saved comes back, which keeps the choice.
-  const [nodes, setNodes] = useState<(BoxNode | PillNode)[]>(drawn.nodes);
+  const [nodes, setNodes] = useState<(BoxNode | PillNode | ValueNodeType)[]>(drawn.nodes);
   const [edges, setEdges] = useState<Edge[]>(drawn.edges);
   const shown = useRef({ nodes, edges });
   shown.current = { nodes, edges };
@@ -268,18 +269,7 @@ function Graph({ graph, names, faulty, chosen = null, onChoose, onEdit }: Bluepr
               edgesFocusable={editable}
               onEdgesChange={(changes) => setEdges((now) => applyEdgeChanges(changes, now))}
               onNodeContextMenu={(event, node) => {
-                // A numbered output or a case under the pointer, its dot or its row, has its own menu, "Remove"
-                // (the owner, 2026-11-17), which never deletes the node, even at its kind's least.
-                const at = event.target instanceof Element ? event.target : null;
-                const row = at?.closest(".blueprint-row");
-                const handle = at?.closest(".react-flow__handle") ?? row?.querySelector(".react-flow__handle");
-                const pin = handle?.getAttribute("data-handleid") ?? null;
-                const option = pin !== null && node.type === "box" && optionPin((node as BoxNode).data.node, pin);
-                target.current = !editable
-                  ? null
-                  : option
-                    ? { kind: "pin", id: node.id, pin }
-                    : { kind: "node", id: node.id };
+                target.current = editable ? rightClicked(event.target, node) : null;
               }}
               onEdgeContextMenu={(_, edge) => {
                 target.current = editable ? { kind: "wire", id: edge.id } : null;

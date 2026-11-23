@@ -1,7 +1,8 @@
 import type { Edge } from "@xyflow/react";
 import { describe, expect, it } from "vitest";
 
-import { deletion, menuDeletion } from "./deletion.ts";
+import type { GraphNode } from "../node-sentence.ts";
+import { deletion, menuDeletion, rightClicked } from "./deletion.ts";
 
 function edge(from: [string, string], to: [string, string], selected = false): Edge {
   return {
@@ -57,5 +58,50 @@ describe("menuDeletion", () => {
   it("is nothing for a node or a wire the graph no longer draws", () => {
     expect(menuDeletion({ kind: "node", id: "n9" }, nodes, [])).toBeNull();
     expect(menuDeletion({ kind: "wire", id: "gone" }, nodes, [START])).toBeNull();
+  });
+});
+
+describe("rightClicked", () => {
+  const and = {
+    id: "n4",
+    adds: { pin: "in", side: "in", least: 2 },
+    takesCases: false,
+    options: { count: 3 },
+  } as unknown as GraphNode;
+
+  function handle(id: string): Element {
+    const row = document.createElement("div");
+    row.className = "blueprint-row";
+    const dot = document.createElement("div");
+    dot.className = "react-flow__handle";
+    dot.setAttribute("data-handleid", id);
+    const label = document.createElement("span");
+    row.append(dot, label);
+    return label;
+  }
+
+  it("lands on a numbered input of a compact value, its row or its dot, as on a box's", () => {
+    expect(rightClicked(handle("in_2"), { id: "n4", type: "value", data: { node: and } })).toEqual({
+      kind: "pin",
+      id: "n4",
+      pin: "in_2",
+    });
+    expect(rightClicked(handle("in_2"), { id: "n4", type: "box", data: { node: and } })).toEqual({
+      kind: "pin",
+      id: "n4",
+      pin: "in_2",
+    });
+  });
+
+  it("lands on the node for a pin that is not numbered, a pill, or no element", () => {
+    expect(rightClicked(handle("value"), { id: "n4", type: "value", data: { node: and } })).toEqual({
+      kind: "node",
+      id: "n4",
+    });
+    expect(rightClicked(handle("in_2"), { id: "n5", type: "pill", data: { name: "Zone" } })).toEqual({
+      kind: "node",
+      id: "n5",
+    });
+    expect(rightClicked(null, { id: "n4", type: "value", data: { node: and } })).toEqual({ kind: "node", id: "n4" });
   });
 });

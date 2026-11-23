@@ -103,4 +103,27 @@ describe("a graph's elements", () => {
     expect(chosenNode([{ type: "select", id: "go", selected: false }])).toBeNull();
     expect(chosenNode([{ type: "remove", id: "go" }])).toBeNull();
   });
+  it("draws a value compact, knowing which of its inputs a wire feeds", () => {
+    const valued = {
+      id: "events",
+      name: "Event graph",
+      function: false,
+      nodes: [
+        node("lt", {
+          kind: "less",
+          family: "value",
+          fromStep: null,
+          pins: [pin("a", "in", "number"), pin("b", "in", "number"), pin("value", "out", "bool")],
+        }),
+        node("lvl", { kind: "level", family: "query", fromStep: null, pins: [pin("value", "out", "number")] }),
+      ],
+      wires: [{ from: ["lvl", "value"], to: ["lt", "a"] }],
+    } as never;
+    const { nodes } = graphElements(valued, new Map());
+    const lt = nodes.find((one) => one.id === "lt");
+    expect([lt?.type, lt?.type === "value" ? lt.data.wired : null]).toEqual(["value", ["a"]]);
+    expect(lt?.ariaLabel, "its whole sentence names it when focused").toMatch(/\S/);
+    expect(lt?.ariaLabel).not.toContain("[object");
+    expect(nodes.find((one) => one.id === "lvl")?.type, "a query stays a box").toBe("box");
+  });
 });

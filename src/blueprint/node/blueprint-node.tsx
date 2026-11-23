@@ -3,34 +3,18 @@ import { Plus } from "lucide-react";
 import { useContext } from "react";
 import { useTranslation } from "react-i18next";
 
-import type { PinView_Serialize } from "@/bindings.ts";
 import { cn } from "@/lib/utils.ts";
-import { addedPin, NodeEdit } from "./edit/node-options.ts";
-import { FAMILY_COLOUR, nodeIcon } from "./graph-look.ts";
-import type { GraphNode, SentencePart } from "./node-sentence.ts";
-import { pinLabel } from "./pin-label.ts";
+import { addedPin, NodeEdit } from "../edit/node-options.ts";
+import { FAMILY_COLOUR, nodeIcon } from "../graph-look.ts";
+import type { GraphNode, SentencePart } from "../node-sentence.ts";
+import { pinLabel } from "../pin-label.ts";
+import { pinClass } from "./pin-class.ts";
 
 /** What a node of the graph carries for React Flow: the IPC's node and its sentence, filled. */
 export type BoxData = { node: GraphNode; sentence: SentencePart[]; faulty?: boolean };
 
 /** A node as React Flow holds it. */
 export type BoxNode = Node<BoxData, "box">;
-
-/**
- * A pin's look (the owner, 2026-11-17, from a mock-up): a triangle for the flow, a circle for a value coloured by its
- * type, a filled square for a list and a hollow one for ranges; a wildcard its node notes no type for a hollow grey
- * circle (a square for a list), drawn as its type once typed.
- */
-function pinClass(pin: PinView_Serialize, open: boolean): string {
-  return cn(
-    "blueprint-pin",
-    pin.carries === "exec" ? "blueprint-exec" : "blueprint-value",
-    `blueprint-type-${pin.carries}`,
-    pin.list === true && "blueprint-list",
-    pin.ranges === true && "blueprint-ranges",
-    (pin.carries === "wildcard" || (open && pin.wildcard === true)) && "blueprint-open",
-  );
-}
 
 /**
  * A node, the look the owner approved on the prototype (2026-11-13): a sober box, its family's icon coloured, its

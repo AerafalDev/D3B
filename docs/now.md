@@ -30,7 +30,6 @@ whole catalogue (ADR 0019) and step 4's first slice (ADR 0021) are designed. Pre
 
 One line per item, in order; each is designed in [bot.md](bot.md) or [play.md](play.md).
 
-- v2.4: drawn compact.
 - v2.4: sentences in place, and its checklist; the language is frozen there (ADR 0019, the owner, 2026-11-23).
 - Step 4's first slice, F3 to F7 and F10: the game layer reading every family the C# version reads, typed acts
   ([play.md](play.md#the-stack), ADR 0021); started on the owner's go of 2026-11-23, its PRs labelled `step-finish`;
