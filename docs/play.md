@@ -32,15 +32,20 @@ Lua scripts". Three rules make it so.
 - **Read everything early, act step by step.** The first PRs decode, read only, every family the C# version reads
   (about 262 messages in 19 `.proto` families: movement, maps, interactives, NPCs, exchanges, inventory, jobs, texts,
   teleportation, haven bags, fights, fight actions, spells, characters, characteristics, actors, context, game, party),
-  each checked on the owner's captures replayed. Acts that send come with the step that uses them. A generated
-  `docs/protocol-coverage.md` lists, per build, each message pinned, decoded or encoded, its replay counts, whether it is
-  measured in game, and which Lua call it backs; CI fails when it is stale.
+  each checked on the owner's captures replayed; a family no capture holds (the haven bag) waits for its capture. Acts
+  that send come with the step that uses them. A generated `docs/protocol-coverage.md` lists, per build, each message
+  pinned, decoded or encoded, which Lua call it backs, and, from the last local replay, its counts and whether it is
+  measured in game; CI fails when its pinned, decoded and encoded columns are stale.
 - **Typed acts with deadlines.** Each act (walk, change map, use an element, talk, reply, leave a dialog, move to
   storage) is a state machine: `start(view, now)` gives the request, `poll(view, now)` gives `Pending`, `Done`,
   `Refused(why)`, `NoAnswer` or `Interrupted(fight, moved, closed)`. Every deadline comes from one table, each value
-  citing its measure; the server's refusals are typed per act. A run sending nothing for 10 minutes, its blueprint's own
-  waits included, turns blocked with its reason, well before the server's idle kick at about 30 (the owner,
-  2026-11-23; the watchdog's ADR).
+  citing its measure; the server's refusals are typed per act. A running run sending nothing for 10 minutes, its
+  blueprint's own waits included, turns blocked with its reason, well before the server's idle kick at about 30 (the
+  owner, 2026-11-23; the watchdog's ADR); a paused run and a fight the player plays by hand are not running.
+- **The bot's frames between the client's.** The relay holds the client's bytes only until its frame in progress ends,
+  then writes the bot's frame, as the C# version measured (D61); the bot's requests carry the request id the C# version
+  measured for them, so the client's own numbering is untouched, and the server's answers reach the client, which
+  follows what the bot does. The relay still rewrites only its one frame (ADR 0011) and passes the rest untouched.
 
 ### What the C# version already knows
 
@@ -94,15 +99,15 @@ which those captures hold.
 
 ## The stack
 
-Each PR is one behaviour, under 1,000 lines, its checklist small; the first motion in game comes early so that nothing
-piles up unmeasured ([lessons.md](lessons.md)).
+Each PR is one behaviour, under 1,000 lines, its checklist small, so that nothing piles up unmeasured
+([lessons.md](lessons.md)); the first walk in game is R3's.
 
 | PR | What | Measured in game after it |
 | --- | --- | --- |
 | F1 | The coverage report and the state table, by family, both builds | none (a doc) |
 | F2 | The relay: bot frames between the client's, kept in captures | plays as before, no frame untrusted |
 | F3 | Requests and the client frame writer; movement and map pins, the C# frames re-encoded | the inspector names the client's walks |
-| F4–F7 | Reading, family by family: inventory, jobs and characteristics; interactives, NPCs, exchanges and texts; fights, fight actions and spells; party, teleportation and haven bags | 5 minutes played: the new names in the inspector, no frame untrusted |
+| F4–F7 | Reading, family by family: characters, characteristics, actors, context, game, inventory and jobs; interactives, NPCs, exchanges and texts; fights, fight actions and spells; party and teleportation | each family's counts equal on the replays; 5 minutes played, a fight by hand and a party made: the new names in the inspector, no frame untrusted |
 | F8 | The cell path | none |
 | F9 | The world path | none |
 | F10 | Acts: the core, walk and map change, and the fake game | none (fake) |
