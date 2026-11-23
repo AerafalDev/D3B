@@ -193,11 +193,15 @@
       "description": "True when the value lies between both bounds, included; 23:00 to 08:00 goes past midnight."
     },
     "and": {
-      "sentence": "AND",
+      "sentence": "{{in}}",
+      "word": "AND",
+      "between": " AND ",
       "description": "True when all its conditions hold, read in order up to the first false."
     },
     "or": {
-      "sentence": "OR",
+      "sentence": "{{in}}",
+      "word": "OR",
+      "between": " OR ",
       "description": "True when one of its conditions holds, read in order up to the first true."
     },
     "not": {
@@ -257,7 +261,9 @@
       "description": "An element of the list drawn at random at each read; an empty list blocks the character."
     },
     "make_list": {
-      "sentence": "List",
+      "sentence": "List of {{in}}",
+      "word": "List",
+      "between": ", ",
       "description": "A list made of its inputs, in their order; \"+\" adds one."
     },
     "length": {

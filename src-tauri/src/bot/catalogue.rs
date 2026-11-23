@@ -497,7 +497,7 @@ pub(crate) mod tests {
     }
 
     #[test]
-    fn every_kind_reads_as_a_sentence_in_each_language_whose_holes_are_its_inputs() {
+    fn every_kind_reads_as_a_sentence_in_each_language_whose_holes_are_its_inputs_or_its_counted_ones() {
         let locales = [
             include_str!("../../../src/i18n/locales/nodes.en.json"),
             include_str!("../../../src/i18n/locales/nodes.fr.json"),
@@ -528,7 +528,18 @@ pub(crate) mod tests {
                         .pins
                         .iter()
                         .any(|pin| pin.id == hole && pin.side == Side::In && pin.carries.is_value());
-                    assert!(input, "{}: {hole}", kind.id);
+                    // A kind of N inputs says them all by its counted pin's id, joined by its `between`; its compact
+                    // node and the picker say it by its `word`.
+                    let counted = kind.takes.iter().any(
+                        |takes| matches!(takes, Takes::Count { pin, .. } if pin.id == hole && pin.side == Side::In),
+                    );
+                    assert!(input || counted, "{}: {hole}", kind.id);
+                    assert!(!counted || read("word").is_some(), "{}: its word", kind.id);
+                    assert!(
+                        !counted || read("between").is_some(),
+                        "{}: what joins its inputs",
+                        kind.id
+                    );
                     holes.push((kind.id, hole.to_owned()));
                 }
             }
