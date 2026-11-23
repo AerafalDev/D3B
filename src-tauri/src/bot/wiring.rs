@@ -707,7 +707,7 @@ mod tests {
     #[test]
     fn a_hole_takes_any_value_but_none() {
         let found = after(|blueprint| {
-            let text = r#"{"id": "tx", "kind": "test_text", "options": {"text": "{count} in {zone} by {who}"}, "inputs": {"zone": 445, "who": "Bob"}}"#;
+            let text = r#"{"id": "tx", "kind": "text", "options": {"text": "{count} in {zone} by {who}"}, "inputs": {"zone": 445, "who": "Bob"}}"#;
             blueprint.graphs[0].nodes.push(node(text));
             blueprint.graphs[0].wires.push(wire("n2", "value", "tx", "count"));
         });

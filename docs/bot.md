@@ -56,8 +56,9 @@ As decided on 2026-11-12, on Unreal's event graph (ADR 0014):
 
 - **One flow per character, one action at a time.** "On start" is the main flow. Another event (a fight starts, life
   below, pods above, every N minutes, the map changed, reconnected) interrupts it by **priority** (1 before 2) and by
-  its **mode**: interrupt then resume (the default), wait for the current action, interrupt and restart from the
-  start, or in parallel for a graph that never acts. A threshold fires once and re-arms past its reset value. "You took
+  its **mode**: interrupt then resume (the default), wait for the current action (the whole action), interrupt and
+  restart from the start, or in parallel for a graph that never acts; an event cuts a long action at its next inner
+  step, not between nodes only (the owner, 2026-11-23, ADR 0020, below "The runtime"). A threshold fires once and re-arms past its reset value. "You took
   control" (step 4) is above everything, outside the graph.
 - **Actions are goal-shaped**: an intent and a check on the observed state that says it is done ("on map X", "pods ≥
   80 %"), so an interrupted action resumes by running again. Each ends **Done** or **Failed** with its reason; a Failed
@@ -65,9 +66,12 @@ As decided on 2026-11-12, on Unreal's event graph (ADR 0014):
 - Unlike Unreal's, a **function** may hold actions that last (2026-11-12): moving to a bank is one.
 - **Queries** are read when the node that uses them runs; the value used is kept for the debugger.
 - **Events the game forces**, when the blueprint does not handle them, have a default: a fight is fought by the
-  default AI (step 6), then the flow resumes; a death stops the run, blocked; an invitation is refused and a dialog
+  default AI from step 6 (before it, the run sends nothing, notifies and lets the player fight by hand), then the flow
+  resumes; a death, a fight lost back at the save point, blocks the run unless the blueprint holds "a fight ended" or
+  "died" (D3B's will, through "after a lost fight", once (26) runs them: the owner, 2026-11-23); an invitation is refused and a dialog
   the server opens is closed, each noted in the History (the owner, 2026-11-23).
-- A setting changed while running applies at the next safe point, between actions, and says so. The states: without
+- A setting changed while running applies at the next safe point, between nodes or a long action's inner steps, a
+  long action reading its inputs again at each inner step (settled alone), and says so. The states: without
   blueprint, ready, running, paused, finished, blocked (with its reason), disconnected (listed greyed, its blueprint
   and values kept). A blueprint with a problem cannot run.
 
@@ -117,17 +121,64 @@ flowchart LR
   step 4's actor answers from the game data and `storage`'s zones; unknown, an action waits and a query blocks.
 - **It blocks**, with the reason and the node, on an unlinked Failed outside any Retry's try (from (v2.3), one inside
   starts the next try), a death (the character's fights lost rising:
-  the forced default; a `died` event held by the blueprint is (26)'s), 10,000 nodes in a row without waiting ("runs
+  the forced default; "died" or "a fight ended" held by the blueprint is (26)'s), 10,000 nodes in a row without waiting ("runs
   without pause"), more than 64 calls at work one inside the other, a value that cannot be computed (on the node
   that computes it), or a Set out of its variable's bounds, which memory would lose at the next run (settled alone). Its states are ready, running, paused,
   finished and blocked; without blueprint and disconnected are the character's: no view holds the run, and the node
   at work runs again once the character is back, as actions are goal-shaped. A Wait counts the clock's time (settled
   alone).
 - **(26)'s seam**: a stack of flows, one today; an event pushes its own, and when it ends the flow under it enters its
-  node at work again; Restart empties the main flow; a safe point is the moment between two nodes. The other events
+  node at work again; Restart empties the main flow; a safe point is the moment between two nodes, or between two
+  inner steps of a long action (ADR 0020, below). The other events
   compile as starts nothing runs before (26), so D3B's blueprints run now; a death is a fight lost since the run first
   saw the character, those lost before it not counting, and counted again from 0 after a new connection or
   selection. Away, a run waits on nothing; finished, paused or blocked, it asks to be woken by nothing.
+- **An event cuts a long action at its next inner step** (the owner, 2026-11-23, ADR 0020), so that nothing is left
+  half done in the game and no event waits out a tour. An **inner step** is one gesture the game holds until it says
+  it ended: a walk on the map (its arrival), a map change (the new map), a use of an element (its end, about 3 s for a
+  harvest), a teleport (the arrival), a dialog or an exchange the action opened (closed by it). Each long action's:
+  - **Harvest until** and **Harvest this map**: the use or the walk to the next element at work, or the tour's map
+    change; the regrowth learned, the tour's place and the count are kept;
+  - **Hunt until** and **Attack a group**: the walk to a group or the map change; a fight is never cut, the events
+    waiting for its end;
+  - **the travels** (Go to a zone, a map, the bank; Follow a route; a zaap, the haven bag, a door, an NPC's way): the
+    current map change or teleport, a dialog given its replies to its end and left (settled alone);
+  - **the bank** (Deposit all but, Withdraw, the chests): once the window is open, the exchange to its end and the
+    window closed;
+  - **Wait**, **Wait until** and **Wait for life** are cut at once, acting on nothing, and counted again as before
+    (settled alone).
+- **The four modes** then: **interrupt then resume** runs the event's flow after the inner step, then the action runs
+  again from where it was, its progress kept in its node's slot (as it is goal-shaped, it checks what is already done);
+  **wait for the current action** waits for the whole action, Done or Failed, then runs the event's flow before the
+  next node; **interrupt and restart** cuts at the inner step, runs the event's flow, then starts the main flow from
+  its On start (a node's memory kept, (v2.3)); **parallel** runs at once beside the flow at work, cutting nothing, and
+  an action or a wait in its flow is a problem, a new one (settled alone: it never acts).
+- **Several events** (the owner's choices of 2026-11-23): a priority from 1 to 8; events of one priority firing
+  together run in the order of the event graph's nodes, top to bottom (the declaration order; settled alone); only a
+  strictly higher priority cuts a flow at work, an event's flow too, so the stack holds at most nine flows; another
+  event of the same or a lower priority is kept pending, once, and runs when the flows above it end, those of one
+  priority in that order; the same event firing again while its own flow runs is ignored (a threshold re-arms anyway).
+- **A fight and a death cut everything**, at once, since the game forces them: "A fight starts" runs its flow as the
+  fight begins, its mode fixed, its nodes only those that do not act on the map (Notify, Set, Fight with's choice of a
+  fight blueprint; settled alone); "Died" runs once the character is back at its save point. **In a fight** the
+  character's other events wait for its end, each pending once: before step 6 the run sends nothing there, notifies
+  and lets the player fight by hand, the action resuming after; from step 6 the fight's own events (placement, On my
+  turn, a turn began, a fighter died, a challenge proposed) run inside it, in the fight's blueprint (step 6's design).
+- **A timer missed** while paused, away or fighting fires once on return, if it returns within its period: an At
+  less than an hour after its time, an Every less than its duration after it was due; later, it is skipped and the next
+  fires on time (the owner, 2026-11-23: a pause from 22:00 to 10:00 never logs off at 10:00). Events triggering each
+  other with no wait are caught by the 10,000-node guard, counted across flows: Trigger at once does not wait.
+- **Every wait on the game has a deadline** (the owner, 2026-11-23, ADR 0022): a walk's arrival, a map change, a use's
+  end, a dialog or the bank opening, the server's answer each end in ADR 0021's outcomes, done, refused (the server's
+  reason), no answer (what was awaited, how long) or interrupted (a fight, the player moving, the connection closed),
+  its deadline from ADR 0021's one table; the action makes them Done or Failed with their reason. **One watchdog per run**: running, if D3B sends nothing to
+  the game for **10 minutes**, the run turns blocked, "nothing sent for 10 min", with its node, inner step and what it
+  waited for, so that no run reaches the server's idle kick at about 30 minutes (the C# version's D464, D481, D484,
+  D488, D490). The graph's own waits count too, on purpose: a Wait of 10 minutes or more, and a Wait until whose
+  longest wait is 10 minutes or more or none, and Wait for life, say so beside their node in the editor, a hint, not
+  the rule (a long regrowth waited inside Harvest until may block too); a night pause logs off. Paused, finished,
+  blocked or away, a run has no watchdog; before step 6, a run entering a fight sends nothing, notifies, the player
+  fights by hand and the action resumes after, the watchdog's clock starting again at the fight's end.
 - **On the owner's captures** (2026-11-16, the 54 game connections of 3.7.13.17): a blueprint waiting for full life,
   then a minute, then reading its life and looping ran on each of the 49 characters chosen, 6,900 turns, blocked
   only by the 6 deaths, each at its fight's end, and never "runs without pause".
@@ -207,8 +258,8 @@ flowchart LR
   use an interactive element (its skill), talk to an NPC and give its replies in order, leave the dialog (step 4, an
   **NPC** a type); harvest until, go to the nearest bank and deposit all but (step 4's first slice, `docs/play.md`);
   harvest this map, a bank on a map, withdraw, deposit to the haven bag's chest, use an item, open the resource bags, equip the best I carry for my level, equip an item or a preset,
-  set the game's own "experience received" (step 5); hunt until, attack a group (its levels), fight with the default
-  AI (won is Done), leave the fight (step 6); craft N of an item, sell items at the auction house (step 7); notify,
+  set the game's own "experience received" (step 5); hunt until, attack a group (its levels), fight (the class's profile or a
+  fight blueprint; won is Done), leave the fight (step 6); craft N of an item, sell items at the auction house (step 7); notify,
   and note in the History (step 4); destroy items (step 5); switch to another blueprint (step 4, the owner,
   2026-11-16): the character's file then names it, its settings carried as when the tab chooses one, and it starts
   from its On start. Choosing a fight's challenges' bonus comes with step 6 (the catalogue, below).
@@ -216,8 +267,8 @@ flowchart LR
   with the fight's state, the spells and the effects: a **fight profile** is a value edited as an ordered list of
   rules (a spell, a target, a cell, typed conditions, how often it repeats, whether to move to cast), the first
   that holds is played and the list read again until none does; D3B ships one per class, shareable, and **the
-  default AI is the character's class profile**; for advanced players, an event "On my turn" overrides it in the
-  graph. The fight profile (a type) and "On my turn" (an event) are marked step 6 until then.
+  default AI is the character's class profile**; for advanced players, an event "On my turn" overrides it, in a
+  fight blueprint (the owner, 2026-11-23, the catalogue's fight family below). The fight profile (a type) and "On my turn" (an event) are marked step 6 until then.
 - **Routes** ((21), the owner, 2026-11-16): an anchor may hold an action (harvest, fight, nothing, or call a function
   of mine) and a forced exit (a door, a cell) where the world graph is not enough; Follow the route resumes from the
   map the character is on, as the scripts' "on map X, do Y"; a route is recorded while playing (the relay observes the
@@ -590,7 +641,12 @@ flowchart LR
   and × as theirs; `=` of two lists its own kind beside `=`, "Listes … = …", a pin's shape being fixed (settled alone); a List
   typed by its first input's value or wire, as any wildcard; an index typed
   below 1 a problem, one by a wire out of the list blocking on the node, the first of an empty list too);
-  Text and Join; drawn compact; sentences in place, the Summary, a run on the captures and the checklist. Each kind
+  Text and Join (done in code: `values/text.rs`, a template filled in one pass, so words a value brings are never read
+  as holes; each hole by its value's type, as its wire brings it: digits, "90 %", "1 min 30", "23:00", a text itself,
+  a game thing, a route, a bank, items or yes or no by `Knows::words` in the player's language, else its id, a list
+  by its elements separated by ", "; the template its own edit, `GraphEdit::Text`, a hole gone taking its wire and
+  value and the type it alone used; the template shown on D3B's blueprints; Join's separator ", " by default); drawn
+  compact; sentences in place, the Summary, a run on the captures and the checklist. Each kind
   replaces the catalogue's test kinds (`test_equal`, `test_list`, `test_text`) as it comes.
 - **Measured** (nothing acts in the game before step 4): the picker's group; a compact `<` with a chip; "Tant que Pods
   % < 80" and parentheses read; a ÷ 0 problem; a list's "+" and Remove; a Text's holes; Choose typed by a wire;
@@ -697,8 +753,8 @@ comes from an audit of 2026-11-23 comparing `next` with `main`'s C# bot, the pro
 | A profession's level reached | the profession, its level | 5·Récolte | C# |
 | An item obtained | the item, its quantity | 5·Récolte | studied for harvests; inventory C# |
 | One harvest done | the resource, its quantity | 5·Récolte | studied |
-| On my turn (overrides the class's profile) | — | 6·Combat | C# |
-| Placement; a turn began; a fighter died | the cells; the fighter | 6·Combat | C# |
+| On my turn (overrides the class's profile), in a fight blueprint | — | 6·Combat | C# |
+| Placement; a turn began; a fighter died, in a fight blueprint | the cells; the fighter | 6·Combat | C# |
 | A challenge proposed, its result | the challenge | 6·Combat | C#, `artifacts/studies/challenges*` |
 | A party member lost, needs the bank; the master moved | the member | 7 | C# (D437 to D490) |
 | A quest's or a treasure hunt's step; a sale done | the step; the item | 7 | study |
@@ -715,6 +771,7 @@ resuming (4·Play), the watchdog of a run that sends nothing (4·Play), a whispe
 | --- | --- | --- | --- |
 | Life %, life, its maximum | percentage, numbers | v1; 4·Play | pinned (out of fights) |
 | Pods %, pods, their maximum | percentage, numbers | v1; 4·Play | pinned |
+| An item's weight | a number | on demand | data |
 | Level; the level's experience % | number; percentage | v1; 4·Play | pinned (experience inferred) |
 | Kamas; energy and its maximum | numbers | 4·Play | pinned (energy inferred) |
 | In a fight | yes or no | 4·Play | pinned |
@@ -752,6 +809,7 @@ resuming (4·Play), the watchdog of a run that sends nothing (4·Play), a whispe
 | The places for my level (a row of `bot::places`) | a list of zones | 5·Récolte | data |
 | The monster groups here (levels, size, monsters left out) | a list of group records: level, size, monsters, cell | 6·Combat | pinned |
 | A map's kind: a dungeon, an interior, a bank, a zaap, a workshop | a choice | on demand | data |
+| Whether a cell is walkable | yes or no | on demand | data |
 | A sub-area's bonus (anomalies) | a percentage | on demand | study |
 | The players here | — | out (2026-11-16, 2026-11-23) | pinned |
 
@@ -766,23 +824,57 @@ distance, line of sight, reachable and free cells; whether a spell can be cast o
 a spell's zone, the best target of a zone, an estimated damage; the fight's challenges, their targets and results; the
 placement cells of both teams; glyphs, traps, portals and runes.
 
+**A fight AI of my own** (the owner's choices of 2026-11-23, ADR 0024): the class's **fight profile** plays by
+default, as the C# version's one AI (D244); a player's own turn logic lives in a **fight blueprint**, a blueprint
+of the one kind ADR 0014 keeps whose graph holds the fight's events, chosen in a character's setting (none by default:
+the profile plays) and for one fight by the character's blueprint (Fight's input: a dungeon, an archmonster). The
+character's run waits through the fight, its events pending (ADR 0020), while the fight blueprint's flow plays it:
+one flow at work at a time (ADR 0017); its "a fight ended" runs first, then the character's. A fight blueprint:
+
+| Node | Gives or does | Data |
+| --- | --- | --- |
+| Placement (my cells, the enemies' cells); On my turn; a turn began (the fighter); a fighter died; a fight ended | events, the fight's only ones | C# |
+| My AP, MP, life %, cell; the turn's number | numbers, a cell | C# |
+| The enemies, the allies, the summons | lists of fighter records: life %, cell, states, buffs, resistances, an archmonster or a wild mount | C# |
+| Line of sight, distance, the reachable and free cells, the cells in a spell's range | yes or no, numbers, lists of cells | C# + data |
+| Can I cast this spell there (and why not, a choice: AP, range, sight, cooldown, cell taken) | yes or no, its reason | C# |
+| Cast a spell on a cell; move to a cell or toward a fighter (keeping a distance); place on a cell; ready; pass the turn; a summon's own turn | actions, each Done or Failed with its reason | C# |
+| **Let the built-in AI play this turn**; **let it play one action** (the profile's next rule that holds) | actions, handing the turn back to the profile | runtime |
+
+An unlinked Failed in a fight blueprint hands the rest of the turn to the profile and notes it, rather than blocking
+the character mid-fight; a turn the server ends before the blueprint passes is noted too (settled alone).
+
+**Captures** (the owner, 2026-11-23), measured by neither version, a study and captures owed first (step 6): settings
+of Combat and Chasseur that the built-in AI plays, and nodes for an AI of mine:
+
+| Node or setting | Gives or does | Data |
+| --- | --- | --- |
+| Capture the wild mounts met (dragoturkeys, muldos, volkornes; which ones) | a setting: the AI keeps the mount alive, casts the capture net or scroll when it may, carries one | study |
+| Capture the archmonsters met (which soul stone, the monster's level and grade) | a setting: the AI keeps the archmonster alive until the stone is cast, the stone carried | study (format 5 flags archmonsters?) |
+| Capture (a fighter, a net or a stone) | an action under On my turn: Done once cast | study |
+| Its outcome: a mount obtained, a stone filled | outputs of "a fight ended" and "an item obtained" | study |
+| The soul stones carried and their capacity; whether a fighter is an archmonster or a wild mount | a list of items, numbers; yes or no (a fighter's fields) | study + data |
+
 #### Actions
 
 | Action | Slice | Data |
 | --- | --- | --- |
 | Notify | v1 | runtime |
 | Pause and notify; Block; Finish | v2.3, v1 | runtime |
+| Start again (the main flow from On start, as the restart mode) | (26) | runtime |
 | Note in the History; switch to another blueprint | 4·Travel | runtime |
 | Refuse an invitation (the forced default; as a node with the event, 7) | 4·Travel | C# party, exchange |
 | Go to a zone | v1, done 4·Play (R3) | studied (map change, walk) |
 | Go to a map; walk to a cell; leave by an edge or a cell | 4·Travel | studied |
 | Follow a route N laps (an action and a forced exit per anchor) | (21), done 4·Travel | studied |
 | Go to the haven bag; leave it | 5·Récolte (after its capture) | study (capture missing) |
+| Take a waypoint (a teleport of the world map) | on demand | study |
 | Take a zaap or a zaapi to a map; save a zaap; discover the zaaps within reach | 4·Travel | studied (`hgz`, the cost rule; D499) |
 | Go through a door; use an interactive element (its skill) | 4·Play (R5) | studied |
 | Talk to an NPC, its replies in order; leave the dialog | 4·Play (R8, the banker); NPC ways 4·Travel | studied; NPC tables format 6 (R7) |
 | Harvest until (pods, a count); its tour | v1, done 4·Play (R6) | studied |
 | Harvest this map; on every map crossed (inside, never to the bank) | 5·Récolte | studied |
+| Harvest this map's "at most N" (Advanced); harvest this element (a resource record) | on demand | studied |
 | Go to the bank: the nearest; a map | v1, done 4·Play (R9); a map 5·Récolte | studied |
 | Deposit all but what is worn and the items a setting keeps (Récolte automatique's "Garder"; settled alone) | v1, done 4·Play (R9) | studied |
 | Withdraw (N of an item); deposit or withdraw kamas | 5·Récolte | studied (`jyj`); withdraw inferred, deposit study |
@@ -792,17 +884,21 @@ placement cells of both teams; glyphs, traps, portals and runes.
 | Set the game's "experience received" | 5·Récolte | study |
 | Destroy items (cannot be undone, the History notes each) | 5·Récolte | study |
 | Log off (the night pause) | 5·Récolte | relay; the idle kick C# (D481) |
-| Hunt until; attack a group (its levels, size, monsters left out); fight with the default AI; leave the fight | v1, 6·Combat | C# |
+| Hunt until; attack a group (its levels, size, monsters left out); fight with the class's profile or a fight blueprint; leave the fight | v1, 6·Combat | C# |
 | Choose the challenges' bonus, play the easy ones; close the fight to others, no spectators | 6·Combat | C# (D438, D466, D480) |
-| Cast, move, pass the turn, place, ready (under "On my turn") | 6·Combat | C# |
-| Party: invite, accept, follow a master, give to the master | 7 | C# |
+| Choose a proposed challenge (a priority list of challenges, or the first) | 6·Combat | C# (D461) |
+| Cast, move, pass the turn, place, ready (under "On my turn"); a summon's own turn | 6·Combat | C# |
+| Attack a group's monsters required, its composition (Advanced) | 6·Combat | C# |
+| Party: create, invite, accept, leave; follow a master, join its fights, ready with it; give to the master, receive from the members; wait for the members on one map; a member needing the bank; tell the members to stop, pause, resume; a dungeon's teleport offered and accepted | 7 | C# (D435 to D490) |
 | Craft N of an item; sell at the auction house; buy there or from an NPC | 7 | study |
 | Quests (start, validate a step), treasure hunts, dungeons (keys, rooms); the Kolizeum | 7 | study |
 | Notify outside the app (the desktop, Discord) | on demand | — |
-| Mounts, pets, houses, smithmagic, achievements; spend characteristic points | on demand | study |
+| Play another character of the account | on demand | the selection study |
+| Mounts, pets, houses, smithmagic, achievements, cosmetics and titles; spend characteristic points | on demand | study |
 | Log in again | never (credentials, Shield) | — |
 | Answer private messages; flee or log off when a player or a moderator arrives | never | — |
-| Wait at random between gestures (no random duration node, (v2.4)) | never | — |
+| Wait at random between gestures (no random duration node, (v2.4)); an emote; sit (no effect left in Dofus 3) | never | — |
+| Speak in the chat, whisper to a player | never | — |
 | Buy the subscription or Ogrines; create accounts or characters; a proxy per account | never | — |
 | Aggress players | never | — |
 | Send raw messages (no untyped escape) | never | — |
@@ -820,9 +916,11 @@ placement cells of both teams; glyphs, traps, portals and runes.
 | Ranges (a type) | v2.1 |
 | "According to the range of …" (the value of the row a number reaches, or that row's output) | 5·Récolte |
 | A choice (options on its variable) | 4·Play (an area's world, a fight's kind), its editor 5·Récolte (the resources' order) |
+| Records and Break: an interactive element (its kind, skill, state) | 4·Play (R5) |
 | Records and Break: a resource here, a sub-area | 5·Récolte |
 | Records and Break: a monster group; a fighter | 6·Combat |
 | A quantity of an item ("200 × an item", typed, with its list: restocking) | 5·Récolte |
+| The Items selection "of these types" (resources only, the C# version's "harvest only") | 5·Récolte |
 | A cell, a direction | 4·Travel |
 | A class | 4·Play |
 | A monster, a race; a spell, a challenge; a fight profile | 6·Combat |
@@ -832,6 +930,164 @@ placement cells of both teams; glyphs, traps, portals and runes.
 | Decimal numbers | on demand |
 
 An event's outputs come with its event; a type's editor with the first setting of that type.
+
+#### Lua parity
+
+The owner, 2026-11-23: "the bot must be able to do as many things as with the Lua scripts". This table is that check,
+read for ideas only from the reference scripts (`vendor/metiers`'s 58 profession scripts, the 15 Retro scripts) and
+MoonBot's API (`vendor/moonbot/lua-api.md`), their code never copied (`lua-reference-analysis.md` and its Retro
+addendum in the sessions' notes). Every API the scripts call is a row, by how often they call it; the rest of the API
+follows by family, so that nothing is left out silently. A row maps to the node or nodes that do it and their slice
+(the tables above), **gap** when no node does it yet, its proposed node added above, **out** when D3B's model covers
+it another way (why said), or **never**, with the never-list's reason. The scripts' own names (their functions,
+`ERREUR`, `CRITIQUE`, `DROP`, `EQUIP_`) are not the API.
+
+**The scripts' shape**
+
+| Lua | Blueprint | Slice |
+| --- | --- | --- |
+| `move()`, called each turn, its route of steps "on map X, do Y" | On start, then Follow a route (resumed from the map the character is on) or Harvest until on a zone | v1, (21) |
+| `bank()`, called past the pods' threshold; `PODS_THRESHOLD` | Pods above X % (or Harvest until's pods), then Go to the bank and Deposit all but; the setting `pods_threshold` | v1, 4·Play (R9), 5·Récolte |
+| `phenix()`, the respawn | Died, or a fight ended lost ("after a lost fight") | (26), 5·Récolte |
+| `onLoad()`, the preamble | On start's first nodes; Do N times of 1 | v1, v2.3 |
+| `prefightManagement(myCells, enemyCells)`; `fightManagement()` | Placement; On my turn, in a fight blueprint, overriding the class's fight profile | 6·Combat |
+| `challengeManagement(count, isMule)` (a priority list, a manual or random mode); `fightChallenge:challengeName`, `getLastChallengeProposalMessage`; `fight.selectChallenge`, `validateChallenge`, `challengeModSelect` | A challenge proposed; **gap**: Choose a proposed challenge (a priority list, else the first; no random mode); the bonus and easy challenges (settings) | 6·Combat |
+| `afterFight`, `waitForFightEnd` | A fight ended (won, its kind); Wait until not in a fight | 5·Récolte, 4·Play |
+| `mule_lost(bossMapId)`, `MOONBOT_TIMEOUT`, `lockedCustom(mode, fn)`, `MULE`, `TEAM_IDS_LIST`, `global:isBoss`, `getTeamMembersIds` | A party member lost; the party's queries and actions | 7 |
+| `change()`, a field toward another zone | Go to a zone (goal-shaped, no field of arrows) | v1, 4·Play (R3) |
+| A step's `map` (coordinates or id) | A route anchor: a map, by id, shown by its coordinates | (21) |
+| A step's `path`: a direction, an edge cell | The world graph joins anchors; a forced exit (an edge or a cell) where it is not enough | (21), 4·Travel |
+| `path = "top\|right"`, a random exit | Alternate, or Pick the least recently picked, in a function the anchor calls: D3B picks deterministically | v2.3 |
+| `path = zaap(id)`, `zaapi(id)`, `havresac` | Take a zaap or a zaapi to a map; Go to the haven bag | 4·Travel, 5·Récolte |
+| `path = waypoint(id)` | **gap**: Take a waypoint (a teleport of the world map; study) | on demand |
+| A step's `gather = true`; `GATHER`, `JOB_ID` | Harvest this map, an anchor's action; the resources taken (Items) and the profession | 5·Récolte |
+| A step's `fight = true`; `MIN_MONSTERS`, `MAX_MONSTERS` | Attack a group (its size), an anchor's action; fighting on the way | 6·Combat |
+| `forcefight` (a dungeon: wait and retry) | Retry around Attack a group, with Wait until a group is here | 6·Combat, v2.3 |
+| A step's `door`, `custom`, `npcBank`, `sale`, `craft` | Go through a door; an anchor calling a function of mine; Go to the bank; Sell; Craft | 4·Play, (21), 4·Play, 7 |
+| `RC_CIRCULAR` (the route loops) | A route as a loop, one way or a round trip | (21) |
+| `OPEN_BAGS` | Open the resource bags (the setting, on) | 5·Récolte |
+| `AUTO_DELETE` | Items to destroy (the setting, none by default); Destroy items | 5·Récolte |
+| `MAX_GATHER_DISTANCE` | **out**: the harvest leaves the elements it cannot reach, inside the action (the C# version's D424) | 5·Récolte |
+| The settings file (`config.*`: colours, booleans per bank city, bonus) | Settings set per character, typed; a choice for one of several | v1, 4·Play |
+| A level bracket chain (if/elseif on `job.level`), its pool of routes, a random pick | Ranges of zones or routes, According to the range of …, Pick | v2.1, 5·Récolte, v2.3 |
+| `autoEquipGear` (a gear table per colour) | Equip the best I carry for my level; or a preset | 5·Récolte |
+| A one-shot snippet (equip an item), a one-way travel that ends | A blueprint of a few nodes ending on Finish; Switch to another blueprint to chain | v1, 4·Play |
+
+**What the scripts call** (counted over both sets)
+
+| Lua | Blueprint | Slice |
+| --- | --- | --- |
+| `global:printMessage`, `printSuccess`, `printError`, `printColor` | Notify; Note in the History; Block with a reason for an error | v1, 4·Play, v2.3 |
+| `global:delay` (fixed waits between gestures) | Wait (a duration); the actions wait for the game's answer themselves, no fixed wait needed | v1 |
+| `global:random`; random waits | A random number, true N % of the time, a random element; a random wait, **never** (humanlike timings) | v2.4; never |
+| `map.currentMap`, `map:currentMapId`, `map:onMap` | The current map, its X and Y; `=`; whether in a zone | 4·Play |
+| `map:changeMap` | Leave by an edge or a cell | 4·Travel |
+| `map:moveToCell` | Walk to a cell | 4·Travel |
+| `map.moveTowardMap` | Go to a map | 4·Travel |
+| `map:door` | Go through a door | 4·Play (R5) |
+| `job:level`, `job.level`, `job:name` | A profession's level; Text reads a profession by its name | 5·Récolte, v2.4 |
+| `character:level`, `character:name`, `character:id` | Level; its name; **out**: an id, the character being the run's | v1, 4·Play |
+| `inventory:podsP` | Pods % | v1 |
+| `inventory:itemCount`, `inventory.findByTemplate` | An item's count; whether one is carried | 5·Récolte |
+| `inventory:equipItem` | Equip an item | 5·Récolte |
+| `inventory.deleteItem` | Destroy items | 5·Récolte |
+| `exchange:putAllItems`, `exchange:leave` | Deposit all but (what is worn); the bank's window closed by the action | 4·Play (R9) |
+| `exchange.getItem`, `exchange.storageItemQuantity` | Withdraw (N of an item); an item's count in the bank | 5·Récolte |
+| `npc:npcBank` | Go to the nearest bank (its banker opened) | 4·Play (R9) |
+| `npc:npc`, `npc:reply` | Talk to an NPC, its replies in order | 4·Play (R8); NPC ways 4·Travel |
+| `global:addInMemory`, `remember` | Variables of a run or memory; Get, Set | v1 |
+| `global:AddInGlobalMemory`, `GetInGlobalMemory` | Variables shared between characters | 7 |
+| `developer:createMessage`, `sendMessage`, `suspendScriptUntil` (the experience limit, the challenge handshake) | Set the game's "experience received"; Choose the challenges' bonus; raw messages **never** (no untyped escape) | 5·Récolte, 6·Combat; never |
+| `global:getCurrentScriptDirectory` | **out**: a blueprint names no file | — |
+| `fight.getNearestEnemy`, `myCell`, `myMP`, `isCellFree`, `adjacentCells` | The fight's queries (fighter records, cells) | 6·Combat |
+| `fight.canCastSpell`, `canCastSpellOnCell`, `castSpell`, `move`, `passTurn` | Cast, move, pass the turn, under On my turn, or a fight profile's rule | 6·Combat |
+
+**The rest of MoonBot's API**, by family
+
+| Lua | Blueprint | Slice |
+| --- | --- | --- |
+| `map.x/y`, `cellId`, `currentArea`, `currentSubArea` | X and Y; the character's cell; its area and world; its sub-area | 4·Play, 4·Travel |
+| `moveToward(x, y)` | Go to a map (typed "5,-18") | 4·Travel |
+| `useInteractive(target, skill)`, `useInteractiveIndex`, `getInteractives`, `interactiveObjects` | Use an interactive element (its skill); the elements here (records) | 4·Play (R5) |
+| `waitInteractiveState(el, state, ms)` | Wait until over an element's state (its record, Break), with a longest wait | 4·Play |
+| `useZaap`, `useZaapi`, `zaapTo`, `openZaap`, `getZaapDestinations`, `knownZaapAt`, `hasZaapHere`, `saveZaap`, `knownZaaps` | Take a zaap or a zaapi; the zaaps known; the elements here; Save a zaap; Discover the zaaps | 4·Travel |
+| `zaap(x, y)` (the chat's command) | **out**: Take a zaap does it typed | 4·Travel |
+| `character.havreSac()`, `map.enterDreams()`, `map.exitDungeon()` | Go to the haven bag, leave it; dungeons | 5·Récolte, 7 |
+| `isWalkable(cell)`, `waitForMapChange` | **gap**: whether a cell is walkable (a query); The map changed, or Wait until on the current map | on demand, 4·Travel |
+| `getAnomalies`, `getAnomalyBonus` | A sub-area's bonus | on demand |
+| `sit`; `sendEmote` | **never**: sitting no longer speeds regeneration (the owner, 2026-11-14) and an emote does nothing, their one use left to pass for a present player | never |
+| `map.gather()`, `gatherAll(max)` | Harvest this map; **gap**: its "at most N" (an Advanced input) | 5·Récolte, on demand |
+| `map.gatherResource(cell)`, `getResources()` | **gap**: Harvest this element (a resource record); the resources here | on demand, 5·Récolte |
+| `config.setGatherList`, `setHarvestMode("whitelist"\|"blacklist")` | The resources taken or left (Items) | 5·Récolte |
+| `inventory.list`, `count`, `findByUid`, `findByName`, `itemNameId` | Items of a type carried; an item's count; the item type's picker | 5·Récolte |
+| `pods`, `podsMax`, `itemWeight`, `itemPods` | Pods, their maximum; **gap**: an item's weight (a query, from the data) | 4·Play, on demand |
+| `useItem`, `useItemByGID`, `useMultipleItem` | Use an item, N at once | 5·Récolte |
+| `unequipItem`, `isEquipped`, `getPresets`, `usePreset` | Unequip; what is equipped; Equip a preset | 5·Récolte |
+| `getShortcuts`, `useShortcut` | **out**: Use an item and Equip a preset do it typed | — |
+| `feedPet`, `getPets`; mounts; houses; wardrobe, cosmetics, titles | Mounts, pets, houses, cosmetics and titles | on demand |
+| `dropItem` | **out**: Destroy items frees the pods; nothing is dropped on the map for others | — |
+| `putItem`, `putItems`, `putExisting`, `putItemsKeeping({gid = keep})` | Deposit all but (the items kept); restocking keeps "N × an item" | 5·Récolte |
+| `putCategory`, `putResources(except)` | **gap**: the Items selection "of these types" (resources only, as the C# version's "harvest only") | 5·Récolte |
+| `getAllItems`, `getItemsQuantity`, `getCategory`, `getExisting` | Withdraw, with a quantity of an item or a list of them | 5·Récolte |
+| `putKamas`, `getKamas`, `storageKamas`, `storageItems` | Deposit or withdraw kamas; the bank's content | 5·Récolte |
+| `character.havreSacChest()`; `house.openChest`, `useChest` | Deposit to the haven bag's chest; houses | 5·Récolte, on demand |
+| `config.setBankThreshold` | The setting `pods_threshold` | 5·Récolte |
+| `putItemsKeeping`'s and `placeTeam`'s `delayMin/delayMax` | **never**: random pauses pass for a player | never |
+| `fight.*` (turn, me, fighters, spells, cells, marks, challenges, placement, `abandon`, `playTurn`, the action log) | The fight's queries and actions; Leave the fight; the fight profile | 6·Combat |
+| `fightSlave.*` (controlled summons) | **gap**: a summon's own turn under On my turn (step 6's design) | 6·Combat |
+| `config.setMin/MaxMonsters`, `setForbiddenMonsters`, `setMandatoryMonsters`, `setMonsterComposition` | Attack a group's size, monsters left out; **gap**: monsters required, a group's composition (inputs, Advanced) | 6·Combat |
+| `map.monsterGroups()`, `fightGroup(id)`, `fight()` | The monster groups here (records); Attack a group | 6·Combat |
+| `gameData.*` (spells, monsters, states, challenges, recipes, sub-areas, dungeons, names) | The game data behind each picker and query; a sub-area's facts | as their users |
+| `character.hp/hpMax/hpPercent`, `kamas`, `xp/xpPercent`, `energy` | Life, its maximum, life %; kamas; experience %; energy | v1, 4·Play |
+| `classId`, `breed`, `sex`, `server` | Its class; **out**: sex and server, no blueprint reads them | 4·Play |
+| `ap`, `mp`, `initiative`, `range`, `prospecting`, other characteristics, `statsPoint` | AP and MP, other characteristics | on demand |
+| `statUpgrade`, `UpgradeX`, `resetStats`, `setSpellVariant`, `spellLevel` | Spend characteristic points; its spells | on demand, 6·Combat |
+| `job.list`, `job.xp`, `xpNext`, `xpPercent` | The professions known; a profession's experience | 5·Récolte |
+| `global.setXpReceived`, `setXpBlocked` | Set the game's "experience received" | 5·Récolte |
+| `character.list/count/switch` (another character of the account) | **gap**: Play another character of the account (a study of the selection) | on demand |
+| `isSubscribed`, `subscriptionDaysLeft`, `subscriptionEnd*` | The account subscribed; Subscription ending | 4·Travel, on demand |
+| `subscription.buy7Days`, `isInProgress` | **never**: payment automation | never |
+| Quests, achievements, treasure hunts (`quest.*`, `achievement.*`, `hunt.*`) | Quests and treasure hunts; achievements | 7, on demand |
+| `npc.respond`, `leaveDialog`, `getQuestionId`, `getResponses`, `isInDialog`, `map.npcs()` | Talk to an NPC, its replies; Leave the dialog; busy in a dialog; the NPCs here | 4·Travel |
+| Player exchanges (`exchange.requestById`, `accept`, `ready`, `myItems`…) | Party: give to the master; Refuse an invitation | 7, 4·Travel |
+| `social.setPolicy`, `pending`, `accept/refuse` | Invitation received (refused by default); Refuse an invitation | 4·Travel, 7 |
+| `group.setPartyTiming(acceptMin, acceptMax)` | **never**: a random "reading delay" | never |
+| HDV (`autoSell`, `sellItem`, prices, `buyItem`, `waitForSale`, `undercutAll`…); NPC shops (`merchant.*`) | Sell at the auction house; buy there or from an NPC; a sale done | 7 |
+| `craft.*`; smithmagic `fm.*` | Craft N of an item; smithmagic | 7, on demand |
+| `sleep`, `fight.delay`, `elapsedTime`, `getTime`, `localTime(tz)`, `os.time` | Wait; how long the run has lasted; the time now (the computer's local time, no time zone) | v1, 4·Play |
+| `finishScript`, `bot.stop`, `restartScript(reset)`, `switchScript(name)`, `bot.isRunning` | Finish; **gap**: Start again (the main flow from On start, as the restart mode); Switch to another blueprint | v1, (26), 4·Play |
+| `disconnect()` | Log off | 5·Récolte |
+| `reconnect()`, `reconnectTo(minutes)` | Reconnected resumes once the player logs in; logging in, **never** (credentials, Shield) | 4·Play; never |
+| `editInMemory`, `deleteMemory`, `bot.scriptMemory` | Set, Reset of a memory variable | v1, (14) |
+| `files.read/write/readJson/writeJson…` | **out**: memory and shared variables hold a blueprint's state; it writes no file | — |
+| `bot.sessionStats()`, `connectionStats()`, `uptime()` | The run's counts; how long the run has lasted | 4·Play, 5·Récolte |
+| `print`, `log`, `consoleLines`, `clearConsole` | Notify; the History and the debugger | v1, 4·Play |
+| `chat.send`, `sendPM`, channel shortcuts | **never**: a bot speaking to players passes for a present one | never |
+| `getPrivateMessages`, `waitForPrivateMessage` | A whisper received, a notification outside the graph; answering it, **never** | 4·Play; never |
+| `developer.sendDiscordWebhook` | Notify outside the app | on demand |
+| `postRequest`, `getRequest` | **out**: a blueprint makes no network call; D3B's data is the game's | — |
+| `developer.sendRawPacket`, `registerMessage`, `bot.sendPacket`, `global.onMessage` | **never**: no untyped escape, every gesture typed and goal-shaped | never |
+| `moonbot.accounts`, `account.profile:setProxy`, `scheduleCreation`, `deleteCharacter`, the controllers' "Proxy", "Subscribe", "Character creation" | **never**: account and fleet automation, a proxy per account | never |
+| Controllers reading other accounts and starting their scripts | **out**: D3B runs each character's blueprint, any number at once, in the open (ADR 0014); a run reads no other's but by shared variables (7) | — |
+| The dashboard's "anti-moderator", the AI replies to whispers | **never**: evading moderation, passing for a player | never |
+| `move_zone`, `startBot` (Retro compatibility) | **out**: Dofus Retro's | — |
+| `group.*`: `createGroup`, `map.inviteToGroup`, `acceptGroupInvite`, `leaveGroup`, `isLeader`, `isMule`, `getMembers`, `waitForMembers`, `allOnSameMap`, `anyMemberNeedsBank`, `giveToLeader`, `receiveFromMules`, `sendCommandToMules`, `setAutoJoinFight`, `setAutoReady`, `setAutoFollow`, `dungeonTeleportOffer`, `acceptDungeonTeleport` | **gap**: the party's family (Actions, 7): create, invite, accept, leave; follow, join and ready; give and receive; wait for the members; a member needing the bank; tell the members to stop, pause, resume; the dungeon's teleport | 7 |
+| `map.players()` | **out**: the players here stay out (2026-11-16, 2026-11-23) | — |
+| `map.challengePlayer`, `acceptChallenge`, `declineChallenge` (duels) | **out** until the Kolizeum's design (PvP, step 7 or beyond); a duel offered is refused by default | 7; 4·Travel |
+| `map.exchangePlayer` | Give to the master (the party); otherwise **out**, no trade with players | 7 |
+| `config.setBankKamas`, `setBankWithdrawKamas`, `addBankKeepItem`, `addBankWithdrawItem`, `addAutoDeleteItem` | Deposit or withdraw kamas; the items kept; restocking; items to destroy (settings) | 5·Récolte |
+| `global.getCountFight`, `isInFight` | The run's fights won and lost; in a fight | 4·Play |
+| `map.worldDistance` | The distance to a map or a zone | 4·Travel |
+| `developer.listGlobalMemory` | Variables shared between characters | 7 |
+| `developer.waitForAnyMessage` | **never**: raw messages, no untyped escape | never |
+| `config.setConnectionMode`, `setServerId` | **never**: logging in (credentials, Shield) | never |
+| `global.username`, `accountTag`, `thisAccountController` | **out**: no blueprint reads the account's identity | — |
+| The dashboard's import from an account creator | **never**: mass account creation | never |
+
+The gaps, each now a node of the catalogue above: Take a waypoint, whether a cell is walkable, Choose a proposed
+challenge, the party's family, Harvest this map's "at most N", Harvest this element, an item's weight, the Items
+selection "of these types", a summon's turn, monsters required and a group's composition, Play another character of
+the account, Start again, and an interactive element's record.
 
 ## In the app
 

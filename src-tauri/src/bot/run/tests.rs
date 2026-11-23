@@ -407,6 +407,8 @@ impl Built {
             named: None,
             outs: Vec::new(),
             cases: Vec::new(),
+            types: std::collections::HashMap::new(),
+            text: None,
         });
         self
     }

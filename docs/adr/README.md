@@ -10,7 +10,7 @@ Smaller choices are in their pull requests. An ADR is never rewritten: a later o
 | [0003](0003-game-data-as-json-packed-in-the-app.md) | Game data as JSON from a .NET extractor, packed in the app | superseded by 0008 |
 | [0004](0004-typed-ipc-with-tauri-specta.md) | A typed IPC generated from Rust with tauri-specta | accepted |
 | [0005](0005-how-we-deliver.md) | Claude delivers through squash-merged PRs on protected branches | accepted |
-| [0006](0006-releases-for-six-targets.md) | Releases for six targets through release-please, unsigned for now | accepted |
+| [0006](0006-releases-for-six-targets.md) | Releases for six targets through release-please, unsigned for now | superseded by 0023 |
 | [0007](0007-the-updater-next-channel.md) | The rewrite updates from an `updater-next` channel, silently, with a restart bar | accepted |
 | [0008](0008-world-data-first-in-five-languages-as-a-tar-gz.md) | The data folder holds the world first, in five languages, and ships as a `.tar.gz` | superseded by 0013 |
 | [0009](0009-the-app-identifier-is-io-github-aerafaldev-d3b.md) | The app's identifier is `io.github.aerafaldev.d3b` | accepted |
@@ -24,4 +24,8 @@ Smaller choices are in their pull requests. An ADR is never rewritten: a later o
 | [0017](0017-the-runtime-is-one-behaviour-per-kind-over-an-explicit-stack.md) | The runtime is one behaviour per kind over an explicit stack, advanced on a given clock | accepted |
 | [0018](0018-the-d3b-file-is-one-readable-json.md) | The `.d3b` file is one readable JSON holding the blueprint's file | accepted |
 | [0019](0019-the-blueprints-catalogue-is-written-whole-and-coded-in-slices.md) | The blueprints' catalogue is written whole and coded in slices with the actions that use it | accepted |
+| [0020](0020-an-event-cuts-a-long-action-at-its-next-inner-step.md) | An event cuts a long action at its next inner step, and the action resumes where it was | accepted |
 | [0021](0021-the-game-layer-reads-everything-early-and-acts-through-typed-acts.md) | The game layer reads everything early and acts through typed acts with deadlines | accepted |
+| [0022](0022-every-runtime-wait-has-a-deadline-and-one-watchdog-guards-each-run.md) | Every runtime wait has a deadline and a typed outcome, and one watchdog guards each run | accepted |
+| [0023](0023-ci-tests-on-windows-releases-for-six-targets.md) | CI tests on Ubuntu and Windows; releases build six targets through release-please, unsigned for now | accepted |
+| [0024](0024-a-fight-ai-of-mine-is-a-fight-blueprint-over-the-class-profile.md) | A fight AI of mine is a fight blueprint of its own, over the class's profile | accepted |

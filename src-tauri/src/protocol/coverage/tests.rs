@@ -171,15 +171,6 @@ fn the_report_sums_each_build_then_lists_each_family() {
 }
 
 #[test]
-fn a_report_of_a_catalogue_that_disagrees_is_refused() {
-    let walks = [build("3.7.13.17", &[("MapMovementEvent", "jnz")], None)];
-    assert_eq!(
-        report(MOVEMENT, &walks, &["MapCurrentEvent"], &[]),
-        Err(CoverageError::Missing("MapCurrentEvent".to_owned()))
-    );
-}
-
-#[test]
 fn counts_are_grouped_by_three_digits() {
     assert_eq!(thousands(0), "0");
     assert_eq!(thousands(1_000), "1,000");

@@ -332,7 +332,7 @@ mod tests {
             [zone("in_1"), zone("in_2")],
             "a List's inputs, each of its type"
         );
-        let text = optioned_pins("test_text", r#"{"text": "{count} in {zone}, {count} {Zone} {} {"}"#);
+        let text = optioned_pins("text", r#"{"text": "{count} in {zone}, {count} {Zone} {} {"}"#);
         let any = |id: &str| (id.to_owned(), Side::In, Carries::Any);
         assert_eq!(text[1..], [any("count"), any("zone")]);
     }

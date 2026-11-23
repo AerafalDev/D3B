@@ -7,6 +7,7 @@ mod compare;
 mod lists;
 mod logic;
 mod random;
+mod text;
 
 #[cfg(test)]
 mod tests;
@@ -50,6 +51,8 @@ pub(super) fn behaviour(kind: &str) -> Option<&'static dyn Behaviour> {
         "element_at" => &lists::At(false),
         "first" => &lists::At(true),
         "equal_lists" => &lists::Same,
+        "text" => &text::Text,
+        "join" => &text::Join,
         _ => return None,
     })
 }

@@ -19,7 +19,7 @@ The owner's session of tests closes them.
 Steps 0 (the shell, typed IPC, packed data, i18n, the Claude setup, CI, release-please, six targets, signed updates) and
 1 (the extractor) are done and measured on Windows x64; the data is now in format 5 ([data.md](data.md)). Step 2 (the
 relay, the protocol and its pins, the live view, the inspector, the new shell) is done in code and measured on Windows
-x64 but for the items below. Step 3 is done in code up to v2.4's lists: the blueprint and its storage, the Library,
+x64 but for the items below. Step 3 is done in code up to v2.4's Text and Join: the blueprint and its storage, the Library,
 D3B's three blueprints, the editor (graph, Details, Summary, picker, undo), the World and my zones, a character's
 blueprint and settings, the `.d3b` file, the runtime on the captures, v2.1 to v2.3, and v2.10's ranges; the blueprints'
 whole catalogue (ADR 0019) and step 4's first slice (ADR 0021) are designed. Pre-releases up to v0.14.0
@@ -29,13 +29,13 @@ whole catalogue (ADR 0019) and step 4's first slice (ADR 0021) are designed. Pre
 
 One line per item, in order; each is designed in [bot.md](bot.md) or [play.md](play.md).
 
-- v2.4: Text and Join.
 - v2.4: drawn compact.
 - v2.4: sentences in place, and its checklist; the language is frozen there (ADR 0019, the owner, 2026-11-23).
 - Step 4's first slice, F2 to F10: the game layer reading every family the C# version reads, paths, typed acts
   ([play.md](play.md#the-stack), ADR 0021); started on the owner's go of 2026-11-23, its PRs labelled `step-finish`.
 - Step 4's first slice, R1 to R9: Récolte automatique playing on Windows; its measure, a 30-minute loop unblocked.
-- (26) events at run time: priorities, modes, thresholds, settings at safe points, When, Every, At, Trigger.
+- (26) events at run time: priorities, modes, thresholds, settings at safe points, When, Every, At, Trigger; an
+  event cutting a long action at its next inner step (ADR 0020).
 - The catalogue's slices, each node with its first user ([bot.md](bot.md#the-catalogue-complete-2026-11-23)): 4·Play
   (History, debugger), 4·Travel, 5·Récolte (and the five profession blueprints), 6·Combat (and Chasseur), 7.
 - (14) variables, with locals, lists and the new types' editors.

@@ -5,14 +5,14 @@ paths:
 
 # CI and releases
 
-- **CI** (`ci.yml`) runs on Ubuntu the same checks as `bun run check`, the extractor's included, in the
-  `Check` job; then the freshness of the bindings and of `docs/protocol-coverage.md`, the PR's size (skipped when the
-  owner granted an exception: the `size-exception` label), its Conventional Commits title, and the cap on open checklists (a `feat` PR
-  fails while more than five are open, unless labelled `step-finish`; `scripts/check-checklists.ts`). A `Windows` job
-  runs Vitest, `cargo test` and the same freshness on `windows-latest`, where the owner plays (the owner,
-  2026-11-23); its Rust cache is saved from `next` only, so that PRs' Windows targets do not evict it. The rulesets
-  require `Check` and `Pull request` (so the cap binds), not `Windows` until the owner adds it: the `pr` skill waits
-  for every check all the same. The three OSes are built by the release workflow.
+- **CI** (`ci.yml`) runs on Ubuntu the same checks as `bun run check`, the extractor's included, in the `Check` job;
+  then the freshness of the bindings and of `docs/protocol-coverage.md`, the PR's size (skipped when the owner granted
+  an exception: the `size-exception` label), its Conventional Commits title, and the cap on open checklists (a `feat`
+  PR fails while more than five are open, unless labelled `step-finish`; `scripts/check-checklists.ts`). A `Windows`
+  job runs Vitest, `cargo test` and the same freshness on `windows-latest`, where the owner plays (ADR 0023); its Rust
+  cache is saved from `next` only, so that PRs' Windows targets do not evict it. The rulesets require `Check` and `Pull
+  request` (so the cap binds), not `Windows` until the owner adds it: the `pr` skill waits for every check all the
+  same. The three OSes are built by the release workflow.
 - **Releases**: release-please keeps a release PR from the Conventional Commits on `next`; Claude merges it only on the
   owner's go. Its release triggers `release.yml`, which builds the six targets (Windows, macOS, Linux; x64 and ARM64),
   with the game data of the build named in `.github/game-data.json`, and attaches the installers and the updater's

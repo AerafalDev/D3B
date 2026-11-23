@@ -794,6 +794,8 @@ of?: string | null } |
 { edit: "options"; node: string; count?: number | null; cases?: string[] | null; of?: string | null } | 
 /**  The numbered pin or case `pin` of `node` gone with its wire, those after it renumbered. */
 { edit: "removePin"; node: string; pin: string } | 
+/**  A Text's template, its `{holes}` its inputs; a hole gone takes its wire and value with it. */
+{ edit: "text"; node: string; text: string } | 
 /**  A variable of mine named so, yes or no, under an id made from its name. */
 { edit: "newVariable"; name: string } | 
 /**  The variable of its id made this one, whole; a new type drops what it no longer fits. */
@@ -827,6 +829,8 @@ of?: string | null } |
 { edit: "options"; node: string; count?: number | null; cases?: string[] | null; of?: string | null } | 
 /**  The numbered pin or case `pin` of `node` gone with its wire, those after it renumbered. */
 { edit: "removePin"; node: string; pin: string } | 
+/**  A Text's template, its `{holes}` its inputs; a hole gone takes its wire and value with it. */
+{ edit: "text"; node: string; text: string } | 
 /**  A variable of mine named so, yes or no, under an id made from its name. */
 { edit: "newVariable"; name: string } | 
 /**  The variable of its id made this one, whole; a new type drops what it no longer fits. */
@@ -1047,6 +1051,8 @@ export type NodeView_Deserialize = {
 	adds?: AddsView | null,
 	/**  Whether it takes cases, each a flow output, typed in Details: Switch; omitted for no. */
 	takesCases?: boolean,
+	/**  Whether it takes a template, its `{holes}` its inputs, typed in Details: Text; omitted for no. */
+	takesText?: boolean,
 	/**  A call's named exits, each its flow output's id and the name the player gave it; omitted for none. */
 	exits?: ExitView[],
 } & NodeDoes;
@@ -1077,6 +1083,8 @@ export type NodeView_Serialize = {
 	adds?: AddsView,
 	/**  Whether it takes cases, each a flow output, typed in Details: Switch; omitted for no. */
 	takesCases?: boolean,
+	/**  Whether it takes a template, its `{holes}` its inputs, typed in Details: Text; omitted for no. */
+	takesText?: boolean,
 	/**  A call's named exits, each its flow output's id and the name the player gave it; omitted for none. */
 	exits?: ExitView[],
 } & NodeDoes;

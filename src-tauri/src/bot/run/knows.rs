@@ -3,6 +3,8 @@
 
 use serde_json::Value;
 
+use crate::bot::ValueType;
+
 /// What a run knows beyond the observed state.
 pub(crate) trait Knows {
     /// Whether `map` is in `zone` (a game's sub-area or a zone of mine), `None` when unknown: no data of the
@@ -11,6 +13,13 @@ pub(crate) trait Knows {
 
     /// The items profession `job` harvests, from the data's skills; `None` when unknown.
     fn resources(&self, job: u64) -> Option<Vec<u64>>;
+
+    /// A value of `of`'s words in the player's language, as a Text says it: a zone's, an item's, a profession's or a map's
+    /// name, yes or no; `None` when unknown, and the Text says its id (the owner, 2026-11-17).
+    fn words(&self, of: ValueType, value: &Value) -> Option<String> {
+        let _ = (of, value);
+        None
+    }
 }
 
 /// Knows nothing: what a blueprint reading no zone and no profession needs, in tests.
