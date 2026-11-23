@@ -9,8 +9,7 @@ paths:
   `Check` job; then the bindings' freshness, the PR's size (skipped when the owner granted an
   exception: the `size-exception` label), its Conventional Commits title, and the cap on open checklists (a `feat` PR
   fails while more than five are open, unless labelled `step-finish`; `scripts/check-checklists.ts`). A `Windows` job
-  runs Vitest, `cargo test` and the bindings' freshness on `windows-latest`, where the owner plays (the owner,
-  2026-11-23); its Rust cache is saved from `next` only, so that PRs' Windows targets do not evict it. The rulesets
+  runs Vitest, `cargo test` and the bindings' freshness on `windows-latest`, where the owner plays (ADR 0023); its Rust cache is saved from `next` only, so that PRs' Windows targets do not evict it. The rulesets
   require `Check` and `Pull request` (so the cap binds), not `Windows` until the owner adds it: the `pr` skill waits
   for every check all the same. The three OSes are built by the release workflow.
 - **Releases**: release-please keeps a release PR from the Conventional Commits on `next`; Claude merges it only on the
