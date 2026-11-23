@@ -5,6 +5,7 @@ use super::graph::WorldGraph;
 use super::items::ItemTables;
 use super::manifest::{DataError, Manifest};
 use super::monsters::MonsterTables;
+use super::npcs::NpcTables;
 use super::world::World;
 use super::world_maps::{Hint, HintCategory, WorldMap};
 
@@ -28,6 +29,8 @@ pub struct GameData {
     pub items: ItemTables,
     /// The monsters, their races and super races.
     pub monsters: MonsterTables,
+    /// The NPCs, their actions and dialogs, and the bankers.
+    pub npcs: NpcTables,
 }
 
 impl GameData {
@@ -43,6 +46,7 @@ impl GameData {
         let items = ItemTables::load(folder, &manifest)?;
         let item_ids = items.items.iter().map(|item| item.id).collect();
         let monsters = MonsterTables::load(folder, &manifest, &item_ids, &world.sub_areas)?;
+        let npcs = NpcTables::load(folder, &manifest)?;
         Ok(Self {
             manifest,
             world,
@@ -53,6 +57,7 @@ impl GameData {
             breeds,
             items,
             monsters,
+            npcs,
         })
     }
 }
@@ -112,6 +117,14 @@ mod tests {
             .unwrap_or_else(|error| panic!("{error}"));
             tables.push(format!(r#"{{"name":"{name}","path":"{name}.json","sha256":"00"}}"#));
         }
+        for name in ["npcs", "npc-actions"] {
+            std::fs::copy(
+                fixtures.join(format!("../npcs/{name}.json")),
+                folder.join(format!("{name}.json")),
+            )
+            .unwrap_or_else(|error| panic!("{error}"));
+            tables.push(format!(r#"{{"name":"{name}","path":"{name}.json","sha256":"00"}}"#));
+        }
         for picture in ["heads/8-0", "heads/8-1", "heads/9-0", "heads/9-1", "icons/jobs/1"] {
             tables.push(format!(
                 r#"{{"name":"{picture}","path":"{picture}.png","sha256":"00"}}"#
@@ -133,6 +146,7 @@ mod tests {
         assert_eq!(data.items.skills.len(), 2);
         assert_eq!((data.hints.len(), data.hint_categories.len()), (2, 1));
         assert_eq!(data.monsters.monsters.len(), 2);
+        assert_eq!(data.npcs.bankers.len(), 1);
     }
 
     #[test]
@@ -155,5 +169,6 @@ mod tests {
         assert_ne!(data.items.item_icons.len(), 0);
         assert_ne!(data.hints.len(), 0);
         assert_ne!(data.monsters.monsters.len(), 0);
+        assert_ne!(data.npcs.bankers.len(), 0);
     }
 }
