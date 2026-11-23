@@ -10,8 +10,8 @@ by two exceptions of the owner to "the next feature does not start": step 2 is m
 waiting on outside events. Today's feature is **blueprints v2's (v2.4), the values**
 ([bot.md](bot.md#the-values-v24)); its remaining PRs finish a started feature and carry `step-finish`.
 
-**The cap** (`CLAUDE.md`; the owner, 2026-11-23): 18 checklists are open, so no new feature PR until at most five
-are; fixes, docs and v2.4's remaining PRs go on. The owner's session of tests closes them.
+**The cap** (`CLAUDE.md`; the owner, 2026-11-23): more than five checklists are open (`bun run rules` counts them), so
+no new feature PR until at most five are; fixes, docs and v2.4's remaining PRs go on. The owner's session of tests closes them.
 
 ## Done
 

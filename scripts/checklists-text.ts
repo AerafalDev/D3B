@@ -1,4 +1,4 @@
-// The cap on open checklists and the size of docs/now.md (CLAUDE.md, Scope; the owner, 2026-11-23): read from the
+// The cap on open checklists and the size of docs/now.md (CLAUDE.md, The cap; the owner, 2026-11-23): read from the
 // texts alone, so that scripts/check-checklists.ts only reads the files and the environment.
 
 /** At most this many checklists open before a new feature PR. */
@@ -46,16 +46,15 @@ export function checklistProblems(input: { now: string; checklists: Checklist[];
   for (const checklist of input.checklists) {
     const status = statusOf(checklist.text);
     if (status === undefined) {
-      problems.push(
-        `docs/checklists/${checklist.name}: no \`Status: open\`, \`waiting\` or \`measured\` line under its title`,
-      );
+      problems.push(`docs/checklists/${checklist.name}: no \`Status: open\`, \`waiting\` or \`measured\` line`);
       continue;
     }
     if (status === "open") {
       open += 1;
     }
-    if (status !== "measured" && !input.now.includes(`checklists/${checklist.name}`)) {
-      problems.push(`docs/now.md: no line for checklists/${checklist.name} (${status})`);
+    // An index line reads `- [<title>](checklists/<name>): <status>, <what is left>.`
+    if (status !== "measured" && !input.now.includes(`](checklists/${checklist.name}): ${status}`)) {
+      problems.push(`docs/now.md: no index line "[…](checklists/${checklist.name}): ${status}, …"`);
     }
   }
   const pr = input.pr;

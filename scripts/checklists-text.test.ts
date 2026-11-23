@@ -7,7 +7,7 @@ const file = (name: string, status: string): Checklist => ({
 });
 const lines = (count: number) => Array.from({ length: count }, (_, i) => `line ${i}`).join("\n");
 const indexOf = (checklists: Checklist[]) =>
-  `# Now\n\n${checklists.map((checklist) => `- [x](checklists/${checklist.name}): open.`).join("\n")}\n`;
+  `# Now\n\n${checklists.map((checklist) => `- [x](checklists/${checklist.name}): ${statusOf(checklist.text)}, left.`).join("\n")}\n`;
 const opened = (count: number) => Array.from({ length: count }, (_, i) => file(`open-${i}.md`, "open"));
 
 describe("statusOf", () => {
@@ -45,15 +45,24 @@ describe("checklistProblems", () => {
   it("refuses a checklist without a status", () => {
     const checklists = [{ name: "a.md", text: "# A\n\n1. an item;\n" }];
     expect(checklistProblems({ now: indexOf(checklists), checklists }).problems).toEqual([
-      "docs/checklists/a.md: no `Status: open`, `waiting` or `measured` line under its title",
+      "docs/checklists/a.md: no `Status: open`, `waiting` or `measured` line",
     ]);
   });
 
   it("refuses an open or waiting checklist that now.md does not list", () => {
     const checklists = [file("a.md", "open"), file("b.md", "waiting"), file("c.md", "measured")];
     expect(checklistProblems({ now: "# Now\n", checklists }).problems).toEqual([
-      "docs/now.md: no line for checklists/a.md (open)",
-      "docs/now.md: no line for checklists/b.md (waiting)",
+      'docs/now.md: no index line "[…](checklists/a.md): open, …"',
+      'docs/now.md: no index line "[…](checklists/b.md): waiting, …"',
+    ]);
+  });
+
+  it("refuses an index line that names another status, or a mere mention", () => {
+    const checklists = [file("a.md", "open"), file("b.md", "open")];
+    const now = "- [a](checklists/a.md): waiting, left.\nMeasured: [b](checklists/b.md), [c](checklists/c.md).\n";
+    expect(checklistProblems({ now, checklists }).problems).toEqual([
+      'docs/now.md: no index line "[…](checklists/a.md): open, …"',
+      'docs/now.md: no index line "[…](checklists/b.md): open, …"',
     ]);
   });
 

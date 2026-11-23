@@ -1,4 +1,4 @@
-// The cap on open checklists and the size of docs/now.md (CLAUDE.md, Scope). Usage: bun scripts/check-checklists.ts;
+// The cap on open checklists and the size of docs/now.md (CLAUDE.md, The cap). Usage: bun scripts/check-checklists.ts;
 // in CI's pull-request job, PR_TITLE and PR_LABELS (comma-separated) name the PR, and a feature PR over the cap fails.
 // Prints the count, every problem, and exits 1 on a problem, 2 when it cannot read the files.
 import { readdirSync, readFileSync } from "node:fs";

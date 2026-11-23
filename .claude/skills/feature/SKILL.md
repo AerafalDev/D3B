@@ -4,6 +4,8 @@ description: Design and deliver one D3B feature end to end, every choice decided
 argument-hint: "The feature, such as 'the character's live view'"
 ---
 
+0. **The cap.** While more than five checklists are open (`bun run rules` prints the count), a new feature waits:
+   say so to the owner and offer the open checklists instead (`CLAUDE.md`, The cap).
 1. **Know the game.** For each behaviour the feature needs, find its study in `artifacts/studies/`; when one is
    missing or leaves a question open, run `study` first. Nothing is designed on a guess.
 2. **Design.** Give the `architect` agent the feature, the studies and the code it touches. It returns the scope, the
