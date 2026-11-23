@@ -1269,7 +1269,9 @@ Pure logic with no I/O, in `D3B.Engine`, which references `D3B.Data` for the cel
     lowers the side's worth most by, every character of a group as dear to it as the fighter playing (`AlliesWorth`, D467), then the character's next
     turn (`NextTurn`, D210), the plan with the fewest actions winning among those within a point of life that leave the same enemies
     alive (D407), the summoning spells left out of the first search but for the Osamodas', the Roublard's, the Steamer's and the
-    Forgelance's, whose lances strike (D462), and searched again with them when it finds nothing to do (D408); given a `TurnChallenge` (D466), the plan searched again
+    Forgelance's, whose lances strike (D462), and searched again with them when it finds nothing to do (D408); a spell every
+    character has whose casts reach the summons' control, effect 2027, such as "Maîtrise des invocations", never searched,
+    the control left as the player set it (`WithoutSummonControl`, D500); given a `TurnChallenge` (D466), the plan searched again
     keeping it when the best breaks it, its casts, walks and ends those the challenge allows, chosen while its loss stays
     within `TurnChallenge.MostLoss` of the best's gain (`TurnPlan.KeepsChallenge`); each cast judged by `TurnChallenge.Cast`
     against the fight before and after it, which gives the challenge as it then stands (`ChallengeKills`, `ChallengeStrikes`,

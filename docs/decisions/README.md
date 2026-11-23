@@ -120,3 +120,4 @@ Each file holds the decisions of one group of [the index](../decisions-index.md)
 - [Fights, more challenges (D497)](d497-fights-challenges-more.md): 1 decision, 5 KB.
 - [Fights, the Forgelance's lance left on the map (D498)](d498-forgelance-lance-stays.md): 1 decision, 5 KB.
 - [Zaaps, the discovery of those the character does not know (D499)](d499-zaap-discovery.md): 1 decision, 4 KB.
+- [Fights, the summons' control left as the player set it (D500)](d500-summon-control-left.md): 1 decision, 4 KB.

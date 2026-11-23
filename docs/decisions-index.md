@@ -898,3 +898,8 @@ or refines another says so in its own entry. Add a line here with every new deci
 
 - [D499](decisions/d499-zaap-discovery.md#d499-an-activity-walks-to-every-zaap-within-reach-the-character-does-not-know-the-nearest-first-and-ends-once-none-is-left) An activity walks to every zaap within reach the character does not know, the nearest first, and ends once none is left (2026-11-22)
   - A tour computed once, a route asset generated, an entry of the list editor's menu, the unactivated zaaps sought.
+
+## Fights, the summons' control left as the player set it (D500)
+
+- [D500](decisions/d500-summon-control-left.md#d500-the-ai-never-casts-a-spell-every-character-has-that-switches-its-summons-control-no-more-maîtrise-des-invocations-for-nothing) The AI never casts a spell every character has that switches its summons' control: no more "Maîtrise des invocations" for nothing (2026-11-22)
+  - A worthless cast left out of the search, the mastery searched by the summoners alone, a list of spell ids.
