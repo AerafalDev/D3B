@@ -799,17 +799,18 @@ placement cells of both teams; glyphs, traps, portals and runes.
 | Log off (the night pause) | 5·Récolte | relay; the idle kick C# (D481) |
 | Hunt until; attack a group (its levels, size, monsters left out); fight with the default AI; leave the fight | v1, 6·Combat | C# |
 | Choose the challenges' bonus, play the easy ones; close the fight to others, no spectators | 6·Combat | C# (D438, D466, D480) |
+| Choose a proposed challenge (a priority list of challenges, or the first) | 6·Combat | C# (D461) |
 | Cast, move, pass the turn, place, ready (under "On my turn"); a summon's own turn | 6·Combat | C# |
 | Attack a group's monsters required, its composition (Advanced) | 6·Combat | C# |
-| Party: invite, accept, follow a master, give to the master | 7 | C# |
+| Party: create, invite, accept, leave; follow a master, join its fights, ready with it; give to the master, receive from the members; wait for the members on one map; a member needing the bank; tell the members to stop, pause, resume; a dungeon's teleport offered and accepted | 7 | C# (D435 to D490) |
 | Craft N of an item; sell at the auction house; buy there or from an NPC | 7 | study |
 | Quests (start, validate a step), treasure hunts, dungeons (keys, rooms); the Kolizeum | 7 | study |
 | Notify outside the app (the desktop, Discord) | on demand | — |
-| Sit; play another character of the account | on demand | not measured; the selection study |
-| Mounts, pets, houses, smithmagic, achievements; spend characteristic points | on demand | study |
+| Play another character of the account | on demand | the selection study |
+| Mounts, pets, houses, smithmagic, achievements, cosmetics and titles; spend characteristic points | on demand | study |
 | Log in again | never (credentials, Shield) | — |
 | Answer private messages; flee or log off when a player or a moderator arrives | never | — |
-| Wait at random between gestures (no random duration node, (v2.4)); an emote | never | — |
+| Wait at random between gestures (no random duration node, (v2.4)); an emote; sit (no effect left in Dofus 3) | never | — |
 | Speak in the chat, whisper to a player | never | — |
 | Buy the subscription or Ogrines; create accounts or characters; a proxy per account | never | — |
 | Aggress players | never | — |
@@ -828,6 +829,7 @@ placement cells of both teams; glyphs, traps, portals and runes.
 | Ranges (a type) | v2.1 |
 | "According to the range of …" (the value of the row a number reaches, or that row's output) | 5·Récolte |
 | A choice (options on its variable) | 4·Play (an area's world, a fight's kind), its editor 5·Récolte (the resources' order) |
+| Records and Break: an interactive element (its kind, skill, state) | 4·Play (R5) |
 | Records and Break: a resource here, a sub-area | 5·Récolte |
 | Records and Break: a monster group; a fighter | 6·Combat |
 | A quantity of an item ("200 × an item", typed, with its list: restocking) | 5·Récolte |
@@ -862,7 +864,7 @@ it another way (why said), or **never**, with the never-list's reason. The scrip
 | `phenix()`, the respawn | Died, or a fight ended lost ("after a lost fight") | (26), 5·Récolte |
 | `onLoad()`, the preamble | On start's first nodes; Do N times of 1 | v1, v2.3 |
 | `prefightManagement(myCells, enemyCells)`; `fightManagement()` | Placement; On my turn, overriding the class's fight profile | 6·Combat |
-| `challengeManagement(count, isMule)`; `fightChallenge:challengeName`, `getLastChallengeProposalMessage` | A challenge proposed; the challenges' bonus and easy challenges (settings) | 6·Combat |
+| `challengeManagement(count, isMule)` (a priority list, a manual or random mode); `fightChallenge:challengeName`, `getLastChallengeProposalMessage`; `fight.selectChallenge`, `validateChallenge`, `challengeModSelect` | A challenge proposed; **gap**: Choose a proposed challenge (a priority list, else the first; no random mode); the bonus and easy challenges (settings) | 6·Combat |
 | `afterFight`, `waitForFightEnd` | A fight ended (won, its kind); Wait until not in a fight | 5·Récolte, 4·Play |
 | `mule_lost(bossMapId)`, `MOONBOT_TIMEOUT`, `lockedCustom(mode, fn)`, `MULE`, `TEAM_IDS_LIST`, `global:isBoss`, `getTeamMembersIds` | A party member lost; the party's queries and actions | 7 |
 | `change()`, a field toward another zone | Go to a zone (goal-shaped, no field of arrows) | v1, 4·Travel |
@@ -920,13 +922,13 @@ it another way (why said), or **never**, with the never-list's reason. The scrip
 | `map.x/y`, `cellId`, `currentArea`, `currentSubArea` | X and Y; the character's cell; its area and world; its sub-area | 4·Play, 4·Travel |
 | `moveToward(x, y)` | Go to a map (typed "5,-18") | 4·Travel |
 | `useInteractive(target, skill)`, `useInteractiveIndex`, `getInteractives`, `interactiveObjects` | Use an interactive element (its skill); the elements here (records) | 4·Travel |
-| `waitInteractiveState(el, state, ms)` | Wait until over an element's state (its record), with a longest wait | 4·Travel |
+| `waitInteractiveState(el, state, ms)` | Wait until over an element's state (its record, Break), with a longest wait | 4·Play |
 | `useZaap`, `useZaapi`, `zaapTo`, `openZaap`, `getZaapDestinations`, `knownZaapAt`, `hasZaapHere`, `saveZaap`, `knownZaaps` | Take a zaap or a zaapi; the zaaps known; the elements here; Save a zaap; Discover the zaaps | 4·Travel |
 | `zaap(x, y)` (the chat's command) | **out**: Take a zaap does it typed | 4·Travel |
 | `character.havreSac()`, `map.enterDreams()`, `map.exitDungeon()` | Go to the haven bag, leave it; dungeons | 4·Travel, 7 |
 | `isWalkable(cell)`, `waitForMapChange` | **gap**: whether a cell is walkable (a query); The map changed, or Wait until on the current map | on demand, 4·Travel |
 | `getAnomalies`, `getAnomalyBonus` | A sub-area's bonus | on demand |
-| `sit`; `sendEmote` | **gap**: Sit (it no longer speeds regeneration, the owner, 2026-11-14); an emote **never**, its one use to pass for a present player | on demand; never |
+| `sit`; `sendEmote` | **never**: sitting no longer speeds regeneration (the owner, 2026-11-14) and an emote does nothing, their one use left to pass for a present player | never |
 | `map.gather()`, `gatherAll(max)` | Harvest this map; **gap**: its "at most N" (an Advanced input) | 5·Récolte, on demand |
 | `map.gatherResource(cell)`, `getResources()` | **gap**: Harvest this element (a resource record); the resources here | on demand, 5·Récolte |
 | `config.setGatherList`, `setHarvestMode("whitelist"\|"blacklist")` | The resources taken or left (Items) | 5·Récolte |
@@ -935,7 +937,7 @@ it another way (why said), or **never**, with the never-list's reason. The scrip
 | `useItem`, `useItemByGID`, `useMultipleItem` | Use an item, N at once | 5·Récolte |
 | `unequipItem`, `isEquipped`, `getPresets`, `usePreset` | Unequip; what is equipped; Equip a preset | 5·Récolte |
 | `getShortcuts`, `useShortcut` | **out**: Use an item and Equip a preset do it typed | — |
-| `feedPet`, `getPets`; mounts; houses; wardrobe, cosmetics, titles | Mounts, pets, houses | on demand |
+| `feedPet`, `getPets`; mounts; houses; wardrobe, cosmetics, titles | Mounts, pets, houses, cosmetics and titles | on demand |
 | `dropItem` | **out**: Destroy items frees the pods; nothing is dropped on the map for others | — |
 | `putItem`, `putItems`, `putExisting`, `putItemsKeeping({gid = keep})` | Deposit all but (the items kept); restocking keeps "N × an item" | 5·Récolte |
 | `putCategory`, `putResources(except)` | **gap**: the Items selection "of these types" (resources only, as the C# version's "harvest only") | 5·Récolte |
@@ -979,13 +981,26 @@ it another way (why said), or **never**, with the never-list's reason. The scrip
 | `postRequest`, `getRequest` | **out**: a blueprint makes no network call; D3B's data is the game's | — |
 | `developer.sendRawPacket`, `registerMessage`, `bot.sendPacket`, `global.onMessage` | **never**: no untyped escape, every gesture typed and goal-shaped | never |
 | `moonbot.accounts`, `account.profile:setProxy`, `scheduleCreation`, `deleteCharacter`, the controllers' "Proxy", "Subscribe", "Character creation" | **never**: account and fleet automation, a proxy per account | never |
-| Controllers reading other accounts and starting their scripts | Several accounts, each its character's run, in the open | 7 |
+| Controllers reading other accounts and starting their scripts | **out**: D3B runs each character's blueprint, any number at once, in the open (ADR 0014); a run reads no other's but by shared variables (7) | — |
 | The dashboard's "anti-moderator", the AI replies to whispers | **never**: evading moderation, passing for a player | never |
 | `move_zone`, `startBot` (Retro compatibility) | **out**: Dofus Retro's | — |
+| `group.*`: `createGroup`, `map.inviteToGroup`, `acceptGroupInvite`, `leaveGroup`, `isLeader`, `isMule`, `getMembers`, `waitForMembers`, `allOnSameMap`, `anyMemberNeedsBank`, `giveToLeader`, `receiveFromMules`, `sendCommandToMules`, `setAutoJoinFight`, `setAutoReady`, `setAutoFollow`, `dungeonTeleportOffer`, `acceptDungeonTeleport` | **gap**: the party's family (Actions, 7): create, invite, accept, leave; follow, join and ready; give and receive; wait for the members; a member needing the bank; tell the members to stop, pause, resume; the dungeon's teleport | 7 |
+| `map.players()` | **out**: the players here stay out (2026-11-16, 2026-11-23) | — |
+| `map.challengePlayer`, `acceptChallenge`, `declineChallenge` (duels) | **out** until the Kolizeum's design (PvP, step 7 or beyond); a duel offered is refused by default | 7; 4·Travel |
+| `map.exchangePlayer` | Give to the master (the party); otherwise **out**, no trade with players | 7 |
+| `config.setBankKamas`, `setBankWithdrawKamas`, `addBankKeepItem`, `addBankWithdrawItem`, `addAutoDeleteItem` | Deposit or withdraw kamas; the items kept; restocking; items to destroy (settings) | 5·Récolte |
+| `global.getCountFight`, `isInFight` | The run's fights won and lost; in a fight | 4·Play |
+| `map.worldDistance` | The distance to a map or a zone | 4·Travel |
+| `developer.listGlobalMemory` | Variables shared between characters | 7 |
+| `developer.waitForAnyMessage` | **never**: raw messages, no untyped escape | never |
+| `config.setConnectionMode`, `setServerId` | **never**: logging in (credentials, Shield) | never |
+| `global.username`, `accountTag`, `thisAccountController` | **out**: no blueprint reads the account's identity | — |
+| The dashboard's import from an account creator | **never**: mass account creation | never |
 
-The gaps, each now a node of the catalogue above: Take a waypoint, whether a cell is walkable, Sit,
-Harvest this map's "at most N", Harvest this element, an item's weight, the Items selection "of these types", a
-summon's turn, monsters required and a group's composition, Play another character of the account, Start again.
+The gaps, each now a node of the catalogue above: Take a waypoint, whether a cell is walkable, Choose a proposed
+challenge, the party's family, Harvest this map's "at most N", Harvest this element, an item's weight, the Items
+selection "of these types", a summon's turn, monsters required and a group's composition, Play another character of
+the account, Start again, and an interactive element's record.
 
 ## In the app
 
