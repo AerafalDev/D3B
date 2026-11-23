@@ -860,23 +860,23 @@ it another way (why said), or **never**, with the never-list's reason. The scrip
 | Lua | Blueprint | Slice |
 | --- | --- | --- |
 | `move()`, called each turn, its route of steps "on map X, do Y" | On start, then Follow a route (resumed from the map the character is on) or Harvest until on a zone | v1, (21) |
-| `bank()`, called past the pods' threshold; `PODS_THRESHOLD` | Pods above X %, then Go to the bank and Deposit all but; the setting `pods_threshold` | v1, 5·Récolte |
+| `bank()`, called past the pods' threshold; `PODS_THRESHOLD` | Pods above X % (or Harvest until's pods), then Go to the bank and Deposit all but; the setting `pods_threshold` | v1, 4·Play (R9), 5·Récolte |
 | `phenix()`, the respawn | Died, or a fight ended lost ("after a lost fight") | (26), 5·Récolte |
 | `onLoad()`, the preamble | On start's first nodes; Do N times of 1 | v1, v2.3 |
 | `prefightManagement(myCells, enemyCells)`; `fightManagement()` | Placement; On my turn, overriding the class's fight profile | 6·Combat |
 | `challengeManagement(count, isMule)` (a priority list, a manual or random mode); `fightChallenge:challengeName`, `getLastChallengeProposalMessage`; `fight.selectChallenge`, `validateChallenge`, `challengeModSelect` | A challenge proposed; **gap**: Choose a proposed challenge (a priority list, else the first; no random mode); the bonus and easy challenges (settings) | 6·Combat |
 | `afterFight`, `waitForFightEnd` | A fight ended (won, its kind); Wait until not in a fight | 5·Récolte, 4·Play |
 | `mule_lost(bossMapId)`, `MOONBOT_TIMEOUT`, `lockedCustom(mode, fn)`, `MULE`, `TEAM_IDS_LIST`, `global:isBoss`, `getTeamMembersIds` | A party member lost; the party's queries and actions | 7 |
-| `change()`, a field toward another zone | Go to a zone (goal-shaped, no field of arrows) | v1, 4·Travel |
+| `change()`, a field toward another zone | Go to a zone (goal-shaped, no field of arrows) | v1, 4·Play (R3) |
 | A step's `map` (coordinates or id) | A route anchor: a map, by id, shown by its coordinates | (21) |
 | A step's `path`: a direction, an edge cell | The world graph joins anchors; a forced exit (an edge or a cell) where it is not enough | (21), 4·Travel |
 | `path = "top\|right"`, a random exit | Alternate, or Pick the least recently picked, in a function the anchor calls: D3B picks deterministically | v2.3 |
-| `path = zaap(id)`, `zaapi(id)`, `havresac` | Take a zaap or a zaapi to a map; Go to the haven bag | 4·Travel |
+| `path = zaap(id)`, `zaapi(id)`, `havresac` | Take a zaap or a zaapi to a map; Go to the haven bag | 4·Travel, 5·Récolte |
 | `path = waypoint(id)` | **gap**: Take a waypoint (a teleport of the world map; study) | on demand |
 | A step's `gather = true`; `GATHER`, `JOB_ID` | Harvest this map, an anchor's action; the resources taken (Items) and the profession | 5·Récolte |
 | A step's `fight = true`; `MIN_MONSTERS`, `MAX_MONSTERS` | Attack a group (its size), an anchor's action; fighting on the way | 6·Combat |
 | `forcefight` (a dungeon: wait and retry) | Retry around Attack a group, with Wait until a group is here | 6·Combat, v2.3 |
-| A step's `door`, `custom`, `npcBank`, `sale`, `craft` | Go through a door; an anchor calling a function of mine; Go to the bank; Sell; Craft | 4·Travel, (21), 5·Récolte, 7 |
+| A step's `door`, `custom`, `npcBank`, `sale`, `craft` | Go through a door; an anchor calling a function of mine; Go to the bank; Sell; Craft | 4·Play, (21), 4·Play, 7 |
 | `RC_CIRCULAR` (the route loops) | A route as a loop, one way or a round trip | (21) |
 | `OPEN_BAGS` | Open the resource bags (the setting, on) | 5·Récolte |
 | `AUTO_DELETE` | Items to destroy (the setting, none by default); Destroy items | 5·Récolte |
@@ -897,17 +897,17 @@ it another way (why said), or **never**, with the never-list's reason. The scrip
 | `map:changeMap` | Leave by an edge or a cell | 4·Travel |
 | `map:moveToCell` | Walk to a cell | 4·Travel |
 | `map.moveTowardMap` | Go to a map | 4·Travel |
-| `map:door` | Go through a door | 4·Travel |
+| `map:door` | Go through a door | 4·Play (R5) |
 | `job:level`, `job.level`, `job:name` | A profession's level; Text reads a profession by its name | 5·Récolte, v2.4 |
 | `character:level`, `character:name`, `character:id` | Level; its name; **out**: an id, the character being the run's | v1, 4·Play |
 | `inventory:podsP` | Pods % | v1 |
 | `inventory:itemCount`, `inventory.findByTemplate` | An item's count; whether one is carried | 5·Récolte |
 | `inventory:equipItem` | Equip an item | 5·Récolte |
 | `inventory.deleteItem` | Destroy items | 5·Récolte |
-| `exchange:putAllItems`, `exchange:leave` | Deposit all but (none kept); the bank's window closed by the action | 5·Récolte |
+| `exchange:putAllItems`, `exchange:leave` | Deposit all but (what is worn); the bank's window closed by the action | 4·Play (R9) |
 | `exchange.getItem`, `exchange.storageItemQuantity` | Withdraw (N of an item); an item's count in the bank | 5·Récolte |
-| `npc:npcBank` | Go to the bank (its banker opened) | 5·Récolte |
-| `npc:npc`, `npc:reply` | Talk to an NPC, its replies in order | 4·Travel |
+| `npc:npcBank` | Go to the nearest bank (its banker opened) | 4·Play (R9) |
+| `npc:npc`, `npc:reply` | Talk to an NPC, its replies in order | 4·Play (R8); NPC ways 4·Travel |
 | `global:addInMemory`, `remember` | Variables of a run or memory; Get, Set | v1 |
 | `global:AddInGlobalMemory`, `GetInGlobalMemory` | Variables shared between characters | 7 |
 | `developer:createMessage`, `sendMessage`, `suspendScriptUntil` (the experience limit, the challenge handshake) | Set the game's "experience received"; Choose the challenges' bonus; raw messages **never** (no untyped escape) | 5·Récolte, 6·Combat; never |
@@ -921,11 +921,11 @@ it another way (why said), or **never**, with the never-list's reason. The scrip
 | --- | --- | --- |
 | `map.x/y`, `cellId`, `currentArea`, `currentSubArea` | X and Y; the character's cell; its area and world; its sub-area | 4·Play, 4·Travel |
 | `moveToward(x, y)` | Go to a map (typed "5,-18") | 4·Travel |
-| `useInteractive(target, skill)`, `useInteractiveIndex`, `getInteractives`, `interactiveObjects` | Use an interactive element (its skill); the elements here (records) | 4·Travel |
+| `useInteractive(target, skill)`, `useInteractiveIndex`, `getInteractives`, `interactiveObjects` | Use an interactive element (its skill); the elements here (records) | 4·Play (R5) |
 | `waitInteractiveState(el, state, ms)` | Wait until over an element's state (its record, Break), with a longest wait | 4·Play |
 | `useZaap`, `useZaapi`, `zaapTo`, `openZaap`, `getZaapDestinations`, `knownZaapAt`, `hasZaapHere`, `saveZaap`, `knownZaaps` | Take a zaap or a zaapi; the zaaps known; the elements here; Save a zaap; Discover the zaaps | 4·Travel |
 | `zaap(x, y)` (the chat's command) | **out**: Take a zaap does it typed | 4·Travel |
-| `character.havreSac()`, `map.enterDreams()`, `map.exitDungeon()` | Go to the haven bag, leave it; dungeons | 4·Travel, 7 |
+| `character.havreSac()`, `map.enterDreams()`, `map.exitDungeon()` | Go to the haven bag, leave it; dungeons | 5·Récolte, 7 |
 | `isWalkable(cell)`, `waitForMapChange` | **gap**: whether a cell is walkable (a query); The map changed, or Wait until on the current map | on demand, 4·Travel |
 | `getAnomalies`, `getAnomalyBonus` | A sub-area's bonus | on demand |
 | `sit`; `sendEmote` | **never**: sitting no longer speeds regeneration (the owner, 2026-11-14) and an emote does nothing, their one use left to pass for a present player | never |
