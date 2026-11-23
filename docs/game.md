@@ -115,6 +115,12 @@ I/O ([play.md](play.md)). Each fact is `inferred` from the C# version's measures
   then the last step, or a step aside first for a walk of one step, never onto an action cell.
 - **The turns** a walk request carries: its start, each change of direction, its end with the direction it arrives in,
   each `direction << 12 | cell` (verified on 97,976 requests).
+- **The world path**, over the world graph read once (`WorldPaths`): from the character's map and zone to any zone of
+  the nearest of some maps, the fewest map changes, each costing the same (the C# version's `WorldPathfinder`), by
+  Dijkstra. A hop is a scroll, a scroll with an action (it lands where the graph's edge leads, not on the map it asks
+  for: verified, 924 of 924, study `map-change`), a map action or a door. A transition with a criterion is left out
+  until criteria are answered, the `#` lists of cells included; a map asked already reached is no hop; a place the graph
+  lacks is `Unknown`, no way to the maps `OutOfReach`.
 
 ## In the app
 
@@ -189,4 +195,6 @@ closed connection); the map's geometry (cells 0, 13, 14 and 559), the ground dra
 drawing order, and its notices (a fight, no map, a map the data lacks). The paths: named tests of each rule above, and
 property tests on maps generated from a seeded source, each walk checked step by step against the rules written again
 from the map's data and its cost against a slow search (Bellman-Ford), the cells avoided, the turns giving the walk back,
-and the walks split where the last ended.
+and the walks split where the last ended. The world path: hand-written graphs (a scroll, a map action, a door, a scroll
+with an action, the nearest of two maps, a criterion skipped, a zone with no way out, an edge to no vertex, a place
+unknown) and the extractor's fixture graph.

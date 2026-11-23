@@ -5,6 +5,7 @@ mod cell_path;
 mod grid;
 mod ground;
 mod walks;
+mod world_path;
 
 #[cfg(test)]
 mod tests;
