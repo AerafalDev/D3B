@@ -92,6 +92,8 @@ pub(crate) enum Problem {
     LeaveOutsideLoop { graph: Id, node: Id },
     /// A 0 typed as a ÷'s or a remainder's divisor: it would block the character.
     ZeroDivisor { graph: Id, node: Id, pin: Id },
+    /// An index typed below 1 on element n°: lists count from 1, so it would block the character.
+    IndexBelowOne { graph: Id, node: Id, pin: Id },
 }
 
 /// Every problem of `blueprint`: its own in the order of its file, then each graph's nodes and wires, then the events

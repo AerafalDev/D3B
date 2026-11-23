@@ -23,3 +23,5 @@ Smaller choices are in their pull requests. An ADR is never rewritten: a later o
 | [0016](0016-blueprints-v2-a-typed-language-of-generic-nodes-lists-and-own-events.md) | Blueprints v2 are a typed language of compact values, generic nodes, lists and events of the player's own | accepted |
 | [0017](0017-the-runtime-is-one-behaviour-per-kind-over-an-explicit-stack.md) | The runtime is one behaviour per kind over an explicit stack, advanced on a given clock | accepted |
 | [0018](0018-the-d3b-file-is-one-readable-json.md) | The `.d3b` file is one readable JSON holding the blueprint's file | accepted |
+| [0019](0019-the-blueprints-catalogue-is-written-whole-and-coded-in-slices.md) | The blueprints' catalogue is written whole and coded in slices with the actions that use it | accepted |
+| [0021](0021-the-game-layer-reads-everything-early-and-acts-through-typed-acts.md) | The game layer reads everything early and acts through typed acts with deadlines | accepted |

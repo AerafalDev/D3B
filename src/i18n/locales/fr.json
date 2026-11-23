@@ -473,7 +473,8 @@
       "noSuchExit": "Ce nœud sort par {{subject}}, que cette fonction n'a pas.",
       "notPure": "Une fonction pure ne calcule que des valeurs : ce nœud a un flux.",
       "leaveOutsideLoop": "Sortir de la boucle n'est dans le corps d'aucune boucle.",
-      "zeroDivisor": "L'entrée {{pin}} divise par 0 : le personnage serait bloqué."
+      "zeroDivisor": "L'entrée {{pin}} divise par 0 : le personnage serait bloqué.",
+      "indexBelowOne": "L'entrée {{pin}} est sous 1 : les listes comptent à partir de 1, le personnage serait bloqué."
     },
     "type": {
       "bool": "Oui / non",
