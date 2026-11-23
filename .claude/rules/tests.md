@@ -15,8 +15,9 @@ paths:
   `"falls back to English"`).
 - **Deterministic**: a fixed clock and a seeded random source passed in; no real time, no sleep, no network, no
   writing outside a temporary folder the test removes.
-- **Bounded**: every asynchronous test (a channel, a socket, the relay, a task, a promise) has a deadline of its own
-  (`tokio::time::timeout`, Vitest's timeout on the test), so a hang fails that test, never CI's job (ADR 0022).
+- **Bounded**: no test waits without a deadline (ADR 0022): in Rust, each await on a channel, a socket, the relay or
+  a task under `tokio::time::timeout`, a blocking receive by `recv_timeout`, never a bare `recv` or `join`; in
+  TypeScript, Vitest's timeout (5 s by default) is never turned off.
 - **Fixtures are ours**: hand-written JSON, synthetic frames. A test needing real client data or a real capture reads
   it from `D3B_DATA` or `D3B_CAPTURES` and is skipped (`#[ignore]` with the reason, `it.skipIf`) when they are unset;
   CI has neither.

@@ -13,17 +13,18 @@ minutes (its D464, D481, D484, D488 and D490): the player found a character logg
 
 ## Decision
 
-- **Every wait the runtime makes on the game has a deadline** and ends in a typed outcome: done, refused (the
-  server's reason), too long (what it waited for, how long), or cut (disconnected, a fight). Each deadline is named
-  in code beside the gesture it bounds, from a measure; an action turns the outcomes into Done or Failed with their
-  reason, so Retry and an unlinked Failed see them.
+- **Every wait the runtime makes on the game has a deadline** and ends in ADR 0021's typed outcomes: done, refused
+  (the server's reason), no answer (what it waited for, how long), or interrupted (a fight, the player moving, the
+  connection closed). Its deadline comes from ADR 0021's one table, citing its measure; an action turns the outcomes
+  into Done or Failed with their reason, so Retry and an unlinked Failed see them.
 - **One watchdog per run**: while running, if D3B sends nothing to the game for **10 minutes**, the run turns
   blocked, "nothing sent for 10 min", with the node, the inner step and what it waited for. The graph's own waits
-  count too (a Wait of 40 minutes blocks, on purpose), so no run ever reaches the server's kick; a Wait of 10 minutes
-  or more, and a Wait until whose longest wait is 10 minutes or more or none, say so beside their node in the editor.
-  The night pause logs off (ADR 0019).
+  count too (a Wait of 40 minutes blocks, on purpose), so no run ever reaches the server's kick. A Wait of 10 minutes
+  or more, a Wait until whose longest wait is 10 minutes or more or none, and Wait for life say so beside their node
+  in the editor, a hint, not the rule. The night pause logs off (the catalogue, `docs/bot.md`).
 - Paused, finished, blocked or away, a run has no watchdog. Before step 6 a run entering a fight sends nothing,
-  notifies, lets the player fight by hand and resumes its action after: that fight is not counted.
+  notifies, lets the player fight by hand and resumes its action after: the watchdog's clock starts again at the
+  fight's end (settled alone: the server saw the player act).
 
 ## Rejected
 
