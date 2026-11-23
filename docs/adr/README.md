@@ -27,3 +27,4 @@ Smaller choices are in their pull requests. An ADR is never rewritten: a later o
 | [0020](0020-an-event-cuts-a-long-action-at-its-next-inner-step.md) | An event cuts a long action at its next inner step, and the action resumes where it was | accepted |
 | [0021](0021-the-game-layer-reads-everything-early-and-acts-through-typed-acts.md) | The game layer reads everything early and acts through typed acts with deadlines | accepted |
 | [0022](0022-every-runtime-wait-has-a-deadline-and-one-watchdog-guards-each-run.md) | Every runtime wait has a deadline and a typed outcome, and one watchdog guards each run | accepted |
+| [0024](0024-a-fight-ai-of-mine-is-a-fight-blueprint-over-the-class-profile.md) | A fight AI of mine is a fight blueprint of its own, over the class's profile | accepted |
