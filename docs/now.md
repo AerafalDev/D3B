@@ -35,7 +35,8 @@ One line per item, in order; each is designed in [bot.md](bot.md) or [play.md](p
 - Step 4's first slice, F1 to F10: the game layer reading every family the C# version reads, paths, typed acts
   ([play.md](play.md#the-stack), ADR 0021).
 - Step 4's first slice, R1 to R9: Récolte automatique playing on Windows; its measure, a 30-minute loop unblocked.
-- (26) events at run time: priorities, modes, thresholds, settings at safe points, When, Every, At, Trigger.
+- (26) events at run time: priorities, modes, thresholds, settings at safe points, When, Every, At, Trigger; an
+  event cutting a long action at its next inner step (ADR 0020).
 - The catalogue's slices, each node with its first user ([bot.md](bot.md#the-catalogue-complete-2026-11-23)): 4·Play
   (History, debugger), 4·Travel, 5·Récolte (and the five profession blueprints), 6·Combat (and Chasseur), 7.
 - (14) variables, with locals, lists and the new types' editors.
