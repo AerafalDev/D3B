@@ -819,6 +819,34 @@ distance, line of sight, reachable and free cells; whether a spell can be cast o
 a spell's zone, the best target of a zone, an estimated damage; the fight's challenges, their targets and results; the
 placement cells of both teams; glyphs, traps, portals and runes.
 
+**A fight AI of my own** (the owner's choices of 2026-11-23, ADR 0024): the class's **fight profile** plays by
+default, as the C# version's one AI (D244); a player's own turn logic lives in a **fight blueprint**, a blueprint of
+its own whose events are the fight's, chosen per character (its class's by default, which plays the profile) and for
+one fight by the character's blueprint (Fight with's input: a dungeon, an archmonster). A fight blueprint:
+
+| Node | Gives or does | Data |
+| --- | --- | --- |
+| Placement (my cells, the enemies' cells); On my turn; a turn began (the fighter); a fighter died; a fight ended | events, the fight's only ones | C# |
+| My AP, MP, life %, cell; the turn's number | numbers, a cell | C# |
+| The enemies, the allies, the summons | lists of fighter records: life %, cell, states, buffs, resistances, an archmonster or a wild mount | C# |
+| Line of sight, distance, the reachable and free cells, the cells in a spell's range | yes or no, numbers, lists of cells | C# + data |
+| Can I cast this spell there (and why not, a choice: AP, range, sight, cooldown, cell taken) | yes or no, its reason | C# |
+| Cast a spell on a cell; move to a cell or toward a fighter (keeping a distance); place on a cell; pass the turn | actions, each Done or Failed with its reason | C# |
+| **Let the built-in AI play this turn**; **let it play one action** (the profile's next rule that holds) | actions, handing the turn back to the profile | runtime |
+
+A turn that never ends meets the 10,000-node guard and a cap per turn the History notes.
+
+**Captures** (the owner, 2026-11-23), measured by neither version, a study and captures owed first (step 6): settings
+of Combat and Chasseur that the built-in AI plays, and nodes for an AI of mine:
+
+| Node or setting | Gives or does | Data |
+| --- | --- | --- |
+| Capture the wild mounts met (dragoturkeys, muldos, volkornes; which ones) | a setting: the AI keeps the mount alive, casts the capture net or scroll when it may, carries one | study |
+| Capture the archmonsters met (which soul stone, the monster's level and grade) | a setting: the AI keeps the archmonster alive until the stone is cast, the stone carried | study (format 5 flags archmonsters?) |
+| Capture (a fighter, a net or a stone) | an action under On my turn: Done once cast | study |
+| Its outcome: a mount obtained, a stone filled | outputs of "a fight ended" and "an item obtained" | study |
+| The soul stones carried and their capacity; whether a fighter is an archmonster or a wild mount | a list of items, numbers; yes or no (a fighter's fields) | study + data |
+
 #### Actions
 
 | Action | Slice | Data |
