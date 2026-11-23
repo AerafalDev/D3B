@@ -109,8 +109,8 @@ flowchart LR
   by hand completes it, and step 4 only adds the doing; a check on what D3B does not observe yet fails "D3B does not
   see this before step N", its reason the id `unseen_before_step_<N>` the interface words (settled alone). Go to a zone
   is done on a map of the zone; Harvest until and Hunt until once the pods reach their share, their harvests' count
-  not given before step 5 (a node reading it blocks); Go to the bank on the bank's map, the nearest one failing until
-  step 4's paths; Deposit all but failing until step 5. Wait counts its duration from when the flow came in, Wait for
+  not given before step 4's harvest (R6 of `docs/play.md`, its first slice; a node reading it blocks); Go to the bank on the bank's
+  map, the nearest one failing until step 4's paths; Deposit all but failing until step 4's bank (R9). Wait counts its duration from when the flow came in, Wait for
   life waits for the life's share, read each second since it rises with no message; Notify's texts wait in the run, the last 100, for step 4's History. The queries
   read the view when used, one not seen yet (no life read since the connection opened) blocking with what is missing.
 - **What it knows beyond the view** (whether a map is in a zone, a profession's resources) it asks of a `Knows` that
@@ -610,16 +610,21 @@ comes from an audit of 2026-11-23 comparing `next` with `main`'s C# bot, the pro
   slices below, each node marked with its own, and the earlier sections' "(v2.5)" to "(v2.9)" name the slice each
   node now joins; (v2.10)'s blueprints move to 5·Récolte (Récolte and the five professions) and 6·Combat (Combat and
   Chasseur), the ranges computed from the data being done.
-- **The slices**, each the PRs of a step that bring an action with the nodes it needs (their words, problems,
-  Summary and tests), measured in game with that step:
-  - **(26)**: the events at run time (priorities, modes, thresholds, settings at safe points) with When, Every, At,
-    the events of mine and Trigger, the language's own;
-  - **4·Play**: step 4's actor per character, Play, Pause, Stop, the History, the debugger, and the queries and
-    events over what is already pinned, which a run in game reads first; the picker by intent and "Advanced", as the
-    kinds outgrow a flat list;
-  - **4·Travel**: step 4's paths and moves, zaaps, the haven bag, doors, NPCs, and what they read;
-  - **5·Récolte**: step 5's harvest, bank and inventory, Récolte and the five profession blueprints of (v2.10), its
-    goal "Récolte runs in game";
+- **The slices**, each the PRs that bring an action with the nodes it needs (their words, problems, Summary and
+  tests), measured in game with it, in this order (step 4's first slice moved a first harvest and bank into step 4,
+  the owner, 2026-11-23: `docs/play.md`):
+  - **4·Play**: step 4's first slice, R1 to R9 of `docs/play.md`, D3B's given Récolte automatique playing in game:
+    the actor per character, Play, Pause, Stop, the watchdog, the player taking control (R1, R2, R4); Go to a zone
+    (R3); Use an element and doors in travel (R5); Harvest until's tour (R6); the NPC dialog and the storage acts
+    (R8); Go to the nearest bank and Deposit all but what is worn (R9); and the queries and events over what is
+    already pinned, which a run in game reads first;
+  - **4·Travel**: the next slices' moves: zaaps, the haven bag, NPC ways, a map, a cell, routes done, and what they
+    read;
+  - **5·Récolte**: the items used (food, potions, resource bags), withdrawing, the chests, equipment, the bank's and
+    harvest's other options, Récolte and the five profession blueprints of (v2.10) with their settings, and the
+    History and the debugger's views; the picker by intent and "Advanced", as the kinds outgrow a flat list;
+  - **(26)**: then the events at run time (priorities, modes, thresholds, an event cutting a long action, settings at
+    safe points) with Life below, When, Every, At, the events of mine and Trigger, the language's own;
   - **6·Combat**: step 6's fight state, the AI, Combat and Chasseur;
   - **7**: step 7's families, each in its own design;
   - **on demand**: listed and designed, coded once a D3B blueprint, an action or a player's request needs it, with
@@ -762,18 +767,20 @@ placement cells of both teams; glyphs, traps, portals and runes.
 | --- | --- | --- |
 | Notify | v1 | runtime |
 | Pause and notify; Block; Finish | v2.3, v1 | runtime |
-| Note in the History; switch to another blueprint | 4·Play | runtime |
+| Note in the History; switch to another blueprint | 5·Récolte | runtime |
 | Refuse an invitation (the forced default; as a node with the event, 7) | 4·Travel | C# party, exchange |
-| Go to a zone | v1, done 4·Travel | studied (map change, walk) |
+| Go to a zone | v1, done 4·Play (R3) | studied (map change, walk) |
 | Go to a map; walk to a cell; leave by an edge or a cell | 4·Travel | studied |
 | Follow a route N laps (an action and a forced exit per anchor) | (21), done 4·Travel | studied |
 | Go to the haven bag; leave it | 4·Travel | study (capture missing) |
 | Take a zaap or a zaapi to a map; save a zaap; discover the zaaps within reach | 4·Travel | studied (`hgz`, the cost rule; D499) |
-| Go through a door; use an interactive element (its skill) | 4·Travel | studied |
-| Talk to an NPC, its replies in order; leave the dialog | 4·Travel | studied (NPC tables not extracted) |
-| Harvest until (pods, a count); harvest this map; on every map crossed (inside, never to the bank) | v1, 5·Récolte | studied |
-| Go to the bank (the nearest, a map) | v1, 5·Récolte | studied |
-| Deposit all but; withdraw (N of an item); deposit or withdraw kamas | v1, 5·Récolte | studied (`jyj`); withdraw inferred, deposit study |
+| Go through a door; use an interactive element (its skill) | 4·Play (R5) | studied |
+| Talk to an NPC, its replies in order; leave the dialog | 4·Play (R8, the banker); NPC ways 4·Travel | studied; NPC tables format 6 (R7) |
+| Harvest until (pods, a count); its tour | v1, done 4·Play (R6) | studied |
+| Harvest this map; on every map crossed (inside, never to the bank) | 5·Récolte | studied |
+| Go to the bank: the nearest; a map | v1, done 4·Play (R9); a map 5·Récolte | studied |
+| Deposit all but what is worn | v1, done 4·Play (R9) | studied |
+| Deposit all but the items kept; withdraw (N of an item); deposit or withdraw kamas | 5·Récolte | studied (`jyj`); withdraw inferred, deposit study |
 | Deposit to the haven bag's chest; to the guild's chest (opted in) | 5·Récolte | study; guild C# (D147) |
 | Use an item, N at once (eat, a potion, a recall potion); open the resource bags | 5·Récolte | C# (D148, D156) |
 | Equip the best I carry for my level; equip an item or a preset; unequip | 5·Récolte | C#; presets study |
