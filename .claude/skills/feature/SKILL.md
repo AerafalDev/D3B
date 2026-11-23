@@ -16,6 +16,7 @@ argument-hint: "The feature, such as 'the character's live view'"
    Mermaid diagram, then the details; about two pages at most). `docs/now.md` names the stack. A choice costly to
    reverse also gets an `adr`.
 5. **Deliver** the stack in order, one PR at a time through `tdd` and `pr`.
-6. **Measure in game.** At the end of the stack, give the owner the checklist (in `docs/now.md` under "Not measured")
-   and wait for the result. A failed step becomes a bug (`diagnose`) in the same feature. The feature is done when
-   every step passes; `docs/now.md` then moves it to "Done" and names the next step.
+6. **Measure in game.** At the end of the stack, give the owner the checklist (its own file in `docs/checklists/`,
+   `Status: open`, one line in `docs/now.md`) and wait for the result. A failed step becomes a bug (`diagnose`) in the
+   same feature. The feature is done when every step passes; its file then says `Status: measured`, and `docs/now.md`
+   drops its line and names the next step.

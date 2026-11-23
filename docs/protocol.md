@@ -39,7 +39,8 @@ Each is `inferred` unless said `verified`.
 - **Between builds**: 3.7.13.17's schema is 3.7.12.12's byte for byte (the C# version, D361), and 3.7.14.18's (built
   2026-11-16) is 3.7.13.17's, obfuscated names included: the extractor gives both the same digest (verified,
   2026-11-17), so 3.7.14.18's pins are 3.7.13.17's under its build. What a build that changes the schema does is not
-  measured (the C# version's Q17). Patch builds come every one to two weeks.
+  measured (the C# version's Q17; 3.7.13.17's `GameAssembly.dll`, `global-metadata.dat` and `version` kept in `artifacts/` for it
+  on 2026-11-13). Patch builds come every one to two weeks.
 
 ## The tap
 

@@ -112,6 +112,17 @@ version. So the app reads `releases/download/updater-next/latest.json`, which ev
 that moves the endpoint to `releases/latest/download/latest.json` is still published on `updater-next`, so that every
 installed copy reaches it; the `channel` job goes only in the release after.
 
+## Pre-releases
+
+Each on the owner's go, with installers for the six targets and its `latest.json` on `updater-next`:
+
+- **v0.10.0** (2026-11-11), the first, without game data;
+- **v0.11.0**, without data;
+- **v0.12.0** (2026-11-11), format 1's data and the relay;
+- **v0.13.0** (2026-11-11), the game connection split into frames;
+- **v0.14.0** (2026-11-13), the data's format 2 and the new shell (status bar, inspector, Lucide icons, the breed's
+  head), its packages carrying `THIRD-PARTY-NOTICES.txt` (#205, #213, #214).
+
 ## Not yet
 
 - A bot running will veto the restart and the install on close, once bots exist.
