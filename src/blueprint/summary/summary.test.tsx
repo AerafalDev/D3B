@@ -409,6 +409,42 @@ describe("the blueprint's Summary", () => {
     expect(read()[0]).toEqual(["Au lancement", "1. Attendre que Oui", "Trop long :", "1.1. Prévenir : à choisir"]);
   });
 
+  it("reads the values in place in their steps, never as steps of their own", () => {
+    const value = (id: string, kind: string, pins: object[], inputs: object = {}) =>
+      node(id, kind, { family: "value", pins: [...pins, pin("value", "out", "number")], inputs });
+    const flows = {
+      ...events,
+      nodes: [
+        node("start", "on_start", { family: "event", pins: [pin("then", "out")] }),
+        node("until", "wait_until", {
+          family: "flow",
+          pins: [pin("run", "in"), pin("condition", "in", "bool"), pin("then", "out"), pin("too_long", "out")],
+        }),
+        node("pods", "pods_percent", { family: "query", pins: [pin("value", "out", "percentage")] }),
+        value("less", "less", [pin("a", "in", "percentage"), pin("b", "in", "number")], { b: "80" }),
+        node("said", "text", {
+          family: "value",
+          takesText: true,
+          options: { text: "Pods à {p}" },
+          pins: [pin("p", "in", "percentage"), pin("value", "out", "text")],
+        }),
+        node("tell", "notify", { pins: [...flow, pin("text", "in", "text")] }),
+      ],
+      wires: [
+        { from: ["start", "then"], to: ["until", "run"] },
+        { from: ["pods", "value"], to: ["less", "a"] },
+        { from: ["less", "value"], to: ["until", "condition"] },
+        { from: ["until", "then"], to: ["tell", "run"] },
+        { from: ["pods", "value"], to: ["said", "p"] },
+        { from: ["said", "value"], to: ["tell", "text"] },
+      ],
+    };
+    render(
+      <Summary graphs={[flows] as unknown as GraphView_Serialize[]} names={names} chosen={null} onChoose={() => {}} />,
+    );
+    expect(read()[0]).toEqual(["Au lancement", "1. Attendre que Pods % < 80", "2. Prévenir : Pods à Pods %"]);
+  });
+
   it("titles Retry's try and its Failed after every try", () => {
     const flows = {
       ...events,

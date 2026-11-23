@@ -1,5 +1,6 @@
 //! The runtime on the owner's game captures (`docs/bot.md`, "The runtime"): a blueprint that waits for its life, waits a
-//! minute, reads its life and loops, and one of v2's flow (a Retry around a Repeat of Wait until, a Switch), each run
+//! minute, reads its life and loops, one of v2's flow (a Retry around a Repeat of Wait until, a Switch), and one of its
+//! values (AND, NOT, a Text, a draw, a List), each run
 //! on each connection's character as an actor would, advanced at each message and when it asked to wake. A capture holds the account's ticket: it prints counts only. Ignored unless
 //! `D3B_CAPTURES` names their folder.
 
@@ -42,7 +43,7 @@ struct Counts {
     /// Connections where the character lost a fight.
     with_a_loss: u32,
     /// Times the run asked to be woken by the clock and was (each minute's end, and each second while waiting for its
-    /// life), and the notices of a life below half after its wait.
+    /// life), and the notices: of a life below half after its wait, or the values' Text.
     wakes: u32,
     lows: usize,
 }
@@ -69,10 +70,46 @@ const FLOW: &str = r#"{"schema": 2, "id": "flow", "name": "Flow", "version": 1,
               {"from": ["n", "value"], "to": ["add", "a"]}, {"from": ["add", "value"], "to": ["bump", "value"]},
               {"from": ["retry", "then"], "to": ["minute", "run"]}, {"from": ["minute", "then"], "to": ["retry", "run"]}]}]}"#;
 
+/// v2's values (`docs/bot.md`, "The values (v2.4)"): On start → Wait until life ≥ 50 % AND NOT level < 1 (at most
+/// 1 min) → Notify a Text "{v} % at level {l}" → n ← clamp(n + a random 1 to 3, 0, 1000) → Wait N seconds, element
+/// "chance 50 % ? 1 : 2" of a List [30, 60] → again. Nothing in it faults: it measures the values never blocking.
+const VALUES: &str = r#"{"schema": 2, "id": "values", "name": "Values", "version": 1,
+  "variables": [{"id": "n", "name": "N", "type": "number", "default": 0, "memory": true}],
+  "graphs": [{"id": "events", "name": "Events",
+    "nodes": [{"id": "start", "kind": "on_start"}, {"id": "until", "kind": "wait_until", "inputs": {"longest": 60}},
+              {"id": "life", "kind": "life_percent"}, {"id": "ge", "kind": "greater_or_equal", "inputs": {"b": 50}},
+              {"id": "level", "kind": "level"}, {"id": "lt", "kind": "less", "inputs": {"b": 1}},
+              {"id": "not", "kind": "not"}, {"id": "and", "kind": "and"},
+              {"id": "said", "kind": "text", "options": {"text": "{v} % at level {l}"}},
+              {"id": "tell", "kind": "notify"},
+              {"id": "n", "get": "n"}, {"id": "draw", "kind": "random_number", "inputs": {"low": 1, "high": 3}},
+              {"id": "add", "kind": "add"}, {"id": "clamp", "kind": "clamp", "inputs": {"low": 0, "high": 1000}},
+              {"id": "bump", "set": "n"},
+              {"id": "list", "kind": "make_list", "options": {"type": "number", "count": 2}, "inputs": {"in_1": 30, "in_2": 60}},
+              {"id": "coin", "kind": "chance"}, {"id": "pick", "kind": "choose", "options": {"type": "number"},
+               "inputs": {"if_true": 1, "if_false": 2}},
+              {"id": "at", "kind": "element_at", "options": {"type": "number"}}, {"id": "secs", "kind": "seconds"}, {"id": "pause", "kind": "wait"}],
+    "wires": [{"from": ["start", "then"], "to": ["until", "run"]}, {"from": ["life", "value"], "to": ["ge", "a"]},
+              {"from": ["level", "value"], "to": ["lt", "a"]}, {"from": ["lt", "value"], "to": ["not", "value"]},
+              {"from": ["ge", "value"], "to": ["and", "in_1"]}, {"from": ["not", "value"], "to": ["and", "in_2"]},
+              {"from": ["and", "value"], "to": ["until", "condition"]}, {"from": ["until", "then"], "to": ["tell", "run"]},
+              {"from": ["until", "too_long"], "to": ["tell", "run"]},
+              {"from": ["life", "value"], "to": ["said", "v"]}, {"from": ["level", "value"], "to": ["said", "l"]},
+              {"from": ["said", "value"], "to": ["tell", "text"]}, {"from": ["tell", "done"], "to": ["bump", "run"]},
+              {"from": ["n", "value"], "to": ["add", "a"]}, {"from": ["draw", "value"], "to": ["add", "b"]},
+              {"from": ["add", "value"], "to": ["clamp", "value"]}, {"from": ["clamp", "value"], "to": ["bump", "value"]},
+              {"from": ["coin", "value"], "to": ["pick", "condition"]}, {"from": ["list", "value"], "to": ["at", "list"]},
+              {"from": ["pick", "value"], "to": ["at", "index"]}, {"from": ["at", "element"], "to": ["secs", "seconds"]},
+              {"from": ["secs", "value"], "to": ["pause", "duration"]}, {"from": ["bump", "then"], "to": ["pause", "run"]},
+              {"from": ["pause", "then"], "to": ["until", "run"]}]}]}"#;
+
 #[test]
-fn v2s_flow_replayed_on_the_captures_compiles() {
-    let blueprint = read(FLOW).unwrap_or_else(|error| panic!("{error}"));
-    assert!(Run::new(&blueprint, &BTreeMap::new(), &BTreeMap::new()).is_ok());
+fn v2s_flow_and_values_replayed_on_the_captures_compile() {
+    for text in [FLOW, VALUES] {
+        let blueprint = read(text).unwrap_or_else(|error| panic!("{error}"));
+        let run = Run::new(&blueprint, &BTreeMap::new(), &BTreeMap::new());
+        assert!(run.is_ok(), "{:?}", run.err());
+    }
 }
 
 #[test]
@@ -102,6 +139,19 @@ fn the_owners_game_captures_run_v2s_flow_without_blocking_but_on_a_death() {
         counts.blocked_otherwise, 0,
         "never \"runs without pause\", nor another block"
     );
+    assert_eq!(counts.died, counts.with_a_loss, "only a death blocks");
+}
+
+#[test]
+#[ignore = "needs the owner's captures: set D3B_CAPTURES to their folder"]
+fn the_owners_game_captures_run_v2s_values_without_blocking_but_on_a_death() {
+    let counts = replayed(VALUES);
+    eprintln!("{counts:?}");
+    assert!(
+        counts.runs > 0 && counts.wakes > 0 && counts.lows > 0,
+        "nothing ran: {counts:?}"
+    );
+    assert_eq!(counts.blocked_otherwise, 0, "no value faults, nor another block");
     assert_eq!(counts.died, counts.with_a_loss, "only a death blocks");
 }
 

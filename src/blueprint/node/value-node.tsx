@@ -51,7 +51,7 @@ export function ValueNode({ data, selected }: NodeProps<ValueNodeType>) {
   const ins = node.pins.filter((pin) => pin.side === "in" && pin.carries !== "exec");
   const out = node.pins.find((pin) => pin.side === "out");
   const symbol = SYMBOL[kind];
-  const worded = WORDED.has(kind) ? (nodeWord(`kinds.${kind}.sentence`) ?? kind) : undefined;
+  const worded = WORDED.has(kind) ? (nodeWord(`kinds.${kind}.word`) ?? kind) : undefined;
   const labelled = symbol === undefined && !WORDED.has(kind);
   const Icon = nodeIcon(node.family, kind);
   const open = (node.options?.valueType ?? null) === null;

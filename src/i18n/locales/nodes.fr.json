@@ -193,11 +193,15 @@
       "description": "Vrai si la valeur est entre les deux bornes, comprises ; de 23:00 à 08:00 passe minuit."
     },
     "and": {
-      "sentence": "ET",
+      "sentence": "{{in}}",
+      "word": "ET",
+      "between": " ET ",
       "description": "Vrai si toutes ses conditions sont vraies, lues dans l'ordre jusqu'à la première fausse."
     },
     "or": {
-      "sentence": "OU",
+      "sentence": "{{in}}",
+      "word": "OU",
+      "between": " OU ",
       "description": "Vrai si une de ses conditions est vraie, lues dans l'ordre jusqu'à la première vraie."
     },
     "not": {
@@ -257,7 +261,9 @@
       "description": "Un élément de la liste tiré au hasard à chaque lecture ; une liste vide bloque le personnage."
     },
     "make_list": {
-      "sentence": "Liste",
+      "sentence": "Liste de {{in}}",
+      "word": "Liste",
+      "between": ", ",
       "description": "Une liste faite de ses entrées, dans leur ordre ; « + » en ajoute une."
     },
     "length": {

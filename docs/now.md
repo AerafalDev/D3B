@@ -7,12 +7,12 @@ checklists. History is in git and the ADRs, design in the domain pages, measures
 
 **Step 3, the bot's model** ([ROADMAP.md](../ROADMAP.md), [bot.md](bot.md), ADRs 0014 to 0019), started on 2026-11-13 by
 two exceptions of the owner to "the next feature does not start": step 2 is measured on Windows but for items waiting on
-outside events. Today's feature is **blueprints v2's (v2.4), the values** ([bot.md](bot.md#the-values-v24)); its
-remaining PRs finish a started feature and carry `step-finish`.
+outside events. The last feature, **blueprints v2's (v2.4), the values** ([bot.md](bot.md#the-values-v24)), is done
+in code and waits on its checklist.
 
 **The cap** (`CLAUDE.md`; the owner, 2026-11-23): more than five checklists are open (`bun run rules` counts them), so
-no new feature PR until at most five are; fixes, docs, v2.4's remaining PRs and step 4's first slice, started on the
-owner's go of 2026-11-23 (`step-finish`), go on.
+no new feature PR until at most five are; fixes, docs and step 4's first slice, started on the owner's go of
+2026-11-23 (`step-finish`), go on.
 The owner's session of tests closes them.
 
 ## Done
@@ -20,17 +20,17 @@ The owner's session of tests closes them.
 Steps 0 (the shell, typed IPC, packed data, i18n, the Claude setup, CI, release-please, six targets, signed updates) and
 1 (the extractor) are done and measured on Windows x64; the data is now in format 6, the NPCs added for step 4's R7, published on 2026-11-23 ([data.md](data.md)). Step 2 (the
 relay, the protocol and its pins, the live view, the inspector, the new shell) is done in code and measured on Windows
-x64 but for the items below. Step 3 is done in code up to v2.4's Text and Join: the blueprint and its storage, the Library,
-D3B's three blueprints, the editor (graph, Details, Summary, picker, undo), the World and my zones, a character's
-blueprint and settings, the `.d3b` file, the runtime on the captures, v2.1 to v2.3, and v2.10's ranges; the blueprints'
-whole catalogue (ADR 0019) and step 4's first slice (ADR 0021) are designed. Pre-releases up to v0.14.0
+x64 but for the items below. Step 3 is done in code up to v2.4, where the blueprint language is frozen (ADR 0019, the
+owner, 2026-11-23): the blueprint and its storage, the Library, D3B's three blueprints, the editor (graph, Details,
+Summary, picker, undo), the World and my zones, a character's blueprint and settings, the `.d3b` file, the runtime on
+the captures, v2.1 to v2.4, and v2.10's ranges; the blueprints' whole catalogue (ADR 0019) and step 4's first slice
+(ADR 0021) are designed. Pre-releases up to v0.14.0
 ([updates.md](updates.md#pre-releases)); data assets in [data.md](data.md#published).
 
 ## Next
 
 One line per item, in order; each is designed in [bot.md](bot.md) or [play.md](play.md).
 
-- v2.4: sentences in place, and its checklist; the language is frozen there (ADR 0019, the owner, 2026-11-23).
 - Step 4's first slice, F4 to F7 and F10: the game layer reading every family the C# version reads, typed acts
   ([play.md](play.md#the-stack), ADR 0021); started on the owner's go of 2026-11-23, its PRs labelled `step-finish`;
   F1 ([protocol-coverage.md](protocol-coverage.md)), F2 (the bot's frames), F3 (the requests), F8 and F9 (the paths)
@@ -55,6 +55,7 @@ One line each: what is left to measure. Step 3's own measure is [bot.md](bot.md#
 
 - [v2.2, the editor reads it](checklists/v2-2-editor-reads-it.md): open, items 1 to 7.
 - [v2.3, the flow's kinds](checklists/v2-3-flow-kinds.md): open, items 1 to 5.
+- [v2.4, the values](checklists/v2-4-values.md): open, items 1 to 10.
 - [the protocol](checklists/protocol.md): open, item 7 with v0.14.0 on client 3.7.14.18, before the next release.
 - [the breed](checklists/breed.md): open, items 1 and 2 (the owner's extraction and `data:fetch`), 5 with v0.14.0.
 - [the characters played](checklists/characters-played.md): open, items 1 to 6.
