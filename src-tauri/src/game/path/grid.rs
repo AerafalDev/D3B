@@ -57,7 +57,7 @@ pub(crate) fn direction(from: u16, to: u16) -> Option<u8> {
 
 /// Whether a step in `direction` passes between two cells: east, south, west and north, as the screen shows them.
 pub(crate) fn is_across(direction: u8) -> bool {
-    direction % 2 == 0
+    direction.is_multiple_of(2)
 }
 
 #[cfg(test)]

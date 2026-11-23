@@ -6,9 +6,5 @@ mod grid;
 mod ground;
 mod walks;
 
-pub(crate) use cell_path::{CellPath, PathError, find};
-pub(crate) use ground::Ground;
-pub(crate) use walks::walks;
-
 #[cfg(test)]
 mod tests;

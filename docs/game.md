@@ -111,8 +111,8 @@ I/O ([play.md](play.md)). Each fact is `inferred` from the C# version's measures
 - **Map action cells** move the character on a walk that only crosses them: a walk goes round them unless one is its
   goal, and crosses one only when no other way exists (D488).
 - **Where the last walk ended**: the client did not follow most walks ending there (D260; 11 of 16 on 3.7.13.17). Another
-  goal is taken when one is reached; else the walk goes in two, to its cell before the last then the last step, or a
-  step aside first for a walk of one step.
+  goal is taken when a walk round the action cells reaches one; else the walk goes in two, to its cell before the last
+  then the last step, or a step aside first for a walk of one step, never onto an action cell.
 - **The turns** a walk request carries: its start, each change of direction, its end with the direction it arrives in,
   each `direction << 12 | cell` (verified on 97,976 requests).
 

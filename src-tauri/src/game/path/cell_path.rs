@@ -113,7 +113,21 @@ fn cost(direction: u8) -> u32 {
 /// cells, which move the character on a walk that only crosses them; it steps on one when no other way exists, or when
 /// it is a goal (inferred, `main` D488, measured on 3.7.14.18).
 pub(crate) fn find(ground: &Ground, from: u16, goals: &[u16], avoid: &[u16]) -> Result<CellPath, PathError> {
-    if let Some(&cell) = goals.iter().chain(avoid).chain([&from]).find(|cell| !grid::exists(**cell)) {
+    route(ground, from, goals, avoid, true)
+}
+
+/// The quickest walk as [`find`] gives it, but never through a cell of `avoid` that is no goal.
+pub(super) fn find_round(ground: &Ground, from: u16, goals: &[u16], avoid: &[u16]) -> Result<CellPath, PathError> {
+    route(ground, from, goals, avoid, false)
+}
+
+fn route(ground: &Ground, from: u16, goals: &[u16], avoid: &[u16], cross: bool) -> Result<CellPath, PathError> {
+    if let Some(&cell) = goals
+        .iter()
+        .chain(avoid)
+        .chain([&from])
+        .find(|cell| !grid::exists(**cell))
+    {
         return Err(PathError::NoSuchCell(cell));
     }
     if goals.contains(&from) {
@@ -128,7 +142,11 @@ pub(crate) fn find(ground: &Ground, from: u16, goals: &[u16], avoid: &[u16]) -> 
         blocked[usize::from(cell)] = true;
     }
     search(ground, from, &goal, &blocked)
-        .or_else(|| search(ground, from, &goal, &vec![false; CELL_COUNT]))
+        .or_else(|| {
+            cross
+                .then(|| search(ground, from, &goal, &vec![false; CELL_COUNT]))
+                .flatten()
+        })
         .ok_or(PathError::NoWay { from })
 }
 
@@ -178,9 +196,8 @@ mod tests {
     #[test]
     fn walks_straight_to_a_cell_of_its_row() {
         let path = find(&open(), 30, &[33], &[]).unwrap_or_else(|error| panic!("{error}"));
-        // East costs 3, a diagonal 2: two diagonals beat one step east, so 30 to 32 zig-zags.
-        assert_eq!((path.start(), path.end()), (30, 33));
-        assert!(path.cells().len() >= 4);
+        // A step east costs 3, the two diagonals that go round it 4.
+        assert_eq!(path.cells(), [30, 31, 32, 33]);
     }
 
     #[test]
@@ -191,15 +208,18 @@ mod tests {
             path.turns(),
             [Turn { cell: 30, direction: 2 }, Turn { cell: 86, direction: 2 }]
         );
-        assert_eq!(path.turns()[0].key(), 2 << 12 | 30);
+        assert_eq!(path.turns()[0].key(), 2 * 4096 + 30);
     }
 
     #[test]
     fn lists_a_turn_where_the_walk_changes_direction() {
-        let path = find(&open(), 30, &[59], &[]).unwrap_or_else(|error| panic!("{error}"));
+        // Every quickest walk from 30 to 87 takes three steps of two directions at least, south and south-east.
+        let path = find(&open(), 30, &[87], &[]).unwrap_or_else(|error| panic!("{error}"));
         let turns = path.turns();
-        assert_eq!(turns.first().map(|turn| turn.cell), Some(30));
-        assert_eq!(turns.last().map(|turn| turn.cell), Some(59));
+        assert_eq!(path.cells().len(), 4);
+        assert!(turns.len() >= 3, "{turns:?}");
+        assert_eq!((turns[0].cell, turns[turns.len() - 1].cell), (30, 87));
+        assert_ne!(turns[0].direction, turns[1].direction);
     }
 
     #[test]
@@ -220,7 +240,10 @@ mod tests {
         for neighbour in (0..DIRECTIONS).filter_map(|d| grid::neighbour(300, d)) {
             map.flags[usize::from(neighbour)] = 0;
         }
-        assert_eq!(find(&Ground::of(&map), 30, &[300], &[]), Err(PathError::NoWay { from: 30 }));
+        assert_eq!(
+            find(&Ground::of(&map), 30, &[300], &[]),
+            Err(PathError::NoWay { from: 30 })
+        );
         map.flags[100] = 0;
         assert_eq!(
             find(&Ground::of(&map), 30, &[100], &[]),

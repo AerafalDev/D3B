@@ -3,11 +3,13 @@
 
 use crate::data::{CELL_COUNT, MapData, cell};
 
-use super::ground::tests::open_map;
+use super::cell_path::{CellPath, PathError, find};
 use super::grid::{self, DIRECTIONS};
-use super::{CellPath, Ground, PathError, find, walks};
+use super::ground::Ground;
+use super::ground::tests::open_map;
+use super::walks::walks;
 
-/// SplitMix64: a seeded source, so a failing map is found again from its seed.
+/// `SplitMix64`: a seeded source, so a failing map is found again from its seed.
 struct Seeded(u64);
 
 impl Seeded {
@@ -48,7 +50,8 @@ fn generated(seeded: &mut Seeded) -> MapData {
         }
         if stairs && seeded.below(6) == 0 {
             map.move_zone.insert(index, 1);
-            map.floor.insert(index, i32::try_from(seeded.below(8)).unwrap_or(0) * 30);
+            map.floor
+                .insert(index, i32::try_from(seeded.below(8)).unwrap_or(0) * 30);
         }
     }
     map
@@ -64,7 +67,7 @@ fn legal(map: &MapData, from: u16, to: u16) -> Option<u32> {
     if !walkable(map, to) {
         return None;
     }
-    if direction % 2 == 0 {
+    if direction.is_multiple_of(2) {
         let sides = [direction + 1, direction + DIRECTIONS - 1]
             .map(|side| grid::neighbour(from, side % DIRECTIONS).is_some_and(|side| walkable(map, side)));
         if !sides.contains(&true) {
@@ -73,7 +76,8 @@ fn legal(map: &MapData, from: u16, to: u16) -> Option<u32> {
     }
     let zone = |at: u16| map.move_zone.get(&at).copied().unwrap_or(0);
     let floor = |at: u16| map.floor.get(&at).copied().unwrap_or(0);
-    if !map.move_zone.is_empty() && !(zone(from) == 1 && zone(to) == 1) && (floor(from) - floor(to)).abs() > 10 {
+    let along_a_stair = zone(from) == 1 && zone(to) == 1;
+    if !map.move_zone.is_empty() && !along_a_stair && (floor(from) - floor(to)).abs() > 10 {
         return None;
     }
     Some(if direction == 0 || direction == 4 { 3 } else { 2 })
@@ -154,11 +158,20 @@ fn a_walk_goes_round_the_cells_avoided_when_it_can() {
         let ground = Ground::of(&map);
         let (from, goal) = (seeded.cell(), seeded.cell());
         let avoid: Vec<u16> = (0..8).map(|_| seeded.cell()).collect();
-        let Ok(path) = find(&ground, from, &[goal], &avoid) else { continue };
+        let Ok(path) = find(&ground, from, &[goal], &avoid) else {
+            continue;
+        };
         let blocked: Vec<u16> = avoid.iter().copied().filter(|cell| *cell != goal).collect();
         let round = slow_costs(&map, from, &blocked)[usize::from(goal)];
-        let crossed = path.cells()[1..path.cells().len() - 1].iter().any(|cell| avoid.contains(cell));
-        assert_eq!(crossed, round.is_none(), "from {from} to {goal}, avoiding {avoid:?}: {:?}", path.cells());
+        let crossed = path.cells()[1..path.cells().len() - 1]
+            .iter()
+            .any(|cell| avoid.contains(cell));
+        assert_eq!(
+            crossed,
+            round.is_none(),
+            "from {from} to {goal}, avoiding {avoid:?}: {:?}",
+            path.cells()
+        );
         if let Some(round) = round {
             assert_eq!(cost_of(&map, &path), round);
         }
@@ -170,7 +183,9 @@ fn the_turns_give_the_walk_back() {
     let mut seeded = Seeded(0x0012);
     for _ in 0..150 {
         let map = generated(&mut seeded);
-        let Ok(path) = find(&Ground::of(&map), seeded.cell(), &[seeded.cell()], &[]) else { continue };
+        let Ok(path) = find(&Ground::of(&map), seeded.cell(), &[seeded.cell()], &[]) else {
+            continue;
+        };
         let turns = path.turns();
         let mut cells = vec![turns[0].cell];
         for pair in turns.windows(2) {
@@ -180,7 +195,11 @@ fn the_turns_give_the_walk_back() {
             }
         }
         assert_eq!(cells, path.cells());
-        assert!(turns.iter().all(|turn| turn.key() >> 12 < 8 && turn.key() & 0xFFF < 560));
+        assert!(
+            turns
+                .iter()
+                .all(|turn| turn.key() >> 12 < 8 && turn.key() & 0xFFF < 560)
+        );
     }
 }
 
@@ -194,7 +213,9 @@ fn walks_chain_and_none_ends_where_the_last_one_ended_unless_no_way_round_exists
         let from = seeded.cell();
         let goal = seeded.cell();
         let last_end = if seeded.below(2) == 0 { goal } else { seeded.cell() };
-        let Ok(walks) = walks(&ground, from, &[goal], &[], Some(last_end)) else { continue };
+        let Ok(walks) = walks(&ground, from, &[goal], &[], Some(last_end)) else {
+            continue;
+        };
         assert_eq!(walks[0].start(), from);
         assert_eq!(walks[walks.len() - 1].end(), goal);
         for pair in walks.windows(2) {

@@ -72,7 +72,8 @@ impl Ground {
         if !grid::is_across(direction) {
             return true;
         }
-        let side = |turn: u8| grid::neighbour(from, (direction + turn) % DIRECTIONS).is_some_and(|cell| self.walkable(cell));
+        let side =
+            |turn: u8| grid::neighbour(from, (direction + turn) % DIRECTIONS).is_some_and(|cell| self.walkable(cell));
         side(DIRECTIONS - 1) || side(1)
     }
 
@@ -143,7 +144,11 @@ pub(crate) mod tests {
     fn counts_floors_only_on_a_map_with_stairs() {
         let mut map = open_map();
         map.floor.insert(31, 170);
-        assert_eq!(Ground::of(&map).step(30, 0), Some(31), "no stair: a step of 170 walked (D86)");
+        assert_eq!(
+            Ground::of(&map).step(30, 0),
+            Some(31),
+            "no stair: a step of 170 walked (D86)"
+        );
 
         // A stair 31, 32 of moveZone 1; elsewhere moveZone 0.
         map.move_zone.insert(31, 1);
