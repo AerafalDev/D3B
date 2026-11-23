@@ -219,11 +219,9 @@ decoded, as many times as the study counted them in these 54 (it read 2 more, of
 version's `.proto` files (its readable names, ours, kept with the Lua calls each backs and the checklist that measured
 it in `protocol::coverage::catalogue`), whether a build pins it, whether D3B decodes and encodes it, and its frames in
 the last local replay, which the replay above writes to `src-tauri/protocol/replay/<build>.json` (counts by readable
-name and outcome only). Its checks, each with its failure case: a message listed twice, a name that is no request,
-event or response, a message decoded, encoded, pinned or replayed that the catalogue lacks, a measure on a build that
-does not pin it, a checklist that does not exist; a replay's file of another build, not of its shape or unreadable.
+name and outcome only); its checks, each with its failure case, are `protocol::coverage`'s tests.
 On 2026-11-23 only 4 game connections were on the owner's machine (2 of each build; the 54 above were gone): their
-counts are the report's, and on them the replay fails its last check, since none gains a level.
+counts are the report's, and the replay fails on them, since none gains a level.
 
 The inspector's, each with its failure case: the frames kept bounded by count and by bytes (an 88 KB frame evicts the
 oldest), a secret's frame kept without its bytes, nothing kept for a connection whose protocol is off; a batch capped at
