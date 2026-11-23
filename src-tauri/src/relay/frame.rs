@@ -93,7 +93,7 @@ fn split(mut bytes: &[u8], each: &mut impl FnMut(&[u8])) -> Result<usize, RelayE
     not(test),
     expect(
         dead_code,
-        reason = "the bot's frames are checked with it, which nothing sends before step 4's F3"
+        reason = "the bot's frames are checked with it, which nothing sends before step 4's R1"
     )
 )]
 pub(crate) fn whole(bytes: &[u8]) -> Result<Option<usize>, RelayError> {

@@ -31,9 +31,10 @@ whole catalogue (ADR 0019) and step 4's first slice (ADR 0021) are designed. Pre
 One line per item, in order; each is designed in [bot.md](bot.md) or [play.md](play.md).
 
 - v2.4: sentences in place, and its checklist; the language is frozen there (ADR 0019, the owner, 2026-11-23).
-- Step 4's first slice, F3 to F7 and F10: the game layer reading every family the C# version reads, typed acts
+- Step 4's first slice, F4 to F7 and F10: the game layer reading every family the C# version reads, typed acts
   ([play.md](play.md#the-stack), ADR 0021); started on the owner's go of 2026-11-23, its PRs labelled `step-finish`;
-  F1 ([protocol-coverage.md](protocol-coverage.md)), F2 (the bot's frames), F8 and F9 (the paths) done.
+  F1 ([protocol-coverage.md](protocol-coverage.md)), F2 (the bot's frames), F3 (the requests), F8 and F9 (the paths)
+  done.
 - Step 4's first slice, R1 to R9: Récolte automatique playing on Windows; its measure, a 30-minute loop unblocked.
 - (26) events at run time: priorities, modes, thresholds, settings at safe points, When, Every, At, Trigger; an
   event cutting a long action at its next inner step (ADR 0020).
@@ -69,6 +70,7 @@ One line each: what is left to measure. Step 3's own measure is [bot.md](bot.md#
 - [Advanced tools](checklists/advanced-tools.md): open, items 4 and 6.
 - [the Protocol panel's opening](checklists/protocol-panel.md): open, item 5, the parts of 1 and 3 not tried.
 - [the bot's frames in the relay](checklists/step4-bot-frames.md): open, items 1 and 2 (step 4's F2).
+- [the walks named](checklists/step4-walks-named.md): open, items 1 and 2 (step 4's F3).
 - [a given blueprint's update](checklists/blueprint-update.md): open, items 1 to 3; 4 waits on a given v2.
 - [the `.d3b` file](checklists/d3b-file.md): open, items 4 and 6, and the rest of 5.
 - [the relay](checklists/relay.md): waiting, item 10's offer on the release after v0.14.0, 11 on an accented account.

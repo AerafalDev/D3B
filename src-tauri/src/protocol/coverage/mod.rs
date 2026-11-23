@@ -13,9 +13,6 @@ use std::fmt::Write as _;
 use catalogue::Family;
 use replayed::Replayed;
 
-/// The requests D3B encodes to send to the game: none before step 4's requests (`docs/play.md`, F3).
-const ENCODED: &[&str] = &[];
-
 /// One build as the report shows it: its pins, and its last replay if it had one.
 #[derive(Debug, Clone, PartialEq, Eq)]
 struct Build {
