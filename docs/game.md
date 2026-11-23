@@ -94,6 +94,28 @@ tick, sends its view when it changed.
   their looks (`Actor.information` field 2, not read) was studied, then dropped by the owner on 2026-11-13: the
   client's sprites (about 6.4 GB of skeletons and skins) would take too much room.
 
+## The paths
+
+`game::path` finds the walks the acts send, pure functions of a map's data and of where the character stands, with no
+I/O ([play.md](play.md)). Each fact is `inferred` from the C# version's measures on `main` unless said `verified`.
+
+- **The grid** (verified, study `map-walk`): 14 columns of 40 staggered rows, directions 0 (east) clockwise to 7; from
+  an even row the diagonals are +14, +13, −15, −14, from an odd one +15, +14, −14, −13, east and west ±1, south and
+  north ±28.
+- **A step** reaches a cell walkable out of fights (`mov` set, `nonWalkableDuringRP` not), never passes between two
+  obstacles (D68), and, on a map holding both moveZones, changes floor by at most 10 unless it goes along a stair, both
+  cells of moveZone 1 (D86). The start may be an obstacle.
+- **The quickest walk**, Dijkstra over the 560 cells to the nearest of several goals, steps weighed 3 east or west, 2
+  north, south or diagonal (D68's 170, 110 and 113 ms; 3.7.13.17's 209, 126 and 141 keep the order). Never a walk of no
+  step (D89: `AlreadyThere`); a goal that cannot be walked on is none (`NoWay`); a cell off the map is `NoSuchCell`.
+- **Map action cells** move the character on a walk that only crosses them: a walk goes round them unless one is its
+  goal, and crosses one only when no other way exists (D488).
+- **Where the last walk ended**: the client did not follow most walks ending there (D260; 11 of 16 on 3.7.13.17). Another
+  goal is taken when one is reached; else the walk goes in two, to its cell before the last then the last step, or a
+  step aside first for a walk of one step.
+- **The turns** a walk request carries: its start, each change of direction, its end with the direction it arrives in,
+  each `direction << 12 | cell` (verified on 97,976 requests).
+
 ## In the app
 
 Rebuilt in the new shell ([shell.md](shell.md)), the owner's choices of 2026-11-12 from mock-ups:
@@ -164,4 +186,7 @@ the Characters view (its empty line, a row by name, level and place or by connec
 chosen, its tab opened); a character's tab (who and where, its breed named in the interface's language or its level alone, its breed's head or
 its initials without one or when it fails to load, its gauges, what is around, its title, waiting, a protocol off, a
 closed connection); the map's geometry (cells 0, 13, 14 and 559), the ground drawn, what stands on it in
-drawing order, and its notices (a fight, no map, a map the data lacks).
+drawing order, and its notices (a fight, no map, a map the data lacks). The paths: named tests of each rule above, and
+property tests on maps generated from a seeded source, each walk checked step by step against the rules written again
+from the map's data and its cost against a slow search (Bellman-Ford), the cells avoided, the turns giving the walk back,
+and the walks split where the last ended.
