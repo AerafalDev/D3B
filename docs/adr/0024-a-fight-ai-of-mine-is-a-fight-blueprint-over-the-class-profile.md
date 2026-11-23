@@ -15,9 +15,10 @@ profile, or how captures are offered. The C# version had one AI (D244), and none
 
 - **The class's fight profile plays by default.** "On my turn" overrides it, and two nodes hand the turn back:
   "Let the built-in AI play this turn" and "Let it play one action", the profile's next rule that holds.
-- **A fight blueprint** holds a player's turn logic: a blueprint of its own whose only events are the fight's
-  (placement, on my turn, a turn began, a fighter died, a fight ended), chosen per character, its class's by default,
-  and for one fight by the character's blueprint, through Fight with's input. Shared alone, per class or per fight.
+- **A fight blueprint** holds a player's turn logic: a blueprint of ADR 0014's one kind whose graph holds the
+  fight's events (placement, on my turn, a turn began, a fighter died, a fight ended), chosen in a character's setting
+  (none by default) and for one fight by the character's blueprint, through Fight's input; shared alone, per class
+  or per fight. The character's run waits through the fight while it plays, one flow at a time (ADR 0017).
 - **Captures** are settings of Combat and Chasseur that the built-in AI plays (which wild mounts, which soul stone
   for which archmonsters; keep the target alive, cast at the right moment), plus a Capture node and the fighter's
   fields for a fight blueprint; each studied and captured at step 6 before it is coded.
@@ -31,6 +32,6 @@ profile, or how captures are offered. The C# version had one AI (D244), and none
 
 ## Consequences
 
-A blueprint gains a kind, fight or not, its picker offering a fight blueprint only the fight's events and nodes; the
-file names it (a change of schema with the first fight PR). Step 6 designs the profile and the fight blueprints
-together; review checks a fight node is offered in fight blueprints only.
+No second kind of blueprint (ADR 0014 holds): the fight's events run only while their blueprint plays a fight, and a
+fight node outside their flows is a problem. Step 6 designs the profile and the fight blueprints together; review
+checks a fight node runs only in a fight.

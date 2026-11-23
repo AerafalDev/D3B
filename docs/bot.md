@@ -258,8 +258,8 @@ flowchart LR
   use an interactive element (its skill), talk to an NPC and give its replies in order, leave the dialog (step 4, an
   **NPC** a type); harvest until, go to the nearest bank and deposit all but (step 4's first slice, `docs/play.md`);
   harvest this map, a bank on a map, withdraw, deposit to the haven bag's chest, use an item, open the resource bags, equip the best I carry for my level, equip an item or a preset,
-  set the game's own "experience received" (step 5); hunt until, attack a group (its levels), fight with the default
-  AI (won is Done), leave the fight (step 6); craft N of an item, sell items at the auction house (step 7); notify,
+  set the game's own "experience received" (step 5); hunt until, attack a group (its levels), fight (the class's profile or a
+  fight blueprint; won is Done), leave the fight (step 6); craft N of an item, sell items at the auction house (step 7); notify,
   and note in the History (step 4); destroy items (step 5); switch to another blueprint (step 4, the owner,
   2026-11-16): the character's file then names it, its settings carried as when the tab chooses one, and it starts
   from its On start. Choosing a fight's challenges' bonus comes with step 6 (the catalogue, below).
@@ -267,8 +267,8 @@ flowchart LR
   with the fight's state, the spells and the effects: a **fight profile** is a value edited as an ordered list of
   rules (a spell, a target, a cell, typed conditions, how often it repeats, whether to move to cast), the first
   that holds is played and the list read again until none does; D3B ships one per class, shareable, and **the
-  default AI is the character's class profile**; for advanced players, an event "On my turn" overrides it in the
-  graph. The fight profile (a type) and "On my turn" (an event) are marked step 6 until then.
+  default AI is the character's class profile**; for advanced players, an event "On my turn" overrides it, in a
+  fight blueprint (the owner, 2026-11-23, the catalogue's fight family below). The fight profile (a type) and "On my turn" (an event) are marked step 6 until then.
 - **Routes** ((21), the owner, 2026-11-16): an anchor may hold an action (harvest, fight, nothing, or call a function
   of mine) and a forced exit (a door, a cell) where the world graph is not enough; Follow the route resumes from the
   map the character is on, as the scripts' "on map X, do Y"; a route is recorded while playing (the relay observes the
@@ -748,8 +748,8 @@ comes from an audit of 2026-11-23 comparing `next` with `main`'s C# bot, the pro
 | A profession's level reached | the profession, its level | 5·Récolte | C# |
 | An item obtained | the item, its quantity | 5·Récolte | studied for harvests; inventory C# |
 | One harvest done | the resource, its quantity | 5·Récolte | studied |
-| On my turn (overrides the class's profile) | — | 6·Combat | C# |
-| Placement; a turn began; a fighter died | the cells; the fighter | 6·Combat | C# |
+| On my turn (overrides the class's profile), in a fight blueprint | — | 6·Combat | C# |
+| Placement; a turn began; a fighter died, in a fight blueprint | the cells; the fighter | 6·Combat | C# |
 | A challenge proposed, its result | the challenge | 6·Combat | C#, `artifacts/studies/challenges*` |
 | A party member lost, needs the bank; the master moved | the member | 7 | C# (D437 to D490) |
 | A quest's or a treasure hunt's step; a sale done | the step; the item | 7 | study |
@@ -820,9 +820,11 @@ a spell's zone, the best target of a zone, an estimated damage; the fight's chal
 placement cells of both teams; glyphs, traps, portals and runes.
 
 **A fight AI of my own** (the owner's choices of 2026-11-23, ADR 0024): the class's **fight profile** plays by
-default, as the C# version's one AI (D244); a player's own turn logic lives in a **fight blueprint**, a blueprint of
-its own whose events are the fight's, chosen per character (its class's by default, which plays the profile) and for
-one fight by the character's blueprint (Fight with's input: a dungeon, an archmonster). A fight blueprint:
+default, as the C# version's one AI (D244); a player's own turn logic lives in a **fight blueprint**, a blueprint
+of the one kind ADR 0014 keeps whose graph holds the fight's events, chosen in a character's setting (none by default:
+the profile plays) and for one fight by the character's blueprint (Fight's input: a dungeon, an archmonster). The
+character's run waits through the fight, its events pending (ADR 0020), while the fight blueprint's flow plays it:
+one flow at work at a time (ADR 0017); its "a fight ended" runs first, then the character's. A fight blueprint:
 
 | Node | Gives or does | Data |
 | --- | --- | --- |
@@ -831,10 +833,11 @@ one fight by the character's blueprint (Fight with's input: a dungeon, an archmo
 | The enemies, the allies, the summons | lists of fighter records: life %, cell, states, buffs, resistances, an archmonster or a wild mount | C# |
 | Line of sight, distance, the reachable and free cells, the cells in a spell's range | yes or no, numbers, lists of cells | C# + data |
 | Can I cast this spell there (and why not, a choice: AP, range, sight, cooldown, cell taken) | yes or no, its reason | C# |
-| Cast a spell on a cell; move to a cell or toward a fighter (keeping a distance); place on a cell; pass the turn | actions, each Done or Failed with its reason | C# |
+| Cast a spell on a cell; move to a cell or toward a fighter (keeping a distance); place on a cell; ready; pass the turn; a summon's own turn | actions, each Done or Failed with its reason | C# |
 | **Let the built-in AI play this turn**; **let it play one action** (the profile's next rule that holds) | actions, handing the turn back to the profile | runtime |
 
-A turn that never ends meets the 10,000-node guard and a cap per turn the History notes.
+An unlinked Failed in a fight blueprint hands the rest of the turn to the profile and notes it, rather than blocking
+the character mid-fight; a turn the server ends before the blueprint passes is noted too (settled alone).
 
 **Captures** (the owner, 2026-11-23), measured by neither version, a study and captures owed first (step 6): settings
 of Combat and Chasseur that the built-in AI plays, and nodes for an AI of mine:
@@ -876,7 +879,7 @@ of Combat and Chasseur that the built-in AI plays, and nodes for an AI of mine:
 | Set the game's "experience received" | 5·Récolte | study |
 | Destroy items (cannot be undone, the History notes each) | 5·Récolte | study |
 | Log off (the night pause) | 5·Récolte | relay; the idle kick C# (D481) |
-| Hunt until; attack a group (its levels, size, monsters left out); fight with the default AI; leave the fight | v1, 6·Combat | C# |
+| Hunt until; attack a group (its levels, size, monsters left out); fight with the class's profile or a fight blueprint; leave the fight | v1, 6·Combat | C# |
 | Choose the challenges' bonus, play the easy ones; close the fight to others, no spectators | 6·Combat | C# (D438, D466, D480) |
 | Choose a proposed challenge (a priority list of challenges, or the first) | 6·Combat | C# (D461) |
 | Cast, move, pass the turn, place, ready (under "On my turn"); a summon's own turn | 6·Combat | C# |
@@ -942,7 +945,7 @@ it another way (why said), or **never**, with the never-list's reason. The scrip
 | `bank()`, called past the pods' threshold; `PODS_THRESHOLD` | Pods above X % (or Harvest until's pods), then Go to the bank and Deposit all but; the setting `pods_threshold` | v1, 4·Play (R9), 5·Récolte |
 | `phenix()`, the respawn | Died, or a fight ended lost ("after a lost fight") | (26), 5·Récolte |
 | `onLoad()`, the preamble | On start's first nodes; Do N times of 1 | v1, v2.3 |
-| `prefightManagement(myCells, enemyCells)`; `fightManagement()` | Placement; On my turn, overriding the class's fight profile | 6·Combat |
+| `prefightManagement(myCells, enemyCells)`; `fightManagement()` | Placement; On my turn, in a fight blueprint, overriding the class's fight profile | 6·Combat |
 | `challengeManagement(count, isMule)` (a priority list, a manual or random mode); `fightChallenge:challengeName`, `getLastChallengeProposalMessage`; `fight.selectChallenge`, `validateChallenge`, `challengeModSelect` | A challenge proposed; **gap**: Choose a proposed challenge (a priority list, else the first; no random mode); the bonus and easy challenges (settings) | 6·Combat |
 | `afterFight`, `waitForFightEnd` | A fight ended (won, its kind); Wait until not in a fight | 5·Récolte, 4·Play |
 | `mule_lost(bossMapId)`, `MOONBOT_TIMEOUT`, `lockedCustom(mode, fn)`, `MULE`, `TEAM_IDS_LIST`, `global:isBoss`, `getTeamMembersIds` | A party member lost; the party's queries and actions | 7 |
