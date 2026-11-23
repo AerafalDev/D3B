@@ -4,9 +4,9 @@ import i18next from "i18next";
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import type { GraphEdit_Deserialize } from "@/bindings.ts";
 import { initI18n } from "@/i18n/i18n.ts";
+import { NodeEdit } from "../edit/node-options.ts";
+import type { GraphNode } from "../node-sentence.ts";
 import { BlueprintNode } from "./blueprint-node.tsx";
-import { NodeEdit } from "./edit/node-options.ts";
-import type { GraphNode } from "./node-sentence.ts";
 
 const pin = (id: string, side: "in" | "out", carries: string) =>
   ({ id, side, carries, default: null }) as GraphNode["pins"][number];

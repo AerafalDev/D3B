@@ -69,6 +69,21 @@
   color: var(--text-faint);
   white-space: nowrap;
 }
+/* A value drawn compact: its inputs, its operator in the middle, its output, on one band. */
+.blueprint-compact {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 12px;
+}
+.blueprint-compact-op {
+  min-width: 18px;
+  text-align: center;
+  font-size: 15px;
+  font-weight: 600;
+  color: #fff;
+}
 .blueprint-node-body {
   display: flex;
   justify-content: space-between;

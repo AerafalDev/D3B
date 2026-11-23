@@ -646,7 +646,10 @@ flowchart LR
   a game thing, a route, a bank, items or yes or no by `Knows::words` in the player's language, else its id, a list
   by its elements separated by ", "; the template its own edit, `GraphEdit::Text`, a hole gone taking its wire and
   value and the type it alone used; the template shown on D3B's blueprints; Join's separator ", " by default); drawn
-  compact; sentences in place, the Summary, a run on the captures and the checklist. Each kind
+  compact (done in code: `src/blueprint/node/value-node.tsx`, the React Flow node type `value` for the family Value,
+  the operators `<`, `≤`, `>`, `≥`, `=`, `≠`, `+`, `−`, `×`, `÷`, min and max in the middle with no labels, AND, OR
+  and List by their word, the others by their icon with their inputs labelled; a chip for a value typed or a default
+  where no wire feeds; "+" among the inputs; the node components moved to `src/blueprint/node/`); sentences in place, the Summary, a run on the captures and the checklist. Each kind
   replaces the catalogue's test kinds (`test_equal`, `test_list`, `test_text`) as it comes.
 - **Measured** (nothing acts in the game before step 4): the picker's group; a compact `<` with a chip; "Tant que Pods
   % < 80" and parentheses read; a ÷ 0 problem; a list's "+" and Remove; a Text's holes; Choose typed by a wire;
