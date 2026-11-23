@@ -596,7 +596,7 @@ _Updated 2026-11-18._
   ([bot.md](bot.md#the-values-v24), the owner's choices of 2026-11-17: started before (v2.2) and (v2.3) are measured,
   their measures alongside; drawn compact as Unreal from a mock-up; AND and OR of N inputs; whole numbers; a fresh
   seed per run and no random duration; Text in one field; Choose reading the side it takes; the nodes' words in their
-  own namespace), in eight PRs: the namespace `nodes` (done in code); comparisons, logic and Choose (done in code); arithmetic and N seconds;
+  own namespace), in eight PRs: the namespace `nodes` (done in code); comparisons, logic and Choose (done in code); arithmetic and N seconds (done in code);
   randomness; lists; Text and Join; drawn compact; sentences in place and the checklist; (v2.5) the queries
   over `game::Live`, and those marked with their study and step; (v2.6) the events: When, Every, At, the game's new
   ones, mine and Trigger with its timers; (v2.7) the actions of steps 4 to 7, marked (the haven bag, zaaps, doors,

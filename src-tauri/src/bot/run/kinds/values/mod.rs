@@ -1,7 +1,8 @@
 //! The values (`docs/bot.md`, "The values (v2.4)"): nodes without flow, computed from their inputs when the node that
 //! uses them reads them, each input read only when needed, so Choose, AND and OR never read the side they do not take.
-//! N minutes and add live here; each family of values in its own file.
+//! N minutes and N seconds live here; each family of values in its own file.
 
+mod arithmetic;
 mod compare;
 mod logic;
 
@@ -26,30 +27,28 @@ pub(super) fn behaviour(kind: &str) -> Option<&'static dyn Behaviour> {
         "or" => &logic::All(false),
         "not" => &logic::Not,
         "choose" => &logic::Choose,
-        "minutes" => &Minutes,
-        "add" => &Add,
+        "minutes" => &Duration(60, "minutes"),
+        "seconds" => &Duration(1, "seconds"),
+        "add" => &arithmetic::Arithmetic(arithmetic::Operation::Add),
+        "subtract" => &arithmetic::Arithmetic(arithmetic::Operation::Subtract),
+        "multiply" => &arithmetic::Arithmetic(arithmetic::Operation::Multiply),
+        "divide" => &arithmetic::Arithmetic(arithmetic::Operation::Divide),
+        "remainder" => &arithmetic::Arithmetic(arithmetic::Operation::Remainder),
+        "min" => &arithmetic::Arithmetic(arithmetic::Operation::Min),
+        "max" => &arithmetic::Arithmetic(arithmetic::Operation::Max),
+        "clamp" => &arithmetic::Clamp,
+        "percent_of" => &arithmetic::PercentOf,
         _ => return None,
     })
 }
 
-/// N minutes: their duration in seconds, none below 0, one too long blocking rather than wrapping.
-struct Minutes;
+/// N minutes or N seconds: a duration in seconds of its input times `.0`, none below 0, one too long blocking rather
+/// than wrapping.
+struct Duration(u64, &'static str);
 
-impl Behaviour for Minutes {
+impl Behaviour for Duration {
     fn value(&self, cx: &mut Cx<'_>, _: &str) -> Result<Value, Fault> {
-        let minutes = u64::try_from(cx.number("minutes")?).map_err(|_| Fault::NotOfType {
-            pin: "minutes".to_owned(),
-        })?;
-        Ok(Value::from(minutes.checked_mul(60).ok_or(Fault::TooLarge)?))
-    }
-}
-
-/// Add: `a` + `b`, a sum too large for a whole number blocking rather than wrapping.
-struct Add;
-
-impl Behaviour for Add {
-    fn value(&self, cx: &mut Cx<'_>, _: &str) -> Result<Value, Fault> {
-        let sum = cx.number("a")?.checked_add(cx.number("b")?).ok_or(Fault::TooLarge)?;
-        Ok(Value::from(sum))
+        let count = u64::try_from(cx.number(self.1)?).map_err(|_| Fault::NotOfType { pin: self.1.to_owned() })?;
+        Ok(Value::from(count.checked_mul(self.0).ok_or(Fault::TooLarge)?))
     }
 }

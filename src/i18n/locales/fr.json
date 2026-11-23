@@ -472,7 +472,8 @@
       "noSuchEvent": "Ce nœud nomme l'événement {{subject}}, que ce blueprint n'a pas.",
       "noSuchExit": "Ce nœud sort par {{subject}}, que cette fonction n'a pas.",
       "notPure": "Une fonction pure ne calcule que des valeurs : ce nœud a un flux.",
-      "leaveOutsideLoop": "Sortir de la boucle n'est dans le corps d'aucune boucle."
+      "leaveOutsideLoop": "Sortir de la boucle n'est dans le corps d'aucune boucle.",
+      "zeroDivisor": "L'entrée {{pin}} divise par 0 : le personnage serait bloqué."
     },
     "type": {
       "bool": "Oui / non",

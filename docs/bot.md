@@ -575,7 +575,12 @@ flowchart LR
   debugger's display (step 4); "Advanced" and the picker by intent (v2.9); decimal numbers; sort, sum, last, filter.
 - **Eight PRs**: the namespace `nodes`; comparisons, logic and Choose (done in code: `bot/run/kinds/values/`, each
   input read only when needed; AND's and OR's inputs numbered as Sequence's outputs, "+" and × in Details; drawn as
-  boxes until the compact look; `=` of two lists comes with the lists, its wildcard of one value today); arithmetic and N seconds; randomness; lists;
+  boxes until the compact look; `=` of two lists comes with the lists, its wildcard of one value today); arithmetic
+  and N seconds (done in code: `values/arithmetic.rs`, a 0 typed as a divisor the problem "divides by 0", one that
+  comes by a wire blocking on the ÷; ÷ by 1 and the remainder by 2 by default, "N % of" 50 %, N seconds 30, the other
+  inputs to fill, a value read only from what is wired or typed; "N % of" a whole number of percent, 150 % too, its
+  product computed wide (settled alone));
+  randomness; lists;
   Text and Join; drawn compact; sentences in place, the Summary, a run on the captures and the checklist. Each kind
   replaces the catalogue's test kinds (`test_equal`, `test_list`, `test_text`) as it comes.
 - **Measured** (nothing acts in the game before step 4): the picker's group; a compact `<` with a chip; "Tant que Pods

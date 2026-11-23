@@ -207,6 +207,42 @@
     "choose": {
       "sentence": "If {{condition}}: {{if_true}}, else {{if_false}}",
       "description": "Gives one value when the condition holds, another otherwise; only the side taken is read."
+    },
+    "subtract": {
+      "sentence": "{{a}} − {{b}}",
+      "description": "A minus B, in whole numbers."
+    },
+    "multiply": {
+      "sentence": "{{a}} × {{b}}",
+      "description": "A times B, in whole numbers."
+    },
+    "divide": {
+      "sentence": "{{a}} ÷ {{b}}",
+      "description": "A divided by B, rounded down; by 0, the character is blocked."
+    },
+    "remainder": {
+      "sentence": "Remainder of {{a}} ÷ {{b}}",
+      "description": "What remains of A divided by B, never negative; by 0, the character is blocked."
+    },
+    "min": {
+      "sentence": "Min of {{a}} and {{b}}",
+      "description": "The smaller of the two values."
+    },
+    "max": {
+      "sentence": "Max of {{a}} and {{b}}",
+      "description": "The larger of the two values."
+    },
+    "clamp": {
+      "sentence": "{{value}} clamped from {{low}} to {{high}}",
+      "description": "The value, brought within both bounds."
+    },
+    "percent_of": {
+      "sentence": "{{percent}} of {{of}}",
+      "description": "That percentage of the value, rounded down."
+    },
+    "seconds": {
+      "sentence": "{{seconds}} s",
+      "description": "A duration of that many seconds."
     }
   },
   "pins": {
@@ -250,6 +286,9 @@
     "low": "From",
     "high": "To",
     "if_true": "If true",
-    "if_false": "If false"
+    "if_false": "If false",
+    "percent": "Percentage",
+    "of": "Of",
+    "seconds": "Seconds"
   }
 }
