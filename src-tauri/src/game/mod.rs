@@ -9,6 +9,9 @@ mod life;
 
 mod live;
 
+#[cfg_attr(not(test), expect(dead_code, reason = "the acts of step 4's PR F10 walk the paths"))]
+mod path;
+
 pub(crate) use around::{ActorKind, Monster, Seen};
 pub(crate) use character::Who;
 #[cfg(test)]
