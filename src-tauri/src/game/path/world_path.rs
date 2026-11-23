@@ -25,8 +25,8 @@ pub(crate) struct Hop {
 /// Why no journey was found, met in normal use: the kind reading it says so.
 #[derive(Debug, Clone, PartialEq, Eq, thiserror::Error)]
 pub(crate) enum WorldPathError {
-    /// The character's map and zone have no vertex: a zone with no way out (186 maps of 3.7.12.12 hold one, `main`
-    /// client.md), or a map of another build.
+    /// The character's map and zone have no vertex: a zone the graph leaves out, which has no way out (186 maps of
+    /// 3.7.12.12 hold one, `main` client.md), or a map of another build. A vertex with no way out gives `OutOfReach`.
     #[error("map {} zone {} is not in the world graph", .0.map, .0.zone)]
     Unknown(Place),
     #[error("no journey from map {} zone {} reaches the maps asked", from.map, from.zone)]
@@ -78,7 +78,8 @@ impl WorldPaths {
         Self { places, index, ways }
     }
 
-    /// The fewest map changes from `from` to any zone of the nearest of `maps`: none when it stands on one already.
+    /// The fewest map changes from `from` to any zone of the nearest of `maps`: none when it stands on one already, and
+    /// `OutOfReach` when `maps` is empty.
     pub(crate) fn journey(&self, from: Place, maps: &[i64]) -> Result<Vec<Hop>, WorldPathError> {
         if maps.contains(&from.map) {
             return Ok(Vec::new());
@@ -249,7 +250,7 @@ mod tests {
         assert_eq!(
             world().journey(HOME, &[9]),
             Err(WorldPathError::OutOfReach { from: HOME }),
-            "an edge to no vertex"
+            "an edge to no vertex is left out, not followed"
         );
         let nowhere = Place { map: 99, zone: 1 };
         assert_eq!(world().journey(nowhere, &[1]), Err(WorldPathError::Unknown(nowhere)));
