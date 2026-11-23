@@ -239,7 +239,8 @@ it in `protocol::coverage::catalogue`), whether a build pins it, whether D3B dec
 the last local replay, which the replay above writes to `src-tauri/protocol/replay/<build>.json` (counts by readable
 name and outcome only); its checks, each with its failure case, are `protocol::coverage`'s tests.
 On 2026-11-23 only 4 game connections were on the owner's machine (2 of each build; the 54 above were gone): their
-counts are the report's, and the replay fails on them, since none gains a level.
+counts are the report's, and the replay fails on them, since none gains a level and the client sends no map change
+there (the 1,615 are the C# bot's, checked by the replay of its requests below).
 
 The inspector's, each with its failure case: the frames kept bounded by count and by bytes (an 88 KB frame evicts the
 oldest), a secret's frame kept without its bytes, nothing kept for a connection whose protocol is off; a batch capped at
