@@ -66,4 +66,16 @@ internal sealed class TextFiles
 
         return new Text { Fr = texts[0], En = texts[1], De = texts[2], Es = texts[3], Pt = texts[4] };
     }
+
+    /// <summary>Gets the text a table names, or <see langword="null"/> for text 0 or a text a language lacks.</summary>
+    /// <remarks>For the dialogs' lines only, which keep their id without a text (the owner, 2026-11-23): every other table fails through <see cref="Name"/>.</remarks>
+    public Text? Find(long id)
+    {
+        if (id is 0 or < int.MinValue or > int.MaxValue || _files.Any(file => !file.TryGet((int)id, out _)))
+        {
+            return null;
+        }
+
+        return Name(id);
+    }
 }

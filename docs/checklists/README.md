@@ -19,6 +19,6 @@ PR, from its design's measure.
 
 ## The game data
 
-From the monsters' PR on, `next` reads format 5 only, published on 2026-11-17 (from the PR's b9412ad, the owner's go).
-A checklist that says "with format 4's data" runs on `next` before that PR or from the last release, or on a later
-`next` with format 5's: `bun run data:fetch <build>`, the client's build (3.7.14.18 since 2026-11-16).
+From the NPCs' PR on (step 4's R7), `next` reads format 6 only, published on 2026-11-23 (from `next` 3951826, the
+owner's go). A checklist that says "with format 5's data" runs from the last release, or on `next` with format 6's:
+`bun run data:fetch <build>`, the client's build (3.7.14.18 since 2026-11-16).

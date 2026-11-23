@@ -21,6 +21,44 @@ flowchart LR
 The facts below come from the study `artifacts/studies/live-view.md` (the owner's 56 game connections of 3.7.13.17,
 the build's schema, the client's tables, and the C# version's docs), each `inferred` unless said `verified`.
 
+## The state table
+
+What `game::Character` holds and will hold (ADR 0021: one owner of the state, every family the C# version reads), by
+family: each field, the messages it comes from, and whether it is verified on the owner's captures, inferred, or not
+decoded yet, with the PR of step 4's stack that reads it ([play.md](play.md#the-stack)). 3.7.14.18's schema and pins are
+3.7.13.17's ([protocol.md](protocol.md#on-the-wire)), so the table holds for both builds; its counts are 3.7.13.17's.
+Which messages each build pins and decodes is in [protocol-coverage.md](protocol-coverage.md), generated.
+
+| Family | Field | From | Status |
+| --- | --- | --- | --- |
+| Characters | id, name, breed, sex | `CharacterSelectionEvent` | verified |
+| Characteristics | level | `CharacterSelectionEvent`, `CharacterLevelUpEvent` | verified |
+| Characteristics | life, max life, regenerating | `CharacterStatsEvent`, `LifeRegenStartEvent`, `LifeRegenEndEvent` | verified |
+| Characteristics | action and movement points, energy | `CharacterStatsEvent` | inferred |
+| Characteristics | experience: the level's floor, now, the next floor | `CharacterStatsEvent` | inferred (order verified) |
+| Characteristics | kamas | `CharacterStatsEvent`, `KamasUpdateEvent` | verified |
+| Inventory | pods, max pods | `InventoryWeightEvent` | verified |
+| Inventory | the objects by uid, their quantity, worn or not | `InventoryContentEvent`, `Object*Event` | not decoded yet (F4) |
+| Jobs | each profession's level, experience and skills | `JobDescriptionEvent`, `JobExperiencesEvent` | not decoded yet (F4) |
+| Context | roleplay or fight | `ContextCreationEvent`, `ContextDestroyEvent` | verified |
+| Context | in a dialog, at a bank | `NpcDialogCreationEvent`, `DialogLeaveEvent`, `ExchangeStarted*Event`, `ExchangeLeaveEvent` | not decoded yet (F5) |
+| Maps | the map | `MapCurrentEvent`, `MapInformationEvent` | verified |
+| Maps | the character's cell | `MapInformationEvent`, `MapMovementEvent` | verified |
+| Maps | actors: players, NPCs, monster groups | `MapInformationEvent`, `MapActorShownEvent`, `MapActorRemovedEvent`, `MapMovementEvent` | verified |
+| Movement | a walk refused, confirmed | `MapMovementRefusedEvent`, `MapMovementConfirmResponse` | not decoded yet (F3) |
+| Interactives | interactive and stated elements | `MapInformationEvent`, `InteractiveElementUpdatedEvent`, `StatedElementUpdatedEvent` | verified |
+| Interactives | an element in use, its end, its refusal | `InteractiveUsedEvent`, `InteractiveUseEndedEvent`, `InteractiveUseErrorEvent` | not decoded yet (F5) |
+| NPCs | a dialog's question and replies | `NpcDialogQuestionEvent`, `NpcActionErrorEvent` | not decoded yet (F5) |
+| Exchanges | the bank's objects and kamas | `StorageContentEvent`, `Storage*Event` | not decoded yet (F5) |
+| Texts | states (alterations), the server's texts | `AlterationsSnapshotEvent`, `AlterationAddedEvent`, `TextInformationEvent` | not decoded yet (F5) |
+| Fights | fights won and lost | `FightEndEvent` | verified |
+| Fights | the fight: placement, fighters, turns, challenges | `Fight*Event`, `Challenge*Event`, `EntitiesDispositionEvent` | not decoded yet (F6) |
+| Fight actions | what each action did: life, points, buffs | `GameActionFightEvent`, `FightEffectsEvent`, `FightBuffEndEvent` | not decoded yet (F6) |
+| Spells | the spells and their cooldowns | `SpellsEvent`, `FightSpellsContextEvent`, `RefreshCooldownEvent` | not decoded yet (F6) |
+| Party | the party's members, in a fight, following | `Party*Event` | not decoded yet (F7) |
+| Teleportation | the zaaps known, a zaap's destinations | `ZaapKnownListEvent`, `TeleportDestinationsEvent` | not decoded yet (F7) |
+| Haven bags | inside one | (no event: its capture is missing) | not decoded yet |
+
 ## The state of a character
 
 `game::Character` is fed each decoded message with the time it was read (time injected, so tests drive it). The
@@ -94,6 +132,34 @@ tick, sends its view when it changed.
   their looks (`Actor.information` field 2, not read) was studied, then dropped by the owner on 2026-11-13: the
   client's sprites (about 6.4 GB of skeletons and skins) would take too much room.
 
+## The paths
+
+`game::path` finds the walks the acts send, pure functions of a map's data and of where the character stands, with no
+I/O ([play.md](play.md)). Each fact is `inferred` from the C# version's measures on `main` unless said `verified`.
+
+- **The grid** (verified, study `map-walk`): 14 columns of 40 staggered rows, directions 0 (east) clockwise to 7; from
+  an even row the diagonals are +14, +13, −15, −14, from an odd one +15, +14, −14, −13, east and west ±1, south and
+  north ±28.
+- **A step** reaches a cell walkable out of fights (`mov` set, `nonWalkableDuringRP` not), never passes between two
+  obstacles (D68), and, on a map holding both moveZones, changes floor by at most 10 unless it goes along a stair, both
+  cells of moveZone 1 (D86). The start may be an obstacle.
+- **The quickest walk**, Dijkstra over the 560 cells to the nearest of several goals, steps weighed 3 east or west, 2
+  north, south or diagonal (D68's 170, 110 and 113 ms; 3.7.13.17's 209, 126 and 141 keep the order). Never a walk of no
+  step (D89: `AlreadyThere`); a goal that cannot be walked on is none (`NoWay`); a cell off the map is `NoSuchCell`.
+- **Map action cells** move the character on a walk that only crosses them: a walk goes round them unless one is its
+  goal, and crosses one only when no other way exists (D488).
+- **Where the last walk ended**: the client did not follow most walks ending there (D260; 11 of 16 on 3.7.13.17). Another
+  goal is taken when a walk round the action cells reaches one; else the walk goes in two, to its cell before the last
+  then the last step, or a step aside first for a walk of one step, never onto an action cell.
+- **The turns** a walk request carries: its start, each change of direction, its end with the direction it arrives in,
+  each `direction << 12 | cell` (verified on 97,976 requests).
+- **The world path**, over the world graph read once (`WorldPaths`): from the character's map and zone to any zone of
+  the nearest of some maps, the fewest map changes, each costing the same (the C# version's `WorldPathfinder`), by
+  Dijkstra. A hop is a scroll, a scroll with an action (it lands where the graph's edge leads, not on the map it asks
+  for: verified, 924 of 924, study `map-change`), a map action or a door. A transition with a criterion is left out
+  until criteria are answered, the `#` lists of cells included; a map asked already reached is no hop; a place the graph
+  lacks is `Unknown`, no way to the maps `OutOfReach`.
+
 ## In the app
 
 Rebuilt in the new shell ([shell.md](shell.md)), the owner's choices of 2026-11-12 from mock-ups:
@@ -164,4 +230,9 @@ the Characters view (its empty line, a row by name, level and place or by connec
 chosen, its tab opened); a character's tab (who and where, its breed named in the interface's language or its level alone, its breed's head or
 its initials without one or when it fails to load, its gauges, what is around, its title, waiting, a protocol off, a
 closed connection); the map's geometry (cells 0, 13, 14 and 559), the ground drawn, what stands on it in
-drawing order, and its notices (a fight, no map, a map the data lacks).
+drawing order, and its notices (a fight, no map, a map the data lacks). The paths: named tests of each rule above, and
+property tests on maps generated from a seeded source, each walk checked step by step against the rules written again
+from the map's data and its cost against a slow search (Bellman-Ford), the cells avoided, the turns giving the walk back,
+and the walks split where the last ended. The world path: hand-written graphs (a scroll, a map action, a door, a scroll
+with an action, the nearest of two maps, a criterion skipped, a zone with no way out, an edge to no vertex, a place
+unknown) and the extractor's fixture graph.

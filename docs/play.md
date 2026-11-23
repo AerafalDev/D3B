@@ -30,8 +30,10 @@ Lua scripts". Three rules make it so.
   [game.md](game.md) lists each field with its source message and whether it is verified, inferred or not decoded yet.
   The C# version gave each feature its own observer and its own copy of the state.
 - **Read everything early, act step by step.** The first PRs decode, read only, every family the C# version reads
-  (about 262 messages in 19 `.proto` families: movement, maps, interactives, NPCs, exchanges, inventory, jobs, texts,
-  teleportation, haven bags, fights, fight actions, spells, characters, characteristics, actors, context, game, party),
+  (141 frame messages in 17 of its `.proto` families, listed in
+  [protocol-coverage.md](protocol-coverage.md): movement, maps, interactives, NPCs, exchanges, inventory, jobs, texts,
+  teleportation, haven bags, fights, fight actions, spells, characters, characteristics, context, party; actors and
+  game hold only shapes and the envelope),
   each checked on the owner's captures replayed; a family no capture holds (the haven bag) waits for its capture. Acts
   that send come with the step that uses them. A generated `docs/protocol-coverage.md` lists, per build, each message
   pinned, decoded or encoded, which Lua call it backs, and, from the last local replay, its counts and whether it is
