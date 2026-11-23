@@ -14,6 +14,7 @@ import { EventDetails } from "./event-details.tsx";
 import { InputRow } from "./input-row.tsx";
 import { OutputsEditor } from "./outputs-editor.tsx";
 import { problemText } from "./problem-text.ts";
+import { TemplateEditor } from "./template-editor.tsx";
 import { VariableEditor } from "./variable-editor.tsx";
 
 /** What Details shows: nothing chosen, a node of the graph shown, or a variable. */
@@ -288,6 +289,16 @@ function NodeDetails({ node, graph, problems, names, variables, onValue, onEdit 
               <li key={at}>{pinLabel(`case_${at + 1}`, node)}</li>
             ))}
           </ul>
+        </DetailRow>
+      )}
+      {node.takesText === true && onEdit === undefined && (node.options?.text ?? "") !== "" && (
+        <DetailRow label={t("blueprint.details.templateHead")}>
+          <p className="m-0 break-words">{node.options?.text}</p>
+        </DetailRow>
+      )}
+      {node.takesText === true && onEdit !== undefined && (
+        <DetailRow label={t("blueprint.details.templateHead")}>
+          <TemplateEditor key={node.id} node={node} onEdit={onEdit} />
         </DetailRow>
       )}
       {node.takesCases === true && onEdit !== undefined && (

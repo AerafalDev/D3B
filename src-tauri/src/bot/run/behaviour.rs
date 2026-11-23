@@ -13,6 +13,7 @@ use super::program::Program;
 use super::random::Random;
 use super::values::{self, Trace};
 use super::variables::Variables;
+use crate::bot::Type;
 use crate::game::View;
 
 /// The behaviour of a kind of node.
@@ -189,6 +190,16 @@ impl Cx<'_> {
     /// The node's flow outputs, in its pins' order.
     pub(crate) fn outs(&self) -> &[String] {
         &self.program.graphs[self.graph].nodes[self.node].outs
+    }
+
+    /// The type of input `pin`, as its wire brings it or its own pin carries it; none for a hole typed, which is text.
+    pub(crate) fn type_of(&self, pin: &str) -> Option<Type> {
+        self.program.graphs[self.graph].nodes[self.node].types.get(pin).copied()
+    }
+
+    /// The node's template, a Text's.
+    pub(crate) fn template(&self) -> Option<&str> {
+        self.program.graphs[self.graph].nodes[self.node].text.as_deref()
     }
 
     /// The node's cases, Switch's.

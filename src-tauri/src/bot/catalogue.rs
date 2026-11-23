@@ -342,6 +342,10 @@ pub(crate) const KINDS: &[Kind] = &[
     of("element_at", Value, &[wildcard("list", Side::In, true), input("index", Number, Some("1")), wildcard("element", Side::Out, false)], None),
     of("first", Value, &[wildcard("list", Side::In, true), wildcard("element", Side::Out, false)], None),
     of("position_of", Value, &[wildcard("list", Side::In, true), wildcard("element", Side::In, false), output("value", Number)], None),
+    // Text and Join (the owner, 2026-11-17): a template whose `{holes}` are inputs of any value, each read by its words,
+    // a game thing by its name; Join, a list's elements one after another, its separator ", " by default.
+    Kind { takes: &[Takes::Text], ..of("text", Value, &[output("value", Text)], None) },
+    of("join", Value, &[wildcard("list", Side::In, true), input("separator", Text, Some("\", \"")), output("value", Text)], None),
     of("equal_lists", Value, &[wildcard("a", Side::In, true), wildcard("b", Side::In, true), output("value", Bool)], None),
     of("entry", Function, &[THEN], None),
     of("return_done", Function, &[RUN], None),
@@ -371,10 +375,9 @@ pub(crate) mod tests {
         Kind { takes, ..kind }
     }
 
-    /// Kinds for the tests, until v2's values bring theirs: Text, Add to a variable and an Expression.
+    /// Kinds for the tests, until v2's values bring theirs: Add to a variable and an Expression.
     #[rustfmt::skip]
     pub(crate) const WILDCARDS: &[Kind] = &[
-        taking(of("test_text", Query, &[output("value", Text)], None), &[Takes::Text]),
         taking(of("test_add_to", Flow, &[RUN, THEN, wildcard("amount", Side::In, false)], None), &[Takes::Variable]),
         taking(of("test_expression", Query, &[wildcard("value", Side::Out, false)], None), &[Takes::Expression]),
     ];

@@ -57,6 +57,8 @@ pub enum GraphEdit {
     },
     /// The numbered pin or case `pin` of `node` gone with its wire, those after it renumbered.
     RemovePin { node: String, pin: String },
+    /// A Text's template, its `{holes}` its inputs; a hole gone takes its wire and value with it.
+    Text { node: String, text: String },
     /// A variable of mine named so, yes or no, under an id made from its name.
     NewVariable { name: String },
     /// The variable of its id made this one, whole; a new type drops what it no longer fits.
@@ -277,6 +279,7 @@ impl TryFrom<GraphEdit> for bot::Edit {
                 node: Id(node),
                 pin: Id(pin),
             },
+            GraphEdit::Text { node, text } => Self::Text { node: Id(node), text },
             GraphEdit::NewVariable { name } => Self::NewVariable { name },
             GraphEdit::Variable { variable } => Self::Variable(variable.try_into()?),
             GraphEdit::DeleteVariable { variable } => Self::DeleteVariable { id: Id(variable) },

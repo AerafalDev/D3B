@@ -5,6 +5,10 @@ use std::collections::BTreeMap;
 use std::time::Instant;
 
 use crate::bot::read;
+use serde_json::Value;
+
+use crate::bot::ValueType;
+use crate::bot::run::Knows;
 use crate::bot::run::knows::Nothing;
 use crate::bot::run::{Blocked, Fault, Reason, Run, State};
 use crate::game::View;
@@ -422,4 +426,130 @@ fn two_lists_are_equal_with_the_same_elements_in_the_same_order() {
     assert!(lists("[1, 2]", "[1, 2]"));
     assert!(!lists("[1, 2]", "[2, 1]"), "by their order");
     assert!(!lists("[1, 2]", "[1, 2, 3]"));
+}
+
+/// What a Notify fed by a Text of `template` says, the Text's holes given `more` nodes and `wires`, with `knows`.
+fn said_by(template: &str, inputs: &str, more: &str, wires: &str, knows: &dyn Knows) -> String {
+    let text = format!(
+        r#"{{"schema": 2, "id": "t", "name": "T", "version": 1, "graphs": [{{"id": "events", "name": "Events",
+  "nodes": [{{"id": "start", "kind": "on_start"}}, {{"id": "say", "kind": "notify"}},
+            {{"id": "it", "kind": "text", "options": {{"text": "{template}"}}, "inputs": {inputs}}}{more}],
+  "wires": [{{"from": ["start", "then"], "to": ["say", "run"]}}, {{"from": ["it", "value"], "to": ["say", "text"]}}{wires}]}}]}}"#
+    );
+    let blueprint = read(&text).unwrap_or_else(|error| panic!("{error}"));
+    let mut run = Run::new(&blueprint, &BTreeMap::new(), &BTreeMap::new()).unwrap_or_else(|error| panic!("{error:?}"));
+    run.advance(Some(&View::default()), knows, Instant::now());
+    run.notices().into_iter().map(|notice| notice.text).collect()
+}
+
+/// Knows a sub-area's name and says yes or no in French.
+struct Names;
+
+impl Knows for Names {
+    fn in_zone(&self, _: &Value, _: i64) -> Option<bool> {
+        None
+    }
+
+    fn resources(&self, _: u64) -> Option<Vec<u64>> {
+        None
+    }
+
+    fn words(&self, of: ValueType, value: &Value) -> Option<String> {
+        match of {
+            ValueType::Zone => Some("Forêt d'Astrub".to_owned()),
+            ValueType::Bool => Some(if value == &Value::Bool(true) { "oui" } else { "non" }.to_owned()),
+            _ => None,
+        }
+    }
+}
+
+#[test]
+fn a_text_fills_its_holes_with_each_values_words_by_its_type() {
+    let more = r#", {"id": "n", "kind": "add", "inputs": {"a": 2, "b": 3}}, {"id": "d", "kind": "seconds", "inputs": {"seconds": 90}},
+                  {"id": "z", "kind": "choose", "options": {"type": "zone"}, "inputs": {"condition": true, "if_true": {"sub_area": 445}, "if_false": {"sub_area": 1}}},
+                  {"id": "b", "kind": "not", "inputs": {"value": false}}"#;
+    let wires = r#", {"from": ["n", "value"], "to": ["it", "n"]}, {"from": ["d", "value"], "to": ["it", "d"]},
+                   {"from": ["z", "value"], "to": ["it", "z"]}, {"from": ["b", "value"], "to": ["it", "b"]}"#;
+    let said = said_by(
+        "{n} en {d} à {z}, {b} {who} {} {nope",
+        r#"{"who": "Lyra"}"#,
+        more,
+        wires,
+        &Names,
+    );
+    assert_eq!(said, "5 en 1 min 30 à Forêt d'Astrub, oui Lyra {} {nope");
+    let unknown = said_by(
+        "{z}",
+        "{}",
+        more,
+        r#", {"from": ["z", "value"], "to": ["it", "z"]}"#,
+        &Nothing,
+    );
+    assert_eq!(
+        unknown, r#"{"sub_area":445}"#,
+        "a game thing the run does not know, by its id"
+    );
+}
+
+#[test]
+fn a_text_says_a_list_by_its_elements_a_percentage_with_its_sign_and_a_bank_by_its_words() {
+    let more = r#", {"id": "l", "kind": "make_list", "options": {"type": "duration", "count": 2}, "inputs": {"in_1": 45, "in_2": 120}},
+                  {"id": "p", "kind": "choose", "options": {"type": "percentage"}, "inputs": {"condition": true, "if_true": 90, "if_false": 10}},
+                  {"id": "k", "kind": "choose", "options": {"type": "bank"}, "inputs": {"condition": true, "if_true": "nearest", "if_false": "nearest"}}"#;
+    let wires = r#", {"from": ["l", "value"], "to": ["it", "l"]}, {"from": ["p", "value"], "to": ["it", "p"]},
+                   {"from": ["k", "value"], "to": ["it", "k"]}"#;
+    assert_eq!(
+        said_by("{l} | {p} | {k}", "{}", more, wires, &Nothing),
+        "45 s, 2 min | 90 % | nearest"
+    );
+    assert_eq!(
+        said_by(
+            "{k}",
+            "{}",
+            more,
+            r#", {"from": ["k", "value"], "to": ["it", "k"]}"#,
+            &Bank
+        ),
+        "la plus proche"
+    );
+}
+
+/// Knows a bank's words.
+struct Bank;
+
+impl Knows for Bank {
+    fn in_zone(&self, _: &Value, _: i64) -> Option<bool> {
+        None
+    }
+
+    fn resources(&self, _: u64) -> Option<Vec<u64>> {
+        None
+    }
+
+    fn words(&self, of: ValueType, _: &Value) -> Option<String> {
+        (of == ValueType::Bank).then(|| "la plus proche".to_owned())
+    }
+}
+
+#[test]
+fn a_text_reads_words_a_value_brings_as_words_not_as_holes() {
+    let said = said_by("{a}-{b}", r#"{"a": "{b}", "b": "x"}"#, "", "", &Nothing);
+    assert_eq!(said, "{b}-x");
+}
+
+#[test]
+fn join_says_a_lists_elements_with_its_separator() {
+    let join = |inputs: &str| {
+        let more = format!(r#", {{"id": "j", "kind": "join", "options": {{"type": "duration"}}, "inputs": {inputs}}}"#);
+        said_by(
+            "{l}",
+            "{}",
+            &more,
+            r#", {"from": ["j", "value"], "to": ["it", "l"]}"#,
+            &Nothing,
+        )
+    };
+    assert_eq!(join(r#"{"list": [45, 120]}"#), "45 s, 2 min", "', ' by default");
+    assert_eq!(join(r#"{"list": [45, 120], "separator": " / "}"#), "45 s / 2 min");
+    assert_eq!(join(r#"{"list": []}"#), "");
 }

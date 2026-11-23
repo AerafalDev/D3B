@@ -8,7 +8,7 @@ use serde_json::Value;
 
 use super::behaviour::{Behaviour, Starts};
 use super::kinds;
-use crate::bot::{Blueprint, Carries, Does, Id, Problem, Side, Variable, pins, problems};
+use crate::bot::{Blueprint, Carries, Does, Graph, Id, Node, NodePin, Problem, Side, Type, Variable, pins, problems};
 
 /// A blueprint ready to run.
 pub(crate) struct Program {
@@ -43,6 +43,10 @@ pub(super) struct NodeCode {
     pub(super) outs: Vec<String>,
     /// Switch's cases, each the value of its output `case_<n>`.
     pub(super) cases: Vec<Value>,
+    /// The type of each value input: its wire's source pin's, else its own; none for a hole typed, which is text.
+    pub(super) types: HashMap<String, Type>,
+    /// A Text's template, its `{holes}` its inputs.
+    pub(super) text: Option<String>,
 }
 
 /// What a node does: a kind's behaviour, or the engine's own Get, Set and Call.
@@ -111,8 +115,39 @@ fn doing(blueprint: &Blueprint, functions: &HashMap<&Id, usize>, does: &Does) ->
     })
 }
 
+/// The type each value input of `node` carries: the one its wire brings, from its source's pin, else its own pin's.
+fn input_types(
+    graph: &Graph,
+    node: &Node,
+    its: &[NodePin],
+    all: &[Vec<NodePin>],
+    index: &HashMap<&Id, usize>,
+) -> HashMap<String, Type> {
+    let typed = |carries: Carries| match carries {
+        Carries::Value(typed) => Some(typed),
+        _ => None,
+    };
+    let inputs = its.iter().filter(|pin| pin.side == Side::In && pin.carries.is_value());
+    inputs
+        .filter_map(|pin| {
+            let wire = graph
+                .wires
+                .iter()
+                .find(|wire| wire.to.0 == node.id && wire.to.1.0 == pin.id);
+            let brought = wire.and_then(|wire| {
+                let source = all.get(*index.get(&wire.from.0)?)?;
+                let out = source
+                    .iter()
+                    .find(|it| it.side == Side::Out && it.id == wire.from.1.0)?;
+                typed(out.carries)
+            });
+            brought.or_else(|| typed(pin.carries)).map(|of| (pin.id.clone(), of))
+        })
+        .collect()
+}
+
 /// A node's flow outputs, in its pins' order.
-fn flow_outputs(pins: &[crate::bot::NodePin]) -> Vec<String> {
+fn flow_outputs(pins: &[NodePin]) -> Vec<String> {
     let outs = pins
         .iter()
         .filter(|pin| pin.side == Side::Out && pin.carries == Carries::Exec);
@@ -196,6 +231,8 @@ pub(crate) fn compile(blueprint: &Blueprint) -> Result<Program, Refused> {
                 named: node.options.exit.as_ref().map(|exit| exit.0.clone()),
                 outs: flow_outputs(its),
                 cases: node.options.cases.clone(),
+                types: input_types(graph, node, its, &all, &index),
+                text: node.options.text.clone(),
             });
         }
         let starting = |starts| {

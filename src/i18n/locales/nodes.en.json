@@ -283,6 +283,14 @@
     "equal_lists": {
       "sentence": "Lists {{a}} = {{b}}",
       "description": "True when both lists hold the same elements in the same order."
+    },
+    "text": {
+      "sentence": "Text",
+      "description": "A text each of whose {holes} takes what is wired there: a game thing by its name."
+    },
+    "join": {
+      "sentence": "Join {{list}}",
+      "description": "The list's elements one after another, the separator between two."
     }
   },
   "pins": {
@@ -329,6 +337,7 @@
     "if_false": "If false",
     "percent": "Percentage",
     "of": "Of",
-    "seconds": "Seconds"
+    "seconds": "Seconds",
+    "separator": "Separator"
   }
 }

@@ -367,6 +367,10 @@ pub struct NodeView {
     #[serde(skip_serializing_if = "std::ops::Not::not")]
     #[specta(optional)]
     pub takes_cases: bool,
+    /// Whether it takes a template, its `{holes}` its inputs, typed in Details: Text; omitted for no.
+    #[serde(skip_serializing_if = "std::ops::Not::not")]
+    #[specta(optional)]
+    pub takes_text: bool,
     /// A call's named exits, each its flow output's id and the name the player gave it; omitted for none.
     #[serde(skip_serializing_if = "Vec::is_empty")]
     #[specta(optional)]
@@ -676,6 +680,8 @@ pub(crate) fn graphs(blueprint: &Blueprint) -> BlueprintGraphs {
                 adds: adds(&node.does),
                 takes_cases: matches!(&node.does, Does::Kind(kind)
                     if bot::kind(&kind.0).is_some_and(|kind| kind.takes.contains(&bot::Takes::Cases))),
+                takes_text: matches!(&node.does, Does::Kind(kind)
+                    if bot::kind(&kind.0).is_some_and(|kind| kind.takes.contains(&bot::Takes::Text))),
                 exits: exits(blueprint, &node.does),
                 inputs: node
                     .inputs

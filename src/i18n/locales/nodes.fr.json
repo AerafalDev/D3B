@@ -283,6 +283,14 @@
     "equal_lists": {
       "sentence": "Listes {{a}} = {{b}}",
       "description": "Vrai si les deux listes ont les mêmes éléments dans le même ordre."
+    },
+    "text": {
+      "sentence": "Texte",
+      "description": "Un texte dont chaque {trou} est remplacé par ce qu'on y relie : une chose du jeu par son nom."
+    },
+    "join": {
+      "sentence": "Joindre {{list}}",
+      "description": "Les éléments de la liste à la suite, le séparateur entre deux."
     }
   },
   "pins": {
@@ -329,6 +337,7 @@
     "if_false": "Si faux",
     "percent": "Pourcentage",
     "of": "De",
-    "seconds": "Secondes"
+    "seconds": "Secondes",
+    "separator": "Séparateur"
   }
 }

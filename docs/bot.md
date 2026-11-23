@@ -641,7 +641,12 @@ flowchart LR
   and × as theirs; `=` of two lists its own kind beside `=`, "Listes … = …", a pin's shape being fixed (settled alone); a List
   typed by its first input's value or wire, as any wildcard; an index typed
   below 1 a problem, one by a wire out of the list blocking on the node, the first of an empty list too);
-  Text and Join; drawn compact; sentences in place, the Summary, a run on the captures and the checklist. Each kind
+  Text and Join (done in code: `values/text.rs`, a template filled in one pass, so words a value brings are never read
+  as holes; each hole by its value's type, as its wire brings it: digits, "90 %", "1 min 30", "23:00", a text itself,
+  a game thing, a route, a bank, items or yes or no by `Knows::words` in the player's language, else its id, a list
+  by its elements separated by ", "; the template its own edit, `GraphEdit::Text`, a hole gone taking its wire and
+  value and the type it alone used; the template shown on D3B's blueprints; Join's separator ", " by default); drawn
+  compact; sentences in place, the Summary, a run on the captures and the checklist. Each kind
   replaces the catalogue's test kinds (`test_equal`, `test_list`, `test_text`) as it comes.
 - **Measured** (nothing acts in the game before step 4): the picker's group; a compact `<` with a chip; "Tant que Pods
   % < 80" and parentheses read; a ÷ 0 problem; a list's "+" and Remove; a Text's holes; Choose typed by a wire;
