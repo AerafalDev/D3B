@@ -8,6 +8,7 @@ using D3B.Extractor.Hints;
 using D3B.Extractor.Items;
 using D3B.Extractor.Maps;
 using D3B.Extractor.Monsters;
+using D3B.Extractor.Npcs;
 using D3B.Extractor.Protocol;
 using D3B.Extractor.Texts;
 using D3B.Extractor.World;
@@ -123,6 +124,7 @@ internal static class ExtractCommand
 
         IconTables.Extract(client, items, jobs, folder, output);
         MonsterTables.Extract(client, texts, code, items, subAreas, folder, output);
+        NpcTables.Extract(client, texts, folder, output);
 
         var maps = MapTables.Extract(client, folder, output);
 

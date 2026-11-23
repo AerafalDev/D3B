@@ -2,7 +2,7 @@
 //!
 //! The .NET extractor (`tools/extractor`) writes one folder per client build: a `manifest.json` that lists every file
 //! with its SHA-256, the JSON tables (the large ones in shards), the world map's tiles, the breeds' heads, and the
-//! items' and jobs' icons, the monsters. A `client-<build>` release asset carries that folder; the release workflow puts it in `data/`, which Tauri bundles as a resource. Nothing
+//! items' and jobs' icons, the monsters, the NPCs. A `client-<build>` release asset carries that folder; the release workflow puts it in `data/`, which Tauri bundles as a resource. Nothing
 //! extracted from the client is ever committed (`docs/data.md`).
 
 mod breeds;
@@ -34,6 +34,14 @@ mod maps;
     )
 )]
 mod monsters;
+#[cfg_attr(
+    not(test),
+    expect(
+        dead_code,
+        reason = "the bank's kind finds its banker and the reply that opens it from step 4's R9"
+    )
+)]
+mod npcs;
 mod text;
 mod world;
 mod world_maps;
@@ -53,8 +61,8 @@ pub use world_maps::{Hint, HintKind, WorldMap};
 /// (`DataFolder.Format`); a different one is refused rather than half read. Format 2 adds the breeds and their heads,
 /// format 3 the items, their types, the jobs and their skills, and the items' and jobs' icons, format 4 the world map's
 /// hints, their categories and their pictures, format 5 the monsters, their grades' levels, their drops and their
-/// flags, their races and super races.
-pub const FORMAT: u32 = 5;
+/// flags, their races and super races, format 6 the NPCs, their actions and their dialogs' questions and replies.
+pub const FORMAT: u32 = 6;
 
 #[cfg(test)]
 mod tests {

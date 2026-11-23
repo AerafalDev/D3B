@@ -1,0 +1,4 @@
+[
+{"id":7,"name":{"fr":"Banquier","en":"Banker","de":"Bankier","es":"Banquero","pt":"Banqueiro"},"actions":[3],"questions":[{"id":21,"text":{"fr":"Bienvenue, #1.","en":"Welcome, #1.","de":"Willkommen, #1.","es":"Bienvenido, #1.","pt":"Bem-vindo, #1."}}],"replies":[{"id":11,"text":{"fr":"Consulter son coffre personnel.","en":"Open your chest.","de":"Truhe öffnen.","es":"Abrir el cofre.","pt":"Abrir o baú."}},{"id":12,"text":{"fr":"Au revoir.","en":"Goodbye.","de":"Auf Wiedersehen.","es":"Adiós.","pt":"Adeus."}}]},
+{"id":9,"name":{"fr":"Garde","en":"Guard","de":"Wache","es":"Guardia","pt":"Guarda"},"actions":[3,17],"questions":[],"replies":[{"id":12,"text":{"fr":"Au revoir.","en":"Goodbye.","de":"Auf Wiedersehen.","es":"Adiós.","pt":"Adeus."}},{"id":13,"text":null}]}
+]

@@ -2,7 +2,7 @@
 
 The app ships the game data of one client build, as JSON, inside the installer: for now the world (maps, world graph,
 positions, sub-areas, areas, zaaps, the world map and its tiles), the breeds with their heads, and the items, their
-types, the jobs and their skills, with the items' and jobs' icons, and the monsters, their races and super races; spells come with the step that reads them. A .NET tool extracts it from the official client, it is published as a release asset and packed by the
+types, the jobs and their skills, with the items' and jobs' icons, the monsters, their races and super races, and the NPCs, their actions and their dialogs; spells come with the step that reads them. A .NET tool extracts it from the official client, it is published as a release asset and packed by the
 release workflow. Nothing of it is ever committed (ADR [0008](adr/0008-world-data-first-in-five-languages-as-a-tar-gz.md), its archive's name
 superseded by [0013](adr/0013-a-new-data-format-is-a-second-asset-named-by-its-format.md)).
 
@@ -17,13 +17,14 @@ flowchart LR
 
 ## The folder
 
-- `manifest.json`: `format` (equal to `data::FORMAT`, currently 5), `build` (such as `3.7.13.17`), `extractor` (its
+- `manifest.json`: `format` (equal to `data::FORMAT`, currently 6), `build` (such as `3.7.13.17`), `extractor` (its
   version) and `tables`, one entry per file, tiles included, in order of `path` (relative, forward slashes), with its
   `name` (the path without its extension, such as `maps/37`, unique) and its `sha256`. Unknown fields are refused.
 - One JSON file per table, an array of records sorted by id, one record per line; names in camelCase.
 - **Texts** are inline in each record, in the five languages of the client's `Content/I18n/*.bin` (3.7.12.12,
   `main:docs/client.md`): `{"fr", "en", "de", "es", "pt"}`. A text a record names but a language lacks fails the
-  extraction, as in the C# version; its first measure is the texts' PR.
+  extraction, as in the C# version; its first measure is the texts' PR. The one exception is an NPC's questions and
+  replies, whose text is `null` when a language lacks it (the owner, 2026-11-23).
 - **Maps** are split in 100 files by the last two digits of their id: `maps/<id % 100>.json`. On 3.7.13.17
   the files run from 434 KB to 873 KB: the ids spread well enough.
 - **Tiles** are JPEG files, `tiles/<world>/<zoom as a percentage>/<n>.jpg`, numbered from 1 row by row from the top
@@ -80,6 +81,8 @@ flowchart LR
 | `monsters.json` | `id`, `name`, `raceId`, `flags` (`MonsterFlags`), `levels` (each grade's, grade 1 first), `drops` (`itemId`, `chances`: five percentages for grades 1 to 5, `criterion`: the client's text, or `null`) | `MonsterData`, 5,135 records, 5,129 written, 26,821 grades, 13,567 drops, 2.9 MB |
 | `monster-races.json` | `id`, `name`, `superRaceId` | `MonsterRaceData`, 266 records, 265 written |
 | `monster-super-races.json` | `id`, `name` | `MonsterSuperRaceData`, 35 records |
+| `npcs.json` | `id`, `name`, `actions` (ids of `npc-actions.json`), `questions` and `replies` (`id`, `text`: a text or `null`), each in the client's order | `NpcData`, 6,487 records (3.7.14.18), 47,942 questions, 64,634 replies, 67 MB |
+| `npc-actions.json` | `id`, `realId`, `name` | `NpcActionData`, 16 records |
 
 **3.7.14.18** (built 2026-11-16, extracted on 2026-11-17 by `next` 220473d): every table holds the same bytes as
 3.7.13.17's but the world graph's two (verified, the manifests' SHA-256 compared). The graph gains 42 vertices and 85
@@ -93,6 +96,20 @@ A cell's `flags` pack its booleans, bit 0 first: `mov` (walkable), `los` (line o
 of the cell, not an enum of the client, so the order is ours (`data::maps::cell`). The extraction fails when the graph contradicts the maps: a vertex's zone that no walkable cell
 has, a transition through an element its map lacks, a position or a zaap on a map the client does not hold. A map's
 interactive elements are in its record; the app reads a map's file when it needs the map, not at start.
+
+An NPC keeps its name, its actions and its dialog's lines, with their texts (the owner, 2026-11-23), so that the bot
+finds every bank's banker and the reply that opens it on every build (ADR [0021](adr/0021-the-game-layer-reads-everything-early-and-acts-through-typed-acts.md)).
+Measured on 3.7.14.18: a line is a pair, the id the server names it by and its text's id; one id reads one text
+whatever the NPC (questions and replies numbered apart), and the extraction fails on a pair of other than two numbers
+or an id read as two texts. 112 questions and 190 replies name a text a language lacks: they keep their id, with a
+`null` text, and are counted. The client says nothing of what a reply does but its text, and places no NPC on a map:
+the server does, with the map's information. So the app derives the bankers (`data::npcs`): an NPC offering action 3,
+Parler, with a reply whose French text starts with `Consulter son coffre personnel`, 8 NPCs with 2 or 3 such replies;
+on a bank's inside, the bank reply is the one among those the banker's question offers (verified on the three bankers
+of the captures of 3.7.13.17, `npc-dialog.md` and `bank.md` of step 4's studies). Its look, its animations and its
+`dialogData` (a question's bubble and mood) are left out, and `NpcMessageData`'s skins and parameters. Of the 16
+actions, 17, Examiner, has `realId` 3 as 3 does; 5,935 NPCs offer 3. The extraction fails on an NPC without a name or
+offering an action the client lacks, and on an id held twice; the app refuses a folder where either breaks.
 
 A monster keeps what D3B's default blueprints compute their ranges from, and Chasseur its meats (the owner,
 2026-11-17): its grades' levels, its drops and its flags; its grades' characteristics, spells, looks and its own
@@ -148,7 +165,9 @@ named `client-<build>.tar.gz`; format 2 added the breeds and their heads (the ow
 asset is never replaced, a build's data in a new format is a second asset of the build's release, named by its format.
 Format 3 adds the items, their types, the jobs and their skills, and the items' and jobs' icons (the owner,
 2026-11-14); format 4 the world map's hints, their categories and their pictures (step 3's (9b), 2026-11-15); format 5
-the monsters, their grades' levels, drops and flags, their races and super races (blueprints v2's (v2.10), 2026-11-17). The C# version's tools on `main`
+the monsters, their grades' levels, drops and flags, their races and super races (blueprints v2's (v2.10), 2026-11-17);
+format 6 the NPCs, their actions and their dialogs' questions and replies (step 4's R7, 2026-11-23), which bring the
+archive of 3.7.14.18 from 105.7 MB to 128.7 MB. The C# version's tools on `main`
 (`scripts/extract/`, `scripts/unity/`) and its measures (`docs/client.md`) are the sources it was rewritten from.
 
 ## Where it lives

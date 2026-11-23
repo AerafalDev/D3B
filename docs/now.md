@@ -17,7 +17,7 @@ The owner's session of tests closes them.
 ## Done
 
 Steps 0 (the shell, typed IPC, packed data, i18n, the Claude setup, CI, release-please, six targets, signed updates) and
-1 (the extractor) are done and measured on Windows x64; the data is now in format 5 ([data.md](data.md)). Step 2 (the
+1 (the extractor) are done and measured on Windows x64; the data is now in format 6, the NPCs added for step 4's R7 ([data.md](data.md)); its asset waits for the owner's go. Step 2 (the
 relay, the protocol and its pins, the live view, the inspector, the new shell) is done in code and measured on Windows
 x64 but for the items below. Step 3 is done in code up to v2.4's Text and Join: the blueprint and its storage, the Library,
 D3B's three blueprints, the editor (graph, Details, Summary, picker, undo), the World and my zones, a character's
