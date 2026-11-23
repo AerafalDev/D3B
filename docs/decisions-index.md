@@ -893,3 +893,8 @@ or refines another says so in its own entry. Add a line here with every new deci
 
 - [D498](decisions/d498-forgelance-lance-stays.md#d498-the-forgelances-lance-stays-on-the-map-until-it-dies-or-a-cast-kills-it-then-is-back-in-its-hand-the-forgelance-no-longer-waits-for-a-lance-that-never-comes-back) The Forgelance's lance stays on the map until it dies or a cast kills it, then is back in its hand: the Forgelance no longer waits for a lance that never comes back (2026-11-22)
   - A rule by spell or by element; D465 kept and the recall left to the server.
+
+## Zaaps, the discovery of those the character does not know (D499)
+
+- [D499](decisions/d499-zaap-discovery.md#d499-an-activity-walks-to-every-zaap-within-reach-the-character-does-not-know-the-nearest-first-and-ends-once-none-is-left) An activity walks to every zaap within reach the character does not know, the nearest first, and ends once none is left (2026-11-22)
+  - A tour computed once, a route asset generated, an entry of the list editor's menu, the unactivated zaaps sought.

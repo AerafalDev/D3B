@@ -417,6 +417,13 @@ The bots run in `D3B.Bot`: what each part does today, with the decisions that ma
   settings lead to: the ground's mini-map, its maps, monsters and their levels, the nearest bank (`NearestBank`, shared
   with harvesting's) and isolated maps, and the place for each character (D246). Harvesting's fights are the AI's as its
   profile's "The AI fights" says (D235).
+- **The zaaps' discovery** (D499), in `D3B.Bot.Zaaps`, registered by `ZaapsModule`: `ZaapDiscoveryActivity`, the "Discover
+  the zaaps" activity, with no setting. It seeks the activated zaaps of the pack's atlas the character does not know as it
+  starts (`ZaapTargets`); each step finds the nearest left by the world's path with the zaaps known so far, travels there,
+  a teleport counting as 5 changes (D167), and waits 5 s on its map for the server's list of the zaaps known, which comes as
+  the character enters an unknown zaap's map. A zaap no path leads to, whose journey fails, or that the list does not name
+  is given up for the run; the activity is done once none is left, and fails in a haven bag it cannot leave. Its report
+  counts the zaaps discovered of those sought, warns of each given up, out of reach or not taught, and draws them as a zone.
 - **The maps' graphics** (D138), in `D3B.Bot.Interactives`: `GraphicSkills`, one per host, holds what the server said the
   elements of each graphic offer, every skill seen, none for an element that offers none; `GraphicLearner`, an observer of
   the game connections registered by the bots module, teaches it from every map's information any bot receives, by the

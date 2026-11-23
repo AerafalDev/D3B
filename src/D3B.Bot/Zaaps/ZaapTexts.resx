@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="Name" xml:space="preserve">
+    <value>Discover the zaaps</value>
+  </data>
+  <data name="Going" xml:space="preserve">
+    <value>Goes to the zaap of {0}</value>
+  </data>
+  <data name="Learning" xml:space="preserve">
+    <value>Waits for the zaap of {0} to be learnt</value>
+  </data>
+  <data name="Over" xml:space="preserve">
+    <value>Knows every zaap within reach</value>
+  </data>
+  <data name="Discovered" xml:space="preserve">
+    <value>Zaaps discovered</value>
+  </data>
+  <data name="OutOfReach" xml:space="preserve">
+    <value>The zaap of {0} is out of reach</value>
+  </data>
+  <data name="FailStuckMapUnknown" xml:space="preserve">
+    <value>The character's map is still unknown after two minutes.</value>
+  </data>
+  <data name="FailStuckUsing" xml:space="preserve">
+    <value>Still using an element after two minutes, even once put back in order.</value>
+  </data>
+  <data name="FailStuckInDialog" xml:space="preserve">
+    <value>Still in a dialog or an exchange after two minutes, even once put back in order.</value>
+  </data>
+  <data name="FailStuckWalking" xml:space="preserve">
+    <value>Still walking after two minutes, even once put back in order.</value>
+  </data>
+  <data name="Untaught" xml:space="preserve">
+    <value>The zaap of {0} was not learnt on its map</value>
+  </data>
+  <data name="FailHavenBag" xml:space="preserve">
+    <value>The character cannot leave the haven bag it is in.</value>
+  </data>
+</root>
