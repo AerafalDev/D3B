@@ -53,7 +53,6 @@ pub use manifest::{DataError, Manifest};
 pub use map_flag::MapFlag;
 pub use maps::{MapData, read_map};
 pub use monsters::Monster;
-pub use npcs::{Banker, Npc, NpcTables};
 pub use text::Text;
 pub use world::{MapPosition, SubArea, World};
 pub use world_maps::{Hint, HintKind, WorldMap};

@@ -34,6 +34,18 @@ public sealed class TextFilesTests
     }
 
     [Fact]
+    public void ADialogsLineFindsItsTextOrNoneWhenALanguageLacksIt()
+    {
+        // The NPCs' questions and replies keep their id without a text (the owner, 2026-11-23).
+        var texts = TextFiles.From(TextFiles.Languages.Select(language => File(language is "pt" ? [(7, "Astrub")] : [(7, "Astrub"), (8, "Amakna")])));
+
+        Assert.Equal("Astrub", texts.Find(7)?.Pt);
+        Assert.Null(texts.Find(8));
+        Assert.Null(texts.Find(9));
+        Assert.Null(texts.Find(0));
+    }
+
+    [Fact]
     public void ATextHeldTwiceIsRefused()
     {
         Assert.Throws<InvalidDataException>(() => I18nFile.Read(File([(7, "a"), (7, "b")])));

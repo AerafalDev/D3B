@@ -139,11 +139,12 @@ public sealed class NpcTablesTests
         var replies = npcs.SelectMany(npc => npc.Replies).ToList();
 
         // 3.7.14.18, measured for format 6 (docs/data.md): 6,487 NPCs, 47,942 questions of which 112 without a text in
-        // every language, 64,634 replies of which 190, 16 actions; 8 NPCs offer a reply reading the chest's text.
+        // every language, 64,634 replies of which 190, 16 actions; 8 NPCs one talks to (action 3) offer a reply reading
+        // the chest's text: the bankers the app derives (src-tauri/src/data/npcs/banker.rs).
         Assert.Equal((6487, 16), (npcs.Count, actions.Count));
         Assert.Equal((47942, 112), (questions.Count, questions.Count(line => line.Text is null)));
         Assert.Equal((64634, 190), (replies.Count, replies.Count(line => line.Text is null)));
-        Assert.Equal(8, npcs.Count(npc => npc.Replies.Any(reply => reply.Text?.Fr.StartsWith("Consulter son coffre personnel", StringComparison.Ordinal) is true)));
+        Assert.Equal(8, npcs.Count(npc => npc.Actions.Contains(3) && npc.Replies.Any(reply => reply.Text?.Fr.StartsWith("Consulter son coffre personnel", StringComparison.Ordinal) is true)));
     }
 
     // An NPC's record as the client lays it out (3.7.14.18), its look, animations and dialogData left out.
