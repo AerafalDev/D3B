@@ -249,3 +249,7 @@ _Updated 2026-11-23._
   (25) is measured with step 4's Play; (26) events at run time:
   priorities, modes, thresholds, settings at safe points, with When, Every, At, the events of mine and their timers. Step 4 then brings Play,
   what a character does now, its History and the debugger, with the first actions.
+- **Next, step 4's first slice, designed** ([play.md](play.md), ADR 0021; the owner's choices of 2026-11-23, after
+  audits comparing `next` with `main`): D3B's Récolte automatique playing in game on Windows, on a game layer that reads
+  every family the C# version reads before it acts, through typed acts with deadlines and a watchdog of 10 minutes;
+  in about 19 PRs (F1 to F10, R1 to R9), its measure a 30-minute loop unblocked.
