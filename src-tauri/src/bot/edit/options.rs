@@ -318,7 +318,7 @@ mod tests {
     #[test]
     fn an_input_removed_moves_the_values_and_wires_after_it_up() {
         let mut blueprint = flows();
-        let list = r#"{"id": "list", "kind": "test_list", "options": {"count": 3}, "inputs": {"in_1": 1, "in_2": 2}}"#;
+        let list = r#"{"id": "list", "kind": "make_list", "options": {"count": 3, "type": "number"}, "inputs": {"in_1": 1, "in_2": 2}}"#;
         let list = serde_json::from_str(list).unwrap_or_else(|error| panic!("{error}"));
         blueprint.graphs[0].nodes.push(list);
         let level = serde_json::from_str(r#"{"id": "lv", "kind": "level"}"#).unwrap_or_else(|error| panic!("{error}"));
@@ -334,6 +334,11 @@ mod tests {
         let into = blueprint.graphs[0].wires.iter().filter(|wire| wire.to.0.0 == "list");
         assert_eq!(into.map(|wire| wire.to.1.0.as_str()).collect::<Vec<_>>(), ["in_2"]);
         assert_eq!(list.options.count, NonZeroU8::new(2));
+        assert_eq!(
+            list.options.value_type,
+            Some(ValueType::Number),
+            "still typed by its inputs"
+        );
     }
 
     #[test]

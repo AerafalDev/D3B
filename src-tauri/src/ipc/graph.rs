@@ -75,6 +75,7 @@ pub enum ProblemKind {
     NotPure,
     LeaveOutsideLoop,
     ZeroDivisor,
+    IndexBelowOne,
 }
 
 impl From<&Problem> for ProblemView {
@@ -155,6 +156,7 @@ impl From<&Problem> for ProblemView {
             Problem::NotPure { graph, node } => (K::NotPure, text(graph), text(node), None, None),
             Problem::LeaveOutsideLoop { graph, node } => (K::LeaveOutsideLoop, text(graph), text(node), None, None),
             Problem::ZeroDivisor { graph, node, pin } => (K::ZeroDivisor, text(graph), text(node), text(pin), None),
+            Problem::IndexBelowOne { graph, node, pin } => (K::IndexBelowOne, text(graph), text(node), text(pin), None),
         };
         Self {
             kind,
@@ -1219,6 +1221,14 @@ mod tests {
                 (K::ZeroDivisor, some("g"), some("n"), some("x"), None),
             ),
             (
+                Problem::IndexBelowOne {
+                    graph: g(),
+                    node: n(),
+                    pin: x(),
+                },
+                (K::IndexBelowOne, some("g"), some("n"), some("x"), None),
+            ),
+            (
                 Problem::DefaultRangesOverlap { variable: x() },
                 (K::DefaultRangesOverlap, None, None, None, some("x")),
             ),
@@ -1292,7 +1302,7 @@ mod tests {
                 "{problem:?}: a kind's name twice"
             );
         }
-        assert_eq!(kinds.len(), 39, "every problem");
+        assert_eq!(kinds.len(), 40, "every problem");
     }
 
     #[test]

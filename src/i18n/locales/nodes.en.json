@@ -255,6 +255,34 @@
     "random_element": {
       "sentence": "A random element of {{list}}",
       "description": "An element of the list drawn at random at each read; an empty list blocks the character."
+    },
+    "make_list": {
+      "sentence": "List",
+      "description": "A list made of its inputs, in their order; \"+\" adds one."
+    },
+    "length": {
+      "sentence": "Number of elements of {{list}}",
+      "description": "How many elements the list holds."
+    },
+    "contains": {
+      "sentence": "{{list}} contains {{element}}",
+      "description": "True when the list holds this element."
+    },
+    "element_at": {
+      "sentence": "Element {{index}} of {{list}}",
+      "description": "The element at that place of the list, counted from 1; a place out of the list blocks the character."
+    },
+    "first": {
+      "sentence": "First of {{list}}",
+      "description": "The list's first element; an empty list blocks the character."
+    },
+    "position_of": {
+      "sentence": "Place of {{element}} in {{list}}",
+      "description": "The element's place in the list, from 1; 0 when absent."
+    },
+    "equal_lists": {
+      "sentence": "Lists {{a}} = {{b}}",
+      "description": "True when both lists hold the same elements in the same order."
     }
   },
   "pins": {
