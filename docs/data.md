@@ -191,8 +191,10 @@ archive of 3.7.14.18 from 105.7 MB to 128.7 MB. The C# version's tools on `main`
 Each asset was added to the C# version's `client-<build>` release on the owner's go; `.github/game-data.json` names
 the one `next` reads.
 
-- `client-3.7.14.18-format5.tar.gz`, from `next` 220473d (SHA-256 `331fe578…`, 105,692,906 bytes), on 2026-11-17:
-  the one named today.
+- `client-3.7.14.18-format6.tar.gz`, from `next` 3951826 (SHA-256 `ee48d3ea…`, 128,708,047 bytes), on 2026-11-23:
+  the one named today. Fetched back by `bun run data:fetch 3.7.14.18` into a `data/` the app reads, bankers
+  found (`reads_the_folder_the_app_ships_when_there_is_one`).
+- `client-3.7.14.18-format5.tar.gz`, from `next` 220473d (SHA-256 `331fe578…`, 105,692,906 bytes), on 2026-11-17.
 - `client-3.7.13.17-format5.tar.gz`, on 2026-11-17 (from the monsters' PR's b9412ad).
 - `client-3.7.13.17-format4.tar.gz`, from `next` 55e4be8 (SHA-256 `3c4f5060…`, 105,345,462 bytes), on 2026-11-16;
   format 3 was never published.
