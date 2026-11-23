@@ -43,7 +43,8 @@ const PROTOCOL: &[(&str, &str)] = &[("3.7.13.17", "protocol.md")];
 /// The live view's life, on 3.7.13.17 (2026-11-13): the regeneration shown, then ended.
 const LIFE: &[(&str, &str)] = &[("3.7.13.17", "live-view-life.md")];
 
-/// The catalogue, in the order of `docs/play.md`'s families.
+/// The catalogue, in the order of `docs/play.md`'s families, one message a line, as a table reads.
+#[rustfmt::skip]
 pub(super) const CATALOGUE: &[Family] = &[
     Family {
         name: "Movement",
@@ -74,23 +75,12 @@ pub(super) const CATALOGUE: &[Family] = &[
     Family {
         name: "Interactives",
         messages: &[
-            m(
-                "InteractiveUseRequest",
-                &["map.useInteractive", "map.gather", "map.door"],
-            ),
+            m("InteractiveUseRequest", &["map.useInteractive", "map.gather", "map.door"]),
             m("InteractiveUsedEvent", &["map.gather", "map.door"]),
             m("InteractiveUseErrorEvent", &["map.gather", "map.useInteractive"]),
             m("InteractiveUseEndedEvent", &["map.gather"]),
-            measured(
-                "InteractiveElementUpdatedEvent",
-                &["map.getInteractives", "map.getResources"],
-                PROTOCOL,
-            ),
-            measured(
-                "StatedElementUpdatedEvent",
-                &["map.getResources", "map.waitInteractiveState"],
-                PROTOCOL,
-            ),
+            measured("InteractiveElementUpdatedEvent", &["map.getInteractives", "map.getResources"], PROTOCOL),
+            measured("StatedElementUpdatedEvent", &["map.getResources", "map.waitInteractiveState"], PROTOCOL),
         ],
     },
     Family {
@@ -109,18 +99,12 @@ pub(super) const CATALOGUE: &[Family] = &[
         messages: &[
             m("ExchangeStartedWithStorageEvent", &["npc.npcBank"]),
             m("ExchangeStartedWithTabbedStorageEvent", &["npc.npcBank"]),
-            m(
-                "StorageContentEvent",
-                &["exchange.storageItems", "exchange.storageKamas"],
-            ),
+            m("StorageContentEvent", &["exchange.storageItems", "exchange.storageKamas"]),
             m("StorageObjectsUpdateEvent", &["exchange.storageItems"]),
             m("StorageObjectUpdateEvent", &["exchange.storageItemQuantity"]),
             m("StorageObjectRemovedEvent", &["exchange.storageItems"]),
             m("StorageKamasUpdateEvent", &["exchange.storageKamas"]),
-            m(
-                "ExchangeTransferFromInventoryRequest",
-                &["exchange.putAllItems", "exchange.putAllItemsExcept"],
-            ),
+            m("ExchangeTransferFromInventoryRequest", &["exchange.putAllItems", "exchange.putAllItemsExcept"]),
             m("ExchangeObjectMoveRequest", &["exchange.putItem", "exchange.getItem"]),
             m("ExchangeKamasRequest", &["exchange.putKamas", "exchange.getKamas"]),
             m("DialogLeaveRequest", &["exchange.leave", "npc.leaveDialog"]),
@@ -146,11 +130,7 @@ pub(super) const CATALOGUE: &[Family] = &[
             m("ObjectObtainedEvent", &["inventory.countItem"]),
             m("ObjectUseRequest", &["inventory.useItem", "inventory.useItemByGID"]),
             m("ObjectUseMultipleRequest", &["inventory.useMultipleItem"]),
-            measured(
-                "InventoryWeightEvent",
-                &["inventory.pods", "inventory.podsMax"],
-                PROTOCOL,
-            ),
+            measured("InventoryWeightEvent", &["inventory.pods", "inventory.podsMax"], PROTOCOL),
             measured("KamasUpdateEvent", &["character.kamas"], PROTOCOL),
         ],
     },
@@ -215,10 +195,7 @@ pub(super) const CATALOGUE: &[Family] = &[
             m("FightTurnReadyRequest", &[]),
             m("FightTurnEndEvent", &["fight.waitForTurn"]),
             m("FightTurnFinishRequest", &["fight.passTurn"]),
-            m(
-                "FightRefreshCharacterStatsEvent",
-                &["fight.myAP", "fight.myMP", "fight.myHP"],
-            ),
+            m("FightRefreshCharacterStatsEvent", &["fight.myAP", "fight.myMP", "fight.myHP"]),
             m("RefreshCooldownEvent", &["fight.spellCooldown"]),
             m("FightEndEvent", &["fight.waitForFightEnd"]),
         ],
@@ -248,11 +225,7 @@ pub(super) const CATALOGUE: &[Family] = &[
             m("CharacterListRequest", &["character.list"]),
             m("CharacterListEvent", &["character.list", "character.count"]),
             m("CharacterSelectionRequest", &["character.switch"]),
-            measured(
-                "CharacterSelectionEvent",
-                &["character.name", "character.breed", "character.sex"],
-                PROTOCOL,
-            ),
+            measured("CharacterSelectionEvent", &["character.name", "character.breed", "character.sex"], PROTOCOL),
         ],
     },
     Family {
