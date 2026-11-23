@@ -168,6 +168,16 @@ flowchart LR
   less than an hour after its time, an Every less than its duration after it was due; later, it is skipped and the next
   fires on time (the owner, 2026-11-23: a pause from 22:00 to 10:00 never logs off at 10:00). Events triggering each
   other with no wait are caught by the 10,000-node guard, counted across flows: Trigger at once does not wait.
+- **Every wait on the game has a deadline** (the owner, 2026-11-23, ADR 0022): a walk's arrival, a map change, a use's
+  end, a dialog or the bank opening, the server's answer each end done, refused (the server's reason), too long (what
+  was awaited, how long) or cut (disconnected, a fight), a deadline named in code beside its gesture from a measure;
+  the action makes them Done or Failed with their reason. **One watchdog per run**: running, if D3B sends nothing to
+  the game for **10 minutes**, the run turns blocked, "nothing sent for 10 min", with its node, inner step and what it
+  waited for, so that no run reaches the server's idle kick at about 30 minutes (the C# version's D464, D481, D484,
+  D488, D490). The graph's own waits count too, on purpose: a Wait of 10 minutes or more, and a Wait until whose
+  longest wait is 10 minutes or more or none, say so beside their node in the editor; a night pause logs off. Paused,
+  finished, blocked or away, a run has no watchdog; before step 6, a run entering a fight sends nothing, notifies, the
+  player fights by hand and the action resumes after, that fight not counted.
 - **On the owner's captures** (2026-11-16, the 54 game connections of 3.7.13.17): a blueprint waiting for full life,
   then a minute, then reading its life and looping ran on each of the 49 characters chosen, 6,900 turns, blocked
   only by the 6 deaths, each at its fight's end, and never "runs without pause".

@@ -15,6 +15,8 @@ paths:
   `"falls back to English"`).
 - **Deterministic**: a fixed clock and a seeded random source passed in; no real time, no sleep, no network, no
   writing outside a temporary folder the test removes.
+- **Bounded**: every asynchronous test (a channel, a socket, the relay, a task, a promise) has a deadline of its own
+  (`tokio::time::timeout`, Vitest's timeout on the test), so a hang fails that test, never CI's job (ADR 0022).
 - **Fixtures are ours**: hand-written JSON, synthetic frames. A test needing real client data or a real capture reads
   it from `D3B_DATA` or `D3B_CAPTURES` and is skipped (`#[ignore]` with the reason, `it.skipIf`) when they are unset;
   CI has neither.
