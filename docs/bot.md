@@ -109,8 +109,8 @@ flowchart LR
   by hand completes it, and step 4 only adds the doing; a check on what D3B does not observe yet fails "D3B does not
   see this before step N", its reason the id `unseen_before_step_<N>` the interface words (settled alone). Go to a zone
   is done on a map of the zone; Harvest until and Hunt until once the pods reach their share, their harvests' count
-  not given before step 5 (a node reading it blocks); Go to the bank on the bank's map, the nearest one failing until
-  step 4's paths; Deposit all but failing until step 5. Wait counts its duration from when the flow came in, Wait for
+  not given before step 4's harvest (R6 of `docs/play.md`, its first slice; a node reading it blocks); Go to the bank on the bank's
+  map, the nearest one failing until step 4's bank (R9, with R7's NPC tables); Deposit all but failing until then. Wait counts its duration from when the flow came in, Wait for
   life waits for the life's share, read each second since it rises with no message; Notify's texts wait in the run, the last 100, for step 4's History. The queries
   read the view when used, one not seen yet (no life read since the connection opened) blocking with what is missing.
 - **What it knows beyond the view** (whether a map is in a zone, a profession's resources) it asks of a `Knows` that
@@ -205,8 +205,8 @@ flowchart LR
 - **Actions**, each Done or Failed with its reason, marked with their step, each studied before it is done: go to a
   zone, to a map, follow a route N laps; go to the haven bag, take a zaap to a map, save a zaap, go through a door or
   use an interactive element (its skill), talk to an NPC and give its replies in order, leave the dialog (step 4, an
-  **NPC** a type); harvest until, harvest this map, go to the bank, deposit all but, withdraw, deposit to the haven
-  bag's chest, use an item, open the resource bags, equip the best I carry for my level, equip an item or a preset,
+  **NPC** a type); harvest until, go to the nearest bank and deposit all but (step 4's first slice, `docs/play.md`);
+  harvest this map, a bank on a map, withdraw, deposit to the haven bag's chest, use an item, open the resource bags, equip the best I carry for my level, equip an item or a preset,
   set the game's own "experience received" (step 5); hunt until, attack a group (its levels), fight with the default
   AI (won is Done), leave the fight (step 6); craft N of an item, sell items at the auction house (step 7); notify,
   and note in the History (step 4); destroy items (step 5); switch to another blueprint (step 4, the owner,
@@ -472,7 +472,7 @@ flowchart LR
 - **Memory** of Do N times, Alternate and Pick is the node's for the whole run, in a function called many times too,
   and kept through "restart from the start" (the owner, 2026-11-17).
 - **Out**: Trigger and Cancel its timer come with (26), when an event of mine starts something (the owner,
-  2026-11-17); a value read in a sentence ("Tant que récoltes < objectif") with (v2.4)'s values; "Advanced" with 4·Play (the catalogue, below).
+  2026-11-17); a value read in a sentence ("Tant que récoltes < objectif") with (v2.4)'s values; "Advanced" with step 4 (the catalogue, below).
 - **A node's options**: "+ Add an output" on Sequence (a list's inputs reuse it in (v2.4)), absent on D3B's
   blueprints; Switch's cases in Details, a row each in the type's editor with + and ×, a case given twice marked; a
   pin's right-click "Remove" drops its wire and renumbers the later pins and their wires, as Unreal does, refused
@@ -613,16 +613,22 @@ comes from an audit of 2026-11-23 comparing `next` with `main`'s C# bot, the pro
   slices below, each node marked with its own, and the earlier sections' "(v2.5)" to "(v2.9)" name the slice each
   node now joins; (v2.10)'s blueprints move to 5·Récolte (Récolte and the five professions) and 6·Combat (Combat and
   Chasseur), the ranges computed from the data being done.
-- **The slices**, each the PRs of a step that bring an action with the nodes it needs (their words, problems,
-  Summary and tests), measured in game with that step:
-  - **(26)**: the events at run time (priorities, modes, thresholds, settings at safe points) with When, Every, At,
-    the events of mine and Trigger, the language's own;
-  - **4·Play**: step 4's actor per character, Play, Pause, Stop, the History, the debugger, and the queries and
-    events over what is already pinned, which a run in game reads first; the picker by intent and "Advanced", as the
-    kinds outgrow a flat list;
-  - **4·Travel**: step 4's paths and moves, zaaps, the haven bag, doors, NPCs, and what they read;
-  - **5·Récolte**: step 5's harvest, bank and inventory, Récolte and the five profession blueprints of (v2.10), its
-    goal "Récolte runs in game";
+- **The slices**, each the PRs that bring an action with the nodes it needs (their words, problems, Summary and
+  tests), measured in game with it, in this order (step 4's first slice moved a first harvest and bank into step 4,
+  the owner, 2026-11-23: `docs/play.md`):
+  - **4·Play**: step 4's first slice, R1 to R9 of `docs/play.md`, D3B's given Récolte automatique playing in game:
+    the actor per character, Play, Pause, Stop, the watchdog, the player taking control (R1, R2, R4); Go to a zone
+    (R3); Use an element and doors in travel (R5); Harvest until's tour (R6); the NPC dialog and the storage acts
+    (R8); Go to the nearest bank and Deposit all but what is worn (R9); and the queries and events over what is
+    already pinned, which a run in game reads first;
+  - **4·Travel**: step 4's next slices: zaaps, NPC ways, a map, a cell, routes done, and what they read; the History,
+    the debugger, the picker by intent and "Advanced", as the kinds outgrow a flat list;
+  - **5·Récolte**: the items used (food, potions, resource bags), withdrawing and the haven bag (each after its
+    capture), the chests, equipment, the bank's and harvest's other options, Récolte and the five profession
+    blueprints of (v2.10) with their settings;
+  - **(26)**: then the events at run time (priorities, modes, thresholds, an event cutting a long action, settings at
+    safe points) with Life below, When, Every, At, the events of mine and Trigger, the language's own; regrowth learnt
+    after them, as `docs/play.md` orders;
   - **6·Combat**: step 6's fight state, the AI, Combat and Chasseur;
   - **7**: step 7's families, each in its own design;
   - **on demand**: listed and designed, coded once a D3B blueprint, an action or a player's request needs it, with
@@ -716,7 +722,7 @@ resuming (4·Play), the watchdog of a run that sends nothing (4·Play), a whispe
 | How long the run has lasted; the time now; time since the last map change, fight, gesture sent | durations, a time | 4·Play | clock |
 | Its class, its name | a class, a text | 4·Play | pinned |
 | The account subscribed | yes or no | 4·Travel | study (identification; places' `fits`, the haven bag) |
-| In the haven bag | yes or no | 4·Travel | study (capture missing) |
+| In the haven bag | yes or no | 5·Récolte (after its capture) | study (capture missing) |
 | Busy: walking, using, in a dialog, an exchange, the bank | yes or no each | 4·Travel | studied |
 | The zaaps known; the saved zaap | a list of maps; a map | 4·Travel | studied (`hgw`); saved: study |
 | An item's count; whether one is carried; items of a type | a number; yes or no; a list of items | 5·Récolte | C# + data |
@@ -738,7 +744,8 @@ resuming (4·Play), the watchdog of a run that sends nothing (4·Play), a whispe
 | Whether in a zone | yes or no | 4·Play (v1's Go to a zone checks it) | data + storage |
 | The character's cell | a cell | 4·Travel | pinned |
 | The NPCs here; the interactive elements here (a door, a zaap, a workshop, a chest) | lists of NPCs, of elements | 4·Travel | pinned + data |
-| The distance to a map or a zone (map changes); the nearest bank, the nearest zaap | a number; a map | 4·Travel | data (the world graph) |
+| The nearest bank | a map | 4·Play (R9) | data (R7's NPC tables) |
+| The distance to a map or a zone (map changes); the nearest zaap | a number; a map | 4·Travel | data (the world graph) |
 | A profession's resources | a list of items | v1 | data |
 | The resources here (the professions taken) | a list of resource records: item, element, level, harvestable | 5·Récolte | pinned + data |
 | A sub-area's facts | a record: level, basic-account access, resources, monsters | 5·Récolte | data (format 5) |
@@ -748,7 +755,7 @@ resuming (4·Play), the watchdog of a run that sends nothing (4·Play), a whispe
 | A sub-area's bonus (anomalies) | a percentage | on demand | study |
 | The players here | — | out (2026-11-16, 2026-11-23) | pinned |
 
-A resource's regrowth learned stays inside the harvest (5·Récolte), as the C# version's D145.
+A resource's regrowth learned stays inside the harvest, after (26) as `docs/play.md` orders, as the C# version's D145.
 
 #### The fight (6·Combat)
 
@@ -765,18 +772,20 @@ placement cells of both teams; glyphs, traps, portals and runes.
 | --- | --- | --- |
 | Notify | v1 | runtime |
 | Pause and notify; Block; Finish | v2.3, v1 | runtime |
-| Note in the History; switch to another blueprint | 4·Play | runtime |
+| Note in the History; switch to another blueprint | 4·Travel | runtime |
 | Refuse an invitation (the forced default; as a node with the event, 7) | 4·Travel | C# party, exchange |
-| Go to a zone | v1, done 4·Travel | studied (map change, walk) |
+| Go to a zone | v1, done 4·Play (R3) | studied (map change, walk) |
 | Go to a map; walk to a cell; leave by an edge or a cell | 4·Travel | studied |
 | Follow a route N laps (an action and a forced exit per anchor) | (21), done 4·Travel | studied |
-| Go to the haven bag; leave it | 4·Travel | study (capture missing) |
+| Go to the haven bag; leave it | 5·Récolte (after its capture) | study (capture missing) |
 | Take a zaap or a zaapi to a map; save a zaap; discover the zaaps within reach | 4·Travel | studied (`hgz`, the cost rule; D499) |
-| Go through a door; use an interactive element (its skill) | 4·Travel | studied |
-| Talk to an NPC, its replies in order; leave the dialog | 4·Travel | studied (NPC tables not extracted) |
-| Harvest until (pods, a count); harvest this map; on every map crossed (inside, never to the bank) | v1, 5·Récolte | studied |
-| Go to the bank (the nearest, a map) | v1, 5·Récolte | studied |
-| Deposit all but; withdraw (N of an item); deposit or withdraw kamas | v1, 5·Récolte | studied (`jyj`); withdraw inferred, deposit study |
+| Go through a door; use an interactive element (its skill) | 4·Play (R5) | studied |
+| Talk to an NPC, its replies in order; leave the dialog | 4·Play (R8, the banker); NPC ways 4·Travel | studied; NPC tables format 6 (R7) |
+| Harvest until (pods, a count); its tour | v1, done 4·Play (R6) | studied |
+| Harvest this map; on every map crossed (inside, never to the bank) | 5·Récolte | studied |
+| Go to the bank: the nearest; a map | v1, done 4·Play (R9); a map 5·Récolte | studied |
+| Deposit all but what is worn and the items a setting keeps (Récolte automatique's "Garder"; settled alone) | v1, done 4·Play (R9) | studied |
+| Withdraw (N of an item); deposit or withdraw kamas | 5·Récolte | studied (`jyj`); withdraw inferred, deposit study |
 | Deposit to the haven bag's chest; to the guild's chest (opted in) | 5·Récolte | study; guild C# (D147) |
 | Use an item, N at once (eat, a potion, a recall potion); open the resource bags | 5·Récolte | C# (D148, D156) |
 | Equip the best I carry for my level; equip an item or a preset; unequip | 5·Récolte | C#; presets study |
@@ -1067,8 +1076,8 @@ opens with its **problems** and cannot run; a node kind this version does not kn
 The **catalogue** (`bot::catalogue`, the owner's v1 list of 2026-11-13) holds 25 kinds by family (v1's; v2.1 adds an event of mine, a return by an exit, a pure function's result and N
 minutes, and makes "at least" `≥`, `greater_or_equal`): the events on start,
 life below, pods above, a fight starts (forced: the default fight, then resume), died and an action fails (forced:
-blocked with the reason); the actions go to a zone (step 4), harvest until, go to the bank and deposit
-all but (step 5), hunt until (step 6), and notify; If, Wait, Wait for life (sitting no longer gives life back
+blocked with the reason); the actions go to a zone, harvest until, go to the bank and deposit all but
+(step 4's first slice, `docs/play.md`), hunt until (step 6), and notify; If, Wait, Wait for life (sitting no longer gives life back
 faster: the owner, 2026-11-14) and Finish; the queries life %, pods %, level, at least (`greater_or_equal` from (v2.1)),
 add and the resources of a profession; a function's entry, done return and failed return. Flow pins are `run` in, `then` out, an action's `done`
 and `failed` with its `reason`; a get has `value`, a set and a call their variable's or function's. Rust holds ids
