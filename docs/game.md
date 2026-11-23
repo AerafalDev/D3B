@@ -21,6 +21,44 @@ flowchart LR
 The facts below come from the study `artifacts/studies/live-view.md` (the owner's 56 game connections of 3.7.13.17,
 the build's schema, the client's tables, and the C# version's docs), each `inferred` unless said `verified`.
 
+## The state table
+
+What `game::Character` holds and will hold (ADR 0021: one owner of the state, every family the C# version reads), by
+family: each field, the messages it comes from, and whether it is verified on the owner's captures, inferred, or not
+decoded yet, with the PR of step 4's stack that reads it ([play.md](play.md#the-stack)). 3.7.14.18's schema and pins are
+3.7.13.17's ([protocol.md](protocol.md#on-the-wire)), so the table holds for both builds; its counts are 3.7.13.17's.
+Which messages each build pins and decodes is in [protocol-coverage.md](protocol-coverage.md), generated.
+
+| Family | Field | From | Status |
+| --- | --- | --- | --- |
+| Characters | id, name, breed, sex | `CharacterSelectionEvent` | verified |
+| Characteristics | level | `CharacterSelectionEvent`, `CharacterLevelUpEvent` | verified |
+| Characteristics | life, max life, regenerating | `CharacterStatsEvent`, `LifeRegenStartEvent`, `LifeRegenEndEvent` | verified |
+| Characteristics | action and movement points, energy | `CharacterStatsEvent` | inferred |
+| Characteristics | experience: the level's floor, now, the next floor | `CharacterStatsEvent` | inferred (order verified) |
+| Characteristics | kamas | `CharacterStatsEvent`, `KamasUpdateEvent` | verified |
+| Inventory | pods, max pods | `InventoryWeightEvent` | verified |
+| Inventory | the objects by uid, their quantity, worn or not | `InventoryContentEvent`, `Object*Event` | not decoded yet (F4) |
+| Jobs | each profession's level, experience and skills | `JobDescriptionEvent`, `JobExperiencesEvent` | not decoded yet (F4) |
+| Context | roleplay or fight | `ContextCreationEvent`, `ContextDestroyEvent` | verified |
+| Context | in a dialog, at a bank | `NpcDialogCreationEvent`, `DialogLeaveEvent`, `ExchangeStarted*Event`, `ExchangeLeaveEvent` | not decoded yet (F5) |
+| Maps | the map | `MapCurrentEvent`, `MapInformationEvent` | verified |
+| Maps | the character's cell | `MapInformationEvent`, `MapMovementEvent` | verified |
+| Maps | actors: players, NPCs, monster groups | `MapInformationEvent`, `MapActorShownEvent`, `MapActorRemovedEvent`, `MapMovementEvent` | verified |
+| Movement | a walk refused, confirmed | `MapMovementRefusedEvent`, `MapMovementConfirmResponse` | not decoded yet (F3) |
+| Interactives | interactive and stated elements | `MapInformationEvent`, `InteractiveElementUpdatedEvent`, `StatedElementUpdatedEvent` | verified |
+| Interactives | an element in use, its end, its refusal | `InteractiveUsedEvent`, `InteractiveUseEndedEvent`, `InteractiveUseErrorEvent` | not decoded yet (F5) |
+| NPCs | a dialog's question and replies | `NpcDialogQuestionEvent`, `NpcActionErrorEvent` | not decoded yet (F5) |
+| Exchanges | the bank's objects and kamas | `StorageContentEvent`, `Storage*Event` | not decoded yet (F5) |
+| Texts | states (alterations), the server's texts | `AlterationsSnapshotEvent`, `AlterationAddedEvent`, `TextInformationEvent` | not decoded yet (F5) |
+| Fights | fights won and lost | `FightEndEvent` | verified |
+| Fights | the fight: placement, fighters, turns, challenges | `Fight*Event`, `Challenge*Event`, `EntitiesDispositionEvent` | not decoded yet (F6) |
+| Fight actions | what each action did: life, points, buffs | `GameActionFightEvent`, `FightEffectsEvent`, `FightBuffEndEvent` | not decoded yet (F6) |
+| Spells | the spells and their cooldowns | `SpellsEvent`, `FightSpellsContextEvent`, `RefreshCooldownEvent` | not decoded yet (F6) |
+| Party | the party's members, in a fight, following | `Party*Event` | not decoded yet (F7) |
+| Teleportation | the zaaps known, a zaap's destinations | `ZaapKnownListEvent`, `TeleportDestinationsEvent` | not decoded yet (F7) |
+| Haven bags | inside one | (no event: its capture is missing) | not decoded yet |
+
 ## The state of a character
 
 `game::Character` is fed each decoded message with the time it was read (time injected, so tests drive it). The
