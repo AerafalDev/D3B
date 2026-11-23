@@ -52,6 +52,14 @@ public sealed class FightActivityTests : IAsyncDisposable
         };
     }
 
+    private static void Drunk(TestConnection connection, int uid, int left)
+    {
+        // The server's answer to a use (D148), with the grant of the minor elixir's 15 fights (D501).
+        connection.Server(new ObjectQuantityEvent { Object = new ObjectQuantity { Uid = uid, Quantity = left } });
+        connection.Server(new AlterationAddedEvent { Alteration = new RoleplayAlteration { AlterationId = 50, Remaining = 15 } });
+        connection.Server(new InventoryWeightEvent { Weight = 10, MaxWeight = 1_000 });
+    }
+
     private static FightEnd Ended(FightOutcome outcome)
     {
         return new FightEnd(outcome, 0, 0, ImmutableSortedDictionary<int, int>.Empty);
@@ -686,9 +694,13 @@ public sealed class FightActivityTests : IAsyncDisposable
         Assert.Equal(GroupCell, await TestWalks.WalkedAsync(_play, connection, 1));
 
         if (drinks)
+        {
             Assert.Equal(new ObjectUseRequest { Uid = 52 }, await TestWalks.SentAsync(_play, connection, 2));
+            Drunk(connection, 52, 2);
+        }
 
-        Assert.IsType<AttackMonsterRequest>(await connection.SentAsync(drinks ? 3 : 2));
+        Assert.IsType<AttackMonsterRequest>(await TestWalks.SentAsync(_play, connection, drinks ? 3 : 2));
+        Assert.Equal(drinks ? 1 : 0, connection.Sent.Count(message => message is ObjectUseRequest));
         run.Stop();
         Assert.Equal(ActivityOutcome.Stopped, await run.Completion);
     }
@@ -716,9 +728,48 @@ public sealed class FightActivityTests : IAsyncDisposable
         }));
         connection.Server(new AlterationsSnapshotEvent { Alterations = { new RoleplayAlteration { AlterationId = alteration, Remaining = remaining } } });
         if (drinks)
+        {
             Assert.Equal(new ObjectUseRequest { Uid = 52 }, await TestWalks.SentAsync(_play, connection, 1));
+            Drunk(connection, 52, 1);
+        }
+
         Assert.Equal(GroupCell, await TestWalks.WalkedAsync(_play, connection, drinks ? 2 : 1));
-        Assert.IsType<AttackMonsterRequest>(await connection.SentAsync(drinks ? 3 : 2));
+        Assert.IsType<AttackMonsterRequest>(await TestWalks.SentAsync(_play, connection, drinks ? 3 : 2));
+        Assert.Equal(drinks ? 1 : 0, connection.Sent.Count(message => message is ObjectUseRequest));
+        run.Stop();
+        Assert.Equal(ActivityOutcome.Stopped, await run.Completion);
+    }
+
+    [Fact]
+    public async Task AnElixirTheServerDoesNotGrantIsTriedAgainBeforeTheAttack()
+    {
+        // Reviewed (D501): the use answered but no alteration granted, the effect still reads missing, so the hunt tries
+        // once more before it attacks rather than going on without the elixir for the rest of the run.
+        var (connection, bot) = await _play.EnterAsync(433);
+        connection.Server(new InventoryContentEvent
+        {
+            Objects = { new InventoryObject { Item = new ObjectItem { Uid = 52, ItemId = 20_962, Quantity = 4 }, Position = InventoryItem.NotWorn } },
+        });
+        connection.Server(new AlterationsSnapshotEvent { Alterations = { new RoleplayAlteration { AlterationId = 50, Remaining = 0 } } });
+        connection.Server(new MapActorShownEvent { Actors = { GroupActor(GroupId, GroupCell, (Larva, 20)) } });
+        await bot.ProcessedAsync();
+        var run = bot.StartActivity(Activity(new FightSettings
+        {
+            FarmAnomalyFragments = true,
+            Place = FightPlace.Chosen,
+            SubAreas = [TestPlay.SubAreaId],
+            Heal = false,
+        }));
+
+        Assert.Equal(new ObjectUseRequest { Uid = 52 }, await TestWalks.SentAsync(_play, connection, 1));
+        connection.Server(new ObjectQuantityEvent { Object = new ObjectQuantity { Uid = 52, Quantity = 3 } });
+        connection.Server(new InventoryWeightEvent { Weight = 10, MaxWeight = 1_000 });
+
+        Assert.Equal(GroupCell, await TestWalks.WalkedAsync(_play, connection, 2));
+        Assert.Equal(new ObjectUseRequest { Uid = 52 }, await TestWalks.SentAsync(_play, connection, 3));
+        Drunk(connection, 52, 2);
+
+        Assert.IsType<AttackMonsterRequest>(await TestWalks.SentAsync(_play, connection, 4));
         run.Stop();
         Assert.Equal(ActivityOutcome.Stopped, await run.Completion);
     }

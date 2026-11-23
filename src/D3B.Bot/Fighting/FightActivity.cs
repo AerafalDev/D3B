@@ -35,6 +35,7 @@ public sealed class FightActivity : BotActivity
 {
     private const int MinorElixirAlteration = 50;
     private const int MinorUchronicElixir = 20_962;
+    private const int MostFailedElixirs = 3;
     private const int MostLostInARow = 3;
     private const int MostFailedJourneys = 3;
     private const int MostBankings = 3;
@@ -65,9 +66,8 @@ public sealed class FightActivity : BotActivity
     private long? _skippedOn;
     private ActivityReport? _report;
     private ActivityStatistics? _statistics;
-    private int _potionPending;
     private bool _waitedForElixir;
-    private bool? _lastElixirActive;
+    private int _failedElixirs;
     private bool _healing;
     private bool _regaining;
     private int _failedJourneys;
@@ -304,42 +304,23 @@ public sealed class FightActivity : BotActivity
         _regaining = false;
     }
 
-    /// <inheritdoc/>
-    public override void OnServerText(TextInformationEvent text)
-    {
-        ArgumentNullException.ThrowIfNull(text);
-
-        // Message 1665 substitutes the alteration ID in its first parameter. The minor elixir grants alteration 50.
-        if (_settings.FarmAnomalyFragments && text is { Type: TextInformationType.Message, TextId: 1665, Parameters: ["50"] })
-            Interlocked.Exchange(ref _potionPending, 1);
-    }
-
     private async Task RenewElixirAsync(BotContext context, CancellationToken cancellationToken)
     {
-        if (!_settings.FarmAnomalyFragments)
+        // Missing, at zero, or not yet granted after a use that failed: each failure counts, so that a use the server never
+        // honours stops costing a request before every fight.
+        if (!_settings.FarmAnomalyFragments || _failedElixirs >= MostFailedElixirs || ElixirActive(context.State) is not false)
             return;
 
-        var lost = Interlocked.Exchange(ref _potionPending, 0) != 0;
-        var active = ElixirActive(context.State);
-        if (active == true)
-        {
-            _lastElixirActive = true;
-            return;
-        }
-
-        if (!lost && (active is null || _lastElixirActive == false))
+        var elixir = context.State.Inventory.Values.FirstOrDefault(stack => stack.ItemId == MinorUchronicElixir && !stack.IsWorn && stack.Quantity > 0);
+        if (elixir is null)
             return;
 
-        var potion = context.State.Inventory.Values.FirstOrDefault(stack =>
-            stack.ItemId == MinorUchronicElixir && !stack.IsWorn && stack.Quantity > 0);
-        if (potion is null)
-        {
-            _lastElixirActive = null;
-            return;
-        }
+        // The server answers the use with the stack's quantity and grants the alteration beside it: until the grant is in the
+        // state, the effect still reads missing and a second elixir would be drunk for nothing.
+        var granted = await context.UseObjectAsync(elixir.Uid, cancellationToken).ConfigureAwait(false) is ObjectUseOutcome.Used
+            && await context.WaitUntilAsync(state => ElixirActive(state) is true, context.Delays.Answer, cancellationToken).ConfigureAwait(false);
 
-        await context.SendAsync(new ObjectUseRequest { Uid = potion.Uid }, cancellationToken).ConfigureAwait(false);
-        _lastElixirActive = false;
+        _failedElixirs = granted ? 0 : _failedElixirs + 1;
     }
 
     private FightRotationZone CurrentOf(BotContext context)

@@ -39,13 +39,6 @@ internal sealed class TestActivity : BotActivity
     /// <summary>Gets the interruptions the activity recovered the character after, in order.</summary>
     public ConcurrentQueue<Interruption> Recoveries { get; } = new();
 
-    public ConcurrentQueue<TextInformationEvent> ServerTexts { get; } = new();
-
-    public override void OnServerText(TextInformationEvent text)
-    {
-        ServerTexts.Enqueue(text);
-    }
-
     public override async Task<bool> StepAsync(BotContext context, CancellationToken cancellationToken)
     {
         if (Throws)

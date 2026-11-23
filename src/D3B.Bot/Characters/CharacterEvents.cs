@@ -1,4 +1,5 @@
 using System.Collections.Immutable;
+using System.Globalization;
 using D3B.Bot.Fights;
 using D3B.Data.Maps;
 using D3B.Engine.Maps;
@@ -47,12 +48,18 @@ namespace D3B.Bot.Characters;
 /// map; once the fight is over, it creates the roleplay's context again and names the map the fight began on (D88). In
 /// between, <see cref="FightEvents"/> takes the fight's messages first (D179).
 /// </para>
+/// <para>
+/// Alterations, measured on client 3.7.14.18 (client-game.md, D501): the server lists them whole on entering the game and
+/// between fights, each with what is left of it, adds one as it is granted, and says one ended with an information that
+/// names it, while a snapshot may still list it at zero.
+/// </para>
 /// </remarks>
 public static class CharacterEvents
 {
     private const int MostLife = 0;
     private const int Vitality = 11;
     private const int LifeLacking = 97;
+    private const int AlterationEndedTextId = 1665;
 
     /// <summary>Gives the character's state once a side sent a message.</summary>
     /// <param name="state">The state before the message.</param>
@@ -113,8 +120,8 @@ public static class CharacterEvents
                 HasAlterationSnapshot = true,
             },
             AlterationAddedEvent { Alteration: { } effect } => state with { Alterations = state.Alterations.SetItem(effect.AlterationId, effect.Remaining) },
-            TextInformationEvent { Type: TextInformationType.Message, TextId: 1665, Parameters: [var id] } when
-                long.TryParse(id, System.Globalization.CultureInfo.InvariantCulture, out var expired) => state with { Alterations = state.Alterations.SetItem(expired, 0) },
+            TextInformationEvent { Type: TextInformationType.Message, TextId: AlterationEndedTextId, Parameters: [var id] } when
+                long.TryParse(id, CultureInfo.InvariantCulture, out var ended) => state with { Alterations = state.Alterations.SetItem(ended, 0) },
             MapCurrentEvent current => state with
             {
                 MapId = current.MapId,

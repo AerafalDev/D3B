@@ -3,7 +3,6 @@ using D3B.Bot.Characters;
 using D3B.Bot.Fights;
 using D3B.Bot.Localization;
 using D3B.Bot.Runtime;
-using D3B.Protocol.Game;
 
 namespace D3B.Bot.Activities;
 
@@ -135,12 +134,6 @@ public abstract class BotActivity
     public virtual GameText? Describe(Interruption reason)
     {
         return null;
-    }
-
-    /// <summary>Receives a system text from the server on the actor loop while this activity is running.</summary>
-    /// <param name="text">The system text reported for this character.</param>
-    public virtual void OnServerText(TextInformationEvent text)
-    {
     }
 
     /// <summary>Sees the bot as its loop leaves it after everything it handles, while the activity runs: a behavior's events and urgent states read it (D297).</summary>
