@@ -131,7 +131,9 @@ Each is `inferred` unless said `verified`.
 
 `D3B_RECORD=<folder>` records each game connection to `<folder>/<build>-<Unix milliseconds>-<n>.d3bcap`, in the C#
 version's format 2, which the replay reads (`relay::capture`): each read of each side as it came, the client's first
-ones as one record up to its first frame. Nothing is written for a game server that cannot be reached. The build is the
+ones as one record up to its first frame, and each frame the bot wrote itself as a record of kind 5, the C# version's own
+([relay.md](relay.md#the-bots-frames)), which the reader gives as the bot's and the replays leave out of the client's
+stream. Nothing is written for a game server that cannot be reached. The build is the
 connection's own, from its connection phase, or `unknown` when none was read. Game connections only: the connection
 phase holds the launcher's login token. Each read is handed to a blocking writer without waiting, at most 1,024 waiting;
 one more cuts the capture, and so does a write that fails: nothing more is recorded, the file ends at its last whole

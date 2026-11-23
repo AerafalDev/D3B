@@ -164,7 +164,7 @@ async fn play(records: &[Record], mut client: DuplexStream, mut server: DuplexSt
                         break;
                     }
                 }
-                Record::Other => {}
+                Record::FromBot(_) | Record::Other => {}
             }
         }
         let _ = server_write.shutdown().await;
@@ -268,7 +268,7 @@ async fn game(name: &str, capture: &Capture, ticket: Ticket) -> Result<usize, St
         client_side,
         &handover,
         |_| async move { Some(server_side) },
-        |_: &Waiting| tap,
+        |_: &Waiting, _| tap,
         |_| None,
     );
     let (relayed, (at_client, at_server)) = tokio::join!(relay, play(&capture.records, client, server));

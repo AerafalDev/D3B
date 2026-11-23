@@ -91,6 +91,28 @@ The facts below come from the study `artifacts/studies/relay.md`: the C# version
   another build it is tried with the shape checks above, which let a renumbered answer pass untouched rather than
   rewrite it wrongly (the owner, 2026-11-11). The version gate belongs to the protocol (step 2, next feature).
 
+## The bot's frames
+
+Step 4's first slice writes the bot's requests to the game server through the relay (ADR 0021, which amends ADR
+0011: the relay still rewrites only its one frame). The C# version wrote 18 requests of its own on 3.7.12.12, each
+whole between the client's frames, with the request id -1, and the server answered each as the client's
+(`main:docs/client-game.md`, D61; inferred here).
+
+- **One way per game connection**, `relay::BotFrames`, handed with the connection's observer
+  (`relay::Observe`): `send` takes one whole frame, its header included, and never waits. It refuses, typed
+  (`BotFrameRefused`), what is not exactly one whole frame, a frame while 32 already wait (16 held, 16 queued: the bot
+  sends one request at a time), and any frame once the connection closed or its client's bytes are no longer in
+  frames.
+- **Between the client's frames**: the client's pump follows where its frames end (`relay::frame::Ends`). Between
+  two frames, a frame of the bot's is written at once; inside one, it is held until the client's frame in progress
+  ends, and the rest of that read goes after it. The client's bytes are read first, so the bot's frame waits only on
+  the frame in progress. The client's own bytes are never held otherwise, changed or renumbered.
+- **Not tapped**: the protocol is given the client's frames only, so that what it reads as the client's requests are
+  the player's (step 4's R4, the player wins).
+- **Recorded**: with `D3B_RECORD`, each frame of the bot's is a record of kind 5, format 2's own
+  ([protocol.md](protocol.md#captures)), where it went among the client's reads.
+- Nothing sends yet: the app's observer drops its way, which closes it, until the bot plays (step 4's R1).
+
 ## In the app
 
 - `relay::Relay` is started in `setup` on the installed client and stopped on `RunEvent::Exit`; the updater awaits the
@@ -132,3 +154,10 @@ is seeded into the handover. A connection phase handed over must hand over the b
 2026-11-11, the owner's 225 captures: 171 connection phases, 161 handed over, each with its capture's build, 54 game
 connections relayed byte for byte, their 3,048,392 frames split as each side sent them. D3B records its own captures
 with `D3B_RECORD` ([protocol.md](protocol.md#captures)).
+
+The bot's frames, each with its failure case: one between frames written at once, one inside a frame held until it
+ends and the rest of that read after it, those held still written once the bot's way is dropped, their records where
+they went (on real time, the capture's writer being a blocking task), what is not one whole frame, too many waiting,
+a closed connection, a client no longer in frames, which drops what waits and refuses the next while the copy goes on,
+and one whose first read already is not; the ends of frames over reads (a header split, an empty frame, a sixth
+header byte).

@@ -30,6 +30,49 @@ impl Frames {
     }
 }
 
+/// Where one direction's frames end, as its reads come: the bot's frames go to the game server between two of the
+/// client's, never inside one, as the C# version wrote its own (inferred, `main:docs/client-game.md`, D61, 3.7.12.12:
+/// 18 requests of its own, each whole between the client's frames). Keeps only the header in progress and how much of
+/// the body is left.
+#[derive(Debug, Default)]
+pub(crate) struct Ends {
+    header: Vec<u8>,
+    body: usize,
+}
+
+impl Ends {
+    /// Whether the bytes taken so far end on a frame's end.
+    pub(crate) fn between(&self) -> bool {
+        self.header.is_empty() && self.body == 0
+    }
+
+    /// Takes the bytes of one read: how many of them come before the first frame's end they hold, if they hold one.
+    /// After an error the stream is no longer in frames.
+    pub(crate) fn push(&mut self, bytes: &[u8]) -> Result<Option<usize>, RelayError> {
+        let mut first = None;
+        let mut at = 0;
+        while at < bytes.len() {
+            if self.body > 0 {
+                let taken = self.body.min(bytes.len() - at);
+                self.body -= taken;
+                at += taken;
+            } else {
+                self.header.push(bytes[at]);
+                at += 1;
+                let Some((_, body)) = header(&self.header)? else {
+                    continue;
+                };
+                self.header.clear();
+                self.body = body;
+            }
+            if self.between() && first.is_none() {
+                first = Some(at);
+            }
+        }
+        Ok(first)
+    }
+}
+
 /// Gives `each` the body of every whole frame at the start of `bytes`; how many bytes they took.
 fn split(mut bytes: &[u8], each: &mut impl FnMut(&[u8])) -> Result<usize, RelayError> {
     let start = bytes.len();
@@ -48,7 +91,10 @@ fn split(mut bytes: &[u8], each: &mut impl FnMut(&[u8])) -> Result<usize, RelayE
 /// 3.7.12.12 and 3.7.13.17). `None` while the frame is not whole yet.
 #[cfg_attr(
     not(test),
-    expect(dead_code, reason = "the capture replay reads frames with it, and the protocol will")
+    expect(
+        dead_code,
+        reason = "the bot's frames are checked with it, which nothing sends before step 4's F3"
+    )
 )]
 pub(crate) fn whole(bytes: &[u8]) -> Result<Option<usize>, RelayError> {
     let Some((header, body)) = header(bytes)? else {
@@ -92,6 +138,55 @@ pub(crate) fn encode(body: &[u8], out: &mut Vec<u8>) {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    fn ends_of(reads: &[&[u8]]) -> Vec<Option<usize>> {
+        let mut ends = Ends::default();
+        reads
+            .iter()
+            .map(|read| ends.push(read).unwrap_or_else(|error| panic!("{error}")))
+            .collect()
+    }
+
+    #[test]
+    fn finds_where_the_first_frame_of_a_read_ends() {
+        let mut bytes = Vec::new();
+        encode(b"one", &mut bytes);
+        encode(b"two", &mut bytes);
+
+        assert_eq!(ends_of(&[&bytes]), [Some(4)]);
+        assert_eq!(
+            ends_of(&[&bytes[..2], &bytes[2..6], &bytes[6..]]),
+            [None, Some(2), Some(2)]
+        );
+    }
+
+    #[test]
+    fn a_header_split_across_reads_and_an_empty_frame_end_where_they_end() {
+        let mut long = Vec::new();
+        encode(&[7; 300], &mut long);
+
+        assert_eq!(ends_of(&[&long[..1], &long[1..2], &long[2..]]), [None, None, Some(300)]);
+        assert_eq!(ends_of(&[&[0]]), [Some(1)]);
+    }
+
+    #[test]
+    fn is_between_frames_only_once_a_frame_ended() {
+        let mut ends = Ends::default();
+        assert!(ends.between());
+        let _ = ends.push(&[3, b'a']);
+        assert!(!ends.between());
+        let _ = ends.push(b"bc");
+        assert!(ends.between());
+        let _ = ends.push(&[0x80]);
+        assert!(!ends.between(), "a header in progress");
+    }
+
+    #[test]
+    fn bytes_no_longer_in_frames_are_an_error() {
+        let mut ends = Ends::default();
+
+        assert!(matches!(ends.push(&[0x80; 6]), Err(RelayError::FrameHeader)));
+    }
 
     #[test]
     fn waits_for_the_whole_frame() {

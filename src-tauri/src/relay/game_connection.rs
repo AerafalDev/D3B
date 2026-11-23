@@ -1,19 +1,21 @@
 //! The game connection through the relay (`docs/relay.md`, "The connections"; inferred, `main:docs/client-game.md`,
 //! "The game connection", 3.7.12.12 and 3.7.13.17). The client speaks first, a frame holding its ticket; the relay
 //! finds where that ticket's game goes, connects there, relays the frame first, then every byte both ways untouched,
-//! splitting each way into frames for the protocol as it copies (`docs/protocol.md`, "The tap").
+//! splitting each way into frames for the protocol as it copies (`docs/protocol.md`, "The tap"). The bot's frames go
+//! to the game server between the client's (`docs/relay.md`, "The bot's frames", ADR 0021).
 
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
 
 use tokio::io::{AsyncRead, AsyncReadExt, AsyncWrite, AsyncWriteExt};
 use tokio::net::TcpListener;
+use tokio::sync::mpsc;
 use tokio::task::JoinSet;
 use tokio::time::Instant;
 
 use super::capture::{Recorder, Recording};
 use super::connection_phase::connect;
-use super::frame::{self, Frames};
+use super::frame::{self, Ends, Frames};
 use super::handover::{GameServer, Handover, Waiting};
 use crate::protocol::{self, Session};
 
@@ -24,6 +26,56 @@ const FIRST_FRAME_LIMIT: usize = 64 * 1024;
 
 /// How much one read may take: a game server's frames are up to 88,581 bytes (verified, 3.7.13.17), most far smaller.
 const READ: usize = 64 * 1024;
+
+/// How many of the bot's frames may wait for the client's frame in progress to end, or for the copy to take them: the
+/// bot sends one request at a time, each an act waiting for its answer (ADR 0021), so more waiting is a bug.
+const BOT_WAITING: usize = 16;
+
+/// Writes the bot's frames to one game connection's server, each whole between two of the client's: the relay holds
+/// the client's bytes only until its frame in progress ends (inferred, `main:docs/client-game.md`, D61, 3.7.12.12).
+/// Its frames are recorded in the connection's capture, as format 2's own records; the protocol is not given them,
+/// so that it reads the client's requests alone.
+#[derive(Debug, Clone)]
+pub(crate) struct BotFrames {
+    #[cfg_attr(
+        not(test),
+        expect(dead_code, reason = "the bot's acts send through it from step 4's F3 and R1")
+    )]
+    frames: mpsc::Sender<Vec<u8>>,
+}
+
+/// A frame of the bot's the relay will not write.
+#[cfg_attr(
+    not(test),
+    expect(dead_code, reason = "the bot's acts send through it from step 4's F3 and R1")
+)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, thiserror::Error)]
+pub(crate) enum BotFrameRefused {
+    #[error("the bot's frame is not one whole frame")]
+    NotAFrame,
+    #[error("too many of the bot's frames already wait to be written")]
+    Full,
+    #[error("the game connection closed, or its client's bytes are no longer in frames")]
+    Closed,
+}
+
+impl BotFrames {
+    /// Gives the relay `frame`, a whole frame, header included, to write to the game server between the client's
+    /// frames, as soon as the client's frame in progress, if any, ends; never waits.
+    #[cfg_attr(
+        not(test),
+        expect(dead_code, reason = "the bot's acts send through it from step 4's F3 and R1")
+    )]
+    pub(crate) fn send(&self, frame: Vec<u8>) -> Result<(), BotFrameRefused> {
+        if !matches!(frame::whole(&frame), Ok(Some(length)) if length == frame.len()) {
+            return Err(BotFrameRefused::NotAFrame);
+        }
+        self.frames.try_send(frame).map_err(|error| match error {
+            mpsc::error::TrySendError::Full(_) => BotFrameRefused::Full,
+            mpsc::error::TrySendError::Closed(_) => BotFrameRefused::Closed,
+        })
+    }
+}
 
 /// Which side sent a frame.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -74,11 +126,11 @@ pub(crate) async fn serve(
         connections.spawn(async move {
             let opened = {
                 let report = report.clone();
-                move |waiting: &Waiting| {
+                move |waiting: &Waiting, bot: BotFrames| {
                     report(Game::Opened);
                     let report = move |session| report(Game::Protocol(number, session));
-                    let protocol =
-                        protocol::open(waiting.build.clone(), report, observe(number, waiting.build.as_deref()));
+                    let observer = observe(number, waiting.build.as_deref(), bot);
+                    let protocol = protocol::open(waiting.build.clone(), report, observer);
                     move |side, body: Option<&[u8]>| protocol.give(side, body)
                 }
             };
@@ -97,15 +149,16 @@ pub(crate) async fn serve(
 }
 
 /// Relays one game connection: reads the client's first frame, takes what waits for its ticket from `handover`,
-/// reaches its game server through `connect`, says so through `opened`, which gives the tap, relays the bytes read so
-/// far, then both ways until both sides are done, giving the tap the body of every frame each side sent, the first one
-/// included, or `None` once a side is no longer in frames, and the recorder `record` makes for what waited for the
-/// ticket, if any, every read. `false` when it closed before reaching a game server.
+/// reaches its game server through `connect`, says so through `opened` with the connection's [`BotFrames`], which
+/// gives the tap, relays the bytes read so far, then both ways until both sides are done, writing the bot's frames
+/// between the client's, giving the tap the body of every frame each side sent, the first one included, or `None` once
+/// a side is no longer in frames, and the recorder `record` makes for what waited for the ticket, if any, every read
+/// and every frame of the bot's. `false` when it closed before reaching a game server.
 pub(crate) async fn relay<C, S, F, T>(
     mut client: C,
     handover: &Mutex<Handover>,
     connect: impl FnOnce(GameServer) -> F,
-    opened: impl FnOnce(&Waiting) -> T,
+    opened: impl FnOnce(&Waiting, BotFrames) -> T,
     record: impl FnOnce(&Waiting) -> Option<Recorder>,
 ) -> bool
 where
@@ -130,17 +183,30 @@ where
     let Some(mut server) = connect(waiting.server.clone()).await else {
         return false;
     };
-    let tap = opened(&waiting);
+    let (frames, bot) = mpsc::channel(BOT_WAITING);
+    let tap = opened(&waiting, BotFrames { frames });
     let recorder = record(&waiting);
     let note = |side, bytes: &[u8]| {
         if let Some(recorder) = &recorder {
             recorder.record(side, bytes);
         }
     };
+    let note_bot = |frame: &[u8]| {
+        if let Some(recorder) = &recorder {
+            recorder.record_bot(frame);
+        }
+    };
     note(Side::Client, &read);
     if server.write_all(&read).await.is_ok() {
         let mut from_client = Some(Frames::default());
         tapped(&mut from_client, &read, &|body| tap(Side::Client, body));
+        // A client whose first read is not frames can take none of the bot's: its way closes at once.
+        let mut ends = Ends::default();
+        let bot = ends.push(&read).is_ok().then(|| Bot {
+            frames: Some(bot),
+            ends,
+            record: note_bot,
+        });
         let (client_read, client_write) = tokio::io::split(client);
         let (server_read, server_write) = tokio::io::split(server);
         // Both ways at once, the first error ending both, as `copy_bidirectional` did.
@@ -149,6 +215,7 @@ where
                 client_read,
                 server_write,
                 from_client,
+                bot,
                 |bytes| note(Side::Client, bytes),
                 |body| tap(Side::Client, body)
             ),
@@ -156,6 +223,7 @@ where
                 server_read,
                 client_write,
                 Some(Frames::default()),
+                None::<Bot<fn(&[u8])>>,
                 |bytes| note(Side::Server, bytes),
                 |body| tap(Side::Server, body)
             ),
@@ -169,24 +237,90 @@ where
 
 /// Copies `from` to `to` read by read, each read written before anything else, then given to `record` and split into
 /// frames for `tap`; once `from` ends, shuts `to` down and returns, the other way going on. A stream that is no longer
-/// in frames stops the frames, never the copy, and `tap` hears `None` once.
-async fn pump(
+/// in frames stops the frames, never the copy, and `tap` hears `None` once. With `bot`, each of the bot's frames is
+/// written whole between two of `from`'s frames: at once between frames, else once the frame in progress ends, the
+/// rest of that read after it; a stream no longer in frames drops the bot's frames waiting and refuses the next.
+async fn pump<R: Fn(&[u8])>(
     mut from: impl AsyncRead + Unpin,
     mut to: impl AsyncWrite + Unpin,
     mut frames: Option<Frames>,
+    mut bot: Option<Bot<R>>,
     record: impl Fn(&[u8]),
     tap: impl Fn(Option<&[u8]>),
 ) -> std::io::Result<()> {
     let mut buffer = vec![0; READ];
+    let mut held: Vec<Vec<u8>> = Vec::new();
     loop {
-        let count = from.read(&mut buffer).await?;
-        if count == 0 {
-            return to.shutdown().await;
+        tokio::select! {
+            // The client's bytes first: a frame of the bot's never waits on them longer than their frame in progress.
+            biased;
+            count = from.read(&mut buffer) => {
+                let count = count?;
+                if count == 0 {
+                    return to.shutdown().await;
+                }
+                let bytes = &buffer[..count];
+                let end = match bot.as_mut().map(|bot| bot.ends.push(bytes)) {
+                    Some(Ok(end)) => end.filter(|_| !held.is_empty()),
+                    Some(Err(_)) => {
+                        // Its frames' ends are lost: nothing of the bot's is written any more.
+                        bot = None;
+                        held.clear();
+                        None
+                    }
+                    None => None,
+                };
+                if let (Some(end), Some(bot)) = (end, &bot) {
+                    to.write_all(&bytes[..end]).await?;
+                    record(&bytes[..end]);
+                    for frame in held.drain(..) {
+                        to.write_all(&frame).await?;
+                        (bot.record)(&frame);
+                    }
+                    to.write_all(&bytes[end..]).await?;
+                    if end < count {
+                        record(&bytes[end..]);
+                    }
+                } else {
+                    to.write_all(bytes).await?;
+                    record(bytes);
+                }
+                to.flush().await?;
+                tapped(&mut frames, bytes, &tap);
+            }
+            frame = next(&mut bot), if held.len() < BOT_WAITING => match (frame, &bot) {
+                (Some(frame), Some(Bot { ends, record, .. })) if held.is_empty() && ends.between() => {
+                    to.write_all(&frame).await?;
+                    to.flush().await?;
+                    record(&frame);
+                }
+                (Some(frame), _) => held.push(frame),
+                // No one can send more; those held still go where they belong.
+                (None, _) => {
+                    if let Some(bot) = &mut bot {
+                        bot.frames = None;
+                    }
+                }
+            },
         }
-        to.write_all(&buffer[..count]).await?;
-        to.flush().await?;
-        record(&buffer[..count]);
-        tapped(&mut frames, &buffer[..count], &tap);
+    }
+}
+
+/// The bot's frames a pump writes between its stream's frames, while that stream is in frames: those it receives
+/// (`None` once no one can send one), where that stream's frames end, and where each frame written is recorded.
+struct Bot<R> {
+    frames: Option<mpsc::Receiver<Vec<u8>>>,
+    ends: Ends,
+    record: R,
+}
+
+/// The next frame of the bot's; `None` once no one can send one, and never while nothing can come.
+async fn next<R>(bot: &mut Option<Bot<R>>) -> Option<Vec<u8>> {
+    match bot {
+        Some(Bot {
+            frames: Some(frames), ..
+        }) => frames.recv().await,
+        _ => std::future::pending().await,
     }
 }
 
@@ -345,7 +479,7 @@ mod tests {
                     let _ = connected.send((game, server));
                     Some(server_side)
                 },
-                |_: &Waiting| {
+                |_: &Waiting, _: BotFrames| {
                     opened += 1;
                     tap
                 },
@@ -537,6 +671,7 @@ mod tests {
             from_side,
             to_side,
             Some(Frames::default()),
+            None::<Bot<fn(&[u8])>>,
             |_| {},
             |_: Option<&[u8]>| panic!("tapped"),
         ))
@@ -563,7 +698,7 @@ mod tests {
                 client_side,
                 &handover,
                 |_| async move { Some(server_side) },
-                |_: &Waiting| |_, _: Option<&[u8]>| {},
+                |_: &Waiting, _: BotFrames| |_, _: Option<&[u8]>| {},
                 |waiting: &Waiting| {
                     let build = waiting.build.as_deref();
                     Some(recording.start(&waiting.server, build, std::time::SystemTime::UNIX_EPOCH, 1))
@@ -743,5 +878,267 @@ mod tests {
 
         assert!(relay.is_finished());
         assert_eq!(relay.await.ok(), Some((false, 0)));
+    }
+
+    /// A game connection relayed over in-memory streams past its first frame, sent in one read with `after`, and
+    /// recorded to `recording` if given: the client's end, the game server's end, the connection's [`BotFrames`] and
+    /// the relay's result.
+    async fn relayed_with_bot(
+        recording: Option<Recording>,
+        after: &[u8],
+    ) -> (DuplexStream, DuplexStream, BotFrames, tokio::task::JoinHandle<bool>) {
+        let handover = handover_waiting();
+        let (mut client, client_side) = tokio::io::duplex(1 << 16);
+        let (mut server, server_side) = tokio::io::duplex(1 << 16);
+        let (given, bot) = tokio::sync::oneshot::channel();
+        let relay = tokio::spawn(async move {
+            relay(
+                client_side,
+                &handover,
+                |_| async move { Some(server_side) },
+                |_: &Waiting, bot: BotFrames| {
+                    let _ = given.send(bot);
+                    |_, _: Option<&[u8]>| {}
+                },
+                |waiting: &Waiting| {
+                    let recording = recording?;
+                    let build = waiting.build.as_deref();
+                    Some(recording.start(&waiting.server, build, std::time::SystemTime::UNIX_EPOCH, 1))
+                },
+            )
+            .await
+        });
+        let first = [first(TICKET).as_slice(), after].concat();
+        client.write_all(&first).await.unwrap_or_else(|error| panic!("{error}"));
+        received(&mut server, first.len()).await;
+        let bot = tokio::time::timeout(Duration::from_secs(1), bot).await;
+        let bot = bot
+            .ok()
+            .and_then(Result::ok)
+            .unwrap_or_else(|| panic!("no bot frames given"));
+        (client, server, bot, relay)
+    }
+
+    /// Lets the relay's tasks take what was given them; time is paused, so this sleeps nothing.
+    async fn settle() {
+        tokio::time::sleep(Duration::from_millis(10)).await;
+    }
+
+    /// Whether `server` gets nothing more within 100 ms.
+    async fn nothing_more(server: &mut DuplexStream) -> bool {
+        let mut byte = [0; 1];
+        tokio::time::timeout(Duration::from_millis(100), server.read(&mut byte))
+            .await
+            .is_err()
+    }
+
+    #[tokio::test(start_paused = true)]
+    async fn a_frame_of_the_bot_s_between_the_client_s_goes_at_once() {
+        let (mut client, mut server, bot, relay) = relayed_with_bot(None, &[]).await;
+
+        let sent = bot.send(frames_of(&[b"walk"]));
+        let walk = received(&mut server, 5).await;
+        client
+            .write_all(&frames_of(&[b"list"]))
+            .await
+            .unwrap_or_else(|error| panic!("{error}"));
+        let list = received(&mut server, 5).await;
+        drop((client, server));
+
+        assert_eq!(sent, Ok(()));
+        assert_eq!(walk, frames_of(&[b"walk"]));
+        assert_eq!(list, frames_of(&[b"list"]));
+        assert!(matches!(
+            tokio::time::timeout(Duration::from_secs(1), relay).await,
+            Ok(Ok(true))
+        ));
+    }
+
+    #[tokio::test(start_paused = true)]
+    async fn a_frame_of_the_bot_s_waits_for_the_client_s_frame_in_progress_only() {
+        let (mut client, mut server, bot, relay) = relayed_with_bot(None, &[]).await;
+        let ours = frames_of(&[b"a frame of the client's"]);
+        let (begun, rest) = ours.split_at(7);
+        let next = frames_of(&[b"next"]);
+
+        client.write_all(begun).await.unwrap_or_else(|error| panic!("{error}"));
+        let at_first = received(&mut server, begun.len()).await;
+        let sent = bot.send(frames_of(&[b"walk"]));
+        settle().await;
+        let held = nothing_more(&mut server).await;
+        client
+            .write_all(&[rest, next.as_slice()].concat())
+            .await
+            .unwrap_or_else(|error| panic!("{error}"));
+        let then = received(&mut server, rest.len() + 5 + next.len()).await;
+        drop((client, server));
+
+        assert_eq!(sent, Ok(()));
+        assert_eq!(at_first, begun);
+        assert!(held, "the bot's frame went inside the client's");
+        assert_eq!(then, [rest, frames_of(&[b"walk"]).as_slice(), next.as_slice()].concat());
+        assert!(matches!(
+            tokio::time::timeout(Duration::from_secs(1), relay).await,
+            Ok(Ok(true))
+        ));
+    }
+
+    // Real time: the capture's writer is a blocking task, which paused time would not wait for.
+    #[tokio::test]
+    async fn the_bot_s_frames_are_recorded_where_they_went() {
+        use super::super::capture::Record::{FromBot, FromClient};
+
+        let folder = std::env::temp_dir().join(format!("d3b-game-capture-bot-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&folder);
+        let recording = Recording { folder: folder.clone() };
+        let (mut client, mut server, bot, relay) = relayed_with_bot(Some(recording), &[]).await;
+        let ours = frames_of(&[b"choose", b"list"]);
+
+        client
+            .write_all(&ours[..3])
+            .await
+            .unwrap_or_else(|error| panic!("{error}"));
+        received(&mut server, 3).await;
+        let sent = bot.send(frames_of(&[b"walk"]));
+        settle().await;
+        client
+            .write_all(&ours[3..])
+            .await
+            .unwrap_or_else(|error| panic!("{error}"));
+        received(&mut server, ours.len() - 3 + 5).await;
+        drop((client, server));
+        let relayed = tokio::time::timeout(Duration::from_secs(1), relay).await;
+
+        let path = folder.join("3.7.13.17-0-1.d3bcap");
+        let capture = super::super::capture::read(&std::fs::read(&path).unwrap_or_default());
+        let _ = std::fs::remove_dir_all(&folder);
+        assert_eq!(sent, Ok(()));
+        assert!(matches!(relayed, Ok(Ok(true))));
+        let records = capture.unwrap_or_else(|error| panic!("{error}")).records;
+        assert_eq!(
+            records[1..],
+            [
+                FromClient(ours[..3].to_vec()),
+                FromClient(ours[3..7].to_vec()),
+                FromBot(frames_of(&[b"walk"])),
+                FromClient(ours[7..].to_vec()),
+            ]
+        );
+    }
+
+    #[tokio::test(start_paused = true)]
+    async fn refuses_what_is_not_one_whole_frame() {
+        let (client, server, bot, _relay) = relayed_with_bot(None, &[]).await;
+
+        let frames = [vec![], vec![3, b'a'], frames_of(&[b"one", b"two"]), vec![0xff; 6]];
+        let refused = frames.map(|frame| bot.send(frame));
+        drop((client, server));
+
+        assert_eq!(refused, [Err(BotFrameRefused::NotAFrame); 4]);
+    }
+
+    #[tokio::test(start_paused = true)]
+    async fn refuses_a_frame_while_too_many_wait_then_once_the_connection_closed() {
+        let (mut client, mut server, bot, relay) = relayed_with_bot(None, &[]).await;
+        client
+            .write_all(&[9, b'h'])
+            .await
+            .unwrap_or_else(|error| panic!("{error}"));
+        received(&mut server, 2).await;
+
+        let mut taken = 0;
+        let mut full = None;
+        for _ in 0..=2 * BOT_WAITING {
+            match bot.send(frames_of(&[b"walk"])) {
+                Ok(()) => taken += 1,
+                Err(refused) => {
+                    full = Some(refused);
+                    break;
+                }
+            }
+            settle().await;
+        }
+        drop((client, server));
+        let ended = tokio::time::timeout(Duration::from_secs(1), relay).await;
+        let closed = bot.send(frames_of(&[b"walk"]));
+
+        assert_eq!(full, Some(BotFrameRefused::Full));
+        assert_eq!(
+            taken,
+            2 * BOT_WAITING,
+            "held while the client's frame is in progress, then waiting"
+        );
+        assert!(matches!(ended, Ok(Ok(true))));
+        assert_eq!(closed, Err(BotFrameRefused::Closed));
+    }
+
+    #[tokio::test(start_paused = true)]
+    async fn a_client_no_longer_in_frames_closes_the_bot_s_way_not_the_copy() {
+        let (mut client, mut server, bot, relay) = relayed_with_bot(None, &[]).await;
+        client
+            .write_all(&[0x80])
+            .await
+            .unwrap_or_else(|error| panic!("{error}"));
+        received(&mut server, 1).await;
+        let waiting = bot.send(frames_of(&[b"walk"]));
+        settle().await;
+
+        client
+            .write_all(&[0xff; 5])
+            .await
+            .unwrap_or_else(|error| panic!("{error}"));
+        let copied = received(&mut server, 5).await;
+        settle().await;
+        let after = bot.send(frames_of(&[b"walk"]));
+        let dropped = nothing_more(&mut server).await;
+        drop((client, server));
+
+        assert_eq!(waiting, Ok(()));
+        assert_eq!(copied, [0xff; 5]);
+        assert_eq!(after, Err(BotFrameRefused::Closed));
+        assert!(dropped, "a frame of the bot's went into bytes no longer in frames");
+        assert!(matches!(
+            tokio::time::timeout(Duration::from_secs(1), relay).await,
+            Ok(Ok(true))
+        ));
+    }
+
+    #[tokio::test(start_paused = true)]
+    async fn the_bot_s_frames_held_still_go_once_its_way_is_dropped() {
+        let (mut client, mut server, bot, relay) = relayed_with_bot(None, &[]).await;
+        let ours = frames_of(&[b"a frame of the client's"]);
+        let (begun, rest) = ours.split_at(7);
+
+        client.write_all(begun).await.unwrap_or_else(|error| panic!("{error}"));
+        received(&mut server, begun.len()).await;
+        let sent = bot.send(frames_of(&[b"walk"]));
+        settle().await;
+        drop(bot);
+        settle().await;
+        client.write_all(rest).await.unwrap_or_else(|error| panic!("{error}"));
+        let then = received(&mut server, rest.len() + 5).await;
+        drop((client, server));
+
+        assert_eq!(sent, Ok(()));
+        assert_eq!(then, [rest, frames_of(&[b"walk"]).as_slice()].concat());
+        assert!(matches!(
+            tokio::time::timeout(Duration::from_secs(1), relay).await,
+            Ok(Ok(true))
+        ));
+    }
+
+    #[tokio::test(start_paused = true)]
+    async fn a_client_whose_first_read_is_no_longer_frames_takes_none_of_the_bot_s() {
+        let (client, server, bot, relay) = relayed_with_bot(None, &[0x80; 6]).await;
+        settle().await;
+
+        let refused = bot.send(frames_of(&[b"walk"]));
+        drop((client, server));
+
+        assert_eq!(refused, Err(BotFrameRefused::Closed));
+        assert!(matches!(
+            tokio::time::timeout(Duration::from_secs(1), relay).await,
+            Ok(Ok(true))
+        ));
     }
 }

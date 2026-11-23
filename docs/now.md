@@ -11,7 +11,8 @@ outside events. Today's feature is **blueprints v2's (v2.4), the values** ([bot.
 remaining PRs finish a started feature and carry `step-finish`.
 
 **The cap** (`CLAUDE.md`; the owner, 2026-11-23): more than five checklists are open (`bun run rules` counts them), so
-no new feature PR until at most five are, step 4's first slice included; fixes, docs and v2.4's remaining PRs go on.
+no new feature PR until at most five are; fixes, docs, v2.4's remaining PRs and step 4's first slice, started on the
+owner's go of 2026-11-23 (`step-finish`), go on.
 The owner's session of tests closes them.
 
 ## Done
@@ -31,9 +32,9 @@ One line per item, in order; each is designed in [bot.md](bot.md) or [play.md](p
 
 - v2.4: drawn compact.
 - v2.4: sentences in place, and its checklist; the language is frozen there (ADR 0019, the owner, 2026-11-23).
-- Step 4's first slice, F2 to F10: the game layer reading every family the C# version reads, paths, typed acts
+- Step 4's first slice, F3 to F7 and F10: the game layer reading every family the C# version reads, typed acts
   ([play.md](play.md#the-stack), ADR 0021); started on the owner's go of 2026-11-23, its PRs labelled `step-finish`;
-  F8 and F9, the paths, done ([game.md](game.md#the-paths)).
+  F1 ([protocol-coverage.md](protocol-coverage.md)), F2 (the bot's frames), F8 and F9 (the paths) done.
 - Step 4's first slice, R1 to R9: Récolte automatique playing on Windows; its measure, a 30-minute loop unblocked.
 - (26) events at run time: priorities, modes, thresholds, settings at safe points, When, Every, At, Trigger; an
   event cutting a long action at its next inner step (ADR 0020).
@@ -68,6 +69,7 @@ One line each: what is left to measure. Step 3's own measure is [bot.md](bot.md#
 - [renaming a blueprint of mine](checklists/rename-blueprint.md): open, the parts of 1 to 3 not tried.
 - [Advanced tools](checklists/advanced-tools.md): open, items 4 and 6.
 - [the Protocol panel's opening](checklists/protocol-panel.md): open, item 5, the parts of 1 and 3 not tried.
+- [the bot's frames in the relay](checklists/step4-bot-frames.md): open, items 1 and 2 (step 4's F2).
 - [a given blueprint's update](checklists/blueprint-update.md): open, items 1 to 3; 4 waits on a given v2.
 - [the `.d3b` file](checklists/d3b-file.md): open, items 4 and 6, and the rest of 5.
 - [the relay](checklists/relay.md): waiting, item 10's offer on the release after v0.14.0, 11 on an accented account.
