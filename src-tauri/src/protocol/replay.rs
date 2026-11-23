@@ -10,6 +10,7 @@ use super::coverage::replayed::{self, Replayed};
 use super::message::{Message, READABLE};
 use super::outcome::Outcome;
 use super::pins::Pins;
+use super::request::{ENCODED, Request};
 use super::{decoder, envelope};
 use crate::relay::Side;
 use crate::relay::capture::{Record, read};
@@ -168,5 +169,61 @@ fn the_owners_game_captures_read_through_the_protocol() {
                 .is_some_and(|tally| tally.understood + tally.read > 0)),
             "{readable} was never decoded"
         );
+    }
+}
+
+/// The C# bot's own requests in the owner's captures (records of kind 5), decoded and encoded again by
+/// [`Request::frame`]: the same bytes, each, so that D3B's requests are the ones the server answered (ADR 0021). A
+/// record holds the frame whole or its body alone; either is compared.
+#[test]
+#[ignore = "needs the owner's captures: set D3B_CAPTURES to their folder"]
+fn the_c_sharp_bot_s_requests_encode_again_byte_for_byte() {
+    let folder = folder();
+    let mut compared: BTreeMap<&str, (usize, usize)> = BTreeMap::new();
+    for path in captures(&folder) {
+        let name = path.strip_prefix(&folder).unwrap_or(&path).display().to_string();
+        let bytes = std::fs::read(&path).unwrap_or_else(|error| panic!("{name}: {error}"));
+        let capture = read(&bytes).unwrap_or_else(|error| panic!("{name}: {error}"));
+        let Some(pins) = Pins::embedded(&capture.build) else {
+            continue;
+        };
+        let pins = pins.unwrap_or_else(|error| panic!("{error}"));
+        for record in &capture.records {
+            let Record::FromBot(sent) = record else {
+                continue;
+            };
+            let body = body_of(sent).unwrap_or(sent);
+            let Some(content) = envelope::open(Side::Client, body) else {
+                continue;
+            };
+            let Some(readable) = pins
+                .readable(content.name)
+                .filter(|readable| ENCODED.contains(readable))
+            else {
+                continue;
+            };
+            let request = Request::decode(readable, content.value).and_then(Result::ok);
+            let again = request.and_then(|request| request.frame(&pins).ok());
+            // The frame whole if the record held it whole, else its body.
+            let same = again.is_some_and(|again| again == *sent || body_of(&again) == Some(sent.as_slice()));
+            let counts = compared.entry(readable).or_default();
+            if same { counts.0 += 1 } else { counts.1 += 1 }
+        }
+    }
+    eprintln!("the C# bot's requests, the same and not: {compared:?}");
+    assert!(
+        !compared.is_empty(),
+        "no request of the C# bot's in {}",
+        folder.display()
+    );
+    let differing: Vec<_> = compared.iter().filter(|(_, (_, other))| *other > 0).collect();
+    assert!(differing.is_empty(), "encoded otherwise: {differing:?}");
+}
+
+/// The body of `bytes` when they are exactly one whole frame.
+fn body_of(bytes: &[u8]) -> Option<&[u8]> {
+    match crate::relay::frame::header(bytes) {
+        Ok(Some((header, length))) if header + length == bytes.len() => Some(&bytes[header..]),
+        _ => None,
     }
 }
