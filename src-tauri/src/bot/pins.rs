@@ -214,27 +214,42 @@ pub(crate) fn uses_wildcards(graph: &Graph, node: &Node) -> bool {
         _ => false,
     };
     (cases && !node.options.cases.is_empty())
-        || wildcards(node).any(|pin| {
-            node.inputs.keys().any(|id| id.0 == pin)
+        || wildcards(node).iter().any(|pin| {
+            node.inputs.keys().any(|id| id.0 == *pin)
                 || graph.wires.iter().any(|wire| at(&wire.from, pin) || at(&wire.to, pin))
         })
 }
 
 /// Whether `node`'s kind has a wildcard pin, which a type noted on it is for.
 pub(crate) fn has_wildcards(node: &Node) -> bool {
-    wildcards(node).next().is_some()
+    !wildcards(node).is_empty()
 }
 
-/// The ids of the wildcard pins of `node`'s kind that take the type it notes: none for a kind that changes a variable,
-/// whose wildcards take the variable's.
-fn wildcards(node: &Node) -> impl Iterator<Item = &'static str> {
+/// The ids of the wildcard pins of `node` that take the type it notes, its kind's and those its count numbers (a List's
+/// `in_1` to `in_n`): none for a kind that changes a variable, whose wildcards take the variable's.
+fn wildcards(node: &Node) -> Vec<String> {
     let kind = match &node.does {
         Does::Kind(kind) => catalogue::kind(&kind.0).filter(|kind| !kind.takes.contains(&Takes::Variable)),
         _ => None,
     };
-    let pins = kind.into_iter().flat_map(|kind| kind.pins);
-    pins.filter(|pin| matches!(pin.carries, Carries::Wildcard(_)))
-        .map(|pin| pin.id)
+    let Some(kind) = kind else {
+        return Vec::new();
+    };
+    let wildcard = |pin: &Pin| matches!(pin.carries, Carries::Wildcard(_));
+    let mut ids: Vec<String> = kind
+        .pins
+        .iter()
+        .filter(|pin| wildcard(pin))
+        .map(|pin| pin.id.to_owned())
+        .collect();
+    for takes in kind.takes {
+        if let Takes::Count { pin, .. } = takes
+            && wildcard(pin)
+        {
+            ids.extend(optioned(*takes, &node.options).into_iter().map(|pin| pin.id));
+        }
+    }
+    ids
 }
 
 /// A function's parameters that become pins: the first of an id, none with a reserved one, each already a problem.
@@ -310,6 +325,13 @@ mod tests {
         assert_eq!(three.last(), Some(&("then_3".to_owned(), Side::Out, Carries::Exec)));
         let switch = optioned_pins("switch", r#"{"type": "job", "cases": [24, 28]}"#);
         assert_eq!(ids(switch), ["run", "value", "case_1", "case_2", "otherwise"]);
+        let list = optioned_pins("make_list", r#"{"type": "zone", "count": 2}"#);
+        let zone = |id: &str| (id.to_owned(), Side::In, Carries::one(ValueType::Zone));
+        assert_eq!(
+            list[1..],
+            [zone("in_1"), zone("in_2")],
+            "a List's inputs, each of its type"
+        );
         let text = optioned_pins("test_text", r#"{"text": "{count} in {zone}, {count} {Zone} {} {"}"#);
         let any = |id: &str| (id.to_owned(), Side::In, Carries::Any);
         assert_eq!(text[1..], [any("count"), any("zone")]);

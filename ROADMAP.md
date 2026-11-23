@@ -16,8 +16,11 @@ owner** before the next one starts. The current step is in [docs/now.md](docs/no
    goals the bot plans for itself. It must fix what went wrong before: too many concepts, tedious to create, rigid,
    opaque ([docs/lessons.md](docs/lessons.md)). An interactive mockup is decided before any code.
 4. **Act**: moving on a map and between maps, travel with zaaps and NPC ways, "the player wins" (a manual action pauses
-   the bot), recovery after an interruption.
-5. **Harvest and bank**, on the model of step 3.
+   the bot), recovery after an interruption. Its first slice ([docs/play.md](docs/play.md), the owner, 2026-11-23)
+   reads every family the C# version reads and brings a first harvest and a deposit all, so that D3B's Récolte
+   automatique plays in game.
+5. **Harvest and bank**, on the model of step 3: what the first slice leaves (regrowth learnt, withdrawing, items kept,
+   resource bags, the professions' blueprints).
 6. **Fights**: the fight state, the rules of a cast and a walk, the effects, the AI; then the hunting activity.
 7. Then, each in its own design: several accounts and groups, the marketplace and crafting, treasure hunts and
    dungeons, the profession scripts of `vendor/metiers` as the acceptance test.

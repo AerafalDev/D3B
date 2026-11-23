@@ -557,6 +557,35 @@ mod tests {
     }
 
     #[test]
+    fn a_list_keeps_the_type_its_first_input_gives_and_refuses_another_and_a_list_into_one_input() {
+        let mut blueprint = with_wildcards();
+        let list = r#"{"id": "list", "kind": "make_list", "options": {"count": 2}}"#;
+        blueprint.graphs[0]
+            .nodes
+            .push(serde_json::from_str(list).unwrap_or_else(|error| panic!("{error}")));
+        let as_number = Edit::Value {
+            node: id("list"),
+            pin: id("in_1"),
+            value: Some(serde_json::json!(5)),
+            of: Some(ValueType::Number),
+        };
+        done(&mut blueprint, as_number);
+        assert_eq!(
+            typed(&blueprint, "list"),
+            Some(ValueType::Number),
+            "kept by its input's value"
+        );
+        let refusals = vec![
+            (
+                value("list", "in_2", Some(serde_json::json!({"zone": "forest"}))),
+                Refusal::NotItsType,
+            ),
+            (wire(("g", "value"), ("list", "in_2")), Refusal::OtherType),
+        ];
+        refused(&mut blueprint, refusals);
+    }
+
+    #[test]
     fn a_switch_keeps_its_type_while_it_has_cases_and_a_hole_takes_any_value() {
         let mut blueprint = harvest();
         let more = [

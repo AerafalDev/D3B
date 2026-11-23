@@ -10,6 +10,7 @@ use serde_json::Value;
 use super::frame::{Body, Call, Slot};
 use super::knows::Knows;
 use super::program::Program;
+use super::random::Random;
 use super::values::{self, Trace};
 use super::variables::Variables;
 use crate::game::View;
@@ -129,6 +130,8 @@ pub(crate) enum Fault {
     Empty { pin: String },
     #[error("the input {pin} divides by 0")]
     DividedByZero { pin: String },
+    #[error("no element {index} in a list of {length}")]
+    OutOfList { index: i64, length: usize },
 }
 
 /// What a node may use while it runs.
@@ -145,6 +148,7 @@ pub(crate) struct Cx<'a> {
     pub(super) call: &'a mut Call,
     pub(super) variables: &'a mut Variables,
     pub(super) kept: &'a mut HashMap<(usize, usize), Slot>,
+    pub(super) random: &'a mut Random,
     pub(super) trace: &'a mut Trace,
     pub(super) notices: &'a mut Vec<Notice>,
     pub(super) view: &'a View,
@@ -212,6 +216,20 @@ impl Cx<'_> {
     /// first.
     pub(crate) fn kept(&mut self) -> &mut Slot {
         self.kept.entry((self.graph, self.node)).or_default()
+    }
+
+    /// A whole number from `low` to `high`, both included, from the run's random source.
+    pub(crate) fn draw(&mut self, low: i64, high: i64) -> i64 {
+        self.random.between(low, high)
+    }
+
+    /// Keeps in the trace the value `pin` of the node at work gives, whatever the depth it is read at: a random
+    /// node's, so the debugger shows each draw as the value it gave.
+    pub(crate) fn traced(&mut self, pin: &str, value: Value) -> Value {
+        let code = &self.program.graphs[self.graph];
+        self.trace
+            .keep(&code.id, &code.nodes[self.node].id, pin, &value, self.now);
+        value
     }
 
     pub(crate) fn now(&self) -> Instant {

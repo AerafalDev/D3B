@@ -5,37 +5,34 @@ git and the ADRs, design in the domain pages, measures in [checklists/](checklis
 
 ## The step
 
-**Step 3, the bot's model** ([ROADMAP.md](../ROADMAP.md), [bot.md](bot.md), ADRs 0014 to 0018), started on 2026-11-13
-by two exceptions of the owner to "the next feature does not start": step 2 is measured on Windows but for items
-waiting on outside events. Today's feature is **blueprints v2's (v2.4), the values**
-([bot.md](bot.md#the-values-v24)).
+**Step 3, the bot's model** ([ROADMAP.md](../ROADMAP.md), [bot.md](bot.md), ADRs 0014 to 0019), started on 2026-11-13 by
+two exceptions of the owner to "the next feature does not start": step 2 is measured on Windows but for items waiting on
+outside events. Today's feature is **blueprints v2's (v2.4), the values** ([bot.md](bot.md#the-values-v24)).
 
 ## Done
 
 Steps 0 (the shell, typed IPC, packed data, i18n, the Claude setup, CI, release-please, six targets, signed updates) and
 1 (the extractor) are done and measured on Windows x64; the data is now in format 5 ([data.md](data.md)). Step 2 (the
 relay, the protocol and its pins, the live view, the inspector, the new shell) is done in code and measured on Windows
-x64 but for the items below. Step 3 is done in code up to v2.4's arithmetic and N seconds: the blueprint and its
-storage, the Library, D3B's three blueprints, the editor (graph, Details, Summary, picker, undo), the World and my
-zones, a character's blueprint and settings, the `.d3b` file, the runtime on the captures, v2.1 to v2.3, and v2.10's
-ranges. Pre-releases up to v0.14.0 ([updates.md](updates.md#pre-releases)); data assets in [data.md](data.md#published).
+x64 but for the items below. Step 3 is done in code up to v2.4's lists: the blueprint and its storage, the Library,
+D3B's three blueprints, the editor (graph, Details, Summary, picker, undo), the World and my zones, a character's
+blueprint and settings, the `.d3b` file, the runtime on the captures, v2.1 to v2.3, and v2.10's ranges; the blueprints'
+whole catalogue (ADR 0019) and step 4's first slice (ADR 0021) are designed. Pre-releases up to v0.14.0
+([updates.md](updates.md#pre-releases)); data assets in [data.md](data.md#published).
 
 ## Next
 
-One line per item, in order; each is designed in [bot.md](bot.md) unless named.
+One line per item, in order; each is designed in [bot.md](bot.md) or [play.md](play.md).
 
-- v2.4: randomness.
-- v2.4: lists.
 - v2.4: Text and Join.
 - v2.4: drawn compact.
-- v2.4: sentences in place, and its checklist.
-- v2.5: the queries over `game::Live`, and those marked with their study and step.
-- v2.6: the events: When, Every, At, the game's new ones, mine, and Trigger with its timers.
-- v2.7: the actions of steps 4 to 7, marked, and the variables' nodes (Add to, Reset, a list's).
-- v2.8: the Expression, its parser and checks in Rust, its node and completion in the editor.
-- v2.9: the picker by intent with its synonyms, and a node's inputs folded under "Advanced".
-- v2.10: Récolte and the five harvest blueprints, harvesting on the way (the owner, 2026-11-18).
-- v2.10: Combat and Chasseur, after the hunting weapon's and the meats' study.
+- v2.4: sentences in place, and its checklist; the language is frozen there (ADR 0019, the owner, 2026-11-23).
+- Step 4's first slice, F1 to F10: the game layer reading every family the C# version reads, paths, typed acts
+  ([play.md](play.md#the-stack), ADR 0021).
+- Step 4's first slice, R1 to R9: Récolte automatique playing on Windows; its measure, a 30-minute loop unblocked.
+- (26) events at run time: priorities, modes, thresholds, settings at safe points, When, Every, At, Trigger.
+- The catalogue's slices, each node with its first user ([bot.md](bot.md#the-catalogue-complete-2026-11-23)): 4·Play
+  (History, debugger), 4·Travel, 5·Récolte (and the five profession blueprints), 6·Combat (and Chasseur), 7.
 - (14) variables, with locals, lists and the new types' editors.
 - (15) functions opened in place, with their exits and the pure ones.
 - (16) events: priority, re-arming, modes, the defaults, and the events of mine declared.
@@ -43,8 +40,6 @@ One line per item, in order; each is designed in [bot.md](bot.md) unless named.
 - (18) Align, copy and paste, search.
 - (19) editing by keyboard.
 - (21) routes: an action and a forced exit per anchor, the recorder, the text import and export.
-- (26) events at run time: priorities, modes, thresholds, settings at safe points, timers.
-- Step 4: Play, what a character does now, its History and the debugger, with the first actions; (25) measured there.
 - Step 2: Q17, a build that changes the schema, at a later patch ([protocol.md](protocol.md#on-the-wire)).
 
 ## Open checklists

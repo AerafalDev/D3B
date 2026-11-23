@@ -329,6 +329,20 @@ pub(crate) const KINDS: &[Kind] = &[
     of("clamp", Value, &[input("value", Number, None), input("low", Number, None), input("high", Number, None), output("value", Number)], None),
     of("percent_of", Value, &[input("percent", Number, Some("50")), input("of", Number, None), output("value", Number)], None),
     of("seconds", Value, &[input("seconds", Number, Some("30")), output("value", Duration)], None),
+    // Randomness, numbers only (the owner, 2026-11-17: no random duration node, which would look like the humanlike
+    // timings `CLAUDE.md` refuses); each draw from the run's fresh seed, kept in the trace.
+    of("random_number", Value, &[input("low", Number, Some("1")), input("high", Number, Some("6")), output("value", Number)], None),
+    of("chance", Value, &[input("percent", Percentage, Some("50")), output("value", Bool)], None),
+    of("random_element", Value, &[wildcard("list", Side::In, true), wildcard("element", Side::Out, false)], None),
+    // The lists (the owner, 2026-11-17): one made of its inputs (at least 1, "+"), its length, contains, element n°
+    // from 1, first, position of (0 when absent), and `=` of two lists by their order.
+    Kind { takes: &[Takes::Count { pin: wildcard("in", Side::In, false), least: 1 }], ..of("make_list", Value, &[wildcard("value", Side::Out, true)], None) },
+    of("length", Value, &[wildcard("list", Side::In, true), output("value", Number)], None),
+    of("contains", Value, &[wildcard("list", Side::In, true), wildcard("element", Side::In, false), output("value", Bool)], None),
+    of("element_at", Value, &[wildcard("list", Side::In, true), input("index", Number, Some("1")), wildcard("element", Side::Out, false)], None),
+    of("first", Value, &[wildcard("list", Side::In, true), wildcard("element", Side::Out, false)], None),
+    of("position_of", Value, &[wildcard("list", Side::In, true), wildcard("element", Side::In, false), output("value", Number)], None),
+    of("equal_lists", Value, &[wildcard("a", Side::In, true), wildcard("b", Side::In, true), output("value", Bool)], None),
     of("entry", Function, &[THEN], None),
     of("return_done", Function, &[RUN], None),
     of("return_failed", Function, &[RUN, input("reason", Text, Some("\"\""))], None),
@@ -357,11 +371,9 @@ pub(crate) mod tests {
         Kind { takes, ..kind }
     }
 
-    /// Kinds for the tests, until v2's values bring theirs: a list of its numbered inputs, Text, Add to a variable and an
-    /// Expression.
+    /// Kinds for the tests, until v2's values bring theirs: Text, Add to a variable and an Expression.
     #[rustfmt::skip]
     pub(crate) const WILDCARDS: &[Kind] = &[
-        taking(of("test_list", Query, &[output("value", Number)], None), &[Takes::Count { pin: input("in", Number, None), least: 1 }]),
         taking(of("test_text", Query, &[output("value", Text)], None), &[Takes::Text]),
         taking(of("test_add_to", Flow, &[RUN, THEN, wildcard("amount", Side::In, false)], None), &[Takes::Variable]),
         taking(of("test_expression", Query, &[wildcard("value", Side::Out, false)], None), &[Takes::Expression]),

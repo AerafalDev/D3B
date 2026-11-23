@@ -96,6 +96,7 @@ pub(crate) fn of_graph(blueprint: &Blueprint, graph: &Graph, found: &mut Vec<Pro
     wires(graph, &known, found);
     leaves_outside_loops(graph, &known, found);
     zero_divisors(graph, found);
+    indexes_below_one(graph, found);
     for node in &graph.nodes {
         let Some(node_pins) = known.get(&node.id) else { continue };
         for pin in node_pins
@@ -122,6 +123,24 @@ fn zero_divisors(graph: &Graph, found: &mut Vec<Problem>) {
                 graph: graph.id.clone(),
                 node: node.id.clone(),
                 pin: Id("b".to_owned()),
+            });
+        }
+    }
+}
+
+/// Each element n° given an index typed below 1, which no list holds.
+fn indexes_below_one(graph: &Graph, found: &mut Vec<Problem>) {
+    for node in &graph.nodes {
+        let at = matches!(&node.does, Does::Kind(kind) if kind.0 == "element_at");
+        let index = node
+            .inputs
+            .get(&Id("index".to_owned()))
+            .and_then(serde_json::Value::as_i64);
+        if at && index.is_some_and(|index| index < 1) {
+            found.push(Problem::IndexBelowOne {
+                graph: graph.id.clone(),
+                node: node.id.clone(),
+                pin: Id("index".to_owned()),
             });
         }
     }
@@ -853,6 +872,38 @@ mod tests {
             pin: id("b"),
         };
         assert_eq!(found, [zero("d"), zero("r")]);
+    }
+
+    #[test]
+    fn a_list_given_values_with_no_type_is_a_wildcard_without_type() {
+        let found = after(|blueprint| {
+            let list = r#"{"id": "list", "kind": "make_list", "inputs": {"in_1": 5}}"#;
+            blueprint.graphs[0].nodes.push(node(list));
+        });
+        let untyped = Problem::WildcardWithoutType {
+            graph: id("events"),
+            node: id("list"),
+        };
+        assert_eq!(found, [untyped]);
+    }
+
+    #[test]
+    fn an_index_typed_below_1_is_a_problem_and_1_none() {
+        let found = after(|blueprint| {
+            blueprint.graphs[0].nodes.extend(
+                [
+                    r#"{"id": "at0", "kind": "element_at", "options": {"type": "number"}, "inputs": {"list": [1], "index": 0}}"#,
+                    r#"{"id": "at1", "kind": "element_at", "options": {"type": "number"}, "inputs": {"list": [1], "index": 1}}"#,
+                ]
+                .map(node),
+            );
+        });
+        let below = Problem::IndexBelowOne {
+            graph: id("events"),
+            node: id("at0"),
+            pin: id("index"),
+        };
+        assert_eq!(found, [below]);
     }
 
     #[test]

@@ -473,7 +473,8 @@
       "noSuchExit": "This node returns by {{subject}}, which this function does not have.",
       "notPure": "A pure function computes values only: this node has a flow.",
       "leaveOutsideLoop": "Leave the loop is in no loop's body.",
-      "zeroDivisor": "The input {{pin}} divides by 0: the character would be blocked."
+      "zeroDivisor": "The input {{pin}} divides by 0: the character would be blocked.",
+      "indexBelowOne": "The input {{pin}} is below 1: lists count from 1, the character would be blocked."
     },
     "type": {
       "bool": "Yes / no",

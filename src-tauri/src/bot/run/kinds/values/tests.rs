@@ -12,6 +12,11 @@ use crate::game::View;
 /// On start → If, its condition the output `value` of `node` (with `more` nodes and `wires` beside): true → "yes",
 /// false → "no"; what the run says, or why it blocked.
 fn decide(node: &str, more: &str, wires: &str) -> Result<String, Reason> {
+    decided(node, more, wires, 1).0
+}
+
+/// `decide` with the run's random source seeded `seed`; the run, for its trace.
+fn decided(node: &str, more: &str, wires: &str, seed: u64) -> (Result<String, Reason>, Run) {
     let text = format!(
         r#"{{"schema": 2, "id": "v", "name": "V", "version": 1, "graphs": [{{"id": "events", "name": "Events",
   "nodes": [{{"id": "start", "kind": "on_start"}}, {{"id": "if", "kind": "if"}}, {node}{more},
@@ -20,11 +25,13 @@ fn decide(node: &str, more: &str, wires: &str) -> Result<String, Reason> {
             {{"from": ["if", "true"], "to": ["yes", "run"]}}, {{"from": ["if", "false"], "to": ["no", "run"]}}{wires}]}}]}}"#
     );
     let blueprint = read(&text).unwrap_or_else(|error| panic!("{error}"));
-    let mut run = Run::new(&blueprint, &BTreeMap::new(), &BTreeMap::new()).unwrap_or_else(|error| panic!("{error:?}"));
-    match run.advance(Some(&View::default()), &Nothing, Instant::now()).clone() {
+    let run = Run::new(&blueprint, &BTreeMap::new(), &BTreeMap::new()).unwrap_or_else(|error| panic!("{error:?}"));
+    let mut run = run.seeded(seed);
+    let said = match run.advance(Some(&View::default()), &Nothing, Instant::now()).clone() {
         State::Blocked(Blocked { reason, .. }) => Err(reason),
         _ => Ok(run.notices().into_iter().map(|notice| notice.text).collect()),
-    }
+    };
+    (said, run)
 }
 
 /// A node `it` of `kind`, its wildcards of `of`, given `inputs`.
@@ -250,4 +257,169 @@ fn a_division_by_0_and_a_result_too_large_block_on_the_node() {
         gives("seconds", r#"{"seconds": -5}"#, 0),
         Err(Reason::Fault(Fault::NotOfType { pin: "seconds".into() }))
     );
+}
+
+/// Over 100 seeds, how many times `node` (fed by `more` and `wires`) read yes.
+fn yes_in_100(node: &str, more: &str, wires: &str) -> usize {
+    (0..100)
+        .filter(|seed| decided(node, more, wires, *seed).0 == Ok("yes".to_owned()))
+        .count()
+}
+
+#[test]
+fn a_random_number_stays_within_its_bounds_swapped() {
+    let more = r#", {"id": "x", "kind": "random_number", "inputs": {"low": 6, "high": 1}}"#;
+    let node = it("between", "number", r#"{"low": 1, "high": 6}"#);
+    assert_eq!(
+        yes_in_100(&node, more, r#", {"from": ["x", "value"], "to": ["it", "value"]}"#),
+        100
+    );
+    let three = it("equal", "number", r#"{"b": 3}"#);
+    let hits = yes_in_100(&three, more, r#", {"from": ["x", "value"], "to": ["it", "a"]}"#);
+    assert!((1..100).contains(&hits), "3 drawn sometimes: {hits}");
+}
+
+#[test]
+fn a_chance_of_0_is_never_true_of_100_always_and_of_50_both() {
+    let chance = |percent: i64| format!(r#"{{"id": "it", "kind": "chance", "inputs": {{"percent": {percent}}}}}"#);
+    assert_eq!(yes_in_100(&chance(0), "", ""), 0);
+    assert_eq!(yes_in_100(&chance(100), "", ""), 100);
+    assert!((20..80).contains(&yes_in_100(&chance(50), "", "")));
+}
+
+#[test]
+fn a_value_read_twice_by_one_node_is_one_draw_kept_in_the_trace() {
+    let more = r#", {"id": "x", "kind": "random_number", "inputs": {"low": 1, "high": 1000000}}"#;
+    let wires = r#", {"from": ["x", "value"], "to": ["it", "a"]}, {"from": ["x", "value"], "to": ["it", "b"]}"#;
+    assert_eq!(yes_in_100(&it("equal", "number", "{}"), more, wires), 100);
+    let (_, run) = decided(&it("equal", "number", "{}"), more, wires, 7);
+    let draws = run.trace().iter().filter(|traced| traced.node.0 == "x").count();
+    assert_eq!(draws, 1, "the draw, read two levels deep, traced once");
+    assert_eq!(run.seed(), 7);
+}
+
+#[test]
+fn a_random_node_traces_the_value_it_gives_and_choose_draws_on_its_side_only() {
+    let chance = r#"{"id": "it", "kind": "chance", "inputs": {"percent": 50}}"#;
+    let (said, run) = decided(chance, "", "", 3);
+    let traced: Vec<_> = run
+        .trace()
+        .iter()
+        .filter(|it| it.node.0 == "it")
+        .map(|it| it.value.clone())
+        .collect();
+    let gave = serde_json::Value::Bool(said == Ok("yes".to_owned()));
+    assert_eq!(traced, [gave], "the chance's yes or no, not its draw");
+    // ≥ 0 of a Choose, true, between two random numbers.
+    let more = r#", {"id": "pick", "kind": "choose", "options": {"type": "number"}, "inputs": {"condition": true}},
+                  {"id": "t", "kind": "random_number"}, {"id": "f", "kind": "random_number"}"#;
+    let wires = r#", {"from": ["t", "value"], "to": ["pick", "if_true"]}, {"from": ["f", "value"], "to": ["pick", "if_false"]},
+                   {"from": ["pick", "value"], "to": ["it", "a"]}"#;
+    let (_, run) = decided(&it("greater_or_equal", "number", r#"{"b": 0}"#), more, wires, 5);
+    let drawn: Vec<_> = run
+        .trace()
+        .iter()
+        .map(|it| it.node.0.clone())
+        .filter(|node| node == "t" || node == "f")
+        .collect();
+    assert_eq!(drawn, ["t"], "only the side taken drawn");
+}
+
+#[test]
+fn a_random_element_is_one_of_its_list_and_an_empty_list_blocks() {
+    let list = |values: &str| {
+        format!(
+            r#", {{"id": "x", "kind": "random_element", "options": {{"type": "number"}}, "inputs": {{"list": {values}}}}}"#
+        )
+    };
+    let node = it("between", "number", r#"{"low": 5, "high": 7}"#);
+    let wire = r#", {"from": ["x", "element"], "to": ["it", "value"]}"#;
+    assert_eq!(yes_in_100(&node, &list("[5, 6, 7]"), wire), 100);
+    let each = |element: i64| {
+        let node = it("equal", "number", &format!(r#"{{"b": {element}}}"#));
+        yes_in_100(
+            &node,
+            &list("[5, 6, 7]"),
+            r#", {"from": ["x", "element"], "to": ["it", "a"]}"#,
+        )
+    };
+    assert!(
+        [5, 6, 7].into_iter().all(|element| (1..100).contains(&each(element))),
+        "each, sometimes"
+    );
+    let only = it("equal", "number", r#"{"b": 9}"#);
+    let one = yes_in_100(
+        &only,
+        &list("[9]"),
+        r#", {"from": ["x", "element"], "to": ["it", "a"]}"#,
+    );
+    assert_eq!(one, 100, "a list of one");
+    assert_eq!(
+        decide(&node, &list("[]"), wire),
+        Err(Reason::Fault(Fault::Empty { pin: "list".into() }))
+    );
+}
+
+/// Whether `kind`, its list `[5, 6, 7]` made by a List of three, given `inputs`, gives through its output `out` what an
+/// `=` of `of` against `expected` reads true.
+fn of_list(kind: &str, inputs: &str, out: &str, of: &str, expected: &str) -> Result<bool, Reason> {
+    let node = it("equal", of, &format!(r#"{{"b": {expected}}}"#));
+    let more = format!(
+        r#", {{"id": "make", "kind": "make_list", "options": {{"type": "number", "count": 3}}, "inputs": {{"in_1": 5, "in_2": 6, "in_3": 7}}}},
+           {{"id": "x", "kind": "{kind}", "options": {{"type": "number"}}, "inputs": {inputs}}}"#
+    );
+    let wires = format!(
+        r#", {{"from": ["make", "value"], "to": ["x", "list"]}}, {{"from": ["x", "{out}"], "to": ["it", "a"]}}"#
+    );
+    decide(&node, &more, &wires).map(|said| said == "yes")
+}
+
+#[test]
+fn a_list_made_of_its_inputs_reads_its_length_elements_and_places() {
+    for (kind, inputs, out, of, expected) in [
+        ("length", "{}", "value", "number", "3"),
+        ("contains", r#"{"element": 6}"#, "value", "bool", "true"),
+        ("contains", r#"{"element": 9}"#, "value", "bool", "false"),
+        ("position_of", r#"{"element": 7}"#, "value", "number", "3"),
+        ("position_of", r#"{"element": 9}"#, "value", "number", "0"),
+        ("element_at", r#"{"index": 2}"#, "element", "number", "6"),
+        ("first", "{}", "element", "number", "5"),
+    ] {
+        assert_eq!(of_list(kind, inputs, out, of, expected), Ok(true), "{kind} {inputs}");
+    }
+}
+
+#[test]
+fn an_element_out_of_the_list_or_the_first_of_an_empty_one_blocks() {
+    assert_eq!(
+        of_list("element_at", r#"{"index": 4}"#, "element", "number", "0"),
+        Err(Reason::Fault(Fault::OutOfList { index: 4, length: 3 }))
+    );
+    // A 0 typed is a problem; one by a wire, 1 − 1, blocks.
+    let zero = it("equal", "number", r#"{"b": 0}"#);
+    let more = r#", {"id": "x", "kind": "element_at", "options": {"type": "number"}, "inputs": {"list": [5]}},
+                  {"id": "zero", "kind": "subtract", "inputs": {"a": 1, "b": 1}}"#;
+    let wires = r#", {"from": ["zero", "value"], "to": ["x", "index"]}, {"from": ["x", "element"], "to": ["it", "a"]}"#;
+    assert_eq!(
+        decide(&zero, more, wires),
+        Err(Reason::Fault(Fault::OutOfList { index: 0, length: 1 }))
+    );
+    let node = it("equal", "number", r#"{"b": 0}"#);
+    let empty = r#", {"id": "x", "kind": "first", "options": {"type": "number"}, "inputs": {"list": []}}"#;
+    assert_eq!(
+        decide(&node, empty, r#", {"from": ["x", "element"], "to": ["it", "a"]}"#),
+        Err(Reason::Fault(Fault::Empty { pin: "list".into() }))
+    );
+}
+
+#[test]
+fn two_lists_are_equal_with_the_same_elements_in_the_same_order() {
+    let lists = |a: &str, b: &str| {
+        yes(&format!(
+            r#"{{"id": "it", "kind": "equal_lists", "options": {{"type": "number"}}, "inputs": {{"a": {a}, "b": {b}}}}}"#
+        ))
+    };
+    assert!(lists("[1, 2]", "[1, 2]"));
+    assert!(!lists("[1, 2]", "[2, 1]"), "by their order");
+    assert!(!lists("[1, 2]", "[1, 2, 3]"));
 }
