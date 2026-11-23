@@ -243,6 +243,18 @@
     "seconds": {
       "sentence": "{{seconds}} s",
       "description": "A duration of that many seconds."
+    },
+    "random_number": {
+      "sentence": "At random from {{low}} to {{high}}",
+      "description": "A whole number drawn at random between both bounds, included, at each read."
+    },
+    "chance": {
+      "sentence": "True {{percent}} of the time",
+      "description": "True that percentage of the time, drawn at each read: never at 0, always at 100."
+    },
+    "random_element": {
+      "sentence": "A random element of {{list}}",
+      "description": "An element of the list drawn at random at each read; an empty list blocks the character."
     }
   },
   "pins": {

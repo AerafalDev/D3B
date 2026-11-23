@@ -329,6 +329,11 @@ pub(crate) const KINDS: &[Kind] = &[
     of("clamp", Value, &[input("value", Number, None), input("low", Number, None), input("high", Number, None), output("value", Number)], None),
     of("percent_of", Value, &[input("percent", Number, Some("50")), input("of", Number, None), output("value", Number)], None),
     of("seconds", Value, &[input("seconds", Number, Some("30")), output("value", Duration)], None),
+    // Randomness, numbers only (the owner, 2026-11-17: no random duration node, which would look like the humanlike
+    // timings `CLAUDE.md` refuses); each draw from the run's fresh seed, kept in the trace.
+    of("random_number", Value, &[input("low", Number, Some("1")), input("high", Number, Some("6")), output("value", Number)], None),
+    of("chance", Value, &[input("percent", Percentage, Some("50")), output("value", Bool)], None),
+    of("random_element", Value, &[wildcard("list", Side::In, true), wildcard("element", Side::Out, false)], None),
     of("entry", Function, &[THEN], None),
     of("return_done", Function, &[RUN], None),
     of("return_failed", Function, &[RUN, input("reason", Text, Some("\"\""))], None),
