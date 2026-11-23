@@ -1,0 +1,92 @@
+{
+  "build": "3.7.14.18",
+  "connections": 2,
+  "frames": 63557,
+  "messages": {
+    "CharacterSelectionEvent": {
+      "understood": 0,
+      "read": 2,
+      "notTrusted": 0
+    },
+    "CharacterStatsEvent": {
+      "understood": 0,
+      "read": 54,
+      "notTrusted": 0
+    },
+    "ContextCreationEvent": {
+      "understood": 32,
+      "read": 0,
+      "notTrusted": 0
+    },
+    "ContextDestroyEvent": {
+      "understood": 32,
+      "read": 0,
+      "notTrusted": 0
+    },
+    "FightEndEvent": {
+      "understood": 0,
+      "read": 15,
+      "notTrusted": 0
+    },
+    "InteractiveElementUpdatedEvent": {
+      "understood": 528,
+      "read": 549,
+      "notTrusted": 0
+    },
+    "InventoryWeightEvent": {
+      "understood": 707,
+      "read": 0,
+      "notTrusted": 0
+    },
+    "KamasUpdateEvent": {
+      "understood": 430,
+      "read": 0,
+      "notTrusted": 0
+    },
+    "LifeRegenEndEvent": {
+      "understood": 15,
+      "read": 0,
+      "notTrusted": 0
+    },
+    "LifeRegenStartEvent": {
+      "understood": 17,
+      "read": 0,
+      "notTrusted": 0
+    },
+    "MapActorRemovedEvent": {
+      "understood": 626,
+      "read": 0,
+      "notTrusted": 0
+    },
+    "MapActorShownEvent": {
+      "understood": 0,
+      "read": 703,
+      "notTrusted": 0
+    },
+    "MapCurrentEvent": {
+      "understood": 3285,
+      "read": 0,
+      "notTrusted": 0
+    },
+    "MapInformationEvent": {
+      "understood": 0,
+      "read": 3273,
+      "notTrusted": 0
+    },
+    "MapInformationRequest": {
+      "understood": 3285,
+      "read": 0,
+      "notTrusted": 0
+    },
+    "MapMovementEvent": {
+      "understood": 0,
+      "read": 4904,
+      "notTrusted": 0
+    },
+    "StatedElementUpdatedEvent": {
+      "understood": 1076,
+      "read": 0,
+      "notTrusted": 0
+    }
+  }
+}

@@ -8,6 +8,8 @@ const IGNORED = [
   /^bun\.lock$/,
   /Cargo\.lock$/,
   /^src\/bindings\.ts$/,
+  /^docs\/protocol-coverage\.md$/,
+  /^src-tauri\/protocol\/replay\//,
   /^src\/components\/(ui|flow)\//,
   /^src-tauri\/icons\//,
   /^CHANGELOG\.md$/,

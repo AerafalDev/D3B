@@ -6,6 +6,7 @@ use std::collections::BTreeMap;
 use std::path::{Path, PathBuf};
 use std::time::Duration;
 
+use super::coverage::replayed::{self, Replayed};
 use super::message::{Message, READABLE};
 use super::outcome::Outcome;
 use super::pins::Pins;
@@ -81,12 +82,28 @@ fn is_a_game_connection(frames: &[(Side, Duration, Vec<u8>)]) -> bool {
     first.is_some_and(|(side, _, body)| envelope::open(*side, body).is_some())
 }
 
+/// Counts a frame of a build's replay: every frame, and a pinned one by its readable name and outcome.
+fn tally(replayed: &mut Replayed, readable: Option<&str>, outcome: Outcome) {
+    replayed.frames += 1;
+    let Some(readable) = readable else {
+        return;
+    };
+    let tally = replayed.messages.entry(readable.to_owned()).or_default();
+    match outcome {
+        Outcome::Understood => tally.understood += 1,
+        Outcome::Read => tally.read += 1,
+        Outcome::NotTrusted => tally.not_trusted += 1,
+        // A pinned name is decoded, so its frame is never unknown.
+        Outcome::Unknown => {}
+    }
+}
+
 #[test]
 #[ignore = "needs the owner's captures: set D3B_CAPTURES to their folder"]
 fn the_owners_game_captures_read_through_the_protocol() {
     let folder = folder();
     let mut outcomes: BTreeMap<String, usize> = BTreeMap::new();
-    let mut by_name: BTreeMap<(&str, String), usize> = BTreeMap::new();
+    let mut builds: BTreeMap<String, Replayed> = BTreeMap::new();
     let (mut games, mut unmapped) = (0, 0);
     for path in captures(&folder) {
         let name = path.strip_prefix(&folder).unwrap_or(&path).display().to_string();
@@ -102,34 +119,53 @@ fn the_owners_game_captures_read_through_the_protocol() {
             continue;
         };
         let pins = pins.unwrap_or_else(|error| panic!("{error}"));
+        let replayed = builds.entry(capture.build.clone()).or_insert_with(|| Replayed {
+            build: capture.build.clone(),
+            ..Replayed::default()
+        });
+        replayed.connections += 1;
         for (side, _, body) in &frames {
             let (outcome, _) = decoder::read(&pins, *side, body);
             *outcomes.entry(format!("{outcome:?}")).or_default() += 1;
             let readable = envelope::open(*side, body).and_then(|content| pins.readable(content.name));
-            if let Some(readable) = readable {
-                *by_name.entry((readable, format!("{outcome:?}"))).or_default() += 1;
-            }
+            tally(replayed, readable, outcome);
         }
     }
     eprintln!("{games} game connections ({unmapped} of a build without pins), frames by outcome: {outcomes:?}");
-    for ((readable, outcome), count) in &by_name {
-        eprintln!("  {readable}: {count} {outcome}");
+    for replayed in builds.values() {
+        eprintln!(
+            "  {}: {} connections, {} frames",
+            replayed.build, replayed.connections, replayed.frames
+        );
+        for (readable, tally) in &replayed.messages {
+            eprintln!("    {readable}: {tally:?}");
+        }
+        // The coverage report's counts (`docs/protocol-coverage.md`): written before the checks, so that a frame not
+        // trusted shows there too.
+        replayed::write(&replayed::folder(), replayed).unwrap_or_else(|error| panic!("{error}"));
     }
     assert!(
         games > unmapped,
         "no game capture of a build with pins in {}",
         folder.display()
     );
-    let not_trusted: Vec<_> = by_name
-        .iter()
-        .filter(|((_, outcome), _)| *outcome == format!("{:?}", Outcome::NotTrusted))
+    let not_trusted: Vec<_> = builds
+        .values()
+        .flat_map(|replayed| {
+            replayed
+                .messages
+                .iter()
+                .map(move |(name, tally)| (&replayed.build, name, tally))
+        })
+        .filter(|(.., tally)| tally.not_trusted > 0)
         .collect();
     assert!(not_trusted.is_empty(), "not trusted: {not_trusted:?}");
     for readable in READABLE {
         assert!(
-            by_name
-                .keys()
-                .any(|(name, outcome)| name == readable && outcome != "Unknown"),
+            builds.values().any(|replayed| replayed
+                .messages
+                .get(*readable)
+                .is_some_and(|tally| tally.understood + tally.read > 0)),
             "{readable} was never decoded"
         );
     }

@@ -35,6 +35,9 @@ mod audit;
 #[cfg(test)]
 pub(crate) mod replay;
 
+#[cfg(test)]
+mod coverage;
+
 /// The messages of our `.proto` files, as `prost-build` writes them.
 // `allow`, not `expect`: which lints the generated code trips changes with prost's version, and an expectation left
 // unfulfilled would fail the build.
