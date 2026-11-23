@@ -26,6 +26,11 @@ version's `.proto` files declare about 262.
 - **The C# version's measures are the first source** of each act, as named tests; every request is proven byte for
   byte against the C# bot's own in the owner's captures.
 - The bankers come from the extractor's NPC tables, a format 6, not from values written in the code.
+- **The bot's frames go between the client's**: the relay holds the client's bytes until its frame in progress ends,
+  then writes the bot's, with the request id the C# version measured for them (D61); the server's answers reach the
+  client. This amends ADR 0011, whose relay wrote nothing of its own: it still rewrites only its one frame.
+- **Pins follow the families read**: this amends ADR 0012's pins "for the messages a feature reads": a family the C#
+  version reads is pinned and decoded once the owner's captures check it, before a feature uses it.
 
 ## Rejected
 
@@ -37,6 +42,6 @@ version's `.proto` files declare about 262.
 
 ## Consequences
 
-Step 4 starts with about seven PRs of reading before the first walk; each adds its families to the coverage report and
-its fields to [game.md](../game.md). A blueprint node is a thin call onto a field or an act. Review refuses a wait
+Step 4 starts with the writer (two PRs) and four PRs of reading before the paths and the first walk; each adds its
+families to the coverage report and its fields to [game.md](../game.md). A blueprint node is a thin call onto a field or an act. Review refuses a wait
 without a deadline and an act whose refusals are not typed.
