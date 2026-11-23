@@ -2,13 +2,15 @@
 
 One file per feature: what the owner measures in game on Windows x64, and the testers on the other platforms
 ([testing.md](../testing.md)), before the feature is done (`CLAUDE.md`, Done). `docs/now.md` lists each file still
-open or waiting in one line.
+open or waiting in one line, which `bun run rules` checks.
 
-A file's status is its line `Status: <status>` under its title:
+A file's status is its line `Status: <status>` under its title, which `bun run rules` reads:
 
-- `open`: an item, or the part of one not tried, is still the owner's to measure.
+- `open`: an item, or the part of one not tried, is still the owner's to measure. While more than five are open, no
+  new feature PR is opened (`CLAUDE.md`, The cap); CI fails a `feat` PR then, unless it carries the `step-finish`
+  label: one of the remaining PRs of the feature already started, which `docs/now.md` names.
 - `waiting`: what is left waits on an outside event (a release, a client patch, a tester, an account), each item
-  saying which.
+  saying which; it does not count toward the cap.
 - `measured`: every item passed; the file stays as the record of its measures.
 
 A measure adds its line, "Measured by the owner on <date>, <platform>, <how>: items … pass", which is never rewritten
