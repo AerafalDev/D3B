@@ -485,3 +485,58 @@ fn a_message_without_fields_lists_none() {
     assert_eq!(fields_of("LifeRegenEndEvent"), Vec::<String>::new());
     assert_eq!(fields_of("LifeRegenEndEvent {\n}"), Vec::<String>::new());
 }
+
+#[test]
+fn reads_a_walk_its_refusal_its_stop_and_a_map_change() {
+    let turning = packed(&[300, 4096 + 302, 4096 + 316]);
+    let walk = message(&[bytes(1, &turning), varint(2, 191_106_048)]);
+    let refused = message(&[varint(2, 13), varint(3, -2)]);
+    let stop = message(&[varint(1, 302)]);
+    let change = message(&[varint(1, 1), varint(2, 191_106_050)]);
+    let confirm = message(&[]);
+
+    assert_eq!(
+        decoded("MapMovementRequest", &walk),
+        Message::MapMovementRequest(game::MapMovementRequest {
+            key_movements: vec![300, 4096 + 302, 4096 + 316],
+            map_id: 191_106_048,
+            flag_3: false,
+        })
+    );
+    assert_eq!(
+        decoded("MapMovementRefusedEvent", &refused),
+        Message::MapMovementRefusedEvent(game::MapMovementRefusedEvent { x: 13, y: -2 })
+    );
+    assert_eq!(
+        decoded("MapMovementCancelRequest", &stop),
+        Message::MapMovementCancelRequest(game::MapMovementCancelRequest { cell_id: 302 })
+    );
+    assert_eq!(
+        decoded("MapChangeRequest", &change),
+        Message::MapChangeRequest(game::MapChangeRequest {
+            flag_1: true,
+            map_id: 191_106_050,
+        })
+    );
+    assert_eq!(
+        decoded("MapMovementConfirmRequest", &confirm),
+        Message::MapMovementConfirmRequest(game::MapMovementConfirmRequest::default())
+    );
+    assert_eq!(
+        decoded("MapMovementConfirmResponse", &confirm),
+        Message::MapMovementConfirmResponse(game::MapMovementConfirmResponse {})
+    );
+}
+
+#[test]
+fn a_refusal_s_text_and_fourth_field_are_left_out() {
+    let refused = message(&[bytes(1, b"text"), varint(2, 13), varint(3, -2), varint(4, 7)]);
+
+    let decoded = decoded("MapMovementRefusedEvent", &refused);
+
+    assert_eq!(
+        decoded,
+        Message::MapMovementRefusedEvent(game::MapMovementRefusedEvent { x: 13, y: -2 })
+    );
+    assert_ne!(decoded.encode(), refused, "fields 1 and 4 came back");
+}

@@ -142,6 +142,18 @@ impl Pins {
         self.readable.iter().map(|(name, readable)| (*readable, name.as_str()))
     }
 
+    /// The build's name of `readable`, if the build pins it: the name the bot's requests carry.
+    #[cfg_attr(
+        not(test),
+        expect(dead_code, reason = "the bot's requests are encoded with it from step 4's R1")
+    )]
+    pub(crate) fn name_of(&self, readable: &str) -> Option<&str> {
+        self.readable
+            .iter()
+            .find(|(_, ours)| **ours == readable)
+            .map(|(name, _)| name.as_str())
+    }
+
     /// Whether `name`, a message's name in the build, carries a session secret.
     pub(crate) fn is_secret(&self, name: &str) -> bool {
         self.secrets.contains(name)

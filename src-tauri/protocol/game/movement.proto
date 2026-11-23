@@ -1,0 +1,51 @@
+// How a character moves: on its map along a path, then to the next map (step 4's F3, docs/play.md). The client asks,
+// the server shows the walk, and the client confirms once its character arrived; the bot sends the walks and map
+// changes itself (docs/relay.md, "The bot's frames"). Readable names and meanings are the C# version's (inferred,
+// `main:src/D3B.Protocol/Game/movement.proto`), checked on the owner's 56 game connections of 3.7.13.17 (the study of
+// step 4's walks); field numbers and kinds were checked by hand against 3.7.13.17's schema, which the pins' audit test
+// checks. A message marked partial declares only the fields D3B reads.
+syntax = "proto3";
+
+package d3b.game;
+
+// Asks to walk a path on the character's map: its turning points, each the direction leaving it (0 east, clockwise to
+// 7) times 4096 plus its cell, the last with the direction it arrives in, and the map (verified, all 97,976 requests).
+// Field 3 is never set. The server shows the walk 27 to 36 ms later, or refuses it with a MapMovementRefusedEvent.
+message MapMovementRequest {
+  repeated int32 key_movements = 1;
+  int64 map_id = 2;
+  bool flag_3 = 3;
+}
+
+// The client says its character arrived at its walk's end; both fields are never set (verified, 90,498). The bot never
+// sends it: the client confirms the bot's walks too, 99.2% of them.
+message MapMovementConfirmRequest {
+  // An enum of nine values in the schema, read as its number.
+  int32 value_1 = 1;
+  int32 number_2 = 2;
+}
+
+// The server's answer to the confirmation, 27 to 36 ms later: the walk is over (verified, 90,494).
+message MapMovementConfirmResponse {
+}
+
+// The server does not walk the path asked: the character stands on the cell these coordinates name, the first cell of
+// a walk it still holds (verified, 541 of 591), the cell being (x - y) * 14 + y + floor((x - y) / 2). Partial: fields 1
+// (a text) and 4 are never set.
+message MapMovementRefusedEvent {
+  int32 x = 2;
+  int32 y = 3;
+}
+
+// The client stops its walk on a cell of it, then sends the new path from there in the same read; the server answers
+// nothing (verified, 11).
+message MapMovementCancelRequest {
+  int32 cell_id = 1;
+}
+
+// Asks to go to a neighbouring map from a cell of the edge it lies beyond: the server names the new map 27 to 36 ms
+// later (verified, 51,707 of 51,750). Field 1 is set by the client only, never by the bot.
+message MapChangeRequest {
+  bool flag_1 = 1;
+  int32 map_id = 2;
+}

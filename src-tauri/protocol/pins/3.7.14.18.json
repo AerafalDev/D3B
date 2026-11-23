@@ -15,10 +15,16 @@
     "LifeRegenStartEvent": "kqw",
     "MapActorRemovedEvent": "kjz",
     "MapActorShownEvent": "jns",
+    "MapChangeRequest": "joc",
     "MapCurrentEvent": "jow",
     "MapInformationEvent": "jnj",
     "MapInformationRequest": "kjt",
+    "MapMovementCancelRequest": "jpj",
+    "MapMovementConfirmRequest": "jny",
+    "MapMovementConfirmResponse": "jpk",
     "MapMovementEvent": "jnz",
+    "MapMovementRefusedEvent": "jpc",
+    "MapMovementRequest": "jok",
     "StatedElementUpdatedEvent": "itw"
   },
   "secrets": [

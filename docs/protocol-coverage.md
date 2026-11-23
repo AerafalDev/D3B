@@ -16,20 +16,20 @@ protocol's replay writes (`D3B_CAPTURES`, [protocol.md](protocol.md#tests)); CI 
 
 | Build | Pinned | Decoded | Encoded | Replayed | Measured in game |
 | --- | ---: | ---: | ---: | --- | ---: |
-| 3.7.13.17 | 18 of 141 | 18 | 0 | 2 connections, 345 frames | 15 |
-| 3.7.14.18 | 18 of 141 | 18 | 0 | 2 connections, 63,557 frames | 0 |
+| 3.7.13.17 | 24 of 141 | 24 | 2 | 2 connections, 345 frames | 15 |
+| 3.7.14.18 | 24 of 141 | 24 | 2 | 2 connections, 63,557 frames | 0 |
 
 ## Movement
 
 | Message | Side | 3.7.13.17 | 3.7.14.18 | Lua |
 | --- | --- | --- | --- | --- |
-| MapMovementRequest | client | — | — | `map.moveToCell` |
+| MapMovementRequest | client | `jok`, decoded, encoded, 5 frames | `jok`, decoded, encoded, 12 frames | `map.moveToCell` |
 | MapMovementEvent | server | `jnz`, decoded, 13 frames, [measured](checklists/protocol.md) | `jnz`, decoded, 4,904 frames | `map.cellId` |
-| MapMovementConfirmRequest | client | — | — | `map.moveToCell` |
-| MapMovementConfirmResponse | server | — | — | — |
-| MapMovementRefusedEvent | server | — | — | `map.moveToCell` |
-| MapMovementCancelRequest | client | — | — | — |
-| MapChangeRequest | client | — | — | `map.changeMap`, `map.moveToward` |
+| MapMovementConfirmRequest | client | `jny`, decoded, 5 frames | `jny`, decoded, 3,618 frames | `map.moveToCell` |
+| MapMovementConfirmResponse | server | `jpk`, decoded, 5 frames | `jpk`, decoded, 3,617 frames | — |
+| MapMovementRefusedEvent | server | `jpc`, decoded | `jpc`, decoded, 116 frames | `map.moveToCell` |
+| MapMovementCancelRequest | client | `jpj`, decoded | `jpj`, decoded, 2 frames | — |
+| MapChangeRequest | client | `joc`, decoded, encoded | `joc`, decoded, encoded | `map.changeMap`, `map.moveToward` |
 
 ## Maps
 

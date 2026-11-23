@@ -1,4 +1,4 @@
-//! The messages the live view reads (`docs/protocol.md`, "Decoding"), decoded by their readable names.
+//! The messages the live view and the bot read (`docs/protocol.md`, "Decoding"), decoded by their readable names.
 
 use prost::Message as _;
 
@@ -82,6 +82,12 @@ messages! {
     CharacterLevelUpEvent,
     KamasUpdateEvent,
     FightEndEvent,
+    MapMovementRequest,
+    MapMovementConfirmRequest,
+    MapMovementConfirmResponse,
+    MapMovementRefusedEvent,
+    MapMovementCancelRequest,
+    MapChangeRequest,
 }
 
 #[cfg(test)]

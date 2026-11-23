@@ -16,6 +16,8 @@ mod pins;
 
 mod decoder;
 
+mod request;
+
 mod session;
 
 mod frames;

@@ -3,9 +3,10 @@ use std::path::Path;
 
 use super::catalogue::{CATALOGUE, Entry, Family};
 use super::replayed::{self, Replayed, ReplayedError, Tally};
-use super::{Build, CoverageError, ENCODED, cell, check, report, thousands};
+use super::{Build, CoverageError, cell, check, report, thousands};
 use crate::protocol::Pins;
 use crate::protocol::message::READABLE;
+use crate::protocol::request::ENCODED;
 
 const fn entry(name: &'static str) -> Entry {
     Entry {

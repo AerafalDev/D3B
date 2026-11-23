@@ -78,9 +78,34 @@
       "read": 0,
       "notTrusted": 0
     },
+    "MapMovementCancelRequest": {
+      "understood": 2,
+      "read": 0,
+      "notTrusted": 0
+    },
+    "MapMovementConfirmRequest": {
+      "understood": 3618,
+      "read": 0,
+      "notTrusted": 0
+    },
+    "MapMovementConfirmResponse": {
+      "understood": 3617,
+      "read": 0,
+      "notTrusted": 0
+    },
     "MapMovementEvent": {
       "understood": 0,
       "read": 4904,
+      "notTrusted": 0
+    },
+    "MapMovementRefusedEvent": {
+      "understood": 116,
+      "read": 0,
+      "notTrusted": 0
+    },
+    "MapMovementRequest": {
+      "understood": 12,
+      "read": 0,
       "notTrusted": 0
     },
     "StatedElementUpdatedEvent": {
