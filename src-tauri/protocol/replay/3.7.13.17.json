@@ -63,9 +63,24 @@
       "read": 0,
       "notTrusted": 0
     },
+    "MapMovementConfirmRequest": {
+      "understood": 5,
+      "read": 0,
+      "notTrusted": 0
+    },
+    "MapMovementConfirmResponse": {
+      "understood": 5,
+      "read": 0,
+      "notTrusted": 0
+    },
     "MapMovementEvent": {
       "understood": 0,
       "read": 13,
+      "notTrusted": 0
+    },
+    "MapMovementRequest": {
+      "understood": 5,
+      "read": 0,
       "notTrusted": 0
     }
   }

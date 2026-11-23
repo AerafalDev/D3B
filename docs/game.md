@@ -45,7 +45,7 @@ Which messages each build pins and decodes is in [protocol-coverage.md](protocol
 | Maps | the map | `MapCurrentEvent`, `MapInformationEvent` | verified |
 | Maps | the character's cell | `MapInformationEvent`, `MapMovementEvent` | verified |
 | Maps | actors: players, NPCs, monster groups | `MapInformationEvent`, `MapActorShownEvent`, `MapActorRemovedEvent`, `MapMovementEvent` | verified |
-| Movement | a walk refused, confirmed | `MapMovementRefusedEvent`, `MapMovementConfirmResponse` | not decoded yet (F3) |
+| Movement | a walk refused, confirmed | `MapMovementRefusedEvent`, `MapMovementConfirmResponse` | decoded (F3), held by the acts (F10) |
 | Interactives | interactive and stated elements | `MapInformationEvent`, `InteractiveElementUpdatedEvent`, `StatedElementUpdatedEvent` | verified |
 | Interactives | an element in use, its end, its refusal | `InteractiveUsedEvent`, `InteractiveUseEndedEvent`, `InteractiveUseErrorEvent` | not decoded yet (F5) |
 | NPCs | a dialog's question and replies | `NpcDialogQuestionEvent`, `NpcActionErrorEvent` | not decoded yet (F5) |

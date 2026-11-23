@@ -23,12 +23,12 @@ protocol's replay writes (`D3B_CAPTURES`, [protocol.md](protocol.md#tests)); CI 
 
 | Message | Side | 3.7.13.17 | 3.7.14.18 | Lua |
 | --- | --- | --- | --- | --- |
-| MapMovementRequest | client | `jok`, decoded, encoded | `jok`, decoded, encoded | `map.moveToCell` |
+| MapMovementRequest | client | `jok`, decoded, encoded, 5 frames | `jok`, decoded, encoded, 12 frames | `map.moveToCell` |
 | MapMovementEvent | server | `jnz`, decoded, 13 frames, [measured](checklists/protocol.md) | `jnz`, decoded, 4,904 frames | `map.cellId` |
-| MapMovementConfirmRequest | client | `jny`, decoded | `jny`, decoded | `map.moveToCell` |
-| MapMovementConfirmResponse | server | `jpk`, decoded | `jpk`, decoded | — |
-| MapMovementRefusedEvent | server | `jpc`, decoded | `jpc`, decoded | `map.moveToCell` |
-| MapMovementCancelRequest | client | `jpj`, decoded | `jpj`, decoded | — |
+| MapMovementConfirmRequest | client | `jny`, decoded, 5 frames | `jny`, decoded, 3,618 frames | `map.moveToCell` |
+| MapMovementConfirmResponse | server | `jpk`, decoded, 5 frames | `jpk`, decoded, 3,617 frames | — |
+| MapMovementRefusedEvent | server | `jpc`, decoded | `jpc`, decoded, 116 frames | `map.moveToCell` |
+| MapMovementCancelRequest | client | `jpj`, decoded | `jpj`, decoded, 2 frames | — |
 | MapChangeRequest | client | `joc`, decoded, encoded | `joc`, decoded, encoded | `map.changeMap`, `map.moveToward` |
 
 ## Maps

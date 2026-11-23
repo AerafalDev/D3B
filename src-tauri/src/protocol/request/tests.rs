@@ -17,7 +17,8 @@ fn movement() -> Pins {
 /// A walk of two cells east then one south-east, on map 191106048.
 fn walk() -> Request {
     Request::MapMovementRequest(game::MapMovementRequest {
-        key_movements: vec![300, 302, 1 << 12 | 316],
+        // Direction 1, south-east, times 4096, then the cell.
+        key_movements: vec![300, 302, 4096 + 316],
         map_id: 191_106_048,
         flag_3: false,
     })
@@ -48,7 +49,7 @@ fn encodes_a_walk_as_the_client_frames_it() {
 /// The walk's message as prost writes it: field 1 packed, then the map.
 fn walk_value(out: &mut Vec<u8>) {
     let mut packed = Vec::new();
-    for cell in [300_u64, 302, 1 << 12 | 316] {
+    for cell in [300_u64, 302, 4096 + 316] {
         wire::write_varint(cell, &mut packed);
     }
     out.push(0x0a);

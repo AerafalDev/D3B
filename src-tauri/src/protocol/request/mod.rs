@@ -2,6 +2,10 @@
 //! field 4, a request `{ int32 id = 1, Any = 2 }`, its `Any` `{ type_url = 1, value = 2 }` naming the message by the
 //! build's pins, the value left out when the message is empty (verified, `protocol::envelope`, 3.7.13.17). The relay
 //! writes the frame between the client's (`relay::BotFrames`).
+#![cfg_attr(
+    not(test),
+    expect(dead_code, reason = "the bot's acts send its requests from step 4's R1")
+)]
 
 use prost::Message as _;
 
@@ -28,7 +32,6 @@ macro_rules! requests {
         }
 
         /// The readable names of [`Request`]'s variants: the requests D3B encodes, the coverage report's column.
-        #[cfg_attr(not(test), expect(dead_code, reason = "the coverage report and the replay read it"))]
         pub(crate) const ENCODED: &[&str] = &[$(stringify!($name)),*];
 
         impl Request {
@@ -73,10 +76,6 @@ pub(crate) enum RequestError {
 impl Request {
     /// The request as one whole frame, its header included, the client's envelope around it with the id -1 and the
     /// name `pins` give it.
-    #[cfg_attr(
-        not(test),
-        expect(dead_code, reason = "the bot's acts send through it from step 4's R1")
-    )]
     pub(crate) fn frame(&self, pins: &Pins) -> Result<Vec<u8>, RequestError> {
         let readable = self.readable();
         let name = pins.name_of(readable).ok_or(RequestError::NotPinned { readable })?;

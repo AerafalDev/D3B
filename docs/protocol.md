@@ -104,7 +104,23 @@ Each is `inferred` unless said `verified`.
   `.proto` keeps the build's `optional` and oneofs. A secret message's frames count as unknown.
 - **To start**, the messages the live view needs: the character chosen, the current map and its information (and its
   request), the context created and destroyed, actors shown, removed and moving, interactive and stated elements
-  updated, the characteristics, life regeneration, the weight, a level gained and the kamas.
+  updated, the characteristics, life regeneration, the weight, a level gained and the kamas. Step 4's F3 adds the
+  movement family (`movement.proto`): the walk and its refusal, confirmation, answer and stop, and the map change,
+  pinned for 3.7.13.17 and 3.7.14.18 (24 pins each, the audit holding on both schemas).
+
+## Requests
+
+The bot's requests (ADR 0021), `protocol::request::Request`, one variant per request it sends, by its readable name:
+today the walk (`MapMovementRequest`) and the map change (`MapChangeRequest`), the coverage report's "encoded".
+`Request::frame` gives one whole frame as the client writes its own: the root's field 4 `{ int32 id = 1, Any = 2 }`,
+the id -1 (the C# version's and the client's own for these requests, `main:docs/client-game.md`), the `Any` naming
+the build's message by its pins, its value as prost writes it, left out for an empty message. A build that does not pin
+the request refuses it, typed (`RequestError::NotPinned`). The relay writes the frame between the client's
+([relay.md](relay.md#the-bots-frames)); nothing sends it before the bot plays (step 4's R1).
+
+**Byte for byte**: the replay `the_c_sharp_bot_s_requests_encode_again_byte_for_byte` (`D3B_CAPTURES`) decodes each
+request the C# bot wrote itself (a capture's records of kind 5) and encodes it again: on 2026-11-23, on the 4 game
+connections on the owner's machine, all 3,806 walks and 1,615 map changes gave the same bytes, none other.
 
 ## A new build
 
