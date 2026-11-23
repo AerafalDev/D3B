@@ -15,6 +15,9 @@ const FORMAT: i32 = 2;
 const FROM_CLIENT: u8 = 1;
 /// A record of bytes the server sent.
 const FROM_SERVER: u8 = 2;
+/// A record of a frame the bot wrote to the game server itself, between the client's: format 2's `Injected`. The
+/// server's bytes are then the client's records and these, in their order.
+const FROM_BOT: u8 = 5;
 
 #[cfg(test)]
 pub(crate) use reader::{Capture, Record, read};
@@ -38,7 +41,9 @@ mod reader {
     pub(crate) enum Record {
         FromClient(Vec<u8>),
         FromServer(Vec<u8>),
-        /// A side closed, or a frame the C# bot sent itself: nothing to replay.
+        /// A frame the bot wrote to the game server itself, between the client's.
+        FromBot(Vec<u8>),
+        /// A side closed: nothing to replay.
         Other,
     }
 
@@ -88,7 +93,7 @@ mod reader {
                     match kind {
                         super::FROM_CLIENT => Record::FromClient(data.to_vec()),
                         super::FROM_SERVER => Record::FromServer(data.to_vec()),
-                        _ => Record::Other,
+                        _ => Record::FromBot(data.to_vec()),
                     }
                 }
                 3 | 4 => Record::Other,
@@ -139,7 +144,7 @@ mod reader {
                 [
                     Record::FromClient(b"abc".to_vec()),
                     Record::Other,
-                    Record::Other,
+                    Record::FromBot(b"xy".to_vec()),
                     Record::FromServer(vec![7; 128]),
                 ]
             );

@@ -15,7 +15,7 @@ use tokio::time::Instant;
 use super::super::game_connection::Side;
 use super::super::handover::GameServer;
 use super::super::{ADDRESS, GAME_PORT, wire};
-use super::{FORMAT, FROM_CLIENT, FROM_SERVER, MAGIC};
+use super::{FORMAT, FROM_BOT, FROM_CLIENT, FROM_SERVER, MAGIC};
 
 /// How many reads may wait for the disk before the capture is cut: about 64 MiB of the largest reads.
 const WAITING: usize = 1024;
@@ -77,13 +77,23 @@ impl Recorder {
 
     /// Records the bytes one read of `side` gave, unless the capture is cut; never waits.
     pub(crate) fn record(&self, side: Side, bytes: &[u8]) {
-        if self.cut.load(Ordering::Relaxed) {
-            return;
-        }
         let kind = match side {
             Side::Client => FROM_CLIENT,
             Side::Server => FROM_SERVER,
         };
+        self.push(kind, bytes);
+    }
+
+    /// Records a frame the bot wrote to the game server itself, between the client's, unless the capture is cut; never
+    /// waits.
+    pub(crate) fn record_bot(&self, frame: &[u8]) {
+        self.push(FROM_BOT, frame);
+    }
+
+    fn push(&self, kind: u8, bytes: &[u8]) {
+        if self.cut.load(Ordering::Relaxed) {
+            return;
+        }
         let micros = u64::try_from(self.start.elapsed().as_micros()).unwrap_or(u64::MAX);
         if let Err(mpsc::error::TrySendError::Full(_)) = self.reads.try_send((kind, micros, bytes.to_vec())) {
             self.cut.store(true, Ordering::Relaxed);
@@ -182,6 +192,7 @@ mod tests {
         let recorder = recording(folder.clone()).start(&server(), Some("3.7.13.17"), started, 7);
         recorder.record(Side::Client, b"ticket");
         recorder.record(Side::Server, b"accepted");
+        recorder.record_bot(b"walk");
         recorder.record(Side::Client, b"");
         recorder.finish().await;
 
@@ -194,6 +205,7 @@ mod tests {
             [
                 Record::FromClient(b"ticket".to_vec()),
                 Record::FromServer(b"accepted".to_vec()),
+                Record::FromBot(b"walk".to_vec()),
                 Record::FromClient(Vec::new()),
             ]
         );

@@ -45,7 +45,8 @@ fn frames(name: &str, records: &[Record], micros: &[u64]) -> Vec<(Side, Duration
         let (side, reader, bytes) = match record {
             Record::FromClient(bytes) => (Side::Client, &mut client, bytes),
             Record::FromServer(bytes) => (Side::Server, &mut server, bytes),
-            Record::Other => continue,
+            // The C# bot's frames, between the client's: the client's own stream stays whole without them.
+            Record::FromBot(_) | Record::Other => continue,
         };
         let at = Duration::from_micros(micros);
         let pushed = reader.push(bytes, |body| frames.push((side, at, body.to_vec())));
