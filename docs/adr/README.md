@@ -24,4 +24,5 @@ Smaller choices are in their pull requests. An ADR is never rewritten: a later o
 | [0017](0017-the-runtime-is-one-behaviour-per-kind-over-an-explicit-stack.md) | The runtime is one behaviour per kind over an explicit stack, advanced on a given clock | accepted |
 | [0018](0018-the-d3b-file-is-one-readable-json.md) | The `.d3b` file is one readable JSON holding the blueprint's file | accepted |
 | [0019](0019-the-blueprints-catalogue-is-written-whole-and-coded-in-slices.md) | The blueprints' catalogue is written whole and coded in slices with the actions that use it | accepted |
+| [0020](0020-an-event-cuts-a-long-action-at-its-next-inner-step.md) | An event cuts a long action at its next inner step, and the action resumes where it was | accepted |
 | [0021](0021-the-game-layer-reads-everything-early-and-acts-through-typed-acts.md) | The game layer reads everything early and acts through typed acts with deadlines | accepted |
