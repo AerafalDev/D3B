@@ -2,14 +2,14 @@
 
 The owner measures D3B on Windows x64. macOS (Intel and Apple Silicon), Linux (x64 and ARM64) and Windows ARM64 are
 measured by volunteers from the [Discord server](https://discord.com/invite/6A6Vw9Mn24), who report each result through
-the **Test report** issue form. A platform no tester has measured stays under "Not measured" in `docs/now.md`.
+the **Test report** issue form. A platform no tester has measured stays waiting in [checklists/platforms.md](checklists/platforms.md).
 
 ## How a round goes
 
 1. A release is published (`release` skill). Claude posts the round's checklist below, for that version, as text the
    owner pastes on the Discord.
 2. Testers install the version from the release page and fill one **Test report** per platform.
-3. Claude reads the reports (`gh issue list --label test-report`), moves what passed to "Measured" in `docs/now.md`
+3. Claude reads the reports (`gh issue list --label test-report`), adds what passed to its checklist in `docs/checklists/`,
    with the tester's platform, and turns what failed into bugs (`diagnose`).
 
 ## The checklist

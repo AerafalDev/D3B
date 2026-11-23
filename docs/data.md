@@ -123,7 +123,7 @@ status bar then says it has no data, and its hover why ([shell.md](shell.md)).
 
 ## The extractor
 
-`tools/extractor`, a .NET 10 console app and its test project, being built as a stack of PRs (`docs/now.md`). The
+`tools/extractor`, a .NET 10 console app and its test project, built as a stack of PRs, each format with the step that reads it. The
 owner chose its libraries: AssetsTools.NET for the client's bundles, Cpp2IL for the names of its enums and its protocol's schema, AssetRipper.TextureDecoder for the tiles' BC7,
 SkiaSharp to encode them (with its Linux native assets for CI), System.CommandLine for its options, xUnit v3 for its
 tests. CI and `bun run check` build it and run its tests, which need no client. It reads the client's facts as they are and fails when the client contradicts what it relies on (but for the two broken references above, left out and counted); what the
@@ -166,6 +166,19 @@ the monsters, their grades' levels, drops and flags, their races and super races
 - **The client's folder**, read by the extractor and by studies: `--client`, else the `DOFUS_CLIENT` environment
   variable, else `%LOCALAPPDATA%\Ankama\Dofus-dofus3` on Windows. On macOS and Linux, where Dofus 3 has native
   clients, it must be named: where their launchers install it, and whether they hold the same data, is not measured.
+
+## Published
+
+Each asset was added to the C# version's `client-<build>` release on the owner's go; `.github/game-data.json` names
+the one `next` reads.
+
+- `client-3.7.14.18-format5.tar.gz`, from `next` 220473d (SHA-256 `331fe578…`, 105,692,906 bytes), on 2026-11-17:
+  the one named today.
+- `client-3.7.13.17-format5.tar.gz`, on 2026-11-17 (from the monsters' PR's b9412ad).
+- `client-3.7.13.17-format4.tar.gz`, from `next` 55e4be8 (SHA-256 `3c4f5060…`, 105,345,462 bytes), on 2026-11-16;
+  format 3 was never published.
+- `client-3.7.13.17-format2.tar.gz`, from `next` 2b0577c (SHA-256 `2e3ac196…`, 84,146,484 bytes), on 2026-11-13.
+- `client-3.7.13.17.tar.gz` (format 1), from `next` f3104e9 (SHA-256 `74cfd3c3…`).
 
 ## Rules
 

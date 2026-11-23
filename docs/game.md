@@ -61,7 +61,8 @@ tick, sends its view when it changed.
   won and 0 when lost, a death or an abandon. The view counts the fights won and lost since the selection, so a death
   read between two views is never missed: on the captures, 613 won and 21 lost in 6 connections. An outcome never seen
   (1, 3, 4), another fighter's result or a fight's end before a selection counts nothing. A death in a group fight
-  whose side wins is not captured yet (the study's item 1).
+  whose side wins is not captured yet (the study's item 1). After a death, life comes back at half and energy drops by
+  ten times the level (verified on the 21 lost fights).
 - **Fights**: a fight's `ContextCreationEvent` sets the context to fight and ends any regeneration; its
   `MapCurrentEvent` names the fight's map (634 of 634) and no map information follows. What is around is cleared.
   Life changes in a fight are not read (they need messages not pinned yet: step 6): it shows the last

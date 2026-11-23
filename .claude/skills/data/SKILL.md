@@ -11,8 +11,8 @@ The data pipeline is in `docs/data.md`. Nothing here is ever committed.
    folder, `--client`, `DOFUS_CLIENT` or the default in `docs/data.md`).
 2. **Extract**: run the extractor with its `--help` first (`dotnet run --project tools/extractor/src -- --help`); it
    writes `artifacts/data/<build>/` with `manifest.json`, one JSON file per table and the tiles, and its archive
-   `artifacts/data/client-<build>-format<n>.tar.gz`. Until the extractor is complete (`docs/now.md`), say what it does not
-   extract yet. The archive's name holds the format: `client-<build>-format<n>.tar.gz`.
+   `artifacts/data/client-<build>-format<n>.tar.gz`. Say what it does not extract yet (`docs/data.md`, the
+   formats). The archive's name holds the format: `client-<build>-format<n>.tar.gz`.
 3. **Check**: the manifest's `format` equals `data::FORMAT`, every table's SHA-256 matches, and the app reads it:
    copy the folder into `data/` and run `bun run app`; the status bar names the build.
 4. **Publish, only on the owner's go**: when a `client-<build>` release exists (the C# version's, or one with another
