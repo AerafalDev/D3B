@@ -142,6 +142,32 @@ pub(super) fn set(
     Ok(())
 }
 
+/// A Text's template made `text`: its holes its inputs, each a hole no longer there dropping its wire and its value; an
+/// empty template is none.
+pub(super) fn template(blueprint: &mut Blueprint, at: usize, id: &Id, text: String) -> Result<(), Refusal> {
+    let found = node(&blueprint.graphs[at], id)?;
+    let takes = match &found.does {
+        Does::Kind(kind) => catalogue::kind(&kind.0).is_some_and(|kind| kind.takes.contains(&Takes::Text)),
+        _ => false,
+    };
+    if !takes {
+        return Err(Refusal::NotAnOption);
+    }
+    let holes = crate::bot::pins::holes(&text);
+    let graph = &mut blueprint.graphs[at];
+    let Some(found) = graph.nodes.iter_mut().find(|it| &it.id == id) else {
+        return Err(Refusal::NoSuchNode);
+    };
+    found.options.text = (!text.is_empty()).then_some(text);
+    found.inputs.retain(|pin, _| holes.contains(pin));
+    graph
+        .wires
+        .retain(|wire| &wire.to.0 != id || holes.contains(&wire.to.1));
+    // The node a removed hole's wire came from may use its type no more.
+    untype(graph);
+    Ok(())
+}
+
 /// The numbered pin or case `pin` of `id` gone, with its wire and value, the pins after it each taking the number
 /// before, their wires and values with them; refused below the kind's least.
 pub(super) fn remove(blueprint: &mut Blueprint, at: usize, id: &Id, pin: &Id) -> Result<(), Refusal> {
@@ -339,6 +365,84 @@ mod tests {
             Some(ValueType::Number),
             "still typed by its inputs"
         );
+    }
+
+    #[test]
+    fn a_template_makes_its_holes_and_a_hole_gone_takes_its_wire_and_value() {
+        let mut blueprint = flows();
+        let text = r#"{"id": "tx", "kind": "text", "options": {"text": "{n} {who}"}, "inputs": {"who": "Lyra"}}"#;
+        let level = r#"{"id": "lv", "kind": "level"}"#;
+        for node in [text, level] {
+            blueprint.graphs[0]
+                .nodes
+                .push(serde_json::from_str(node).unwrap_or_else(|error| panic!("{error}")));
+        }
+        let wire = Edit::Wire {
+            from: End(id("lv"), id("value")),
+            to: End(id("tx"), id("n")),
+        };
+        assert_eq!(change(&mut blueprint, wire), Ok(()));
+        let renamed = Edit::Text {
+            node: id("tx"),
+            text: "{count} {who}".to_owned(),
+        };
+        assert_eq!(change(&mut blueprint, renamed), Ok(()));
+        assert!(
+            !blueprint.graphs[0].wires.iter().any(|wire| wire.to.0.0 == "tx"),
+            "the hole n gone, its wire with it"
+        );
+        assert_eq!(the(&blueprint, "tx").inputs.len(), 1, "the hole who kept");
+        let emptied = Edit::Text {
+            node: id("tx"),
+            text: String::new(),
+        };
+        assert_eq!(change(&mut blueprint, emptied), Ok(()));
+        assert_eq!(
+            (
+                the(&blueprint, "tx").options.text.clone(),
+                the(&blueprint, "tx").inputs.len()
+            ),
+            (None, 0)
+        );
+        // A Choose typed only by its wire into a hole: the hole gone, its type goes too.
+        let choose = r#"{"id": "pick", "kind": "choose", "options": {"type": "zone"},
+            "inputs": {"condition": true, "if_true": {"sub_area": 445}}}"#;
+        blueprint.graphs[0]
+            .nodes
+            .push(serde_json::from_str(choose).unwrap_or_else(|error| panic!("{error}")));
+        let back = Edit::Text {
+            node: id("tx"),
+            text: "{z}".to_owned(),
+        };
+        assert_eq!(change(&mut blueprint, back), Ok(()));
+        let into = Edit::Wire {
+            from: End(id("pick"), id("value")),
+            to: End(id("tx"), id("z")),
+        };
+        assert_eq!(change(&mut blueprint, into), Ok(()));
+        let cleared = Edit::Value {
+            node: id("pick"),
+            pin: id("if_true"),
+            value: None,
+            of: None,
+        };
+        assert_eq!(change(&mut blueprint, cleared), Ok(()));
+        assert_eq!(
+            the(&blueprint, "pick").options.value_type,
+            Some(ValueType::Zone),
+            "its wire still uses it"
+        );
+        let done = Edit::Text {
+            node: id("tx"),
+            text: "done".to_owned(),
+        };
+        assert_eq!(change(&mut blueprint, done), Ok(()));
+        assert_eq!(the(&blueprint, "pick").options.value_type, None, "its type unused");
+        let elsewhere = Edit::Text {
+            node: id("seq"),
+            text: "{x}".to_owned(),
+        };
+        assert_eq!(change(&mut blueprint, elsewhere), Err(Refusal::NotAnOption));
     }
 
     #[test]

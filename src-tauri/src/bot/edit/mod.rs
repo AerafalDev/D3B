@@ -53,6 +53,8 @@ pub(crate) enum Edit {
     },
     /// A numbered pin or a case gone with its wire, those after it renumbered.
     RemovePin { node: Id, pin: Id },
+    /// A Text's template, its `{holes}` its inputs; a hole gone takes its wire and value with it.
+    Text { node: Id, text: String },
     /// A variable of mine named so, under an id made from its name; the graph it is sent from does not matter.
     NewVariable { name: String },
     /// The variable of its id made this one, whole: its name, type, default, bounds, help, set per character, memory.
@@ -181,6 +183,7 @@ pub(crate) fn edit(blueprint: &mut Blueprint, graph: &Id, edit: Edit) -> Result<
         }
         Edit::Options { node, count, cases, of } => options::set(blueprint, at, &node, count, cases, of)?,
         Edit::RemovePin { node, pin } => options::remove(blueprint, at, &node, &pin)?,
+        Edit::Text { node, text } => options::template(blueprint, at, &node, text)?,
         Edit::NewVariable { .. } | Edit::Variable(_) | Edit::DeleteVariable { .. } | Edit::About { .. } => {}
     }
     Ok(())
@@ -590,7 +593,7 @@ mod tests {
         let mut blueprint = harvest();
         let more = [
             r#"{"id": "sw", "kind": "switch", "options": {"type": "job", "cases": [24]}}"#,
-            r#"{"id": "tx", "kind": "test_text", "options": {"text": "{count} done"}}"#,
+            r#"{"id": "tx", "kind": "text", "options": {"text": "{count} done"}}"#,
             r#"{"id": "add", "kind": "test_add_to"}"#,
         ];
         for node in more {
