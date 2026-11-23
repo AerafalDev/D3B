@@ -23,19 +23,18 @@ blueprint studio (D293 to D318) that nothing used, and fell back to forms.
   the common filters as inputs; records live on wires, locals and a run's variables, never in settings or memory.
 - **A choice type** whose named options live on its variable, a Switch taking them as cases.
 - Banking stays per character, D3B's blueprints sharing the bank settings' ids; a whisper is a notification, never an
-  event; an invitation is an event refused when unhandled; long actions stay atomic, events being their hooks.
+  event; an invitation is refused when unhandled, its event coming with step 7's groups; long actions stay atomic,
+  events being their hooks.
 
 ## Rejected
 
 - Coding (v2.5) to (v2.9) first: kinds nobody runs, as `main`'s studio; their design drifts before their user exists.
-- Designing each node with its action only: the gaps the audit found would be found one step too late.
 - Queries with filters only, no records: each new filter would wait for a version of D3B.
-- Enumerations declared in My Blueprint: an editor more for options a variable rarely shares.
 - Banking general to the app (`main`'s D405): a setting outside any blueprint, a concept the model does not have.
-- Events for other players: a graph could wire a flight, which `CLAUDE.md` refuses.
+- Events for other players' presence or words: a graph could wire a flight, which `CLAUDE.md` refuses.
 
 ## Consequences
 
-Each slice's PRs bring an action with the nodes it needs, their words, problems, Summary and tests; a node coded
-before its slice is a review finding. The catalogue is the list review checks a new kind against: a kind not in it is
-added there first, with the owner. A choice's options and a record type's fields are additions to schema 2.
+Each slice's PRs bring an action with the nodes it needs; a node over the game coded before its slice is a review
+finding, and a kind not in the catalogue is added there first, with the owner. A choice's options on a variable and
+the new types change the file's shape: the first slice bringing one brings schema 3 and its migration from 2.

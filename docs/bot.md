@@ -471,8 +471,8 @@ flowchart LR
     (step 4) goes on after it.
 - **Memory** of Do N times, Alternate and Pick is the node's for the whole run, in a function called many times too,
   and kept through "restart from the start" (the owner, 2026-11-17).
-- **Out**: Trigger and Cancel its timer come with (v2.6) and (26), when an event of mine starts something (the owner,
-  2026-11-17); a value read in a sentence ("Tant que récoltes < objectif") with (v2.4)'s values; "Advanced" with (v2.9).
+- **Out**: Trigger and Cancel its timer come with (26), when an event of mine starts something (the owner,
+  2026-11-17); a value read in a sentence ("Tant que récoltes < objectif") with (v2.4)'s values; "Advanced" with 4·Play (the catalogue, below).
 - **A node's options**: "+ Add an output" on Sequence (a list's inputs reuse it in (v2.4)), absent on D3B's
   blueprints; Switch's cases in Details, a row each in the type's editor with + and ×, a case given twice marked; a
   pin's right-click "Remove" drops its wire and renumbers the later pins and their wires, as Unreal does, refused
@@ -603,15 +603,20 @@ comes from an audit of 2026-11-23 comparing `next` with `main`'s C# bot, the pro
 (`blueprints-support-audit.md` in the sessions' notes), and the owner's answers to its questions that day.
 
 - **The language is frozen at (v2.4)**: v1's kinds, (v2.1)'s model, (v2.3)'s flow and (v2.4)'s values are the last
-  coded ahead of their users. (v2.5) to (v2.9) are not PRs any more: their nodes are re-cut into the slices below,
-  each node marked with its own. Editor PRs (14) to (24) stay step 3's, (26) brings the events at run time.
+  nodes coded for the language alone. The rule holds for the nodes over the game, its queries, events, actions and
+  the types they give: each comes with its first action or D3B blueprint. The language's own nodes that step 3's
+  editor and runtime PRs edit and run come with them: Add to, Reset and a list's (14), pure calls (15), When, Every,
+  At, the events of mine and Trigger (26). (v2.5) to (v2.9) are not PRs any more: their nodes are re-cut into the
+  slices below, each node marked with its own, and the earlier sections' "(v2.5)" to "(v2.9)" name the slice each
+  node now joins; (v2.10)'s blueprints move to 5·Récolte (Récolte and the five professions) and 6·Combat (Combat and
+  Chasseur), the ranges computed from the data being done.
 - **The slices**, each the PRs of a step that bring an action with the nodes it needs (their words, problems,
   Summary and tests), measured in game with that step:
   - **(26)**: the events at run time (priorities, modes, thresholds, settings at safe points) with When, Every, At,
-    the events of mine and Trigger, which it is the user of;
+    the events of mine and Trigger, the language's own;
   - **4·Play**: step 4's actor per character, Play, Pause, Stop, the History, the debugger, and the queries and
-    events over what is already pinned, which a run in game reads first; the picker by intent and "Advanced" (once
-    (v2.9)), as the kinds outgrow a flat list;
+    events over what is already pinned, which a run in game reads first; the picker by intent and "Advanced", as the
+    kinds outgrow a flat list;
   - **4·Travel**: step 4's paths and moves, zaaps, the haven bag, doors, NPCs, and what they read;
   - **5·Récolte**: step 5's harvest, bank and inventory, Récolte and the five profession blueprints of (v2.10), its
     goal "Récolte runs in game";
@@ -642,7 +647,9 @@ comes from an audit of 2026-11-23 comparing `next` with `main`'s C# bot, the pro
 - **Other players**: a whisper received is a notification in the app and a line in the History, never an event of
   the graph; a player arriving on the map stays out. Nothing answers or flees.
 - **Forced defaults outside fights**: an invitation (party, exchange, duel, guild) is an event, "Invitation
-  received", for a blueprint that wants it; unhandled, D3B refuses it and notes it in the History. A dialog the
+  received", for a blueprint that wants it, its kind its one output; unhandled, D3B refuses it and notes it in the
+  History. The refusal comes with step 4's travel; the event with its first user, step 7's groups (a master's party
+  accepted), and a flow answering an invitation by fleeing stays never. A dialog the
   server opens with no action waiting for it is closed the same way. Nothing is left open to block the run (the C#
   version's D455).
 - **Long actions stay atomic** with their options (Harvest until does the tour, regrowth, rotation, maps crossed,
@@ -665,8 +672,8 @@ comes from an audit of 2026-11-23 comparing `next` with `main`'s C# bot, the pro
 | Life below X % (re-arm) | — | v1, its modes (26) | pinned (out of fights) |
 | Pods above X % (re-arm) | — | v1, (26) | pinned |
 | A fight starts (forced: fought by the AI, then resume) | its kind: mine, a protector, an aggression | v1; kind 5·Récolte | pinned; kind C# (a protector ~2 ms after a use) |
-| A fight ended | won, its kind; loot, experience | 4·Play; loot 6·Combat | pinned; loot C# |
-| Died (a lost fight, back at the save point) | — | v1 forced, held 4·Play | pinned |
+| A fight ended | won, its kind; loot, experience | 5·Récolte (after a lost fight); loot 6·Combat | pinned; loot C# |
+| Died (a lost fight, back at the save point) | — | v1 forced, held (26) | pinned |
 | An action failed (forced: blocked) | the action, its reason | v1 | runtime |
 | When … becomes true (re-arm when) | — | (26) | as its queries |
 | Every (a duration) | — | (26) | clock |
@@ -675,7 +682,7 @@ comes from an audit of 2026-11-23 comparing `next` with `main`'s C# bot, the pro
 | Disconnected | its reason when known | 4·Play | the relay sees the close; reason study |
 | Reconnected (a character chosen again) | — | 4·Play | pinned |
 | The map changed | the map, its sub-area | 4·Travel | pinned |
-| Invitation received (forced: refused) | party, exchange, duel or guild | 4·Travel | C# (party D435, exchange D442); duel, guild study |
+| Invitation received (party, exchange, duel or guild; no player's name) | its kind | the forced refusal 4·Travel; the event 7 (a group's master) | C# (party D435, exchange D442); duel, guild study |
 | A server refusal no action waits for | the text's id, its words | 4·Travel | C# (texts 34, 175, 225, 356, 474) |
 | Level gained | the level | 4·Play | pinned |
 | A profession's level reached | the profession, its level | 5·Récolte | C# |
@@ -756,7 +763,7 @@ placement cells of both teams; glyphs, traps, portals and runes.
 | Notify | v1 | runtime |
 | Pause and notify; Block; Finish | v2.3, v1 | runtime |
 | Note in the History; switch to another blueprint | 4·Play | runtime |
-| Refuse an invitation (the forced default, and as a node) | 4·Travel | C# party, exchange |
+| Refuse an invitation (the forced default; as a node with the event, 7) | 4·Travel | C# party, exchange |
 | Go to a zone | v1, done 4·Travel | studied (map change, walk) |
 | Go to a map; walk to a cell; leave by an edge or a cell | 4·Travel | studied |
 | Follow a route N laps (an action and a forced exit per anchor) | (21), done 4·Travel | studied |
@@ -800,7 +807,7 @@ placement cells of both teams; glyphs, traps, portals and runes.
 | Functions' exits, locals, pure calls | (15) |
 | Ranges (a type) | v2.1 |
 | "According to the range of …" (the value of the row a number reaches, or that row's output) | 5·Récolte |
-| A choice (options on its variable) | 5·Récolte (the resources' order, after a lost fight) |
+| A choice (options on its variable) | 4·Play (an area's world, a fight's kind), its editor 5·Récolte (the resources' order) |
 | Records and Break: a resource here, a sub-area | 5·Récolte |
 | Records and Break: a monster group; a fighter | 6·Combat |
 | A quantity of an item ("200 × an item", typed, with its list: restocking) | 5·Récolte |
