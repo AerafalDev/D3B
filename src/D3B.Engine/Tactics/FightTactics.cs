@@ -41,6 +41,11 @@ public sealed class FightTactics
     private const double Tie = 1;
     private const int Finalists = 16;
 
+    // Read in the pack (D269): 18649, which "Maîtrise des invocations" casts through 18647, gives the character's summons
+    // effect 2027, their control.
+    private const int SummonControl = 2027;
+    private const int SummonControlDepth = 3;
+
     // The breeds whose summons are not a last resort (D408): the Osamodas' beasts, the Roublard's bombs, the Steamer's turrets, and
     // the Forgelance's lances, which strike as they are thrown: replayed on its 221 turns of the 2026-11-19 captures, searching them
     // first plans over a quarter more damage (5,676 against 4,439), a thrown lance out of hand until its next turn (D462, D465).
@@ -270,6 +275,39 @@ public sealed class FightTactics
         return false;
     }
 
+    private FightKnowledge WithoutSummonControl(ImaginedFight fight, FightKnowledge knowledge)
+    {
+        // The owner's report (D500): the characters of a group cast "Maîtrise des invocations" turn after turn, each cast free,
+        // its AP given back, and worth nothing to the judge, but kept beside the best sequences as a set of states of its own
+        // (D255), so that sequences starting with it crowded out the search's. The control of the summons is the player's
+        // setting, which the AI leaves: a spell every character has that switches it is never cast.
+        var spells = knowledge.SpellsOf(fight.ActorId);
+
+        return spells.Any(SwitchesSummonControl) ? knowledge.With(fight.ActorId, spells.RemoveAll(SwitchesSummonControl)) : knowledge;
+    }
+
+    private bool SwitchesSummonControl(SpellLevel level)
+    {
+        return _spells.TryGetVariantOf(level.SpellId, out var variant) && variant.BreedId is SpellVariant.CommonBreed && ReachesSummonControl(level, 0);
+    }
+
+    private bool ReachesSummonControl(in SpellLevel level, int depth)
+    {
+        foreach (var effect in _spells.EffectsOf(level))
+        {
+            if (effect.EffectId is SummonControl)
+                return true;
+
+            if (depth < SummonControlDepth && _actions.Of(effect.EffectId).Kind is EffectKind.CastSpell && _spells.TryGetLevel(effect.DiceNum, Math.Max(1, effect.DiceSide), out var cast)
+                && cast.SpellId != level.SpellId && ReachesSummonControl(cast, depth + 1))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     private ImmutableArray<EffectElement> BlowElements(SpellLevel level, Combatant caster)
     {
         // The elements a cast strikes in, its caster's best or worst resolved: Élémentaire binds a fighter to one (D497).
@@ -473,6 +511,8 @@ public sealed class FightTactics
         ArgumentNullException.ThrowIfNull(knowledge);
         ArgumentNullException.ThrowIfNull(weights);
         ArgumentNullException.ThrowIfNull(limits);
+
+        knowledge = WithoutSummonControl(fight, knowledge);
 
         // The best plan is watched for the challenge, never held to it: a challenge of the blows (D497) is broken by a cast on
         // the way, not only where the turn ends.
