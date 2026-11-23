@@ -11,7 +11,8 @@ outside events. Today's feature is **blueprints v2's (v2.4), the values** ([bot.
 remaining PRs finish a started feature and carry `step-finish`.
 
 **The cap** (`CLAUDE.md`; the owner, 2026-11-23): more than five checklists are open (`bun run rules` counts them), so
-no new feature PR until at most five are, step 4's first slice included; fixes, docs and v2.4's remaining PRs go on.
+no new feature PR until at most five are; fixes, docs, v2.4's remaining PRs and step 4's first slice, started on the
+owner's go of 2026-11-23 (`step-finish`), go on.
 The owner's session of tests closes them.
 
 ## Done

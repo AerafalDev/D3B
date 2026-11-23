@@ -131,11 +131,7 @@ whole between the client's frames, with the request id -1, and the server answer
 ## Secrets
 
 The login token, the ticket and the game frames identify the account: they are never logged, shown, or written to disk,
-but in a capture the maintainer asks for with `D3B_RECORD` ([protocol.md](protocol.md#captures)). The bot's frames, each with its failure case on paused time: one
-between frames written at once, one inside a frame held until it ends and the rest of that read after it, their
-records where they went, what is not one whole frame, too many waiting, a closed connection, and a client no longer
-in frames, which drops what waits and refuses the next while the copy goes on; the ends of frames over reads (a
-header split, an empty frame, a sixth header byte).
+but in a capture the maintainer asks for with `D3B_RECORD` ([protocol.md](protocol.md#captures)).
 A ticket's `Debug` prints `<redacted>`; tests on captures print only file names, offsets and lengths.
 
 ## Platforms
@@ -158,3 +154,10 @@ is seeded into the handover. A connection phase handed over must hand over the b
 2026-11-11, the owner's 225 captures: 171 connection phases, 161 handed over, each with its capture's build, 54 game
 connections relayed byte for byte, their 3,048,392 frames split as each side sent them. D3B records its own captures
 with `D3B_RECORD` ([protocol.md](protocol.md#captures)).
+
+The bot's frames, each with its failure case: one between frames written at once, one inside a frame held until it
+ends and the rest of that read after it, those held still written once the bot's way is dropped, their records where
+they went (on real time, the capture's writer being a blocking task), what is not one whole frame, too many waiting,
+a closed connection, a client no longer in frames, which drops what waits and refuses the next while the copy goes on,
+and one whose first read already is not; the ends of frames over reads (a header split, an empty frame, a sixth
+header byte).

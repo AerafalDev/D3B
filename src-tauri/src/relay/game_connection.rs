@@ -200,8 +200,13 @@ where
     if server.write_all(&read).await.is_ok() {
         let mut from_client = Some(Frames::default());
         tapped(&mut from_client, &read, &|body| tap(Side::Client, body));
+        // A client whose first read is not frames can take none of the bot's: its way closes at once.
         let mut ends = Ends::default();
-        let ends = ends.push(&read).is_ok().then_some(ends);
+        let bot = ends.push(&read).is_ok().then(|| Bot {
+            frames: Some(bot),
+            ends,
+            record: note_bot,
+        });
         let (client_read, client_write) = tokio::io::split(client);
         let (server_read, server_write) = tokio::io::split(server);
         // Both ways at once, the first error ending both, as `copy_bidirectional` did.
@@ -210,11 +215,7 @@ where
                 client_read,
                 server_write,
                 from_client,
-                Some(Bot {
-                    frames: bot,
-                    ends,
-                    record: note_bot
-                }),
+                bot,
                 |bytes| note(Side::Client, bytes),
                 |body| tap(Side::Client, body)
             ),
@@ -259,7 +260,7 @@ async fn pump<R: Fn(&[u8])>(
                     return to.shutdown().await;
                 }
                 let bytes = &buffer[..count];
-                let end = match bot.as_mut().and_then(|bot| bot.ends.as_mut().map(|ends| ends.push(bytes))) {
+                let end = match bot.as_mut().map(|bot| bot.ends.push(bytes)) {
                     Some(Ok(end)) => end.filter(|_| !held.is_empty()),
                     Some(Err(_)) => {
                         // Its frames' ends are lost: nothing of the bot's is written any more.
@@ -288,31 +289,38 @@ async fn pump<R: Fn(&[u8])>(
                 tapped(&mut frames, bytes, &tap);
             }
             frame = next(&mut bot), if held.len() < BOT_WAITING => match (frame, &bot) {
-                (Some(frame), Some(Bot { ends: Some(ends), record, .. })) if held.is_empty() && ends.between() => {
+                (Some(frame), Some(Bot { ends, record, .. })) if held.is_empty() && ends.between() => {
                     to.write_all(&frame).await?;
                     to.flush().await?;
                     record(&frame);
                 }
                 (Some(frame), _) => held.push(frame),
-                (None, _) => bot = None,
+                // No one can send more; those held still go where they belong.
+                (None, _) => {
+                    if let Some(bot) = &mut bot {
+                        bot.frames = None;
+                    }
+                }
             },
         }
     }
 }
 
-/// The bot's frames a pump writes between its stream's frames: those it receives, where that stream's frames end
-/// (`None` once it is no longer in frames), and where each frame written is recorded.
+/// The bot's frames a pump writes between its stream's frames, while that stream is in frames: those it receives
+/// (`None` once no one can send one), where that stream's frames end, and where each frame written is recorded.
 struct Bot<R> {
-    frames: mpsc::Receiver<Vec<u8>>,
-    ends: Option<Ends>,
+    frames: Option<mpsc::Receiver<Vec<u8>>>,
+    ends: Ends,
     record: R,
 }
 
-/// The next frame of the bot's; `None` once no one can send one, and never while there is no bot.
+/// The next frame of the bot's; `None` once no one can send one, and never while nothing can come.
 async fn next<R>(bot: &mut Option<Bot<R>>) -> Option<Vec<u8>> {
     match bot {
-        Some(bot) => bot.frames.recv().await,
-        None => std::future::pending().await,
+        Some(Bot {
+            frames: Some(frames), ..
+        }) => frames.recv().await,
+        _ => std::future::pending().await,
     }
 }
 
@@ -872,10 +880,12 @@ mod tests {
         assert_eq!(relay.await.ok(), Some((false, 0)));
     }
 
-    /// A game connection relayed over in-memory streams past its first frame, recorded to `recording` if given: the
-    /// client's end, the game server's end, the connection's [`BotFrames`] and the relay's result.
+    /// A game connection relayed over in-memory streams past its first frame, sent in one read with `after`, and
+    /// recorded to `recording` if given: the client's end, the game server's end, the connection's [`BotFrames`] and
+    /// the relay's result.
     async fn relayed_with_bot(
         recording: Option<Recording>,
+        after: &[u8],
     ) -> (DuplexStream, DuplexStream, BotFrames, tokio::task::JoinHandle<bool>) {
         let handover = handover_waiting();
         let (mut client, client_side) = tokio::io::duplex(1 << 16);
@@ -898,7 +908,7 @@ mod tests {
             )
             .await
         });
-        let first = first(TICKET);
+        let first = [first(TICKET).as_slice(), after].concat();
         client.write_all(&first).await.unwrap_or_else(|error| panic!("{error}"));
         received(&mut server, first.len()).await;
         let bot = tokio::time::timeout(Duration::from_secs(1), bot).await;
@@ -924,7 +934,7 @@ mod tests {
 
     #[tokio::test(start_paused = true)]
     async fn a_frame_of_the_bot_s_between_the_client_s_goes_at_once() {
-        let (mut client, mut server, bot, relay) = relayed_with_bot(None).await;
+        let (mut client, mut server, bot, relay) = relayed_with_bot(None, &[]).await;
 
         let sent = bot.send(frames_of(&[b"walk"]));
         let walk = received(&mut server, 5).await;
@@ -946,7 +956,7 @@ mod tests {
 
     #[tokio::test(start_paused = true)]
     async fn a_frame_of_the_bot_s_waits_for_the_client_s_frame_in_progress_only() {
-        let (mut client, mut server, bot, relay) = relayed_with_bot(None).await;
+        let (mut client, mut server, bot, relay) = relayed_with_bot(None, &[]).await;
         let ours = frames_of(&[b"a frame of the client's"]);
         let (begun, rest) = ours.split_at(7);
         let next = frames_of(&[b"next"]);
@@ -981,7 +991,7 @@ mod tests {
         let folder = std::env::temp_dir().join(format!("d3b-game-capture-bot-{}", std::process::id()));
         let _ = std::fs::remove_dir_all(&folder);
         let recording = Recording { folder: folder.clone() };
-        let (mut client, mut server, bot, relay) = relayed_with_bot(Some(recording)).await;
+        let (mut client, mut server, bot, relay) = relayed_with_bot(Some(recording), &[]).await;
         let ours = frames_of(&[b"choose", b"list"]);
 
         client
@@ -1018,7 +1028,7 @@ mod tests {
 
     #[tokio::test(start_paused = true)]
     async fn refuses_what_is_not_one_whole_frame() {
-        let (client, server, bot, _relay) = relayed_with_bot(None).await;
+        let (client, server, bot, _relay) = relayed_with_bot(None, &[]).await;
 
         let frames = [vec![], vec![3, b'a'], frames_of(&[b"one", b"two"]), vec![0xff; 6]];
         let refused = frames.map(|frame| bot.send(frame));
@@ -1029,7 +1039,7 @@ mod tests {
 
     #[tokio::test(start_paused = true)]
     async fn refuses_a_frame_while_too_many_wait_then_once_the_connection_closed() {
-        let (mut client, mut server, bot, relay) = relayed_with_bot(None).await;
+        let (mut client, mut server, bot, relay) = relayed_with_bot(None, &[]).await;
         client
             .write_all(&[9, b'h'])
             .await
@@ -1037,18 +1047,22 @@ mod tests {
         received(&mut server, 2).await;
 
         let mut taken = 0;
-        let full = loop {
+        let mut full = None;
+        for _ in 0..=2 * BOT_WAITING {
             match bot.send(frames_of(&[b"walk"])) {
                 Ok(()) => taken += 1,
-                Err(refused) => break refused,
+                Err(refused) => {
+                    full = Some(refused);
+                    break;
+                }
             }
             settle().await;
-        };
+        }
         drop((client, server));
         let ended = tokio::time::timeout(Duration::from_secs(1), relay).await;
         let closed = bot.send(frames_of(&[b"walk"]));
 
-        assert_eq!(full, BotFrameRefused::Full);
+        assert_eq!(full, Some(BotFrameRefused::Full));
         assert_eq!(
             taken,
             2 * BOT_WAITING,
@@ -1060,7 +1074,7 @@ mod tests {
 
     #[tokio::test(start_paused = true)]
     async fn a_client_no_longer_in_frames_closes_the_bot_s_way_not_the_copy() {
-        let (mut client, mut server, bot, relay) = relayed_with_bot(None).await;
+        let (mut client, mut server, bot, relay) = relayed_with_bot(None, &[]).await;
         client
             .write_all(&[0x80])
             .await
@@ -1083,6 +1097,45 @@ mod tests {
         assert_eq!(copied, [0xff; 5]);
         assert_eq!(after, Err(BotFrameRefused::Closed));
         assert!(dropped, "a frame of the bot's went into bytes no longer in frames");
+        assert!(matches!(
+            tokio::time::timeout(Duration::from_secs(1), relay).await,
+            Ok(Ok(true))
+        ));
+    }
+
+    #[tokio::test(start_paused = true)]
+    async fn the_bot_s_frames_held_still_go_once_its_way_is_dropped() {
+        let (mut client, mut server, bot, relay) = relayed_with_bot(None, &[]).await;
+        let ours = frames_of(&[b"a frame of the client's"]);
+        let (begun, rest) = ours.split_at(7);
+
+        client.write_all(begun).await.unwrap_or_else(|error| panic!("{error}"));
+        received(&mut server, begun.len()).await;
+        let sent = bot.send(frames_of(&[b"walk"]));
+        settle().await;
+        drop(bot);
+        settle().await;
+        client.write_all(rest).await.unwrap_or_else(|error| panic!("{error}"));
+        let then = received(&mut server, rest.len() + 5).await;
+        drop((client, server));
+
+        assert_eq!(sent, Ok(()));
+        assert_eq!(then, [rest, frames_of(&[b"walk"]).as_slice()].concat());
+        assert!(matches!(
+            tokio::time::timeout(Duration::from_secs(1), relay).await,
+            Ok(Ok(true))
+        ));
+    }
+
+    #[tokio::test(start_paused = true)]
+    async fn a_client_whose_first_read_is_no_longer_frames_takes_none_of_the_bot_s() {
+        let (client, server, bot, relay) = relayed_with_bot(None, &[0x80; 6]).await;
+        settle().await;
+
+        let refused = bot.send(frames_of(&[b"walk"]));
+        drop((client, server));
+
+        assert_eq!(refused, Err(BotFrameRefused::Closed));
         assert!(matches!(
             tokio::time::timeout(Duration::from_secs(1), relay).await,
             Ok(Ok(true))
