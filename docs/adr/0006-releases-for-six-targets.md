@@ -1,6 +1,6 @@
 # 0006. Releases for six targets through release-please, unsigned for now
 
-- Status: accepted
+- Status: superseded by 0023
 - Date: 2026-11-11
 - Decided by: the owner
 
