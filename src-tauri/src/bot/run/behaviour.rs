@@ -130,6 +130,8 @@ pub(crate) enum Fault {
     Empty { pin: String },
     #[error("the input {pin} divides by 0")]
     DividedByZero { pin: String },
+    #[error("no element {index} in a list of {length}")]
+    OutOfList { index: i64, length: usize },
 }
 
 /// What a node may use while it runs.

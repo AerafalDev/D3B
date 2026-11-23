@@ -255,6 +255,34 @@
     "random_element": {
       "sentence": "Un élément au hasard de {{list}}",
       "description": "Un élément de la liste tiré au hasard à chaque lecture ; une liste vide bloque le personnage."
+    },
+    "make_list": {
+      "sentence": "Liste",
+      "description": "Une liste faite de ses entrées, dans leur ordre ; « + » en ajoute une."
+    },
+    "length": {
+      "sentence": "Nombre d'éléments de {{list}}",
+      "description": "Combien d'éléments la liste contient."
+    },
+    "contains": {
+      "sentence": "{{list}} contient {{element}}",
+      "description": "Vrai si la liste contient cet élément."
+    },
+    "element_at": {
+      "sentence": "Élément {{index}} de {{list}}",
+      "description": "L'élément à cette place de la liste, comptée à partir de 1 ; une place hors de la liste bloque le personnage."
+    },
+    "first": {
+      "sentence": "Premier de {{list}}",
+      "description": "Le premier élément de la liste ; une liste vide bloque le personnage."
+    },
+    "position_of": {
+      "sentence": "Place de {{element}} dans {{list}}",
+      "description": "La place de l'élément dans la liste, à partir de 1 ; 0 s'il n'y est pas."
+    },
+    "equal_lists": {
+      "sentence": "Listes {{a}} = {{b}}",
+      "description": "Vrai si les deux listes ont les mêmes éléments dans le même ordre."
     }
   },
   "pins": {

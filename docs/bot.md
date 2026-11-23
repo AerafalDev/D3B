@@ -586,7 +586,10 @@ flowchart LR
   randomness (done in code: `bot/run/random.rs`, SplitMix64, each run's seed from the standard library's
   `RandomState`, its keys drawn from the system, and kept with the run, `Run::seeded` replaying one; the value a random
   node gives traced whatever the depth it is read at, once per node at work; a number from 1 to 6 and a chance of
-  50 % by default); lists;
+  50 % by default); lists (done in code: `values/lists.rs`, a List's inputs numbered as AND's, typed by the node, "+"
+  and × as theirs; `=` of two lists its own kind beside `=`, "Listes … = …", a pin's shape being fixed (settled alone); a List
+  typed by its first input's value or wire, as any wildcard; an index typed
+  below 1 a problem, one by a wire out of the list blocking on the node, the first of an empty list too);
   Text and Join; drawn compact; sentences in place, the Summary, a run on the captures and the checklist. Each kind
   replaces the catalogue's test kinds (`test_equal`, `test_list`, `test_text`) as it comes.
 - **Measured** (nothing acts in the game before step 4): the picker's group; a compact `<` with a chip; "Tant que Pods

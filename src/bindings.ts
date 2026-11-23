@@ -1282,7 +1282,7 @@ export type PlayedList_Serialize = {
 };
 
 /**  The kinds of `bot::Problem`, by name. */
-export type ProblemKind = "malformedId" | "variableTwice" | "graphTwice" | "nodeTwice" | "parameterTwice" | "defaultNotOfType" | "defaultRangesOverlap" | "wrongBounds" | "defaultOutOfBounds" | "noSuchVariable" | "noSuchFunction" | "wireToNoNode" | "wireTwice" | "unknownKind" | "outOfPlace" | "eventSettingsOnNoEvent" | "noSuchInput" | "valueNotOfType" | "rangesOverlap" | "noSuchOption" | "optionMissing" | "caseNotOfType" | "caseTwice" | "typeNotTaken" | "wildcardWithoutType" | "wireToNoPin" | "wireTheWrongWay" | "wireOfAnotherType" | "wireOfAnotherShape" | "outputWiredTwice" | "inputFedTwice" | "inputWithoutValue" | "eventTwice" | "ownEventTwice" | "noSuchEvent" | "noSuchExit" | "notPure" | "leaveOutsideLoop" | "zeroDivisor";
+export type ProblemKind = "malformedId" | "variableTwice" | "graphTwice" | "nodeTwice" | "parameterTwice" | "defaultNotOfType" | "defaultRangesOverlap" | "wrongBounds" | "defaultOutOfBounds" | "noSuchVariable" | "noSuchFunction" | "wireToNoNode" | "wireTwice" | "unknownKind" | "outOfPlace" | "eventSettingsOnNoEvent" | "noSuchInput" | "valueNotOfType" | "rangesOverlap" | "noSuchOption" | "optionMissing" | "caseNotOfType" | "caseTwice" | "typeNotTaken" | "wildcardWithoutType" | "wireToNoPin" | "wireTheWrongWay" | "wireOfAnotherType" | "wireOfAnotherShape" | "outputWiredTwice" | "inputFedTwice" | "inputWithoutValue" | "eventTwice" | "ownEventTwice" | "noSuchEvent" | "noSuchExit" | "notPure" | "leaveOutsideLoop" | "zeroDivisor" | "indexBelowOne";
 
 /**
  *  A problem of a blueprint (`bot::Problem`), its kind for the interface to word, and where it is: its graph, its node

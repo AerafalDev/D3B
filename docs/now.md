@@ -211,7 +211,7 @@ _Updated 2026-11-23._
   their measures alongside; drawn compact as Unreal from a mock-up; AND and OR of N inputs; whole numbers; a fresh
   seed per run and no random duration; Text in one field; Choose reading the side it takes; the nodes' words in their
   own namespace), in eight PRs: the namespace `nodes` (done in code); comparisons, logic and Choose (done in code); arithmetic and N seconds (done in code);
-  randomness (done in code); lists; Text and Join; drawn compact; sentences in place and the checklist; the language frozen there (the owner, 2026-11-23, ADR 0019):
+  randomness (done in code); lists (done in code); Text and Join; drawn compact; sentences in place and the checklist; the language frozen there (the owner, 2026-11-23, ADR 0019):
   (v2.5) to (v2.9) are re-cut into the slices of steps 4 to 7 that use their nodes, and (v2.10)'s blueprints move to steps 5 and 6 ([bot.md](bot.md#the-catalogue-complete-2026-11-23)); (v2.10) D3B's eight
   blueprints (Récolte, Combat, Mineur, Paysan, Alchimiste, Pêcheur, Bûcheron, Chasseur: the owner, 2026-11-16), with
   the ranges computed from the data and the C# version's measured behaviours, in four PRs: the extractor's format 5,

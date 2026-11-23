@@ -359,3 +359,67 @@ fn a_random_element_is_one_of_its_list_and_an_empty_list_blocks() {
         Err(Reason::Fault(Fault::Empty { pin: "list".into() }))
     );
 }
+
+/// Whether `kind`, its list `[5, 6, 7]` made by a List of three, given `inputs`, gives through its output `out` what an
+/// `=` of `of` against `expected` reads true.
+fn of_list(kind: &str, inputs: &str, out: &str, of: &str, expected: &str) -> Result<bool, Reason> {
+    let node = it("equal", of, &format!(r#"{{"b": {expected}}}"#));
+    let more = format!(
+        r#", {{"id": "make", "kind": "make_list", "options": {{"type": "number", "count": 3}}, "inputs": {{"in_1": 5, "in_2": 6, "in_3": 7}}}},
+           {{"id": "x", "kind": "{kind}", "options": {{"type": "number"}}, "inputs": {inputs}}}"#
+    );
+    let wires = format!(
+        r#", {{"from": ["make", "value"], "to": ["x", "list"]}}, {{"from": ["x", "{out}"], "to": ["it", "a"]}}"#
+    );
+    decide(&node, &more, &wires).map(|said| said == "yes")
+}
+
+#[test]
+fn a_list_made_of_its_inputs_reads_its_length_elements_and_places() {
+    for (kind, inputs, out, of, expected) in [
+        ("length", "{}", "value", "number", "3"),
+        ("contains", r#"{"element": 6}"#, "value", "bool", "true"),
+        ("contains", r#"{"element": 9}"#, "value", "bool", "false"),
+        ("position_of", r#"{"element": 7}"#, "value", "number", "3"),
+        ("position_of", r#"{"element": 9}"#, "value", "number", "0"),
+        ("element_at", r#"{"index": 2}"#, "element", "number", "6"),
+        ("first", "{}", "element", "number", "5"),
+    ] {
+        assert_eq!(of_list(kind, inputs, out, of, expected), Ok(true), "{kind} {inputs}");
+    }
+}
+
+#[test]
+fn an_element_out_of_the_list_or_the_first_of_an_empty_one_blocks() {
+    assert_eq!(
+        of_list("element_at", r#"{"index": 4}"#, "element", "number", "0"),
+        Err(Reason::Fault(Fault::OutOfList { index: 4, length: 3 }))
+    );
+    // A 0 typed is a problem; one by a wire, 1 − 1, blocks.
+    let zero = it("equal", "number", r#"{"b": 0}"#);
+    let more = r#", {"id": "x", "kind": "element_at", "options": {"type": "number"}, "inputs": {"list": [5]}},
+                  {"id": "zero", "kind": "subtract", "inputs": {"a": 1, "b": 1}}"#;
+    let wires = r#", {"from": ["zero", "value"], "to": ["x", "index"]}, {"from": ["x", "element"], "to": ["it", "a"]}"#;
+    assert_eq!(
+        decide(&zero, more, wires),
+        Err(Reason::Fault(Fault::OutOfList { index: 0, length: 1 }))
+    );
+    let node = it("equal", "number", r#"{"b": 0}"#);
+    let empty = r#", {"id": "x", "kind": "first", "options": {"type": "number"}, "inputs": {"list": []}}"#;
+    assert_eq!(
+        decide(&node, empty, r#", {"from": ["x", "element"], "to": ["it", "a"]}"#),
+        Err(Reason::Fault(Fault::Empty { pin: "list".into() }))
+    );
+}
+
+#[test]
+fn two_lists_are_equal_with_the_same_elements_in_the_same_order() {
+    let lists = |a: &str, b: &str| {
+        yes(&format!(
+            r#"{{"id": "it", "kind": "equal_lists", "options": {{"type": "number"}}, "inputs": {{"a": {a}, "b": {b}}}}}"#
+        ))
+    };
+    assert!(lists("[1, 2]", "[1, 2]"));
+    assert!(!lists("[1, 2]", "[2, 1]"), "by their order");
+    assert!(!lists("[1, 2]", "[1, 2, 3]"));
+}

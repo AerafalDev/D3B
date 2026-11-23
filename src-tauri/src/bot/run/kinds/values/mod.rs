@@ -4,6 +4,7 @@
 
 mod arithmetic;
 mod compare;
+mod lists;
 mod logic;
 mod random;
 
@@ -42,6 +43,13 @@ pub(super) fn behaviour(kind: &str) -> Option<&'static dyn Behaviour> {
         "random_number" => &random::Number,
         "chance" => &random::Chance,
         "random_element" => &random::Element,
+        "make_list" => &lists::Make,
+        "length" => &lists::Length,
+        "contains" => &lists::Find(false),
+        "position_of" => &lists::Find(true),
+        "element_at" => &lists::At(false),
+        "first" => &lists::At(true),
+        "equal_lists" => &lists::Same,
         _ => return None,
     })
 }
