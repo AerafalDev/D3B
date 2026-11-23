@@ -14,7 +14,9 @@ Claude merges its own PRs once everything is green (CLAUDE.md, Delivery). Each s
    `test`, `docs`, `build`, `ci`, `chore`; scope the domain (`relay`, `data`, `ui`, `claude`, `deps`); a body for why.
    No AI attribution.
 3. **Size**: `bun run pr:size`. Over 1,000 lines, split into a stack before going on, unless the owner granted an
-   exception: then the PR carries the `size-exception` label (`gh pr edit <n> --add-label size-exception`).
+   exception: then the PR carries the `size-exception` label (`gh pr edit <n> --add-label size-exception`). A `feat`
+   PR while more than five checklists are open (`bun run rules` prints the count) waits, unless it is one of the
+   remaining PRs of the feature already started: then it carries the `step-finish` label and says so.
 4. **Checks**: `bun run check` in full, then `git diff --exit-code src/bindings.ts` (stale bindings fail CI). For an
    interface change, a screenshot through `run`.
 5. **Review, one round**: `git diff origin/next...HEAD > artifacts/review.diff`, then one fresh `reviewer` agent with

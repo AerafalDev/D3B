@@ -1,14 +1,17 @@
 # Now
 
-_Updated 2026-11-23._ Under a page: the step, what is done, what comes next, and the open checklists. History is in
-git and the ADRs, design in the domain pages, measures in [checklists/](checklists/README.md).
+_Updated 2026-11-23._ Under 150 lines (`bun run rules`): the step, what is done, what comes next, and the open
+checklists. History is in git and the ADRs, design in the domain pages, measures in [checklists/](checklists/README.md).
 
 ## The step
 
 **Step 3, the bot's model** ([ROADMAP.md](../ROADMAP.md), [bot.md](bot.md), ADRs 0014 to 0018), started on 2026-11-13
 by two exceptions of the owner to "the next feature does not start": step 2 is measured on Windows but for items
 waiting on outside events. Today's feature is **blueprints v2's (v2.4), the values**
-([bot.md](bot.md#the-values-v24)).
+([bot.md](bot.md#the-values-v24)); its remaining PRs finish a started feature and carry `step-finish`.
+
+**The cap** (`CLAUDE.md`; the owner, 2026-11-23): 18 checklists are open, so no new feature PR until at most five
+are; fixes, docs and v2.4's remaining PRs go on. The owner's session of tests closes them.
 
 ## Done
 
