@@ -110,6 +110,12 @@ public sealed record CharacterState
     /// <summary>Gets whether the character is in the middle of something a behavior must not start over: a walk, a use, a dialog or exchange, or a fight.</summary>
     public bool IsBusy => IsWalking || IsUsing || IsInDialog || IsFighting;
 
+    /// <summary>Gets the remaining duration reported for each alteration, by alteration id.</summary>
+    public ImmutableSortedDictionary<long, long> Alterations { get; init; } = ImmutableSortedDictionary<long, long>.Empty;
+
+    /// <summary>Gets whether the server has sent its full list of alterations.</summary>
+    public bool HasAlterationSnapshot { get; init; }
+
     /// <summary>Gets the stacks the character carries, by their own id.</summary>
     public ImmutableSortedDictionary<int, InventoryItem> Inventory { get; init; } = ImmutableSortedDictionary<int, InventoryItem>.Empty;
 

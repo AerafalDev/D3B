@@ -54,6 +54,9 @@ public sealed class FightSettings
     /// <summary>Gets or sets the food to eat, by item, the first carried eaten first; none chosen, what the inventory holds that only heals, the smallest heal first; with none left the life regenerates by itself up to the share.</summary>
     public IReadOnlyList<int> Food { get; set; } = [];
 
+    /// <summary>Gets or sets whether the hunt uses a Minor Uchronic Elixir when the server reports that its alteration expired.</summary>
+    public bool FarmAnomalyFragments { get; set; }
+
     /// <summary>Gets or sets whether the profile banks by its own rules, <see cref="FullAt"/> and its zaaps to the bank, rather than by the general settings' (D405); <see cref="UseZaaps"/> is the profile's whatever this says (D436).</summary>
     public bool OwnBanking { get; set; }
 

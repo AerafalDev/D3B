@@ -81,6 +81,9 @@ public sealed class FightingModule : IModule
             .Advanced()
             .VisibleWhen(s => s.Heal);
 
+        settings.Flag(s => s.FarmAnomalyFragments, FightTexts.Text("FarmAnomalyFragments"))
+            .Help(FightTexts.Text("FarmAnomalyFragmentsHelp"));
+
         settings.Choice(s => s.ChallengeReward, FightTexts.Text("ChallengeReward"), reward => FightTexts.Text($"ChallengeReward{reward}"))
             .Help(FightTexts.Text("ChallengeRewardHelp"));
         settings.Choice(s => s.Challenges, FightTexts.Text("Challenges"), play => FightTexts.Text($"Challenges{play}"))

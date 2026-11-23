@@ -903,3 +903,8 @@ or refines another says so in its own entry. Add a line here with every new deci
 
 - [D500](decisions/d500-summon-control-left.md#d500-the-ai-never-casts-a-spell-every-character-has-that-switches-its-summons-control-no-more-maîtrise-des-invocations-for-nothing) The AI never casts a spell every character has that switches its summons' control: no more "Maîtrise des invocations" for nothing (2026-11-22)
   - A worthless cast left out of the search, the mastery searched by the summoners alone, a list of spell ids.
+
+## Hunting, the Minor Uchronic Elixir kept up (D501)
+
+- [D501](decisions/d501-anomaly-fragment-farming.md#d501-a-hunt-profile-may-keep-a-minor-uchronic-elixir-going-drinking-one-when-its-effect-is-missing-or-ends) A hunt profile may keep a Minor Uchronic Elixir going, drinking one when its effect is missing or ends (2026-11-22)
+  - A contributor's pull request; the alterations in the readable protocol, mapping format 25, three failed uses in a row ending the tries.

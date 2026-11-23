@@ -1618,3 +1618,21 @@ Measured on 2026-11-21 for D488: two game connections of another player on 3.7.1
   action and two scrolls took 18.5 s.
 - **A connection closed.** On the first connection, at 42:43.8, the server answered neither the client's confirmation of a
   walk nor D3B's five walks over the next 20 s, then closed the connection first; nothing it sent before says why.
+
+## The game, altered
+
+Measured for D501. On 2026-11-22, by a contributor (#375): their two game sessions on 3.7.14.18, starting at 13:19:57 and
+14:04:59 UTC, read by structure with `scripts/capture.cs --messages --frames --schema --mapping`, never committed. On
+2026-11-23, by the lead: the owner's 239 game connections of 18 to 22 November, with the mapping of format 25 the branch
+writes, counting messages only.
+
+- **The alterations listed.** `AlterationsSnapshotEvent` (`lxg`) lists the character's alterations whole, a repeated
+  `RoleplayAlteration` (`lxj`) in its field 1. On the owner's connections it came at each of the 222 entries into the game,
+  and once after each of the 8,727 fights' ends, the first of its kind after `FightEndEvent`; never otherwise, and always
+  empty, the owner's characters holding no alteration.
+- **An alteration granted.** On the contributor's sessions, a use of the Minor Uchronic Elixir (item 20962) was followed by
+  `AlterationAddedEvent` (`lxk`), one record in its field 1. The record's field 2 is the alteration, 50 for that elixir, and
+  its field 3 what is left of it, 15 fights at the grant, falling to 0 as the fights went by; a snapshot may
+  still list it at 0. None of the owner's connections holds a grant.
+- **An alteration ended.** Its end came with `TextInformationEvent` of the information kind, text 1665, whose field 4, the
+  text's parameters, holds the alteration's id first.

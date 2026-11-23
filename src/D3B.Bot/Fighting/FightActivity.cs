@@ -33,6 +33,9 @@ namespace D3B.Bot.Fighting;
 /// </remarks>
 public sealed class FightActivity : BotActivity
 {
+    private const int MinorElixirAlteration = 50;
+    private const int MinorUchronicElixir = 20_962;
+    private const int MostFailedElixirs = 3;
     private const int MostLostInARow = 3;
     private const int MostFailedJourneys = 3;
     private const int MostBankings = 3;
@@ -63,6 +66,8 @@ public sealed class FightActivity : BotActivity
     private long? _skippedOn;
     private ActivityReport? _report;
     private ActivityStatistics? _statistics;
+    private bool _waitedForElixir;
+    private int _failedElixirs;
     private bool _healing;
     private bool _regaining;
     private int _failedJourneys;
@@ -131,6 +136,14 @@ public sealed class FightActivity : BotActivity
         _report = new ActivityReport { Doing = GameText.Of(FightTexts.Text("DoingStart")) };
     }
 
+    private static bool? ElixirActive(CharacterState state)
+    {
+        if (state.Alterations.TryGetValue(MinorElixirAlteration, out var remaining))
+            return remaining > 0;
+
+        return state.HasAlterationSnapshot ? false : null;
+    }
+
     private static ActivityException Failure(string message, string key)
     {
         return new ActivityException(message, GameText.Of(FightTexts.Text(key)));
@@ -143,6 +156,14 @@ public sealed class FightActivity : BotActivity
 
         if (await _busy.WaitAsync(context, Failure, cancellationToken).ConfigureAwait(false) || context.State is not { MapId: { } mapId })
             return true;
+
+        if (_settings.FarmAnomalyFragments && !_waitedForElixir && ElixirActive(context.State) is null)
+        {
+            _waitedForElixir = true;
+            await context.WaitUntilAsync(state => ElixirActive(state).HasValue, context.Delays.Answer, cancellationToken).ConfigureAwait(false);
+        }
+
+        await RenewElixirAsync(context, cancellationToken).ConfigureAwait(false);
 
         if (await HealAsync(context, cancellationToken).ConfigureAwait(false))
             return true;
@@ -283,6 +304,25 @@ public sealed class FightActivity : BotActivity
         _regaining = false;
     }
 
+    private async Task RenewElixirAsync(BotContext context, CancellationToken cancellationToken)
+    {
+        // Missing, at zero, or not yet granted after a use that failed: each failure counts, so that a use the server never
+        // honours stops costing a request before every fight.
+        if (!_settings.FarmAnomalyFragments || _failedElixirs >= MostFailedElixirs || ElixirActive(context.State) is not false)
+            return;
+
+        var elixir = context.State.Inventory.Values.FirstOrDefault(stack => stack.ItemId == MinorUchronicElixir && !stack.IsWorn && stack.Quantity > 0);
+        if (elixir is null)
+            return;
+
+        // The server answers the use with the stack's quantity and grants the alteration beside it: until the grant is in the
+        // state, the effect still reads missing and a second elixir would be drunk for nothing.
+        var granted = await context.UseObjectAsync(elixir.Uid, cancellationToken).ConfigureAwait(false) is ObjectUseOutcome.Used
+            && await context.WaitUntilAsync(state => ElixirActive(state) is true, context.Delays.Answer, cancellationToken).ConfigureAwait(false);
+
+        _failedElixirs = granted ? 0 : _failedElixirs + 1;
+    }
+
     private FightRotationZone CurrentOf(BotContext context)
     {
         if (_current is { } current)
@@ -396,6 +436,8 @@ public sealed class FightActivity : BotActivity
 
             if (!context.State.MonsterGroups.TryGetValue(group.ActorId, out now) || now.Cell != context.State.Cell)
                 continue;
+
+            await RenewElixirAsync(context, cancellationToken).ConfigureAwait(false);
 
             var fought = context.Expect((side, _, state) => state.Fight is not null);
 
