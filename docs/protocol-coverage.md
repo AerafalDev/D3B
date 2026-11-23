@@ -7,7 +7,8 @@ the C# version reads, from its `.proto` files, and those D3B pinned beyond them.
 that build once pinned, whether D3B decodes it and encodes it (the bot's requests, from step 4's F3), how many of its
 frames the last local replay of the owner's captures read, and the checklist that measured it in game; then the
 MoonBot Lua calls it backs. Two families of the C# version hold no frame of their own: actors (the shapes maps and
-fights hold) and game (the envelope, which `protocol::envelope` reads).
+fights hold) and game (the envelope, which `protocol::envelope` reads); authentication, the ticket's exchange, is left
+out: its request is a secret, never decoded.
 
 To change it: the catalogue (`src-tauri/src/protocol/coverage/catalogue.rs`), the pins, the code, then `cargo test`;
 CI fails when this page is stale. The replay's counts come from `src-tauri/protocol/replay/<build>.json`, which the
@@ -15,7 +16,7 @@ protocol's replay writes (`D3B_CAPTURES`, [protocol.md](protocol.md#tests)); CI 
 
 | Build | Pinned | Decoded | Encoded | Replayed | Measured in game |
 | --- | ---: | ---: | ---: | --- | ---: |
-| 3.7.13.17 | 18 of 141 | 18 | 0 | 2 connections, 345 frames | 17 |
+| 3.7.13.17 | 18 of 141 | 18 | 0 | 2 connections, 345 frames | 15 |
 | 3.7.14.18 | 18 of 141 | 18 | 0 | 2 connections, 63,557 frames | 0 |
 
 ## Movement
@@ -204,8 +205,8 @@ protocol's replay writes (`D3B_CAPTURES`, [protocol.md](protocol.md#tests)); CI 
 | --- | --- | --- | --- | --- |
 | CharacterStatsEvent | server | `krg`, decoded, 4 frames, [measured](checklists/protocol.md) | `krg`, decoded, 54 frames | `character.hp`, `character.ap`, `character.mp`, `character.energy`, `character.xp` |
 | LifeRegenStartEvent | server | `kqw`, decoded, 2 frames, [measured](checklists/live-view-life.md) | `kqw`, decoded, 17 frames | `character.hp` |
-| LifeRegenEndEvent | server | `kqo`, decoded, [measured](checklists/live-view-life.md) | `kqo`, decoded, 15 frames | `character.hp`, `character.hpMax` |
-| CharacterLevelUpEvent | server | `kqp`, decoded, [measured](checklists/protocol.md) | `kqp`, decoded | `character.level` |
+| LifeRegenEndEvent | server | `kqo`, decoded | `kqo`, decoded, 15 frames | `character.hp`, `character.hpMax` |
+| CharacterLevelUpEvent | server | `kqp`, decoded | `kqp`, decoded | `character.level` |
 
 ## Context
 

@@ -34,8 +34,8 @@ One line per item, in order; each is designed in [bot.md](bot.md) or [play.md](p
 - v2.4: sentences in place, and its checklist; the language is frozen there (ADR 0019, the owner, 2026-11-23).
 - Step 4's first slice, F2 to F10: the game layer reading every family the C# version reads, paths, typed acts
   ([play.md](play.md#the-stack), ADR 0021); F1, the coverage report, is done
-  ([protocol-coverage.md](protocol-coverage.md)). F2 waits on the cap: at most five checklists open (the owner,
-  2026-11-23).
+  ([protocol-coverage.md](protocol-coverage.md)). Started on the owner's go of 2026-11-23: its PRs carry
+  `step-finish` despite the cap.
 - Step 4's first slice, R1 to R9: Récolte automatique playing on Windows; its measure, a 30-minute loop unblocked.
 - (26) events at run time: priorities, modes, thresholds, settings at safe points, When, Every, At, Trigger.
 - The catalogue's slices, each node with its first user ([bot.md](bot.md#the-catalogue-complete-2026-11-23)): 4·Play

@@ -2,7 +2,8 @@
 //! `main` declare (`src/D3B.Protocol/Game/`), by its readable names, which are ours, plus those `next` pinned beyond
 //! them. Each names the Lua calls of `MoonBot` it backs, as the study of that API lists them by module, and the
 //! checklist that measured it in game per build. Two of its families hold no frame of their own: actors (shapes that
-//! maps and fights hold) and game (the envelope, which `protocol::envelope` reads).
+//! maps and fights hold) and game (the envelope, which `protocol::envelope` reads); a third, authentication, is the
+//! ticket's exchange, a secret never decoded.
 
 /// A family of messages, as the C# version's `.proto` files group them.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -40,7 +41,7 @@ const fn measured(
 /// The protocol's checklist, items 1 to 3 on 3.7.13.17 (2026-11-12 and 13): the live view read in game, no frame not
 /// trusted.
 const PROTOCOL: &[(&str, &str)] = &[("3.7.13.17", "protocol.md")];
-/// The live view's life, on 3.7.13.17 (2026-11-13): the regeneration shown, then ended.
+/// The live view's life, on 3.7.13.17 (2026-11-13): the regeneration shown while the bar fills.
 const LIFE: &[(&str, &str)] = &[("3.7.13.17", "live-view-life.md")];
 
 /// The catalogue, in the order of `docs/play.md`'s families, one message a line, as a table reads.
@@ -243,8 +244,8 @@ pub(super) const CATALOGUE: &[Family] = &[
                 PROTOCOL,
             ),
             measured("LifeRegenStartEvent", &["character.hp"], LIFE),
-            measured("LifeRegenEndEvent", &["character.hp", "character.hpMax"], LIFE),
-            measured("CharacterLevelUpEvent", &["character.level"], PROTOCOL),
+            m("LifeRegenEndEvent", &["character.hp", "character.hpMax"]),
+            m("CharacterLevelUpEvent", &["character.level"]),
         ],
     },
     Family {

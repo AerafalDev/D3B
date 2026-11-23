@@ -152,7 +152,8 @@ the C# version reads, from its `.proto` files, and those D3B pinned beyond them.
 that build once pinned, whether D3B decodes it and encodes it (the bot's requests, from step 4's F3), how many of its
 frames the last local replay of the owner's captures read, and the checklist that measured it in game; then the
 MoonBot Lua calls it backs. Two families of the C# version hold no frame of their own: actors (the shapes maps and
-fights hold) and game (the envelope, which `protocol::envelope` reads).
+fights hold) and game (the envelope, which `protocol::envelope` reads); authentication, the ticket's exchange, is left
+out: its request is a secret, never decoded.
 
 To change it: the catalogue (`src-tauri/src/protocol/coverage/catalogue.rs`), the pins, the code, then `cargo test`;
 CI fails when this page is stale. The replay's counts come from `src-tauri/protocol/replay/<build>.json`, which the
