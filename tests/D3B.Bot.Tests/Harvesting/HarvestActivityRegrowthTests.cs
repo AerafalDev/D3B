@@ -144,15 +144,20 @@ public sealed class HarvestActivityRegrowthTests
     }
 
     // The tour goes through the middle map, its tree harvested or refused, then north, which a bot saw holding ash, then east, back
-    // through the middle map, whose tree the server offers as the character comes.
-    private static async Task<(TestConnection Connection, ActivityRun Run)> BackThroughTheMiddleMapAsync(TestPlay play, bool refused)
+    // through the middle map, whose tree the server offers as the character comes. Out of the zone, the zone is the north and east
+    // maps, and the middle map is crossed.
+    private static async Task<(TestConnection Connection, ActivityRun Run)> BackThroughTheMiddleMapAsync(TestPlay play, bool refused, bool outOfTheZone = false)
     {
         var (connection, bot) = await play.EnterAsync(433);
         var sightings = new HarvestSightings();
 
         sightings.Seen(TestPlay.NorthMapId, [TestPlay.Ash], play.Time.GetUtcNow());
 
-        var activity = new HarvestActivity(new HarvestSettings { Resources = [TestPlay.Ash], SubAreas = [TestPlay.SubAreaId] }, play.World, play.Tables, play.Maps, sightings, new GraphicSkills(), play.Places, new Regrowths(), play.Time);
+        var settings = outOfTheZone
+            ? new HarvestSettings { Resources = [TestPlay.Ash], Place = HarvestPlace.Zone, Zone = "woods" }
+            : new HarvestSettings { Resources = [TestPlay.Ash], SubAreas = [TestPlay.SubAreaId] };
+        var zones = new TestPlaceZones().Add("woods", TestPlay.NorthMapId, TestPlay.EastMapId);
+        var activity = new HarvestActivity(settings, play.World, play.Tables, play.Maps, sightings, new GraphicSkills(), play.Places, new Regrowths(), play.Time, zones: zones);
         var run = bot.StartActivity(activity);
 
         await TestWalks.WalkedAsync(play, connection, 1);
@@ -188,6 +193,20 @@ public sealed class HarvestActivityRegrowthTests
         // tour had gone through, the journey stopping only on maps it had not (D392, D439).
         await using var play = new TestPlay();
         var (connection, run) = await BackThroughTheMiddleMapAsync(play, refused: false);
+
+        Assert.NotEqual(TestPlay.ActionCell, await TestWalks.WalkedAsync(play, connection, 7));
+        Assert.Equal(new InteractiveUseRequest { SkillInstanceId = TestPlay.TreeInstanceId, ElementId = TestPlay.TreeElementId }, await TestWalks.SentAsync(play, connection, 8));
+
+        run.Stop();
+
+        Assert.Equal(ActivityOutcome.Stopped, await run.Completion);
+    }
+
+    [Fact]
+    public async Task AResourceGrownBackOnAMapOutOfTheZoneTheTourCrossedAlreadyStopsTheJourneyAndIsHarvested()
+    {
+        await using var play = new TestPlay();
+        var (connection, run) = await BackThroughTheMiddleMapAsync(play, refused: false, outOfTheZone: true);
 
         Assert.NotEqual(TestPlay.ActionCell, await TestWalks.WalkedAsync(play, connection, 7));
         Assert.Equal(new InteractiveUseRequest { SkillInstanceId = TestPlay.TreeInstanceId, ElementId = TestPlay.TreeElementId }, await TestWalks.SentAsync(play, connection, 8));

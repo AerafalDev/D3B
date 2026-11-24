@@ -201,7 +201,7 @@ internal sealed class HarvestTour
         return _crossed.Contains(mapId);
     }
 
-    /// <summary>Marks an element of a map left in this tour, refused or out of reach: no journey of the tour stops for it again (D507).</summary>
+    /// <summary>Marks an element of a map whose use failed in this tour: no journey of the tour stops for it again (D507).</summary>
     /// <param name="mapId">The map.</param>
     /// <param name="elementId">The element.</param>
     public void LeaveElement(long mapId, int elementId)
@@ -212,7 +212,7 @@ internal sealed class HarvestTour
         elements.Add(elementId);
     }
 
-    /// <summary>Gets the elements of a map left in this tour.</summary>
+    /// <summary>Gets the elements of a map whose use failed in this tour.</summary>
     /// <param name="mapId">The map.</param>
     /// <returns>The elements, by id.</returns>
     public IReadOnlySet<int> ElementsLeftOn(long mapId)
@@ -288,6 +288,13 @@ internal sealed class HarvestTour
     public void Harvested()
     {
         HasHarvested = true;
+        _harvests++;
+    }
+
+    /// <summary>Marks a harvest out of the zone, on the way: something done for <see cref="Arrived"/>, nothing of the zone's (D439, D507).</summary>
+    /// <remarks>A journey may stop again on a map out of the zone the tour crossed already, for a resource grown back: crossing it again adds nothing to the tour, so the harvest must.</remarks>
+    public void HarvestedOnTheWay()
+    {
         _harvests++;
     }
 

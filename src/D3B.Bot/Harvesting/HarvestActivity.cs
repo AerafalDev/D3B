@@ -584,8 +584,6 @@ public sealed class HarvestActivity : BotActivity
 
         var candidates = Candidates(context, zone, state);
 
-        LeaveSkipped(state);
-
         if (candidates.Count is 0)
             return false;
 
@@ -613,11 +611,18 @@ public sealed class HarvestActivity : BotActivity
             // Only the zone's own harvests keep it from being swept for nothing: what the way gave says nothing of it (D128).
             if (inZone)
                 _current?.Tour.Harvested();
+            else
+                _current?.Tour.HarvestedOnTheWay();
         }
         else if (outcome is not UseOutcome.Busy)
         {
             _skipped.Add(elementId);
-            LeaveSkipped(state);
+
+            // A use that failed, no journey of the tour stops for again on that map: it would call the character back to it at every
+            // crossing (D392, D507). What is out of reach is not: that is the cell's and the zone's the character came by, which
+            // the next crossing weighs again.
+            if (state.MapId is { } failedOn)
+                _current?.Tour.LeaveElement(failedOn, elementId);
         }
 
         // Moved to another map on the way, the server's doing as on a map action's cell, the character left the map it was going
@@ -635,17 +640,6 @@ public sealed class HarvestActivity : BotActivity
         Publish(context.State, doing);
 
         return true;
-    }
-
-    // What the visit left, refused or out of reach, no journey of the tour stops for again on that map: it would call the character
-    // back to a use that fails at every crossing (D392, D507).
-    private void LeaveSkipped(CharacterState state)
-    {
-        if (state.MapId is not { } mapId || _current is not { } current)
-            return;
-
-        foreach (var elementId in _skipped)
-            current.Tour.LeaveElement(mapId, elementId);
     }
 
     // The step right after a use whose walk did not arrive, before anything of its own moves the character: on another map, the
@@ -700,21 +694,11 @@ public sealed class HarvestActivity : BotActivity
         // A map the journey crosses is harvested if the server offers a wanted element on it, whether the tour holds it back as
         // growing or not, the reckoned time being only a guess (D392), whether it is of the zone or not, the profile's resources
         // being wanted anywhere (D439), and whether the tour went through it already, the element grown back since (D507). An
-        // element the tour left on that map, refused or out of reach, is no reason to stop. The journey asks it of the map's own
+        // element whose use failed on that map in the tour is no reason to stop. The journey asks it of the map's own
         // information, with a list of its own, so that nothing is left skipped for the map the character stands on.
         bool Harvestable(CharacterState crossed)
         {
-            if (crossed.MapId is not { } crossedId)
-                return false;
-
-            // What the crossing finds out of reach is left for the tour too, so that the next crossings neither stop for it nor say it again.
-            HashSet<int> left = [.. tour.ElementsLeftOn(crossedId)];
-            var found = MapHarvest.Candidates(context, TargetsOf(zone), crossed, left).Count;
-
-            foreach (var elementId in left)
-                tour.LeaveElement(crossedId, elementId);
-
-            if (found is 0)
+            if (crossed.MapId is not { } crossedId || MapHarvest.Candidates(context, TargetsOf(zone), crossed, [.. tour.ElementsLeftOn(crossedId)]).Count is 0)
                 return false;
 
             // Out of the zone, a map crossed already in this tour is harvested again only where the journey stopped for it.

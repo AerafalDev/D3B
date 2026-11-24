@@ -28,7 +28,8 @@ them"; the rule chosen by the owner, as the lead recommended it. Refines D391, w
   left longest ago comes first, whatever the way, so that a zone left a moment ago still grows back.
 - **Not measured in game.** The saving is reckoned on the world graph over the rounds the captures played, not played. The
   rule is tested on `HarvestRotation.Next`; the activity's use of it, the zone just left and the world graph's map changes, is
-  read only, the fake game holding one sub-area. A zone dropped for no way there or nothing left to harvest is followed by
+  read only, the fake game holding one sub-area. The first zone of a run is still the draw's first, a profession's top
+  (D391): no zone was gone to yet. A zone dropped for no way there or nothing left to harvest is followed by
   the same choice, the zone just left counting for nothing.
 - **Rejected.**
   - The nearest ready zone alone, D391's fear: two neighbours would take turns while the others wait; the round keeps each
@@ -51,11 +52,14 @@ through or crossed out of the journey's stop.*
   refused could not call the character back. A resource grown back on such a map was passed by; D495's stay takes only one
   grown back while the character stood there.
 - **Made.** The journey stops on any map it crosses where the server offers a wanted element the character can reach, gone
-  through or crossed in the tour or not, except an element the tour left on that map: refused, or out of reach, at a visit of
-  this tour (`HarvestTour.LeaveElement`, forgotten with the tour). Out of the zone, a map crossed already is harvested again
-  where the journey stopped for it, as D495's stay does.
+  through or crossed in the tour or not, except an element whose use failed on that map in this tour, refused or its walk
+  cut (`HarvestTour.LeaveElement`, forgotten with the tour). One out of reach is weighed again at each crossing, from the cell
+  and the zone the character came by (D425, D495). Out of the zone, a map crossed already is harvested again where the
+  journey stopped for it, as D495's stay does, and the harvest counts as something done for D488's tour going round
+  (`HarvestTour.HarvestedOnTheWay`), crossing the map again adding nothing, though not as the zone's (D128).
 - **Not measured in game.** Tested on the fake game: the tree of the middle map, harvested, grown back as the tour comes back
-  through it, stops the journey; refused, it does not.
+  through it, stops the journey, in the zone and out of it; refused, it does not. Known: the journal says again, at each
+  crossing of a map, the elements out of reach from where the character came.
 - **Rejected.**
   - Stopping for any element offered, refused or not: one the server refuses would stop every journey of the tour that
     crosses its map.

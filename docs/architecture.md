@@ -278,8 +278,8 @@ The bots run in `D3B.Bot`: what each part does today, with the decisions that ma
   order of the professions harvested least lately and `HarvestBalance`, which counts the last 50 harvests by profession, gives
   the resources of a map their priority. The journey to the tour's next map stops on the first map it crosses where the server
   offers a wanted element it can reach, even one the tour holds back as growing (D392), even out of the zone (D439), and even on
-  a map gone through or crossed in the tour, unless the tour left that element there, refused or out of reach
-  (`HarvestTour.LeaveElement`, D507): out of the zone the step takes the profile's resources and marks the map
+  a map gone through or crossed in the tour, unless the element's use failed there in this tour
+  (`HarvestTour.LeaveElement`, D507), a harvest out of the zone counting for D488's going round (`HarvestedOnTheWay`): out of the zone the step takes the profile's resources and marks the map
   `HarvestTour.Cross`, apart from the maps gone through, so the tour's progress and `HasHarvested` stay the zone's. The journey to the bank stops nowhere. Any journey
   of the tour stays on the map it is about to leave where a wanted element it can reach is offered that was not as it came
   (`MapHarvest.Regrown`), and harvests it there, crossed already or not (D495).
