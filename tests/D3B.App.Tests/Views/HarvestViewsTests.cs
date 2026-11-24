@@ -509,4 +509,97 @@ public sealed class HarvestViewsTests : IAsyncDisposable
         Assert.Contains("Frêne", french);
         Assert.DoesNotContain(french, text => text.StartsWith('[') && text.EndsWith(']'));
     }
+
+    [Fact]
+    public async Task TheStatisticsSayWhatTheFightsGaveByHourOfTheRunsThatFoughtInBothLanguages()
+    {
+        using var host = await HostAsync();
+        var now = new DateTimeOffset(2026, 10, 29, 15, 0, 0, TimeSpan.Zero);
+
+        _play.Time.SetUtcNow(now);
+
+        var contexts = host.Services.GetRequiredService<IDbContextFactory<StorageContext>>();
+
+        await using (var context = await contexts.CreateDbContextAsync(TestContext.Current.CancellationToken))
+        {
+            // Two hours of hunting, and an hour of harvest that fought nothing: the rates count the hunt's hours alone.
+            context.Runs.Add(new RunRecord
+            {
+                AccountId = TestPlay.AccountId,
+                CharacterId = TestPlay.CharacterId,
+                CharacterName = "Character",
+                Title = "Bouftous",
+                Activity = "Hunting",
+                StartedAt = now.AddHours(-4),
+                LastAt = now.AddHours(-2),
+                EndedAt = now.AddHours(-2),
+                Outcome = ActivityOutcome.Stopped,
+                FightsWon = 11,
+                FightsLost = 1,
+                Deaths = 2,
+                Experience = 24_000,
+                Kamas = 3_000,
+            });
+            context.Runs.Add(new RunRecord
+            {
+                AccountId = TestPlay.AccountId,
+                CharacterId = TestPlay.CharacterId,
+                CharacterName = "Character",
+                Title = "Ortie",
+                Activity = "Harvesting",
+                StartedAt = now.AddHours(-1),
+                LastAt = now,
+                EndedAt = now,
+                Outcome = ActivityOutcome.Stopped,
+                Items = new() { [TestPlay.Ash] = 100 },
+            });
+            await context.SaveChangesAsync(TestContext.Current.CancellationToken);
+        }
+
+        await host.Services.GetRequiredService<RunBook>().LoadAsync(TestContext.Current.CancellationToken);
+
+        var runner = await TestHosts.RunningAsync(host);
+        var (english, french) = await OnTheUIThreadAsync(() =>
+        {
+            var localizer = Localizer.Instance;
+
+            localizer.Use(Localizer.English);
+
+            var main = new MainViewModel(runner, localizer);
+            var window = new MainWindow { DataContext = main, Width = 1280, Height = 900 };
+
+            main.Refresh();
+            window.Show();
+            main.Bottom.ShowCommand.Execute(BottomTab.Statistics);
+            Dispatcher.UIThread.RunJobs();
+
+            var english = Texts(window);
+
+            Drawings.Draw(window, "statistics-fights-en");
+            main.Settings.UseFrenchCommand.Execute(null);
+            main.Refresh();
+            Dispatcher.UIThread.RunJobs();
+
+            var french = Texts(window);
+
+            Drawings.Draw(window, "statistics-fights-fr");
+            localizer.Use(Localizer.English);
+            window.Close();
+
+            return (english, french);
+        });
+
+        Assert.Contains("Fights", english);
+        Assert.Contains("won 11 · lost 1 · deaths 2", english);
+        Assert.Contains("Experience", english);
+        Assert.Contains("24,000", english);
+        Assert.Contains("12,000/h", english);
+        Assert.Contains("3,000", english);
+        Assert.Contains("1,500/h", english);
+        Assert.DoesNotContain(english, text => text.StartsWith('[') && text.EndsWith(']'));
+        Assert.Contains("Combats", french);
+        Assert.Contains("gagnés 11 · perdus 1 · morts 2", french);
+        Assert.Contains("Expérience", french);
+        Assert.DoesNotContain(french, text => text.StartsWith('[') && text.EndsWith(']'));
+    }
 }

@@ -42,7 +42,7 @@ internal sealed class RunRecorder : BackgroundService
 
     private static string Signature(RunRecord record)
     {
-        return $"{string.Join(',', record.Items.OrderBy(item => item.Key).Select(item => $"{item.Key}:{item.Value}"))}|{string.Join(',', record.Jobs.Select(job => $"{job.JobId}:{job.Experience}"))}|{record.Banks}|{record.Protectors}|{record.Aggressions}|{record.Outcome}";
+        return $"{string.Join(',', record.Items.OrderBy(item => item.Key).Select(item => $"{item.Key}:{item.Value}"))}|{string.Join(',', record.Jobs.Select(job => $"{job.JobId}:{job.Experience}"))}|{record.Banks}|{record.Protectors}|{record.Aggressions}|{record.FightsWon}|{record.FightsLost}|{record.Deaths}|{record.Experience}|{record.Kamas}|{record.Outcome}";
     }
 
     private static void Fill(RunRecord record, BotActor bot, ActivityRun run, Tracked tracked, DateTimeOffset now)
@@ -57,6 +57,14 @@ internal sealed class RunRecorder : BackgroundService
         record.Banks = statistics?.Banks ?? 0;
         record.Protectors = statistics?.Fights.GetValueOrDefault(FightKind.Protector) ?? 0;
         record.Aggressions = statistics?.Fights.GetValueOrDefault(FightKind.Aggression) ?? 0;
+
+        var fights = run.Fights;
+
+        record.FightsWon = fights.Won;
+        record.FightsLost = fights.Lost;
+        record.Deaths = fights.Deaths;
+        record.Experience = fights.Experience;
+        record.Kamas = fights.Kamas;
 
         var jobs = new List<RunJob>();
 

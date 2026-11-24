@@ -49,4 +49,19 @@ public sealed class RunRecord
 
     /// <summary>Gets or sets how many aggressions cut it (D144).</summary>
     public int Aggressions { get; set; }
+
+    /// <summary>Gets or sets how many fights the character won while it ran (D505).</summary>
+    public int FightsWon { get; set; }
+
+    /// <summary>Gets or sets how many fights the character lost while it ran (D505).</summary>
+    public int FightsLost { get; set; }
+
+    /// <summary>Gets or sets how many fights the character ended dead while it ran (D505).</summary>
+    public int Deaths { get; set; }
+
+    /// <summary>Gets or sets the experience the fights gave the character while it ran (D505).</summary>
+    public long Experience { get; set; }
+
+    /// <summary>Gets or sets the kamas the fights gave the character while it ran (D505).</summary>
+    public long Kamas { get; set; }
 }

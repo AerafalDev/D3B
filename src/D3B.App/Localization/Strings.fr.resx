@@ -1934,12 +1934,6 @@
   <data name="SessionFights" xml:space="preserve">
     <value>Combats {0:N0}</value>
   </data>
-  <data name="SessionKamasGained" xml:space="preserve">
-    <value>Kamas +{0:N0}</value>
-  </data>
-  <data name="SessionKamasSpent" xml:space="preserve">
-    <value>Kamas −{0:N0}</value>
-  </data>
   <data name="SessionProfession" xml:space="preserve">
     <value>{0} · niveau {1}</value>
   </data>
@@ -3535,5 +3529,23 @@
   </data>
   <data name="CharacterPickerDetail" xml:space="preserve">
     <value>Niveau {0} · {1}</value>
+  </data>
+  <data name="SessionFightsOutcome" xml:space="preserve">
+    <value>Gagnés {0:N0} · Perdus {1:N0}</value>
+  </data>
+  <data name="SessionDeaths" xml:space="preserve">
+    <value>Morts {0:N0}</value>
+  </data>
+  <data name="SessionExperience" xml:space="preserve">
+    <value>Expérience</value>
+  </data>
+  <data name="SessionKamas" xml:space="preserve">
+    <value>Kamas</value>
+  </data>
+  <data name="StatisticsFights" xml:space="preserve">
+    <value>Combats</value>
+  </data>
+  <data name="StatisticsFightsSummary" xml:space="preserve">
+    <value>gagnés {0:N0} · perdus {1:N0} · morts {2:N0}</value>
   </data>
 </root>

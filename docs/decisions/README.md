@@ -124,3 +124,4 @@ Each file holds the decisions of one group of [the index](../decisions-index.md)
 - [Hunting, the Minor Uchronic Elixir kept up (D501)](d501-anomaly-fragment-farming.md): 1 decision, 4 KB.
 - [The client's directory, chosen or found by the launcher (D502)](d502-client-directory.md): 1 decision, 3 KB.
 - [Fights, the Chaferfu a last resort and Saoul's share dispelled (D503)](d503-chaferfu-and-saoul.md): 1 decision, 5 KB.
+- [A fighting profile's numbers (D505)](d505-run-fight-figures.md): 1 decision, 3 KB.

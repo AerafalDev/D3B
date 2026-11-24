@@ -271,8 +271,20 @@ namespace D3B.Storage.Migrations
                         .IsRequired()
                         .HasColumnType("TEXT");
 
+                    b.Property<int>("Deaths")
+                        .HasColumnType("INTEGER");
+
                     b.Property<DateTimeOffset?>("EndedAt")
                         .HasColumnType("TEXT");
+
+                    b.Property<long>("Experience")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("FightsLost")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("FightsWon")
+                        .HasColumnType("INTEGER");
 
                     b.Property<string>("Items")
                         .IsRequired()
@@ -281,6 +293,9 @@ namespace D3B.Storage.Migrations
                     b.Property<string>("Jobs")
                         .IsRequired()
                         .HasColumnType("TEXT");
+
+                    b.Property<long>("Kamas")
+                        .HasColumnType("INTEGER");
 
                     b.Property<DateTimeOffset>("LastAt")
                         .HasColumnType("TEXT");

@@ -371,6 +371,72 @@ public sealed class ActivityRunTests : IAsyncDisposable
         Assert.Throws<ObjectDisposedException>(() => bot.StartActivity(new TestActivity()));
     }
 
+    private static Actor Self()
+    {
+        return new Actor
+        {
+            Id = TestPlay.CharacterId,
+            Disposition = new ActorDisposition { CellId = 314 },
+            Information = new ActorInformation { Fighter = new FightFighter { Spawn = new FighterSpawn { Alive = true, Team = FightTeam.Challenger } } },
+        };
+    }
+
+    private static FightResult Result(FightOutcome outcome, long experience, long kamas)
+    {
+        return new FightResult
+        {
+            Outcome = outcome,
+            Fighter = new FightResultFighter
+            {
+                FighterId = TestPlay.CharacterId,
+                Character = new FightResultCharacter { Data = { new FightResultData { Experience = new FightExperience { Gained = experience } } } },
+            },
+            Loot = new FightLoot { Kamas = kamas },
+        };
+    }
+
+    private static void Fight(TestConnection connection, FightOutcome outcome, long experience, long kamas, bool dies = false)
+    {
+        connection.Server(new ContextCreationEvent { Context = ContextCreationEvent.Types.GameContext.Fight });
+        connection.Server(new FightFighterShowEvent { Fighter = Self() });
+
+        if (dies)
+            connection.Server(new GameActionFightEvent { ActionId = 103, SourceId = -1, Death = new FightDeath { TargetId = TestPlay.CharacterId } });
+
+        connection.Server(new FightEndEvent { Results = { Result(outcome, experience, kamas) } });
+        connection.Server(new ContextCreationEvent { Context = ContextCreationEvent.Types.GameContext.Roleplay });
+    }
+
+    [Fact]
+    public async Task ARunCountsItsCharactersFightsWonLostAndDeathsWithTheExperienceAndKamasTheyGave()
+    {
+        var (connection, bot) = await _play.EnterAsync(300);
+
+        // A fight before the run is not its own.
+        Fight(connection, FightOutcome.Won, 1_000, 100);
+        await bot.ProcessedAsync();
+
+        var run = bot.StartActivity(new TestActivity());
+
+        Assert.Equal(new RunFights(), run.Fights);
+
+        Fight(connection, FightOutcome.Won, 77, 7);
+        Fight(connection, FightOutcome.Won, 23, 3, dies: true);
+        Fight(connection, FightOutcome.Lost, 0, 0, dies: true);
+        await bot.ProcessedAsync();
+
+        Assert.Equal(new RunFights { Won = 2, Lost = 1, Deaths = 2, Experience = 100, Kamas = 10 }, run.Fights);
+
+        run.Stop();
+        await run.Completion;
+
+        // Nor one after it.
+        Fight(connection, FightOutcome.Won, 1_000, 100);
+        await bot.ProcessedAsync();
+
+        Assert.Equal((2, 100L), (run.Fights.Won, run.Fights.Experience));
+    }
+
     private static async Task WaitForAsync(Func<bool> condition)
     {
         var deadline = DateTime.UtcNow + Polling.Deadline;

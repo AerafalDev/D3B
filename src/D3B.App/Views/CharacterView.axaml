@@ -665,6 +665,52 @@
                         <Border
                             Background="{DynamicResource CardBackgroundColor}"
                             CornerRadius="10"
+                            IsVisible="{Binding HasFightFigures}"
+                            Margin="0,6,0,0"
+                            Padding="12,10">
+                            <ItemsControl ItemsSource="{Binding FightFigures}">
+                                <ItemsControl.ItemsPanel>
+                                    <ItemsPanelTemplate>
+                                        <StackPanel Spacing="8" />
+                                    </ItemsPanelTemplate>
+                                </ItemsControl.ItemsPanel>
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate x:DataType="ch:SessionFigureViewModel">
+                                        <Grid ColumnDefinitions="Auto,*,Auto,64" ColumnSpacing="8">
+                                            <c:GlyphIcon
+                                                Foreground="{DynamicResource MutedColor}"
+                                                Height="14"
+                                                Source="{Binding Glyph}"
+                                                VerticalAlignment="Center"
+                                                Width="14" />
+                                            <TextBlock
+                                                Classes="Muted"
+                                                FontSize="12"
+                                                Grid.Column="1"
+                                                Text="{Binding Name}"
+                                                TextTrimming="CharacterEllipsis"
+                                                VerticalAlignment="Center" />
+                                            <TextBlock
+                                                Classes="Bright Figures"
+                                                FontWeight="SemiBold"
+                                                Grid.Column="2"
+                                                Text="{Binding Count}"
+                                                VerticalAlignment="Center" />
+                                            <TextBlock
+                                                Classes="Dim Figures"
+                                                FontSize="11"
+                                                Grid.Column="3"
+                                                HorizontalAlignment="Right"
+                                                Text="{Binding Rate}"
+                                                VerticalAlignment="Center" />
+                                        </Grid>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </Border>
+                        <Border
+                            Background="{DynamicResource CardBackgroundColor}"
+                            CornerRadius="10"
                             IsVisible="{Binding HasProfession}"
                             Margin="0,6,0,0"
                             Padding="12,10">

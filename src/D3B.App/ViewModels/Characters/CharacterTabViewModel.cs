@@ -45,7 +45,6 @@ internal sealed partial class CharacterTabViewModel : ObservableObject
     private JournalLines? _lines;
     private TimeProvider _time = TimeProvider.System;
     private ActivityRun? _run;
-    private long _kamasAtStart;
     private long _journalSeen = -1;
     private CultureInfo? _culture;
 
@@ -129,6 +128,11 @@ internal sealed partial class CharacterTabViewModel : ObservableObject
     [ObservableProperty]
     public partial IReadOnlyList<SessionTileViewModel> Tiles { get; private set; } = [];
 
+    /// <summary>Gets the experience and kamas the session's fights gave, overall and by hour, once it fought (D505).</summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasFightFigures))]
+    public partial IReadOnlyList<SessionFigureViewModel> FightFigures { get; private set; } = [];
+
     /// <summary>Gets the profession the session raised, and its level.</summary>
     [ObservableProperty]
     public partial string Profession { get; private set; } = "";
@@ -141,7 +145,7 @@ internal sealed partial class CharacterTabViewModel : ObservableObject
     [ObservableProperty]
     public partial double ProfessionProgress { get; private set; }
 
-    /// <summary>Gets the session's fights, deposits and kamas, a fact each.</summary>
+    /// <summary>Gets the session's fights, won and lost, deaths and deposits, a fact each (D505).</summary>
     [ObservableProperty]
     public partial IReadOnlyList<string> Facts { get; private set; } = [];
 
@@ -163,6 +167,9 @@ internal sealed partial class CharacterTabViewModel : ObservableObject
 
     /// <summary>Gets whether the session counted a resource.</summary>
     public bool HasTiles => Tiles.Count > 0;
+
+    /// <summary>Gets whether the session fought, so that what its fights gave shows.</summary>
+    public bool HasFightFigures => FightFigures.Count > 0;
 
     /// <summary>Gets whether the session raised a profession.</summary>
     public bool HasProfession => Profession.Length > 0;
@@ -347,7 +354,6 @@ internal sealed partial class CharacterTabViewModel : ObservableObject
         if (run != _run)
         {
             _run = run;
-            _kamasAtStart = state.Kamas;
             _jobsAtStart.Clear();
 
             foreach (var job in state.Jobs.Values)
@@ -371,15 +377,30 @@ internal sealed partial class CharacterTabViewModel : ObservableObject
         OnPropertyChanged(nameof(HasTiles));
         RefreshProfession(state);
 
-        var fights = statistics?.Fights.Values.Sum() ?? 0;
-        var kamas = state.Kamas - _kamasAtStart;
+        // What a fighting profile is judged by, once the run fought: the fights' experience and kamas, by hour.
+        var fights = run.Fights;
 
-        Facts =
-        [
-            _localizer.Format("SessionFights", fights),
-            _localizer.Format("SessionDeposits", statistics?.Banks ?? 0),
-            _localizer.Format(kamas >= 0 ? "SessionKamasGained" : "SessionKamasSpent", Math.Abs(kamas)),
-        ];
+        FightFigures = fights.Fought > 0
+            ? [Figure(GameGlyph.Experience, "SessionExperience", fights.Experience, hours), Figure(GameGlyph.Kamas, "SessionKamas", fights.Kamas, hours)]
+            : [];
+
+        var facts = new List<string> { _localizer.Format("SessionFights", fights.Fought) };
+
+        if (fights.Fought > 0)
+        {
+            facts.Add(_localizer.Format("SessionFightsOutcome", fights.Won, fights.Lost));
+            facts.Add(_localizer.Format("SessionDeaths", fights.Deaths));
+        }
+
+        facts.Add(_localizer.Format("SessionDeposits", statistics?.Banks ?? 0));
+        Facts = facts;
+    }
+
+    private SessionFigureViewModel Figure(GameGlyph glyph, string name, long count, double hours)
+    {
+        var culture = _localizer.Culture;
+
+        return new SessionFigureViewModel(_icons?.Glyph(glyph), _localizer[name], count.ToString("N0", culture), _localizer.Format("StatisticsRate", Math.Round(count / hours).ToString("N0", culture)));
     }
 
     private void RefreshProfession(CharacterState state)
