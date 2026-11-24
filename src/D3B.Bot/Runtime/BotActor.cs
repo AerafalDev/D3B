@@ -553,6 +553,7 @@ public sealed class BotActor : IAsyncDisposable, IRequestWithholder
             _lastFightEnd = end;
             Volatile.Write(ref _lastEndedFight, Volatile.Read(ref _fightsBegun));
             Journal.Add(new FightEndEntry(Time.GetUtcNow(), end.Outcome, end.Experience, end.Kamas, end.Items.Values.Sum()));
+            _activity?.Count(end, state.Fight.Fighters.GetValueOrDefault(Key.CharacterId) is { IsAlive: false });
         }
 
         if (side is RelayDirection.FromServer && message is PartyInvitationEvent)

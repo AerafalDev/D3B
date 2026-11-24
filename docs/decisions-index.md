@@ -923,3 +923,8 @@ or refines another says so in its own entry. Add a line here with every new deci
 
 - [D504](decisions/d504-journal-on-disk.md#d504-each-bots-journal-and-the-hosts-problems-are-written-to-disk-for-seven-days-and-250-mb-saved-from-the-studio-and-joined-to-a-report-for-their-last-24-hours) Each bot's journal and the host's problems are written to disk for seven days and 250 MB, saved from the studio and joined to a report for their last 24 hours (2026-11-24)
   - A recorder reading the rings every second, a file a source and a UTC day, the owner's retention and report span, `%USERPROFILE%` hidden.
+
+## A fighting profile's numbers (D505)
+
+- [D505](decisions/d505-run-fight-figures.md#d505-a-run-counts-its-characters-fights-won-and-lost-its-deaths-and-the-experience-and-kamas-they-gave) A run counts its character's fights won and lost, its deaths, and the experience and kamas they gave (2026-11-24)
+  - U3 of the next release; kept in the run's record, on the card and in the Statistics by hour of the runs that fought.
