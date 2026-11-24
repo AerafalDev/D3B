@@ -32,7 +32,8 @@ namespace D3B.Bot.Fights;
 /// <para>
 /// A cast the server refuses with an error text is not weighed again this turn, on that cell, and the next turn weighs it anew:
 /// what it refuses depends on what it sees, such as a monster it cannot see. A cast it does not answer within its delay is not
-/// cast again this fight, for a spell it never answers is one the character cannot cast; a walk not answered ends the turn.
+/// cast again this turn, and not this fight once it went unanswered on two turns, for a spell it never answers is one the
+/// character cannot cast, and one answer may be lost (D510); a walk not answered ends the turn.
 /// The client acknowledges the sequences and says it is ready for each turn by itself (client.md).
 /// </para>
 /// </remarks>
@@ -40,6 +41,9 @@ public static class FightPlay
 {
     private const int MostActionsATurn = 30;
     private const int MostRefusedATurn = 2;
+
+    // F2 (D510): the turns a spell goes unanswered before it is left out of the fight, the first maybe an answer lost.
+    private const int UnansweredTurns = 2;
 
     // The owner's ask (D203, D216): the AI's fight is closed to other players, then to spectators. A master's is left to its
     // party, which the server locks it to (D431, D435), and opened when the server kept it closed from the last (D471); a
@@ -71,7 +75,7 @@ public static class FightPlay
         var weights = TacticWeights.Default;
         var judged = false;
         var risky = false;
-        var refused = new HashSet<int>();
+        var unanswered = new Dictionary<int, int>();
         var challenged = new HashSet<int>();
         var left = new HashSet<int>();
         FightMap? map = null;
@@ -139,7 +143,7 @@ public static class FightPlay
                 var play = PlayOf(context);
                 var playedFor = play is ChallengePlay.None || risky || fight.Challenges.IsEmpty ? null : ChallengeOf(fight, tables.Challenges, play, risky, left, fight.PlayingId ?? self);
 
-                await PlayTurnAsync(context, tactics, searches, tables, map, weights, refused, playedFor, left, cancellationToken).ConfigureAwait(false);
+                await PlayTurnAsync(context, tactics, searches, tables, map, weights, unanswered, playedFor, left, cancellationToken).ConfigureAwait(false);
                 await context.WaitUntilAsync(next => next.Fight is not { IsOwnTurn: true }, context.Delays.Answer, cancellationToken).ConfigureAwait(false);
             }
         }
@@ -372,11 +376,12 @@ public static class FightPlay
         };
     }
 
-    private static async Task PlayTurnAsync(BotContext context, FightTactics tactics, FightSearches searches, GameTables tables, FightMap map, TacticWeights weights, HashSet<int> refusedSpells, (int Id, TurnChallenge Challenge)? challenge, HashSet<int> left, CancellationToken cancellationToken)
+    private static async Task PlayTurnAsync(BotContext context, FightTactics tactics, FightSearches searches, GameTables tables, FightMap map, TacticWeights weights, Dictionary<int, int> unanswered, (int Id, TurnChallenge Challenge)? challenge, HashSet<int> left, CancellationToken cancellationToken)
     {
         // The character's turn, or a summon's it controls.
         var self = context.State.Fight?.PlayingId ?? context.State.Key.CharacterId;
         var refused = new HashSet<(int SpellId, int Cell)>();
+        var leftOut = unanswered.Where(spell => spell.Value >= UnansweredTurns).Select(spell => spell.Key).ToHashSet();
         var refusals = 0;
         var acted = 0;
         (int ActionPoints, int MovementPoints)? turnPoints = context.State.Fight?.Fighters.GetValueOrDefault(self) is { } own ? (own.ActionPoints, own.MovementPoints) : null;
@@ -393,8 +398,8 @@ public static class FightPlay
             if (context.State.Fight is not { IsOwnTurn: true } || ImaginedFights.Of(context.State, map, tables, tactics.Blows, turnPoints) is not { } imagined)
                 return;
 
-            if (refusedSpells.Count > 0)
-                imagined = (imagined.Fight, imagined.Knowledge.Without(refusedSpells));
+            if (leftOut.Count > 0)
+                imagined = (imagined.Fight, imagined.Knowledge.Without(leftOut));
 
             // A state the character began its turn with is no gain put back by a later plan of the turn (D503).
             turnStates ??= imagined.Fight.Actor.States;
@@ -438,13 +443,14 @@ public static class FightPlay
             else if (await CastAsync(context, self, action, cancellationToken).ConfigureAwait(false) is var answer and not CastAnswer.Cast)
             {
                 // Measured live (D203): a spell the server leaves unanswered, such as a transformed character's own, is
-                // refused again on every cell: it is not cast again this fight. One it refuses with a text depends on what
-                // the server sees (D407): a target invisible for some turns left the spell out of the whole fight, and the
-                // AI passed its turns once the monsters were seen again.
+                // refused again on every cell: it is not cast again this turn, and not this fight once a second turn left it
+                // unanswered, for one answer lost left a key spell out of the whole fight (F2, D510). One it refuses with a
+                // text depends on what the server sees (D407): a target invisible for some turns left the spell out of the
+                // whole fight, and the AI passed its turns once the monsters were seen again.
                 refused.Add((action.SpellId, action.Cell));
 
-                if (answer is CastAnswer.Unanswered)
-                    refusedSpells.Add(action.SpellId);
+                if (answer is CastAnswer.Unanswered && leftOut.Add(action.SpellId))
+                    unanswered[action.SpellId] = unanswered.GetValueOrDefault(action.SpellId) + 1;
 
                 if (++refusals >= MostRefusedATurn)
                     break;

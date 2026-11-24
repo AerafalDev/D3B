@@ -15,4 +15,7 @@ public sealed record TurnPlan(ImmutableArray<TacticAction> Actions, double Score
 
     /// <summary>Gets whether the plan keeps the fight's challenge the search was given (D466); false with none.</summary>
     public bool KeepsChallenge { get; init; }
+
+    /// <summary>Gets how many of the ends the search found it weighed against the enemies' reply, ending the turn now among them.</summary>
+    public int Replied { get; init; }
 }
