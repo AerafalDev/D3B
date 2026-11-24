@@ -923,3 +923,8 @@ or refines another says so in its own entry. Add a line here with every new deci
 
 - [D505](decisions/d505-run-fight-figures.md#d505-a-run-counts-its-characters-fights-won-and-lost-its-deaths-and-the-experience-and-kamas-they-gave) A run counts its character's fights won and lost, its deaths, and the experience and kamas they gave (2026-11-24)
   - U3 of the next release; kept in the run's record, on the card and in the Statistics by hour of the runs that fought.
+
+## The studio made simpler (D513)
+
+- [D513](decisions/d513-studio-navigation.md#d513-the-studio-opens-on-an-activity-bar-and-one-side-bar-the-bottom-panel-and-the-details-hidden-until-needed-the-protocol-an-advanced-tool) The studio opens on an activity bar and one side bar, the bottom panel and the Details hidden until needed, the protocol an advanced tool (2026-11-24)
+  - Stage 1 of 4 of the redesign after `next`, taken by the lead under the owner's delegation; Characters, Library and World as views, Advanced tools.

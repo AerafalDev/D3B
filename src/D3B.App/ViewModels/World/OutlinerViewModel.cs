@@ -54,6 +54,17 @@ internal sealed partial class OutlinerViewModel : ObservableObject
     [ObservableProperty]
     public partial string Filter { get; set; } = "";
 
+    /// <summary>Gets or sets what the rows list: the characters, the world, or both (D513).</summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(SearchText), nameof(EmptyText))]
+    public partial OutlinerScope Scope { get; set; }
+
+    /// <summary>Gets what the search's field says while empty, by what the rows list.</summary>
+    public string SearchText => _localizer[Scope is OutlinerScope.Characters ? "CharactersSearch" : "OutlinerSearch"];
+
+    /// <summary>Gets what the list says while nothing is in it, by what the rows list.</summary>
+    public string EmptyText => _localizer[Scope switch { OutlinerScope.Characters => "CharactersEmpty", OutlinerScope.World => "WorldEmpty", _ => "OutlinerEmpty" }];
+
     /// <summary>Gets whether nothing is in the world: no character, no route, no zone, or nothing matches the filter.</summary>
     [ObservableProperty]
     public partial bool IsEmpty { get; private set; } = true;
@@ -269,6 +280,20 @@ internal sealed partial class OutlinerViewModel : ObservableObject
         Refresh();
     }
 
+    /// <summary>Says the search's and the empty list's words again, in the language chosen.</summary>
+    public void Relabel()
+    {
+        OnPropertyChanged(nameof(SearchText));
+        OnPropertyChanged(nameof(EmptyText));
+        _signature = null;
+    }
+
+    partial void OnScopeChanged(OutlinerScope value)
+    {
+        _signature = null;
+        Refresh();
+    }
+
     partial void OnFilterChanged(string value)
     {
         _signature = null;
@@ -286,9 +311,14 @@ internal sealed partial class OutlinerViewModel : ObservableObject
     {
         var rows = new List<OutlinerRowViewModel>();
 
-        AddCharacters(rows);
-        AddRoutes(rows);
-        AddZones(rows);
+        if (Scope is not OutlinerScope.World)
+            AddCharacters(rows);
+
+        if (Scope is not OutlinerScope.Characters)
+        {
+            AddRoutes(rows);
+            AddZones(rows);
+        }
 
         return rows;
     }
@@ -347,6 +377,14 @@ internal sealed partial class OutlinerViewModel : ObservableObject
 
         if (group.Count == 0)
             return;
+
+        // Alone in the Characters view, they need no heading: the side bar's header names them and counts those online (D513).
+        if (Scope is OutlinerScope.Characters)
+        {
+            rows.AddRange(group);
+
+            return;
+        }
 
         rows.Add(new OutlinerRowViewModel("heading:characters", OutlinerRowKind.Heading)
         {

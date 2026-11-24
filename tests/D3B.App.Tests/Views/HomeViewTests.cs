@@ -4,6 +4,7 @@ using Avalonia.Threading;
 using Avalonia.VisualTree;
 using D3B.App.Localization;
 using D3B.App.ViewModels;
+using D3B.App.ViewModels.Studio;
 using D3B.App.Views;
 using D3B.Bot.Tests.Runtime;
 using D3B.Studio.Assets;
@@ -66,6 +67,7 @@ public sealed class HomeViewTests : IAsyncDisposable
             Drawings.Draw(window, "home-fr");
             localizer.Use(Localizer.English);
             main.Refresh();
+            main.Layout.ShowView(SideView.World);
             main.Outliner.Select(main.Outliner.Rows.Single(row => row.Key == "route:north"));
             Dispatcher.UIThread.RunJobs();
 

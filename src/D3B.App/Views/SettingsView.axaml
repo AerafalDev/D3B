@@ -862,6 +862,23 @@
                                     </Grid>
                                 </Panel>
                             </Border>
+                            <Border Classes="SRow" IsVisible="{Binding AdvancedToolsRow.IsShown}">
+                                <Panel>
+                                    <Border Classes="Rule" />
+                                    <Grid Classes="RowBody" ColumnDefinitions="*,Auto">
+                                        <StackPanel VerticalAlignment="Center">
+                                            <TextBlock Classes="RowTitle" Text="{Binding AdvancedToolsRow.Label}" />
+                                            <TextBlock Classes="RowLine" Text="{Binding AdvancedToolsRow.Detail}" />
+                                        </StackPanel>
+                                        <CheckBox
+                                            AutomationProperties.Name="{Binding AdvancedToolsRow.Label}"
+                                            Command="{Binding Studio.ToggleAdvancedToolsCommand}"
+                                            Grid.Column="1"
+                                            IsChecked="{Binding Studio.AdvancedTools, Mode=OneWay}"
+                                            VerticalAlignment="Center" />
+                                    </Grid>
+                                </Panel>
+                            </Border>
                         </StackPanel>
                     </StackPanel>
 

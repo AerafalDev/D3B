@@ -1,5 +1,6 @@
 using D3B.App.Localization;
 using D3B.App.ViewModels;
+using D3B.App.ViewModels.Studio;
 using D3B.App.ViewModels.World;
 using D3B.Bot.Tests.Runtime;
 using D3B.Studio.Assets;
@@ -74,6 +75,8 @@ public sealed class HomeViewModelTests : IAsyncDisposable
     {
         var main = await StudioAsync();
 
+        // The routes and the zones are the World's view of the side bar (D513).
+        main.Layout.ShowView(SideView.World);
         main.Outliner.Select(main.Outliner.Rows.Single(row => row.Key == "route:north"));
 
         Assert.True(main.Editor.IsShown("world"));
@@ -116,6 +119,7 @@ public sealed class HomeViewModelTests : IAsyncDisposable
         Assert.True(main.Editor.IsShown("home"));
         Assert.Equal(["home"], main.Editor.Items.Select(tab => tab.Key));
 
+        main.Layout.ShowView(SideView.World);
         main.Outliner.Select(main.Outliner.Rows.Single(row => row.Key == "route:north"));
 
         Assert.True(main.Editor.IsShown("world"));

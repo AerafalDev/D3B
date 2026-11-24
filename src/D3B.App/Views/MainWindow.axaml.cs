@@ -13,7 +13,7 @@ using ShadUI;
 
 namespace D3B.App.Views;
 
-/// <summary>The studio's window: its title row, its docks laid out as the layout says, its dialogs and toasts (D320 to D322).</summary>
+/// <summary>The studio's window: its title row, its activity bar, its parts laid out as the layout says, its dialogs and toasts (D320 to D322, D513).</summary>
 internal sealed partial class MainWindow : ShadUI.Window
 {
     // The gap between two docks, which their edges sit in.
@@ -56,16 +56,14 @@ internal sealed partial class MainWindow : ShadUI.Window
         LeftSplitter.DragDelta += (_, e) => _main?.Layout.ResizeLeft(_dragStart + e.Vector.X, Bounds.Width);
         RightSplitter.DragStarted += (_, _) => _dragStart = _main?.Layout.RightWidth ?? 0;
         RightSplitter.DragDelta += (_, e) => _main?.Layout.ResizeRight(_dragStart - e.Vector.X, Bounds.Width);
-        ShareSplitter.DragStarted += (_, _) => _dragStart = _main?.Layout.LeftShare ?? 0;
-        ShareSplitter.DragDelta += (_, e) => _main?.Layout.ResizeShare(_dragStart + e.Vector.Y / Math.Max(1, LeftColumn.Bounds.Height - Gap), LeftColumn.Bounds.Height - Gap);
         BottomSplitter.DragStarted += (_, _) => _dragStart = _main?.Layout.BottomHeight ?? 0;
         BottomSplitter.DragDelta += (_, e) => _main?.Layout.ResizeBottom(_dragStart - e.Vector.Y, CentreColumn.Bounds.Height - Gap);
 
-        foreach (var splitter in new[] { LeftSplitter, RightSplitter, ShareSplitter, BottomSplitter })
+        foreach (var splitter in new[] { LeftSplitter, RightSplitter, BottomSplitter })
             splitter.DragCompleted += (_, _) => _main?.Layout.Remember();
 
         // The panel last pressed is outlined in the accent, as the mockup's focused panel.
-        foreach (var dock in new[] { OutlinerDock, AssetsDock, EditorDock, BottomDock, DetailsDock })
+        foreach (var dock in new[] { SideDock, EditorDock, BottomDock, DetailsDock })
             dock.AddHandler(PointerPressedEvent, (_, _) => Focus(dock), RoutingStrategies.Tunnel, handledEventsToo: true);
     }
 
@@ -126,16 +124,10 @@ internal sealed partial class MainWindow : ShadUI.Window
         // A closed panel's row or column takes no room, and its gap goes with it: its neighbour takes the room.
         var columns = Docks.ColumnDefinitions;
 
-        columns[0].Width = new GridLength(layout.IsLeftOpen ? layout.LeftWidth : 0);
-        columns[1].Width = new GridLength(layout.IsLeftOpen ? Gap : 0);
+        columns[0].Width = new GridLength(layout.IsSideOpen ? layout.LeftWidth : 0);
+        columns[1].Width = new GridLength(layout.IsSideOpen ? Gap : 0);
         columns[3].Width = new GridLength(layout.IsDetailsOpen ? Gap : 0);
         columns[4].Width = new GridLength(layout.IsDetailsOpen ? layout.RightWidth : 0);
-
-        var left = LeftColumn.RowDefinitions;
-
-        left[0].Height = layout.AreBothLeftOpen ? new GridLength(layout.LeftShare, GridUnitType.Star) : new GridLength(layout.IsOutlinerOpen ? 1 : 0, GridUnitType.Star);
-        left[1].Height = new GridLength(layout.AreBothLeftOpen ? Gap : 0);
-        left[2].Height = layout.AreBothLeftOpen ? new GridLength(1 - layout.LeftShare, GridUnitType.Star) : new GridLength(layout.IsAssetsOpen ? 1 : 0, GridUnitType.Star);
 
         var centre = CentreColumn.RowDefinitions;
 
@@ -145,7 +137,7 @@ internal sealed partial class MainWindow : ShadUI.Window
 
     private void Focus(Border dock)
     {
-        foreach (var other in new[] { OutlinerDock, AssetsDock, EditorDock, BottomDock, DetailsDock })
+        foreach (var other in new[] { SideDock, EditorDock, BottomDock, DetailsDock })
             other.Classes.Set("Focused", other == dock);
     }
 

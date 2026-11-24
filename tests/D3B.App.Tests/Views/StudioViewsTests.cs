@@ -78,7 +78,7 @@ public sealed class StudioViewsTests : IAsyncDisposable
 
             Drawings.Draw(window, "studio-playing");
             Drawings.DrawPart(window.GetVisualDescendants().OfType<Border>().Single(border => border.Classes.Contains("Run")), "part-run-playing");
-            Drawings.DrawPart(window.GetVisualDescendants().OfType<Border>().Single(border => border.Name == "OutlinerDock"), "part-characters");
+            Drawings.DrawPart(window.GetVisualDescendants().OfType<Border>().Single(border => border.Name == "SideDock"), "part-characters");
             Drawings.DrawPart(window.GetVisualDescendants().OfType<Border>().Single(border => border.Name == "BottomDock"), "part-bottom");
             main.RunBlock.PauseCommand.Execute(null);
             Dispatcher.UIThread.RunJobs();
@@ -173,14 +173,15 @@ public sealed class StudioViewsTests : IAsyncDisposable
             var window = new MainWindow { DataContext = main, Width = 1440, Height = 900 };
 
             main.Refresh();
+            main.Layout.Show(StudioPanel.Bottom, true);
+            main.Layout.Show(StudioPanel.Details, true);
             window.Show();
             Dispatcher.UIThread.RunJobs();
 
             var editor = window.GetVisualDescendants().OfType<Border>().Single(border => border.Name == "EditorDock");
             var before = (editor.Bounds.Width, editor.Bounds.Height);
 
-            main.Layout.Close(StudioPanel.Outliner);
-            main.Layout.Close(StudioPanel.Assets);
+            main.Layout.Close(StudioPanel.Side);
             main.Layout.Close(StudioPanel.Bottom);
             main.Layout.Close(StudioPanel.Details);
             Dispatcher.UIThread.RunJobs();
@@ -195,9 +196,9 @@ public sealed class StudioViewsTests : IAsyncDisposable
             return (before, after);
         });
 
-        // 1440 less the window's edges, the left column, the inspector and their gaps, then all of it.
-        Assert.Equal(1440 - 2 - 10 - 300 - 340 - 10, widths.before.Width, 1);
-        Assert.Equal(1440 - 2 - 10, widths.after.Width, 1);
+        // 1440 less the window's edges, the activity bar and its margins, the side bar, the Details, their gaps and the right margin; then all of it but the activity bar (D513).
+        Assert.Equal(1440 - 2 - 45 - 300 - 5 - 340 - 5 - 5, widths.before.Width, 1);
+        Assert.Equal(1440 - 2 - 45 - 5, widths.after.Width, 1);
         Assert.True(widths.after.Height > widths.before.Height + 200);
     }
 

@@ -18,13 +18,13 @@ public sealed class AppPreferencesTests
         Assert.Equal((null, null), (first.Language, first.Layout));
 
         first.RememberLanguage("fr");
-        first.RememberLayout(new StudioLayoutState(260, 400, 0.5, 180, ["Inspector"]));
+        first.RememberLayout(new StudioLayoutState(260, 400, 180, Shown: ["Side", "Bottom"], View: "World"));
 
         var next = AppPreferences.Load(path);
 
         Assert.Equal("fr", next.Language);
-        Assert.Equal((260d, 400d, 0.5, 180d), (next.Layout!.LeftWidth, next.Layout.RightWidth, next.Layout.LeftShare, next.Layout.BottomHeight));
-        Assert.Equal(["Inspector"], next.Layout.Closed);
+        Assert.Equal((260d, 400d, 180d, "World"), (next.Layout!.LeftWidth, next.Layout.RightWidth, next.Layout.BottomHeight, next.Layout.View));
+        Assert.Equal(["Side", "Bottom"], next.Layout.Shown);
     }
 
     [Fact]
@@ -107,13 +107,13 @@ public sealed class AppPreferencesTests
         var main = new MainViewModel(await TestHosts.RunningAsync(store.Host), new Localizer(Localizer.English), preferences);
 
         main.Settings.UseFrenchCommand.Execute(null);
-        main.Layout.CloseCommand.Execute(StudioPanel.Details);
+        main.Layout.ToggleCommand.Execute(StudioPanel.Bottom);
 
         var again = new MainViewModel(await TestHosts.RunningAsync(store.Host), new Localizer(Localizer.English), AppPreferences.Load(path));
 
         Assert.Equal("fr", AppPreferences.Load(path).Language);
-        Assert.False(again.Layout.IsDetailsOpen);
-        Assert.True(again.Layout.IsOutlinerOpen);
+        Assert.True(again.Layout.IsBottomOpen);
+        Assert.True(again.Layout.IsSideOpen);
 
         again.Layout.ResetCommand.Execute(null);
 

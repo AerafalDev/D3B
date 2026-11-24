@@ -1,13 +1,10 @@
 namespace D3B.App.ViewModels.Studio;
 
-/// <summary>A panel of the studio that closes by its × and opens again from the Window menu (D321).</summary>
+/// <summary>A part of the studio that hides and shows again from the title row's toggles, the View menu or its keys (D321, D513).</summary>
 internal enum StudioPanel
 {
-    /// <summary>The Outliner, at the top of the left column: what the world holds, characters, routes and zones (D397).</summary>
-    Outliner,
-
-    /// <summary>The project's assets, the Content browser, under the Outliner.</summary>
-    Assets,
+    /// <summary>The side bar, on the left beside the activity bar: the view chosen there, the characters, the library or the world.</summary>
+    Side,
 
     /// <summary>The bottom panel, under the editor: the journal, the trace, the problems, the protocol and the statistics.</summary>
     Bottom,
