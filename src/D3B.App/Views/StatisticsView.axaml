@@ -4,6 +4,7 @@
     x:DataType="vm:StatisticsViewModel"
     xmlns="https://github.com/avaloniaui"
     xmlns:c="clr-namespace:D3B.App.Controls"
+    xmlns:ch="clr-namespace:D3B.App.ViewModels.Characters"
     xmlns:l="clr-namespace:D3B.App.Localization"
     xmlns:vm="clr-namespace:D3B.App.ViewModels.Statistics"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
@@ -157,69 +158,115 @@
                     ColumnSpacing="10"
                     Margin="10"
                     VerticalAlignment="Top">
-                    <Border Classes="Stat" VerticalAlignment="Top">
-                        <StackPanel Spacing="10">
-                            <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10">
-                                <TextBlock Classes="StatTitle" Text="{l:Tr StatisticsResources}" />
-                                <TextBlock
-                                    Classes="StatAside"
-                                    Grid.Column="1"
-                                    Text="{Binding Summary}"
-                                    TextTrimming="CharacterEllipsis" />
-                            </Grid>
-                            <ItemsControl ItemsSource="{Binding Resources}">
-                                <ItemsControl.ItemsPanel>
-                                    <ItemsPanelTemplate>
-                                        <StackPanel Spacing="7" />
-                                    </ItemsPanelTemplate>
-                                </ItemsControl.ItemsPanel>
-                                <ItemsControl.ItemTemplate>
-                                    <DataTemplate x:DataType="vm:StatisticsResourceViewModel">
-                                        <Grid ColumnDefinitions="22,90,*,54,54" ColumnSpacing="8">
-                                            <Border Classes="ItemSquare">
-                                                <Image
-                                                    IsVisible="{Binding HasIcon}"
-                                                    Margin="2"
-                                                    RenderOptions.BitmapInterpolationMode="HighQuality"
-                                                    Source="{Binding Icon}" />
-                                            </Border>
-                                            <TextBlock
-                                                Grid.Column="1"
-                                                Text="{Binding Name}"
-                                                TextTrimming="CharacterEllipsis"
-                                                VerticalAlignment="Center" />
-                                            <c:ShareBar
-                                                Fill="#7FA7FF"
-                                                Grid.Column="2"
-                                                Height="5"
-                                                Track="#12FFFFFF"
-                                                Value="{Binding Share}"
-                                                VerticalAlignment="Center" />
-                                            <TextBlock
-                                                Classes="Count"
-                                                Grid.Column="3"
-                                                Text="{Binding Count}" />
-                                            <TextBlock
-                                                Classes="Rate"
-                                                Grid.Column="4"
-                                                Text="{Binding Rate}" />
-                                        </Grid>
-                                    </DataTemplate>
-                                </ItemsControl.ItemTemplate>
-                            </ItemsControl>
-                            <Grid
-                                ColumnDefinitions="Auto,*"
-                                ColumnSpacing="8"
-                                IsVisible="{Binding LevelsDetail, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
-                                <TextBlock Classes="Bright" Text="{Binding LevelsValue}" />
-                                <TextBlock
-                                    Classes="Dim"
-                                    Grid.Column="1"
-                                    Text="{Binding LevelsDetail}"
-                                    TextTrimming="CharacterEllipsis" />
-                            </Grid>
-                        </StackPanel>
-                    </Border>
+                    <StackPanel Spacing="10" VerticalAlignment="Top">
+                        <Border Classes="Stat">
+                            <StackPanel Spacing="10">
+                                <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10">
+                                    <TextBlock Classes="StatTitle" Text="{l:Tr StatisticsResources}" />
+                                    <TextBlock
+                                        Classes="StatAside"
+                                        Grid.Column="1"
+                                        Text="{Binding Summary}"
+                                        TextTrimming="CharacterEllipsis" />
+                                </Grid>
+                                <ItemsControl ItemsSource="{Binding Resources}">
+                                    <ItemsControl.ItemsPanel>
+                                        <ItemsPanelTemplate>
+                                            <StackPanel Spacing="7" />
+                                        </ItemsPanelTemplate>
+                                    </ItemsControl.ItemsPanel>
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate x:DataType="vm:StatisticsResourceViewModel">
+                                            <Grid ColumnDefinitions="22,90,*,54,54" ColumnSpacing="8">
+                                                <Border Classes="ItemSquare">
+                                                    <Image
+                                                        IsVisible="{Binding HasIcon}"
+                                                        Margin="2"
+                                                        RenderOptions.BitmapInterpolationMode="HighQuality"
+                                                        Source="{Binding Icon}" />
+                                                </Border>
+                                                <TextBlock
+                                                    Grid.Column="1"
+                                                    Text="{Binding Name}"
+                                                    TextTrimming="CharacterEllipsis"
+                                                    VerticalAlignment="Center" />
+                                                <c:ShareBar
+                                                    Fill="#7FA7FF"
+                                                    Grid.Column="2"
+                                                    Height="5"
+                                                    Track="#12FFFFFF"
+                                                    Value="{Binding Share}"
+                                                    VerticalAlignment="Center" />
+                                                <TextBlock
+                                                    Classes="Count"
+                                                    Grid.Column="3"
+                                                    Text="{Binding Count}" />
+                                                <TextBlock
+                                                    Classes="Rate"
+                                                    Grid.Column="4"
+                                                    Text="{Binding Rate}" />
+                                            </Grid>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                                <Grid
+                                    ColumnDefinitions="Auto,*"
+                                    ColumnSpacing="8"
+                                    IsVisible="{Binding LevelsDetail, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+                                    <TextBlock Classes="Bright" Text="{Binding LevelsValue}" />
+                                    <TextBlock
+                                        Classes="Dim"
+                                        Grid.Column="1"
+                                        Text="{Binding LevelsDetail}"
+                                        TextTrimming="CharacterEllipsis" />
+                                </Grid>
+                            </StackPanel>
+                        </Border>
+                        <Border Classes="Stat" IsVisible="{Binding HasFights}">
+                            <StackPanel Spacing="10">
+                                <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10">
+                                    <TextBlock Classes="StatTitle" Text="{l:Tr StatisticsFights}" />
+                                    <TextBlock
+                                        Classes="StatAside"
+                                        Grid.Column="1"
+                                        Text="{Binding FightsSummary}"
+                                        TextTrimming="CharacterEllipsis" />
+                                </Grid>
+                                <ItemsControl ItemsSource="{Binding FightFigures}">
+                                    <ItemsControl.ItemsPanel>
+                                        <ItemsPanelTemplate>
+                                            <StackPanel Spacing="7" />
+                                        </ItemsPanelTemplate>
+                                    </ItemsControl.ItemsPanel>
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate x:DataType="ch:SessionFigureViewModel">
+                                            <Grid ColumnDefinitions="22,*,Auto,54" ColumnSpacing="8">
+                                                <Border Classes="ItemSquare">
+                                                    <c:GlyphIcon
+                                                        Foreground="{DynamicResource MutedColor}"
+                                                        Margin="4"
+                                                        Source="{Binding Glyph}" />
+                                                </Border>
+                                                <TextBlock
+                                                    Grid.Column="1"
+                                                    Text="{Binding Name}"
+                                                    TextTrimming="CharacterEllipsis"
+                                                    VerticalAlignment="Center" />
+                                                <TextBlock
+                                                    Classes="Count"
+                                                    Grid.Column="2"
+                                                    Text="{Binding Count}" />
+                                                <TextBlock
+                                                    Classes="Rate"
+                                                    Grid.Column="3"
+                                                    Text="{Binding Rate}" />
+                                            </Grid>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
                     <Border
                         Classes="Stat"
                         Grid.Column="1"

@@ -919,6 +919,10 @@ or refines another says so in its own entry. Add a line here with every new deci
 - [D503](decisions/d503-chaferfu-and-saoul.md#d503-a-summon-every-character-has-is-a-last-resort-whatever-the-breed-saouls-share-is-dispelled-with-it-and-the-states-a-turn-began-with-stay-held-through-the-turn) A summon every character has is a last resort whatever the breed, Saoul's share is dispelled with it, and the states a turn began with stay held through the turn (2026-11-24)
   - The owner's report; the Forgelance's Chaferfu and the Pandawa's Bombance measured on the 24 November captures, a probe planning again after each action as the bot does.
 
+## A fighting profile's numbers (D505)
+
+- [D505](decisions/d505-run-fight-figures.md#d505-a-run-counts-its-characters-fights-won-and-lost-its-deaths-and-the-experience-and-kamas-they-gave) A run counts its character's fights won and lost, its deaths, and the experience and kamas they gave (2026-11-24)
+  - U3 of the next release; kept in the run's record, on the card and in the Statistics by hour of the runs that fought.
 ## Fights, the AI's searches off the thread pool (D508)
 
 - [D508](decisions/d508-fight-searches-off-the-pool.md#d508-the-fight-ai-searches-on-threads-of-its-own-half-the-cores-and-below-the-normal-priority-never-on-the-thread-pool) The fight AI searches on threads of its own, half the cores and below the normal priority, never on the thread pool (2026-11-24)

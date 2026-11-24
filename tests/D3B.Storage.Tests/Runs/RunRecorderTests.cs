@@ -1,6 +1,7 @@
 using System.Collections.Immutable;
 using D3B.Bot.Activities;
 using D3B.Bot.Runtime;
+using D3B.Bot.Tests.Runtime;
 using D3B.Data.Tests;
 using D3B.Protocol.Game;
 using D3B.Storage.Runs;
@@ -20,6 +21,20 @@ public sealed class RunRecorderTests : IDisposable
     private static JobExperiencesEvent Lumberjack(int level, long experience)
     {
         return new JobExperiencesEvent { Jobs = { new JobExperience { JobId = 2, Level = level, Experience = experience, LevelFloor = 0, NextLevelFloor = 10_000 } } };
+    }
+
+    private static FightResult Result(FightOutcome outcome, long experience, long kamas)
+    {
+        return new FightResult
+        {
+            Outcome = outcome,
+            Fighter = new FightResultFighter
+            {
+                FighterId = TestPlay.CharacterId,
+                Character = new FightResultCharacter { Data = { new FightResultData { Experience = new FightExperience { Gained = experience } } } },
+            },
+            Loot = new FightLoot { Kamas = kamas },
+        };
     }
 
     [Fact]
@@ -78,6 +93,37 @@ public sealed class RunRecorderTests : IDisposable
         var kept = Assert.Single(next.Services.GetRequiredService<RunBook>().Runs);
 
         Assert.Equal((ActivityOutcome.Stopped, 12L, 800L), (kept.Outcome, kept.Items[303], kept.Jobs.Single().Experience));
+    }
+
+    [Fact]
+    public async Task ARunKeepsTheFightsItsCharacterWonAndLostItsDeathsAndTheExperienceAndKamasTheyGave()
+    {
+        var path = _directory.Combine("d3b.db");
+        var cancellation = TestContext.Current.CancellationToken;
+
+        await using (var storage = await new TestStorage(path).StartedAsync())
+        {
+            var (connection, bot) = await storage.Play.EnterAsync(300);
+            var recorder = storage.Services.GetRequiredService<RunRecorder>();
+            var run = bot.StartActivity(new CountingActivity(), "Bouftous");
+
+            await recorder.PollAsync(cancellation);
+
+            connection.Server(new ContextCreationEvent { Context = ContextCreationEvent.Types.GameContext.Fight });
+            connection.Server(new FightEndEvent { Results = { Result(FightOutcome.Won, 1_250, 40) } });
+            connection.Server(new ContextCreationEvent { Context = ContextCreationEvent.Types.GameContext.Fight });
+            connection.Server(new FightEndEvent { Results = { Result(FightOutcome.Lost, 0, 0) } });
+            await bot.ProcessedAsync();
+
+            run.Stop();
+            await run.Completion;
+            await recorder.PollAsync(cancellation);
+        }
+
+        await using var next = await new TestStorage(path).StartedAsync();
+        var kept = Assert.Single(next.Services.GetRequiredService<RunBook>().Runs);
+
+        Assert.Equal((1, 1, 0, 1_250L, 40L), (kept.FightsWon, kept.FightsLost, kept.Deaths, kept.Experience, kept.Kamas));
     }
 
     private sealed class CountingActivity : BotActivity
