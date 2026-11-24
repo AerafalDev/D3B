@@ -92,6 +92,7 @@ public sealed class FightJudge
     private readonly Imagination? _imagination;
     private readonly int _actorTurnPoints;
     private readonly int _actorTurnMovement;
+    private readonly ImmutableArray<int> _actorTurnStates;
     private readonly int _rounds;
 
     /// <summary>Initializes a new instance of the <see cref="FightJudge"/> class, from the fight as it stands when the search starts.</summary>
@@ -133,6 +134,7 @@ public sealed class FightJudge
 
         _actorTurnPoints = Math.Clamp(turn.Item1, 0, MostPoints);
         _actorTurnMovement = Math.Max(0, turn.Item2);
+        _actorTurnStates = knowledge.TurnStates;
 
         // A buff is weighed over the rounds the fight is foreseen to last still, as its odds reckon them.
         var odds = Odds(start, knowledge);
@@ -846,7 +848,10 @@ public sealed class FightJudge
             // Reported by players (D420): a Pandawa swapping Sobre and Saoul with Picole was credited the Sobre it held all along, whole
             // fight long, each time a cast put it back, while the one it started the search with is worth nothing; it swapped its states
             // instead of striking, turn after turn, as the bot plans again before each cast. A state is a gain only where it was not.
-            if (buff.IsState && _tables.Fighters[known].HasState(buff.Change))
+            // The owner's report (D503): the bot plans again before each action, so that the state the Pandawa had just left was no
+            // longer one it held, and swapping back was a gain again, drunk, sober, drunk at a turn's end. The states the fighter
+            // playing began its turn with stay held for every plan of the turn.
+            if (buff.IsState && (_tables.Fighters[known].HasState(buff.Change) || (buff.FighterId == _actorId && _actorTurnStates.Contains(buff.Change))))
                 continue;
 
             var without = Without(fighter, buff);
