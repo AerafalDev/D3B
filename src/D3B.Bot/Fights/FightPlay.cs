@@ -1,3 +1,4 @@
+using System.Collections.Immutable;
 using D3B.Bot.Characters;
 using D3B.Bot.Movement;
 using D3B.Bot.Runtime;
@@ -376,6 +377,7 @@ public static class FightPlay
         var refusals = 0;
         var acted = 0;
         (int ActionPoints, int MovementPoints)? turnPoints = context.State.Fight?.Fighters.GetValueOrDefault(self) is { } own ? (own.ActionPoints, own.MovementPoints) : null;
+        ImmutableArray<int>? turnStates = null;
 
         if (challenge is { } turn)
             challenge = (turn.Id, turn.Challenge with { StartCell = context.State.Fight?.Fighters.GetValueOrDefault(self)?.Cell });
@@ -390,6 +392,10 @@ public static class FightPlay
 
             if (refusedSpells.Count > 0)
                 imagined = (imagined.Fight, imagined.Knowledge.Without(refusedSpells));
+
+            // A state the character began its turn with is no gain put back by a later plan of the turn (D503).
+            turnStates ??= imagined.Fight.Actor.States;
+            imagined = (imagined.Fight, imagined.Knowledge with { TurnStates = turnStates.Value });
 
             if (challenge is { } going)
                 challenge = Refreshed(going, context.State.Fight, tables.Challenges, self);

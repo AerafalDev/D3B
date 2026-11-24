@@ -768,10 +768,16 @@ public sealed class Imagination
                 };
                 break;
             // A share is a factor, not an amount: one only maybe given is left out rather than halved.
-            // Held by its spell, so that a dispel takes it back with the spell's other buffs (D496).
+            // Held by its spell, so that a dispel takes it back with the spell's other buffs (D496), even with no rounds of its own:
+            // the pack's Saoul gives its share so, waiting for damage, and each swap to drunk added one more where Sobre's dispel
+            // took none back (D503).
             case EffectKind.ReceivedDamageShare when effect.IsCertain && !effect.IsRandom && effect.Value.Min > 0:
                 target = Stacked(target, level, effect, buffs, ref kept);
-                fighters[index] = Held(target with { ReceivedDamageShares = target.ReceivedDamageShares.Add(effect.Value.Min) }, level, effect, effect.Value.Min, fighters[casterIndex].Id);
+                fighters[index] = target with
+                {
+                    ReceivedDamageShares = target.ReceivedDamageShares.Add(effect.Value.Min),
+                    Buffs = target.Buffs.Add(new HeldBuff(level.SpellId, effect.EffectId, effect.Value.Min, CasterId: fighters[casterIndex].Id)),
+                };
                 break;
             case EffectKind.ReceivedDamageReduction when effect.IsCertain && !effect.IsRandom:
                 target = Stacked(target, level, effect, buffs, ref kept);

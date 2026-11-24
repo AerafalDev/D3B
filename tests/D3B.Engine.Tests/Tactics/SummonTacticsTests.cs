@@ -15,6 +15,8 @@ public sealed class SummonTacticsTests
     private const int Bite = 20;
     private const int Blow = 30;
     private const int Lance = 40;
+    private const int CommonSummon = 50;
+    private const int CommonSummonsPair = 51;
     private const int Osamodas = 2;
     private const int Sram = 4;
     private const int Forgelance = 20;
@@ -31,7 +33,8 @@ public sealed class SummonTacticsTests
     /// <summary>
     /// Spell 10, a summon of monster 900 at grade 1, 2 AP, range 1 to 2 on a free cell; spell 20, its earth bite of 25 to 30 on an
     /// enemy, 3 AP, range 1; spell 30, a blow of 20 to 24, 3 AP, range 1 to 4; spell 40, a lance of 3 AP, range 1 to 4, striking 40 to
-    /// 48 in a cross of 1 and bringing monster 900 to its free cell, as a Forgelance's lances strike and stay.
+    /// 48 in a cross of 1 and bringing monster 900 to its free cell, as a Forgelance's lances strike and stay; spell 50, spell 10
+    /// again as a spell every character has, a variant of breed 19, as <i>Invocation de Chaferfu</i> is.
     /// </summary>
     private static SpellCatalog Catalog()
     {
@@ -43,6 +46,7 @@ public sealed class SummonTacticsTests
             new SpellLevel { Id = 1020, SpellId = Bite, Grade = 1, ApCost = 3, MinRange = 1, Range = 1, StatesCriterion = SpellLevel.NoCriterion, FirstEffect = 1, EffectCount = 1 },
             new SpellLevel { Id = 1030, SpellId = Blow, Grade = 1, ApCost = 3, MinRange = 1, Range = 4, StatesCriterion = SpellLevel.NoCriterion, FirstEffect = 2, EffectCount = 1 },
             new SpellLevel { Id = 1040, SpellId = Lance, Grade = 1, ApCost = 3, MinRange = 1, Range = 4, StatesCriterion = SpellLevel.NoCriterion, FirstEffect = 3, EffectCount = 2 },
+            new SpellLevel { Id = 1050, SpellId = CommonSummon, Grade = 1, ApCost = 2, MinRange = 1, Range = 2, StatesCriterion = SpellLevel.NoCriterion, Properties = SpellLevelProperties.NeedFreeCell, FirstEffect = 5, EffectCount = 1 },
         ];
         SpellEffect[] effects =
         [
@@ -51,11 +55,12 @@ public sealed class SummonTacticsTests
             new SpellEffect { Uid = 3, EffectId = 97, TargetMask = 0, Triggers = 2, DiceNum = 20, DiceSide = 24, Zone = point },
             new SpellEffect { Uid = 4, EffectId = 97, TargetMask = 0, Triggers = 2, DiceNum = 40, DiceSide = 48, Zone = Zone(SpellZoneShape.Cross) },
             new SpellEffect { Uid = 5, EffectId = 181, TargetMask = 1, Triggers = 2, DiceNum = Monster, DiceSide = 1, Zone = point },
+            new SpellEffect { Uid = 6, EffectId = 181, TargetMask = 1, Triggers = 2, DiceNum = Monster, DiceSide = 1, Zone = point },
         ];
         Spell[] spells = [.. levels.Select((level, index) => new Spell { Id = level.SpellId, NameId = level.SpellId, FirstLevel = index, LevelCount = 1 })];
 
         return new SpellCatalog(spells, levels, levels.Select(level => level.Id).ToArray(), effects, Array.Empty<SpellPreviewZone>(), Array.Empty<int>(), strings,
-            Array.Empty<SpellVariant>(), Array.Empty<SpellBomb>(), Array.Empty<SpellBombWall>());
+            new[] { new SpellVariant(1, SpellVariant.CommonBreed, CommonSummon, CommonSummonsPair) }, Array.Empty<SpellBomb>(), Array.Empty<SpellBombWall>());
     }
 
     /// <summary>Monster 900, which plays and moves, bites at grade 1, with 3 AP, 3 MP and half its summoner's base life.</summary>
@@ -189,6 +194,23 @@ public sealed class SummonTacticsTests
 
         Assert.Contains(Lance, plan);
         Assert.DoesNotContain(Blow, plan);
+    }
+
+    [Fact]
+    public void AForgelanceSummonsWhatEveryCharacterSummonsOnlyAsALastResort()
+    {
+        // The owner's report (D503): the Forgelance's summons are searched first for its lances (D462), and the Chaferfu every
+        // character may summon came with them, planned 8 times in 39 of its turns of 24 November where its player never cast it.
+        var plan = Plan(Forgelance, Level(_spells, CommonSummon), Level(_spells, Blow));
+
+        Assert.Contains(Blow, plan);
+        Assert.DoesNotContain(CommonSummon, plan);
+    }
+
+    [Fact]
+    public void AForgelanceThatCanDoNothingElseSummonsWhatEveryCharacterSummons()
+    {
+        Assert.Contains(CommonSummon, Plan(Forgelance, Level(_spells, CommonSummon)));
     }
 
     [Fact]

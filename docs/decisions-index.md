@@ -914,6 +914,11 @@ or refines another says so in its own entry. Add a line here with every new deci
 - [D502](decisions/d502-client-directory.md#d502-the-client-is-found-in-the-folder-the-player-chose-else-where-the-launcher-installed-it-else-its-default-folder) The client is found in the folder the player chose, else where the launcher installed it, else its default folder (2026-11-24)
   - A player's suggestion; the launcher's `release.json` measured, a setting in Files, the same order for the tools.
 
+## Fights, the Chaferfu a last resort and Saoul's share dispelled (D503)
+
+- [D503](decisions/d503-chaferfu-and-saoul.md#d503-a-summon-every-character-has-is-a-last-resort-whatever-the-breed-saouls-share-is-dispelled-with-it-and-the-states-a-turn-began-with-stay-held-through-the-turn) A summon every character has is a last resort whatever the breed, Saoul's share is dispelled with it, and the states a turn began with stay held through the turn (2026-11-24)
+  - The owner's report; the Forgelance's Chaferfu and the Pandawa's Bombance measured on the 24 November captures, a probe planning again after each action as the bot does.
+
 ## The journal kept on disk (D504)
 
 - [D504](decisions/d504-journal-on-disk.md#d504-each-bots-journal-and-the-hosts-problems-are-written-to-disk-for-seven-days-and-250-mb-saved-from-the-studio-and-joined-to-a-report-for-their-last-24-hours) Each bot's journal and the host's problems are written to disk for seven days and 250 MB, saved from the studio and joined to a report for their last 24 hours (2026-11-24)

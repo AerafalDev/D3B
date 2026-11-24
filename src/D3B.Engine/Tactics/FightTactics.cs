@@ -261,7 +261,20 @@ public sealed class FightTactics
 
     private bool SummonsAreLastResort(ImaginedFight fight, FightKnowledge knowledge)
     {
-        return !(fight.Actor.BreedId is { } breed && _summonsFirstBreeds.Contains(breed)) && knowledge.SpellsOf(fight.Actor.Id).Any(IsSummon);
+        return knowledge.SpellsOf(fight.Actor.Id).Any(level => IsLastResort(fight.Actor, level));
+    }
+
+    private bool IsLastResort(Combatant actor, SpellLevel level)
+    {
+        // The owner's report (D503): the Forgelance's summons were searched first for its lances, and the Chaferfu every character
+        // may summon came with them, planned 8 times in 39 of its turns where its player never cast it. A summon every character
+        // has is no breed's kit: it is a last resort whatever the breed.
+        return IsSummon(level) && (!(actor.BreedId is { } breed && _summonsFirstBreeds.Contains(breed)) || IsCommon(level));
+    }
+
+    private bool IsCommon(SpellLevel level)
+    {
+        return _spells.TryGetVariantOf(level.SpellId, out var variant) && variant.BreedId is SpellVariant.CommonBreed;
     }
 
     private bool IsSummon(SpellLevel level)
@@ -288,7 +301,7 @@ public sealed class FightTactics
 
     private bool SwitchesSummonControl(SpellLevel level)
     {
-        return _spells.TryGetVariantOf(level.SpellId, out var variant) && variant.BreedId is SpellVariant.CommonBreed && ReachesSummonControl(level, 0);
+        return IsCommon(level) && ReachesSummonControl(level, 0);
     }
 
     private bool ReachesSummonControl(in SpellLevel level, int depth)
@@ -534,7 +547,7 @@ public sealed class FightTactics
     {
         // The owner's ask, for a fast farm (D408): but for the breeds of _summonsFirstBreeds, a summon is a last resort, brought when the
         // turn has nothing else worth doing; they slow a fight and rarely win it.
-        if (SummonsAreLastResort(fight, knowledge) && Search(fight, knowledge.With(fight.Actor.Id, knowledge.SpellsOf(fight.Actor.Id).RemoveAll(IsSummon)), weights, limits, refused, challenge, keep) is { Plan.IsEmpty: false } plain)
+        if (SummonsAreLastResort(fight, knowledge) && Search(fight, knowledge.With(fight.Actor.Id, knowledge.SpellsOf(fight.Actor.Id).RemoveAll(level => IsLastResort(fight.Actor, level))), weights, limits, refused, challenge, keep) is { Plan.IsEmpty: false } plain)
             return plain;
 
         var clock = Stopwatch.StartNew();
