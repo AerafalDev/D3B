@@ -908,3 +908,8 @@ or refines another says so in its own entry. Add a line here with every new deci
 
 - [D501](decisions/d501-anomaly-fragment-farming.md#d501-a-hunt-profile-may-keep-a-minor-uchronic-elixir-going-drinking-one-when-its-effect-is-missing-or-ends) A hunt profile may keep a Minor Uchronic Elixir going, drinking one when its effect is missing or ends (2026-11-22)
   - A contributor's pull request; the alterations in the readable protocol, mapping format 25, three failed uses in a row ending the tries.
+
+## The client's directory, chosen or found by the launcher (D502)
+
+- [D502](decisions/d502-client-directory.md#d502-the-client-is-found-in-the-folder-the-player-chose-else-where-the-launcher-installed-it-else-its-default-folder) The client is found in the folder the player chose, else where the launcher installed it, else its default folder (2026-11-24)
+  - A player's suggestion; the launcher's `release.json` measured, a setting in Files, the same order for the tools.

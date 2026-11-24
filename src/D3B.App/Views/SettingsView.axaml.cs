@@ -1,6 +1,8 @@
 using Avalonia.Controls;
 using Avalonia.Input.Platform;
 using Avalonia.Interactivity;
+using Avalonia.Platform.Storage;
+using D3B.App.Localization;
 using D3B.App.ViewModels;
 
 namespace D3B.App.Views;
@@ -12,6 +14,18 @@ internal sealed partial class SettingsView : UserControl
     public SettingsView()
     {
         InitializeComponent();
+    }
+
+    private async void OnChooseClientFolderClick(object? sender, RoutedEventArgs e)
+    {
+        if (DataContext is not SettingsViewModel settings || TopLevel.GetTopLevel(this)?.StorageProvider is not { } storage)
+            return;
+
+        var start = Directory.Exists(settings.ClientFolderPath) ? await storage.TryGetFolderFromPathAsync(settings.ClientFolderPath) : null;
+        var folders = await storage.OpenFolderPickerAsync(new FolderPickerOpenOptions { Title = Localizer.Instance["SettingClientFolder"], SuggestedStartLocation = start });
+
+        if (folders is [var folder, ..] && folder.TryGetLocalPath() is { } path)
+            settings.ChooseClientFolder(path);
     }
 
     private async void OnCopyPathClick(object? sender, RoutedEventArgs e)

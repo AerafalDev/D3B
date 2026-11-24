@@ -122,3 +122,4 @@ Each file holds the decisions of one group of [the index](../decisions-index.md)
 - [Zaaps, the discovery of those the character does not know (D499)](d499-zaap-discovery.md): 1 decision, 4 KB.
 - [Fights, the summons' control left as the player set it (D500)](d500-summon-control-left.md): 1 decision, 4 KB.
 - [Hunting, the Minor Uchronic Elixir kept up (D501)](d501-anomaly-fragment-farming.md): 1 decision, 4 KB.
+- [The client's directory, chosen or found by the launcher (D502)](d502-client-directory.md): 1 decision, 3 KB.

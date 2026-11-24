@@ -1,6 +1,7 @@
 #!/usr/bin/env dotnet
 #:package AssetsTools.NET
 #:package System.CommandLine
+#:project ../src/D3B.Data/D3B.Data.csproj
 #:include inspect/BundleBlock.cs
 #:include inspect/BundleCompression.cs
 #:include inspect/BundleEntry.cs
@@ -49,7 +50,7 @@ Console.OutputEncoding = Encoding.UTF8;
 
 var client = new Option<DirectoryInfo?>("--client")
 {
-    Description = @"The client's directory. Defaults to %LOCALAPPDATA%\Ankama\Dofus-dofus3 on Windows.",
+    Description = @"The client's directory. Defaults to where Ankama's launcher installed it on Windows, else %LOCALAPPDATA%\Ankama\Dofus-dofus3.",
     Recursive = true,
 };
 

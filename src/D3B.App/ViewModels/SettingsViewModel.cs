@@ -8,6 +8,7 @@ using D3B.App.ViewModels.AppSettings;
 using D3B.Bot.Banks;
 using D3B.Bot.Data;
 using D3B.Bot.Runtime;
+using D3B.Data;
 using D3B.Network.Captures;
 using D3B.Network.Relay;
 using D3B.Storage;
@@ -45,6 +46,7 @@ internal sealed partial class SettingsViewModel : ObservableObject
     private readonly Action<CultureInfo> _useLanguage;
     private readonly Toasts _toasts;
     private readonly string? _storedCaptures;
+    private readonly string? _storedClientFolder;
     private BotDelays _delays;
     private BankingPreferences? _bankingLive;
     private bool _bankingChanged;
@@ -118,6 +120,9 @@ internal sealed partial class SettingsViewModel : ObservableObject
 
     /// <summary>Gets the row of the database.</summary>
     public SettingsRowViewModel Database { get; }
+
+    /// <summary>Gets the row of the game's folder, where the client is installed (D502).</summary>
+    public SettingsRowViewModel ClientFolder { get; }
 
     /// <summary>Gets the row of the client's data.</summary>
     public SettingsRowViewModel ClientData { get; }
@@ -234,6 +239,15 @@ internal sealed partial class SettingsViewModel : ObservableObject
     [ObservableProperty]
     public partial string DatabasePath { get; private set; } = StorageSettings.DefaultPath;
 
+    /// <summary>Gets the folder the host finds the client in from its next start: the one chosen, else the launcher's (D502).</summary>
+    [ObservableProperty]
+    public partial string ClientFolderPath { get; private set; } = "";
+
+    /// <summary>Gets whether a folder was chosen for the client, over the one the launcher gives.</summary>
+    [ObservableProperty]
+    [NotifyCanExecuteChangedFor(nameof(ResetClientFolderCommand))]
+    public partial bool IsClientFolderChosen { get; private set; }
+
     /// <summary>Gets the installed build's pack, once the host knows it, else that it is not known yet.</summary>
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(ClientDataPath))]
@@ -290,6 +304,9 @@ internal sealed partial class SettingsViewModel : ObservableObject
         BankFullAt = banking.FullAt;
         BankUseZaaps = banking.UseZaaps;
         _storedCaptures = stored[RelaySettings.CapturesDirectoryKey];
+        _storedClientFolder = stored[ClientLocator.ConfigurationKey];
+        IsClientFolderChosen = !string.IsNullOrWhiteSpace(_storedClientFolder);
+        ClientFolderPath = ClientLocator.Locate(_storedClientFolder);
         RecordsCaptures = !bool.TryParse(stored[RelaySettings.GameCapturesEnabledKey], out var game) || game || (bool.TryParse(stored[RelaySettings.CapturesEnabledKey], out var all) && all);
         _keptDays = decimal.TryParse(stored[RelaySettings.CapturesRetentionDaysKey], NumberStyles.None, CultureInfo.InvariantCulture, out var days) && days <= CaptureDaysMaximum ? days : DefaultCaptureDays;
         _keptMegabytes = decimal.TryParse(stored[RelaySettings.CapturesRetentionMegabytesKey], NumberStyles.None, CultureInfo.InvariantCulture, out var megabytes) && megabytes <= CaptureMegabytesMaximum ? megabytes : DefaultCaptureMegabytes;
@@ -312,6 +329,7 @@ internal sealed partial class SettingsViewModel : ObservableObject
         Layout = new SettingsRowViewModel(localizer, "SettingLayout");
         Project = new SettingsRowViewModel(localizer, "SettingProject");
         Database = new SettingsRowViewModel(localizer, "SettingDatabase");
+        ClientFolder = new SettingsRowViewModel(localizer, "SettingClientFolder");
         ClientData = new SettingsRowViewModel(localizer, "SettingClientData");
         Preferences = new SettingsRowViewModel(localizer, "SettingPreferences");
         Version = new SettingsRowViewModel(localizer, "SettingVersion", hasDetail: false);
@@ -382,6 +400,10 @@ internal sealed partial class SettingsViewModel : ObservableObject
 
         // The game's captures are the ones a player reports and replays: their folder is the one shown.
         CapturesPath = Path.Combine(relay?.CapturesDirectory ?? (string.IsNullOrWhiteSpace(_storedCaptures) ? RelaySettings.DefaultCapturesDirectory : _storedCaptures), "game");
+        // The host's command line and environment win over the app's settings: a folder they name is the one used.
+        if (services?.GetService<IConfiguration>()?[ClientLocator.ConfigurationKey] is { Length: > 0 } hosted && hosted != _storedClientFolder)
+            ClientFolderPath = Path.GetFullPath(hosted, AppContext.BaseDirectory);
+
         ProjectPath = services?.GetService<AssetLibrary>()?.Folder ?? services?.GetService<StudioSettings>()?.Path ?? StudioSettings.DefaultPath;
         DatabasePath = services?.GetService<StorageSettings>()?.Path ?? StorageSettings.DefaultPath;
 
@@ -400,6 +422,27 @@ internal sealed partial class SettingsViewModel : ObservableObject
             Filter = "";
 
         Select(Sections[(int)section]);
+    }
+
+    /// <summary>Uses a folder for the client from the host's next start, once it holds one (D502).</summary>
+    /// <param name="folder">The folder the player picked.</param>
+    /// <returns>Whether it holds the client, and is used; when not, a toast says so and nothing changes.</returns>
+    public bool ChooseClientFolder(string folder)
+    {
+        ArgumentNullException.ThrowIfNull(folder);
+
+        // A folder without the client would keep the host from starting: refused here, where the player can pick again.
+        if (!ClientLocator.HoldsClient(folder))
+        {
+            _toasts.Show(new Toast(_localizer.Format("ClientFolderNoClient", folder), Tone.Danger));
+
+            return false;
+        }
+
+        UseClientFolder(folder);
+        _toasts.Show(new Toast(_localizer["ClientFolderChosen"], Tone.Success));
+
+        return true;
     }
 
     /// <summary>Says a path was copied.</summary>
@@ -438,7 +481,7 @@ internal sealed partial class SettingsViewModel : ObservableObject
 
     private IEnumerable<SettingsRowViewModel> Rows()
     {
-        return [BankFullAtRow, BankZaapsRow, Captures, CaptureDaysRow, CaptureMegabytesRow, CapturesFolder, Language, Layout, Project, Database, ClientData, Preferences, Version, Licences];
+        return [BankFullAtRow, BankZaapsRow, Captures, CaptureDaysRow, CaptureMegabytesRow, CapturesFolder, Language, Layout, Project, Database, ClientFolder, ClientData, Preferences, Version, Licences];
     }
 
     private void Select(SettingsSectionViewModel section)
@@ -463,7 +506,7 @@ internal sealed partial class SettingsViewModel : ObservableObject
         Bots.IsShown = Delays().Any(delay => delay.IsShown) || IsBankingShown;
         Network.IsShown = Captures.IsShown || CaptureDaysRow.IsShown || CaptureMegabytesRow.IsShown || CapturesFolder.IsShown;
         Appearance.IsShown = Language.IsShown || Layout.IsShown;
-        Files.IsShown = Project.IsShown || Database.IsShown || ClientData.IsShown || Preferences.IsShown;
+        Files.IsShown = Project.IsShown || Database.IsShown || ClientFolder.IsShown || ClientData.IsShown || Preferences.IsShown;
         About.IsShown = Version.IsShown || Licences.IsShown;
         HasNoMatch = !Sections.Any(section => section.IsShown);
 
@@ -476,6 +519,15 @@ internal sealed partial class SettingsViewModel : ObservableObject
     {
         Bots.HasChanges = Display.IsRaised || HasRaisedDelays || IsBankFullAtChanged || !BankUseZaaps;
         Network.HasChanges = IsCapturesOff || IsCaptureDaysChanged || IsCaptureMegabytesChanged;
+        Files.HasChanges = IsClientFolderChosen;
+    }
+
+    private void UseClientFolder(string? folder)
+    {
+        _preferences?.RememberHost(new Dictionary<string, string?> { [ClientLocator.ConfigurationKey] = folder });
+        IsClientFolderChosen = folder is not null;
+        ClientFolderPath = ClientLocator.Locate(folder);
+        MarkChanges();
     }
 
     private void Attach(Bots bots)
@@ -689,6 +741,12 @@ internal sealed partial class SettingsViewModel : ObservableObject
         CaptureMegabytes = DefaultCaptureMegabytes;
     }
 
+    [RelayCommand(CanExecute = nameof(IsClientFolderChosen))]
+    private void ResetClientFolder()
+    {
+        UseClientFolder(null);
+    }
+
     [RelayCommand]
     private void Choose(SettingsSection section)
     {
@@ -701,6 +759,14 @@ internal sealed partial class SettingsViewModel : ObservableObject
         // A file is shown in its folder: the system's file manager opens folders.
         var folder = File.Exists(path) || Path.HasExtension(path) ? Path.GetDirectoryName(path) : path;
 
+        if (!string.IsNullOrEmpty(folder))
+            OpenFolder?.Invoke(folder);
+    }
+
+    [RelayCommand]
+    private void OpenFolderPath(string folder)
+    {
+        // A folder's name may hold a dot, such as "Dofus 3.0": it is opened as it is, never taken for a file.
         if (!string.IsNullOrEmpty(folder))
             OpenFolder?.Invoke(folder);
     }

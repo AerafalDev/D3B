@@ -32,7 +32,7 @@ internal static class ExtractCommand
     {
         var client = new Option<DirectoryInfo?>("--client")
         {
-            Description = @"The client's directory. Defaults to %LOCALAPPDATA%\Ankama\Dofus-dofus3 on Windows.",
+            Description = @"The client's directory. Defaults to where Ankama's launcher installed it on Windows, else %LOCALAPPDATA%\Ankama\Dofus-dofus3.",
         };
         var output = new Option<DirectoryInfo?>("--output")
         {

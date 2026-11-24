@@ -1,5 +1,6 @@
 #!/usr/bin/env dotnet
 #:package System.CommandLine
+#:project ../src/D3B.Data/D3B.Data.csproj
 #:project ../src/D3B.Network/D3B.Network.csproj
 #:include client/ClientCommand.cs
 #:include unity/ClientInstall.cs

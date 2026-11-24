@@ -75,6 +75,13 @@ measurements to repeat at each client update.
 | `Dofus_Data/StreamingAssets/Content/I18n/` | `de.bin`, `en.bin`, `es.bin`, `fr.bin`, `pt.bin`: the texts, 130.4 MiB. |
 | `Dofus_Data/StreamingAssets/aa/StandaloneWindows64/` | 26 Addressables bundles, among them `worldassets_assets_all.bundle`, which holds the world graph. |
 
+The launcher lets the player install a game anywhere and records where in its own data: measured on 3.7.14.18 with
+launcher 3.15.18, `%APPDATA%\zaap\repositories\production\dofus\dofus3\release.json` is a JSON object whose `location`
+string is the installation directory, beside the release's `name`, its `version` (`6.0_3.7.14.18`), `isInstalling`,
+`isUpdating` and `isRepairing`. The other releases of the game (`beta`, `experimental`, `main`) have a folder of their own
+there. Windows' uninstall entries list the launcher, not Dofus 3. D3B finds the client through that file when no folder is
+named (D502).
+
 Unity 6000.3.16f1, serialized format 22, Addressables 2.9.1. In all, 20,623 bundles, 20.9 GiB on disk. Every
 serialized file of a bundle carries its type trees, so every table and map reads without an IL2CPP dump.
 

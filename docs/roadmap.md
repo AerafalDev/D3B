@@ -425,6 +425,10 @@ follower) on the same map, the capture of every connection on; a capture's conte
   setting, « Découvrir les zaaps », walks to every activated zaap within reach the character does not know, the nearest first
   with the zaaps learnt so far, and ends once none is left, giving up for the run one it cannot reach or that the server does
   not teach on its map. Left: seen in game; an entry of the list editor's menu if a profile's list of steps should offer it.
+- **The client's directory** (D502), a player's suggestion relayed by the owner on 2026-11-24, made in code and tests: the
+  host and the tools find the client in the folder chosen in the settings (Files, « Dossier du jeu »), else where the
+  launcher's `release.json` says it installed it, else in its default folder. Left: a client on another drive seen found,
+  and the setting seen in the running app.
 - **The Minor Uchronic Elixir kept up** (D501), a contributor's pull request (#375) to farm anomaly fragments, reviewed and
   completed on 2026-11-23 in code and tests: a hunt profile's flag, off by default, drinks a carried elixir when its effect
   is missing at the start or ends, read from the alterations the server lists (mapping format 25), three uses not granted

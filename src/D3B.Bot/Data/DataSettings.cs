@@ -1,3 +1,4 @@
+using D3B.Data;
 using D3B.Data.Packs;
 using Microsoft.Extensions.Configuration;
 
@@ -6,11 +7,11 @@ namespace D3B.Bot.Data;
 /// <summary>Where the data module finds the client and the files made from its build, as the host's configuration says.</summary>
 internal sealed class DataSettings
 {
-    public const string ClientDirectoryKey = "Client:Directory";
+    public const string ClientDirectoryKey = ClientLocator.ConfigurationKey;
     public const string PacksDirectoryKey = "Data:Directory";
 
-    /// <summary>Gets where the Ankama launcher installs the client, as the extraction tool assumes too.</summary>
-    public static string DefaultClientDirectory => Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Ankama", "Dofus-dofus3");
+    /// <summary>Gets where the client is found when no directory is named: where the launcher installed it, as the tools find it too.</summary>
+    public static string DefaultClientDirectory => ClientLocator.Locate(null);
 
     /// <summary>Gets where a published app keeps the files it ships with: beside its executable (D172).</summary>
     public static string DefaultBundledDirectory => Path.Combine(AppContext.BaseDirectory, "data");
@@ -23,10 +24,12 @@ internal sealed class DataSettings
     /// <summary>Gets where the app's own files are, looked in once a file is not on this machine.</summary>
     public string BundledDirectory { get; init; } = DefaultBundledDirectory;
 
-    /// <summary>Gets the installed client's directory the configuration names, or where the launcher installs it.</summary>
+    /// <summary>Gets the installed client's directory the configuration names, or where the launcher installed it.</summary>
     public static string ClientDirectoryIn(IConfiguration configuration)
     {
-        return PathOr(configuration[ClientDirectoryKey], DefaultClientDirectory);
+        var configured = configuration[ClientDirectoryKey];
+
+        return string.IsNullOrWhiteSpace(configured) ? DefaultClientDirectory : PathOr(configured, DefaultClientDirectory);
     }
 
     public static DataSettings Read(IConfiguration configuration)

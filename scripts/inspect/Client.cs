@@ -24,7 +24,7 @@ internal sealed class Client
         Root = root;
     }
 
-    /// <summary>Finds the client in <paramref name="directory"/>, or where the launcher installs it by default.</summary>
+    /// <summary>Finds the client in <paramref name="directory"/>, else where the launcher installed it.</summary>
     /// <exception cref="DirectoryNotFoundException">No client is there.</exception>
     public static Client Locate(DirectoryInfo? directory)
     {
