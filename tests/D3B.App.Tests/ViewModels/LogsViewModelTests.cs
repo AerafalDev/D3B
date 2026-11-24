@@ -8,11 +8,13 @@ using D3B.Bot.Journal;
 using D3B.Bot.Movement;
 using D3B.Bot.Runtime;
 using D3B.Bot.Tests.Runtime;
+using D3B.Data.Tests;
 using D3B.Protocol.Game;
 using D3B.Storage.Profiles;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace D3B.App.Tests.ViewModels;
 
@@ -25,6 +27,8 @@ public sealed class LogsViewModelTests : IAsyncDisposable
     private readonly HostProblems _problems = new(TimeProvider.System);
     private readonly IHost _host;
     private readonly Localizer _french = new(Localizer.French);
+    private readonly TemporaryDirectory _journals = new();
+    private readonly JournalRecorder _recorder;
 
     public LogsViewModelTests()
     {
@@ -33,13 +37,18 @@ public sealed class LogsViewModelTests : IAsyncDisposable
         builder.Services.AddSingleton(_play.Bots);
         builder.Services.AddSingleton(_play.World);
         builder.Services.AddSingleton(_problems);
+        builder.Services.AddSingleton<TimeProvider>(_play.Time);
+        _recorder = new JournalRecorder(new JournalFiles(_journals.Path), JournalRetention.Default, _play.Bots, _problems, _play.Time, NullLogger<JournalRecorder>.Instance);
+        builder.Services.AddSingleton(_recorder);
         _host = builder.Build();
     }
 
     public async ValueTask DisposeAsync()
     {
         _host.Dispose();
+        _recorder.Dispose();
         await _play.DisposeAsync();
+        _journals.Dispose();
     }
 
     private static void Write(BotActor bot)
@@ -196,5 +205,96 @@ public sealed class LogsViewModelTests : IAsyncDisposable
         page.Sources[2].SelectCommand.Execute(null);
 
         Assert.Equal(bot.Key, choice.Key);
+    }
+
+    [Fact]
+    public async Task SavingABotsJournalWritesEveryDayTheDiskKeepsOfItAsTheMaintainersReadIt()
+    {
+        var (_, bot) = await _play.EnterAsync(300);
+        var toasts = new Toasts();
+        var page = new LogsViewModel(_french, new BotChoice { Key = bot.Key }, toasts);
+        var path = _journals.Combine("saved.txt");
+
+        // A day before the app started again: the journal in memory no longer holds it.
+        var before = _play.Time.GetUtcNow().AddDays(-1);
+
+        _recorder.Files.Append(JournalFiles.SourceOf(bot.Key), [new JournalLine(before, $"{JournalText.TimeOf(before)} NoteEntry {{ Text = before the restart }}")]);
+        Write(bot);
+        page.Refresh(_host.Services);
+        await page.SaveAsync(path);
+
+        var lines = File.ReadAllLines(path);
+
+        Assert.Equal($"{JournalText.TimeOf(before)} NoteEntry {{ Text = before the restart }}", lines[0]);
+        Assert.Contains(lines, line => line.Contains("WalkEntry", StringComparison.Ordinal) && line.Contains("Cell = 388", StringComparison.Ordinal));
+        Assert.Equal("Journal enregistré : saved.txt", toasts.Recent[^1].Text);
+        Assert.Equal(Tone.Success, toasts.Recent[^1].Tone);
+    }
+
+    [Fact]
+    public async Task SavingEverySourceWritesTheHostThenEachBotUnderItsName()
+    {
+        var (_, bot) = await _play.EnterAsync(300);
+        var page = new LogsViewModel(_french, new BotChoice(), new Toasts());
+        var path = _journals.Combine("all.txt");
+
+        _problems.Problems.Add(new HostProblem(_at, LogLevel.Warning, "D3B.Network.Relay", "The relay failed", null));
+        page.Refresh(_host.Services);
+        page.Sources[0].SelectCommand.Execute(null);
+        await page.SaveAsync(path);
+
+        var text = File.ReadAllText(path);
+
+        Assert.StartsWith("# Hôte\n2026-10-29T03:17:19.000Z Warning D3B.Network.Relay: The relay failed\n", text, StringComparison.Ordinal);
+        Assert.Contains($"\n# {page.Sources[2].Name}\n", text, StringComparison.Ordinal);
+        Assert.Contains("BotEventEntry", text, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task AJournalIsOfferedUnderItsSourceAndItsDay()
+    {
+        var (_, bot) = await _play.EnterAsync(300);
+        var page = new LogsViewModel(_french, new BotChoice { Key = bot.Key }, new Toasts());
+
+        page.Refresh(_host.Services);
+
+        Assert.Equal($"journal-{JournalFiles.SourceOf(bot.Key)}-{_play.Time.GetUtcNow():yyyy-MM-dd}.txt", page.SaveName());
+
+        page.ShowHost();
+
+        Assert.Equal($"journal-host-{_play.Time.GetUtcNow():yyyy-MM-dd}.txt", page.SaveName());
+    }
+
+    [Fact]
+    public async Task WithoutJournalsOnDiskTheLinesShownAreSaved()
+    {
+        var (_, bot) = await _play.EnterAsync(300);
+        var builder = Host.CreateApplicationBuilder(new HostApplicationBuilderSettings { DisableDefaults = true });
+
+        builder.Services.AddSingleton(_play.Bots);
+        builder.Services.AddSingleton(_play.World);
+        using var host = builder.Build();
+        var page = new LogsViewModel(_french, new BotChoice { Key = bot.Key }, new Toasts());
+        var path = _journals.Combine("shown.txt");
+
+        page.Refresh(host.Services);
+        await page.SaveAsync(path);
+
+        Assert.Equal(page.Text(), File.ReadAllText(path));
+        Assert.Contains("Joue par la connexion de jeu", File.ReadAllText(path), StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task AJournalThatCannotBeSavedSaysWhy()
+    {
+        var (_, bot) = await _play.EnterAsync(300);
+        var toasts = new Toasts();
+        var page = new LogsViewModel(_french, new BotChoice { Key = bot.Key }, toasts);
+
+        page.Refresh(_host.Services);
+        await page.SaveAsync(_journals.Combine("missing", "folder", "x.txt"));
+
+        Assert.Equal(Tone.Danger, toasts.Recent[^1].Tone);
+        Assert.StartsWith("Le journal n’a pas pu être enregistré", toasts.Recent[^1].Text, StringComparison.Ordinal);
     }
 }

@@ -119,6 +119,13 @@
                         ToolTip.Tip="{l:Tr CopyLinesHint}">
                         <c:Icon Drawing="{StaticResource General.Copy}" />
                     </Button>
+                    <Button
+                        AutomationProperties.Name="{l:Tr SaveJournal}"
+                        Classes="Ib"
+                        Click="OnSaveClick"
+                        ToolTip.Tip="{l:Tr SaveJournalHint}">
+                        <c:Icon Drawing="{StaticResource General.Save}" />
+                    </Button>
                 </StackPanel>
             </Grid>
         </Border>

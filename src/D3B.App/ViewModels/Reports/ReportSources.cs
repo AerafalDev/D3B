@@ -29,8 +29,17 @@ internal sealed record ReportSources
     /// <summary>Gets the translation of the capture's build, which the cleaner reads the character list with, or null when the build has none.</summary>
     public ProtocolTranslation? Translation { get; init; }
 
-    /// <summary>Gets the character's journal, oldest first.</summary>
+    /// <summary>Gets the character's journal in memory, oldest first, which the report holds when the disk has none.</summary>
     public IReadOnlyList<JournalEntry> Journal { get; init; } = [];
+
+    /// <summary>Gets what reads the character's journal of the last day from the journals on disk, null or empty when they hold none, run off the UI's thread as the report is prepared (D504).</summary>
+    public Func<string?>? JournalOnDisk { get; init; }
+
+    /// <summary>Gets what reads the host's problems of the last day from the journals on disk, null or empty when they hold none, run off the UI's thread as the report is prepared (D504).</summary>
+    public Func<string?>? HostJournal { get; init; }
+
+    /// <summary>Gets the player's own folder, which no text of the report holds, or null.</summary>
+    public string? UserFolder { get; init; }
 
     /// <summary>Gets the character's decisions, oldest first.</summary>
     public IReadOnlyList<TraceEntry> Trace { get; init; } = [];

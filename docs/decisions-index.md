@@ -913,3 +913,8 @@ or refines another says so in its own entry. Add a line here with every new deci
 
 - [D502](decisions/d502-client-directory.md#d502-the-client-is-found-in-the-folder-the-player-chose-else-where-the-launcher-installed-it-else-its-default-folder) The client is found in the folder the player chose, else where the launcher installed it, else its default folder (2026-11-24)
   - A player's suggestion; the launcher's `release.json` measured, a setting in Files, the same order for the tools.
+
+## The journal kept on disk (D504)
+
+- [D504](decisions/d504-journal-on-disk.md#d504-each-bots-journal-and-the-hosts-problems-are-written-to-disk-for-seven-days-and-250-mb-saved-from-the-studio-and-joined-to-a-report-for-their-last-24-hours) Each bot's journal and the host's problems are written to disk for seven days and 250 MB, saved from the studio and joined to a report for their last 24 hours (2026-11-24)
+  - A recorder reading the rings every second, a file a source and a UTC day, the owner's retention and report span, `%USERPROFILE%` hidden.

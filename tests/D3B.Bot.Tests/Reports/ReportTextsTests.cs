@@ -66,6 +66,22 @@ public sealed class ReportTextsTests
     }
 
     [Fact]
+    public void TheUsersFolderIsHiddenWhateverItsCaseSoThatAPathNamesNoWindowsAccount()
+    {
+        var identity = new ReportIdentity(5, "Aldebarane", [], @"C:\Users\Jeanne");
+
+        Assert.Equal(@"The file %USERPROFILE%\AppData\Local\D3B\studio\p1.json was not read", identity.Hide(@"The file c:\users\jeanne\AppData\Local\D3B\studio\p1.json was not read"));
+    }
+
+    [Fact]
+    public void AJournalReadFromDiskHidesTheNamesOfEachOfItsLines()
+    {
+        var text = ReportTexts.Journal("2026-11-10T12:30:15.250Z NoteEntry { Text = Aldebarane-du-Nord left Zephyrine behind }\n", _identity);
+
+        Assert.Equal("2026-11-10T12:30:15.250Z NoteEntry { Text = character 11 left another character of the account behind }\n", text);
+    }
+
+    [Fact]
     public void TheSettingsThatDifferAreJsonSortedByKeyAndAnEmptyOneIsAnEmptyObject()
     {
         var text = ReportTexts.Settings(new Dictionary<string, string?> { ["Delays:Display"] = "1.5", ["Banking:FullAt"] = "90", ["Gone"] = null });
