@@ -269,14 +269,16 @@ The bots run in `D3B.Bot`: what each part does today, with the decisions that ma
   resource on the most maps; `PlaceRotation.Draw`, shared with the fight, draws the rotation from the ten richest the character
   reaches (`SubAreaReach`), those worth under a quarter of the richest left out, the tops kept up to half the count and the rest
   drawn at random, the richer likelier, an unreachable one replaced by the next. Each zone of the rotation has its own tour
-  (`HarvestRotationZone`); a tour done or held back by growing resources, `HarvestRotation.Next` goes to the zone left longest ago
-  that has maps to go through, and the activity waits only when none has (`WakeAt`); once every zone was left, the rotation is
-  drawn again at the character's levels. The preset of every profession sets `HarvestOrder.Balanced`: the tops are taken in the
+  (`HarvestRotationZone`); a tour done or held back by growing resources, `HarvestRotation.Next` goes, of the zones that have
+  maps to go through, to the nearest not yet gone to since the draw, by the world graph's map changes from where the character
+  stands, the zone just left last, else to the one left longest ago (D506), and the activity waits only when none has
+  (`WakeAt`); once every zone was left, the rotation is drawn again at the character's levels. The preset of every profession sets `HarvestOrder.Balanced`: the tops are taken in the
   order of the professions harvested least lately and `HarvestBalance`, which counts the last 50 harvests by profession, gives
-  the resources of a map their priority. The journey to the tour's next map stops on the first map it crosses, not yet gone
-  through, where the server offers a wanted element, even one the tour holds back as growing (D392), and even out of the zone
-  (D439): there the step takes the profile's resources once a tour and marks the map `HarvestTour.Cross`, apart from the maps
-  gone through, so the tour's progress and `HasHarvested` stay the zone's. The journey to the bank stops nowhere. Any journey
+  the resources of a map their priority. The journey to the tour's next map stops on the first map it crosses where the server
+  offers a wanted element it can reach, even one the tour holds back as growing (D392), even out of the zone (D439), and even on
+  a map gone through or crossed in the tour, unless the tour left that element there, refused or out of reach
+  (`HarvestTour.LeaveElement`, D507): out of the zone the step takes the profile's resources and marks the map
+  `HarvestTour.Cross`, apart from the maps gone through, so the tour's progress and `HasHarvested` stay the zone's. The journey to the bank stops nowhere. Any journey
   of the tour stays on the map it is about to leave where a wanted element it can reach is offered that was not as it came
   (`MapHarvest.Regrown`), and harvests it there, crossed already or not (D495).
   A use whose walk the server cut by moving the character to another map, as a map action's cell does, leaves the map it

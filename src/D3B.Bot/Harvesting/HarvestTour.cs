@@ -1,3 +1,4 @@
+using System.Collections.Frozen;
 using System.Collections.Immutable;
 using D3B.Bot.Activities;
 using D3B.Bot.Characters;
@@ -33,6 +34,7 @@ internal sealed class HarvestTour
     private readonly HashSet<int> _wanted = [];
     private readonly HashSet<int> _entered = [];
     private readonly HashSet<long> _levelsTried = [];
+    private readonly Dictionary<long, HashSet<int>> _leftElements = [];
     private readonly HarvestSightings _sightings;
     private readonly GraphicSkills _graphics;
     private readonly Regrowths? _regrowths;
@@ -199,6 +201,25 @@ internal sealed class HarvestTour
         return _crossed.Contains(mapId);
     }
 
+    /// <summary>Marks an element of a map left in this tour, refused or out of reach: no journey of the tour stops for it again (D507).</summary>
+    /// <param name="mapId">The map.</param>
+    /// <param name="elementId">The element.</param>
+    public void LeaveElement(long mapId, int elementId)
+    {
+        if (!_leftElements.TryGetValue(mapId, out var elements))
+            _leftElements[mapId] = elements = [];
+
+        elements.Add(elementId);
+    }
+
+    /// <summary>Gets the elements of a map left in this tour.</summary>
+    /// <param name="mapId">The map.</param>
+    /// <returns>The elements, by id.</returns>
+    public IReadOnlySet<int> ElementsLeftOn(long mapId)
+    {
+        return _leftElements.TryGetValue(mapId, out var elements) ? elements : FrozenSet<int>.Empty;
+    }
+
     /// <summary>Marks a map the way to failed: left out of the rest of the tour.</summary>
     /// <param name="mapId">The map.</param>
     public void Unreach(long mapId)
@@ -317,6 +338,7 @@ internal sealed class HarvestTour
         _wanted.Clear();
         _entered.Clear();
         _levelsTried.Clear();
+        _leftElements.Clear();
         OtherLevel = null;
         HasHarvested = false;
         _harvests = 0;

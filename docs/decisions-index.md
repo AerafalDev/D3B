@@ -918,3 +918,10 @@ or refines another says so in its own entry. Add a line here with every new deci
 
 - [D503](decisions/d503-chaferfu-and-saoul.md#d503-a-summon-every-character-has-is-a-last-resort-whatever-the-breed-saouls-share-is-dispelled-with-it-and-the-states-a-turn-began-with-stay-held-through-the-turn) A summon every character has is a last resort whatever the breed, Saoul's share is dispelled with it, and the states a turn began with stay held through the turn (2026-11-24)
   - The owner's report; the Forgelance's Chaferfu and the Pandawa's Bombance measured on the 24 November captures, a probe planning again after each action as the bot does.
+
+## The harvest's audit, the rotation's order and resources grown back on the way (D506, D507)
+
+- [D506](decisions/d506-harvest-audit.md#d506-the-harvests-rotation-goes-to-the-nearest-zone-of-the-round-not-yet-gone-to-the-zone-just-left-last) The harvest's rotation goes to the nearest zone of the round not yet gone to, the zone just left last (2026-11-24)
+  - The nearest ready zone alone, a loop computed once, a draw weighed by the distance.
+- [D507](decisions/d506-harvest-audit.md#d507-a-journey-stops-on-a-map-the-tour-went-through-already-where-a-resource-grew-back-unless-the-tour-left-that-element-there) A journey stops on a map the tour went through already where a resource grew back, unless the tour left that element there (2026-11-24)
+  - Stopping for any element offered, only for elements grown back since the visit.

@@ -143,6 +143,74 @@ public sealed class HarvestActivityRegrowthTests
         Assert.Equal(ActivityOutcome.Stopped, await run.Completion);
     }
 
+    // The tour goes through the middle map, its tree harvested or refused, then north, which a bot saw holding ash, then east, back
+    // through the middle map, whose tree the server offers as the character comes.
+    private static async Task<(TestConnection Connection, ActivityRun Run)> BackThroughTheMiddleMapAsync(TestPlay play, bool refused)
+    {
+        var (connection, bot) = await play.EnterAsync(433);
+        var sightings = new HarvestSightings();
+
+        sightings.Seen(TestPlay.NorthMapId, [TestPlay.Ash], play.Time.GetUtcNow());
+
+        var activity = new HarvestActivity(new HarvestSettings { Resources = [TestPlay.Ash], SubAreas = [TestPlay.SubAreaId] }, play.World, play.Tables, play.Maps, sightings, new GraphicSkills(), play.Places, new Regrowths(), play.Time);
+        var run = bot.StartActivity(activity);
+
+        await TestWalks.WalkedAsync(play, connection, 1);
+        Assert.Equal(new InteractiveUseRequest { SkillInstanceId = TestPlay.TreeInstanceId, ElementId = TestPlay.TreeElementId }, await TestWalks.SentAsync(play, connection, 2));
+
+        if (refused)
+        {
+            connection.Server(new InteractiveUseErrorEvent { ElementId = TestPlay.TreeElementId });
+        }
+        else
+        {
+            connection.Server(new InteractiveElementUpdatedEvent { Element = TestPlay.Tree(enabled: false) });
+            connection.Server(new InteractiveUsedEvent { ActorId = TestPlay.CharacterId, ElementId = TestPlay.TreeElementId, SkillId = TestPlay.TreeSkillId, Duration = 15 });
+            connection.Server(new InteractiveUseEndedEvent { ElementId = TestPlay.TreeElementId, SkillId = TestPlay.TreeSkillId });
+            connection.Server(new ObjectAddedEvent { Object = new InventoryObject { Item = new ObjectItem { Uid = 12, ItemId = TestPlay.Ash, Quantity = 3 }, Position = 63 } });
+        }
+
+        await TestWalks.WalkedAsync(play, connection, 3);
+        Assert.Equal(new MapChangeRequest { MapId = (int)TestPlay.NorthMapId }, await TestWalks.SentAsync(play, connection, 4));
+        TestWalks.Arrive(connection, TestPlay.NorthMapId, 300);
+
+        await TestWalks.WalkedAsync(play, connection, 5);
+        Assert.Equal(new MapChangeRequest { MapId = (int)TestPlay.MapId }, await TestWalks.SentAsync(play, connection, 6));
+        TestWalks.Arrive(connection, TestPlay.MapId, 20);
+
+        return (connection, run);
+    }
+
+    [Fact]
+    public async Task AResourceGrownBackOnAMapTheTourWentThroughAlreadyStopsTheJourneyCrossingItAgain()
+    {
+        // Measured on the owner's four harvests of 23 November, 14 h each: the farmer passed about 1,800 resources offered on maps its
+        // tour had gone through, the journey stopping only on maps it had not (D392, D439).
+        await using var play = new TestPlay();
+        var (connection, run) = await BackThroughTheMiddleMapAsync(play, refused: false);
+
+        Assert.NotEqual(TestPlay.ActionCell, await TestWalks.WalkedAsync(play, connection, 7));
+        Assert.Equal(new InteractiveUseRequest { SkillInstanceId = TestPlay.TreeInstanceId, ElementId = TestPlay.TreeElementId }, await TestWalks.SentAsync(play, connection, 8));
+
+        run.Stop();
+
+        Assert.Equal(ActivityOutcome.Stopped, await run.Completion);
+    }
+
+    [Fact]
+    public async Task AnElementRefusedOnAMapTheTourWentThroughDoesNotStopTheJourneyCrossingItAgain()
+    {
+        // Stopping for it would call the character back to a use the server refuses, at every crossing of the tour.
+        await using var play = new TestPlay();
+        var (connection, run) = await BackThroughTheMiddleMapAsync(play, refused: true);
+
+        Assert.Equal(TestPlay.ActionCell, await TestWalks.WalkedAsync(play, connection, 7));
+
+        run.Stop();
+
+        Assert.Equal(ActivityOutcome.Stopped, await run.Completion);
+    }
+
     [Fact]
     public async Task AnElementTheProfileDoesNotWantGrowingBackDoesNotHoldTheJourney()
     {
