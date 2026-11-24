@@ -23,6 +23,20 @@ public sealed class RunRecorderTests : IDisposable
         return new JobExperiencesEvent { Jobs = { new JobExperience { JobId = 2, Level = level, Experience = experience, LevelFloor = 0, NextLevelFloor = 10_000 } } };
     }
 
+    private static FightResult Result(FightOutcome outcome, long experience, long kamas)
+    {
+        return new FightResult
+        {
+            Outcome = outcome,
+            Fighter = new FightResultFighter
+            {
+                FighterId = TestPlay.CharacterId,
+                Character = new FightResultCharacter { Data = { new FightResultData { Experience = new FightExperience { Gained = experience } } } },
+            },
+            Loot = new FightLoot { Kamas = kamas },
+        };
+    }
+
     [Fact]
     public async Task ARunIsKeptAsItGoesAndOnceOverWithWhatItBroughtAndTheExperienceGained()
     {
@@ -110,20 +124,6 @@ public sealed class RunRecorderTests : IDisposable
         var kept = Assert.Single(next.Services.GetRequiredService<RunBook>().Runs);
 
         Assert.Equal((1, 1, 0, 1_250L, 40L), (kept.FightsWon, kept.FightsLost, kept.Deaths, kept.Experience, kept.Kamas));
-    }
-
-    private static FightResult Result(FightOutcome outcome, long experience, long kamas)
-    {
-        return new FightResult
-        {
-            Outcome = outcome,
-            Fighter = new FightResultFighter
-            {
-                FighterId = TestPlay.CharacterId,
-                Character = new FightResultCharacter { Data = { new FightResultData { Experience = new FightExperience { Gained = experience } } } },
-            },
-            Loot = new FightLoot { Kamas = kamas },
-        };
     }
 
     private sealed class CountingActivity : BotActivity

@@ -380,9 +380,13 @@ internal sealed partial class CharacterTabViewModel : ObservableObject
         // What a fighting profile is judged by, once the run fought: the fights' experience and kamas, by hour.
         var fights = run.Fights;
 
-        FightFigures = fights.Fought > 0
+        IReadOnlyList<SessionFigureViewModel> figures = fights.Fought > 0
             ? [Figure(GameGlyph.Experience, "SessionExperience", fights.Experience, hours), Figure(GameGlyph.Kamas, "SessionKamas", fights.Kamas, hours)]
             : [];
+
+        // Read every 250 ms: a list made again would draw its rows again each time.
+        if (!figures.SequenceEqual(FightFigures))
+            FightFigures = figures;
 
         var facts = new List<string> { _localizer.Format("SessionFights", fights.Fought) };
 
@@ -393,7 +397,9 @@ internal sealed partial class CharacterTabViewModel : ObservableObject
         }
 
         facts.Add(_localizer.Format("SessionDeposits", statistics?.Banks ?? 0));
-        Facts = facts;
+
+        if (!facts.SequenceEqual(Facts))
+            Facts = facts;
     }
 
     private SessionFigureViewModel Figure(GameGlyph glyph, string name, long count, double hours)
