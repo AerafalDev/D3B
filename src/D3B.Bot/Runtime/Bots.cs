@@ -37,6 +37,7 @@ public sealed class Bots : IGameObserver, IAsyncDisposable
     private readonly Lazy<WorldPathfinder> _world;
     private readonly Lazy<BankDirectory> _banks;
     private readonly Lazy<FightTactics> _tactics;
+    private readonly Lazy<FightSearches> _searches;
     private readonly GameTables _tables;
     private readonly TimeProvider _time;
     private readonly ILoggerFactory _logs;
@@ -108,6 +109,9 @@ public sealed class Bots : IGameObserver, IAsyncDisposable
 
         // One per host, built at the first fight: its catalogs are the pack's, shared by every bot's AI (D201).
         _tactics = new Lazy<FightTactics>(() => new FightTactics(tables), LazyThreadSafetyMode.ExecutionAndPublication);
+
+        // Their threads too, off the thread pool that the relay runs on (D508).
+        _searches = new Lazy<FightSearches>(() => new FightSearches(FightSearches.DefaultCount), LazyThreadSafetyMode.ExecutionAndPublication);
         _tables = tables;
         _time = time;
         _logs = logs;
@@ -133,6 +137,9 @@ public sealed class Bots : IGameObserver, IAsyncDisposable
 
         foreach (var pilot in _pilots.Values)
             await pilot.Run.ConfigureAwait(false);
+
+        if (_searches.IsValueCreated)
+            _searches.Value.Dispose();
     }
 
     void IGameObserver.OnSessionStarted(GameSession session)
@@ -185,7 +192,7 @@ public sealed class Bots : IGameObserver, IAsyncDisposable
                 bot.Team = new GroupFight(bot, Groups, this);
                 bot.Bank = new GroupBank(bot, Groups, gate, _tables);
                 _bots[key] = bot;
-                _pilots[key] = new FightPilot(bot, _tactics, _tables);
+                _pilots[key] = new FightPilot(bot, _tactics, _searches, _tables);
                 made = true;
             }
         }

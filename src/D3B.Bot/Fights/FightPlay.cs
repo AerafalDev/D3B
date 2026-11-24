@@ -56,13 +56,15 @@ public static class FightPlay
     /// <summary>Plays the character's fight to its end.</summary>
     /// <param name="context">The behavior's context, in a fight.</param>
     /// <param name="tactics">The fight's AI.</param>
+    /// <param name="searches">The threads its searches run on, off the thread pool (D508).</param>
     /// <param name="tables">The pack's game tables.</param>
     /// <param name="cancellationToken">The behavior's token.</param>
     /// <returns>How the fight ended for the character, once the server said; null when it ended unsaid.</returns>
-    public static async Task<FightEnd?> PlayAsync(BotContext context, FightTactics tactics, GameTables tables, CancellationToken cancellationToken)
+    public static async Task<FightEnd?> PlayAsync(BotContext context, FightTactics tactics, FightSearches searches, GameTables tables, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(context);
         ArgumentNullException.ThrowIfNull(tactics);
+        ArgumentNullException.ThrowIfNull(searches);
         ArgumentNullException.ThrowIfNull(tables);
 
         var self = context.State.Key.CharacterId;
@@ -99,7 +101,7 @@ public static class FightPlay
 
                 if (!judged && ImaginedFights.Of(state, map, tables, tactics.Blows, null) is { } start)
                 {
-                    var odds = tactics.Odds(start.Fight, start.Knowledge);
+                    var odds = await searches.RunAsync(() => tactics.Odds(start.Fight, start.Knowledge), cancellationToken).ConfigureAwait(false);
 
                     weights = WeightsOf(state.Fight ?? fight, self, odds.IsRisky);
                     risky = odds.IsRisky;
@@ -119,7 +121,7 @@ public static class FightPlay
 
                     // Placed once a fight when its readiness is the game's (D477), as it says nothing the server answers.
                     if (!fight.IsReady && context.Actor.Team?.IsPlaced != true)
-                        await PlaceAsync(context, tactics, tables, map, weights, cancellationToken).ConfigureAwait(false);
+                        await PlaceAsync(context, tactics, searches, tables, map, weights, cancellationToken).ConfigureAwait(false);
 
                     await context.WaitUntilAsync(next => next.Fight is not { Phase: FightPhase.Placement }, _placementWait, cancellationToken).ConfigureAwait(false);
 
@@ -137,7 +139,7 @@ public static class FightPlay
                 var play = PlayOf(context);
                 var playedFor = play is ChallengePlay.None || risky || fight.Challenges.IsEmpty ? null : ChallengeOf(fight, tables.Challenges, play, risky, left, fight.PlayingId ?? self);
 
-                await PlayTurnAsync(context, tactics, tables, map, weights, refused, playedFor, left, cancellationToken).ConfigureAwait(false);
+                await PlayTurnAsync(context, tactics, searches, tables, map, weights, refused, playedFor, left, cancellationToken).ConfigureAwait(false);
                 await context.WaitUntilAsync(next => next.Fight is not { IsOwnTurn: true }, context.Delays.Answer, cancellationToken).ConfigureAwait(false);
             }
         }
@@ -263,7 +265,7 @@ public static class FightPlay
         return context.State.Fight is { Phase: not FightPhase.Ended } fight && still(fight);
     }
 
-    private static async Task PlaceAsync(BotContext context, FightTactics tactics, GameTables tables, FightMap map, TacticWeights weights, CancellationToken cancellationToken)
+    private static async Task PlaceAsync(BotContext context, FightTactics tactics, FightSearches searches, GameTables tables, FightMap map, TacticWeights weights, CancellationToken cancellationToken)
     {
         var self = context.State.Key.CharacterId;
 
@@ -292,7 +294,8 @@ public static class FightPlay
 
         await ChooseBonusAsync(context, cancellationToken).ConfigureAwait(false);
 
-        var cell = tactics.Place(imagined.Fight, fight.OwnCells, imagined.Knowledge, weights, (context.State.Fight ?? fight).TurnOrder);
+        var order = (context.State.Fight ?? fight).TurnOrder;
+        var cell = await searches.RunAsync(() => tactics.Place(imagined.Fight, fight.OwnCells, imagined.Knowledge, weights, order), cancellationToken).ConfigureAwait(false);
 
         if (!await PacedAsync(context, Placing, cancellationToken).ConfigureAwait(false))
             return;
@@ -369,7 +372,7 @@ public static class FightPlay
         };
     }
 
-    private static async Task PlayTurnAsync(BotContext context, FightTactics tactics, GameTables tables, FightMap map, TacticWeights weights, HashSet<int> refusedSpells, (int Id, TurnChallenge Challenge)? challenge, HashSet<int> left, CancellationToken cancellationToken)
+    private static async Task PlayTurnAsync(BotContext context, FightTactics tactics, FightSearches searches, GameTables tables, FightMap map, TacticWeights weights, HashSet<int> refusedSpells, (int Id, TurnChallenge Challenge)? challenge, HashSet<int> left, CancellationToken cancellationToken)
     {
         // The character's turn, or a summon's it controls.
         var self = context.State.Fight?.PlayingId ?? context.State.Key.CharacterId;
@@ -400,7 +403,9 @@ public static class FightPlay
             if (challenge is { } going)
                 challenge = Refreshed(going, context.State.Fight, tables.Challenges, self);
 
-            var plan = tactics.Plan(imagined.Fight, imagined.Knowledge, weights, TurnSearchLimits.Default, refused, challenge?.Challenge);
+            var asked = imagined;
+            var keeping = challenge?.Challenge;
+            var plan = await searches.RunAsync(() => tactics.Plan(asked.Fight, asked.Knowledge, weights, TurnSearchLimits.Default, refused, keeping), cancellationToken).ConfigureAwait(false);
 
             FightLog.Planned(context.Log, self, plan.Actions.Length, plan.Score, plan.Standing, plan.Weighed, (long)plan.Elapsed.TotalMilliseconds);
 

@@ -918,3 +918,8 @@ or refines another says so in its own entry. Add a line here with every new deci
 
 - [D503](decisions/d503-chaferfu-and-saoul.md#d503-a-summon-every-character-has-is-a-last-resort-whatever-the-breed-saouls-share-is-dispelled-with-it-and-the-states-a-turn-began-with-stay-held-through-the-turn) A summon every character has is a last resort whatever the breed, Saoul's share is dispelled with it, and the states a turn began with stay held through the turn (2026-11-24)
   - The owner's report; the Forgelance's Chaferfu and the Pandawa's Bombance measured on the 24 November captures, a probe planning again after each action as the bot does.
+
+## Fights, the AI's searches off the thread pool (D508)
+
+- [D508](decisions/d508-fight-searches-off-the-pool.md#d508-the-fight-ai-searches-on-threads-of-its-own-half-the-cores-and-below-the-normal-priority-never-on-the-thread-pool) The fight AI searches on threads of its own, half the cores and below the normal priority, never on the thread pool (2026-11-24)
+  - A player's report of Kestrel's heartbeat late; measured with N bots planning at once on 4 cores, the pool's wait 10 s at most on the pool, 79 ms on the threads.
