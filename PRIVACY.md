@@ -11,7 +11,8 @@ there, and what leaves your computer if you choose to send a bug report.
   days and up to 1 GB by default, then deleted; the Network settings change both and turn the recording off.
 - **The journals of your bots**, in `%LOCALAPPDATA%\D3B\journals`: what each bot did, by the game's ids, and the warnings
   and errors of D3B itself, a file a bot and a day. They hold your characters' names where a bot's note says them and the
-  paths of your files, never a login ticket. They are kept 7 days and up to 250 MB, then deleted.
+  paths of your files, never a login ticket. They are kept 7 days and up to 250 MB, then deleted. "Save the journal" copies
+  them as they are: unlike a report, that file is not cleaned of your characters' names or your folder.
 - **A database and your settings** in `%LOCALAPPDATA%\D3B`: the accounts and characters D3B saw, what the bots learned, your
   profiles and routes.
 

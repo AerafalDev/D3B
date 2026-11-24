@@ -297,4 +297,30 @@ public sealed class LogsViewModelTests : IAsyncDisposable
         Assert.Equal(Tone.Danger, toasts.Recent[^1].Tone);
         Assert.StartsWith("Le journal n’a pas pu être enregistré", toasts.Recent[^1].Text, StringComparison.Ordinal);
     }
+
+    [Fact]
+    public async Task WhenTheDiskCannotBeWrittenTheLinesShownAreSavedInstead()
+    {
+        var (_, bot) = await _play.EnterAsync(300);
+        var blocked = _journals.Combine("blocked");
+
+        // A file where the folder should be: every write of the recorder fails.
+        File.WriteAllText(blocked, "");
+
+        using var recorder = new JournalRecorder(new JournalFiles(blocked), JournalRetention.Default, _play.Bots, _problems, _play.Time, NullLogger<JournalRecorder>.Instance);
+        var builder = Host.CreateApplicationBuilder(new HostApplicationBuilderSettings { DisableDefaults = true });
+
+        builder.Services.AddSingleton(_play.Bots);
+        builder.Services.AddSingleton(_play.World);
+        builder.Services.AddSingleton(recorder);
+        using var host = builder.Build();
+        var page = new LogsViewModel(_french, new BotChoice { Key = bot.Key }, new Toasts());
+        var path = _journals.Combine("shown.txt");
+
+        page.Refresh(host.Services);
+        await page.SaveAsync(path);
+
+        Assert.Equal(page.Text(), File.ReadAllText(path));
+        Assert.NotEmpty(page.Text());
+    }
 }

@@ -117,22 +117,30 @@ internal sealed partial class LogsViewModel : ObservableObject
         Sources.Add(new LogSourceViewModel(LogSourceKind.Host, null, Choose));
     }
 
-    private static string Saved(JournalRecorder recorder, IReadOnlyList<(string? Title, string Source)> sources)
+    private static string Saved(JournalRecorder? recorder, IReadOnlyList<(string? Title, string Source)> sources, string shown)
     {
+        if (recorder is null)
+            return shown;
+
         // What came in the last second is on disk first.
         recorder.Flush();
 
         var text = new StringBuilder();
+        var any = false;
 
         foreach (var (title, source) in sources)
         {
             if (title is not null)
                 text.Append("# ").Append(title).Append('\n');
 
-            text.Append(recorder.Files.Read(source));
+            var lines = recorder.Files.Read(source);
+
+            any |= lines.Length > 0;
+            text.Append(lines);
         }
 
-        return text.ToString();
+        // A disk the recorder cannot write holds nothing, while memory still does.
+        return any ? text.ToString() : shown;
     }
 
     /// <summary>Reads the bots and what came since, in the language chosen.</summary>
@@ -200,7 +208,8 @@ internal sealed partial class LogsViewModel : ObservableObject
         return source is null ? $"journal-{day}.txt" : $"journal-{source}-{day}.txt";
     }
 
-    /// <summary>Saves the journal of the source shown: every day the disk keeps of it, as the maintainers read it, or the lines shown when the host writes none (D504).</summary>
+    /// <summary>Saves the journal of the source shown: every day the disk keeps of it, as the maintainers read it, or the lines shown when the disk holds none (D504).</summary>
+    /// <remarks>The file is the player's own, as the disk keeps it: unlike a report's copy, it still names the characters and the player's folder.</remarks>
     /// <param name="path">The file chosen.</param>
     /// <returns>A task that completes once it is written, or said not to be.</returns>
     public async Task SaveAsync(string path)
@@ -213,7 +222,7 @@ internal sealed partial class LogsViewModel : ObservableObject
 
         try
         {
-            await Task.Run(() => File.WriteAllText(path, recorder is null ? shown : Saved(recorder, sources)));
+            await Task.Run(() => File.WriteAllText(path, Saved(recorder, sources, shown)));
             _toasts.Show(new Toast(_localizer.Format("JournalSaved", Path.GetFileName(path)), Tone.Success));
         }
         catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)

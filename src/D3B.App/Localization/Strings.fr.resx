@@ -591,7 +591,7 @@
     <value>Enregistrer le journal</value>
   </data>
   <data name="SaveJournalHint" xml:space="preserve">
-    <value>Enregistrer le journal gardé sur le disque, tous ses jours, pour l’envoyer aux mainteneurs</value>
+    <value>Enregistrer le journal gardé sur le disque, tous ses jours, tel quel : contrairement à un rapport, il nomme vos personnages</value>
   </data>
   <data name="JournalSaved" xml:space="preserve">
     <value>Journal enregistré : {0}</value>
