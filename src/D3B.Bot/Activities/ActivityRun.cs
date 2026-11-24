@@ -36,6 +36,7 @@ public sealed class ActivityRun
     private long _endedAt = NotEnded;
     private int _steps;
     private Exception? _failure;
+    private RunFights _fights = new();
 
     // Only the run's own sequence of behaviors reads and writes them.
     private bool _unloaded;
@@ -65,6 +66,9 @@ public sealed class ActivityRun
 
     /// <summary>Gets when the activity ended, by the bot's clock, once it is over.</summary>
     public DateTimeOffset? EndedAt => Volatile.Read(ref _endedAt) is var ticks and not NotEnded ? new DateTimeOffset(ticks, TimeSpan.Zero) : null;
+
+    /// <summary>Gets the fights the character fought while the activity ran, and what they gave it (D505).</summary>
+    public RunFights Fights => Volatile.Read(ref _fights);
 
     /// <summary>Gets the error that made the activity fail, as it threw it; none when it failed for a character still full.</summary>
     public Exception? Failure => Volatile.Read(ref _failure);
@@ -101,6 +105,15 @@ public sealed class ActivityRun
     internal void Start()
     {
         _ = Task.Run(RunAsync);
+    }
+
+    /// <summary>Counts a fight that ended while the activity ran, on the bot's loop, the one that writes them.</summary>
+    /// <param name="end">How the fight ended for the character.</param>
+    /// <param name="died">Whether the character's fighter was dead as it ended.</param>
+    internal void Count(FightEnd end, bool died)
+    {
+        if (!IsOver)
+            Volatile.Write(ref _fights, Fights.With(end, died));
     }
 
     internal void Watch()

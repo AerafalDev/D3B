@@ -37,6 +37,35 @@ public sealed class MainWindowTests : IAsyncDisposable
         return HeadlessUnitTestSession.GetOrStartForAssembly(typeof(MainWindowTests).Assembly).Dispatch(action, TestContext.Current.CancellationToken);
     }
 
+    private static void Fight(TestConnection connection, FightOutcome outcome, long experience, long kamas, bool dies)
+    {
+        var self = new Actor
+        {
+            Id = TestPlay.CharacterId,
+            Disposition = new ActorDisposition { CellId = 300 },
+            Information = new ActorInformation { Fighter = new FightFighter { Spawn = new FighterSpawn { Alive = true, Team = FightTeam.Challenger } } },
+        };
+        var result = new FightResult
+        {
+            Outcome = outcome,
+            Fighter = new FightResultFighter
+            {
+                FighterId = TestPlay.CharacterId,
+                Character = new FightResultCharacter { Data = { new FightResultData { Experience = new FightExperience { Gained = experience } } } },
+            },
+            Loot = new FightLoot { Kamas = kamas },
+        };
+
+        connection.Server(new ContextCreationEvent { Context = ContextCreationEvent.Types.GameContext.Fight });
+        connection.Server(new FightFighterShowEvent { Fighter = self });
+
+        if (dies)
+            connection.Server(new GameActionFightEvent { ActionId = 103, SourceId = -1, Death = new FightDeath { TargetId = TestPlay.CharacterId } });
+
+        connection.Server(new FightEndEvent { Results = { result } });
+        connection.Server(new ContextCreationEvent { Context = ContextCreationEvent.Types.GameContext.Roleplay });
+    }
+
     public ValueTask DisposeAsync()
     {
         return _play.DisposeAsync();
@@ -415,6 +444,83 @@ public sealed class MainWindowTests : IAsyncDisposable
         Assert.Contains("Comportement", french);
         Assert.Contains("Sous-zone 440, cellule 300", french);
         Assert.Contains("Calques", french);
+        Assert.DoesNotContain(french, text => text.StartsWith('[') && text.EndsWith(']'));
+    }
+
+    [Fact]
+    public async Task ACharactersTabSaysWhatItsFightsGaveOverallAndByHourInBothLanguages()
+    {
+        using var game = new TestGameData();
+        var builder = Host.CreateApplicationBuilder(new HostApplicationBuilderSettings { DisableDefaults = true });
+
+        builder.Services.AddSingleton(_play.Bots);
+        builder.Services.AddSingleton(_play.Maps);
+        builder.Services.AddSingleton(_play.World);
+        builder.Services.AddSingleton(game.Texts);
+        builder.Services.AddSingleton(game.Tables);
+        builder.Services.AddSingleton<TimeProvider>(_play.Time);
+        builder.Services.AddSingleton(new ActivityCatalog([]));
+        builder.Services.AddSingleton(new PageCatalog([]));
+
+        using var host = builder.Build();
+        var runner = await TestHosts.RunningAsync(host);
+        var (connection, bot) = await _play.EnterAsync(300);
+        var run = bot.StartActivity(new TestActivity(), "Bouftous");
+
+        Fight(connection, FightOutcome.Won, 2_400, 300, dies: false);
+        Fight(connection, FightOutcome.Lost, 0, 0, dies: true);
+        await bot.ProcessedAsync();
+
+        // Two hours: what the fights gave counts by hour.
+        _play.Time.Advance(TimeSpan.FromHours(2));
+
+        var (english, french) = await OnTheUIThreadAsync(() =>
+        {
+            var localizer = Localizer.Instance;
+
+            localizer.Use(Localizer.English);
+
+            var main = new MainViewModel(runner, localizer);
+            var window = new MainWindow { DataContext = main, Width = 1280, Height = 900 };
+
+            main.Refresh();
+            window.Show();
+            main.Bots.Items[0].ShowMapCommand.Execute(null);
+            main.Refresh();
+            Dispatcher.UIThread.RunJobs();
+
+            var english = Texts(window);
+
+            Drawings.Draw(window, "fights-tab-en");
+            main.Settings.UseFrenchCommand.Execute(null);
+            main.Refresh();
+            Dispatcher.UIThread.RunJobs();
+
+            var french = Texts(window);
+
+            Drawings.Draw(window, "fights-tab-fr");
+            localizer.Use(Localizer.English);
+            window.Close();
+
+            return (english, french);
+        });
+
+        run.Stop();
+        await run.Completion;
+
+        Assert.Contains("Fights 2", english);
+        Assert.Contains("Won 1 · Lost 1", english);
+        Assert.Contains("Deaths 1", english);
+        Assert.Contains("2,400", english);
+        Assert.Contains("Experience", english);
+        Assert.Contains("1,200/h", english);
+        Assert.Contains("150/h", english);
+        Assert.DoesNotContain(english, text => text.StartsWith('[') && text.EndsWith(']'));
+        Assert.Contains("Combats 2", french);
+        Assert.Contains("Gagnés 1 · Perdus 1", french);
+        Assert.Contains("Morts 1", french);
+        Assert.Contains("Expérience", french);
+        Assert.Contains("1 200/h", french);
         Assert.DoesNotContain(french, text => text.StartsWith('[') && text.EndsWith(']'));
     }
 }

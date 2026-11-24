@@ -8,6 +8,7 @@ using D3B.Bot.Activities;
 using D3B.Bot.Characters;
 using D3B.Bot.Localization;
 using D3B.Data;
+using D3B.Data.Icons;
 using D3B.Data.Texts;
 using D3B.Data.World;
 using D3B.Storage.Accounts;
@@ -18,8 +19,9 @@ namespace D3B.App.ViewModels.Statistics;
 
 /// <summary>The statistics, in the bottom panel: what the runs D3B kept brought, by character and period (D146, D327).</summary>
 /// <remarks>
-/// The resources, the time, the rate an hour and the levels gained; each resource with its icon and rate; and the runs, the
-/// latest first. Made again only once the runs, the filters or the language changed.
+/// The resources, the time, the rate an hour and the levels gained; each resource with its icon and rate; the fights won and
+/// lost, the deaths, and the experience and kamas they gave, by hour of the runs that fought (D505); and the runs, the latest
+/// first. Made again only once the runs, the filters or the language changed.
 /// </remarks>
 internal sealed partial class StatisticsViewModel : ObservableObject
 {
@@ -42,6 +44,9 @@ internal sealed partial class StatisticsViewModel : ObservableObject
 
     /// <summary>Gets the resources the runs counted brought, the most first.</summary>
     public ObservableCollection<StatisticsResourceViewModel> Resources { get; } = [];
+
+    /// <summary>Gets the experience and kamas the runs' fights gave, and by hour of the runs that fought (D505).</summary>
+    public ObservableCollection<SessionFigureViewModel> FightFigures { get; } = [];
 
     /// <summary>Gets the runs counted, the latest first.</summary>
     public ObservableCollection<StatisticsRunViewModel> Runs { get; } = [];
@@ -74,6 +79,14 @@ internal sealed partial class StatisticsViewModel : ObservableObject
     /// <summary>Gets which professions gained levels, from and to.</summary>
     [ObservableProperty]
     public partial string LevelsDetail { get; private set; } = "";
+
+    /// <summary>Gets the fights won and lost and the deaths, beside the fights' title.</summary>
+    [ObservableProperty]
+    public partial string FightsSummary { get; private set; } = "";
+
+    /// <summary>Gets whether a run counted fought, so that what its fights gave shows.</summary>
+    [ObservableProperty]
+    public partial bool HasFights { get; private set; }
 
     /// <summary>Gets whether the host keeps runs: its database opened.</summary>
     [ObservableProperty]
@@ -174,10 +187,36 @@ internal sealed partial class StatisticsViewModel : ObservableObject
             Resources.Add(new StatisticsResourceViewModel(_icons?.Item(item), _says?.Item(item) ?? item.ToString(culture), count.ToString("N0", culture), rate, most > 0 ? 100.0 * count / most : 0));
         }
 
+        RebuildFights(runs);
         Runs.Clear();
 
         foreach (var run in runs)
             Runs.Add(RunOf(run, now));
+    }
+
+    private void RebuildFights(List<RunRecord> runs)
+    {
+        // By hour of the runs that fought: a harvest's hours beside a hunt's would hide what the hunt gives.
+        var fought = runs.Where(run => run.FightsWon + run.FightsLost > 0).ToList();
+        var hours = TimeSpan.FromTicks(fought.Sum(run => DurationOf(run).Ticks)).TotalHours;
+
+        HasFights = fought.Count > 0;
+        FightsSummary = Localizer.Format("StatisticsFightsSummary", fought.Sum(run => run.FightsWon), fought.Sum(run => run.FightsLost), fought.Sum(run => run.Deaths));
+        FightFigures.Clear();
+
+        if (!HasFights)
+            return;
+
+        FightFigures.Add(FigureOf(GameGlyph.Experience, "SessionExperience", fought.Sum(run => run.Experience), hours));
+        FightFigures.Add(FigureOf(GameGlyph.Kamas, "SessionKamas", fought.Sum(run => run.Kamas), hours));
+    }
+
+    private SessionFigureViewModel FigureOf(GameGlyph glyph, string name, long count, double hours)
+    {
+        var culture = Localizer.Culture;
+        var rate = hours >= 1.0 / 60 ? Localizer.Format("StatisticsRate", Math.Round(count / hours).ToString("N0", culture)) : Localizer["StatisticsNone"];
+
+        return new SessionFigureViewModel(_icons?.Glyph(glyph), Localizer[name], count.ToString("N0", culture), rate);
     }
 
     private void RebuildCharacters(IReadOnlyList<RunRecord> all)
