@@ -255,7 +255,9 @@ The bots run in `D3B.Bot`: what each part does today, with the decisions that ma
   at its life each 10 seconds at least (D258); full, it may deposit in the guild's chest (`GuildChest`, D147), what the chest leaves going to the
   character's own. Between two steps the run lets `BotDelays.BetweenSteps` pass, the client's display time at least (D154).
   An activity gives its figures (`BotActivity.Statistics`,
-  `ActivityStatistics`), and a run keeps the character it started with (`ActivityRun.StartedWith`, D146).
+  `ActivityStatistics`), and a run keeps the character it started with (`ActivityRun.StartedWith`, D146) and counts the
+  fights that end while it goes on, the AI's and the player's: won, lost, the character's deaths, the experience and kamas
+  they gave (`ActivityRun.Fights`, `RunFights`, written by the bot's loop beside the journal's `FightEndEntry`, D505).
 - **Harvesting, grown in 6e**: the resources by profession, the professions chosen, `Base`'s among them, but those left
   out, the nearest first or the highest level first, or a list as before (`HarvestMode`, `HarvestOrder`,
   `HarvestZone.TargetsOf`, D165); the place chosen, or chosen by the activity for each character at each tour, the sub-area
@@ -837,7 +839,8 @@ D356), the pages of D101 and D162 gone.
   tinted by its state, with its progress, the time spent and when it should end, its failure and warnings; its behavior's
   profile and rail, the layer Always listing the thresholds the activity watches (`BotActivity.Watches`) with their
   gauges, then the behavior's states, the one playing lit (`BotActivity.Outline`); its session, a tile per resource with
-  its rate an hour, the profession raised, fights, deposits and kamas; its latest decisions, from its journal, and a way
+  its rate an hour, the experience and kamas its fights gave and their rate an hour once it fought, the profession raised,
+  its fights, won and lost, deaths and deposits (D505); its latest decisions, from its journal, and a way
   to its whole trace in the bottom panel (D353).
 - **The assets' panel** (D326, D351, D358, `AssetsViewModel` in `D3B.App.ViewModels.Assets`, `AssetsView`): as an IDE's
   explorer, several rows chosen, the keyboard, drag and drop, cut and paste, IntelliJ's menus, the kinds shown, the open
@@ -881,7 +884,8 @@ D356), the pages of D101 and D162 gone.
   project's files that do not read, the characters without a profile, the host's failure and problems, each with its
   fix. The protocol (`InspectorViewModel`, D115): a bot's frames live or a capture replayed, by direction and name, those
   not read marked, frozen on demand, a frame unfolded in place. The statistics (`StatisticsViewModel`, D146): what the
-  kept runs brought, by character and period, the resources with their rates and the runs.
+  kept runs brought, by character and period, the resources with their rates, the fights won and lost, the deaths and the
+  experience and kamas they gave by hour of the runs that fought (D505), and the runs.
 - **The settings** (D329, D354, `SettingsViewModel`, `D3B.App.ViewModels.AppSettings`, `SettingsView`): a tab of the
   editor, the title's gear, Ctrl , or a setting found. Sections on the left under a search: Bots, the client's display
   time and every delay, the bots' at once (`Bots.Delays`), the relay's from the next start, the host's raised ones once
@@ -971,7 +975,8 @@ cells in session 9f3 (D275); the NPCs and their dialogs in session 7d3b (D383).
   `KnownNpcs` before the host starts, written as the bots see them, as the graphics are. Ids only: the server sends no name
   nor text. Migration `Npcs`.
 - **Runs** (`RunRecorder`, `RunBook`, D146): each activity's run, its character, profile, times and outcome, the items it
-  brought, the experience its character gained and its banks and fights; the recorder looks at the bots every 5 s and
+  brought, the experience its character gained in its professions, its banks and the fights that cut it, and the fights its
+  character won and lost, its deaths and the experience and kamas they gave (D505, migration `FightFigures`); the recorder looks at the bots every 5 s and
   writes a run as it begins, banks, once a minute while its figures change, and once over. The book reads them back after
   each write, for the app's statistics.
 - **In memory**: the books are read once the database opens, then again after each write; the app reads them every
