@@ -499,10 +499,8 @@
                             AutomationProperties.Name="{l:Tr ActivityJournal}"
                             Classes="Activity"
                             Classes.On="{Binding Bottom.IsJournalOpen}"
-                            Command="{Binding ToggleJournalCommand}">
-                            <ToolTip.Tip>
-                                <c:KeyTip Keys="Ctrl J" Text="{l:Tr ActivityJournal}" />
-                            </ToolTip.Tip>
+                            Command="{Binding ToggleJournalCommand}"
+                            ToolTip.Tip="{l:Tr ActivityJournal}">
                             <c:Icon Drawing="{StaticResource Toolwindows.Messages}" />
                         </Button>
                         <Button

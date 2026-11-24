@@ -114,12 +114,31 @@ public sealed class StudioLayoutTests
         using var directory = new TemporaryDirectory();
         var path = directory.Combine("app.json");
         // Written by hand, or by an older D3B with other bounds.
-        File.WriteAllText(path, """{ "Layout": { "LeftWidth": 10, "RightWidth": -3, "BottomHeight": -5, "Shown": ["Details", "Nothing"], "View": "Nowhere" } }""");
+        File.WriteAllText(path, """{ "Layout": { "LeftWidth": 10, "RightWidth": -3, "BottomHeight": -5, "Shown": ["Bottom", "Nothing"], "View": "Nowhere" } }""");
 
         var layout = new StudioLayout(AppPreferences.Load(path));
 
         Assert.Equal((StudioLayout.LeastLeftWidth, StudioLayout.LeastRightWidth, StudioLayout.LeastBottomHeight), (layout.LeftWidth, layout.RightWidth, layout.BottomHeight));
-        Assert.Equal((false, false, true, SideView.Characters), (layout.IsSideOpen, layout.IsBottomOpen, layout.IsDetailsOpen, layout.View));
+        Assert.Equal((false, true, false, SideView.Characters), (layout.IsSideOpen, layout.IsBottomOpen, layout.IsDetailsOpen, layout.View));
+    }
+
+    [Fact]
+    public void TheDetailsShownAreNotRememberedSoThatTheNextStartOpensThemOnNothing()
+    {
+        using var directory = new TemporaryDirectory();
+        var path = directory.Combine("app.json");
+        var layout = new StudioLayout(AppPreferences.Load(path));
+
+        // As a selection shows them: kept, they would open the next start with nothing selected.
+        layout.Show(StudioPanel.Details, true);
+
+        Assert.Null(AppPreferences.Load(path).Layout);
+
+        layout.Show(StudioPanel.Bottom, true);
+
+        var again = new StudioLayout(AppPreferences.Load(path));
+
+        Assert.Equal((true, false), (again.IsBottomOpen, again.IsDetailsOpen));
     }
 
     [Fact]

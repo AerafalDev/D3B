@@ -1,6 +1,7 @@
 using D3B.App.Hosting;
 using D3B.App.Localization;
 using D3B.App.ViewModels;
+using D3B.App.ViewModels.AppSettings;
 using D3B.App.ViewModels.Studio;
 using D3B.App.ViewModels.World;
 using D3B.Bot.Characters;
@@ -107,6 +108,43 @@ public sealed class ShellTests
         main.Layout.ShowView(SideView.Characters);
 
         Assert.Equal(OutlinerScope.Characters, main.Outliner.Scope);
+    }
+
+    [Fact]
+    public void TheSearchsCommandsShowAndHideTheSideBarTheDetailsAndTheAdvancedToolsAndShowTheStatistics()
+    {
+        var main = Studio();
+
+        void Run(string command)
+        {
+            main.Search.Open(SearchScope.Commands);
+            main.Search.Query = command;
+            main.Search.Run(main.Search.Groups.SelectMany(group => group.Results).First(result => result.Item.Title == command));
+        }
+
+        Run("Show or hide the side bar");
+        Run("Show or hide the Details");
+        Run("Show or hide the advanced tools");
+        Run("Show the statistics");
+
+        Assert.Equal((false, true, true), (main.Layout.IsSideOpen, main.Layout.IsDetailsOpen, main.Layout.AdvancedTools));
+        Assert.Equal((true, BottomTab.Statistics), (main.Layout.IsBottomOpen, main.Bottom.Tab));
+    }
+
+    [Fact]
+    public void TheSettingsInterfaceTurnsTheAdvancedToolsOnAndItsSearchFindsThem()
+    {
+        var main = Studio();
+
+        main.Settings.Studio!.ToggleAdvancedToolsCommand.Execute(null);
+
+        Assert.True(main.Bottom.HasProtocol);
+
+        main.Settings.Filter = "advanced";
+
+        Assert.Equal([SettingsSection.Appearance], main.Settings.Sections.Where(section => section.IsShown).Select(section => section.Section));
+        Assert.True(main.Settings.AdvancedToolsRow.IsShown);
+        Assert.False(main.Settings.Language.IsShown);
     }
 
     [Fact]

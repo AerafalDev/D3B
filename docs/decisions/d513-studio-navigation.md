@@ -34,8 +34,9 @@ under that delegation**. Refines D321, D322, D327, D339 and D397; keeps D396 (th
 - **Plain words.** The Window menu becomes View (« Affichage »): Home, the three views, the three parts with their keys,
   Advanced tools, the modules' pages and the default layout. "Outliner" and "Assets" leave the screens for Characters,
   Library and World (« Personnages », « Bibliothèque », « Monde »); the logo in the title row opens the home page.
-- **`app.json`** keeps the parts shown (`Shown`), the side bar's view (`View`) and the advanced tools; the default is still
-  not written. A file of an older D3B gives its widths back, hides the side bar only when it closed both left panels, and
+- **`app.json`** keeps the side bar and the bottom panel shown or not (`Shown`), the side bar's view (`View`) and the advanced
+  tools; the default is still not written. The Details are never kept: shown by a selection, they would open the next start on
+  nothing selected (found by the review). A file of an older D3B gives its widths back, hides the side bar only when it closed both left panels, and
   starts with the bottom panel and the Details hidden, the new defaults.
 - **Rejected.**
   - A side bar per view kept alive at once (two Outliners): one Outliner whose scope follows the view keeps its rows, folds

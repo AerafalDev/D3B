@@ -10,7 +10,8 @@ namespace D3B.App.ViewModels.Studio;
 /// As <c>next</c>'s shell and VS Code's: the activity bar chooses the side bar's view, the characters, the library or the
 /// world, and choosing the view shown again hides the side bar. The studio opens on the side bar and the editor alone; the
 /// bottom panel and the Details panel start hidden and show when asked, or when what they hold is needed. A hidden part's
-/// neighbour takes its room.
+/// neighbour takes its room. The Details are never remembered: shown by a selection, they would open the next start on
+/// nothing selected, so every start leaves them hidden until something is.
 /// </para>
 /// <para>
 /// Each edge stays within bounds as it is dragged: the side bar 220 pixels to 40 % of the window, the Details 240 to 45 %,
@@ -244,7 +245,7 @@ internal sealed partial class StudioLayout : ObservableObject
         {
             IsSideOpen = shown.Contains(nameof(StudioPanel.Side));
             IsBottomOpen = shown.Contains(nameof(StudioPanel.Bottom));
-            IsDetailsOpen = shown.Contains(nameof(StudioPanel.Details));
+            IsDetailsOpen = false;
 
             return;
         }
@@ -259,7 +260,7 @@ internal sealed partial class StudioLayout : ObservableObject
 
     private StudioLayoutState? ToState()
     {
-        var shown = Enum.GetValues<StudioPanel>().Where(IsOpen).Select(panel => panel.ToString()).ToList();
+        var shown = Enum.GetValues<StudioPanel>().Where(panel => panel is not StudioPanel.Details && IsOpen(panel)).Select(panel => panel.ToString()).ToList();
         var state = new StudioLayoutState(Math.Round(LeftWidth), Math.Round(RightWidth), Math.Round(BottomHeight), Shown: shown, View: View.ToString(), AdvancedTools: AdvancedTools);
 
         // The default is not written, so that a later default reaches a user who never moved an edge.

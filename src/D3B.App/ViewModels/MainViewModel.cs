@@ -513,7 +513,7 @@ internal sealed partial class MainViewModel : ObservableObject
             ChooseAsset(id);
     }
 
-    /// <summary>Shows the settings' tab: the title's gear, Ctrl , (D329).</summary>
+    /// <summary>Shows the settings' tab: the activity bar's gear, Ctrl , (D329, D513).</summary>
     [RelayCommand]
     public void ShowSettings()
     {

@@ -717,7 +717,8 @@ bottom panel and the Details hidden until needed.
   asked. Every edge is dragged on its own (`DockSplitter`), within bounds; a part hides by its × and shows again from the View
   menu, which gives the default layout back; Ctrl B shows or hides the side bar, Ctrl J the bottom panel, Ctrl Alt B the Details,
   Ctrl Space shows the Library. A drag's end, a part shown or hidden, the side bar's view and the advanced tools are remembered
-  in `app.json` (`StudioLayoutState.Shown`, `View`, `AdvancedTools`), the default never written; an older file's widths are
+  in `app.json` (`StudioLayoutState.Shown`, `View`, `AdvancedTools`), the default never written, the Details never kept (a
+  selection shows them, so the next start would open them on nothing); an older file's widths are
   kept, its side bar hidden only if it closed both the Outliner and the assets, its other parts on the new defaults.
 - **Advanced tools** (D513, `StudioLayout.AdvancedTools`), off by default, checked in the View menu, the search and the settings'
   Interface section: the Protocol tab of the bottom panel only with them (`BottomPanelViewModel.HasProtocol`); turned off
@@ -899,7 +900,7 @@ bottom panel and the Details hidden until needed.
   kept runs brought, by character and period, the resources with their rates, the fights won and lost, the deaths and the
   experience and kamas they gave by hour of the runs that fought (D505), and the runs.
 - **The settings** (D329, D354, `SettingsViewModel`, `D3B.App.ViewModels.AppSettings`, `SettingsView`): a tab of the
-  editor, the title's gear, Ctrl , or a setting found. Sections on the left under a search: Bots, the client's display
+  editor, the activity bar's gear, Ctrl , or a setting found. Sections on the left under a search: Bots, the client's display
   time and every delay, the bots' at once (`Bots.Delays`), the relay's from the next start, the host's raised ones once
   it runs; Network, the captures from the next start and their folder; Appearance, the language, the layout given
   back and the advanced tools (D513); Files, the project, the database, the game's folder, chosen from the next start or the launcher's (D502), the client's data and `app.json`, copied or opened; About, the version, the
