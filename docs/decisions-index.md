@@ -923,3 +923,12 @@ or refines another says so in its own entry. Add a line here with every new deci
 
 - [D508](decisions/d508-fight-searches-off-the-pool.md#d508-the-fight-ai-searches-on-threads-of-its-own-half-the-cores-and-below-the-normal-priority-never-on-the-thread-pool) The fight AI searches on threads of its own, half the cores and below the normal priority, never on the thread pool (2026-11-24)
   - A player's report of Kestrel's heartbeat late; measured with N bots planning at once on 4 cores, the pool's wait 10 s at most on the pool, 79 ms on the threads.
+
+## Fights, the search's budget a limit, an unanswered cast and the weapon in a state that prevents fighting (D509 to D511)
+
+- [D509](decisions/d509-d511-search-budget-and-refusals.md#d509-the-searchs-budget-bounds-the-whole-search-its-passes-and-its-reply-the-first-cast-and-two-ends-always-weighed) The search's budget bounds the whole search, its passes and its reply, the first cast and two ends always weighed (2026-11-24)
+  - F1; replayed on the 24 November captures, the searches 1,083 ms at most instead of 2,253, the sum judged 0.07% lower.
+- [D510](decisions/d509-d511-search-budget-and-refusals.md#d510-a-cast-the-server-leaves-unanswered-is-left-out-for-the-turn-and-for-the-fight-once-a-second-turn-left-it-unanswered) A cast the server leaves unanswered is left out for the turn, and for the fight once a second turn left it unanswered (2026-11-24)
+  - F2; none of the 18,330 casts of 22 to 24 November went unanswered, a safeguard.
+- [D511](decisions/d509-d511-search-budget-and-refusals.md#d511-a-weapons-blow-is-not-struck-in-a-state-that-prevents-fighting) A weapon's blow is not struck in a state that prevents fighting (2026-11-24)
+  - The owner's ask, the audit; 74 blows refused with text 372, each in state 1 or 42, which the pack flags preventsFight.
