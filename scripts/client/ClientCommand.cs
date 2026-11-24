@@ -18,7 +18,7 @@ internal static class ClientCommand
     {
         var client = new Option<DirectoryInfo?>("--client")
         {
-            Description = @"The client's directory. Defaults to %LOCALAPPDATA%\Ankama\Dofus-dofus3 on Windows.",
+            Description = @"The client's directory. Defaults to where Ankama's launcher installed it on Windows, else %LOCALAPPDATA%\Ankama\Dofus-dofus3.",
             Recursive = true,
         };
         var directory = new Option<DirectoryInfo?>("--redirect-directory")

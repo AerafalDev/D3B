@@ -81,7 +81,7 @@ internal static class FightsCommand
 
     private static int Run(string[] paths, string root, string? version, bool details, bool turns, double enemyLife, string? weights, bool live)
     {
-        var client = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Ankama", "Dofus-dofus3");
+        var client = ClientLocator.Locate(null);
         var build = version is null ? ClientBuild.Read(client) : BuildOf(version);
         var packPath = PackLocations.PathOf(root, build);
         var schemaPath = SchemaFile.PathOf(root, build.Version);

@@ -17,7 +17,7 @@ internal static class ReleaseCommand
     {
         var client = new Option<DirectoryInfo?>("--client")
         {
-            Description = @"The client whose build's files to publish. Defaults to %LOCALAPPDATA%\Ankama\Dofus-dofus3 on Windows.",
+            Description = @"The client whose build's files to publish. Defaults to where Ankama's launcher installed it on Windows, else %LOCALAPPDATA%\Ankama\Dofus-dofus3.",
         };
         var version = new Option<string?>("--client-version")
         {

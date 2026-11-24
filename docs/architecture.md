@@ -662,7 +662,9 @@ Built at step 2 (D24 to D33):
 - The data module (`DataModule`, in `D3B.Bot`, D31) registers, as singletons every bot shares, the installed
   `ClientBuild`, the `PackSource` that finds its pack, the `GamePack`, opened once and closed with the host, and the
   stores reading it: `GameTexts`, `GameMaps`, `GameWorld` and `GameTables`. The configuration names the client
-  (`Client:Directory`) and the packs' directory on this machine (`Data:Directory`).
+  (`Client:Directory`) and the packs' directory on this machine (`Data:Directory`). With no client named, `ClientLocator`
+  (`D3B.Data`) takes where the launcher's `release.json` says it installed it, when a client is there, else
+  `%LOCALAPPDATA%\Ankama\Dofus-dofus3`; the tools of `scripts/` find it the same way (D502).
 - Before the host starts, it opens the pack of the installed build (D172): the one on this machine, where the tools write,
   else the one the published app ships in `data/<version>/` beside its executable (`DataSettings.Locate`). Nothing is
   downloaded. With no pack for the installed build, the host does not start: it says which build lacks one and how to
@@ -881,7 +883,7 @@ D356), the pages of D101 and D162 gone.
   editor, the title's gear, Ctrl , or a setting found. Sections on the left under a search: Bots, the client's display
   time and every delay, the bots' at once (`Bots.Delays`), the relay's from the next start, the host's raised ones once
   it runs; Network, the captures from the next start and their folder; Appearance, the language and the layout given
-  back; Files, the project, the database, the client's data and `app.json`, copied or opened; About, the version, the
+  back; Files, the project, the database, the game's folder, chosen from the next start or the launcher's (D502), the client's data and `app.json`, copied or opened; About, the version, the
   client build, the update (D173) and the licences. A value changed shows a bar and an arrow giving its default back.
 - **The modules' pages** (D333): in the editor's tabs, opened from the Window menu or the search. A module's page
   (`ModulePageViewModel`) is made the first time its tab shows and kept, refreshed every 250 ms while it shows through its

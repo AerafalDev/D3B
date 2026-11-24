@@ -51,6 +51,7 @@ The app and the host read the same configuration keys, given on the command line
 
 | Option | Effect |
 | --- | --- |
+| `--Client:Directory <folder>` | The client's installation directory, the folder of `Dofus.exe`; by default where Ankama's launcher installed it. The app's settings set it too (Files, « Dossier du jeu »). |
 | `--Storage:Path <file>` | Uses another database file. |
 | `--Studio:Path <folder>` | Uses another folder for the profiles, routes and behaviors. |
 | `--Fights:Alone true` | Has the AI play every fight of the bots, the player's own included. |
@@ -67,8 +68,8 @@ A capture holds the account's login ticket: never share one. Describe it with `s
 ## Tools
 
 The tools are [file-based apps](https://learn.microsoft.com/dotnet/core/sdk/file-based-apps) in `scripts/`. Run one with
-`dotnet run --file scripts/<tool>.cs -- --help` to see its options. By default they read the client installed in
-`%LOCALAPPDATA%\Ankama\Dofus-dofus3` and write under `%LOCALAPPDATA%\D3B`.
+`dotnet run --file scripts/<tool>.cs -- --help` to see its options. By default they read the client where Ankama's launcher
+installed it, else in `%LOCALAPPDATA%\Ankama\Dofus-dofus3`, and write under `%LOCALAPPDATA%\D3B`.
 
 | Tool | What it does |
 | --- | --- |

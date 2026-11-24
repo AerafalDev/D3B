@@ -23,7 +23,7 @@ internal static class MappingCommand
     {
         var client = new Option<DirectoryInfo?>("--client")
         {
-            Description = @"The client whose build to map. Defaults to %LOCALAPPDATA%\Ankama\Dofus-dofus3 on Windows.",
+            Description = @"The client whose build to map. Defaults to where Ankama's launcher installed it on Windows, else %LOCALAPPDATA%\Ankama\Dofus-dofus3.",
         };
         var version = new Option<string?>("--client-version")
         {

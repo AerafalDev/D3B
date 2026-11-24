@@ -2183,6 +2183,21 @@
   <data name="SettingDatabaseDetail" xml:space="preserve">
     <value>Accounts, characters and what the bots learn</value>
   </data>
+  <data name="SettingClientFolder" xml:space="preserve">
+    <value>Game folder</value>
+  </data>
+  <data name="SettingClientFolderDetail" xml:space="preserve">
+    <value>Where Dofus 3 is installed: the launcher's folder unless you choose one</value>
+  </data>
+  <data name="ChooseFolder" xml:space="preserve">
+    <value>Choose a folder</value>
+  </data>
+  <data name="ClientFolderChosen" xml:space="preserve">
+    <value>Game folder chosen: it applies from the next start.</value>
+  </data>
+  <data name="ClientFolderNoClient" xml:space="preserve">
+    <value>No Dofus 3 client in {0}: choose the folder that holds Dofus.exe.</value>
+  </data>
   <data name="SettingClientData" xml:space="preserve">
     <value>Client's data</value>
   </data>

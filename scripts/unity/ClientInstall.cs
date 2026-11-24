@@ -1,3 +1,5 @@
+using D3B.Data;
+
 namespace D3B.Scripts.Unity;
 
 /// <summary>The installed official client, as the Ankama launcher lays it out.</summary>
@@ -14,22 +16,15 @@ internal sealed class ClientInstall
         Root = root;
     }
 
-    /// <summary>Finds the client in <paramref name="directory"/>, or where the launcher installs it by default.</summary>
+    /// <summary>Finds the client in <paramref name="directory"/>, else where the launcher installed it, as the host does (D502).</summary>
     /// <exception cref="DirectoryNotFoundException">No client is there.</exception>
     public static ClientInstall Locate(DirectoryInfo? directory)
     {
-        var root = directory?.FullName;
+        // The launcher installs the client for Windows only; elsewhere a copy must be named.
+        if (directory is null && !OperatingSystem.IsWindows())
+            throw new DirectoryNotFoundException("Name the client's directory with --client.");
 
-        if (root is null)
-        {
-            var localApplicationData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
-
-            // The launcher installs the client for Windows only; elsewhere a copy must be named.
-            if (!OperatingSystem.IsWindows() || localApplicationData.Length is 0)
-                throw new DirectoryNotFoundException("Name the client's directory with --client.");
-
-            root = Path.Combine(localApplicationData, "Ankama", "Dofus-dofus3");
-        }
+        var root = ClientLocator.Locate(directory?.FullName);
 
         var client = new ClientInstall(root);
 

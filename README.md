@@ -29,6 +29,9 @@ D3B injects nothing into the game and never sees your password.
 2. Download and run `D3B.App-win-Setup.exe` from the [latest release](https://github.com/AerafalDev/D3B/releases/latest).
    No administrator rights are needed. If Windows SmartScreen stops it, choose *More info*, then *Run anyway*.
 
+D3B finds the game where Ankama's launcher installed it, on any drive. If it does not, choose the game's folder, the one
+that holds `Dofus.exe`, in the settings (Files, *Game folder*), then restart D3B.
+
 D3B updates itself. After an update of the game, wait for the D3B version that supports it.
 
 ## Getting started
