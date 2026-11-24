@@ -97,6 +97,7 @@ public sealed class FightSearchesTests
 
         await Assert.ThrowsAnyAsync<OperationCanceledException>(() => waiting);
         await holding;
+        searches.Dispose();
 
         Assert.False(ran);
     }
@@ -112,9 +113,9 @@ public sealed class FightSearchesTests
     }
 
     [Fact]
-    public void ItKeepsAThreadAtLeastAndLeavesCoresToTheRest()
+    public void ItKeepsTwoThreadsAtLeastAndLeavesCoresToTheRest()
     {
-        Assert.InRange(FightSearches.DefaultCount, 1, Math.Max(1, Environment.ProcessorCount / 2));
+        Assert.InRange(FightSearches.DefaultCount, 2, Math.Max(2, Environment.ProcessorCount / 2));
         Assert.Throws<ArgumentOutOfRangeException>(() => new FightSearches(0));
     }
 }

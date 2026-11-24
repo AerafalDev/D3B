@@ -21,12 +21,14 @@ fights with the AI from [D201](d176-d208-step-9.md) on, and runs the bots' host 
   normal priority, 4 bots: 0.1 ms halfway, 50 ms at most; 8 bots: 0.1 ms halfway, 79 ms at most, none over 100 ms. The
   heartbeat's own lateness at most 134 and 216 ms on the pool, 79 and 258 ms on the threads, the garbage collector's
   pauses (0.9 to 3.3 s in 30 s) weighing on both.
-- **Made.** `FightSearches`, one per host, made by `Bots` at the first fight and disposed with it: `Math.Max(1, cores / 2)`
+- **Made.** `FightSearches`, one per host, made by `Bots` at the first fight and disposed with it: `Math.Max(2, cores / 2)`
   background threads below the normal priority take the searches in the order asked; what awaits a search goes on on the
   pool (`RunContinuationsAsynchronously`), and a cancelled wait drops a search not yet begun. `FightPlay` runs the odds, the
   placement and every plan there. A rule's instant action is applied through `IInstantNode`, with no task waited for.
   Tests (`FightSearchesTests`): a search runs off the pool, below the normal priority, no more at once than the threads, a
   search that throws fails its task alone, one cancelled before its turn never runs.
+- **Not measured**: the wait of a plan behind the others' searches, which the harness's numbers on the search's own clock
+  leave out; two threads at least, so that two bots in their own turns at once never wait for each other on two cores.
 - **The search's time.** The same harness showed searches of 2 s halfway and up to 5.5 s on the pool, 9.8 s on the threads,
   against a budget of 800 ms: the budget is not a limit of the whole search (D509).
 - **Rejected**: raising the pool's minimum threads, which leaves the searches at the relay's priority and only delays the

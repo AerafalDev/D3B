@@ -21,8 +21,9 @@ public sealed class FightSearches : IDisposable
     private readonly Thread[] _threads;
     private volatile bool _disposed;
 
-    /// <summary>Gets how many threads the host's searches share: half the cores, one at least.</summary>
-    public static int DefaultCount => Math.Max(1, Environment.ProcessorCount / 2);
+    /// <summary>Gets how many threads the host's searches share: half the cores, two at least.</summary>
+    /// <remarks>The review's finding: one thread on two cores queued every bot's plan behind the others'.</remarks>
+    public static int DefaultCount => Math.Max(2, Environment.ProcessorCount / 2);
 
     /// <summary>Initializes a new instance of the <see cref="FightSearches"/> class, its threads started.</summary>
     /// <param name="count">How many searches run at once, each on a thread of its own.</param>

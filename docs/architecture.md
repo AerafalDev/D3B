@@ -342,7 +342,7 @@ The bots run in `D3B.Bot`: what each part does today, with the decisions that ma
   waits for the server's answer and the client's acknowledgement, plans again, the states it began the turn with held by
   every plan of the turn (`FightKnowledge.TurnStates`, D503), and ends its turn as soon as the plan is
   empty. The odds, the placement and every plan are searched on `FightSearches`, the host's threads for the AI, half its
-  cores and below the normal priority, made by `Bots` at the first fight: the thread pool, which the relay's reads and
+  cores (two at least) and below the normal priority, made by `Bots` at the first fight: the thread pool, which the relay's reads and
   writes run on, is never held by a search (D508).
   A summon of the character's the client controls plays its turns the same, the fight imagined from its view, its
   spells its grade's (`FightState.IsOwnTurn`, D271), and so does a companion of the character's, such as the Astrub Knight
