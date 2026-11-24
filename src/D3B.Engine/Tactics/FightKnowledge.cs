@@ -20,6 +20,9 @@ public sealed record FightKnowledge
     /// <summary>Gets the AP and MP each fighter starts its turn with, by fighter.</summary>
     public ImmutableDictionary<long, (int ActionPoints, int MovementPoints)> TurnPoints { get; init; } = ImmutableDictionary<long, (int ActionPoints, int MovementPoints)>.Empty;
 
+    /// <summary>Gets the states the fighter playing began its turn with, as the bot plans again during it; none for those it holds now.</summary>
+    public ImmutableArray<int> TurnStates { get; init; } = [];
+
     /// <summary>Gets the rounds each spell of the fighter playing still waits, as the server said, by spell.</summary>
     public ImmutableDictionary<int, int> Cooldowns { get; init; } = ImmutableDictionary<int, int>.Empty;
 

@@ -14,6 +14,8 @@ public sealed class DamageShareDispelTests
     private const int Sober = 30;
     private const int Shield = 40;
     private const int Ward = 50;
+    private const int Wine = 60;
+    private const int Water = 70;
 
     private const int DrunkState = 8;
 
@@ -30,11 +32,13 @@ public sealed class DamageShareDispelTests
     /// <summary>
     /// Spell 20, 1 AP on the caster: the state 8 and 85% of the damage received for 2 rounds, as Saoul gives. Spell 30, 1 AP on
     /// the caster: dispels spell 20, as Sobre does. Spell 40, 1 AP on the caster: a reduction of 10 for 2 rounds, then dispelled
-    /// by spell 30 too. Spell 50, 1 AP on the caster, of 1 stack: 85% of the damage received for 2 rounds.
+    /// by spell 30 too. Spell 50, 1 AP on the caster, of 1 stack: 85% of the damage received for 2 rounds. Spell 60, 1 AP on the
+    /// caster: the state 8 for 2 rounds and 85% of the damage received waiting for damage with no rounds of its own, as the pack's
+    /// Saoul gives it (D503); spell 70, 1 AP on the caster: dispels spell 60.
     /// </summary>
     private static SpellCatalog Catalog()
     {
-        string[] strings = ["C", "I"];
+        string[] strings = ["C", "I", "D"];
         var point = Zone(SpellZoneShape.Point);
 
         SpellLevel Level(int id, int spell, int first, int count, int stacks = 0)
@@ -42,9 +46,9 @@ public sealed class DamageShareDispelTests
             return new SpellLevel { Id = id, SpellId = spell, Grade = 1, ApCost = 1, MaxStack = (sbyte)stacks, StatesCriterion = SpellLevel.NoCriterion, FirstEffect = first, EffectCount = (ushort)count };
         }
 
-        SpellEffect Effect(int effectId, int dice = 0, int value = 0, int duration = 0)
+        SpellEffect Effect(int effectId, int dice = 0, int value = 0, int duration = 0, int triggers = 1)
         {
-            return new SpellEffect { EffectId = (ushort)effectId, TargetMask = 0, Triggers = 1, DiceNum = dice, Value = value, Duration = (sbyte)duration, Zone = point };
+            return new SpellEffect { EffectId = (ushort)effectId, TargetMask = 0, Triggers = triggers, DiceNum = dice, Value = value, Duration = (sbyte)duration, Zone = point };
         }
 
         SpellLevel[] levels =
@@ -53,6 +57,8 @@ public sealed class DamageShareDispelTests
             Level(1030, Sober, 2, 2),
             Level(1040, Shield, 4, 1),
             Level(1050, Ward, 5, 1, stacks: 1),
+            Level(1060, Wine, 6, 2),
+            Level(1070, Water, 8, 1),
         ];
         SpellEffect[] effects =
         [
@@ -62,6 +68,9 @@ public sealed class DamageShareDispelTests
             Effect(406, value: Shield),
             Effect(105, dice: 10, duration: 2),
             Effect(1163, dice: 85, duration: 2),
+            Effect(950, value: DrunkState, duration: 2),
+            Effect(1163, dice: 85, triggers: 2),
+            Effect(406, value: Wine),
         ];
         Spell[] spells =
         [
@@ -69,6 +78,8 @@ public sealed class DamageShareDispelTests
             new Spell { Id = Sober, NameId = 2, FirstLevel = 1, LevelCount = 1 },
             new Spell { Id = Shield, NameId = 3, FirstLevel = 2, LevelCount = 1 },
             new Spell { Id = Ward, NameId = 4, FirstLevel = 3, LevelCount = 1 },
+            new Spell { Id = Wine, NameId = 5, FirstLevel = 4, LevelCount = 1 },
+            new Spell { Id = Water, NameId = 6, FirstLevel = 5, LevelCount = 1 },
         ];
 
         return new SpellCatalog(spells, levels, levels.Select(level => level.Id).ToArray(), effects, Array.Empty<SpellPreviewZone>(), Array.Empty<int>(), strings,
@@ -95,6 +106,22 @@ public sealed class DamageShareDispelTests
         var drunk = Cast(fight, Drink);
         var sober = Cast(drunk, Sober);
         var again = Cast(sober, Drink);
+
+        Assert.Equal([85], drunk.Actor.ReceivedDamageShares);
+        Assert.Empty(sober.Actor.ReceivedDamageShares);
+        Assert.Equal([85], again.Actor.ReceivedDamageShares);
+    }
+
+    [Fact]
+    public void ADispelTakesBackAShareWaitingForDamageWithNoRoundsOfItsOwn()
+    {
+        // The owner's report (D503): the pack's Saoul gives its share with no rounds, so that it was never held by its spell, and
+        // each swap to drunk added one more, two shares held for the one the server gives.
+        var fight = Fight(Caster() with { ActionPoints = 6 });
+
+        var drunk = Cast(fight, Wine);
+        var sober = Cast(drunk, Water);
+        var again = Cast(sober, Wine);
 
         Assert.Equal([85], drunk.Actor.ReceivedDamageShares);
         Assert.Empty(sober.Actor.ReceivedDamageShares);
