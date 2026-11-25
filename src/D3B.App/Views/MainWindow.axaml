@@ -349,7 +349,7 @@
                 <!--  The side bar (D513): one view at a time, the one the activity bar chose, its header naming it.  -->
                 <Border
                     Classes="Dock Compact"
-                    IsVisible="{Binding Layout.IsSideOpen}"
+                    ClipToBounds="True"
                     Name="SideDock">
                     <DockPanel>
                         <Border Classes="Strip" DockPanel.Dock="Top">
@@ -384,7 +384,39 @@
                                         Height="12"
                                         Width="12" />
                                 </Button>
-                                <!--  Every character connected played at once (D544).  -->
+                                <!--  Every character connected played, paused or stopped at once (D544), right to left in the dock.  -->
+                                <Button
+                                    AutomationProperties.Name="{l:Tr CommandStopAll}"
+                                    Classes="Tool Small"
+                                    Command="{Binding RunBlock.StopAllCommand}"
+                                    DockPanel.Dock="Right"
+                                    Name="StopAll"
+                                    ToolTip.Tip="{l:Tr CommandStopAll}"
+                                    VerticalAlignment="Center">
+                                    <Button.IsVisible>
+                                        <MultiBinding Converter="{x:Static BoolConverters.And}">
+                                            <Binding Path="Layout.IsCharactersShown" />
+                                            <Binding Path="!RunBlock.IsNobodyOnline" />
+                                        </MultiBinding>
+                                    </Button.IsVisible>
+                                    <c:Icon Drawing="{StaticResource Run.Stop}" />
+                                </Button>
+                                <Button
+                                    AutomationProperties.Name="{l:Tr CommandPauseAll}"
+                                    Classes="Tool Small"
+                                    Command="{Binding RunBlock.PauseAllCommand}"
+                                    DockPanel.Dock="Right"
+                                    Name="PauseAll"
+                                    ToolTip.Tip="{l:Tr CommandPauseAll}"
+                                    VerticalAlignment="Center">
+                                    <Button.IsVisible>
+                                        <MultiBinding Converter="{x:Static BoolConverters.And}">
+                                            <Binding Path="Layout.IsCharactersShown" />
+                                            <Binding Path="!RunBlock.IsNobodyOnline" />
+                                        </MultiBinding>
+                                    </Button.IsVisible>
+                                    <c:Icon Drawing="{StaticResource Run.Pause}" />
+                                </Button>
                                 <Button
                                     AutomationProperties.Name="{l:Tr CommandPlayAll}"
                                     Classes="Tool Small"
@@ -717,8 +749,8 @@
                         VerticalAlignment="Center" />
                     <Border
                         Classes="Dock Compact"
+                        ClipToBounds="True"
                         Grid.Row="2"
-                        IsVisible="{Binding Layout.IsBottomOpen}"
                         Name="BottomDock">
                         <views:BottomPanelView DataContext="{Binding Bottom}" />
                     </Border>
@@ -735,8 +767,8 @@
 
                 <Border
                     Classes="Dock"
+                    ClipToBounds="True"
                     Grid.Column="4"
-                    IsVisible="{Binding Layout.IsDetailsOpen}"
                     Name="DetailsDock">
                     <DockPanel>
                         <Border Classes="Strip" DockPanel.Dock="Top">
@@ -791,33 +823,22 @@
             </Grid>
             </Grid>
 
-            <!--  The status bar, VS Code's and next's (D531, D541): the app's state on the left, after its one accent, a small blue dot,
-                 then the relay; its context on the right, the client and its data, the bots playing, the problems, the saving and the
-                 update. Each item opens what it names; colour only for a problem or the update offered.  -->
+            <!--  The status bar, VS Code's and next's (D531, D541): on the right, in icons whose words are their tooltips (D544, D546),
+                 the relay, the client and its data, the bots playing, the problems, the saving, the update and the version. Each item
+                 opens what it names; colour only for a problem or the update offered.  -->
             <Grid
                 ColumnDefinitions="Auto,*,Auto"
                 Grid.Row="1"
                 Margin="6,0"
                 Name="StatusBar">
                 <StackPanel
+                    Grid.Column="2"
                     Orientation="Horizontal"
                     Spacing="2"
                     VerticalAlignment="Center">
+                    <!--  The relay's dot, its colour where it stands, and the characters it carries; its words in the tooltip (D546).  -->
                     <Button
-                        Classes="Status"
-                        Command="{Binding StatusBar.ShowAboutPageCommand}"
-                        Name="VersionItem"
-                        ToolTip.Tip="{l:Tr StatusVersionTip}">
-                        <StackPanel Orientation="Horizontal" Spacing="6">
-                            <Ellipse
-                                Fill="{DynamicResource AccentColor}"
-                                Height="6"
-                                VerticalAlignment="Center"
-                                Width="6" />
-                            <TextBlock Text="{Binding StatusBar.VersionText}" VerticalAlignment="Center" />
-                        </StackPanel>
-                    </Button>
-                    <Button
+                        AutomationProperties.Name="{Binding StatusBar.RelayText}"
                         Classes="Status"
                         Classes.Failed="{Binding StatusBar.IsRelayFailed}"
                         Command="{Binding StatusBar.ShowRelayJournalCommand}"
@@ -825,7 +846,7 @@
                         <ToolTip.Tip>
                             <TextBlock
                                 MaxWidth="360"
-                                Text="{Binding StatusBar.RelayTip}"
+                                Text="{Binding StatusBar.RelayHover}"
                                 TextWrapping="Wrap" />
                         </ToolTip.Tip>
                         <StackPanel Orientation="Horizontal" Spacing="6">
@@ -836,15 +857,12 @@
                                 Classes.Starting="{Binding IsStarting}"
                                 Classes.Stopping="{Binding IsStopping}"
                                 VerticalAlignment="Center" />
-                            <TextBlock Text="{Binding StatusBar.RelayText}" VerticalAlignment="Center" />
+                            <TextBlock
+                                IsVisible="{Binding StatusBar.RelayFigure, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
+                                Text="{Binding StatusBar.RelayFigure}"
+                                VerticalAlignment="Center" />
                         </StackPanel>
                     </Button>
-                </StackPanel>
-                <StackPanel
-                    Grid.Column="2"
-                    Orientation="Horizontal"
-                    Spacing="2"
-                    VerticalAlignment="Center">
                     <Button
                         Classes="Status"
                         Command="{Binding StatusBar.ShowDataFilesCommand}"
@@ -862,7 +880,8 @@
                         Classes="Status"
                         Command="{Binding StatusBar.ShowCharactersViewCommand}"
                         IsVisible="{Binding StatusBar.ShowsPlaying}"
-                        Name="PlayingItem">
+                        Name="PlayingItem"
+                        ToolTip.Tip="{Binding StatusBar.PlayingTip}">
                         <StackPanel Orientation="Horizontal" Spacing="6">
                             <c:Icon
                                 Drawing="{StaticResource Run.Run}"
@@ -890,8 +909,14 @@
                             <TextBlock Text="{Binding StatusBar.WarningsText}" VerticalAlignment="Center" />
                         </StackPanel>
                     </Button>
-                    <Button Classes="Status" Command="{Binding StatusBar.SaveEverythingCommand}">
-                        <StackPanel Orientation="Horizontal" Spacing="6">
+                    <!--  An icon alone, its words in the tooltip (the owner's ask, D544).  -->
+                    <Button
+                        AutomationProperties.Name="{Binding StatusBar.SavedTip}"
+                        Classes="Status"
+                        Command="{Binding StatusBar.SaveEverythingCommand}"
+                        Name="SavedItem"
+                        ToolTip.Tip="{Binding StatusBar.SavedTip}">
+                        <Panel>
                             <c:Icon
                                 Drawing="{StaticResource Status.Success}"
                                 Height="12"
@@ -902,9 +927,7 @@
                                 Height="12"
                                 IsVisible="{Binding !StatusBar.IsSaved}"
                                 Width="12" />
-                            <TextBlock IsVisible="{Binding StatusBar.IsSaved}" Text="{l:Tr StatusSaved}" />
-                            <TextBlock IsVisible="{Binding !StatusBar.IsSaved}" Text="{l:Tr StatusUnsaved}" />
-                        </StackPanel>
+                        </Panel>
                     </Button>
                     <Button
                         Classes="Status Accent"
@@ -918,6 +941,19 @@
                                 Width="12" />
                             <TextBlock Text="{Binding StatusBar.UpdateText}" />
                         </StackPanel>
+                    </Button>
+                    <!--  The version's dot alone, its words in the tooltip, About on a click (D546).  -->
+                    <Button
+                        AutomationProperties.Name="{Binding StatusBar.VersionText}"
+                        Classes="Status"
+                        Command="{Binding StatusBar.ShowAboutPageCommand}"
+                        Name="VersionItem"
+                        ToolTip.Tip="{Binding StatusBar.VersionTip}">
+                        <Ellipse
+                            Fill="{DynamicResource AccentColor}"
+                            Height="6"
+                            VerticalAlignment="Center"
+                            Width="6" />
                     </Button>
                 </StackPanel>
             </Grid>

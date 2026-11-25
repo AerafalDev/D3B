@@ -292,6 +292,26 @@ internal sealed partial class RunBlockViewModel : ObservableObject
         Refresh();
     }
 
+    /// <summary>Pauses every character playing, as each one's pause would (D544).</summary>
+    [RelayCommand]
+    public void PauseAll()
+    {
+        foreach (var bot in _bots.Items.Where(bot => bot.IsConnected && Read(bot, _localizer).State is RunState.Playing).ToList())
+            bot.Bot.Pause();
+
+        Refresh();
+    }
+
+    /// <summary>Stops every character playing or paused, as each one's stop would (D544).</summary>
+    [RelayCommand]
+    public void StopAll()
+    {
+        foreach (var bot in _bots.Items.Where(bot => bot.IsConnected && Read(bot, _localizer).State is RunState.Playing or RunState.Paused).ToList())
+            bot.StopCommand.Execute(null);
+
+        Refresh();
+    }
+
     /// <summary>Plays or pauses, as F5 does.</summary>
     [RelayCommand]
     public void PlayOrPause()

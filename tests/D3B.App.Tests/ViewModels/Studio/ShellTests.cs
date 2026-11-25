@@ -194,7 +194,7 @@ public sealed class ShellTests
         main.Refresh();
 
         Assert.Equal(("Relay starting…", false), (main.StatusBar.RelayText, main.StatusBar.ShowsPlaying));
-        Assert.Equal($"Client {main.Updates.ClientVersion}", main.StatusBar.ClientText);
+        Assert.Equal(main.Updates.ClientVersion, main.StatusBar.ClientText);
         Assert.Equal($"D3B {main.Updates.Version}", main.StatusBar.VersionText);
     }
 }
