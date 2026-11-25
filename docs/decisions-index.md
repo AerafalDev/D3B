@@ -1027,3 +1027,8 @@ or refines another says so in its own entry. Add a line here with every new deci
   - Measured on 74 captures and the client's information texts; the list and all requests left, mapping format 26 unneeded.
 - [D552](decisions/d550-d552-bank-chest-transfer.md#d552-the-types-of-items-are-a-settings-kind-of-their-own-and-the-categories-are-named-by-d3b-after-the-inventorys-tabs) The types of items are a setting's kind of their own, and the categories are named by D3B after the inventory's tabs (2026-11-25)
   - The inventory's tabs as categories, 229 named types picked from the pack.
+
+## The studio's character map, zoomed (D553)
+
+- [D553](decisions/d553-map-zoom.md#d553-a-characters-map-zooms-with-the-wheel-around-the-pointer-from-its-fit-to-four-times-it-a-drag-pans-it-once-zoomed-and-the-worlds-zoom-bar-says-and-steps-it) A character's map zooms with the wheel around the pointer from its fit to four times it, a drag pans it once zoomed, and the world's zoom bar says and steps it (2026-11-25)
+  - The owner's ask, passed on by the shell's session; the world viewport's notch, step and bar, its 100 % the map's fit.
