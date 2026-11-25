@@ -80,6 +80,15 @@ internal sealed class TestStore : IAsyncDisposable
         await Accounts.SeeAsync(account, [.. characters.Select(character => new ListedCharacter(character.Id, character.Name, character.Level))], Play.Time.GetUtcNow(), TestContext.Current.CancellationToken);
     }
 
+    /// <summary>Records an account's characters as played through D3B once, which the Characters view lists (D544).</summary>
+    public async Task PlayedAsync(GameAccount account, params (long Id, string Name, int? Level)[] characters)
+    {
+        await SeeAsync(account, characters);
+
+        foreach (var character in characters)
+            await Accounts.PlayAsync(account, new ListedCharacter(character.Id, character.Name, character.Level), Play.Time.GetUtcNow(), TestContext.Current.CancellationToken);
+    }
+
     private BotActivity Kept(BotActivity activity)
     {
         Harvests.Enqueue(activity);

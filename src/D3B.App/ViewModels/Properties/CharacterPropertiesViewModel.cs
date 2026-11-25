@@ -4,6 +4,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using D3B.App.Localization;
 using D3B.App.ViewModels.Characters;
+using D3B.App.ViewModels.Studio;
 using D3B.Bot.Activities;
 using D3B.Bot.Characters;
 using D3B.Data;
@@ -112,14 +113,6 @@ internal sealed partial class CharacterPropertiesViewModel : ObservableObject
     [ObservableProperty]
     public partial bool ShowsStart { get; private set; } = true;
 
-    /// <summary>Gets whether the search shows the planning's row.</summary>
-    [ObservableProperty]
-    public partial bool ShowsPlanning { get; private set; } = true;
-
-    /// <summary>Gets whether the search shows the fight preferences' row.</summary>
-    [ObservableProperty]
-    public partial bool ShowsFight { get; private set; } = true;
-
     /// <summary>Gets whether the search shows the account's row.</summary>
     [ObservableProperty]
     public partial bool ShowsAccount { get; private set; } = true;
@@ -143,6 +136,36 @@ internal sealed partial class CharacterPropertiesViewModel : ObservableObject
     /// <summary>Gets whether the search shows a row of Account.</summary>
     [ObservableProperty]
     public partial bool ShowsAccountSection { get; private set; } = true;
+
+    /// <summary>Gets or sets the run block, which plays, pauses and stops the character as its tab does (D544).</summary>
+    public RunBlockViewModel? Run { get; set; }
+
+    /// <summary>Gets where the character's run stands.</summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(ShowsPlay), nameof(ShowsPause), nameof(ShowsStop))]
+    public partial RunState RunState { get; private set; }
+
+    /// <summary>Gets whether play does something now.</summary>
+    [ObservableProperty]
+    public partial bool CanPlay { get; private set; }
+
+    /// <summary>Gets what play would do, or why it does nothing.</summary>
+    [ObservableProperty]
+    public partial string PlayTip { get; private set; } = "";
+
+    /// <summary>Gets whether the run's buttons show: a run block to drive, and the character connected.</summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(ShowsPlay), nameof(ShowsPause), nameof(ShowsStop))]
+    public partial bool ShowsRun { get; private set; }
+
+    /// <summary>Gets whether play shows.</summary>
+    public bool ShowsPlay => ShowsRun && RunState is not RunState.Playing;
+
+    /// <summary>Gets whether pause shows.</summary>
+    public bool ShowsPause => ShowsRun && RunState is RunState.Playing;
+
+    /// <summary>Gets whether stop shows.</summary>
+    public bool ShowsStop => ShowsRun && RunState is RunState.Playing or RunState.Paused;
 
     /// <summary>Gets whether the character has a profile, without which it never starts on connection.</summary>
     public bool HasProfile => Profile?.Id is not null;
@@ -252,9 +275,31 @@ internal sealed partial class CharacterPropertiesViewModel : ObservableObject
         LifeText = bot?.Life ?? "";
         PodsText = bot is { HasLoad: true } ? bot.LoadPercentText : "";
         Doing = bot is { IsActivityRunning: true } ? (bot.ProgressText.Length > 0 ? $"{bot.ActivityName} · {bot.ProgressText}" : bot.ActivityName) : "";
+        ReadRun(bot);
         RefreshVariables(key);
         RefreshAccount(key);
         ApplyFilter(_filter);
+    }
+
+    /// <summary>Plays the character, or resumes it, as its tab's play does (D544).</summary>
+    [RelayCommand]
+    public void Play()
+    {
+        Drive(run => run.Play());
+    }
+
+    /// <summary>Pauses the character, as its tab's pause does.</summary>
+    [RelayCommand]
+    public void Pause()
+    {
+        Drive(run => run.Pause());
+    }
+
+    /// <summary>Stops the character's activity, as its tab's stop does.</summary>
+    [RelayCommand]
+    public void Stop()
+    {
+        Drive(run => run.Stop());
     }
 
     /// <summary>Shows only the rows whose label or value holds a text, as the inspector's search asks.</summary>
@@ -270,8 +315,6 @@ internal sealed partial class CharacterPropertiesViewModel : ObservableObject
 
         ShowsProfile = Has(_localizer["PropertyProfile"], Profile?.Name ?? "");
         ShowsStart = Has(_localizer["PropertyStart"]);
-        ShowsPlanning = Has(_localizer["PropertyPlanning"]);
-        ShowsFight = Has(_localizer["PropertyFight"]);
         ShowsAccount = Has(_localizer["PropertyAccount"], Account);
         ShowsSubscription = Has(_localizer["PropertySubscription"], Subscription);
         ShowsForget = Has(_localizer["ForgetAccount"]);
@@ -279,8 +322,10 @@ internal sealed partial class CharacterPropertiesViewModel : ObservableObject
         foreach (var variable in Variables)
             variable.IsShown = Has(variable.Name, variable.Text);
 
-        ShowsGame = ShowsProfile || ShowsStart || ShowsPlanning || ShowsFight;
-        ShowsVariables = _filter.Length == 0 || Variables.Any(variable => variable.IsShown);
+        ShowsGame = ShowsProfile || ShowsStart;
+
+        // A character with no variable has nothing to show there: the section waits for a behavior that declares one (D544).
+        ShowsVariables = HasVariables && (_filter.Length == 0 || Variables.Any(variable => variable.IsShown));
         ShowsAccountSection = ShowsAccount || ShowsSubscription || ShowsForget;
     }
 
@@ -335,6 +380,23 @@ internal sealed partial class CharacterPropertiesViewModel : ObservableObject
     {
         if (Key is { } key)
             _accounts.AskForget(key);
+    }
+
+    // Through the run block, which then drives this character, the Details left as they are: F5 and F6 follow (D514).
+    private void Drive(Action<RunBlockViewModel> act)
+    {
+        if (Run is not { } run || Key is not { } key)
+            return;
+
+        run.Drive(key);
+        act(run);
+        ReadRun(_botOf(key));
+    }
+
+    private void ReadRun(BotViewModel? bot)
+    {
+        ShowsRun = Run is not null && bot is { IsConnected: true };
+        (RunState, CanPlay, PlayTip) = bot is null ? (RunState.Stopped, false, _localizer["Disconnected"]) : RunBlockViewModel.Read(bot, _localizer);
     }
 
     private string SubtitleOf(KnownCharacter? known, BotViewModel? bot)

@@ -901,7 +901,9 @@ bottom panel and the Details hidden until needed.
   only open, close and say, tested without a window.
 - **The characters** (D323, D344, D397, `CharactersViewModel` in `D3B.App.ViewModels.Characters`): the model behind the
   Outliner's character rows, the run block and the menus: the bots (`BotViewModel`: the ring of its state `PlayState`, its
-  level, where it is, what it does and its progress, life and pods) and the characters offline (`CharacterLineViewModel`). The
+  level, where it is, what it does and its progress, life and pods) and the characters offline (`CharacterLineViewModel`), only
+  those played through D3B once (`KnownCharacter.LastPlayed`, D544); the view's header plays every one connected
+  (`RunBlockViewModel.PlayAll`, also a command of the palette). The
   cards of D323 are gone, the Outliner's rows say it shorter (D397). A click chooses the character for the run block and the
   Details, a double click or Enter opens its tab, the right click chooses it and opens its menu, made as it opens: open, play,
   pause, stop, a profile, the start on connection, forgetting its account after a question (`CharacterAccounts`). The profiles'
@@ -909,9 +911,10 @@ bottom panel and the Details hidden until needed.
   bot meets while the app looks is a toast with a way to its journal or tab (D162).
 - **The Details panel** (D324, D345, D397, `PropertiesViewModel` in `D3B.App.ViewModels.Properties`, `PropertiesView`; it was
   the inspector): what is selected, under its search, which filters the rows; sections under a rule, faint labels whose column
-  its edge resizes. A character (`CharacterPropertiesViewModel`): its head, name, breed and level and a way to its tab; State,
-  where it stands, its life and pods; Game, its profile as a field whose menu opens it or gives another, the start on connection
-  with an arrow resetting it, the planning and fight preferences disabled until 7f and 7h; Variables, the character's own, each
+  its edge resizes. A character (`CharacterPropertiesViewModel`): its head, name, breed and level, play, pause and stop as its
+  state allows through the run block (D544), and a way to its tab; State,
+  where it stands, its life and pods; Game, its profile as a field whose menu opens it or gives another (`Button.Pick`, shared with
+  a character's tab), the start on connection with an arrow resetting it; Variables, once a behavior declared one, the character's own, each
   with a dot of its type and its editor (`VariableRowViewModel`), which sets what its behaviors read; Account, the account, its
   subscription and forgetting it. An asset (`AssetPropertiesViewModel`), selected in the world, the Library or the
   search: its name, kind, file and format, what it uses and what uses it, characters included; for a route its course, what it

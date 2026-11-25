@@ -3731,4 +3731,7 @@
   <data name="StatisticsAllRuns" xml:space="preserve">
     <value>See every session</value>
   </data>
+  <data name="CommandPlayAll" xml:space="preserve">
+    <value>Play every character connected</value>
+  </data>
 </root>

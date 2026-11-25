@@ -264,6 +264,34 @@ internal sealed partial class RunBlockViewModel : ObservableObject
         Refresh();
     }
 
+    /// <summary>Plays every character connected that is stopped or paused, each as its own play would, the one chosen left chosen (D544).</summary>
+    [RelayCommand]
+    public void PlayAll()
+    {
+        foreach (var bot in _bots.Items.Where(bot => bot.IsConnected).ToList())
+        {
+            var (state, canPlay, _) = Read(bot, _localizer);
+
+            if (!canPlay)
+                continue;
+
+            if (state is RunState.Paused)
+            {
+                bot.Bot.Resume();
+
+                continue;
+            }
+
+            // The player's hand, or a pause after a fight, may have been left: the activity would start, then wait.
+            if (bot.IsPaused)
+                bot.Bot.Resume();
+
+            bot.StartCommand.Execute(null);
+        }
+
+        Refresh();
+    }
+
     /// <summary>Plays or pauses, as F5 does.</summary>
     [RelayCommand]
     public void PlayOrPause()

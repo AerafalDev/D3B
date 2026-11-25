@@ -284,6 +284,7 @@ internal sealed partial class MainViewModel : ObservableObject
         };
         RunBlock = new RunBlockViewModel(Bots, localizer) { Characters = Characters, Chose = Chose };
         Characters.RunBlock = RunBlock;
+        Properties.Character.Run = RunBlock;
         Search = new SearchViewModel(localizer, SearchItems);
         StatusBar = new StatusBarViewModel(localizer, Updates.Version)
         {
@@ -869,6 +870,7 @@ internal sealed partial class MainViewModel : ObservableObject
         yield return Command("CommandToggleAdvancedTools", "", Layout.ToggleAdvancedTools);
         yield return Command("CommandDefaultLayout", "", Layout.Reset);
         yield return Command("CommandPlay", "F5", RunBlock.PlayOrPause);
+        yield return Command("CommandPlayAll", "", RunBlock.PlayAll);
         yield return Command("CommandPause", "F6", RunBlock.Pause);
         yield return Command("CommandStop", _localizer["KeysShiftF5"], RunBlock.Stop);
         yield return Command("CommandSettings", "Ctrl ,", ShowSettings);

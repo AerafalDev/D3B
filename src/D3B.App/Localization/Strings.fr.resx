@@ -3731,4 +3731,7 @@
   <data name="StatisticsAllRuns" xml:space="preserve">
     <value>Voir toutes les sessions</value>
   </data>
+  <data name="CommandPlayAll" xml:space="preserve">
+    <value>Jouer tous les personnages connectés</value>
+  </data>
 </root>

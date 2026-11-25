@@ -171,7 +171,7 @@ public sealed class HomeViewModelTests : IAsyncDisposable
     public async Task TheHomePagesCardOfACharacterOpensItsTabAndPlaysNothingWhileItIsOffline()
     {
         await _store.OpenedAsync();
-        await _store.SeeAsync(TestPlay.Account, (TestPlay.CharacterId, "Aerafa", 200));
+        await _store.PlayedAsync(TestPlay.Account, (TestPlay.CharacterId, "Aerafa", 200));
 
         var main = new MainViewModel(await TestHosts.RunningAsync(_store.Host), _localizer);
 
@@ -179,7 +179,7 @@ public sealed class HomeViewModelTests : IAsyncDisposable
 
         var character = Assert.Single(main.Home.Characters);
 
-        Assert.Equal(("Aerafa", "Disconnected", false, false), (character.Name, character.Detail, character.IsOnline, character.CanPlay));
+        Assert.Equal(("Aerafa", "just now", false, false), (character.Name, character.Detail, character.IsOnline, character.CanPlay));
         Assert.True(main.Home.HasCharacters);
 
         character.OpenCommand.Execute(null);
@@ -194,7 +194,7 @@ public sealed class HomeViewModelTests : IAsyncDisposable
     public async Task ACharacterSelectedInTheOutlinerDoesNotLeaveTheHomePage()
     {
         await _store.OpenedAsync();
-        await _store.SeeAsync(TestPlay.Account, (TestPlay.CharacterId, "Aerafa", 200));
+        await _store.PlayedAsync(TestPlay.Account, (TestPlay.CharacterId, "Aerafa", 200));
 
         var main = new MainViewModel(await TestHosts.RunningAsync(_store.Host), _localizer);
 
