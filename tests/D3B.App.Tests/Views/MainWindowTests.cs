@@ -118,15 +118,16 @@ public sealed class MainWindowTests : IAsyncDisposable
         Assert.Contains("Search everywhere", english);
         Assert.Contains("Character", english);
         Assert.Contains("Stopped", english);
-        Assert.Contains("Running", english);
+        // The status bar names the relay, as next's (D541).
+        Assert.Contains(english, text => text.StartsWith("Relay ready", StringComparison.Ordinal));
         // Connected goes without saying: only a character that is not says it.
         Assert.DoesNotContain("Connected", english);
         Assert.DoesNotContain(english, text => text.StartsWith('[') && text.EndsWith(']'));
         Assert.Contains("Personnages", french);
         Assert.Contains("Chercher partout", french);
         Assert.Contains("Arrêté", french);
-        Assert.Contains("En marche", french);
-        Assert.DoesNotContain("Running", french);
+        Assert.Contains(french, text => text.StartsWith("Relais prêt", StringComparison.Ordinal));
+        Assert.DoesNotContain(french, text => text.StartsWith("Relay ready", StringComparison.Ordinal));
     }
 
     [Fact]

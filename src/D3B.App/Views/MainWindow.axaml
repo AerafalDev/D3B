@@ -773,8 +773,9 @@
             </Grid>
             </Grid>
 
-            <!--  The status bar as next's (D531): the app's state on the left, after its one accent, a small blue dot; its context on
-                 the right, colour only for a problem or the update offered.  -->
+            <!--  The status bar, VS Code's and next's (D531, D541): the app's state on the left, after its one accent, a small blue dot,
+                 then the relay; its context on the right, the client and its data, the bots playing, the problems, the saving and the
+                 update. Each item opens what it names; colour only for a problem or the update offered.  -->
             <Grid
                 ColumnDefinitions="Auto,*,Auto"
                 Grid.Row="1"
@@ -784,17 +785,31 @@
                     Orientation="Horizontal"
                     Spacing="2"
                     VerticalAlignment="Center">
-                    <Button Classes="Status">
+                    <Button
+                        Classes="Status"
+                        Command="{Binding StatusBar.ShowAboutPageCommand}"
+                        Name="VersionItem"
+                        ToolTip.Tip="{l:Tr StatusVersionTip}">
                         <StackPanel Orientation="Horizontal" Spacing="6">
                             <Ellipse
                                 Fill="{DynamicResource AccentColor}"
                                 Height="6"
                                 VerticalAlignment="Center"
                                 Width="6" />
-                            <TextBlock Text="{Binding StatusVersion}" VerticalAlignment="Center" />
+                            <TextBlock Text="{Binding StatusBar.VersionText}" VerticalAlignment="Center" />
                         </StackPanel>
                     </Button>
-                    <Button Classes="Status" ToolTip.Tip="{Binding HostDetail}">
+                    <Button
+                        Classes="Status"
+                        Classes.Failed="{Binding StatusBar.IsRelayFailed}"
+                        Command="{Binding StatusBar.ShowRelayJournalCommand}"
+                        Name="RelayItem">
+                        <ToolTip.Tip>
+                            <TextBlock
+                                MaxWidth="360"
+                                Text="{Binding StatusBar.RelayTip}"
+                                TextWrapping="Wrap" />
+                        </ToolTip.Tip>
                         <StackPanel Orientation="Horizontal" Spacing="6">
                             <Ellipse
                                 Classes="HostDot"
@@ -803,7 +818,7 @@
                                 Classes.Starting="{Binding IsStarting}"
                                 Classes.Stopping="{Binding IsStopping}"
                                 VerticalAlignment="Center" />
-                            <TextBlock Text="{Binding HostTitle}" VerticalAlignment="Center" />
+                            <TextBlock Text="{Binding StatusBar.RelayText}" VerticalAlignment="Center" />
                         </StackPanel>
                     </Button>
                 </StackPanel>
@@ -812,34 +827,78 @@
                     Orientation="Horizontal"
                     Spacing="2"
                     VerticalAlignment="Center">
-                    <Button Classes="Status" Content="{Binding ClientText}" />
-                    <Button Classes="Status">
+                    <Button
+                        Classes="Status"
+                        Command="{Binding StatusBar.ShowDataFilesCommand}"
+                        Name="ClientItem"
+                        ToolTip.Tip="{Binding StatusBar.ClientTip}">
+                        <StackPanel Orientation="Horizontal" Spacing="6">
+                            <c:Icon
+                                Drawing="{StaticResource Toolwindows.Project}"
+                                Height="12"
+                                Width="12" />
+                            <TextBlock Text="{Binding StatusBar.ClientText}" VerticalAlignment="Center" />
+                        </StackPanel>
+                    </Button>
+                    <Button
+                        Classes="Status"
+                        Command="{Binding StatusBar.ShowCharactersViewCommand}"
+                        IsVisible="{Binding StatusBar.ShowsPlaying}"
+                        Name="PlayingItem">
+                        <StackPanel Orientation="Horizontal" Spacing="6">
+                            <c:Icon
+                                Drawing="{StaticResource Run.Run}"
+                                Height="12"
+                                Width="12" />
+                            <TextBlock Text="{Binding StatusBar.PlayingText}" VerticalAlignment="Center" />
+                        </StackPanel>
+                    </Button>
+                    <Button
+                        Classes="Status"
+                        Command="{Binding StatusBar.ShowProblemsTabCommand}"
+                        Name="ProblemsItem"
+                        ToolTip.Tip="{l:Tr StatusProblemsTip}">
+                        <StackPanel Orientation="Horizontal" Spacing="4">
+                            <c:Icon
+                                Drawing="{StaticResource Status.Error}"
+                                Height="12"
+                                Width="12" />
+                            <TextBlock Text="{Binding StatusBar.ErrorsText}" VerticalAlignment="Center" />
+                            <c:Icon
+                                Drawing="{StaticResource Status.Warning}"
+                                Height="12"
+                                Margin="4,0,0,0"
+                                Width="12" />
+                            <TextBlock Text="{Binding StatusBar.WarningsText}" VerticalAlignment="Center" />
+                        </StackPanel>
+                    </Button>
+                    <Button Classes="Status" Command="{Binding StatusBar.SaveEverythingCommand}">
                         <StackPanel Orientation="Horizontal" Spacing="6">
                             <c:Icon
                                 Drawing="{StaticResource Status.Success}"
                                 Height="12"
-                                IsVisible="{Binding IsSaved}"
+                                IsVisible="{Binding StatusBar.IsSaved}"
                                 Width="12" />
                             <c:Icon
                                 Drawing="{StaticResource Status.Warning}"
                                 Height="12"
-                                IsVisible="{Binding !IsSaved}"
+                                IsVisible="{Binding !StatusBar.IsSaved}"
                                 Width="12" />
-                            <TextBlock Text="{l:Tr StatusSaved}" IsVisible="{Binding IsSaved}" />
-                            <TextBlock Text="{l:Tr StatusUnsaved}" IsVisible="{Binding !IsSaved}" />
+                            <TextBlock IsVisible="{Binding StatusBar.IsSaved}" Text="{l:Tr StatusSaved}" />
+                            <TextBlock IsVisible="{Binding !StatusBar.IsSaved}" Text="{l:Tr StatusUnsaved}" />
                         </StackPanel>
                     </Button>
                     <Button
                         Classes="Status Accent"
-                        Command="{Binding Updates.RestartCommand}"
-                        IsVisible="{Binding Updates.IsReady}"
-                        ToolTip.Tip="{Binding Updates.ReadyText}">
+                        Command="{Binding StatusBar.RestartIntoUpdateCommand}"
+                        IsVisible="{Binding StatusBar.IsUpdateReady}"
+                        Name="UpdateItem">
                         <StackPanel Orientation="Horizontal" Spacing="6">
                             <c:Icon
                                 Drawing="{StaticResource General.IdeUpdate}"
                                 Height="12"
                                 Width="12" />
-                            <TextBlock Text="{l:Tr UpdateRestart}" />
+                            <TextBlock Text="{Binding StatusBar.UpdateText}" />
                         </StackPanel>
                     </Button>
                 </StackPanel>

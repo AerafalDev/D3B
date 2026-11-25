@@ -158,4 +158,43 @@ public sealed class ShellTests
 
         Assert.Equal((true, SideView.Library), (main.Layout.IsSideOpen, main.Layout.View));
     }
+
+    [Fact]
+    public void TheStatusBarsItemsOpenWhatTheyName()
+    {
+        var main = Studio();
+
+        main.StatusBar.ShowProblemsTabCommand.Execute(null);
+
+        Assert.Equal((true, BottomTab.Problems), (main.Layout.IsBottomOpen, main.Bottom.Tab));
+
+        main.StatusBar.ShowRelayJournalCommand.Execute(null);
+
+        Assert.Equal(BottomTab.Journal, main.Bottom.Tab);
+
+        main.Layout.Close(StudioPanel.Side);
+        main.StatusBar.ShowCharactersViewCommand.Execute(null);
+
+        Assert.Equal((true, SideView.Characters), (main.Layout.IsSideOpen, main.Layout.View));
+
+        main.StatusBar.ShowDataFilesCommand.Execute(null);
+
+        Assert.Equal((true, SettingsSection.Files), (main.Editor.IsShown("settings"), main.Settings.Sections.Single(section => section.IsSelected).Section));
+
+        main.StatusBar.ShowAboutPageCommand.Execute(null);
+
+        Assert.Equal(SettingsSection.About, main.Settings.Sections.Single(section => section.IsSelected).Section);
+    }
+
+    [Fact]
+    public void TheStatusBarSaysTheHostStartingAndTheBuildTheAppShips()
+    {
+        var main = Studio();
+
+        main.Refresh();
+
+        Assert.Equal(("Relay starting…", false), (main.StatusBar.RelayText, main.StatusBar.ShowsPlaying));
+        Assert.Equal($"Client {main.Updates.ClientVersion}", main.StatusBar.ClientText);
+        Assert.Equal($"D3B {main.Updates.Version}", main.StatusBar.VersionText);
+    }
 }

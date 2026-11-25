@@ -665,6 +665,9 @@
         <Setter Property="Background" Value="{DynamicResource HoverColor}" />
         <Setter Property="Foreground" Value="{DynamicResource ForegroundColor}" />
     </Style>
+    <Style Selector="Button.Status.Failed">
+        <Setter Property="Foreground" Value="{DynamicResource ErrorTextColor}" />
+    </Style>
     <Style Selector="Button.Status.Accent">
         <Setter Property="Background" Value="{DynamicResource AccentSoftColor}" />
         <Setter Property="Foreground" Value="{DynamicResource BrightColor}" />

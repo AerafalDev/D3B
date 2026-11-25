@@ -3671,4 +3671,46 @@
   <data name="CommandCentre" xml:space="preserve">
     <value>Chercher et lancer une commande</value>
   </data>
+  <data name="RelayStarting" xml:space="preserve">
+    <value>Relais en démarrage…</value>
+  </data>
+  <data name="RelayReady" xml:space="preserve">
+    <value>Relais prêt · {0} en jeu</value>
+  </data>
+  <data name="RelayFailed" xml:space="preserve">
+    <value>Relais arrêté</value>
+  </data>
+  <data name="RelayStopped" xml:space="preserve">
+    <value>Relais fermé</value>
+  </data>
+  <data name="RelayQuitEnds" xml:space="preserve">
+    <value>Quitter D3B coupe les connexions de jeu qu'il relaie.</value>
+  </data>
+  <data name="RelayStartAfter" xml:space="preserve">
+    <value>Lancez Dofus après D3B : un client lancé avant joue sans le relais.</value>
+  </data>
+  <data name="RelayOpens" xml:space="preserve">
+    <value>Ouvrir le journal</value>
+  </data>
+  <data name="StatusClientData" xml:space="preserve">
+    <value>Client {0} · données v{1}</value>
+  </data>
+  <data name="StatusDataTip" xml:space="preserve">
+    <value>Données extraites par D3B.Data {0}</value>
+  </data>
+  <data name="StatusPlayingOne" xml:space="preserve">
+    <value>{0} bot actif</value>
+  </data>
+  <data name="StatusPlayingOther" xml:space="preserve">
+    <value>{0} bots actifs</value>
+  </data>
+  <data name="StatusProblemsTip" xml:space="preserve">
+    <value>Erreurs et avertissements : ouvrir les problèmes</value>
+  </data>
+  <data name="StatusVersionTip" xml:space="preserve">
+    <value>À propos de D3B</value>
+  </data>
+  <data name="StatusRestartTo" xml:space="preserve">
+    <value>Redémarrer pour passer à {0}</value>
+  </data>
 </root>
