@@ -296,8 +296,9 @@ public sealed class BankingTests
     }
 
     [Fact]
-    public async Task AMapNoWayLeadsFromToABankHasNoBank()
+    public async Task AMapThePackLacksHasNoBankToGoTo()
     {
+        // No way can be sought from a map the pack does not hold: no bank, not a journey to try again.
         await using var play = new TestPlay();
         var (_, bot) = await play.EnterAsync(300, TestPlay.HavenBagMapId);
 
