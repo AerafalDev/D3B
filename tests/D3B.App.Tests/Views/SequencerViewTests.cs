@@ -228,6 +228,7 @@ public sealed class SequencerViewTests
             main.World.Refresh();
             main.Selection.SelectRoute("r1");
             Dispatcher.UIThread.RunJobs();
+            Slides.Finish();
 
             var sequencer = main.Bottom.Sequencer!;
 
