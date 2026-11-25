@@ -53,6 +53,7 @@ public sealed class DungeonActivity : BotActivity
     private readonly HashSet<long> _won = [];
     private ActivityReport? _report;
     private int? _inside;
+    private long? _fightingIn;
     private int _failedJourneys;
     private int _unanswered;
     private int _entered;
@@ -140,7 +141,8 @@ public sealed class DungeonActivity : BotActivity
 
         foreach (var listed in _settings.Dungeons)
         {
-            if (!dungeons.TryGetDungeon(listed, out var inside))
+            // A dungeon a fight was lost in is left for the run, a room of it as any other map (D525).
+            if (!dungeons.TryGetDungeon(listed, out var inside) || _beaten.Contains(inside.Id))
                 continue;
 
             if (dungeons.RoomsOf(inside).Contains(mapId))
@@ -199,11 +201,13 @@ public sealed class DungeonActivity : BotActivity
 
             _inside = null;
         }
-        else if (ending is not null)
+        else if (ending is not null && _fightingIn is { } room)
         {
-            _rooms++;
+            // A room won is never walked back to, whether the server moves the character on or not (D525).
+            Won(room);
         }
 
+        _fightingIn = null;
         Publish(_inside is null ? "DoingStart" : "DoingRooms");
 
         return response;
@@ -311,14 +315,15 @@ public sealed class DungeonActivity : BotActivity
             if (await RegainAsync(context, cancellationToken).ConfigureAwait(false))
                 return true;
 
-            // A fight that begins cuts the step; the run plays it, and the next step is the next room's.
+            // A fight that begins cuts the step; the run plays it, and the next step is the next room's. Groups none of which
+            // could be attacked, out of reach or unanswered, leave the room as won, so that the character is not left idle.
+            _fightingIn = mapId;
             await MapFight.FightAsync(context, [], 1, 8, cancellationToken).ConfigureAwait(false);
-
-            return true;
+            _fightingIn = null;
         }
 
         // The room is won and the server did not move the character: the next room is walked to (D525).
-        _won.Add(mapId);
+        Won(mapId);
 
         var left = new HashSet<long>();
 
@@ -351,6 +356,12 @@ public sealed class DungeonActivity : BotActivity
         }
 
         return true;
+    }
+
+    private void Won(long room)
+    {
+        if (_won.Add(room))
+            _rooms++;
     }
 
     // Before a room's fight the character regenerates to its share of life, a point each interval the server gave (D153).

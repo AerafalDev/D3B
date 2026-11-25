@@ -458,8 +458,9 @@ The bots run in `D3B.Bot`: what each part does today, with the decisions that ma
   one lets it in, each reply chosen among those the question offers (`NpcTalk`'s chooser, D522): the keyring's first, then the
   key's, then the keeper's confirmation. In a room, its information come and a group shown within 5 s, it regenerates to the
   profile's share of life, then fights the room's groups through `MapFight`, the AI playing each, and the server's move after a
-  win makes the next step the next room's (D525); a room with no group is won, and the nearest room not won in the run is
-  travelled to through the graph. A fight lost leaves the dungeon for the run. With every room won, or on the map of the
+  win makes the next step the next room's (D525); a room is won by a fight won in it, or with no group it can attack, and from a
+  won room the server did not leave the nearest room not won in the run is travelled to through the graph. A fight lost leaves
+  the dungeon for the run. With every room won, or on the map of the
   dungeon's sub-area the boss's win leads to, the run ends for now: the exit comes next.
 - **The zaaps' discovery** (D499), in `D3B.Bot.Zaaps`, registered by `ZaapsModule`: `ZaapDiscoveryActivity`, the "Discover
   the zaaps" activity, with no setting. It seeks the activated zaaps of the pack's atlas the character does not know as it

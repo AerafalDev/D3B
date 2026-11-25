@@ -108,10 +108,13 @@ choices the session's within D520. Builds D87, D153, D236, D384, D520, D524.*
 - **Made**: in a room of a listed dungeon, its information come, the step waits up to 5 s for a group; with one, the character
   regenerates to the profile's share of life (`LifeShare`, 80 % by default, a point each interval the server gave, D153), then
   fights the room's groups as a route's fight does (`MapFight`, D384), the AI playing each; the next step is the next room's.
-  A room with no group is won: the character travels through the graph to the nearest room of the dungeon not yet won in that
-  run, stopping on the first that shows a group; with every room won, or on a map of the dungeon's sub-area that is no room,
+  A room is won by a fight won in it, or when it shows no group, or none the character can attack, out of reach or unanswered,
+  so that it is never left idle there; a room won is never walked back to. In a won room the server did not leave, the
+  character travels through the graph to the nearest room of the dungeon not yet won in that run, stopping on the first that
+  shows a group; with every room won, or on a map of the dungeon's sub-area that is no room,
   entrance or exit, the map the boss's win leads to, the run of the dungeon ends, the exit being the third pull request's.
-  A fight lost leaves that dungeon for the activity's run, a restart included, the others of the profile still entered.
+  A fight lost leaves that dungeon for the activity's run, a restart included, its rooms then any other map, the others of
+  the profile still entered. The card counts the rooms won, each once a run of the dungeon.
 - **Rejected.**
   - The rooms walked in the table's order, or the next room guessed from it: the captures contradict the order.
   - A fight lost answered as the hunt's (resume, pause or stop, D198): a dungeon entered again after a loss spends another key

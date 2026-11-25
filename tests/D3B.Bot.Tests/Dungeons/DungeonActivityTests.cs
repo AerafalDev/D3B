@@ -410,10 +410,80 @@ public sealed class DungeonActivityTests : IAsyncDisposable
         Assert.Equal(2, connection.Sent.Count);
     }
 
+    [Fact]
+    public async Task UnderItsShareOfLifeTheCharacterRegeneratesBeforeTheRoomsFight()
+    {
+        var (connection, bot) = await InARoomAsync(TestPlay.OtherInsideMapId, true);
+
+        connection.Server(new LifeRegenEndEvent { Life = 300, MaxLife = 1_000 });
+        await bot.ProcessedAsync();
+
+        var run = bot.StartActivity(Activity());
+
+        // Far under the 80 % of the profile: a minute and more of regeneration, and no attack meanwhile (D525).
+        await _play.AdvanceUntilAsync(() => Doing(run).StartsWith("Regenerating its life before the room's fight", StringComparison.Ordinal), TimeSpan.FromSeconds(1));
+        _play.Time.Advance(TimeSpan.FromSeconds(30));
+        await bot.ProcessedAsync();
+        Assert.Empty(connection.Sent);
+
+        connection.Server(new LifeRegenEndEvent { Life = 900, MaxLife = 1_000 });
+
+        Assert.Equal(GroupCell, await TestWalks.WalkedAsync(_play, connection, 1));
+
+        run.Stop();
+        Assert.Equal(ActivityOutcome.Stopped, await run.Completion);
+    }
+
+    [Fact]
+    public async Task ARoomWonByAFightIsNeverWalkedBackTo()
+    {
+        var (connection, bot) = await InARoomAsync(TestPlay.NorthMapId, true);
+        var run = bot.StartActivity(Activity());
+
+        await TestWalks.WalkedAsync(_play, connection, 1);
+        Assert.IsType<AttackMonsterRequest>(await connection.SentAsync(2));
+        Fought(connection, FightOutcome.Won);
+
+        // The server moves the character to the other room, which shows no group: with both rooms won, the run of the dungeon ends.
+        TestWalks.Arrive(connection, TestPlay.OtherInsideMapId, 300);
+
+        Assert.Equal(ActivityOutcome.Done, await TestWalks.AdvanceUntilDoneAsync(_play.Time, run.Completion));
+        Assert.Equal(2, connection.Sent.Count);
+        Assert.Contains("2 rooms won", CountsOf(run));
+    }
+
+    [Fact]
+    public async Task AfterAFightLostTheProfilesOtherDungeonIsStillEntered()
+    {
+        var (connection, bot) = await InARoomAsync(TestPlay.OtherInsideMapId, true, Stack(12, TestPlay.DungeonKeyId, 1));
+        var run = bot.StartActivity(Activity(TestPlay.DungeonId, TestPlay.OtherDungeonId));
+
+        await TestWalks.WalkedAsync(_play, connection, 1);
+        Assert.IsType<AttackMonsterRequest>(await connection.SentAsync(2));
+        Fought(connection, FightOutcome.Lost);
+
+        // The character wakes at the door of both dungeons: the one lost in is left, the other's keeper talked to (D524, D525).
+        TestWalks.Arrive(connection, TestPlay.InsideMapId, 300);
+
+        Assert.Equal(new NpcActionRequest { Action = 3, MapId = TestPlay.InsideMapId, NpcActorId = TestPlay.WayActorId }, await TestWalks.SentAsync(_play, connection, 3));
+
+        run.Stop();
+        Assert.Equal(ActivityOutcome.Stopped, await run.Completion);
+    }
+
+    private static string Doing(ActivityRun run)
+    {
+        var english = CultureInfo.GetCultureInfo("en");
+        var doing = run.Activity.Report!.Doing;
+
+        return string.Format(english, doing.Format.In(english), [.. doing.Values.Select(value => (object)value.Id)]);
+    }
+
     private static string[] CountsOf(ActivityRun run)
     {
         var english = CultureInfo.GetCultureInfo("en");
 
-        return [.. run.Activity.Report!.Counts.Select(count => string.Format(english, count.Text.Format.In(english), [.. count.Text.Values.Select(value => (object)value.Id)]))];
+        // English counts 1 as singular alone, as the app does.
+        return [.. run.Activity.Report!.Counts.Select(count => string.Format(english, (count.Text.Count is 1 || count.Text.Many is null ? count.Text.Format : count.Text.Many).In(english), [.. count.Text.Values.Select(value => (object)value.Id)]))];
     }
 }
