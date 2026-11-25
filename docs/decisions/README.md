@@ -148,5 +148,6 @@ Each file holds the decisions of one group of [the index](../decisions-index.md)
 - [The studio's parts slide and its window is rounded (D545)](d545-slides-and-corners.md): 1 decision, 2 KB.
 - [The status bar in icons, the docks' content held while they slide (D546)](d546-status-icons-and-held-docks.md): 1 decision, 2 KB.
 - [The studio on one scale, its bottom panel to the right edge (D547)](d547-one-scale-and-wide-panel.md): 1 decision, 3 KB.
+- [The studio's controls one style each, the profile's field a select (D548)](d548-one-style-each.md): 1 decision, 3 KB.
 - [Banking, the transfer between the bank and the guild's chest (D550 to D552)](d550-d552-bank-chest-transfer.md): 3 decisions, 8 KB.
 - [The studio's character map, zoomed (D553)](d553-map-zoom.md): 1 decision, 3 KB.

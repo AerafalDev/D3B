@@ -68,24 +68,6 @@
             <Setter Property="Margin" Value="0,0,0,6" />
             <Setter Property="MinHeight" Value="20" />
         </Style>
-        <Style Selector="TextBlock.GroupTitle">
-            <Setter Property="FontSize" Value="12" />
-            <Setter Property="FontWeight" Value="SemiBold" />
-            <Setter Property="Foreground" Value="{DynamicResource MutedColor}" />
-            <Setter Property="VerticalAlignment" Value="Center" />
-        </Style>
-        <Style Selector="Button.Link">
-            <Setter Property="Theme" Value="{DynamicResource StudioButton}" />
-            <Setter Property="Padding" Value="0" />
-            <Setter Property="Foreground" Value="{DynamicResource AccentColor}" />
-            <Setter Property="FontWeight" Value="Normal" />
-            <Setter Property="FontSize" Value="12" />
-            <Setter Property="HorizontalAlignment" Value="Right" />
-            <Setter Property="VerticalAlignment" Value="Center" />
-        </Style>
-        <Style Selector="Button.Link:pointerover">
-            <Setter Property="Foreground" Value="{DynamicResource AccentHoverColor}" />
-        </Style>
         <Style Selector="Border.SRow">
             <Setter Property="CornerRadius" Value="8" />
             <Setter Property="MinHeight" Value="52" />
@@ -271,7 +253,7 @@
             <Setter Property="Background" Value="{DynamicResource RaisedColor}" />
         </Style>
         <Style Selector="Border.About Button.Ghost:pointerover">
-            <Setter Property="Background" Value="{DynamicResource HoverColor}" />
+            <Setter Property="Background" Value="{DynamicResource FieldHoverColor}" />
         </Style>
         <Style Selector="CheckBox">
             <Setter Property="VerticalAlignment" Value="Center" />
@@ -612,6 +594,7 @@
                                     Command="{Binding RestoreDelaysCommand}"
                                     Content="{l:Tr RestoreAllDelays}"
                                     Grid.Column="1"
+                                    HorizontalAlignment="Right"
                                     IsVisible="{Binding HasRaisedDelays}" />
                             </Grid>
                             <ItemsControl Classes="SRows" ItemsSource="{Binding BotWaits}" />

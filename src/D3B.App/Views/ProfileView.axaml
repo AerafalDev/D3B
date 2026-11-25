@@ -68,11 +68,6 @@
         <Style Selector="Border.Figure">
             <Setter Property="Padding" Value="12,10" />
         </Style>
-        <Style Selector="TextBlock.SideTitle">
-            <Setter Property="FontSize" Value="12" />
-            <Setter Property="FontWeight" Value="SemiBold" />
-            <Setter Property="Foreground" Value="{DynamicResource BrightColor}" />
-        </Style>
     </UserControl.Styles>
     <Grid ColumnDefinitions="*,Auto" Name="Body">
         <DockPanel>
@@ -243,7 +238,7 @@
                         Margin="12,18,0,0"
                         Padding="16,14">
                         <StackPanel Spacing="10">
-                            <TextBlock Classes="SideTitle" Text="{l:Tr ProfilePlaysTitle}" />
+                            <TextBlock Classes="SectionTitle" Text="{l:Tr ProfilePlaysTitle}" />
                             <TextBlock
                                 Classes="Bright"
                                 Text="{Binding BehaviorName}"
@@ -281,7 +276,7 @@
                 <Grid
                     ColumnDefinitions="*,Auto"
                     Margin="16,12,16,6">
-                    <TextBlock Classes="SideTitle" Text="{l:Tr ProfileMapTitle}" />
+                    <TextBlock Classes="SectionTitle" Text="{l:Tr ProfileMapTitle}" />
                     <TextBlock
                         Classes="Dim"
                         FontSize="11"
@@ -320,7 +315,7 @@
                             Content="{l:Tr ProfileMapEditZone}"
                             HorizontalAlignment="Left"
                             IsVisible="{Binding Map.CanEditZone}" />
-                    <TextBlock Classes="SideTitle" Text="{l:Tr Preview}" Margin="0,6,0,0" />
+                    <TextBlock Classes="SectionTitle" Text="{l:Tr Preview}" Margin="0,6,0,0" />
                     <Border Classes="Preview" IsVisible="{Binding Editor.HasZone, FallbackValue=False}">
                         <c:ZoneMapCanvas
                             Height="170"
@@ -426,7 +421,7 @@
                         </ItemsControl>
                     </Border>
                     <StackPanel IsVisible="{Binding Editor.HasPlayers, FallbackValue=False}" Spacing="2">
-                        <TextBlock Classes="SideTitle" Text="{l:Tr PlayedBy}" />
+                        <TextBlock Classes="SectionTitle" Text="{l:Tr PlayedBy}" />
                         <ItemsControl ItemsSource="{Binding Editor.PlayerNotes, FallbackValue={x:Null}}">
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate x:DataType="s:PlayerNoteViewModel">

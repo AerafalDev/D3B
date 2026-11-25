@@ -26,12 +26,11 @@
             <Setter Property="BorderThickness" Value="0,0,0,1" />
             <Setter Property="Padding" Value="0,4,0,10" />
         </Style>
+        <!--  The shared section title (Themes/Styles.axaml), set in its row.  -->
         <Style Selector="TextBlock.SectionTitle">
             <Setter Property="Height" Value="36" />
             <Setter Property="Padding" Value="14,11,8,0" />
-            <Setter Property="FontSize" Value="12" />
-            <Setter Property="FontWeight" Value="SemiBold" />
-            <Setter Property="Foreground" Value="{DynamicResource BrightColor}" />
+            <Setter Property="VerticalAlignment" Value="Top" />
         </Style>
         <Style Selector="Grid.Prop">
             <Setter Property="MinHeight" Value="32" />
@@ -216,7 +215,7 @@
                             <TextBlock Classes="Key" Text="{l:Tr PropertyProfile}" />
                             <Button
                                 Classes="Pick"
-                                Click="OnProfileClick"
+                                Name="ProfileField"
                                 Grid.Column="1">
                                 <Grid ColumnDefinitions="Auto,*,Auto">
                                     <Border Background="{DynamicResource ProfileSquareColor}" Classes="Kind">

@@ -1,5 +1,5 @@
+using System.Collections;
 using Avalonia.Controls;
-using D3B.App.Controls;
 using D3B.App.Localization;
 using D3B.App.ViewModels.Characters;
 using D3B.App.ViewModels.Properties;
@@ -7,28 +7,46 @@ using D3B.App.ViewModels.Properties;
 namespace D3B.App.Views;
 
 /// <summary>The menu of a character's profile, under its field in the Details and in its tab's header: open it, or give another (D345, D514).</summary>
+/// <remarks>
+/// The field's own flyout, as a select: a click opens it, the next closes it, and so does a click elsewhere or the focus leaving
+/// (D548). Its items are made as it opens, the profiles having perhaps changed since.
+/// </remarks>
 internal static class ProfileMenu
 {
-    /// <summary>Opens the menu under a field.</summary>
-    /// <param name="character">The character whose profile it gives.</param>
-    /// <param name="field">The field it opens under.</param>
-    public static void Open(CharacterPropertiesViewModel character, Control field)
+    /// <summary>Gives a field the menu of the character it shows.</summary>
+    /// <param name="field">The field.</param>
+    /// <param name="character">Gives the character the field shows, as it is when the menu opens.</param>
+    public static void Attach(Button field, Func<CharacterPropertiesViewModel?> character)
     {
-        ArgumentNullException.ThrowIfNull(character);
         ArgumentNullException.ThrowIfNull(field);
+        ArgumentNullException.ThrowIfNull(character);
 
-        // The click whose press just closed the menu closes it, as a select does, and does not open it again.
-        if (!MenuReopenGuard.Instance.MayOpen(field))
-            return;
+        var menu = new MenuFlyout { Placement = PlacementMode.BottomEdgeAlignedLeft };
 
-        // Made as it opens, as the cards' menu: the profiles may have changed since.
+        menu.Opening += (_, _) =>
+        {
+            menu.Items.Clear();
+
+            if (character() is { } shown)
+                Fill(menu.Items, shown);
+        };
+        field.Flyout = menu;
+    }
+
+    /// <summary>Puts the menu's items: open the profile, the project's profiles, the given ones, the activities, and none.</summary>
+    /// <param name="items">The menu's items.</param>
+    /// <param name="character">The character whose profile it gives.</param>
+    internal static void Fill(IList items, CharacterPropertiesViewModel character)
+    {
+        ArgumentNullException.ThrowIfNull(items);
+        ArgumentNullException.ThrowIfNull(character);
+
         var texts = Localizer.Instance;
-        var menu = new ContextMenu { Placement = PlacementMode.BottomEdgeAlignedLeft };
 
         if (character.HasProfile)
         {
-            menu.Items.Add(Item(texts["OpenProfile"], () => character.OpenProfileCommand.Execute(null)));
-            menu.Items.Add(new Separator());
+            items.Add(Item(texts["OpenProfile"], () => character.OpenProfileCommand.Execute(null)));
+            items.Add(new Separator());
         }
 
         void Group(string heading, IReadOnlyList<ProfileChoice> choices)
@@ -36,24 +54,17 @@ internal static class ProfileMenu
             if (choices.Count == 0)
                 return;
 
-            menu.Items.Add(new MenuItem { Header = heading, Classes = { "Heading" } });
+            items.Add(new MenuItem { Header = heading, Classes = { "Heading" } });
 
             foreach (var choice in choices)
-                menu.Items.Add(new MenuItem { Header = choice.Name, Tag = choice.Detail, Command = character.AssignCommand, CommandParameter = choice });
+                items.Add(new MenuItem { Header = choice.Name, Tag = choice.Detail, Command = character.AssignCommand, CommandParameter = choice });
         }
 
         Group(texts["ProfilesMine"], character.MyProfiles);
         Group(texts["ProfilesGiven"], character.GivenProfiles);
         Group(texts["ProfilesActivities"], character.ActivityProfiles);
-        menu.Items.Add(new Separator());
-        menu.Items.Add(Item(texts["NoProfile"], () => character.AssignCommand.Execute(null)));
-        field.ContextMenu = menu;
-        menu.Closed += (_, _) =>
-        {
-            field.ContextMenu = null;
-            MenuReopenGuard.Instance.Closed(field, field.IsPointerOver);
-        };
-        menu.Open(field);
+        items.Add(new Separator());
+        items.Add(Item(texts["NoProfile"], () => character.AssignCommand.Execute(null)));
     }
 
     private static MenuItem Item(string text, Action run)
