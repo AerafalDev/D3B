@@ -1068,3 +1068,8 @@ or refines another says so in its own entry. Add a line here with every new deci
 
 - [D565](decisions/d565-capture-gear.md#d565-the-hunt-wears-the-best-capture-net-or-the-smallest-soul-stone-that-suffices-before-a-group-to-capture-and-casts-the-soul-capture-against-an-archmonster) The hunt wears the best capture net or the smallest soul stone that suffices before a group to capture, and casts the soul capture against an archmonster (2026-11-25)
   - The owner's ask and choices; slot 31 measured on a capture, `ito` pinned (mapping format 26); dungeon bosses and wearing one at a time set aside.
+
+## The app's 1.1.0 (D566)
+
+- [D566](decisions/d566-release-1-1-0.md#d566-the-apps-release-after-101-is-110-holding-the-bank-and-chest-transfer-fixed-and-the-capture-gear-worn-its-mapping-of-format-26-published-first) The app's release after 1.0.1 is 1.1.0, holding the bank and chest transfer fixed and the capture gear worn, its mapping of format 26 published first (2026-11-25)
+  - The owner's choice of 1.1.0 over 1.0.2; `mapping-26.binpb` on `client-3.7.14.18`, the tag once both pull requests are on `main`.
