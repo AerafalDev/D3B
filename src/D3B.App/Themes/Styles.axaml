@@ -545,7 +545,7 @@
         <Setter Property="FontWeight" Value="Normal" />
     </Style>
     <Style Selector="Button.Pick:pointerover">
-        <Setter Property="Background" Value="{DynamicResource HoverColor}" />
+        <Setter Property="Background" Value="{DynamicResource FieldHoverColor}" />
     </Style>
     <Style Selector="Button.Pick:disabled">
         <Setter Property="Opacity" Value="0.5" />
@@ -554,6 +554,32 @@
         <Setter Property="Width" Value="18" />
         <Setter Property="Height" Value="18" />
         <Setter Property="CornerRadius" Value="4" />
+    </Style>
+    <!--  The titles and links every view shares, one look for each (D548): a section's title, bright; a group's, small and dim; a link
+         in the accent, underlined on hover.  -->
+    <Style Selector="TextBlock.SectionTitle">
+        <Setter Property="FontSize" Value="12" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="Foreground" Value="{DynamicResource BrightColor}" />
+        <Setter Property="VerticalAlignment" Value="Center" />
+    </Style>
+    <Style Selector="TextBlock.GroupTitle">
+        <Setter Property="FontSize" Value="11" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="Foreground" Value="{DynamicResource DimColor}" />
+        <Setter Property="VerticalAlignment" Value="Center" />
+    </Style>
+    <Style Selector="Button.Link">
+        <Setter Property="Theme" Value="{DynamicResource StudioButton}" />
+        <Setter Property="Padding" Value="0" />
+        <Setter Property="Foreground" Value="{DynamicResource AccentTextColor}" />
+        <Setter Property="FontSize" Value="11" />
+        <Setter Property="FontWeight" Value="Normal" />
+        <Setter Property="VerticalAlignment" Value="Center" />
+        <Setter Property="Cursor" Value="Hand" />
+    </Style>
+    <Style Selector="Button.Link:pointerover TextBlock">
+        <Setter Property="TextDecorations" Value="Underline" />
     </Style>
     <Style Selector="Border.Key">
         <Setter Property="MinWidth" Value="18" />

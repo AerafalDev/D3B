@@ -1,5 +1,4 @@
 using Avalonia.Controls;
-using Avalonia.Interactivity;
 using D3B.App.ViewModels.Characters;
 
 namespace D3B.App.Views;
@@ -11,11 +10,6 @@ internal sealed partial class CharacterView : UserControl
     public CharacterView()
     {
         InitializeComponent();
-    }
-
-    private void OnProfileClick(object? sender, RoutedEventArgs e)
-    {
-        if (DataContext is CharacterTabViewModel { Character: { } character } && sender is Control field)
-            ProfileMenu.Open(character, field);
+        ProfileMenu.Attach(ProfileField, () => (DataContext as CharacterTabViewModel)?.Character);
     }
 }

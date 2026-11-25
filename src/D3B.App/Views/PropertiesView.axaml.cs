@@ -21,6 +21,7 @@ internal sealed partial class PropertiesView : UserControl
     public PropertiesView()
     {
         InitializeComponent();
+        ProfileMenu.Attach(ProfileField, () => _shown?.Character);
     }
 
     private void OnNameLostFocus(object? sender, RoutedEventArgs e)
@@ -94,11 +95,5 @@ internal sealed partial class PropertiesView : UserControl
     {
         _dragging = false;
         e.Pointer.Capture(null);
-    }
-
-    private void OnProfileClick(object? sender, RoutedEventArgs e)
-    {
-        if (_shown?.Character is { } character && sender is Control field)
-            ProfileMenu.Open(character, field);
     }
 }
