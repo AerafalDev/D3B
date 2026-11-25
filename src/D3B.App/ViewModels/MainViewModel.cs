@@ -286,8 +286,6 @@ internal sealed partial class MainViewModel : ObservableObject
             ProfileRequested = NewProfile,
             RouteRequested = () => Routes.CreateAsync(""),
             ZoneRequested = () => Zones.CreateAsync(""),
-            SettingsRequested = ShowSettings,
-            FolderRequested = OpenProjectFolder,
             Notice = new CapturesNoticeViewModel(localizer, Settings, preferences) { SettingsRequested = () => ShowSettings(SettingsSection.Network) },
         };
         Selection.Changed += OnSelectionChanged;
@@ -789,8 +787,9 @@ internal sealed partial class MainViewModel : ObservableObject
             _ => null,
         };
 
-        // The Details are what is selected: they show once something is, and stay as the hand left them while it stays selected (D513).
-        if (selected is not null && selected != _detailed)
+        // The Details are what is selected: they show once something is, and stay as the hand left them while it stays selected (D513);
+        // a character chosen by a tab's or a card's play is not selected by the hand, and its header already says what they would (D514).
+        if (selected is not null && selected != _detailed && !RunBlock.IsDriving)
             Layout.Show(StudioPanel.Details, true);
 
         _detailed = selected;
@@ -862,7 +861,11 @@ internal sealed partial class MainViewModel : ObservableObject
     private CharacterTabViewModel TabOf(CharacterKey key)
     {
         if (!_characterTabs.TryGetValue(key, out var tab))
-            _characterTabs[key] = tab = new CharacterTabViewModel(_localizer, key, Bots, OpenProfile, Bottom.ShowTrace);
+            _characterTabs[key] = tab = new CharacterTabViewModel(_localizer, key, Bots, OpenProfile, Bottom.ShowTrace)
+            {
+                Character = new CharacterPropertiesViewModel(_localizer, _characterAccounts, BotOf, Characters.LineOf, OpenProfile, OpenCharacter),
+                Run = RunBlock,
+            };
 
         return tab;
     }

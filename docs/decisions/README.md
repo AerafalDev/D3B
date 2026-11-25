@@ -126,3 +126,4 @@ Each file holds the decisions of one group of [the index](../decisions-index.md)
 - [Fights, the Chaferfu a last resort and Saoul's share dispelled (D503)](d503-chaferfu-and-saoul.md): 1 decision, 5 KB.
 - [A fighting profile's numbers (D505)](d505-run-fight-figures.md): 1 decision, 3 KB.
 - [The studio made simpler, its navigation and shell (D513)](d513-studio-navigation.md): 1 decision, 5 KB.
+- [The studio made simpler, the character's card and the home page (D514)](d514-character-card-and-home.md): 1 decision, 3 KB.

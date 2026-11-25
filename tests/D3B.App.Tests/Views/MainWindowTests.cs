@@ -443,8 +443,12 @@ public sealed class MainWindowTests : IAsyncDisposable
         Assert.Contains("Sub-area 440, cell 300", english);
         Assert.Contains("Layers", english);
         Assert.Contains("Behavior", english);
+        // Its header chooses its profile and its start on connection, as the Details do (D514).
+        Assert.Contains("Profile", english);
+        Assert.Contains("Auto start", english);
         Assert.DoesNotContain(english, text => text.StartsWith('[') && text.EndsWith(']'));
         Assert.Contains("Comportement", french);
+        Assert.Contains("Auto-démarrage", french);
         Assert.Contains("Sous-zone 440, cellule 300", french);
         Assert.Contains("Calques", french);
         Assert.DoesNotContain(french, text => text.StartsWith('[') && text.EndsWith(']'));

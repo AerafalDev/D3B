@@ -729,11 +729,12 @@ bottom panel and the Details hidden until needed.
   character, the settings, a module's page; each tab opened once, its view kept while it is open, closed by its ×, its
   neighbour then shown. A tab that reads the host shows where the host stands until it runs (`HostStateView`). Route and zone
   have no tab: they are selected in the world's (D397).
-- **The home page** (D406, `HomeViewModel` and `HomeView`, in `D3B.App.ViewModels.Home`; the view's context is `MainViewModel`,
+- **The home page** (D406, D514, `HomeViewModel` and `HomeView`, in `D3B.App.ViewModels.Home`; the view's context is `MainViewModel`,
   which holds the host's state it shows): the logo, the version, a pill of where the host stands and the banners of a host
-  starting, of a build the installed app does not ship and of a host that failed; quick actions (new profile, route, zone, the
-  project's folder, the settings, the first four disabled until the host runs); the characters (`HomeCharacterViewModel`, online
-  first, a click chooses one without leaving the page, a double click opens its tab); the six assets of the project changed last
+  starting, of a build the installed app does not ship and of a host that failed; the characters' cards (`HomeCharacterViewModel`,
+  online first: the portrait with a dot of its state, what it does, a click opening its tab, a button playing or pausing it through
+  the run block, `RunBlockViewModel.Read` saying what it allows), or three steps to start while none is known; "Make" (a profile,
+  a route, a zone, disabled until the host runs); the six assets of the project changed last
   (`HomeRecentViewModel`, the file's time, read again when `AssetLibrary.Version` moves, a click opens the asset where it is
   edited); the shortcuts. The lists are read with the window's 250 ms refresh and replaced only when they differ. Selecting a
   character in the Outliner does not show the world; a route, a step or a zone does.
@@ -846,7 +847,10 @@ bottom panel and the Details hidden until needed.
   does with a map no path reaches, its steps with their count and gaps, and the actions of the step chosen, a clip's values
   and the actions several steps share (the Sequencer's, D413); for a zone its contents (`AssetPropertiesViewModel.Zone`: its size and sub-areas, each taken
   out by its ×).
-- **A character's tab** (D325, D346, `CharacterTabViewModel`, `CharacterView`): the character's map live
+- **A character's tab** (D325, D346, D514, `CharacterTabViewModel`, `CharacterView`): a header with its portrait, name and level,
+  its profile in a field whose menu opens it or gives another (`ProfileMenu`, shared with the Details; `CharacterTabViewModel.Character`
+  is a `CharacterPropertiesViewModel` of its own), its start on connection, and play, pause and stop as its state allows, which drive
+  the run block (`Run`), so that F5 and the title row follow; then the character's map live
   (`MapViewModel`, drawn for that character alone): its coordinates and place, the cell under the pointer and what stands
   there, its layers in a menu, its tour's mini-map, a map the search found in preview; and a column: what it does now,
   tinted by its state, with its progress, the time spent and when it should end, its failure and warnings; its behavior's

@@ -79,12 +79,12 @@ public sealed class HomeViewTests : IAsyncDisposable
         });
 
         Assert.Contains("D3B Studio", result.english);
-        Assert.Contains("Quick actions", result.english);
+        Assert.Contains("Make", result.english);
         Assert.Contains("New route", result.english);
         Assert.Contains("Aerafa", result.english);
         Assert.Contains("North", result.english);
         Assert.DoesNotContain(result.english, text => text.StartsWith('[') && text.EndsWith(']'));
-        Assert.Contains("Actions rapides", result.french);
+        Assert.Contains("Créer", result.french);
         Assert.Contains("Nouvelle route", result.french);
         Assert.Contains("Récents", result.french);
         Assert.DoesNotContain(result.french, text => text.StartsWith('[') && text.EndsWith(']'));

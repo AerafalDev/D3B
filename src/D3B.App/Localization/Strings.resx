@@ -1667,12 +1667,6 @@
   <data name="HomeSearch" xml:space="preserve">
     <value>Search everywhere</value>
   </data>
-  <data name="HomeAssets" xml:space="preserve">
-    <value>Library</value>
-  </data>
-  <data name="HomeJournal" xml:space="preserve">
-    <value>Journal</value>
-  </data>
   <data name="HomePlay" xml:space="preserve">
     <value>Play</value>
   </data>
@@ -3101,9 +3095,6 @@
   <data name="ZoneContents" xml:space="preserve">
     <value>Contents</value>
   </data>
-  <data name="HomeQuickActions" xml:space="preserve">
-    <value>Quick actions</value>
-  </data>
   <data name="HomeNewProfile" xml:space="preserve">
     <value>New profile</value>
   </data>
@@ -3113,17 +3104,8 @@
   <data name="HomeNewZone" xml:space="preserve">
     <value>New zone</value>
   </data>
-  <data name="HomeProjectFolder" xml:space="preserve">
-    <value>Project folder</value>
-  </data>
-  <data name="HomeSettings" xml:space="preserve">
-    <value>Settings</value>
-  </data>
   <data name="HomeCharacters" xml:space="preserve">
     <value>Characters</value>
-  </data>
-  <data name="HomeNoCharacters" xml:space="preserve">
-    <value>No character yet. Log in to the game with the relay on, and your characters appear here.</value>
   </data>
   <data name="HomeRecent" xml:space="preserve">
     <value>Recent</value>
@@ -3589,5 +3571,23 @@
   </data>
   <data name="Hide" xml:space="preserve">
     <value>Hide</value>
+  </data>
+  <data name="HomeStartTitle" xml:space="preserve">
+    <value>To start</value>
+  </data>
+  <data name="HomeStartLaunch" xml:space="preserve">
+    <value>Keep D3B open, then start Dofus from Ankama's launcher.</value>
+  </data>
+  <data name="HomeStartChoose" xml:space="preserve">
+    <value>Choose a character in the game: its card shows here.</value>
+  </data>
+  <data name="HomeStartPlay" xml:space="preserve">
+    <value>Open its card, choose its profile and press Play.</value>
+  </data>
+  <data name="HomeOpenCharacter" xml:space="preserve">
+    <value>Open its tab: its profile, its map and what it does</value>
+  </data>
+  <data name="HomeMake" xml:space="preserve">
+    <value>Make</value>
   </data>
 </root>

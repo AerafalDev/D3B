@@ -5,6 +5,8 @@ using CommunityToolkit.Mvvm.Input;
 using D3B.App.Localization;
 using D3B.App.ViewModels.Logs;
 using D3B.App.ViewModels.Maps;
+using D3B.App.ViewModels.Properties;
+using D3B.App.ViewModels.Studio;
 using D3B.Bot.Activities;
 using D3B.Bot.Characters;
 using D3B.Bot.Journal;
@@ -18,7 +20,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace D3B.App.ViewModels.Characters;
 
-/// <summary>A character's tab: its map live, and a column of what it does, its behavior, its session and its latest decisions (D325).</summary>
+/// <summary>A character's tab: a header to choose its profile and play it, its map live, and a column of what it does, its behavior, its session and its latest decisions (D325, D514).</summary>
 /// <remarks>
 /// <para>
 /// The column reads the character's bot every 250 ms while the tab shows. What it does now is large, with the tour's
@@ -53,6 +55,25 @@ internal sealed partial class CharacterTabViewModel : ObservableObject
 
     /// <summary>Gets the character's map.</summary>
     public MapViewModel Map { get; }
+
+    /// <summary>Gets the character's profile, its start on connection and who it is, which the header shows and sets as the Details do (D514).</summary>
+    public CharacterPropertiesViewModel? Character { get; init; }
+
+    /// <summary>Gets the run block, which the header's play, pause and stop drive once it chose the character (D514).</summary>
+    public RunBlockViewModel? Run { get; init; }
+
+    /// <summary>Gets where the character's run stands, which the header's buttons follow.</summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(ShowsPlay), nameof(ShowsPause), nameof(ShowsStop))]
+    public partial RunState RunState { get; private set; }
+
+    /// <summary>Gets whether play may start the character's profile or resume it.</summary>
+    [ObservableProperty]
+    public partial bool CanPlay { get; private set; }
+
+    /// <summary>Gets what play would do, or why it cannot.</summary>
+    [ObservableProperty]
+    public partial string PlayTip { get; private set; } = "";
 
     /// <summary>Gets the character's name, its tab's title.</summary>
     [ObservableProperty]
@@ -186,6 +207,15 @@ internal sealed partial class CharacterTabViewModel : ObservableObject
     /// <summary>Gets whether the thread holds a decision.</summary>
     public bool HasDecisions => Decisions.Count > 0;
 
+    /// <summary>Gets whether the header shows play: the character does not play now.</summary>
+    public bool ShowsPlay => RunState is not RunState.Playing;
+
+    /// <summary>Gets whether the header shows pause: the character plays.</summary>
+    public bool ShowsPause => RunState is RunState.Playing;
+
+    /// <summary>Gets whether the header shows stop: the character plays or is paused.</summary>
+    public bool ShowsStop => RunState is RunState.Playing or RunState.Paused;
+
     /// <summary>Gets whether the character plays a profile, which its button opens.</summary>
     public bool HasProfile => ProfileId is not null;
 
@@ -229,6 +259,14 @@ internal sealed partial class CharacterTabViewModel : ObservableObject
         var bot = _bots.Items.FirstOrDefault(item => item.Bot.Key == Key);
         var known = _book?.Find(Key);
 
+        if (Character is { } character)
+        {
+            character.Show(Key);
+            character.Refresh(services);
+        }
+
+        ReadRun(bot);
+
         Name = bot?.Name ?? known?.Name ?? _localizer.Format("CharacterNamed", Key.CharacterId);
         ProfileId = known?.Profile;
         ProfileName = bot?.SelectedActivity?.Name ?? (ProfileId is null ? _localizer["NoProfile"] : ProfileId);
@@ -255,6 +293,43 @@ internal sealed partial class CharacterTabViewModel : ObservableObject
     {
         if (ProfileId is { } id)
             _openProfile(id);
+    }
+
+    [RelayCommand]
+    private void Play()
+    {
+        Drive(run => run.Play());
+    }
+
+    [RelayCommand]
+    private void Pause()
+    {
+        Drive(run => run.Pause());
+    }
+
+    [RelayCommand]
+    private void Stop()
+    {
+        Drive(run => run.Stop());
+    }
+
+    // The tab plays through the run block, which then drives this character: F5, F6 and its edge follow what the header did.
+    private void Drive(Action<RunBlockViewModel> act)
+    {
+        if (Run is not { } run)
+            return;
+
+        run.Drive(Key);
+        act(run);
+
+        var bot = _bots.Items.FirstOrDefault(item => item.Bot.Key == Key);
+
+        ReadRun(bot);
+    }
+
+    private void ReadRun(BotViewModel? bot)
+    {
+        (RunState, CanPlay, PlayTip) = bot is null ? (RunState.Stopped, false, _localizer["Disconnected"]) : RunBlockViewModel.Read(bot, _localizer);
     }
 
     [RelayCommand]
