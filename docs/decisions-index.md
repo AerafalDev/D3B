@@ -987,7 +987,9 @@ or refines another says so in its own entry. Add a line here with every new deci
 - [D533](decisions/d533-mount-capture.md#d533-a-hunt-profile-may-capture-wild-mounts-the-main-wears-a-carried-capture-net-casts-its-taming-spell-on-a-mount-at-its-first-chance-and-hunts-on-without-capturing-once-it-has-none) A hunt profile may capture wild mounts: the main wears a carried capture net, casts its taming spell on a mount at its first chance, and hunts on without capturing once it has none (2026-11-25)
   - The owner's ask; nets and spells measured in the client, none in the captures; buying, crafting, every member capturing set aside.
 
-## The studio's shell after next (D540)
+## The studio's shell after next (D540, D541)
 
 - [D540](decisions/d540-command-palette.md#d540-the-search-is-also-nexts-command-palette-ctrl-shift-p-types-its-sign-the-title-bars-command-centre-names-the-app-the-views-and-each-characters-play-pause-stop-and-forget-are-commands) The search is also next's command palette: Ctrl Shift P types its sign, the title bar's command centre names the app, the views and each character's play, pause, stop and forget are commands (2026-11-25)
   - Stage 1 of 4 of the shell after `next`, under the owner's delegation; begun by the redesign session, finished here.
+- [D541](decisions/d541-status-bar.md#d541-the-status-bar-is-vs-codes-the-version-and-the-relay-on-the-left-the-client-and-its-data-the-bots-playing-the-problems-the-saving-and-the-update-on-the-right-each-item-opening-what-it-names) The status bar is VS Code's: the version and the relay on the left, the client and its data, the bots playing, the problems, the saving and the update on the right, each item opening what it names (2026-11-25)
+  - Stage 2 of 4, under the owner's delegation; next's relay words and hover, the problems read at every refresh.

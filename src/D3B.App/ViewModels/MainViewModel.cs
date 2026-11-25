@@ -91,6 +91,9 @@ internal sealed partial class MainViewModel : ObservableObject
     /// <summary>Gets the title row's run block.</summary>
     public RunBlockViewModel RunBlock { get; }
 
+    /// <summary>Gets the status bar, VS Code's and next's: the relay, the client and its data, the bots, the problems, the version and its update (D541).</summary>
+    public StatusBarViewModel StatusBar { get; }
+
     /// <summary>Gets the search, Ctrl K.</summary>
     public SearchViewModel Search { get; }
 
@@ -193,10 +196,6 @@ internal sealed partial class MainViewModel : ObservableObject
     [ObservableProperty]
     public partial string MissingBuildText { get; private set; } = "";
 
-    /// <summary>Gets the client build the host runs for, or the one the app ships, in the status bar.</summary>
-    [ObservableProperty]
-    public partial string ClientText { get; private set; } = "";
-
     /// <summary>Gets how many characters are connected, beside the characters' tab.</summary>
     [ObservableProperty]
     public partial string OnlineText { get; private set; } = "";
@@ -211,9 +210,6 @@ internal sealed partial class MainViewModel : ObservableObject
 
     /// <summary>Gets whether the host does not run, which the panels that read it say.</summary>
     public bool IsNotRunning => !IsRunning;
-
-    /// <summary>Gets the app's name and version, at the left of the status bar after its blue dot, as next's (D531).</summary>
-    public string StatusVersion => $"D3B {Updates.Version}";
 
     /// <summary>Gets the app's version and the client build it ships, under the welcome's logo.</summary>
     public string VersionText => _localizer.Format("HomeVersion", Updates.Version, Updates.ClientVersion);
@@ -288,8 +284,17 @@ internal sealed partial class MainViewModel : ObservableObject
         RunBlock = new RunBlockViewModel(Bots, localizer) { Characters = Characters, Chose = Chose };
         Characters.RunBlock = RunBlock;
         Search = new SearchViewModel(localizer, SearchItems);
+        StatusBar = new StatusBarViewModel(localizer, Updates.Version)
+        {
+            ShowAbout = () => ShowSettings(SettingsSection.About),
+            ShowRelay = () => Bottom.Show(BottomTab.Journal),
+            ShowData = () => ShowSettings(SettingsSection.Files),
+            ShowCharacters = () => Layout.Reveal(SideView.Characters),
+            ShowProblems = () => Bottom.Show(BottomTab.Problems),
+            SaveAll = SaveAll,
+            Restart = () => Updates.RestartCommand.Execute(null),
+        };
         Bots.Choose = RunBlock.Choose;
-        ClientText = localizer.Format("StatusClient", Updates.ClientVersion);
         Followed = new FollowedRuns(() => Bots.Items.Where(bot => bot.Route is not null).Select(bot => new FollowedRun(bot.Route!, bot.Name, bot.Initials, bot.PortraitColor)));
         Routes.Followed = Followed;
         World = new WorldViewportViewModel(localizer, Routes, Zones, Selection, () => Bots.Items.Select(bot => new WorldCharacterSnapshot(bot.Bot.Key, bot.Name, bot.Initials, bot.PortraitColor, bot.Bot.State.MapId, bot.IsPlaying || bot.IsFighting)), () => RunBlock.IsPlaying ? RunBlock.Name : null, Followed);
@@ -361,7 +366,6 @@ internal sealed partial class MainViewModel : ObservableObject
             HostStatus.Failed => _localizer["HostFailedDetail"],
             _ => "",
         };
-        ClientText = _localizer.Format("StatusClient", build ?? Updates.ClientVersion);
 
         // The profiles first: the bots' cards offer them, and the characters name them.
         Profiles.Refresh(services);
@@ -392,6 +396,7 @@ internal sealed partial class MainViewModel : ObservableObject
         Editor.Refresh();
 
         Bottom.Refresh(services);
+        RefreshStatusBar(status, services, build);
 
         if (Editor.IsShown(StatisticsTab))
             Statistics.Refresh(services);
@@ -649,6 +654,27 @@ internal sealed partial class MainViewModel : ObservableObject
         Outliner.Relabel();
         Editor.Refresh();
         OnPropertyChanged(nameof(VersionText));
+    }
+
+    private void RefreshStatusBar(HostStatus status, IServiceProvider? services, string? build)
+    {
+        // The pack is opened by the host as it starts: read once it runs, never opened here.
+        var pack = status is HostStatus.Running ? services?.GetService<D3B.Data.Packs.GamePack>() : null;
+
+        StatusBar.Refresh(new StatusFacts
+        {
+            Host = status,
+            Failure = HostFailure,
+            InGame = RunBlock.Online.Count,
+            Playing = Bots.Items.Count(bot => RunBlockViewModel.Read(bot, _localizer).State is RunState.Playing),
+            ClientBuild = build ?? Updates.ClientVersion,
+            PackFormat = pack is null ? null : D3B.Data.Packs.GamePack.FormatVersion,
+            PackExtractor = pack?.Info.ExtractorVersion,
+            Errors = Bottom.Problems.Errors,
+            Warnings = Bottom.Problems.Warnings,
+            Saved = IsSaved,
+            UpdateVersion = Updates.IsReady ? Updates.ReadyVersion : null,
+        });
     }
 
     private void RefreshPages(IServiceProvider? services)

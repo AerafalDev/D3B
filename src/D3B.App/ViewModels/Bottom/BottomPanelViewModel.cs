@@ -89,14 +89,15 @@ internal sealed partial class BottomPanelViewModel : ObservableObject
         layout.PropertyChanged += (_, e) => FollowLayout(e.PropertyName);
     }
 
-    /// <summary>Reads the tab shown again, and the problems, if the panel is open.</summary>
+    /// <summary>Reads the problems, which the status bar counts, then the tab shown again if the panel is open.</summary>
     /// <param name="services">The host's services, once it runs.</param>
     public void Refresh(IServiceProvider? services)
     {
+        // Always: the status bar counts them (D541), and they are read again only when the project, the accounts or the host change.
+        Problems.Refresh(services, HostFailure?.Invoke());
+
         if (!_layout.IsBottomOpen)
             return;
-
-        Problems.Refresh(services, HostFailure?.Invoke());
 
         switch (Tab)
         {

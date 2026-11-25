@@ -230,7 +230,7 @@ public sealed class StudioViewsTests : IAsyncDisposable
                 toggle.Command!.Execute(toggle.CommandParameter);
 
             var pressed = (Lit(), main.Layout.IsSideOpen, main.Layout.IsBottomOpen, main.Layout.IsDetailsOpen);
-            var version = main.StatusVersion == "D3B " + main.Updates.Version;
+            var version = main.StatusBar.VersionText == "D3B " + main.Updates.Version;
 
             window.Close();
 

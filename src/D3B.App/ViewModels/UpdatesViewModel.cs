@@ -41,6 +41,10 @@ internal sealed partial class UpdatesViewModel : ObservableObject
     [NotifyCanExecuteChangedFor(nameof(CheckCommand))]
     public partial bool CanCheck { get; private set; }
 
+    /// <summary>Gets the version downloaded, which a restart installs, once it is ready.</summary>
+    [ObservableProperty]
+    public partial string ReadyVersion { get; private set; } = "";
+
     /// <summary>Gets the app's version.</summary>
     public string Version { get; } = AppRelease.Version;
 
@@ -76,6 +80,7 @@ internal sealed partial class UpdatesViewModel : ObservableObject
         IsBusy = status is UpdateStatus.Checking or UpdateStatus.Downloading;
         CanCheck = status is UpdateStatus.Idle or UpdateStatus.UpToDate or UpdateStatus.Failed;
         ReadyText = IsReady ? _localizer.Format("UpdateReady", version) : "";
+        ReadyVersion = IsReady ? version : "";
         (StatusText, StatusTone) = status switch
         {
             UpdateStatus.NotInstalled => (_localizer["UpdateNotInstalled"], Tone.Neutral),
