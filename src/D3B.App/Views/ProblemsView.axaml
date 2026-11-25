@@ -8,10 +8,8 @@
     xmlns:l="clr-namespace:D3B.App.Localization"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
     <UserControl.Styles>
+        <!--  The shared group title (Themes/Styles.axaml), set in its row.  -->
         <Style Selector="TextBlock.GroupTitle">
-            <Setter Property="Foreground" Value="{DynamicResource DimColor}" />
-            <Setter Property="FontSize" Value="11" />
-            <Setter Property="FontWeight" Value="SemiBold" />
             <Setter Property="Margin" Value="10,0" />
             <Setter Property="Height" Value="28" />
             <Setter Property="Padding" Value="0,7,0,0" />

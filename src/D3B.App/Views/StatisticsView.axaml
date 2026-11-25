@@ -15,11 +15,6 @@
             <Setter Property="CornerRadius" Value="8" />
             <Setter Property="Padding" Value="12" />
         </Style>
-        <Style Selector="TextBlock.StatTitle">
-            <Setter Property="FontWeight" Value="SemiBold" />
-            <Setter Property="Foreground" Value="{DynamicResource BrightColor}" />
-            <Setter Property="FontSize" Value="12" />
-        </Style>
         <Style Selector="TextBlock.StatAside">
             <Setter Property="Foreground" Value="{DynamicResource DimColor}" />
             <Setter Property="FontSize" Value="12" />
@@ -169,7 +164,7 @@
                         <Border Classes="Stat">
                             <StackPanel Spacing="10">
                                 <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10">
-                                    <TextBlock Classes="StatTitle" Text="{l:Tr StatisticsResources}" />
+                                    <TextBlock Classes="SectionTitle" Text="{l:Tr StatisticsResources}" />
                                     <TextBlock
                                         Classes="StatAside"
                                         Grid.Column="1"
@@ -232,7 +227,7 @@
                         <Border Classes="Stat" IsVisible="{Binding HasFights}">
                             <StackPanel Spacing="10">
                                 <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10">
-                                    <TextBlock Classes="StatTitle" Text="{l:Tr StatisticsFights}" />
+                                    <TextBlock Classes="SectionTitle" Text="{l:Tr StatisticsFights}" />
                                     <TextBlock
                                         Classes="StatAside"
                                         Grid.Column="1"
@@ -280,7 +275,7 @@
                         VerticalAlignment="Top">
                         <StackPanel Spacing="10">
                             <Grid ColumnDefinitions="Auto,*">
-                                <TextBlock Classes="StatTitle" Text="{l:Tr StatisticsRuns}" />
+                                <TextBlock Classes="SectionTitle" Text="{l:Tr StatisticsRuns}" />
                                 <TextBlock
                                     Classes="StatAside"
                                     Grid.Column="1"
