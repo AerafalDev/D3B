@@ -10,11 +10,6 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
     <UserControl.Styles>
         <StyleInclude Source="avares://D3B.App/Themes/Panels.axaml" />
-        <Style Selector="Border.Stat">
-            <Setter Property="Background" Value="{DynamicResource CardBackgroundColor}" />
-            <Setter Property="CornerRadius" Value="8" />
-            <Setter Property="Padding" Value="12" />
-        </Style>
         <Style Selector="TextBlock.StatAside">
             <Setter Property="Foreground" Value="{DynamicResource DimColor}" />
             <Setter Property="FontSize" Value="12" />
@@ -159,7 +154,7 @@
                     Margin="10"
                     VerticalAlignment="Top">
                     <StackPanel Spacing="10" VerticalAlignment="Top">
-                        <Border Classes="Stat">
+                        <Border Classes="Tile">
                             <StackPanel Spacing="10">
                                 <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10">
                                     <TextBlock Classes="SectionTitle" Text="{l:Tr StatisticsResources}" />
@@ -191,7 +186,7 @@
                                                     TextTrimming="CharacterEllipsis"
                                                     VerticalAlignment="Center" />
                                                 <c:ShareBar
-                                                    Fill="#7FA7FF"
+                                                    Fill="{DynamicResource BehaviorColor}"
                                                     Grid.Column="2"
                                                     Height="5"
                                                     Track="{DynamicResource VeilColor}"
@@ -222,7 +217,7 @@
                                 </Grid>
                             </StackPanel>
                         </Border>
-                        <Border Classes="Stat" IsVisible="{Binding HasFights}">
+                        <Border Classes="Tile" IsVisible="{Binding HasFights}">
                             <StackPanel Spacing="10">
                                 <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10">
                                     <TextBlock Classes="SectionTitle" Text="{l:Tr StatisticsFights}" />
@@ -268,7 +263,7 @@
                         </Border>
                     </StackPanel>
                     <Border
-                        Classes="Stat"
+                        Classes="Tile"
                         Grid.Column="1"
                         VerticalAlignment="Top">
                         <StackPanel Spacing="10">

@@ -19,9 +19,9 @@ internal static class WorldMapRouteLayer
     private const double MockupMapWidth = 64;
     private const double Reach = 5;
 
-    private static readonly Color _teal = Color.Parse("#5FD3C0");
-    private static readonly Color _red = Color.Parse("#EA5D52");
-    private static readonly Color _accent = Color.Parse("#3B82F6");
+    private static readonly Color _teal = StudioColors.Route;
+    private static readonly Color _red = StudioColors.Error;
+    private static readonly Color _accent = StudioColors.Accent;
     private static readonly IBrush _tealBrush = new SolidColorBrush(_teal);
     private static readonly IBrush _tealTint = new SolidColorBrush(_teal, 0.12);
     private static readonly IBrush _tealEdge = new SolidColorBrush(_teal, 0.92);

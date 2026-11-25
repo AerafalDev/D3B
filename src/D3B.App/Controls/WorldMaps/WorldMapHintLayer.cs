@@ -23,7 +23,7 @@ internal static class WorldMapHintLayer
     private static readonly IBrush _glass = new SolidColorBrush(Color.Parse("#0E0E10"), 0.9);
     private static readonly IBrush _bright = new SolidColorBrush(Color.Parse("#F4F4F6"));
     private static readonly IBrush _halo = new SolidColorBrush(Colors.White, 0.22);
-    private static readonly IBrush _mark = new SolidColorBrush(Color.Parse("#E9AD3C"));
+    private static readonly IBrush _mark = new SolidColorBrush(StudioColors.Warning);
     private static readonly IPen _markRing = new Pen(new SolidColorBrush(Color.Parse("#0B0B0D")), 1.6);
 
     /// <summary>Gives the width and height of a hint's picture, which grows with the map and stays within what reads at a glance.</summary>

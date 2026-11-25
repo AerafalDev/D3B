@@ -644,6 +644,39 @@
     <Style Selector="Border.Badge.Warn > TextBlock">
         <Setter Property="Foreground" Value="{DynamicResource WarningTextColor}" />
     </Style>
+    <!--  Over a map, a pill of glass: what the map shows, a layer's menu, a preview's way back (D560).  -->
+    <Style Selector="Border.Pill">
+        <Setter Property="Height" Value="28" />
+        <Setter Property="Padding" Value="11,0" />
+        <Setter Property="CornerRadius" Value="14" />
+        <Setter Property="Background" Value="{DynamicResource GlassColor}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource GlassEdgeColor}" />
+        <Setter Property="BorderThickness" Value="1" />
+    </Style>
+    <Style Selector="Button.Pill">
+        <Setter Property="Theme" Value="{DynamicResource StudioButton}" />
+        <Setter Property="Height" Value="28" />
+        <Setter Property="MinHeight" Value="28" />
+        <Setter Property="Padding" Value="11,0" />
+        <Setter Property="CornerRadius" Value="14" />
+        <Setter Property="Background" Value="{DynamicResource GlassColor}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource GlassEdgeColor}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="FontWeight" Value="Normal" />
+    </Style>
+    <Style Selector="Button.Pill:pointerover">
+        <Setter Property="Background" Value="{DynamicResource GlassHoverColor}" />
+    </Style>
+    <Style Selector="Button.Pill.Preview">
+        <Setter Property="Background" Value="{DynamicResource GlassAccentColor}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource AccentEdgeColor}" />
+    </Style>
+    <!--  A tile: figures or facts on the card's grey, no edge, in a column or a grid (D560).  -->
+    <Style Selector="Border.Tile">
+        <Setter Property="Padding" Value="12" />
+        <Setter Property="CornerRadius" Value="8" />
+        <Setter Property="Background" Value="{DynamicResource CardBackgroundColor}" />
+    </Style>
     <Style Selector="Border.Key">
         <Setter Property="MinWidth" Value="18" />
         <Setter Property="Height" Value="18" />
@@ -736,7 +769,7 @@
     <!--  A bar of tools floating over a map, the world's viewport's and the character's map's zoom (D553): dark glass with a shadow.  -->
     <Style Selector="Border.Glass">
         <Setter Property="Background" Value="{DynamicResource GlassColor}" />
-        <Setter Property="BorderBrush" Value="{DynamicResource CommandCentreEdgeColor}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource GlassEdgeColor}" />
         <Setter Property="BorderThickness" Value="1" />
         <Setter Property="CornerRadius" Value="8" />
         <Setter Property="Padding" Value="3" />

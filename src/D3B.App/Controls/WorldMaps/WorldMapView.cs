@@ -62,10 +62,10 @@ internal sealed class WorldMapView : Control
     private static readonly IBrush _sea = new SolidColorBrush(Color.Parse("#0C1A1C"));
     private static readonly IPen _gridPen = new Pen(new SolidColorBrush(Colors.Black, 0.28), 1);
     private static readonly IPen _hoverPen = new Pen(new SolidColorBrush(Colors.White, 0.85), 2);
-    private static readonly IPen _tracePen = new Pen(new SolidColorBrush(Color.Parse("#5FD3C0")), 2);
+    private static readonly IPen _tracePen = new Pen(new SolidColorBrush(StudioColors.Route), 2);
     private static readonly IBrush _badge = new SolidColorBrush(Color.Parse("#1B1B1F"));
-    private static readonly IBrush _amber = new SolidColorBrush(Color.Parse("#E9AD3C"));
-    private static readonly IBrush _dot = new SolidColorBrush(Color.Parse("#E9AD3C"), 0.55);
+    private static readonly IBrush _amber = new SolidColorBrush(StudioColors.Warning);
+    private static readonly IBrush _dot = new SolidColorBrush(StudioColors.Warning, 0.55);
 
     private readonly WorldMapViewport _viewport = new();
     private readonly Func<int, int, Rect> _rectOf;

@@ -3,7 +3,7 @@ using D3B.Data.Items;
 
 namespace D3B.Bot.Transfers;
 
-/// <summary>Tells the items a transfer moves, from its settings and the pack's items (D550, D552).</summary>
+/// <summary>Tells the items a transfer moves, from its settings and the pack's items (D560, D552).</summary>
 /// <remarks>An item moves when the transfer moves everything, or its category, its type or the item itself is chosen, and neither its type nor itself is excluded; an item the pack lacks never does.</remarks>
 internal sealed class TransferFilter
 {

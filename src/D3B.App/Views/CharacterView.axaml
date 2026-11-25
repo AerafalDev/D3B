@@ -21,32 +21,6 @@
         <SolidColorBrush Color="{DynamicResource ErrorColor}" x:Key="LifeRuleFill" />
     </UserControl.Resources>
     <UserControl.Styles>
-        <Style Selector="Border.Pill">
-            <Setter Property="Height" Value="28" />
-            <Setter Property="Padding" Value="11,0" />
-            <Setter Property="CornerRadius" Value="14" />
-            <Setter Property="Background" Value="{DynamicResource GlassColor}" />
-            <Setter Property="BorderBrush" Value="{DynamicResource OutlineColor}" />
-            <Setter Property="BorderThickness" Value="1" />
-        </Style>
-        <Style Selector="Button.Pill">
-            <Setter Property="Theme" Value="{DynamicResource StudioButton}" />
-            <Setter Property="Height" Value="28" />
-            <Setter Property="MinHeight" Value="28" />
-            <Setter Property="Padding" Value="11,0" />
-            <Setter Property="CornerRadius" Value="14" />
-            <Setter Property="Background" Value="{DynamicResource GlassColor}" />
-            <Setter Property="BorderBrush" Value="{DynamicResource OutlineColor}" />
-            <Setter Property="BorderThickness" Value="1" />
-            <Setter Property="FontWeight" Value="Normal" />
-        </Style>
-        <Style Selector="Button.Pill:pointerover">
-            <Setter Property="Background" Value="{DynamicResource GlassHoverColor}" />
-        </Style>
-        <Style Selector="Button.Pill.Preview">
-            <Setter Property="Background" Value="#E61E2A44" />
-            <Setter Property="BorderBrush" Value="{DynamicResource AccentEdgeColor}" />
-        </Style>
         <Style Selector="Border.Now">
             <Setter Property="Padding" Value="14" />
             <Setter Property="CornerRadius" Value="8" />
@@ -194,11 +168,6 @@
             <Setter Property="Foreground" Value="{DynamicResource BrightColor}" />
             <Setter Property="FontWeight" Value="SemiBold" />
         </Style>
-        <Style Selector="Border.Tile">
-            <Setter Property="Padding" Value="10" />
-            <Setter Property="CornerRadius" Value="8" />
-            <Setter Property="Background" Value="{DynamicResource CardBackgroundColor}" />
-        </Style>
         <Style Selector="Border.Fact">
             <Setter Property="Height" Value="24" />
             <Setter Property="Padding" Value="9,0" />
@@ -309,10 +278,7 @@
                         </Border>
                     </WrapPanel>
                     <Border
-                        Background="{DynamicResource GlassColor}"
-                        BorderBrush="{DynamicResource OutlineColor}"
-                        BorderThickness="1"
-                        CornerRadius="8"
+                        Classes="Glass"
                         HorizontalAlignment="Left"
                         IsVisible="{Binding Map.HoverItems.Count}"
                         MaxWidth="320"
@@ -381,10 +347,7 @@
                     </Button.Flyout>
                 </Button>
                 <Border
-                    Background="{DynamicResource GlassColor}"
-                    BorderBrush="{DynamicResource OutlineColor}"
-                    BorderThickness="1"
-                    CornerRadius="8"
+                    Classes="Glass"
                     HorizontalAlignment="Left"
                     IsVisible="{Binding Map.HasTour}"
                     Margin="12"
@@ -811,8 +774,7 @@
                                 </ItemsControl.ItemTemplate>
                             </ItemsControl>
                             <Border
-                                Background="{DynamicResource CardBackgroundColor}"
-                                CornerRadius="8"
+                                Classes="Tile"
                                 IsVisible="{Binding HasFightFigures}"
                                 Margin="0,6,0,0"
                                 Padding="12,10">
@@ -857,8 +819,7 @@
                                 </ItemsControl>
                             </Border>
                             <Border
-                                Background="{DynamicResource CardBackgroundColor}"
-                                CornerRadius="8"
+                                Classes="Tile"
                                 IsVisible="{Binding HasProfession}"
                                 Margin="0,6,0,0"
                                 Padding="12,10">

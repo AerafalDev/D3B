@@ -1,4 +1,5 @@
 using Avalonia.Media;
+using D3B.App.Controls;
 using D3B.Studio.Assets;
 
 namespace D3B.App.ViewModels.Assets;
@@ -37,10 +38,10 @@ internal static class AssetKinds
     {
         return kind switch
         {
-            AssetKind.Behavior => Color.Parse("#7FA7FF"),
-            AssetKind.Profile => Color.Parse("#C9A7F2"),
-            AssetKind.Route => Color.Parse("#5FD3C0"),
-            AssetKind.Zone => Color.Parse("#A3D47B"),
+            AssetKind.Behavior => StudioColors.Behavior,
+            AssetKind.Profile => StudioColors.Profile,
+            AssetKind.Route => StudioColors.Route,
+            AssetKind.Zone => StudioColors.Zone,
             AssetKind.List => Color.Parse("#E9B04F"),
             AssetKind.Planning => Color.Parse("#8FB8F2"),
             _ => Color.Parse("#F3A19A"),

@@ -15,7 +15,7 @@
             DockPanel.Dock="Top"
             Margin="20,18,20,0">
             <Border
-                Background="#337FA7FF"
+                Background="{DynamicResource BehaviorTintColor}"
                 CornerRadius="8"
                 Height="38"
                 VerticalAlignment="Top"
@@ -23,7 +23,7 @@
                 <c:Icon
                     Drawing="{StaticResource Toolwindows.Hierarchy}"
                     Height="18"
-                    Tint="#7FA7FF"
+                    Tint="{DynamicResource BehaviorColor}"
                     Width="18" />
             </Border>
             <StackPanel

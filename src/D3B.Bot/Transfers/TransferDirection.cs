@@ -1,6 +1,6 @@
 namespace D3B.Bot.Transfers;
 
-/// <summary>Which way the transfer moves objects (D550).</summary>
+/// <summary>Which way the transfer moves objects (D560).</summary>
 public enum TransferDirection
 {
     /// <summary>From the character's own chest at the bank to its guild's chest.</summary>

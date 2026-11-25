@@ -16,10 +16,10 @@ internal static class WorldMapBackdropLayer
     private const double StepRadius = 3.6;
     private const double CharacterSpacing = 15;
 
-    private static readonly Color _teal = Color.Parse("#5FD3C0");
-    private static readonly Color _green = Color.Parse("#A3D47B");
-    private static readonly Color _accent = Color.Parse("#3B82F6");
-    private static readonly Color _play = Color.Parse("#4ADE80");
+    private static readonly Color _teal = StudioColors.Route;
+    private static readonly Color _green = StudioColors.Zone;
+    private static readonly Color _accent = StudioColors.Accent;
+    private static readonly Color _play = StudioColors.Playing;
     private static readonly IBrush _shade = new SolidColorBrush(Color.Parse("#05070A"), 0.3);
     private static readonly IBrush _bright = new SolidColorBrush(Color.Parse("#F4F4F6"));
     private static readonly IBrush _glass = new SolidColorBrush(Color.Parse("#0E0E10"), 0.82);
@@ -36,8 +36,8 @@ internal static class WorldMapBackdropLayer
         return kind switch
         {
             WorldMapActionKind.Harvest => Color.Parse("#7BD389"),
-            WorldMapActionKind.Fight => Color.Parse("#EA5D52"),
-            WorldMapActionKind.Door => Color.Parse("#E9AD3C"),
+            WorldMapActionKind.Fight => StudioColors.Error,
+            WorldMapActionKind.Door => StudioColors.Warning,
             WorldMapActionKind.Npc => Color.Parse("#6EA8FE"),
             _ => Color.Parse("#9AA0AA"),
         };

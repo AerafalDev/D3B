@@ -6,7 +6,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace D3B.Bot.Transfers;
 
-/// <summary>Transfers: the activity that moves objects between the character's bank and its guild's chest, either way (D550).</summary>
+/// <summary>Transfers: the activity that moves objects between the character's bank and its guild's chest, either way (D560).</summary>
 /// <remarks>Registers <see cref="TransferActivity"/> as <c>transfer</c>, with its settings. Requires the bots module.</remarks>
 public sealed class TransfersModule : IModule
 {
