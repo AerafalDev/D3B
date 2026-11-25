@@ -78,6 +78,7 @@ public static class FightPlay
         var unanswered = new Dictionary<int, int>();
         var challenged = new HashSet<int>();
         var left = new HashSet<int>();
+        var taming = new Taming();
         FightMap? map = null;
 
         // Not placed until this fight's placement places it, whatever the last fight left (D477).
@@ -143,7 +144,7 @@ public static class FightPlay
                 var play = PlayOf(context);
                 var playedFor = play is ChallengePlay.None || risky || fight.Challenges.IsEmpty ? null : ChallengeOf(fight, tables.Challenges, play, risky, left, fight.PlayingId ?? self);
 
-                await PlayTurnAsync(context, tactics, searches, tables, map, weights, unanswered, playedFor, left, cancellationToken).ConfigureAwait(false);
+                await PlayTurnAsync(context, tactics, searches, tables, map, weights, unanswered, playedFor, left, taming, cancellationToken).ConfigureAwait(false);
                 await context.WaitUntilAsync(next => next.Fight is not { IsOwnTurn: true }, context.Delays.Answer, cancellationToken).ConfigureAwait(false);
             }
         }
@@ -376,7 +377,7 @@ public static class FightPlay
         };
     }
 
-    private static async Task PlayTurnAsync(BotContext context, FightTactics tactics, FightSearches searches, GameTables tables, FightMap map, TacticWeights weights, Dictionary<int, int> unanswered, (int Id, TurnChallenge Challenge)? challenge, HashSet<int> left, CancellationToken cancellationToken)
+    private static async Task PlayTurnAsync(BotContext context, FightTactics tactics, FightSearches searches, GameTables tables, FightMap map, TacticWeights weights, Dictionary<int, int> unanswered, (int Id, TurnChallenge Challenge)? challenge, HashSet<int> left, Taming taming, CancellationToken cancellationToken)
     {
         // The character's turn, or a summon's it controls.
         var self = context.State.Fight?.PlayingId ?? context.State.Key.CharacterId;
@@ -408,11 +409,22 @@ public static class FightPlay
             if (challenge is { } going)
                 challenge = Refreshed(going, context.State.Fight, tables.Challenges, self);
 
+            // The owner's choice (D533): the main tames a wild mount first, and spares the mounts while one may still be tamed.
+            var tamed = TamingOf(context, tactics, tables, imagined, self, taming);
+
+            if (tamed.Plan.IsPending)
+                imagined = (imagined.Fight, imagined.Knowledge with { Spared = tamed.Mounts });
+
             var asked = imagined;
             var keeping = challenge?.Challenge;
-            var plan = await searches.RunAsync(() => tactics.Plan(asked.Fight, asked.Knowledge, weights, TurnSearchLimits.Default, refused, keeping), cancellationToken).ConfigureAwait(false);
+            var plan = !tamed.Plan.Actions.IsEmpty
+                ? new TurnPlan(tamed.Plan.Actions, 0, 0, 0, TimeSpan.Zero) { KeepsChallenge = true }
+                : await searches.RunAsync(() => tactics.Plan(asked.Fight, asked.Knowledge, weights, TurnSearchLimits.Default, refused, keeping), cancellationToken).ConfigureAwait(false);
 
-            FightLog.Planned(context.Log, self, plan.Actions.Length, plan.Score, plan.Standing, plan.Weighed, (long)plan.Elapsed.TotalMilliseconds);
+            if (!tamed.Plan.Actions.IsEmpty)
+                FightLog.Taming(context.Log, self, tamed.Plan.Actions[^1].Cell);
+            else
+                FightLog.Planned(context.Log, self, plan.Actions.Length, plan.Score, plan.Standing, plan.Weighed, (long)plan.Elapsed.TotalMilliseconds);
 
             // A turn that breaks a challenge of the turns loses it: it is left for the fight. One the turn kept so far is kept
             // to its end, whatever is left of it to gain.
@@ -449,6 +461,10 @@ public static class FightPlay
                 // whole fight, and the AI passed its turns once the monsters were seen again.
                 refused.Add((action.SpellId, action.Cell));
 
+                // A taming the server did not take is not tried again this fight: the mounts are no longer spared.
+                if (MountCapture.TamingSpells.Contains(action.SpellId))
+                    taming.IsOver = true;
+
                 if (answer is CastAnswer.Unanswered && leftOut.Add(action.SpellId))
                     unanswered[action.SpellId] = unanswered.GetValueOrDefault(action.SpellId) + 1;
 
@@ -470,6 +486,30 @@ public static class FightPlay
         await context.SendAsync(new FightTurnFinishRequest(), cancellationToken).ConfigureAwait(false);
         await ended.WaitAsync(context.Delays.Answer, cancellationToken).ConfigureAwait(false);
         FightLog.TurnEnded(context.Log, self, acted);
+    }
+
+    private static (TamingPlan Plan, ImmutableArray<long> Mounts) TamingOf(BotContext context, FightTactics tactics, GameTables tables, (ImaginedFight Fight, FightKnowledge Knowledge) imagined, long self, Taming taming)
+    {
+        // The main alone captures (D533): a follower keeps its nets, and a summon has none.
+        var races = context.Actor.Activity is { IsOver: false, Activity: { FightsItsFights: true } activity } ? activity.MountRaces : [];
+
+        if (races.Count is 0 || taming.IsOver || self != context.State.Key.CharacterId || context.Actor.Team?.Role is FightRole.Follows || context.State.Fight is not { } fight)
+            return (TamingPlan.None, []);
+
+        var mounts = MountCapture.Targets(fight, tables.Monsters, races);
+
+        if (mounts.IsEmpty)
+            return (TamingPlan.None, []);
+
+        var plan = tactics.Taming(imagined.Fight, imagined.Knowledge, MountCapture.TamingSpells, mounts.ToHashSet());
+
+        if (!plan.IsPending && !taming.Said && !imagined.Knowledge.SpellsOf(self).Any(level => MountCapture.TamingSpells.Contains(level.SpellId)))
+        {
+            taming.Said = true;
+            FightLog.NoCaptureNet(context.Log, self, mounts.Length);
+        }
+
+        return (plan, mounts);
     }
 
     private static async Task<bool> WalkAsync(BotContext context, FightTactics tactics, ImaginedFight fight, int cell, CancellationToken cancellationToken)
@@ -544,5 +584,14 @@ public static class FightPlay
             return (side is RelayDirection.FromClient && message is GameActionAcknowledgementRequest acknowledged && ended is { } id && acknowledged.ActionId == id)
                 || state.Fight is not { Phase: not FightPhase.Ended };
         });
+    }
+
+    private sealed class Taming
+    {
+        // Whether a taming the server did not take ended the fight's capture.
+        public bool IsOver { get; set; }
+
+        // Whether the journal said the character wears no capture net, once a fight.
+        public bool Said { get; set; }
     }
 }

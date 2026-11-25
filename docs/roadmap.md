@@ -437,6 +437,11 @@ follower) on the same map, the capture of every connection on; a capture's conte
   zones taking 478 minutes, and goes now to the nearest zone of the round not yet gone to; a journey passed by the resources
   grown back on maps its tour went through, about 1,800 for the farmer, and stops now for them, unless the tour left that
   element there. The walks and uses refused, D488's and D495's maps measured as holding. Left: seen in game.
+- **Wild mounts captured** (D533), the owner's ask of 2026-11-25 (mounts, then souls of archmonsters and dungeon bosses),
+  studied in `artifacts/studies/captures.md` (git-ignored) and the mounts' first part made in code and tests: a hunt profile's
+  « Capturer des montures » and its families, the main taming a wild mount with its worn net before any blow, the mount spared
+  until then. Left: a capture of a net's fight, then the net worn by the bot from the bag; the souls, the dungeons' bosses with
+  the dungeons' session (D520 to D529).
 - **The miner's door refused on the bank's journey** (D517), the owner's report of 2026-11-25, made in code and tests from the
   capture of the night: a walk the server refused after showing it was taken for arrived, the door used from 19 cells away, and
   the bank's journey's no path taken for no bank, the run failing still full. A walk so refused is refused, and the bank's journey

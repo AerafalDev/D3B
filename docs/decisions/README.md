@@ -138,3 +138,4 @@ Each file holds the decisions of one group of [the index](../decisions-index.md)
 - [The studio made simpler, next's dark islands (D530)](d530-next-dark-islands.md): 1 decision, 3 KB.
 - [The studio made simpler, next's layout (D531)](d531-next-layout.md): 1 decision, 3 KB.
 - [The studio made simpler, next's icons (D532)](d532-lucide-icons.md): 1 decision, 3 KB.
+- [Hunting, wild mounts captured (D533)](d533-mount-capture.md): 1 decision, 4 KB.
