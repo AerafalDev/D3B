@@ -3,8 +3,6 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
-using D3B.App.Localization;
-using D3B.App.ViewModels.Characters;
 using D3B.App.ViewModels.Properties;
 
 namespace D3B.App.Views;
@@ -100,37 +98,7 @@ internal sealed partial class PropertiesView : UserControl
 
     private void OnProfileClick(object? sender, RoutedEventArgs e)
     {
-        if (_shown?.Character is not { } character || sender is not Control field)
-            return;
-
-        // Made as it opens, as the cards' menu: the profiles may have changed since.
-        var texts = Localizer.Instance;
-        var menu = new ContextMenu { Placement = PlacementMode.BottomEdgeAlignedLeft };
-
-        if (character.HasProfile)
-        {
-            menu.Items.Add(Item(texts["OpenProfile"], () => character.OpenProfileCommand.Execute(null)));
-            menu.Items.Add(new Separator());
-        }
-
-        void Group(string heading, IReadOnlyList<ProfileChoice> choices)
-        {
-            if (choices.Count == 0)
-                return;
-
-            menu.Items.Add(new MenuItem { Header = heading, Classes = { "Heading" } });
-
-            foreach (var choice in choices)
-                menu.Items.Add(new MenuItem { Header = choice.Name, Tag = choice.Detail, Command = character.AssignCommand, CommandParameter = choice });
-        }
-
-        Group(texts["ProfilesMine"], character.MyProfiles);
-        Group(texts["ProfilesGiven"], character.GivenProfiles);
-        Group(texts["ProfilesActivities"], character.ActivityProfiles);
-        menu.Items.Add(new Separator());
-        menu.Items.Add(Item(texts["NoProfile"], () => character.AssignCommand.Execute(null)));
-        field.ContextMenu = menu;
-        menu.Closed += (_, _) => field.ContextMenu = null;
-        menu.Open(field);
+        if (_shown?.Character is { } character && sender is Control field)
+            ProfileMenu.Open(character, field);
     }
 }

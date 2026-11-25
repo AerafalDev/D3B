@@ -1679,12 +1679,6 @@
   <data name="HomeSearch" xml:space="preserve">
     <value>Chercher partout</value>
   </data>
-  <data name="HomeAssets" xml:space="preserve">
-    <value>Bibliothèque</value>
-  </data>
-  <data name="HomeJournal" xml:space="preserve">
-    <value>Journal</value>
-  </data>
   <data name="HomePlay" xml:space="preserve">
     <value>Jouer</value>
   </data>
@@ -3113,9 +3107,6 @@
   <data name="ZoneContents" xml:space="preserve">
     <value>Contenu</value>
   </data>
-  <data name="HomeQuickActions" xml:space="preserve">
-    <value>Actions rapides</value>
-  </data>
   <data name="HomeNewProfile" xml:space="preserve">
     <value>Nouveau profil</value>
   </data>
@@ -3125,17 +3116,8 @@
   <data name="HomeNewZone" xml:space="preserve">
     <value>Nouvelle zone</value>
   </data>
-  <data name="HomeProjectFolder" xml:space="preserve">
-    <value>Dossier du projet</value>
-  </data>
-  <data name="HomeSettings" xml:space="preserve">
-    <value>Paramètres</value>
-  </data>
   <data name="HomeCharacters" xml:space="preserve">
     <value>Personnages</value>
-  </data>
-  <data name="HomeNoCharacters" xml:space="preserve">
-    <value>Aucun personnage pour l'instant. Connecte-toi au jeu avec le relais, et tes personnages apparaissent ici.</value>
   </data>
   <data name="HomeRecent" xml:space="preserve">
     <value>Récents</value>
@@ -3613,5 +3595,23 @@
   </data>
   <data name="Hide" xml:space="preserve">
     <value>Masquer</value>
+  </data>
+  <data name="HomeStartTitle" xml:space="preserve">
+    <value>Pour commencer</value>
+  </data>
+  <data name="HomeStartLaunch" xml:space="preserve">
+    <value>Garde D3B ouvert, puis lance Dofus depuis le lanceur d'Ankama.</value>
+  </data>
+  <data name="HomeStartChoose" xml:space="preserve">
+    <value>Choisis un personnage dans le jeu : sa carte s'affiche ici.</value>
+  </data>
+  <data name="HomeStartPlay" xml:space="preserve">
+    <value>Ouvre sa carte, choisis son profil et appuie sur Jouer.</value>
+  </data>
+  <data name="HomeOpenCharacter" xml:space="preserve">
+    <value>Ouvrir son onglet : son profil, sa carte et ce qu'il fait</value>
+  </data>
+  <data name="HomeMake" xml:space="preserve">
+    <value>Créer</value>
   </data>
 </root>
