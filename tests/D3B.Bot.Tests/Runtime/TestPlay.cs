@@ -8,6 +8,7 @@ using D3B.Data;
 using D3B.Data.Banks;
 using D3B.Data.Breeds;
 using D3B.Data.Challenges;
+using D3B.Data.Dungeons;
 using D3B.Data.Effects;
 using D3B.Data.Icons;
 using D3B.Data.Items;
@@ -119,6 +120,21 @@ internal sealed class TestPlay : IAsyncDisposable
 
     // The one monster of the world, living in its sub-area, its grades from level 10 to 14.
     public const int LarvaId = 489;
+
+    // The world's dungeon, as client 3.7.14.18 numbers Champs': its keeper the NPC who is no banker, in the inside, its first
+    // room the other inside; its key and the keyring, and the keeper's replies as measured (D520, D522). A second dungeon of
+    // the same door asks a level no character has, a third of the same door, whose room is the map east, asks none, and a
+    // fourth, an expedition with no key, has its door on the zaap's map the graph does not hold.
+    public const int DungeonId = 1;
+    public const int HighDungeonId = 2;
+    public const int OtherDungeonId = 3;
+    public const int FarDungeonId = 4;
+    public const int DungeonKeyId = 1_568;
+    public const int KeyringId = 10_207;
+    public const int KeyReplyId = 2_802;
+    public const int KeyringReplyId = 6_615;
+    public const int ConfirmReplyId = 20_904;
+    public const int DungeonExitReplyId = 15_920;
 
     // Items', professions' and monsters' icons are 64 pixels square in a pack (D136).
     private const int IconSize = 64;
@@ -331,6 +347,26 @@ internal sealed class TestPlay : IAsyncDisposable
             activations);
     }
 
+    private static DungeonCatalog Dungeons()
+    {
+        return new DungeonCatalog(
+            new Dungeon[]
+            {
+                new(DungeonId, 52_011, 20, 30, InsideMapId, InsideMapId, true, 0, 1, 0, 1, 0, 0, 0, 0),
+                new(HighDungeonId, 52_012, 201, 201, InsideMapId, InsideMapId, false, 1, 0, 1, 1, 0, 0, 0, 0),
+                new(OtherDungeonId, 52_013, 1, 1, InsideMapId, InsideMapId, false, 1, 1, 2, 1, 0, 0, 0, 0),
+                new(FarDungeonId, 52_014, 1, 1, AwayZaapMapId, AwayZaapMapId, false, 2, 0, 3, 0, 0, 0, 0, 0),
+            },
+            new[] { OtherInsideMapId, EastMapId },
+            new DungeonObject[] { new(DungeonKeyId, 1), new(DungeonKeyId, 1), new(DungeonKeyId, 1) },
+            Array.Empty<int>(),
+            Array.Empty<int>(),
+            new[] { KeyReplyId },
+            new[] { KeyringReplyId },
+            new[] { ConfirmReplyId },
+            new[] { DungeonExitReplyId });
+    }
+
     private static byte[] Pack(int[] blocked, int[] otherZone, bool otherZoneIsEntered, int[] ledge)
     {
         var cells = Enumerable.Range(0, MapData.CellCount).Select(cell => blocked.Contains(cell) ? Wall() : Walkable(cell, otherZone.Contains(cell) ? 2 : 1, ledge.Contains(cell) ? LedgeFloor : 0, ledge.Length > 0 && cell == StairCell ? 1 : 0)).ToArray();
@@ -359,6 +395,7 @@ internal sealed class TestPlay : IAsyncDisposable
                 new IconTable(IconSize, Enum.GetValues<GameGlyph>().Where(glyph => glyph is not GameGlyph.None).Select(glyph => (int)glyph).ToArray(), Enum.GetValues<GameGlyph>().Where(glyph => glyph is not GameGlyph.None).SelectMany(_ => Disc(0xFF, 0xFF, 0xFF)).ToArray())));
             writer.Add(SpellCatalog.EntryName, Spells());
             writer.Add(ChallengeCatalog.EntryName, Challenges());
+            writer.Add(DungeonCatalog.EntryName, Dungeons());
             writer.Add(WeaponCatalog.EntryName, new WeaponCatalog(
                 new[] { new Weapon { ItemId = SwordItemId, TypeId = 6, ApCost = 3, MinRange = 1, Range = 1, CriticalHitProbability = 0, MaxCastPerTurn = 1, Properties = SpellLevelProperties.CastTestLos, FirstEffect = 0, EffectCount = 1 } },
                 new[] { new WeaponEffect { EffectId = 97, DiceNum = 20, DiceSide = 25 } },

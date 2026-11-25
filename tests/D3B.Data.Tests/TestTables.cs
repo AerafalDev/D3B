@@ -3,6 +3,7 @@ using D3B.Data.Npcs;
 using D3B.Data.Breeds;
 using D3B.Data.Challenges;
 using D3B.Data.Characteristics;
+using D3B.Data.Dungeons;
 using D3B.Data.Effects;
 using D3B.Data.Hints;
 using D3B.Data.Icons;
@@ -40,6 +41,14 @@ internal static class TestTables
     private static readonly string[] _keywords = ["unknown", "hitPoints", "actionPoints"];
     private static readonly int[] _formulaIds = [4];
     private static readonly string[] _formulas = ["function main()\n   return 1\nend"];
+    private static readonly long[] _dungeonRooms = [190_317_570, 190_318_082, 26_738_688];
+    private static readonly DungeonObject[] _dungeonObjects = [new(1_568, 1), new(8_142, 1), new(8_143, 2)];
+    private static readonly int[] _dungeonBosses = [147];
+    private static readonly int[] _dungeonSubAreas = [509];
+    private static readonly int[] _keyReplies = [2_802];
+    private static readonly int[] _keyringReplies = [6_615];
+    private static readonly int[] _confirmations = [20_904];
+    private static readonly int[] _exitReplies = [15_920];
 
     /// <summary>Wheat and ash wood, of known types, a bread that heals 10 to 15 life, and a test item whose type the client lacks.</summary>
     public static ItemCatalog Items()
@@ -101,6 +110,28 @@ internal static class TestTables
             _incompatibles,
             _completions,
             _activations);
+    }
+
+    /// <summary>
+    /// Two dungeons: the first keyed and on the keyring, two rooms, a boss, a sub-area, its entrance its exit, as the client's
+    /// Champs is; the second a key of two objects, no boss, its exit elsewhere. The replies are Champs' keeper's, measured (D522).
+    /// </summary>
+    public static DungeonCatalog Dungeons()
+    {
+        return new DungeonCatalog(
+            new Dungeon[]
+            {
+                new(1, 52_011, 20, 30, 192_937_992, 192_937_992, true, 0, 2, 0, 1, 0, 1, 0, 1),
+                new(7, 52_017, 60, 70, 88_080_644, 88_080_660, false, 2, 1, 1, 2, 1, 0, 1, 0),
+            },
+            _dungeonRooms,
+            _dungeonObjects,
+            _dungeonBosses,
+            _dungeonSubAreas,
+            _keyReplies,
+            _keyringReplies,
+            _confirmations,
+            _exitReplies);
     }
 
     /// <summary>One bank; banker 100 has two chest replies, banker 6394 one.</summary>
