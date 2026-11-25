@@ -189,7 +189,16 @@ public static class CharacterEvents
             TeleportDestinationsEvent destinations => state with { ZaapDialog = new ZaapDialog(destinations.Type, Costs(destinations)) },
             ExchangeStartedWithStorageEvent { Type: ExchangeType.Storage } => state with { Dialog = null, Storage = new OpenStorage(0) },
             ExchangeStartedWithTabbedStorageEvent { Type: ExchangeType.GuildChest } => state with { Dialog = null, Storage = new OpenStorage(0, IsGuildChest: true) },
-            StorageContentEvent content when state.Storage is { } storage => state with { Storage = storage with { Kamas = content.Kamas } },
+            StorageContentEvent content when state.Storage is { } storage => state with { Storage = storage with { Kamas = content.Kamas, Stacks = Stored(content.Objects) } },
+            StorageObjectUpdateEvent { Object.Item: not null } changed when state.Storage is { } storage => state with
+            {
+                Storage = storage with { Stacks = storage.Stacks.SetItem(changed.Object.Item.Uid, Stored(changed.Object)) },
+            },
+            StorageObjectsUpdateEvent changed when state.Storage is { } storage => state with
+            {
+                Storage = storage with { Stacks = storage.Stacks.SetItems(changed.Objects.Where(item => item.Item is not null).Select(item => KeyValuePair.Create(item.Item.Uid, Stored(item)))) },
+            },
+            StorageObjectRemovedEvent removed when state.Storage is { } storage => state with { Storage = storage with { Stacks = storage.Stacks.Remove(removed.Uid) } },
             StorageKamasUpdateEvent kamas when state.Storage is { } storage => state with { Storage = storage with { Kamas = kamas.Kamas } },
             ExchangeLeaveEvent => state with { Storage = null, Exchange = null },
             ExchangeRequestedEvent { Type: ExchangeType.Player } asked when asked.SourceId == self || asked.TargetId == self => state with
@@ -354,6 +363,16 @@ public static class CharacterEvents
     private static InventoryItem Stack(InventoryObject item)
     {
         return new InventoryItem(item.Item.Uid, item.Item.ItemId, item.Item.Quantity, item.Position);
+    }
+
+    private static ImmutableSortedDictionary<int, StorageItem> Stored(IEnumerable<InventoryObject> objects)
+    {
+        return objects.Where(item => item.Item is not null).Select(Stored).ToImmutableSortedDictionary(stack => stack.Uid, stack => stack);
+    }
+
+    private static StorageItem Stored(InventoryObject item)
+    {
+        return new StorageItem(item.Item.Uid, item.Item.ItemId, item.Item.Quantity);
     }
 
     private static ImmutableSortedDictionary<int, CharacterJob> Described(ImmutableSortedDictionary<int, CharacterJob> jobs, JobDescriptionEvent description)

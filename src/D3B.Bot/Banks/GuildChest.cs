@@ -53,10 +53,10 @@ public static class GuildChest
         using var action = context.BeginAction();
         var depth = action.Depth;
         var asked = 0;
-        var outcome = await GoToChestAsync(context, chests, cancellationToken).ConfigureAwait(false);
+        var outcome = await context.GoToGuildChestAsync(chests, true, cancellationToken).ConfigureAwait(false);
 
         if (outcome is BankOutcome.Done)
-            outcome = await OpenAsync(context, cancellationToken).ConfigureAwait(false);
+            outcome = await context.OpenGuildChestAsync(cancellationToken).ConfigureAwait(false);
 
         if (outcome is BankOutcome.Done)
         {
@@ -90,17 +90,17 @@ public static class GuildChest
         return outcome;
     }
 
-    private static bool TryFindChest(CharacterState state, out int elementId)
+    /// <summary>Goes where a guild's chest stands: the nearest of the maps given, or the character's map when one stands there.</summary>
+    /// <param name="context">The behavior's context.</param>
+    /// <param name="chests">The maps a guild's chest stands on, from the pack.</param>
+    /// <param name="useZaaps">Whether the journey may teleport to a zaap; else the character walks (D405, D436).</param>
+    /// <param name="cancellationToken">The behavior's token.</param>
+    /// <returns>How the journey ended: <see cref="BankOutcome.Done"/> once a chest stands on the character's map.</returns>
+    public static async Task<BankOutcome> GoToGuildChestAsync(this BotContext context, IReadOnlySet<long> chests, bool useZaaps, CancellationToken cancellationToken)
     {
-        var chest = state.Elements.Values.FirstOrDefault(element => element.InteractiveId == InteractiveId && element.EnabledSkills.Any(skill => skill.SkillId == SkillId));
+        ArgumentNullException.ThrowIfNull(context);
+        ArgumentNullException.ThrowIfNull(chests);
 
-        elementId = chest?.ElementId ?? 0;
-
-        return chest is not null;
-    }
-
-    private static async Task<BankOutcome> GoToChestAsync(BotContext context, IReadOnlySet<long> chests, CancellationToken cancellationToken)
-    {
         for (var journeys = 0; ; journeys++)
         {
             var state = context.State;
@@ -114,7 +114,7 @@ public static class GuildChest
             if (chests.Count is 0 || chests.Contains(mapId) || journeys >= MostJourneys)
                 return chests.Count is 0 || chests.Contains(mapId) ? BankOutcome.NoBank : BankOutcome.NotTravelled;
 
-            switch (await context.TravelAsync(chests, cancellationToken).ConfigureAwait(false))
+            switch (await context.TravelAsync(chests, null, useZaaps, cancellationToken).ConfigureAwait(false))
             {
                 case TravelOutcome.Arrived:
                     break;
@@ -128,15 +128,25 @@ public static class GuildChest
         }
     }
 
-    private static async Task<BankOutcome> OpenAsync(BotContext context, CancellationToken cancellationToken)
+    /// <summary>Opens the guild's chest of the character's map: uses its element, then waits for what the tab it opens on holds.</summary>
+    /// <param name="context">The behavior's context.</param>
+    /// <param name="cancellationToken">The behavior's token.</param>
+    /// <returns>
+    /// How the opening ended: <see cref="BankOutcome.Done"/> once the chest's exchange is open; <see cref="BankOutcome.Refused"/> when
+    /// the server refuses the use, or answers it with a text of the error kind, such as a rank without the right to open the tab (D551).
+    /// </returns>
+    public static async Task<BankOutcome> OpenGuildChestAsync(this BotContext context, CancellationToken cancellationToken)
     {
+        ArgumentNullException.ThrowIfNull(context);
+
         // The chest is used from where the character stands, which the server may refuse while it holds a walk (D89).
         await context.ReleaseHeldWalkAsync(cancellationToken).ConfigureAwait(false);
 
         if (!TryFindChest(context.State, out var elementId))
             return BankOutcome.NoBank;
 
-        var opened = context.Expect((side, message, state) => side is RelayDirection.FromServer && message is StorageContentEvent && state.Storage is { IsGuildChest: true });
+        var opened = context.Expect((side, message, state) => side is RelayDirection.FromServer
+            && (message is StorageContentEvent && state.Storage is { IsGuildChest: true } || message is TextInformationEvent { Type: TextInformationType.Error }));
 
         switch (await context.UseAsync(elementId, SkillId, cancellationToken).ConfigureAwait(false))
         {
@@ -150,13 +160,30 @@ public static class GuildChest
                 return BankOutcome.Refused;
         }
 
-        if (context.State.Storage is not { IsGuildChest: true } && await opened.WaitAsync(context.Delays.Answer, cancellationToken).ConfigureAwait(false) is null)
-            return BankOutcome.NoAnswer;
+        if (context.State.Storage is not { IsGuildChest: true })
+        {
+            switch (await opened.WaitAsync(context.Delays.Answer, cancellationToken).ConfigureAwait(false))
+            {
+                case null:
+                    return BankOutcome.NoAnswer;
+                case TextInformationEvent:
+                    return BankOutcome.Refused;
+            }
+        }
 
         // The client shows the chest before anything goes in.
         await Task.Delay(context.Delays.Display, context.Time, cancellationToken).ConfigureAwait(false);
 
         return BankOutcome.Done;
+    }
+
+    private static bool TryFindChest(CharacterState state, out int elementId)
+    {
+        var chest = state.Elements.Values.FirstOrDefault(element => element.InteractiveId == InteractiveId && element.EnabledSkills.Any(skill => skill.SkillId == SkillId));
+
+        elementId = chest?.ElementId ?? 0;
+
+        return chest is not null;
     }
 
     private static async Task<BankOutcome> MoveAsync(BotContext context, int uid, CancellationToken cancellationToken)

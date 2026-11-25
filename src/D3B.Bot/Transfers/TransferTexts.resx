@@ -1,0 +1,254 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="Name" xml:space="preserve">
+    <value>Transfer between bank and guild chest</value>
+  </data>
+  <data name="SectionWhat" xml:space="preserve">
+    <value>What</value>
+  </data>
+  <data name="Direction" xml:space="preserve">
+    <value>Direction</value>
+  </data>
+  <data name="DirectionBankToGuildChest" xml:space="preserve">
+    <value>Bank to guild chest</value>
+  </data>
+  <data name="DirectionGuildChestToBank" xml:space="preserve">
+    <value>Guild chest to bank</value>
+  </data>
+  <data name="DirectionHelp" xml:space="preserve">
+    <value>Where the objects are taken from, and where they go. The guild's chest holds no kamas, and the transfer works on the tab it opens on.</value>
+  </data>
+  <data name="Everything" xml:space="preserve">
+    <value>Everything the source holds</value>
+  </data>
+  <data name="EverythingHelp" xml:space="preserve">
+    <value>Every item the source holds moves, but those left out, in as many rounds as the pods need.</value>
+  </data>
+  <data name="Categories" xml:space="preserve">
+    <value>Categories</value>
+  </data>
+  <data name="CategoryEquipment" xml:space="preserve">
+    <value>Equipment</value>
+  </data>
+  <data name="CategoryConsumable" xml:space="preserve">
+    <value>Consumables</value>
+  </data>
+  <data name="CategoryResource" xml:space="preserve">
+    <value>Resources</value>
+  </data>
+  <data name="CategoryQuest" xml:space="preserve">
+    <value>Quest objects</value>
+  </data>
+  <data name="CategoryCosmetic" xml:space="preserve">
+    <value>Cosmetics</value>
+  </data>
+  <data name="CategoriesHelp" xml:space="preserve">
+    <value>Every item of the categories chosen moves, as the inventory's tabs sort them.</value>
+  </data>
+  <data name="Types" xml:space="preserve">
+    <value>Types</value>
+  </data>
+  <data name="TypesHelp" xml:space="preserve">
+    <value>Every item of the types chosen moves, such as woods or ores.</value>
+  </data>
+  <data name="Items" xml:space="preserve">
+    <value>Items</value>
+  </data>
+  <data name="ItemsHelp" xml:space="preserve">
+    <value>These items move, whatever their category or type.</value>
+  </data>
+  <data name="ExcludedTypes" xml:space="preserve">
+    <value>Types left out</value>
+  </data>
+  <data name="ExcludedTypesHelp" xml:space="preserve">
+    <value>The items of these types never move, even when a category chose them.</value>
+  </data>
+  <data name="ExcludedItems" xml:space="preserve">
+    <value>Items left out</value>
+  </data>
+  <data name="ExcludedItemsHelp" xml:space="preserve">
+    <value>These items never move, even when a category or a type chose them.</value>
+  </data>
+  <data name="RuleSomething" xml:space="preserve">
+    <value>Choose everything, or at least a category, a type or an item to move.</value>
+  </data>
+  <data name="SectionHowMany" xml:space="preserve">
+    <value>How many</value>
+  </data>
+  <data name="Quantity" xml:space="preserve">
+    <value>Quantity of each item</value>
+  </data>
+  <data name="QuantityAll" xml:space="preserve">
+    <value>Everything</value>
+  </data>
+  <data name="QuantityAtMost" xml:space="preserve">
+    <value>At most</value>
+  </data>
+  <data name="QuantityKeepInSource" xml:space="preserve">
+    <value>Keep some in the source</value>
+  </data>
+  <data name="QuantityHelp" xml:space="preserve">
+    <value>Everything the source holds, at most a number of each item over the whole transfer, or everything but a number of each item, which stay in the source.</value>
+  </data>
+  <data name="Amount" xml:space="preserve">
+    <value>Number</value>
+  </data>
+  <data name="AmountUnit" xml:space="preserve">
+    <value>of each item</value>
+  </data>
+  <data name="SectionOptions" xml:space="preserve">
+    <value>Options</value>
+  </data>
+  <data name="WhenRefused" xml:space="preserve">
+    <value>When the destination refuses an item</value>
+  </data>
+  <data name="WhenRefusedGiveBack" xml:space="preserve">
+    <value>Put it back</value>
+  </data>
+  <data name="WhenRefusedKeepCarried" xml:space="preserve">
+    <value>Keep it in the bags</value>
+  </data>
+  <data name="WhenRefusedStop" xml:space="preserve">
+    <value>Stop</value>
+  </data>
+  <data name="WhenRefusedHelp" xml:space="preserve">
+    <value>A tab of the chest may refuse a type of object, the chest may be full, an object may be bound to the account. The item refused is put back in the source at the next visit, or kept in the bags, and the transfer goes on without it; or the transfer stops.</value>
+  </data>
+  <data name="DryRun" xml:space="preserve">
+    <value>Dry run</value>
+  </data>
+  <data name="DryRunHelp" xml:space="preserve">
+    <value>Only opens the source and says what would move, moving nothing.</value>
+  </data>
+  <data name="UseZaaps" xml:space="preserve">
+    <value>Take zaaps</value>
+  </data>
+  <data name="UseZaapsHelp" xml:space="preserve">
+    <value>The journeys to the bank and the chest may teleport to a zaap, as the general banking settings allow.</value>
+  </data>
+  <data name="DoingTakeBank" xml:space="preserve">
+    <value>Takes objects out of the bank</value>
+  </data>
+  <data name="DoingTakeChest" xml:space="preserve">
+    <value>Takes objects out of the guild's chest</value>
+  </data>
+  <data name="DoingPutBank" xml:space="preserve">
+    <value>Puts the objects in the bank</value>
+  </data>
+  <data name="DoingPutChest" xml:space="preserve">
+    <value>Puts the objects in the guild's chest</value>
+  </data>
+  <data name="DoingOver" xml:space="preserve">
+    <value>Transfer over: {0} objects of {1} items moved in {2} rounds</value>
+  </data>
+  <data name="DoingDryRun" xml:space="preserve">
+    <value>Dry run: {0} objects of {1} items would move</value>
+  </data>
+  <data name="Moved" xml:space="preserve">
+    <value>Objects moved</value>
+  </data>
+  <data name="CountItem" xml:space="preserve">
+    <value>{0} {1}</value>
+  </data>
+  <data name="WarningNotExchangeable" xml:space="preserve">
+    <value>{0} is bound to the account: left out</value>
+  </data>
+  <data name="WarningTypeRefused" xml:space="preserve">
+    <value>{0}: the chest's tab does not take this type</value>
+  </data>
+  <data name="WarningRefused" xml:space="preserve">
+    <value>{0} was refused</value>
+  </data>
+  <data name="WarningNoAnswer" xml:space="preserve">
+    <value>{0}: the server did not answer, the destination may be full</value>
+  </data>
+  <data name="WarningTooHeavy" xml:space="preserve">
+    <value>{0} does not fit</value>
+  </data>
+  <data name="WarningNoRight" xml:space="preserve">
+    <value>{0}: the guild's rank lacks the right</value>
+  </data>
+  <data name="WarningLeftInBags" xml:space="preserve">
+    <value>A connection closed during the transfer: what it carried then stays in the bags.</value>
+  </data>
+  <data name="FailNoBank" xml:space="preserve">
+    <value>No bank can be reached.</value>
+  </data>
+  <data name="FailNoChest" xml:space="preserve">
+    <value>No guild chest can be reached.</value>
+  </data>
+  <data name="FailChestClosed" xml:space="preserve">
+    <value>The server keeps the guild's chest closed: the character's guild, its rank or its subscription does not allow it.</value>
+  </data>
+  <data name="FailBankNotOpened" xml:space="preserve">
+    <value>The bank could not be opened, even after trying again.</value>
+  </data>
+  <data name="FailChestNotOpened" xml:space="preserve">
+    <value>The guild's chest could not be opened, even after trying again.</value>
+  </data>
+  <data name="FailNoTakeRight" xml:space="preserve">
+    <value>The guild's rank has no right to take objects out of the chest.</value>
+  </data>
+  <data name="FailNoPutRight" xml:space="preserve">
+    <value>The guild's rank has no right to put objects in the chest.</value>
+  </data>
+  <data name="FailNoPods" xml:space="preserve">
+    <value>The character carries too much to take anything out: free some pods first.</value>
+  </data>
+  <data name="FailRefused" xml:space="preserve">
+    <value>The destination refused {0}: the transfer stops, as its settings say.</value>
+  </data>
+  <data name="FailStuckMapUnknown" xml:space="preserve">
+    <value>The character's map is still unknown after two minutes.</value>
+  </data>
+  <data name="FailStuckUsing" xml:space="preserve">
+    <value>Still using an element after two minutes, even once put back in order.</value>
+  </data>
+  <data name="FailStuckInDialog" xml:space="preserve">
+    <value>Still in a dialog or an exchange after two minutes, even once put back in order.</value>
+  </data>
+  <data name="FailStuckWalking" xml:space="preserve">
+    <value>Still walking after two minutes, even once put back in order.</value>
+  </data>
+</root>

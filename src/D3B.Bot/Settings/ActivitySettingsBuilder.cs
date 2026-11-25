@@ -267,6 +267,15 @@ public sealed class ActivitySettingsBuilder<TSettings>
         return Add(property, SettingKind.Item, true, name);
     }
 
+    /// <summary>Declares several types of items of the game, each once, such as woods and ores (D552).</summary>
+    /// <param name="property">The property, such as <c>s =&gt; s.Types</c>.</param>
+    /// <param name="name">The setting's name, as the app shows it.</param>
+    /// <returns>The setting's builder.</returns>
+    public SettingBuilder<TSettings> ItemTypes(Expression<Func<TSettings, IReadOnlyList<int>>> property, LocalizedText name)
+    {
+        return Add(property, SettingKind.ItemType, true, name);
+    }
+
     /// <summary>Declares several monsters, each once (D236).</summary>
     /// <param name="property">The property, such as <c>s =&gt; s.Monsters</c>.</param>
     /// <param name="name">The setting's name, as the app shows it.</param>

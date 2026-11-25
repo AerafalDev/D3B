@@ -1193,6 +1193,9 @@
   <data name="StatisticsLevelsOne" xml:space="preserve">
     <value>+{0} niveau</value>
   </data>
+  <data name="ItemTypeNamed" xml:space="preserve">
+    <value>Type d’objet {0}</value>
+  </data>
   <data name="ItemNamed" xml:space="preserve">
     <value>Objet {0}</value>
   </data>

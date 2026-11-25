@@ -319,7 +319,10 @@ reads the numbers is not measured. Of the 126 swords, 122 do something in a figh
 steal of one element.
 
 Item types: `superTypeId` takes 25 values, the ids of `ItemSuperTypesDataRoot`, which names none of them; `categoryId`
-from 0 to 5, 2 on 78 types. The pack keeps both as they are.
+from 0 to 5, 2 on 78 types. The pack keeps both as they are. Measured on 3.7.14.18 for D552: `categoryId` is the inventory's tab a type's items sort
+under, 0 the equipment (amulets to shields, weapons, pets and mounts, Dofus), 1 the consumables (potions, bread, scrolls, soul stones,
+nets), 2 the resources (78 types: woods, ores, fish, the monsters' drops), 3 the quests' objects, 4 the hidden objects (buffs, the
+invisible ones), 5 the cosmetics; 229 types are named, which the transfer's profile picks by name.
 
 ### Jobs and skills
 
