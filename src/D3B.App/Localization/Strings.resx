@@ -1680,7 +1680,7 @@
     <value>Play</value>
   </data>
   <data name="HostFailedShort" xml:space="preserve">
-    <value>D3B did not start: click « Relay stopped », at the bottom left, to see why and how to fix it.</value>
+    <value>D3B did not start: click the red dot at the bottom right to see why and how to fix it.</value>
   </data>
   <data name="JournalPausedFromApp" xml:space="preserve">
     <value>Paused from D3B</value>
