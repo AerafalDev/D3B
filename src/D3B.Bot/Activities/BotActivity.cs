@@ -77,6 +77,14 @@ public abstract class BotActivity
     /// <remarks>Read from another thread than the activity's while it runs. None by default.</remarks>
     public virtual DateTimeOffset? WaitingUntil => null;
 
+    /// <summary>Gets the dungeon of the client's table the character is in, by its id, which its followers enter behind it by themselves (D528).</summary>
+    /// <remarks>Read from another thread than the activity's while it runs. None by default, and outside a dungeon.</remarks>
+    public virtual int? DungeonInside => null;
+
+    /// <summary>Gets whether a master's group banks together under the activity though it watches no pods, each member full as <see cref="IsFull"/> says of it (D529).</summary>
+    /// <remarks>No by default: the group banks at the share of pods the activity watches, if any (D442).</remarks>
+    public virtual bool BanksTheGroup => false;
+
     /// <summary>Runs the next step, chosen from the character's state now.</summary>
     /// <param name="context">The step's behavior context.</param>
     /// <param name="cancellationToken">The step's token: an interruption or the activity's stop cancels it.</param>
@@ -108,6 +116,17 @@ public abstract class BotActivity
         return false;
     }
 
+    /// <summary>Tells whether the character keeps a stack it does not wear through every banking, its group's too, such as a dungeon's key (D529).</summary>
+    /// <param name="stack">A stack the character carries.</param>
+    /// <returns>Whether it keeps it; none, by default.</returns>
+    /// <remarks>At a master's group's bank, neither the master deposits such a stack nor its followers give one.</remarks>
+    public virtual bool Keeps(InventoryItem stack)
+    {
+        ArgumentNullException.ThrowIfNull(stack);
+
+        return false;
+    }
+
     /// <summary>Unloads the character, such as at its bank, once it is full.</summary>
     /// <param name="context">The unloading's behavior context.</param>
     /// <param name="cancellationToken">The unloading's token.</param>
@@ -117,6 +136,11 @@ public abstract class BotActivity
         ArgumentNullException.ThrowIfNull(context);
 
         return Task.FromResult(false);
+    }
+
+    /// <summary>Tells the activity that its master's group's bank took its unloading and banked (D442, D529), as its own unloading would have.</summary>
+    public virtual void OnGroupUnloaded()
+    {
     }
 
     /// <summary>Tells what an interruption leads to, once it cancelled a step; the host stopping always ends the activity.</summary>

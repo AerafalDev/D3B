@@ -244,13 +244,13 @@ internal sealed class TestPlay : IAsyncDisposable
     }
 
     /// <summary>The character as the server's confirmation of the choice describes it.</summary>
-    public static CharacterSelectionEvent Chosen(long characterId = CharacterId, string name = "Character")
+    public static CharacterSelectionEvent Chosen(long characterId = CharacterId, string name = "Character", int level = 200)
     {
         return new CharacterSelectionEvent
         {
             Success = new CharacterSelectionEvent.Types.Success
             {
-                Character = new Character { Id = characterId, Basics = new CharacterBasics { Name = name, Level = 200 } },
+                Character = new Character { Id = characterId, Basics = new CharacterBasics { Name = name, Level = level } },
             },
         };
     }
@@ -565,13 +565,13 @@ internal sealed class TestPlay : IAsyncDisposable
     }
 
     /// <summary>A connection of another account, choosing another character, on a map, standing on a cell, the map drawn: the bot playing it, as a group's members are (D437).</summary>
-    public async Task<(TestConnection Connection, BotActor Bot)> EnterAsync(int cell, long mapId, GameAccount account, long characterId, string name)
+    public async Task<(TestConnection Connection, BotActor Bot)> EnterAsync(int cell, long mapId, GameAccount account, long characterId, string name, int level = 200)
     {
         ArgumentNullException.ThrowIfNull(account);
 
         var connection = Connect(account);
 
-        connection.Server(Chosen(characterId, name));
+        connection.Server(Chosen(characterId, name, level));
         Assert.True(Bots.TryGet(new CharacterKey(account.Id, characterId), out var bot));
         connection.Server(new MapCurrentEvent { MapId = mapId });
         connection.Server(Information(cell, mapId, characterId));

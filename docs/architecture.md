@@ -432,6 +432,12 @@ The bots run in `D3B.Bot`: what each part does today, with the decisions that ma
   the stacks the bank left, such as a quest's objects, left for the rest of that unloading (D457); the stacks an exchange
   left are offered no more in that unloading, the round telling the follower which and whether the food goes
   (`GroupCollect`), and a profile depositing all but what is worn (`BotActivity.DepositsAll`) banks the group's food too (D459).
+  What the master's profile keeps (`BotActivity.Keeps`, the round's `GroupCollect.Kept`) neither the master deposits nor a
+  follower gives, and a profile watching no pods may still take the group's bank (`BotActivity.BanksTheGroup`), each member full
+  as its `IsFull` says of it, then hears of it (`BotActivity.OnGroupUnloaded`): a dungeon's, keys and keyring kept (D529).
+  A master in a dungeon says which (`BotActivity.DungeonInside`): the follower goes to its door and talks to its keeper with
+  its own key or keyring, waits there without one or turned away, and inside a dungeon its master left talks to the exit's NPC
+  of its map (D528, `DungeonDoors`, shared with the dungeon's own activity).
 - **Fighting** (D236, D241, D245 to D249, D259), in `D3B.Bot.Fighting`, registered by `FightingModule`: `FightActivity`, its
   settings `FightSettings`. Each step heals, then on a map of the zone walks onto the cell of the nearest group the
   settings allow, monsters or families of monsters chosen, a family a race (`ChosenMonsters`), with no judgement of its
@@ -457,7 +463,7 @@ The bots run in `D3B.Bot`: what each part does today, with the decisions that ma
   settings lead to: the ground's mini-map, its maps, monsters and their levels, the nearest bank (`NearestBank`, shared
   with harvesting's) and isolated maps, and the place for each character (D246). Harvesting's fights are the AI's as its
   profile's "The AI fights" says (D235).
-- **Dungeons** (D520 to D527), in `D3B.Bot.Dungeons`, registered by `DungeonsModule` as `dungeon`: `DungeonActivity`, its
+- **Dungeons** (D520 to D529), in `D3B.Bot.Dungeons`, registered by `DungeonsModule` as `dungeon`: `DungeonActivity`, its
   settings `DungeonSettings`, the dungeons chosen in the form as `SettingKind.Dungeon` (`GameReferences`, each with the least
   level it lets in from). It reads the dungeons of the pack's `DungeonCatalog` the profile
   lists, and each step does what the character's map wants: in a room of one of them, that one is run; else the next of the list
@@ -473,6 +479,11 @@ The bots run in `D3B.Bot`: what each part does today, with the decisions that ma
   the dungeon for the run. With every room won, or on the map of the dungeon's sub-area the boss's win leads to, it talks to the NPCs there until one lets it out by a reply of the pack's exits,
   and counts the run (D526), done once the profile's `Runs` are. Out of every dungeon it banks the loot of its fights, keys and
   the keyring kept, once its weight and the most a run of the next dungeon brought reach the banking share (D527); never inside.
+  The keeper's and the exit's talks are `DungeonDoors`', which a follower uses too. A master leaves out of its turn a dungeon one
+  of its followers connected and not left behind cannot enter, its level or its key, or whose keeper turned one away
+  (`FollowActivity.TurnedAwayFrom`) (D528, the host's `Bots`); it says which
+  dungeon it is in (`DungeonInside`) for its followers to enter behind it; and its group banks together, as each member is full by
+  the same estimate, every member keeping its keys and the keyring (D529, `BanksTheGroup`, `Keeps`).
 - **The zaaps' discovery** (D499), in `D3B.Bot.Zaaps`, registered by `ZaapsModule`: `ZaapDiscoveryActivity`, the "Discover
   the zaaps" activity, with no setting. It seeks the activated zaaps of the pack's atlas the character does not know as it
   starts (`ZaapTargets`); each step finds the nearest left by the world's path with the zaaps known so far, travels there,
