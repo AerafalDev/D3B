@@ -958,3 +958,8 @@ or refines another says so in its own entry. Add a line here with every new deci
   - Stage 2 of 4 of the redesign, taken by the lead under the owner's delegation; the tab's header, the home page's cards.
 - [D515](decisions/d515-library-by-kind.md#d515-the-library-groups-the-project-by-kind-its-folders-on-demand-and-the-profiles-header-speaks-of-settings) The Library groups the project by kind, its folders on demand, and the profile's header speaks of settings (2026-11-25)
   - Stage 3 of 4 of the redesign, taken by the lead under the owner's delegation; the World's view makes a route or a zone.
+
+## Movement and banking, a walk refused with its confirmation (D517)
+
+- [D517](decisions/d517-miner-refused-door.md#d517-a-walk-refused-after-it-was-shown-has-not-arrived-and-a-banks-journey-whose-way-failed-is-not-travelled-not-without-a-bank) A walk refused after it was shown has not arrived, and a bank's journey whose way failed is not travelled, not without a bank (2026-11-25)
+  - Every journey failed once a way failed on it, a refused walk's way tried again, ending no run on a failed unloading.

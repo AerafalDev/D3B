@@ -245,17 +245,21 @@ public static class MapWalk
             && (message is MapMovementEvent movement && movement.ActorId == self || message is MapMovementRefusedEvent));
         var arrival = context.Expect((side, message, _) => side is RelayDirection.FromServer && message is MapMovementConfirmResponse);
 
+        // Measured on the owner's miner of 24 November (D517): the server showed the walk, then sent its refusal and the confirmation's
+        // response in one batch. The refusal says where it holds the character, so the walk did not arrive, confirmed or not.
+        var refusal = context.Expect((side, message, _) => side is RelayDirection.FromServer && message is MapMovementRefusedEvent);
+
         BotLog.Walking(context.Log, self, path.Start, path.End, path.Steps);
         await context.SendAsync(Request(mapId, path), cancellationToken).ConfigureAwait(false);
 
-        var outcome = await AnswerAsync(context, answer, arrival, path, cancellationToken).ConfigureAwait(false);
+        var outcome = await AnswerAsync(context, answer, arrival, refusal, path, cancellationToken).ConfigureAwait(false);
 
         BotLog.Walked(context.Log, self, path.End, outcome);
 
         return outcome;
     }
 
-    private static async Task<WalkOutcome> AnswerAsync(BotContext context, GameExpectation answer, GameExpectation arrival, CellPath path, CancellationToken cancellationToken)
+    private static async Task<WalkOutcome> AnswerAsync(BotContext context, GameExpectation answer, GameExpectation arrival, GameExpectation refusal, CellPath path, CancellationToken cancellationToken)
     {
         var answered = await answer.WaitAsync(context.Delays.Answer, cancellationToken).ConfigureAwait(false);
 
@@ -267,8 +271,9 @@ public static class MapWalk
 
         var arrived = await arrival.WaitAsync(context.Delays.Confirmation(path.Steps), cancellationToken).ConfigureAwait(false);
 
+        // The loop matches a message once the state took it in, in the order they came: a refusal before the response is seen by now.
         if (arrived is not null)
-            return WalkOutcome.Arrived;
+            return await refusal.WaitAsync(TimeSpan.Zero, cancellationToken).ConfigureAwait(false) is null ? WalkOutcome.Arrived : WalkOutcome.Refused;
 
         await context.SettleWalkAsync().ConfigureAwait(false);
 

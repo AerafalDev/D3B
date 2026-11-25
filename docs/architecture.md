@@ -135,7 +135,8 @@ The bots run in `D3B.Bot`: what each part does today, with the decisions that ma
   not ready, which a follower's client sends by itself as it joins its master's fight (D445).
 - **Walking on a map** (D69): `MapWalk`, in `D3B.Bot.Movement`, finds the path in the pack's cells, sends its turning
   points, and is over once the server answers the client's confirmation; a refusal, no answer or no confirmation in time
-  ends it too, and the character walking already makes it busy. A walk the client does not confirm leaves the character
+  ends it too, a refusal coming after the walk was shown, before the confirmation's response, making it refused (D517), and
+  the character walking already makes it busy. A walk the client does not confirm leaves the character
   on its last cell, where the server has it (`BotContext.SettleWalkAsync`, D85); the server may still hold it, and
   refuses what is not a walk from there, so a step aside comes first (`MapWalk.ReleaseHeldWalkAsync`, D89), and a refusal
   does not let it go: only a walk shown does (D456). Out of a fight a refusal holds it too, the client's confirmation of a
@@ -183,7 +184,9 @@ The bots run in `D3B.Bot`: what each part does today, with the decisions that ma
   asked at the walk's end with the state the character came onto it with and the state now (`stayOn`, D495).
 - **Banking** (D79, D80): `Banking`, in `D3B.Bot.Banks`, goes where a banker stands, the nearest bank's inside still
   sought, talks to him, gives the reply of his the question offers, puts the stacks asked for in by one request and the
-  kamas by another, and leaves. `BankDirectory`, one per host and shared by its bots, holds the banks' insides
+  kamas by another, and leaves. A journey there that says no path while a way to a bank leads from where the character
+  stands, a way that failed on it left out, is not travelled, not without a bank, so the caller tries again (D517).
+  `BankDirectory`, one per host and shared by its bots, holds the banks' insides
   (`WorldInsides`), the bankers and their replies, the insides the server showed holding no banker, and the maps where a
   banker's question offered none of the bank's replies, refused for the run (D251). Walking, using,
   changing maps and travelling answer `Busy` during a dialog or an exchange, which the server refuses a walk during.
