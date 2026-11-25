@@ -59,6 +59,7 @@ internal sealed partial class MainViewModel : ObservableObject
     private IUndoable? _followed;
     private List<SearchItem> _maps = [];
     private string? _detailed;
+    private bool _tabsRestored;
     private System.Globalization.CultureInfo? _mapsCulture;
 
     /// <summary>Gets the dialog the window shows over the studio.</summary>
@@ -314,6 +315,17 @@ internal sealed partial class MainViewModel : ObservableObject
         };
         World.PropertyChanged += (_, e) => FollowEditor(e.PropertyName);
         Editor.PropertyChanged += (_, e) => FollowEditor(e.PropertyName);
+        Editor.Items.CollectionChanged += (_, _) => RememberTabs();
+        Editor.PropertyChanged += (_, e) =>
+        {
+            if (e.PropertyName is nameof(EditorTabs.Selected))
+                RememberTabs();
+        };
+        Bottom.PropertyChanged += (_, e) =>
+        {
+            if (e.PropertyName is nameof(BottomPanelViewModel.Tab))
+                RememberTabs();
+        };
     }
 
     // The Library's view keeps the Outliner as the World left it: it is not shown there.
@@ -397,6 +409,7 @@ internal sealed partial class MainViewModel : ObservableObject
 
         Bottom.Refresh(services);
         RefreshStatusBar(status, services, build);
+        RestoreTabs();
 
         if (Editor.IsShown(StatisticsTab))
             Statistics.Refresh(services);
@@ -654,6 +667,77 @@ internal sealed partial class MainViewModel : ObservableObject
         Outliner.Relabel();
         Editor.Refresh();
         OnPropertyChanged(nameof(VersionText));
+    }
+
+    // The tabs come back once the host runs, whose profiles, characters and pages most of them show; a tab whose subject is gone, a
+    // profile deleted, a character forgotten, a module's page no longer registered, falls back quietly (D542).
+    private void RestoreTabs()
+    {
+        if (_tabsRestored || !IsRunning || !_pagesRead)
+            return;
+
+        _tabsRestored = true;
+
+        if (_preferences?.Tabs is not { } tabs)
+            return;
+
+        foreach (var key in tabs.Open)
+            Reopen(key);
+
+        Editor.Select(Editor.Items.FirstOrDefault(tab => tab.Key == tabs.Shown) ?? Editor.Items.LastOrDefault());
+
+        // The panel's tab as it was left, without opening the panel: the Sequencer needs a route selected, the protocol the advanced tools.
+        if (Enum.TryParse<BottomTab>(tabs.Bottom, out var bottom) && Enum.IsDefined(bottom) && bottom is not BottomTab.Sequencer && (bottom is not BottomTab.Protocol || Layout.AdvancedTools))
+            Bottom.Choose(bottom);
+
+        RememberTabs();
+    }
+
+    private void Reopen(string key)
+    {
+        switch (key)
+        {
+            case HomeTab:
+                ShowHome();
+                break;
+            case SettingsTab:
+                ShowSettings();
+                break;
+            case StatisticsTab:
+                ShowStatistics();
+                break;
+            case WorldTab:
+                ShowWorld();
+                break;
+            case var _ when key.StartsWith(CharacterTab, StringComparison.Ordinal):
+                if (CharacterKeys.Parse(key[CharacterTab.Length..]) is { } character && (BotOf(character) is not null || Characters.LineOf(character) is not null))
+                    OpenCharacter(character);
+
+                break;
+            case var _ when key.StartsWith(ProfileTab, StringComparison.Ordinal):
+                if (Profiles.Find(key[ProfileTab.Length..]) is not null)
+                    OpenProfile(key[ProfileTab.Length..]);
+
+                break;
+            case var _ when key.StartsWith(SequenceTab, StringComparison.Ordinal):
+                OpenSequence(key[SequenceTab.Length..]);
+                break;
+            default:
+                ShowPage(Pages.FirstOrDefault(page => page.Route == key));
+                break;
+        }
+    }
+
+    // Written once the tabs came back: before, the studio's empty editor would forget the tabs of the last run.
+    private void RememberTabs()
+    {
+        if (!_tabsRestored)
+            return;
+
+        // A new profile not saved yet has no file to open again.
+        var open = Editor.Items.Select(tab => tab.Key).Where(key => !key.StartsWith(ProfileTab, StringComparison.Ordinal) || Profiles.Find(key[ProfileTab.Length..]) is { IsNew: false }).ToList();
+
+        _preferences?.RememberTabs(new StudioTabsState(open, Editor.Selected?.Key, Bottom.Tab is BottomTab.Journal ? null : Bottom.Tab.ToString()));
     }
 
     private void RefreshStatusBar(HostStatus status, IServiceProvider? services, string? build)

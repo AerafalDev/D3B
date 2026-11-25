@@ -757,7 +757,9 @@ bottom panel and the Details hidden until needed.
   menu, which gives the default layout back; Ctrl B shows or hides the side bar, Ctrl J the bottom panel, Ctrl Alt B the Details,
   Ctrl Space shows the Library. A drag's end, a part shown or hidden, the side bar's view and the advanced tools are remembered
   in `app.json` (`StudioLayoutState.Shown`, `View`, `AdvancedTools`), the default never written, the Details never kept (a
-  selection shows them, so the next start would open them on nothing); an older file's widths are
+  selection shows them, so the next start would open them on nothing); the editor's tabs, the one shown and the bottom panel's tab
+  too (D542, `StudioTabsState`, `AppPreferences.Tabs`), back once the host runs and its pages are read (`MainViewModel.RestoreTabs`),
+  a tab whose subject is gone left out quietly, nothing written before they came back; an older file's widths are
   kept, its side bar hidden only if it closed both the Outliner and the assets, its other parts on the new defaults.
 - **Advanced tools** (D513, `StudioLayout.AdvancedTools`), off by default, checked in the View menu, the search and the settings'
   Interface section: the Protocol tab of the bottom panel only with them (`BottomPanelViewModel.HasProtocol`); turned off
@@ -999,7 +1001,7 @@ bottom panel and the Details hidden until needed.
 - **Translation**: `Localizer`, in `D3B.App.Localization`, reads `Strings.resx` in English and `Strings.fr.resx` in
   French; the language starts as the system's, or the one the app was left in, and changes live, the views binding
   through `{l:Tr Key}`.
-- **Preferences** (`AppPreferences`): the language and the studio's layout (`StudioLayoutState`), remembered in
+- **Preferences** (`AppPreferences`): the language, the studio's layout (`StudioLayoutState`) and its tabs (`StudioTabsState`, D542), remembered in
   `%LOCALAPPDATA%\D3B\app.json`, read before the window shows (D101, D162); and the host's settings the settings' tab changed, by their configuration's keys and values,
   such as `Delays:Display` or `Network:Captures:Game`, one given back its default forgotten (D151). It also
   remembers that the notice of the recorded sessions was read (`CapturesNoticeSeen`, D409): the home page shows
