@@ -97,10 +97,8 @@
   </Folder>
   <Folder Name="/scripts/icons/">
     <File Path="scripts/icons/IconsCommand.cs" />
-    <File Path="scripts/icons/IconShape.cs" />
-    <File Path="scripts/icons/SvgIcon.cs" />
+    <File Path="scripts/icons/LucideIcon.cs" />
     <File Path="scripts/icons/SvgPath.cs" />
-    <File Path="scripts/icons/SvgStyle.cs" />
   </Folder>
   <Folder Name="/scripts/inspect/">
     <File Path="scripts/inspect/BundleBlock.cs" />

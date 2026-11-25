@@ -86,7 +86,7 @@ installed it, else in `%LOCALAPPDATA%\Ankama\Dofus-dofus3`, and write under `%LO
 | `report.cs` | Unpacks and checks a bug report (a `.d3breport`), prints its message, then describes it; `--replay` replays its fights. |
 | `fights.cs` | Replays the captured fights and compares what D3B foresees of each cast with what the server did. |
 | `docs.cs` | Finds the links of the Markdown files whose file or heading does not exist. |
-| `icons.cs` | Takes the IntelliJ Platform icons the studio draws, checks their Apache 2.0 notice, writes them for Avalonia. |
+| `icons.cs` | Takes the Lucide icons the studio draws, as the next line's, at a pinned version, checks their ISC license, writes them for Avalonia under the app's keys (D532). |
 
 The repository's local tools, `dotnet-ef` for the database's migrations and Velopack's `vpk` for the installer, are
 pinned in [`.config/dotnet-tools.json`](../.config/dotnet-tools.json):

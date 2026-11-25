@@ -251,7 +251,7 @@
                 <ToolTip.Tip>
                     <c:KeyTip Keys="Ctrl B" Text="{l:Tr PanelSide}" />
                 </ToolTip.Tip>
-                <c:Icon Data="{StaticResource PanelLeftGeometry}" />
+                <c:Icon Drawing="{StaticResource Layout.PanelLeft}" />
             </Button>
             <Button
                 AutomationProperties.Name="{l:Tr PanelBottom}"
@@ -261,7 +261,7 @@
                 <ToolTip.Tip>
                     <c:KeyTip Keys="Ctrl J" Text="{l:Tr PanelBottom}" />
                 </ToolTip.Tip>
-                <c:Icon Data="{StaticResource PanelBottomGeometry}" />
+                <c:Icon Drawing="{StaticResource Layout.PanelBottom}" />
             </Button>
             <Button
                 AutomationProperties.Name="{l:Tr PanelDetails}"
@@ -272,7 +272,7 @@
                 <ToolTip.Tip>
                     <c:KeyTip Keys="Ctrl Alt B" Text="{l:Tr PanelDetails}" />
                 </ToolTip.Tip>
-                <c:Icon Data="{StaticResource PanelRightGeometry}" />
+                <c:Icon Drawing="{StaticResource Layout.PanelRight}" />
             </Button>
         </StackPanel>
     </shadui:Window.RightWindowTitleBarContent>

@@ -1,0 +1,3161 @@
+<ResourceDictionary xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <!--  Written by scripts/icons.cs: run it again rather than edit this file (D331, D532). Lucide's icons, as the next
+         line draws them, from lucide-icons/lucide 1.72.0, under Lucide's ISC license, which THIRD-PARTY-NOTICES.md
+         holds whole; each key is the app's own, drawn on a grid of 16, Lucide's 24 scaled.  -->
+
+    <!--  folder-plus  -->
+    <DrawingGroup x:Key="Actions.NewFolder">
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <PathGeometry FillRule="NonZero" Figures="M 12 10 v 6">
+                    <PathGeometry.Transform>
+                        <MatrixTransform Matrix="0.666667,0,0,0.666667,0,0" />
+                    </PathGeometry.Transform>
+                </PathGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFCED0D6" LineCap="Round" LineJoin="Round" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <PathGeometry FillRule="NonZero" Figures="M 9 13 h 6">
+                    <PathGeometry.Transform>
+                        <MatrixTransform Matrix="0.666667,0,0,0.666667,0,0" />
+                    </PathGeometry.Transform>
+                </PathGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFCED0D6" LineCap="Round" LineJoin="Round" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <PathGeometry FillRule="NonZero" Figures="M 20 20 a 2 2 0 0 0 2 -2 V 8 a 2 2 0 0 0 -2 -2 h -7.9 a 2 2 0 0 1 -1.69 -0.9 L 9.6 3.9 A 2 2 0 0 0 7.93 3 H 4 a 2 2 0 0 0 -2 2 v 13 a 2 2 0 0 0 2 2 Z">
+                    <PathGeometry.Transform>
+                        <MatrixTransform Matrix="0.666667,0,0,0.666667,0,0" />
+                    </PathGeometry.Transform>
+                </PathGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFCED0D6" LineCap="Round" LineJoin="Round" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+    </DrawingGroup>
+
+    <!--  square-dashed  -->
+    <DrawingGroup x:Key="Actions.SelectAll">
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <PathGeometry FillRule="NonZero" Figures="M 5 3 a 2 2 0 0 0 -2 2">
+                    <PathGeometry.Transform>
+                        <MatrixTransform Matrix="0.666667,0,0,0.666667,0,0" />
+                    </PathGeometry.Transform>
+                </PathGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFCED0D6" LineCap="Round" LineJoin="Round" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <PathGeometry FillRule="NonZero" Figures="M 19 3 a 2 2 0 0 1 2 2">
+                    <PathGeometry.Transform>
+                        <MatrixTransform Matrix="0.666667,0,0,0.666667,0,0" />
+                    </PathGeometry.Transform>
+                </PathGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFCED0D6" LineCap="Round" LineJoin="Round" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <PathGeometry FillRule="NonZero" Figures="M 21 19 a 2 2 0 0 1 -2 2">
+                    <PathGeometry.Transform>
+                        <MatrixTransform Matrix="0.666667,0,0,0.666667,0,0" />
+                    </PathGeometry.Transform>
+                </PathGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFCED0D6" LineCap="Round" LineJoin="Round" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <PathGeometry FillRule="NonZero" Figures="M 5 21 a 2 2 0 0 1 -2 -2">
+                    <PathGeometry.Transform>
+                        <MatrixTransform Matrix="0.666667,0,0,0.666667,0,0" />
+                    </PathGeometry.Transform>
+                </PathGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFCED0D6" LineCap="Round" LineJoin="Round" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <PathGeometry FillRule="NonZero" Figures="M 9 3 h 1">
+                    <PathGeometry.Transform>
+                        <MatrixTransform Matrix="0.666667,0,0,0.666667,0,0" />
+                    </PathGeometry.Transform>
+                </PathGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFCED0D6" LineCap="Round" LineJoin="Round" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <PathGeometry FillRule="NonZero" Figures="M 9 21 h 1">
+                    <PathGeometry.Transform>
+                        <MatrixTransform Matrix="0.666667,0,0,0.666667,0,0" />
+                    </PathGeometry.Transform>
+                </PathGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFCED0D6" LineCap="Round" LineJoin="Round" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <PathGeometry FillRule="NonZero" Figures="M 14 3 h 1">
+                    <PathGeometry.Transform>
+                        <MatrixTransform Matrix="0.666667,0,0,0.666667,0,0" />
+                    </PathGeometry.Transform>
+                </PathGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFCED0D6" LineCap="Round" LineJoin="Round" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <PathGeometry FillRule="NonZero" Figures="M 14 21 h 1">
+                    <PathGeometry.Transform>
+                        <MatrixTransform Matrix="0.666667,0,0,0.666667,0,0" />
+                    </PathGeometry.Transform>
+                </PathGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFCED0D6" LineCap="Round" LineJoin="Round" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <PathGeometry FillRule="NonZero" Figures="M 3 9 v 1">
+                    <PathGeometry.Transform>
+                        <MatrixTransform Matrix="0.666667,0,0,0.666667,0,0" />
+                    </PathGeometry.Transform>
+                </PathGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFCED0D6" LineCap="Round" LineJoin="Round" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <PathGeometry FillRule="NonZero" Figures="M 21 9 v 1">
+                    <PathGeometry.Transform>
+                        <MatrixTransform Matrix="0.666667,0,0,0.666667,0,0" />
+                    </PathGeometry.Transform>
+                </PathGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFCED0D6" LineCap="Round" LineJoin="Round" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <PathGeometry FillRule="NonZero" Figures="M 3 14 v 1">
+                    <PathGeometry.Transform>
+                        <MatrixTransform Matrix="0.666667,0,0,0.666667,0,0" />
+                    </PathGeometry.Transform>
+                </PathGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFCED0D6" LineCap="Round" LineJoin="Round" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <PathGeometry FillRule="NonZero" Figures="M 21 14 v 1">
+                    <PathGeometry.Transform>
+                        <MatrixTransform Matrix="0.666667,0,0,0.666667,0,0" />
+                    </PathGeometry.Transform>
+                </PathGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFCED0D6" LineCap="Round" LineJoin="Round" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+    </DrawingGroup>
+
+    <!--  timer  -->
+    <DrawingGroup x:Key="Actions.StopWatch">
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <PathGeometry FillRule="NonZero" Figures="M10,2 L14,2">
+                    <PathGeometry.Transform>
+                        <MatrixTransform Matrix="0.666667,0,0,0.666667,0,0" />
+                    </PathGeometry.Transform>
+                </PathGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFCED0D6" LineCap="Round" LineJoin="Round" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <PathGeometry FillRule="NonZero" Figures="M12,14 L15,11">
+                    <PathGeometry.Transform>
+                        <MatrixTransform Matrix="0.666667,0,0,0.666667,0,0" />
+                    </PathGeometry.Transform>
+                </PathGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFCED0D6" LineCap="Round" LineJoin="Round" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <PathGeometry FillRule="NonZero" Figures="M 4 14 A 8 8 0 1 1 20 14 A 8 8 0 1 1 4 14 Z">
+                    <PathGeometry.Transform>
+                        <MatrixTransform Matrix="0.666667,0,0,0.666667,0,0" />
+                    </PathGeometry.Transform>
+                </PathGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFCED0D6" LineCap="Round" LineJoin="Round" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+    </DrawingGroup>
+
+    <!--  activity  -->
+    <DrawingGroup x:Key="Debugger.ThreadRunning">
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <PathGeometry FillRule="NonZero" Figures="M 22 12 h -2.48 a 2 2 0 0 0 -1.93 1.46 l -2.35 8.36 a 0.25 0.25 0 0 1 -0.48 0 L 9.24 2.18 a 0.25 0.25 0 0 0 -0.48 0 l -2.35 8.36 A 2 2 0 0 1 4.49 12 H 2">
+                    <PathGeometry.Transform>
+                        <MatrixTransform Matrix="0.666667,0,0,0.666667,0,0" />
+                    </PathGeometry.Transform>
+                </PathGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFCED0D6" LineCap="Round" LineJoin="Round" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+    </DrawingGroup>
+
+    <!--  eye  -->
+    <DrawingGroup x:Key="Debugger.Watch">
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <PathGeometry FillRule="NonZero" Figures="M 2.062 12.348 a 1 1 0 0 1 0 -0.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 0.696 10.75 10.75 0 0 1 -19.876 0">
+                    <PathGeometry.Transform>
+                        <MatrixTransform Matrix="0.666667,0,0,0.666667,0,0" />
+                    </PathGeometry.Transform>
+                </PathGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFCED0D6" LineCap="Round" LineJoin="Round" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <PathGeometry FillRule="NonZero" Figures="M 9 12 A 3 3 0 1 1 15 12 A 3 3 0 1 1 9 12 Z">
+                    <PathGeometry.Transform>
+                        <MatrixTransform Matrix="0.666667,0,0,0.666667,0,0" />
+                    </PathGeometry.Transform>
+                </PathGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFCED0D6" LineCap="Round" LineJoin="Round" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+    </DrawingGroup>
+
+    <!--  plus  -->
+    <DrawingGroup x:Key="General.Add">
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <PathGeometry FillRule="NonZero" Figures="M 5 12 h 14">
+                    <PathGeometry.Transform>
+                        <MatrixTransform Matrix="0.666667,0,0,0.666667,0,0" />
+                    </PathGeometry.Transform>
+                </PathGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFCED0D6" LineCap="Round" LineJoin="Round" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <PathGeometry FillRule="NonZero" Figures="M 12 5 v 14">
+                    <PathGeometry.Transform>
+                        <MatrixTransform Matrix="0.666667,0,0,0.666667,0,0" />
+                    </PathGeometry.Transform>
+                </PathGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFCED0D6" LineCap="Round" LineJoin="Round" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+    </DrawingGroup>
+
+    <!--  chevron-down  -->
+    <DrawingGroup x:Key="General.ChevronDown">
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <PathGeometry FillRule="NonZero" Figures="m 6 9 6 6 6 -6">
+                    <PathGeometry.Transform>
+                        <MatrixTransform Matrix="0.666667,0,0,0.666667,0,0" />
+                    </PathGeometry.Transform>
+                </PathGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFCED0D6" LineCap="Round" LineJoin="Round" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+    </DrawingGroup>
+
+    <!--  chevron-right  -->
+    <DrawingGroup x:Key="General.ChevronRight">
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <PathGeometry FillRule="NonZero" Figures="m 9 18 6 -6 -6 -6">
+                    <PathGeometry.Transform>
+                        <MatrixTransform Matrix="0.666667,0,0,0.666667,0,0" />
+                    </PathGeometry.Transform>
+                </PathGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFCED0D6" LineCap="Round" LineJoin="Round" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+    </DrawingGroup>
+
+    <!--  chevron-up  -->
+    <DrawingGroup x:Key="General.ChevronUp">
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <PathGeometry FillRule="NonZero" Figures="m 18 15 -6 -6 -6 6">
+                    <PathGeometry.Transform>
+                        <MatrixTransform Matrix="0.666667,0,0,0.666667,0,0" />
+                    </PathGeometry.Transform>
+                </PathGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFCED0D6" LineCap="Round" LineJoin="Round" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+    </DrawingGroup>
+
+    <!--  x  -->
+    <DrawingGroup x:Key="General.Close">
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <PathGeometry FillRule="NonZero" Figures="M 18 6 6 18">
+                    <PathGeometry.Transform>
+                        <MatrixTransform Matrix="0.666667,0,0,0.666667,0,0" />
+                    </PathGeometry.Transform>
+                </PathGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFCED0D6" LineCap="Round" LineJoin="Round" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <PathGeometry FillRule="NonZero" Figures="m 6 6 12 12">
+                    <PathGeometry.Transform>
+                        <MatrixTransform Matrix="0.666667,0,0,0.666667,0,0" />
+                    </PathGeometry.Transform>
+                </PathGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFCED0D6" LineCap="Round" LineJoin="Round" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+    </DrawingGroup>
+
+    <!--  chevrons-down-up  -->
+    <DrawingGroup x:Key="General.CollapseAll">
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <PathGeometry FillRule="NonZero" Figures="m 7 20 5 -5 5 5">
+                    <PathGeometry.Transform>
+                        <MatrixTransform Matrix="0.666667,0,0,0.666667,0,0" />
+                    </PathGeometry.Transform>
+                </PathGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFCED0D6" LineCap="Round" LineJoin="Round" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <PathGeometry FillRule="NonZero" Figures="m 7 4 5 5 5 -5">
+                    <PathGeometry.Transform>
+                        <MatrixTransform Matrix="0.666667,0,0,0.666667,0,0" />
+                    </PathGeometry.Transform>
+                </PathGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFCED0D6" LineCap="Round" LineJoin="Round" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+    </DrawingGroup>
+
+    <!--  copy  -->
+    <DrawingGroup x:Key="General.Copy">
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <PathGeometry FillRule="NonZero" Figures="M 10 8 H 20 A 2 2 0 0 1 22 10 V 20 A 2 2 0 0 1 20 22 H 10 A 2 2 0 0 1 8 20 V 10 A 2 2 0 0 1 10 8 Z">
+                    <PathGeometry.Transform>
+                        <MatrixTransform Matrix="0.666667,0,0,0.666667,0,0" />
+                    </PathGeometry.Transform>
+                </PathGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFCED0D6" LineCap="Round" LineJoin="Round" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <PathGeometry FillRule="NonZero" Figures="M 4 16 c -1.1 0 -2 -0.9 -2 -2 V 4 c 0 -1.1 0.9 -2 2 -2 h 10 c 1.1 0 2 0.9 2 2">
+                    <PathGeometry.Transform>
+                        <MatrixTransform Matrix="0.666667,0,0,0.666667,0,0" />
+                    </PathGeometry.Transform>
+                </PathGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFCED0D6" LineCap="Round" LineJoin="Round" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+    </DrawingGroup>
+
+    <!--  trash  -->
+    <DrawingGroup x:Key="General.Delete">
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <PathGeometry FillRule="NonZero" Figures="M 10 11 v 6">
+                    <PathGeometry.Transform>
+                        <MatrixTransform Matrix="0.666667,0,0,0.666667,0,0" />
+                    </PathGeometry.Transform>
+                </PathGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFCED0D6" LineCap="Round" LineJoin="Round" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <PathGeometry FillRule="NonZero" Figures="M 14 11 v 6">
+                    <PathGeometry.Transform>
+                        <MatrixTransform Matrix="0.666667,0,0,0.666667,0,0" />
+                    </PathGeometry.Transform>
+                </PathGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFCED0D6" LineCap="Round" LineJoin="Round" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <PathGeometry FillRule="NonZero" Figures="M 19 6 v 14 a 2 2 0 0 1 -2 2 H 7 a 2 2 0 0 1 -2 -2 V 6">
+                    <PathGeometry.Transform>
+                        <MatrixTransform Matrix="0.666667,0,0,0.666667,0,0" />
+                    </PathGeometry.Transform>
+                </PathGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFCED0D6" LineCap="Round" LineJoin="Round" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <PathGeometry FillRule="NonZero" Figures="M 3 6 h 18">
+                    <PathGeometry.Transform>
+                        <MatrixTransform Matrix="0.666667,0,0,0.666667,0,0" />
+                    </PathGeometry.Transform>
+                </PathGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFCED0D6" LineCap="Round" LineJoin="Round" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <PathGeometry FillRule="NonZero" Figures="M 8 6 V 4 a 2 2 0 0 1 2 -2 h 4 a 2 2 0 0 1 2 2 v 2">
+                    <PathGeometry.Transform>
+                        <MatrixTransform Matrix="0.666667,0,0,0.666667,0,0" />
+                    </PathGeometry.Transform>
+                </PathGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFCED0D6" LineCap="Round" LineJoin="Round" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+    </DrawingGroup>
+
+    <!--  pencil  -->
+    <DrawingGroup x:Key="General.Edit">
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <PathGeometry FillRule="NonZero" Figures="M 21.174 6.812 a 1 1 0 0 0 -3.986 -3.987 L 3.842 16.174 a 2 2 0 0 0 -0.5 0.83 l -1.321 4.352 a 0.5 0.5 0 0 0 0.623 0.622 l 4.353 -1.32 a 2 2 0 0 0 0.83 -0.497 z">
+                    <PathGeometry.Transform>
+                        <MatrixTransform Matrix="0.666667,0,0,0.666667,0,0" />
+                    </PathGeometry.Transform>
+                </PathGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFCED0D6" LineCap="Round" LineJoin="Round" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <PathGeometry FillRule="NonZero" Figures="m 15 5 4 4">
+                    <PathGeometry.Transform>
+                        <MatrixTransform Matrix="0.666667,0,0,0.666667,0,0" />
+                    </PathGeometry.Transform>
+                </PathGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFCED0D6" LineCap="Round" LineJoin="Round" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+    </DrawingGroup>
+
+    <!--  app-window  -->
+    <DrawingGroup x:Key="General.EditorOnly">
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <PathGeometry FillRule="NonZero" Figures="M 4 4 H 20 A 2 2 0 0 1 22 6 V 18 A 2 2 0 0 1 20 20 H 4 A 2 2 0 0 1 2 18 V 6 A 2 2 0 0 1 4 4 Z">
+                    <PathGeometry.Transform>
+                        <MatrixTransform Matrix="0.666667,0,0,0.666667,0,0" />
+                    </PathGeometry.Transform>
+                </PathGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFCED0D6" LineCap="Round" LineJoin="Round" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <PathGeometry FillRule="NonZero" Figures="M 10 4 v 4">
+                    <PathGeometry.Transform>
+                        <MatrixTransform Matrix="0.666667,0,0,0.666667,0,0" />
+                    </PathGeometry.Transform>
+                </PathGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFCED0D6" LineCap="Round" LineJoin="Round" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <PathGeometry FillRule="NonZero" Figures="M 2 8 h 20">
+                    <PathGeometry.Transform>
+                        <MatrixTransform Matrix="0.666667,0,0,0.666667,0,0" />
+                    </PathGeometry.Transform>
+                </PathGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFCED0D6" LineCap="Round" LineJoin="Round" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <PathGeometry FillRule="NonZero" Figures="M 6 4 v 4">
+                    <PathGeometry.Transform>
+                        <MatrixTransform Matrix="0.666667,0,0,0.666667,0,0" />
+                    </PathGeometry.Transform>
+                </PathGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFCED0D6" LineCap="Round" LineJoin="Round" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+    </DrawingGroup>
+
+    <!--  chevrons-up-down  -->
+    <DrawingGroup x:Key="General.ExpandAll">
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <PathGeometry FillRule="NonZero" Figures="m 7 15 5 5 5 -5">
+                    <PathGeometry.Transform>
+                        <MatrixTransform Matrix="0.666667,0,0,0.666667,0,0" />
+                    </PathGeometry.Transform>
+                </PathGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFCED0D6" LineCap="Round" LineJoin="Round" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <PathGeometry FillRule="NonZero" Figures="m 7 9 5 -5 5 5">
+                    <PathGeometry.Transform>
+                        <MatrixTransform Matrix="0.666667,0,0,0.666667,0,0" />
+                    </PathGeometry.Transform>
+                </PathGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFCED0D6" LineCap="Round" LineJoin="Round" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+    </DrawingGroup>
+
+    <!--  file-output  -->
+    <DrawingGroup x:Key="General.Export">
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <PathGeometry FillRule="NonZero" Figures="M 4.226 20.925 A 2 2 0 0 0 6 22 h 12 a 2 2 0 0 0 2 -2 V 8 a 2.4 2.4 0 0 0 -0.706 -1.706 l -3.588 -3.588 A 2.4 2.4 0 0 0 14 2 H 6 a 2 2 0 0 0 -2 2 v 3.127">
+                    <PathGeometry.Transform>
+                        <MatrixTransform Matrix="0.666667,0,0,0.666667,0,0" />
+                    </PathGeometry.Transform>
+                </PathGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFCED0D6" LineCap="Round" LineJoin="Round" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <PathGeometry FillRule="NonZero" Figures="M 14 2 v 5 a 1 1 0 0 0 1 1 h 5">
+                    <PathGeometry.Transform>
+                        <MatrixTransform Matrix="0.666667,0,0,0.666667,0,0" />
+                    </PathGeometry.Transform>
+                </PathGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFCED0D6" LineCap="Round" LineJoin="Round" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <PathGeometry FillRule="NonZero" Figures="m 5 11 -3 3">
+                    <PathGeometry.Transform>
+                        <MatrixTransform Matrix="0.666667,0,0,0.666667,0,0" />
+                    </PathGeometry.Transform>
+                </PathGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFCED0D6" LineCap="Round" LineJoin="Round" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <PathGeometry FillRule="NonZero" Figures="m 5 17 -3 -3 h 10">
+                    <PathGeometry.Transform>
+                        <MatrixTransform Matrix="0.666667,0,0,0.666667,0,0" />
+                    </PathGeometry.Transform>
+                </PathGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFCED0D6" LineCap="Round" LineJoin="Round" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+    </DrawingGroup>
+
+    <!--  funnel  -->
+    <DrawingGroup x:Key="General.Filter">
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <PathGeometry FillRule="NonZero" Figures="M 10 20 a 1 1 0 0 0 0.553 0.895 l 2 1 A 1 1 0 0 0 14 21 v -7 a 2 2 0 0 1 0.517 -1.341 L 21.74 4.67 A 1 1 0 0 0 21 3 H 3 a 1 1 0 0 0 -0.742 1.67 l 7.225 7.989 A 2 2 0 0 1 10 14 z">
+                    <PathGeometry.Transform>
+                        <MatrixTransform Matrix="0.666667,0,0,0.666667,0,0" />
+                    </PathGeometry.Transform>
+                </PathGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFCED0D6" LineCap="Round" LineJoin="Round" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+    </DrawingGroup>
+
+    <!--  users  -->
+    <DrawingGroup x:Key="General.Groups">
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <PathGeometry FillRule="NonZero" Figures="M 16 21 v -2 a 4 4 0 0 0 -4 -4 H 6 a 4 4 0 0 0 -4 4 v 2">
+                    <PathGeometry.Transform>
+                        <MatrixTransform Matrix="0.666667,0,0,0.666667,0,0" />
+                    </PathGeometry.Transform>
+                </PathGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFCED0D6" LineCap="Round" LineJoin="Round" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <PathGeometry FillRule="NonZero" Figures="M 16 3.128 a 4 4 0 0 1 0 7.744">
+                    <PathGeometry.Transform>
+                        <MatrixTransform Matrix="0.666667,0,0,0.666667,0,0" />
+                    </PathGeometry.Transform>
+                </PathGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFCED0D6" LineCap="Round" LineJoin="Round" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <PathGeometry FillRule="NonZero" Figures="M 22 21 v -2 a 4 4 0 0 0 -3 -3.87">
+                    <PathGeometry.Transform>
+                        <MatrixTransform Matrix="0.666667,0,0,0.666667,0,0" />
+                    </PathGeometry.Transform>
+                </PathGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFCED0D6" LineCap="Round" LineJoin="Round" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <PathGeometry FillRule="NonZero" Figures="M 5 7 A 4 4 0 1 1 13 7 A 4 4 0 1 1 5 7 Z">
+                    <PathGeometry.Transform>
+                        <MatrixTransform Matrix="0.666667,0,0,0.666667,0,0" />
+                    </PathGeometry.Transform>
+                </PathGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFCED0D6" LineCap="Round" LineJoin="Round" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+    </DrawingGroup>
+
+    <!--  eye-off  -->
+    <DrawingGroup x:Key="General.Hide">
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <PathGeometry FillRule="NonZero" Figures="M 10.733 5.076 a 10.744 10.744 0 0 1 11.205 6.575 1 1 0 0 1 0 0.696 10.747 10.747 0 0 1 -1.444 2.49">
+                    <PathGeometry.Transform>
+                        <MatrixTransform Matrix="0.666667,0,0,0.666667,0,0" />
+                    </PathGeometry.Transform>
+                </PathGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFCED0D6" LineCap="Round" LineJoin="Round" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <PathGeometry FillRule="NonZero" Figures="M 14.084 14.158 a 3 3 0 0 1 -4.242 -4.242">
+                    <PathGeometry.Transform>
+                        <MatrixTransform Matrix="0.666667,0,0,0.666667,0,0" />
+                    </PathGeometry.Transform>
+                </PathGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFCED0D6" LineCap="Round" LineJoin="Round" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <PathGeometry FillRule="NonZero" Figures="M 17.479 17.499 a 10.75 10.75 0 0 1 -15.417 -5.151 1 1 0 0 1 0 -0.696 10.75 10.75 0 0 1 4.446 -5.143">
+                    <PathGeometry.Transform>
+                        <MatrixTransform Matrix="0.666667,0,0,0.666667,0,0" />
+                    </PathGeometry.Transform>
+                </PathGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFCED0D6" LineCap="Round" LineJoin="Round" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <PathGeometry FillRule="NonZero" Figures="m 2 2 20 20">
+                    <PathGeometry.Transform>
+                        <MatrixTransform Matrix="0.666667,0,0,0.666667,0,0" />
+                    </PathGeometry.Transform>
+                </PathGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFCED0D6" LineCap="Round" LineJoin="Round" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+    </DrawingGroup>
+
+    <!--  clock-arrow-left  -->
+    <DrawingGroup x:Key="General.History">
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <PathGeometry FillRule="NonZero" Figures="M 12 6 v 6 l 1.5 0.8">
+                    <PathGeometry.Transform>
+                        <MatrixTransform Matrix="0.666667,0,0,0.666667,0,0" />
+                    </PathGeometry.Transform>
+                </PathGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFCED0D6" LineCap="Round" LineJoin="Round" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <PathGeometry FillRule="NonZero" Figures="M 12.338 21.994 a 10 10 0 1 1 9.587 -8.767">
+                    <PathGeometry.Transform>
+                        <MatrixTransform Matrix="0.666667,0,0,0.666667,0,0" />
+                    </PathGeometry.Transform>
+                </PathGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFCED0D6" LineCap="Round" LineJoin="Round" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <PathGeometry FillRule="NonZero" Figures="M 14 18 h 8">
+                    <PathGeometry.Transform>
+                        <MatrixTransform Matrix="0.666667,0,0,0.666667,0,0" />
+                    </PathGeometry.Transform>
+                </PathGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFCED0D6" LineCap="Round" LineJoin="Round" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <PathGeometry FillRule="NonZero" Figures="m 18 22 -4 -4 4 -4">
+                    <PathGeometry.Transform>
+                        <MatrixTransform Matrix="0.666667,0,0,0.666667,0,0" />
+                    </PathGeometry.Transform>
+                </PathGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFCED0D6" LineCap="Round" LineJoin="Round" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+    </DrawingGroup>
+
+    <!--  circle-arrow-down  -->
+    <DrawingGroup x:Key="General.IdeUpdate">
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <PathGeometry FillRule="NonZero" Figures="M 2 12 A 10 10 0 1 1 22 12 A 10 10 0 1 1 2 12 Z">
+                    <PathGeometry.Transform>
+                        <MatrixTransform Matrix="0.666667,0,0,0.666667,0,0" />
+                    </PathGeometry.Transform>
+                </PathGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFC77D55" LineCap="Round" LineJoin="Round" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <PathGeometry FillRule="NonZero" Figures="M 12 8 v 8">
+                    <PathGeometry.Transform>
+                        <MatrixTransform Matrix="0.666667,0,0,0.666667,0,0" />
+                    </PathGeometry.Transform>
+                </PathGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFC77D55" LineCap="Round" LineJoin="Round" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <PathGeometry FillRule="NonZero" Figures="m 8 12 4 4 4 -4">
+                    <PathGeometry.Transform>
+                        <MatrixTransform Matrix="0.666667,0,0,0.666667,0,0" />
+                    </PathGeometry.Transform>
+                </PathGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFC77D55" LineCap="Round" LineJoin="Round" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+    </DrawingGroup>
+
+    <!--  file-input  -->
+    <DrawingGroup x:Key="General.Import">
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <PathGeometry FillRule="NonZero" Figures="M 4 11 V 4 a 2 2 0 0 1 2 -2 h 8 a 2.4 2.4 0 0 1 1.706 0.706 l 3.588 3.588 A 2.4 2.4 0 0 1 20 8 v 12 a 2 2 0 0 1 -2 2 H 6 a 2 2 0 0 1 -2 -2 v -1">
+                    <PathGeometry.Transform>
+                        <MatrixTransform Matrix="0.666667,0,0,0.666667,0,0" />
+                    </PathGeometry.Transform>
+                </PathGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFCED0D6" LineCap="Round" LineJoin="Round" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <PathGeometry FillRule="NonZero" Figures="M 14 2 v 5 a 1 1 0 0 0 1 1 h 5">
+                    <PathGeometry.Transform>
+                        <MatrixTransform Matrix="0.666667,0,0,0.666667,0,0" />
+                    </PathGeometry.Transform>
+                </PathGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFCED0D6" LineCap="Round" LineJoin="Round" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <PathGeometry FillRule="NonZero" Figures="M 2 15 h 10">
+                    <PathGeometry.Transform>
+                        <MatrixTransform Matrix="0.666667,0,0,0.666667,0,0" />
+                    </PathGeometry.Transform>
+                </PathGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFCED0D6" LineCap="Round" LineJoin="Round" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <PathGeometry FillRule="NonZero" Figures="m 9 18 3 -3 -3 -3">
+                    <PathGeometry.Transform>
+                        <MatrixTransform Matrix="0.666667,0,0,0.666667,0,0" />
+                    </PathGeometry.Transform>
+                </PathGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFCED0D6" LineCap="Round" LineJoin="Round" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+    </DrawingGroup>
+
+    <!--  languages  -->
+    <DrawingGroup x:Key="General.Language">
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <PathGeometry FillRule="NonZero" Figures="m 5 8 6 6">
+                    <PathGeometry.Transform>
+                        <MatrixTransform Matrix="0.666667,0,0,0.666667,0,0" />
+                    </PathGeometry.Transform>
+                </PathGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFCED0D6" LineCap="Round" LineJoin="Round" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <PathGeometry FillRule="NonZero" Figures="m 4 14 6 -6 2 -3">
+                    <PathGeometry.Transform>
+                        <MatrixTransform Matrix="0.666667,0,0,0.666667,0,0" />
+                    </PathGeometry.Transform>
+                </PathGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFCED0D6" LineCap="Round" LineJoin="Round" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <PathGeometry FillRule="NonZero" Figures="M 2 5 h 12">
+                    <PathGeometry.Transform>
+                        <MatrixTransform Matrix="0.666667,0,0,0.666667,0,0" />
+                    </PathGeometry.Transform>
+                </PathGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFCED0D6" LineCap="Round" LineJoin="Round" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <PathGeometry FillRule="NonZero" Figures="M 7 2 h 1">
+                    <PathGeometry.Transform>
+                        <MatrixTransform Matrix="0.666667,0,0,0.666667,0,0" />
+                    </PathGeometry.Transform>
+                </PathGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFCED0D6" LineCap="Round" LineJoin="Round" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <PathGeometry FillRule="NonZero" Figures="m 22 22 -5 -10 -5 10">
+                    <PathGeometry.Transform>
+                        <MatrixTransform Matrix="0.666667,0,0,0.666667,0,0" />
+                    </PathGeometry.Transform>
+                </PathGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFCED0D6" LineCap="Round" LineJoin="Round" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <PathGeometry FillRule="NonZero" Figures="M 14 18 h 6">
+                    <PathGeometry.Transform>
+                        <MatrixTransform Matrix="0.666667,0,0,0.666667,0,0" />
+                    </PathGeometry.Transform>
+                </PathGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFCED0D6" LineCap="Round" LineJoin="Round" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+    </DrawingGroup>
+
+    <!--  layout-dashboard  -->
+    <DrawingGroup x:Key="General.Layout">
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <PathGeometry FillRule="NonZero" Figures="M 4 3 H 9 A 1 1 0 0 1 10 4 V 11 A 1 1 0 0 1 9 12 H 4 A 1 1 0 0 1 3 11 V 4 A 1 1 0 0 1 4 3 Z">
+                    <PathGeometry.Transform>
+                        <MatrixTransform Matrix="0.666667,0,0,0.666667,0,0" />
+                    </PathGeometry.Transform>
+                </PathGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFCED0D6" LineCap="Round" LineJoin="Round" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <PathGeometry FillRule="NonZero" Figures="M 15 3 H 20 A 1 1 0 0 1 21 4 V 7 A 1 1 0 0 1 20 8 H 15 A 1 1 0 0 1 14 7 V 4 A 1 1 0 0 1 15 3 Z">
+                    <PathGeometry.Transform>
+                        <MatrixTransform Matrix="0.666667,0,0,0.666667,0,0" />
+                    </PathGeometry.Transform>
+                </PathGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFCED0D6" LineCap="Round" LineJoin="Round" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <PathGeometry FillRule="NonZero" Figures="M 15 12 H 20 A 1 1 0 0 1 21 13 V 20 A 1 1 0 0 1 20 21 H 15 A 1 1 0 0 1 14 20 V 13 A 1 1 0 0 1 15 12 Z">
+                    <PathGeometry.Transform>
+                        <MatrixTransform Matrix="0.666667,0,0,0.666667,0,0" />
+                    </PathGeometry.Transform>
+                </PathGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFCED0D6" LineCap="Round" LineJoin="Round" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <PathGeometry FillRule="NonZero" Figures="M 4 16 H 9 A 1 1 0 0 1 10 17 V 20 A 1 1 0 0 1 9 21 H 4 A 1 1 0 0 1 3 20 V 17 A 1 1 0 0 1 4 16 Z">
+                    <PathGeometry.Transform>
+                        <MatrixTransform Matrix="0.666667,0,0,0.666667,0,0" />
+                    </PathGeometry.Transform>
+                </PathGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFCED0D6" LineCap="Round" LineJoin="Round" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+    </DrawingGroup>
+
+    <!--  list  -->
+    <DrawingGroup x:Key="General.ListFiles">
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <PathGeometry FillRule="NonZero" Figures="M 3 5 h 0.01">
+                    <PathGeometry.Transform>
+                        <MatrixTransform Matrix="0.666667,0,0,0.666667,0,0" />
+                    </PathGeometry.Transform>
+                </PathGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFCED0D6" LineCap="Round" LineJoin="Round" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <PathGeometry FillRule="NonZero" Figures="M 3 12 h 0.01">
+                    <PathGeometry.Transform>
+                        <MatrixTransform Matrix="0.666667,0,0,0.666667,0,0" />
+                    </PathGeometry.Transform>
+                </PathGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFCED0D6" LineCap="Round" LineJoin="Round" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <PathGeometry FillRule="NonZero" Figures="M 3 19 h 0.01">
+                    <PathGeometry.Transform>
+                        <MatrixTransform Matrix="0.666667,0,0,0.666667,0,0" />
+                    </PathGeometry.Transform>
+                </PathGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFCED0D6" LineCap="Round" LineJoin="Round" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <PathGeometry FillRule="NonZero" Figures="M 8 5 h 13">
+                    <PathGeometry.Transform>
+                        <MatrixTransform Matrix="0.666667,0,0,0.666667,0,0" />
+                    </PathGeometry.Transform>
+                </PathGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFCED0D6" LineCap="Round" LineJoin="Round" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <PathGeometry FillRule="NonZero" Figures="M 8 12 h 13">
+                    <PathGeometry.Transform>
+                        <MatrixTransform Matrix="0.666667,0,0,0.666667,0,0" />
+                    </PathGeometry.Transform>
+                </PathGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFCED0D6" LineCap="Round" LineJoin="Round" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <PathGeometry FillRule="NonZero" Figures="M 8 19 h 13">
+                    <PathGeometry.Transform>
+                        <MatrixTransform Matrix="0.666667,0,0,0.666667,0,0" />
+                    </PathGeometry.Transform>
+                </PathGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFCED0D6" LineCap="Round" LineJoin="Round" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+    </DrawingGroup>
+
+    <!--  locate  -->
+    <DrawingGroup x:Key="General.Locate">
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <PathGeometry FillRule="NonZero" Figures="M2,12 L5,12">
+                    <PathGeometry.Transform>
+                        <MatrixTransform Matrix="0.666667,0,0,0.666667,0,0" />
+                    </PathGeometry.Transform>
+                </PathGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFCED0D6" LineCap="Round" LineJoin="Round" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <PathGeometry FillRule="NonZero" Figures="M19,12 L22,12">
+                    <PathGeometry.Transform>
+                        <MatrixTransform Matrix="0.666667,0,0,0.666667,0,0" />
+                    </PathGeometry.Transform>
+                </PathGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFCED0D6" LineCap="Round" LineJoin="Round" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <PathGeometry FillRule="NonZero" Figures="M12,2 L12,5">
+                    <PathGeometry.Transform>
+                        <MatrixTransform Matrix="0.666667,0,0,0.666667,0,0" />
+                    </PathGeometry.Transform>
+                </PathGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFCED0D6" LineCap="Round" LineJoin="Round" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <PathGeometry FillRule="NonZero" Figures="M12,19 L12,22">
+                    <PathGeometry.Transform>
+                        <MatrixTransform Matrix="0.666667,0,0,0.666667,0,0" />
+                    </PathGeometry.Transform>
+                </PathGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFCED0D6" LineCap="Round" LineJoin="Round" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <PathGeometry FillRule="NonZero" Figures="M 5 12 A 7 7 0 1 1 19 12 A 7 7 0 1 1 5 12 Z">
+                    <PathGeometry.Transform>
+                        <MatrixTransform Matrix="0.666667,0,0,0.666667,0,0" />
+                    </PathGeometry.Transform>
+                </PathGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFCED0D6" LineCap="Round" LineJoin="Round" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+    </DrawingGroup>
+
+    <!--  lock  -->
+    <DrawingGroup x:Key="General.Locked">
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <PathGeometry FillRule="NonZero" Figures="M 5 11 H 19 A 2 2 0 0 1 21 13 V 20 A 2 2 0 0 1 19 22 H 5 A 2 2 0 0 1 3 20 V 13 A 2 2 0 0 1 5 11 Z">
+                    <PathGeometry.Transform>
+                        <MatrixTransform Matrix="0.666667,0,0,0.666667,0,0" />
+                    </PathGeometry.Transform>
+                </PathGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFCED0D6" LineCap="Round" LineJoin="Round" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <PathGeometry FillRule="NonZero" Figures="M 7 11 V 7 a 5 5 0 0 1 10 0 v 4">
+                    <PathGeometry.Transform>
+                        <MatrixTransform Matrix="0.666667,0,0,0.666667,0,0" />
+                    </PathGeometry.Transform>
+                </PathGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFCED0D6" LineCap="Round" LineJoin="Round" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+    </DrawingGroup>
+
+    <!--  menu  -->
+    <DrawingGroup x:Key="General.Menu">
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <PathGeometry FillRule="NonZero" Figures="M 4 5 h 16">
+                    <PathGeometry.Transform>
+                        <MatrixTransform Matrix="0.666667,0,0,0.666667,0,0" />
+                    </PathGeometry.Transform>
+                </PathGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFCED0D6" LineCap="Round" LineJoin="Round" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <PathGeometry FillRule="NonZero" Figures="M 4 12 h 16">
+                    <PathGeometry.Transform>
+                        <MatrixTransform Matrix="0.666667,0,0,0.666667,0,0" />
+                    </PathGeometry.Transform>
+                </PathGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFCED0D6" LineCap="Round" LineJoin="Round" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <PathGeometry FillRule="NonZero" Figures="M 4 19 h 16">
+                    <PathGeometry.Transform>
+                        <MatrixTransform Matrix="0.666667,0,0,0.666667,0,0" />
+                    </PathGeometry.Transform>
+                </PathGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFCED0D6" LineCap="Round" LineJoin="Round" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+    </DrawingGroup>
+
+    <!--  ellipsis  -->
+    <DrawingGroup x:Key="General.MoreHorizontal">
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <PathGeometry FillRule="NonZero" Figures="M 11 12 A 1 1 0 1 1 13 12 A 1 1 0 1 1 11 12 Z">
+                    <PathGeometry.Transform>
+                        <MatrixTransform Matrix="0.666667,0,0,0.666667,0,0" />
+                    </PathGeometry.Transform>
+                </PathGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFCED0D6" LineCap="Round" LineJoin="Round" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <PathGeometry FillRule="NonZero" Figures="M 18 12 A 1 1 0 1 1 20 12 A 1 1 0 1 1 18 12 Z">
+                    <PathGeometry.Transform>
+                        <MatrixTransform Matrix="0.666667,0,0,0.666667,0,0" />
+                    </PathGeometry.Transform>
+                </PathGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFCED0D6" LineCap="Round" LineJoin="Round" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <PathGeometry FillRule="NonZero" Figures="M 4 12 A 1 1 0 1 1 6 12 A 1 1 0 1 1 4 12 Z">
+                    <PathGeometry.Transform>
+                        <MatrixTransform Matrix="0.666667,0,0,0.666667,0,0" />
+                    </PathGeometry.Transform>
+                </PathGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFCED0D6" LineCap="Round" LineJoin="Round" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+    </DrawingGroup>
+
+    <!--  arrow-down  -->
+    <DrawingGroup x:Key="General.MoveDown">
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <PathGeometry FillRule="NonZero" Figures="M 12 5 v 14">
+                    <PathGeometry.Transform>
+                        <MatrixTransform Matrix="0.666667,0,0,0.666667,0,0" />
+                    </PathGeometry.Transform>
+                </PathGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFCED0D6" LineCap="Round" LineJoin="Round" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <PathGeometry FillRule="NonZero" Figures="m 19 12 -7 7 -7 -7">
+                    <PathGeometry.Transform>
+                        <MatrixTransform Matrix="0.666667,0,0,0.666667,0,0" />
+                    </PathGeometry.Transform>
+                </PathGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFCED0D6" LineCap="Round" LineJoin="Round" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+    </DrawingGroup>
+
+    <!--  arrow-up  -->
+    <DrawingGroup x:Key="General.MoveUp">
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <PathGeometry FillRule="NonZero" Figures="m 5 12 7 -7 7 7">
+                    <PathGeometry.Transform>
+                        <MatrixTransform Matrix="0.666667,0,0,0.666667,0,0" />
+                    </PathGeometry.Transform>
+                </PathGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFCED0D6" LineCap="Round" LineJoin="Round" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <PathGeometry FillRule="NonZero" Figures="M 12 19 V 5">
+                    <PathGeometry.Transform>
+                        <MatrixTransform Matrix="0.666667,0,0,0.666667,0,0" />
+                    </PathGeometry.Transform>
+                </PathGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFCED0D6" LineCap="Round" LineJoin="Round" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+    </DrawingGroup>
+
+    <!--  external-link  -->
+    <DrawingGroup x:Key="General.Open">
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <PathGeometry FillRule="NonZero" Figures="M 15 3 h 6 v 6">
+                    <PathGeometry.Transform>
+                        <MatrixTransform Matrix="0.666667,0,0,0.666667,0,0" />
+                    </PathGeometry.Transform>
+                </PathGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFCED0D6" LineCap="Round" LineJoin="Round" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <PathGeometry FillRule="NonZero" Figures="M 10 14 21 3">
+                    <PathGeometry.Transform>
+                        <MatrixTransform Matrix="0.666667,0,0,0.666667,0,0" />
+                    </PathGeometry.Transform>
+                </PathGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFCED0D6" LineCap="Round" LineJoin="Round" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <PathGeometry FillRule="NonZero" Figures="M 18 13 v 6 a 2 2 0 0 1 -2 2 H 5 a 2 2 0 0 1 -2 -2 V 8 a 2 2 0 0 1 2 -2 h 6">
+                    <PathGeometry.Transform>
+                        <MatrixTransform Matrix="0.666667,0,0,0.666667,0,0" />
+                    </PathGeometry.Transform>
+                </PathGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFCED0D6" LineCap="Round" LineJoin="Round" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+    </DrawingGroup>
+
+    <!--  pin  -->
+    <DrawingGroup x:Key="General.Pin">
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <PathGeometry FillRule="NonZero" Figures="M 12 17 v 5">
+                    <PathGeometry.Transform>
+                        <MatrixTransform Matrix="0.666667,0,0,0.666667,0,0" />
+                    </PathGeometry.Transform>
+                </PathGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFCED0D6" LineCap="Round" LineJoin="Round" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <PathGeometry FillRule="NonZero" Figures="M 9 10.76 a 2 2 0 0 1 -1.11 1.79 l -1.78 0.9 A 2 2 0 0 0 5 15.24 V 16 a 1 1 0 0 0 1 1 h 12 a 1 1 0 0 0 1 -1 v -0.76 a 2 2 0 0 0 -1.11 -1.79 l -1.78 -0.9 A 2 2 0 0 1 15 10.76 V 7 a 1 1 0 0 1 1 -1 2 2 0 0 0 0 -4 H 8 a 2 2 0 0 0 0 4 1 1 0 0 1 1 1 z">
+                    <PathGeometry.Transform>
+                        <MatrixTransform Matrix="0.666667,0,0,0.666667,0,0" />
+                    </PathGeometry.Transform>
+                </PathGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFCED0D6" LineCap="Round" LineJoin="Round" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+    </DrawingGroup>
+
+    <!--  circle-question-mark  -->
+    <DrawingGroup x:Key="General.QuestionMark">
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <PathGeometry FillRule="NonZero" Figures="M 2 12 A 10 10 0 1 1 22 12 A 10 10 0 1 1 2 12 Z">
+                    <PathGeometry.Transform>
+                        <MatrixTransform Matrix="0.666667,0,0,0.666667,0,0" />
+                    </PathGeometry.Transform>
+                </PathGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFCED0D6" LineCap="Round" LineJoin="Round" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <PathGeometry FillRule="NonZero" Figures="M 9 9.5 a 3 2.5 0 0 1 6 0 c 0 2 -2 2 -3 3.5">
+                    <PathGeometry.Transform>
+                        <MatrixTransform Matrix="0.666667,0,0,0.666667,0,0" />
+                    </PathGeometry.Transform>
+                </PathGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFCED0D6" LineCap="Round" LineJoin="Round" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <PathGeometry FillRule="NonZero" Figures="M 12 17 h 0.01">
+                    <PathGeometry.Transform>
+                        <MatrixTransform Matrix="0.666667,0,0,0.666667,0,0" />
+                    </PathGeometry.Transform>
+                </PathGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFCED0D6" LineCap="Round" LineJoin="Round" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+    </DrawingGroup>
+
+    <!--  refresh-cw  -->
+    <DrawingGroup x:Key="General.Refresh">
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <PathGeometry FillRule="NonZero" Figures="M 3 12 a 9 9 0 0 1 9 -9 9.75 9.75 0 0 1 6.74 2.74 L 21 8">
+                    <PathGeometry.Transform>
+                        <MatrixTransform Matrix="0.666667,0,0,0.666667,0,0" />
+                    </PathGeometry.Transform>
+                </PathGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFCED0D6" LineCap="Round" LineJoin="Round" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <PathGeometry FillRule="NonZero" Figures="M 21 3 v 5 h -5">
+                    <PathGeometry.Transform>
+                        <MatrixTransform Matrix="0.666667,0,0,0.666667,0,0" />
+                    </PathGeometry.Transform>
+                </PathGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFCED0D6" LineCap="Round" LineJoin="Round" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <PathGeometry FillRule="NonZero" Figures="M 21 12 a 9 9 0 0 1 -9 9 9.75 9.75 0 0 1 -6.74 -2.74 L 3 16">
+                    <PathGeometry.Transform>
+                        <MatrixTransform Matrix="0.666667,0,0,0.666667,0,0" />
+                    </PathGeometry.Transform>
+                </PathGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFCED0D6" LineCap="Round" LineJoin="Round" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <PathGeometry FillRule="NonZero" Figures="M 8 16 H 3 v 5">
+                    <PathGeometry.Transform>
+                        <MatrixTransform Matrix="0.666667,0,0,0.666667,0,0" />
+                    </PathGeometry.Transform>
+                </PathGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFCED0D6" LineCap="Round" LineJoin="Round" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+    </DrawingGroup>
+
+    <!--  minus  -->
+    <DrawingGroup x:Key="General.Remove">
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <PathGeometry FillRule="NonZero" Figures="M 5 12 h 14">
+                    <PathGeometry.Transform>
+                        <MatrixTransform Matrix="0.666667,0,0,0.666667,0,0" />
+                    </PathGeometry.Transform>
+                </PathGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFCED0D6" LineCap="Round" LineJoin="Round" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+    </DrawingGroup>
+
+    <!--  rotate-ccw  -->
+    <DrawingGroup x:Key="General.Reset">
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <PathGeometry FillRule="NonZero" Figures="M 3 12 a 9 9 0 1 0 9 -9 9.75 9.75 0 0 0 -6.74 2.74 L 3 8">
+                    <PathGeometry.Transform>
+                        <MatrixTransform Matrix="0.666667,0,0,0.666667,0,0" />
+                    </PathGeometry.Transform>
+                </PathGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFCED0D6" LineCap="Round" LineJoin="Round" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <PathGeometry FillRule="NonZero" Figures="M 3 3 v 5 h 5">
+                    <PathGeometry.Transform>
+                        <MatrixTransform Matrix="0.666667,0,0,0.666667,0,0" />
+                    </PathGeometry.Transform>
+                </PathGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFCED0D6" LineCap="Round" LineJoin="Round" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+    </DrawingGroup>
+
+    <!--  save  -->
+    <DrawingGroup x:Key="General.Save">
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <PathGeometry FillRule="NonZero" Figures="M 15.2 3 a 2 2 0 0 1 1.4 0.6 l 3.8 3.8 a 2 2 0 0 1 0.6 1.4 V 19 a 2 2 0 0 1 -2 2 H 5 a 2 2 0 0 1 -2 -2 V 5 a 2 2 0 0 1 2 -2 z">
+                    <PathGeometry.Transform>
+                        <MatrixTransform Matrix="0.666667,0,0,0.666667,0,0" />
+                    </PathGeometry.Transform>
+                </PathGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFCED0D6" LineCap="Round" LineJoin="Round" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <PathGeometry FillRule="NonZero" Figures="M 17 21 v -7 a 1 1 0 0 0 -1 -1 H 8 a 1 1 0 0 0 -1 1 v 7">
+                    <PathGeometry.Transform>
+                        <MatrixTransform Matrix="0.666667,0,0,0.666667,0,0" />
+                    </PathGeometry.Transform>
+                </PathGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFCED0D6" LineCap="Round" LineJoin="Round" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <PathGeometry FillRule="NonZero" Figures="M 7 3 v 4 a 1 1 0 0 0 1 1 h 7">
+                    <PathGeometry.Transform>
+                        <MatrixTransform Matrix="0.666667,0,0,0.666667,0,0" />
+                    </PathGeometry.Transform>
+                </PathGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFCED0D6" LineCap="Round" LineJoin="Round" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+    </DrawingGroup>
+
+    <!--  arrow-down-to-line  -->
+    <DrawingGroup x:Key="General.ScrollDown">
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <PathGeometry FillRule="NonZero" Figures="M 12 17 V 3">
+                    <PathGeometry.Transform>
+                        <MatrixTransform Matrix="0.666667,0,0,0.666667,0,0" />
+                    </PathGeometry.Transform>
+                </PathGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFCED0D6" LineCap="Round" LineJoin="Round" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <PathGeometry FillRule="NonZero" Figures="m 6 11 6 6 6 -6">
+                    <PathGeometry.Transform>
+                        <MatrixTransform Matrix="0.666667,0,0,0.666667,0,0" />
+                    </PathGeometry.Transform>
+                </PathGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFCED0D6" LineCap="Round" LineJoin="Round" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <PathGeometry FillRule="NonZero" Figures="M 19 21 H 5">
+                    <PathGeometry.Transform>
+                        <MatrixTransform Matrix="0.666667,0,0,0.666667,0,0" />
+                    </PathGeometry.Transform>
+                </PathGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFCED0D6" LineCap="Round" LineJoin="Round" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+    </DrawingGroup>
+
+    <!--  search  -->
+    <DrawingGroup x:Key="General.Search">
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <PathGeometry FillRule="NonZero" Figures="m 21 21 -4.34 -4.34">
+                    <PathGeometry.Transform>
+                        <MatrixTransform Matrix="0.666667,0,0,0.666667,0,0" />
+                    </PathGeometry.Transform>
+                </PathGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFCED0D6" LineCap="Round" LineJoin="Round" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <PathGeometry FillRule="NonZero" Figures="M 3 11 A 8 8 0 1 1 19 11 A 8 8 0 1 1 3 11 Z">
+                    <PathGeometry.Transform>
+                        <MatrixTransform Matrix="0.666667,0,0,0.666667,0,0" />
+                    </PathGeometry.Transform>
+                </PathGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFCED0D6" LineCap="Round" LineJoin="Round" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+    </DrawingGroup>
+
+    <!--  settings  -->
+    <DrawingGroup x:Key="General.Settings">
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <PathGeometry FillRule="NonZero" Figures="M 9.671 4.136 a 2.34 2.34 0 0 1 4.659 0 2.34 2.34 0 0 0 3.319 1.915 2.34 2.34 0 0 1 2.33 4.033 2.34 2.34 0 0 0 0 3.831 2.34 2.34 0 0 1 -2.33 4.033 2.34 2.34 0 0 0 -3.319 1.915 2.34 2.34 0 0 1 -4.659 0 2.34 2.34 0 0 0 -3.32 -1.915 2.34 2.34 0 0 1 -2.33 -4.033 2.34 2.34 0 0 0 0 -3.831 A 2.34 2.34 0 0 1 6.35 6.051 a 2.34 2.34 0 0 0 3.319 -1.915">
+                    <PathGeometry.Transform>
+                        <MatrixTransform Matrix="0.666667,0,0,0.666667,0,0" />
+                    </PathGeometry.Transform>
+                </PathGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFCED0D6" LineCap="Round" LineJoin="Round" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <PathGeometry FillRule="NonZero" Figures="M 9 12 A 3 3 0 1 1 15 12 A 3 3 0 1 1 9 12 Z">
+                    <PathGeometry.Transform>
+                        <MatrixTransform Matrix="0.666667,0,0,0.666667,0,0" />
+                    </PathGeometry.Transform>
+                </PathGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFCED0D6" LineCap="Round" LineJoin="Round" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+    </DrawingGroup>
+
+    <!--  user  -->
+    <DrawingGroup x:Key="General.User">
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <PathGeometry FillRule="NonZero" Figures="M 19 21 v -2 a 4 4 0 0 0 -4 -4 H 9 a 4 4 0 0 0 -4 4 v 2">
+                    <PathGeometry.Transform>
+                        <MatrixTransform Matrix="0.666667,0,0,0.666667,0,0" />
+                    </PathGeometry.Transform>
+                </PathGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFCED0D6" LineCap="Round" LineJoin="Round" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <PathGeometry FillRule="NonZero" Figures="M 8 7 A 4 4 0 1 1 16 7 A 4 4 0 1 1 8 7 Z">
+                    <PathGeometry.Transform>
+                        <MatrixTransform Matrix="0.666667,0,0,0.666667,0,0" />
+                    </PathGeometry.Transform>
+                </PathGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFCED0D6" LineCap="Round" LineJoin="Round" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+    </DrawingGroup>
+
+    <!--  route  -->
+    <DrawingGroup x:Key="General.Vcs">
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <PathGeometry FillRule="NonZero" Figures="M 9 5 h 8.5 a 1 1 0 0 1 0 7 h -11 a 1 1 0 0 0 0 7 H 15">
+                    <PathGeometry.Transform>
+                        <MatrixTransform Matrix="0.666667,0,0,0.666667,0,0" />
+                    </PathGeometry.Transform>
+                </PathGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFCED0D6" LineCap="Round" LineJoin="Round" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <PathGeometry FillRule="NonZero" Figures="M 15 19 A 3 3 0 1 1 21 19 A 3 3 0 1 1 15 19 Z">
+                    <PathGeometry.Transform>
+                        <MatrixTransform Matrix="0.666667,0,0,0.666667,0,0" />
+                    </PathGeometry.Transform>
+                </PathGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFCED0D6" LineCap="Round" LineJoin="Round" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <PathGeometry FillRule="NonZero" Figures="M 3 5 A 3 3 0 1 1 9 5 A 3 3 0 1 1 3 5 Z">
+                    <PathGeometry.Transform>
+                        <MatrixTransform Matrix="0.666667,0,0,0.666667,0,0" />
+                    </PathGeometry.Transform>
+                </PathGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFCED0D6" LineCap="Round" LineJoin="Round" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+    </DrawingGroup>
+
+    <!--  external-link  -->
+    <DrawingGroup x:Key="Ide.ExternalLink">
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <PathGeometry FillRule="NonZero" Figures="M 15 3 h 6 v 6">
+                    <PathGeometry.Transform>
+                        <MatrixTransform Matrix="0.666667,0,0,0.666667,0,0" />
+                    </PathGeometry.Transform>
+                </PathGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFCED0D6" LineCap="Round" LineJoin="Round" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <PathGeometry FillRule="NonZero" Figures="M 10 14 21 3">
+                    <PathGeometry.Transform>
+                        <MatrixTransform Matrix="0.666667,0,0,0.666667,0,0" />
+                    </PathGeometry.Transform>
+                </PathGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFCED0D6" LineCap="Round" LineJoin="Round" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <PathGeometry FillRule="NonZero" Figures="M 18 13 v 6 a 2 2 0 0 1 -2 2 H 5 a 2 2 0 0 1 -2 -2 V 8 a 2 2 0 0 1 2 -2 h 6">
+                    <PathGeometry.Transform>
+                        <MatrixTransform Matrix="0.666667,0,0,0.666667,0,0" />
+                    </PathGeometry.Transform>
+                </PathGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFCED0D6" LineCap="Round" LineJoin="Round" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+    </DrawingGroup>
+
+    <!--  panel-bottom  -->
+    <DrawingGroup x:Key="Layout.PanelBottom">
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <PathGeometry FillRule="NonZero" Figures="M 5 3 H 19 A 2 2 0 0 1 21 5 V 19 A 2 2 0 0 1 19 21 H 5 A 2 2 0 0 1 3 19 V 5 A 2 2 0 0 1 5 3 Z">
+                    <PathGeometry.Transform>
+                        <MatrixTransform Matrix="0.666667,0,0,0.666667,0,0" />
+                    </PathGeometry.Transform>
+                </PathGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFCED0D6" LineCap="Round" LineJoin="Round" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <PathGeometry FillRule="NonZero" Figures="M 3 15 h 18">
+                    <PathGeometry.Transform>
+                        <MatrixTransform Matrix="0.666667,0,0,0.666667,0,0" />
+                    </PathGeometry.Transform>
+                </PathGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFCED0D6" LineCap="Round" LineJoin="Round" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+    </DrawingGroup>
+
+    <!--  panel-left  -->
+    <DrawingGroup x:Key="Layout.PanelLeft">
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <PathGeometry FillRule="NonZero" Figures="M 5 3 H 19 A 2 2 0 0 1 21 5 V 19 A 2 2 0 0 1 19 21 H 5 A 2 2 0 0 1 3 19 V 5 A 2 2 0 0 1 5 3 Z">
+                    <PathGeometry.Transform>
+                        <MatrixTransform Matrix="0.666667,0,0,0.666667,0,0" />
+                    </PathGeometry.Transform>
+                </PathGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFCED0D6" LineCap="Round" LineJoin="Round" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <PathGeometry FillRule="NonZero" Figures="M 9 3 v 18">
+                    <PathGeometry.Transform>
+                        <MatrixTransform Matrix="0.666667,0,0,0.666667,0,0" />
+                    </PathGeometry.Transform>
+                </PathGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFCED0D6" LineCap="Round" LineJoin="Round" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+    </DrawingGroup>
+
+    <!--  panel-right  -->
+    <DrawingGroup x:Key="Layout.PanelRight">
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <PathGeometry FillRule="NonZero" Figures="M 5 3 H 19 A 2 2 0 0 1 21 5 V 19 A 2 2 0 0 1 19 21 H 5 A 2 2 0 0 1 3 19 V 5 A 2 2 0 0 1 5 3 Z">
+                    <PathGeometry.Transform>
+                        <MatrixTransform Matrix="0.666667,0,0,0.666667,0,0" />
+                    </PathGeometry.Transform>
+                </PathGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFCED0D6" LineCap="Round" LineJoin="Round" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <PathGeometry FillRule="NonZero" Figures="M 15 3 v 18">
+                    <PathGeometry.Transform>
+                        <MatrixTransform Matrix="0.666667,0,0,0.666667,0,0" />
+                    </PathGeometry.Transform>
+                </PathGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFCED0D6" LineCap="Round" LineJoin="Round" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+    </DrawingGroup>
+
+    <!--  table  -->
+    <DrawingGroup x:Key="Nodes.DataTables">
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <PathGeometry FillRule="NonZero" Figures="M 12 3 v 18">
+                    <PathGeometry.Transform>
+                        <MatrixTransform Matrix="0.666667,0,0,0.666667,0,0" />
+                    </PathGeometry.Transform>
+                </PathGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFCED0D6" LineCap="Round" LineJoin="Round" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <PathGeometry FillRule="NonZero" Figures="M 5 3 H 19 A 2 2 0 0 1 21 5 V 19 A 2 2 0 0 1 19 21 H 5 A 2 2 0 0 1 3 19 V 5 A 2 2 0 0 1 5 3 Z">
+                    <PathGeometry.Transform>
+                        <MatrixTransform Matrix="0.666667,0,0,0.666667,0,0" />
+                    </PathGeometry.Transform>
+                </PathGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFCED0D6" LineCap="Round" LineJoin="Round" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <PathGeometry FillRule="NonZero" Figures="M 3 9 h 18">
+                    <PathGeometry.Transform>
+                        <MatrixTransform Matrix="0.666667,0,0,0.666667,0,0" />
+                    </PathGeometry.Transform>
+                </PathGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFCED0D6" LineCap="Round" LineJoin="Round" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <PathGeometry FillRule="NonZero" Figures="M 3 15 h 18">
+                    <PathGeometry.Transform>
+                        <MatrixTransform Matrix="0.666667,0,0,0.666667,0,0" />
+                    </PathGeometry.Transform>
+                </PathGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFCED0D6" LineCap="Round" LineJoin="Round" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+    </DrawingGroup>
+
+    <!--  monitor  -->
+    <DrawingGroup x:Key="Nodes.Desktop">
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <PathGeometry FillRule="NonZero" Figures="M 4 3 H 20 A 2 2 0 0 1 22 5 V 15 A 2 2 0 0 1 20 17 H 4 A 2 2 0 0 1 2 15 V 5 A 2 2 0 0 1 4 3 Z">
+                    <PathGeometry.Transform>
+                        <MatrixTransform Matrix="0.666667,0,0,0.666667,0,0" />
+                    </PathGeometry.Transform>
+                </PathGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFCED0D6" LineCap="Round" LineJoin="Round" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <PathGeometry FillRule="NonZero" Figures="M8,21 L16,21">
+                    <PathGeometry.Transform>
+                        <MatrixTransform Matrix="0.666667,0,0,0.666667,0,0" />
+                    </PathGeometry.Transform>
+                </PathGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFCED0D6" LineCap="Round" LineJoin="Round" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <PathGeometry FillRule="NonZero" Figures="M12,17 L12,21">
+                    <PathGeometry.Transform>
+                        <MatrixTransform Matrix="0.666667,0,0,0.666667,0,0" />
+                    </PathGeometry.Transform>
+                </PathGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFCED0D6" LineCap="Round" LineJoin="Round" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+    </DrawingGroup>
+
+    <!--  folder  -->
+    <DrawingGroup x:Key="Nodes.Folder">
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <PathGeometry FillRule="NonZero" Figures="M 20 20 a 2 2 0 0 0 2 -2 V 8 a 2 2 0 0 0 -2 -2 h -7.9 a 2 2 0 0 1 -1.69 -0.9 L 9.6 3.9 A 2 2 0 0 0 7.93 3 H 4 a 2 2 0 0 0 -2 2 v 13 a 2 2 0 0 0 2 2 Z">
+                    <PathGeometry.Transform>
+                        <MatrixTransform Matrix="0.666667,0,0,0.666667,0,0" />
+                    </PathGeometry.Transform>
+                </PathGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFCED0D6" LineCap="Round" LineJoin="Round" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+    </DrawingGroup>
+
+    <!--  square-function  -->
+    <DrawingGroup x:Key="Nodes.Function">
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <PathGeometry FillRule="NonZero" Figures="M 5 3 H 19 A 2 2 0 0 1 21 5 V 19 A 2 2 0 0 1 19 21 H 5 A 2 2 0 0 1 3 19 V 5 A 2 2 0 0 1 5 3 Z">
+                    <PathGeometry.Transform>
+                        <MatrixTransform Matrix="0.666667,0,0,0.666667,0,0" />
+                    </PathGeometry.Transform>
+                </PathGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFCED0D6" LineCap="Round" LineJoin="Round" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <PathGeometry FillRule="NonZero" Figures="M 9 17 c 2 0 2.8 -1 2.8 -2.8 V 10 c 0 -2 1 -3.3 3.2 -3">
+                    <PathGeometry.Transform>
+                        <MatrixTransform Matrix="0.666667,0,0,0.666667,0,0" />
+                    </PathGeometry.Transform>
+                </PathGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFCED0D6" LineCap="Round" LineJoin="Round" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <PathGeometry FillRule="NonZero" Figures="M 9 11.2 h 5.7">
+                    <PathGeometry.Transform>
+                        <MatrixTransform Matrix="0.666667,0,0,0.666667,0,0" />
+                    </PathGeometry.Transform>
+                </PathGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFCED0D6" LineCap="Round" LineJoin="Round" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+    </DrawingGroup>
+
+    <!--  shield  -->
+    <DrawingGroup x:Key="Nodes.SecurityRole">
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <PathGeometry FillRule="NonZero" Figures="M 20 13 c 0 5 -3.5 7.5 -7.66 8.95 a 1 1 0 0 1 -0.67 -0.01 C 7.5 20.5 4 18 4 13 V 6 a 1 1 0 0 1 1 -1 c 2 0 4.5 -1.2 6.24 -2.72 a 1.17 1.17 0 0 1 1.52 0 C 14.51 3.81 17 5 19 5 a 1 1 0 0 1 1 1 z">
+                    <PathGeometry.Transform>
+                        <MatrixTransform Matrix="0.666667,0,0,0.666667,0,0" />
+                    </PathGeometry.Transform>
+                </PathGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFCED0D6" LineCap="Round" LineJoin="Round" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+    </DrawingGroup>
+
+    <!--  hash  -->
+    <DrawingGroup x:Key="Nodes.Tag">
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <PathGeometry FillRule="NonZero" Figures="M4,9 L20,9">
+                    <PathGeometry.Transform>
+                        <MatrixTransform Matrix="0.666667,0,0,0.666667,0,0" />
+                    </PathGeometry.Transform>
+                </PathGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFCED0D6" LineCap="Round" LineJoin="Round" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <PathGeometry FillRule="NonZero" Figures="M4,15 L20,15">
+                    <PathGeometry.Transform>
+                        <MatrixTransform Matrix="0.666667,0,0,0.666667,0,0" />
+                    </PathGeometry.Transform>
+                </PathGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFCED0D6" LineCap="Round" LineJoin="Round" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <PathGeometry FillRule="NonZero" Figures="M10,3 L8,21">
+                    <PathGeometry.Transform>
+                        <MatrixTransform Matrix="0.666667,0,0,0.666667,0,0" />
+                    </PathGeometry.Transform>
+                </PathGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFCED0D6" LineCap="Round" LineJoin="Round" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <PathGeometry FillRule="NonZero" Figures="M16,3 L14,21">
+                    <PathGeometry.Transform>
+                        <MatrixTransform Matrix="0.666667,0,0,0.666667,0,0" />
+                    </PathGeometry.Transform>
+                </PathGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFCED0D6" LineCap="Round" LineJoin="Round" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+    </DrawingGroup>
+
+    <!--  workflow  -->
+    <DrawingGroup x:Key="Nodes.Template">
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <PathGeometry FillRule="NonZero" Figures="M 5 3 H 9 A 2 2 0 0 1 11 5 V 9 A 2 2 0 0 1 9 11 H 5 A 2 2 0 0 1 3 9 V 5 A 2 2 0 0 1 5 3 Z">
+                    <PathGeometry.Transform>
+                        <MatrixTransform Matrix="0.666667,0,0,0.666667,0,0" />
+                    </PathGeometry.Transform>
+                </PathGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFCED0D6" LineCap="Round" LineJoin="Round" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <PathGeometry FillRule="NonZero" Figures="M 7 11 v 4 a 2 2 0 0 0 2 2 h 4">
+                    <PathGeometry.Transform>
+                        <MatrixTransform Matrix="0.666667,0,0,0.666667,0,0" />
+                    </PathGeometry.Transform>
+                </PathGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFCED0D6" LineCap="Round" LineJoin="Round" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <PathGeometry FillRule="NonZero" Figures="M 15 13 H 19 A 2 2 0 0 1 21 15 V 19 A 2 2 0 0 1 19 21 H 15 A 2 2 0 0 1 13 19 V 15 A 2 2 0 0 1 15 13 Z">
+                    <PathGeometry.Transform>
+                        <MatrixTransform Matrix="0.666667,0,0,0.666667,0,0" />
+                    </PathGeometry.Transform>
+                </PathGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFCED0D6" LineCap="Round" LineJoin="Round" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+    </DrawingGroup>
+
+    <!--  variable  -->
+    <DrawingGroup x:Key="Nodes.Variable">
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <PathGeometry FillRule="NonZero" Figures="M 8 21 s -4 -3 -4 -9 4 -9 4 -9">
+                    <PathGeometry.Transform>
+                        <MatrixTransform Matrix="0.666667,0,0,0.666667,0,0" />
+                    </PathGeometry.Transform>
+                </PathGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFCED0D6" LineCap="Round" LineJoin="Round" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <PathGeometry FillRule="NonZero" Figures="M 16 3 s 4 3 4 9 -4 9 -4 9">
+                    <PathGeometry.Transform>
+                        <MatrixTransform Matrix="0.666667,0,0,0.666667,0,0" />
+                    </PathGeometry.Transform>
+                </PathGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFCED0D6" LineCap="Round" LineJoin="Round" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <PathGeometry FillRule="NonZero" Figures="M15,9 L9,15">
+                    <PathGeometry.Transform>
+                        <MatrixTransform Matrix="0.666667,0,0,0.666667,0,0" />
+                    </PathGeometry.Transform>
+                </PathGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFCED0D6" LineCap="Round" LineJoin="Round" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <PathGeometry FillRule="NonZero" Figures="M9,9 L15,15">
+                    <PathGeometry.Transform>
+                        <MatrixTransform Matrix="0.666667,0,0,0.666667,0,0" />
+                    </PathGeometry.Transform>
+                </PathGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFCED0D6" LineCap="Round" LineJoin="Round" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+    </DrawingGroup>
+
+    <!--  pause  -->
+    <DrawingGroup x:Key="Run.Pause">
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <PathGeometry FillRule="NonZero" Figures="M 15 3 H 18 A 1 1 0 0 1 19 4 V 20 A 1 1 0 0 1 18 21 H 15 A 1 1 0 0 1 14 20 V 4 A 1 1 0 0 1 15 3 Z">
+                    <PathGeometry.Transform>
+                        <MatrixTransform Matrix="0.666667,0,0,0.666667,0,0" />
+                    </PathGeometry.Transform>
+                </PathGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFCED0D6" LineCap="Round" LineJoin="Round" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <PathGeometry FillRule="NonZero" Figures="M 6 3 H 9 A 1 1 0 0 1 10 4 V 20 A 1 1 0 0 1 9 21 H 6 A 1 1 0 0 1 5 20 V 4 A 1 1 0 0 1 6 3 Z">
+                    <PathGeometry.Transform>
+                        <MatrixTransform Matrix="0.666667,0,0,0.666667,0,0" />
+                    </PathGeometry.Transform>
+                </PathGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFCED0D6" LineCap="Round" LineJoin="Round" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+    </DrawingGroup>
+
+    <!--  play  -->
+    <DrawingGroup x:Key="Run.Resume">
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <PathGeometry FillRule="NonZero" Figures="M 5 5 a 2 2 0 0 1 3.008 -1.728 l 11.997 6.998 a 2 2 0 0 1 0.003 3.458 l -12 7 A 2 2 0 0 1 5 19 z">
+                    <PathGeometry.Transform>
+                        <MatrixTransform Matrix="0.666667,0,0,0.666667,0,0" />
+                    </PathGeometry.Transform>
+                </PathGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FF3FB950" LineCap="Round" LineJoin="Round" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+    </DrawingGroup>
+
+    <!--  play  -->
+    <DrawingGroup x:Key="Run.Run">
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <PathGeometry FillRule="NonZero" Figures="M 5 5 a 2 2 0 0 1 3.008 -1.728 l 11.997 6.998 a 2 2 0 0 1 0.003 3.458 l -12 7 A 2 2 0 0 1 5 19 z">
+                    <PathGeometry.Transform>
+                        <MatrixTransform Matrix="0.666667,0,0,0.666667,0,0" />
+                    </PathGeometry.Transform>
+                </PathGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FF3FB950" LineCap="Round" LineJoin="Round" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+    </DrawingGroup>
+
+    <!--  step-forward  -->
+    <DrawingGroup x:Key="Run.StepOver">
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <PathGeometry FillRule="NonZero" Figures="M 10.029 4.285 A 2 2 0 0 0 7 6 v 12 a 2 2 0 0 0 3.029 1.715 l 9.997 -5.998 a 2 2 0 0 0 0.003 -3.432 z">
+                    <PathGeometry.Transform>
+                        <MatrixTransform Matrix="0.666667,0,0,0.666667,0,0" />
+                    </PathGeometry.Transform>
+                </PathGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFCED0D6" LineCap="Round" LineJoin="Round" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <PathGeometry FillRule="NonZero" Figures="M 3 4 v 16">
+                    <PathGeometry.Transform>
+                        <MatrixTransform Matrix="0.666667,0,0,0.666667,0,0" />
+                    </PathGeometry.Transform>
+                </PathGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFCED0D6" LineCap="Round" LineJoin="Round" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+    </DrawingGroup>
+
+    <!--  square  -->
+    <DrawingGroup x:Key="Run.Stop">
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <PathGeometry FillRule="NonZero" Figures="M 5 3 H 19 A 2 2 0 0 1 21 5 V 19 A 2 2 0 0 1 19 21 H 5 A 2 2 0 0 1 3 19 V 5 A 2 2 0 0 1 5 3 Z">
+                    <PathGeometry.Transform>
+                        <MatrixTransform Matrix="0.666667,0,0,0.666667,0,0" />
+                    </PathGeometry.Transform>
+                </PathGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFF85149" LineCap="Round" LineJoin="Round" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+    </DrawingGroup>
+
+    <!--  circle-exclamation-point  -->
+    <DrawingGroup x:Key="Status.Error">
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <PathGeometry FillRule="NonZero" Figures="M 2 12 A 10 10 0 1 1 22 12 A 10 10 0 1 1 2 12 Z">
+                    <PathGeometry.Transform>
+                        <MatrixTransform Matrix="0.666667,0,0,0.666667,0,0" />
+                    </PathGeometry.Transform>
+                </PathGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFDB5C5C" LineCap="Round" LineJoin="Round" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <PathGeometry FillRule="NonZero" Figures="M12,8 L12,12">
+                    <PathGeometry.Transform>
+                        <MatrixTransform Matrix="0.666667,0,0,0.666667,0,0" />
+                    </PathGeometry.Transform>
+                </PathGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFDB5C5C" LineCap="Round" LineJoin="Round" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <PathGeometry FillRule="NonZero" Figures="M12,16 L12.01,16">
+                    <PathGeometry.Transform>
+                        <MatrixTransform Matrix="0.666667,0,0,0.666667,0,0" />
+                    </PathGeometry.Transform>
+                </PathGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFDB5C5C" LineCap="Round" LineJoin="Round" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+    </DrawingGroup>
+
+    <!--  info  -->
+    <DrawingGroup x:Key="Status.Info">
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <PathGeometry FillRule="NonZero" Figures="M 2 12 A 10 10 0 1 1 22 12 A 10 10 0 1 1 2 12 Z">
+                    <PathGeometry.Transform>
+                        <MatrixTransform Matrix="0.666667,0,0,0.666667,0,0" />
+                    </PathGeometry.Transform>
+                </PathGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFCED0D6" LineCap="Round" LineJoin="Round" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <PathGeometry FillRule="NonZero" Figures="M 12 16 v -4">
+                    <PathGeometry.Transform>
+                        <MatrixTransform Matrix="0.666667,0,0,0.666667,0,0" />
+                    </PathGeometry.Transform>
+                </PathGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFCED0D6" LineCap="Round" LineJoin="Round" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <PathGeometry FillRule="NonZero" Figures="M 12 8 h 0.01">
+                    <PathGeometry.Transform>
+                        <MatrixTransform Matrix="0.666667,0,0,0.666667,0,0" />
+                    </PathGeometry.Transform>
+                </PathGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFCED0D6" LineCap="Round" LineJoin="Round" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+    </DrawingGroup>
+
+    <!--  info  -->
+    <DrawingGroup x:Key="Status.InfoOutline">
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <PathGeometry FillRule="NonZero" Figures="M 2 12 A 10 10 0 1 1 22 12 A 10 10 0 1 1 2 12 Z">
+                    <PathGeometry.Transform>
+                        <MatrixTransform Matrix="0.666667,0,0,0.666667,0,0" />
+                    </PathGeometry.Transform>
+                </PathGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFCED0D6" LineCap="Round" LineJoin="Round" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <PathGeometry FillRule="NonZero" Figures="M 12 16 v -4">
+                    <PathGeometry.Transform>
+                        <MatrixTransform Matrix="0.666667,0,0,0.666667,0,0" />
+                    </PathGeometry.Transform>
+                </PathGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFCED0D6" LineCap="Round" LineJoin="Round" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <PathGeometry FillRule="NonZero" Figures="M 12 8 h 0.01">
+                    <PathGeometry.Transform>
+                        <MatrixTransform Matrix="0.666667,0,0,0.666667,0,0" />
+                    </PathGeometry.Transform>
+                </PathGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFCED0D6" LineCap="Round" LineJoin="Round" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+    </DrawingGroup>
+
+    <!--  circle-check  -->
+    <DrawingGroup x:Key="Status.Success">
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <PathGeometry FillRule="NonZero" Figures="M 2 12 A 10 10 0 1 1 22 12 A 10 10 0 1 1 2 12 Z">
+                    <PathGeometry.Transform>
+                        <MatrixTransform Matrix="0.666667,0,0,0.666667,0,0" />
+                    </PathGeometry.Transform>
+                </PathGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FF3FB950" LineCap="Round" LineJoin="Round" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <PathGeometry FillRule="NonZero" Figures="m 16 9 -5.5 5.5 L 8 12">
+                    <PathGeometry.Transform>
+                        <MatrixTransform Matrix="0.666667,0,0,0.666667,0,0" />
+                    </PathGeometry.Transform>
+                </PathGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FF3FB950" LineCap="Round" LineJoin="Round" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+    </DrawingGroup>
+
+    <!--  triangle-exclamation-point  -->
+    <DrawingGroup x:Key="Status.Warning">
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <PathGeometry FillRule="NonZero" Figures="m 21.73 18 -8 -14 a 2 2 0 0 0 -3.48 0 l -8 14 A 2 2 0 0 0 4 21 h 16 a 2 2 0 0 0 1.73 -3">
+                    <PathGeometry.Transform>
+                        <MatrixTransform Matrix="0.666667,0,0,0.666667,0,0" />
+                    </PathGeometry.Transform>
+                </PathGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFF2C55C" LineCap="Round" LineJoin="Round" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <PathGeometry FillRule="NonZero" Figures="M 12 9 v 4">
+                    <PathGeometry.Transform>
+                        <MatrixTransform Matrix="0.666667,0,0,0.666667,0,0" />
+                    </PathGeometry.Transform>
+                </PathGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFF2C55C" LineCap="Round" LineJoin="Round" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <PathGeometry FillRule="NonZero" Figures="M 12 17 h 0.01">
+                    <PathGeometry.Transform>
+                        <MatrixTransform Matrix="0.666667,0,0,0.666667,0,0" />
+                    </PathGeometry.Transform>
+                </PathGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFF2C55C" LineCap="Round" LineJoin="Round" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+    </DrawingGroup>
+
+    <!--  bug  -->
+    <DrawingGroup x:Key="Toolwindows.Debug">
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <PathGeometry FillRule="NonZero" Figures="M 12 20 v -9">
+                    <PathGeometry.Transform>
+                        <MatrixTransform Matrix="0.666667,0,0,0.666667,0,0" />
+                    </PathGeometry.Transform>
+                </PathGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFCED0D6" LineCap="Round" LineJoin="Round" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <PathGeometry FillRule="NonZero" Figures="M 14 7 a 4 4 0 0 1 4 4 v 3 a 6 6 0 0 1 -12 0 v -3 a 4 4 0 0 1 4 -4 z">
+                    <PathGeometry.Transform>
+                        <MatrixTransform Matrix="0.666667,0,0,0.666667,0,0" />
+                    </PathGeometry.Transform>
+                </PathGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFCED0D6" LineCap="Round" LineJoin="Round" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <PathGeometry FillRule="NonZero" Figures="M 14.12 3.88 16 2">
+                    <PathGeometry.Transform>
+                        <MatrixTransform Matrix="0.666667,0,0,0.666667,0,0" />
+                    </PathGeometry.Transform>
+                </PathGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFCED0D6" LineCap="Round" LineJoin="Round" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <PathGeometry FillRule="NonZero" Figures="M 21 21 a 4 4 0 0 0 -3.81 -4">
+                    <PathGeometry.Transform>
+                        <MatrixTransform Matrix="0.666667,0,0,0.666667,0,0" />
+                    </PathGeometry.Transform>
+                </PathGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFCED0D6" LineCap="Round" LineJoin="Round" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <PathGeometry FillRule="NonZero" Figures="M 21 5 a 4 4 0 0 1 -3.55 3.97">
+                    <PathGeometry.Transform>
+                        <MatrixTransform Matrix="0.666667,0,0,0.666667,0,0" />
+                    </PathGeometry.Transform>
+                </PathGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFCED0D6" LineCap="Round" LineJoin="Round" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <PathGeometry FillRule="NonZero" Figures="M 22 13 h -4">
+                    <PathGeometry.Transform>
+                        <MatrixTransform Matrix="0.666667,0,0,0.666667,0,0" />
+                    </PathGeometry.Transform>
+                </PathGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFCED0D6" LineCap="Round" LineJoin="Round" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <PathGeometry FillRule="NonZero" Figures="M 3 21 a 4 4 0 0 1 3.81 -4">
+                    <PathGeometry.Transform>
+                        <MatrixTransform Matrix="0.666667,0,0,0.666667,0,0" />
+                    </PathGeometry.Transform>
+                </PathGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFCED0D6" LineCap="Round" LineJoin="Round" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <PathGeometry FillRule="NonZero" Figures="M 3 5 a 4 4 0 0 0 3.55 3.97">
+                    <PathGeometry.Transform>
+                        <MatrixTransform Matrix="0.666667,0,0,0.666667,0,0" />
+                    </PathGeometry.Transform>
+                </PathGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFCED0D6" LineCap="Round" LineJoin="Round" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <PathGeometry FillRule="NonZero" Figures="M 6 13 H 2">
+                    <PathGeometry.Transform>
+                        <MatrixTransform Matrix="0.666667,0,0,0.666667,0,0" />
+                    </PathGeometry.Transform>
+                </PathGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFCED0D6" LineCap="Round" LineJoin="Round" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <PathGeometry FillRule="NonZero" Figures="m 8 2 1.88 1.88">
+                    <PathGeometry.Transform>
+                        <MatrixTransform Matrix="0.666667,0,0,0.666667,0,0" />
+                    </PathGeometry.Transform>
+                </PathGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFCED0D6" LineCap="Round" LineJoin="Round" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <PathGeometry FillRule="NonZero" Figures="M 9 7.13 V 6 a 3 3 0 1 1 6 0 v 1.13">
+                    <PathGeometry.Transform>
+                        <MatrixTransform Matrix="0.666667,0,0,0.666667,0,0" />
+                    </PathGeometry.Transform>
+                </PathGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFCED0D6" LineCap="Round" LineJoin="Round" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+    </DrawingGroup>
+
+    <!--  list-tree  -->
+    <DrawingGroup x:Key="Toolwindows.Hierarchy">
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <PathGeometry FillRule="NonZero" Figures="M 8 5 h 13">
+                    <PathGeometry.Transform>
+                        <MatrixTransform Matrix="0.666667,0,0,0.666667,0,0" />
+                    </PathGeometry.Transform>
+                </PathGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFCED0D6" LineCap="Round" LineJoin="Round" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <PathGeometry FillRule="NonZero" Figures="M 13 12 h 8">
+                    <PathGeometry.Transform>
+                        <MatrixTransform Matrix="0.666667,0,0,0.666667,0,0" />
+                    </PathGeometry.Transform>
+                </PathGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFCED0D6" LineCap="Round" LineJoin="Round" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <PathGeometry FillRule="NonZero" Figures="M 13 19 h 8">
+                    <PathGeometry.Transform>
+                        <MatrixTransform Matrix="0.666667,0,0,0.666667,0,0" />
+                    </PathGeometry.Transform>
+                </PathGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFCED0D6" LineCap="Round" LineJoin="Round" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <PathGeometry FillRule="NonZero" Figures="M 3 10 a 2 2 0 0 0 2 2 h 3">
+                    <PathGeometry.Transform>
+                        <MatrixTransform Matrix="0.666667,0,0,0.666667,0,0" />
+                    </PathGeometry.Transform>
+                </PathGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFCED0D6" LineCap="Round" LineJoin="Round" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <PathGeometry FillRule="NonZero" Figures="M 3 5 v 12 a 2 2 0 0 0 2 2 h 3">
+                    <PathGeometry.Transform>
+                        <MatrixTransform Matrix="0.666667,0,0,0.666667,0,0" />
+                    </PathGeometry.Transform>
+                </PathGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFCED0D6" LineCap="Round" LineJoin="Round" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+    </DrawingGroup>
+
+    <!--  scroll-text  -->
+    <DrawingGroup x:Key="Toolwindows.Messages">
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <PathGeometry FillRule="NonZero" Figures="M 15 12 h -5">
+                    <PathGeometry.Transform>
+                        <MatrixTransform Matrix="0.666667,0,0,0.666667,0,0" />
+                    </PathGeometry.Transform>
+                </PathGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFCED0D6" LineCap="Round" LineJoin="Round" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <PathGeometry FillRule="NonZero" Figures="M 15 8 h -5">
+                    <PathGeometry.Transform>
+                        <MatrixTransform Matrix="0.666667,0,0,0.666667,0,0" />
+                    </PathGeometry.Transform>
+                </PathGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFCED0D6" LineCap="Round" LineJoin="Round" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <PathGeometry FillRule="NonZero" Figures="M 19 17 V 5 a 2 2 0 0 0 -2 -2 H 4">
+                    <PathGeometry.Transform>
+                        <MatrixTransform Matrix="0.666667,0,0,0.666667,0,0" />
+                    </PathGeometry.Transform>
+                </PathGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFCED0D6" LineCap="Round" LineJoin="Round" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <PathGeometry FillRule="NonZero" Figures="M 8 21 h 12 a 2 2 0 0 0 2 -2 v -1 a 1 1 0 0 0 -1 -1 H 11 a 1 1 0 0 0 -1 1 v 1 a 2 2 0 1 1 -4 0 V 5 a 2 2 0 1 0 -4 0 v 2 a 1 1 0 0 0 1 1 h 3">
+                    <PathGeometry.Transform>
+                        <MatrixTransform Matrix="0.666667,0,0,0.666667,0,0" />
+                    </PathGeometry.Transform>
+                </PathGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFCED0D6" LineCap="Round" LineJoin="Round" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+    </DrawingGroup>
+
+    <!--  bell  -->
+    <DrawingGroup x:Key="Toolwindows.Notifications">
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <PathGeometry FillRule="NonZero" Figures="M 10.268 21 a 2 2 0 0 0 3.464 0">
+                    <PathGeometry.Transform>
+                        <MatrixTransform Matrix="0.666667,0,0,0.666667,0,0" />
+                    </PathGeometry.Transform>
+                </PathGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFCED0D6" LineCap="Round" LineJoin="Round" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <PathGeometry FillRule="NonZero" Figures="M 3.262 15.326 A 1 1 0 0 0 4 17 h 16 a 1 1 0 0 0 0.74 -1.673 C 19.41 13.956 18 12.499 18 8 A 6 6 0 0 0 6 8 c 0 4.499 -1.411 5.956 -2.738 7.326">
+                    <PathGeometry.Transform>
+                        <MatrixTransform Matrix="0.666667,0,0,0.666667,0,0" />
+                    </PathGeometry.Transform>
+                </PathGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFCED0D6" LineCap="Round" LineJoin="Round" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+    </DrawingGroup>
+
+    <!--  paintbrush  -->
+    <DrawingGroup x:Key="Toolwindows.Palette">
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <PathGeometry FillRule="NonZero" Figures="m 14.622 17.897 -10.68 -2.913">
+                    <PathGeometry.Transform>
+                        <MatrixTransform Matrix="0.666667,0,0,0.666667,0,0" />
+                    </PathGeometry.Transform>
+                </PathGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFCED0D6" LineCap="Round" LineJoin="Round" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <PathGeometry FillRule="NonZero" Figures="M 18.376 2.622 a 1 1 0 1 1 3.002 3.002 L 17.36 9.643 a 0.5 0.5 0 0 0 0 0.707 l 0.944 0.944 a 2.41 2.41 0 0 1 0 3.408 l -0.944 0.944 a 0.5 0.5 0 0 1 -0.707 0 L 8.354 7.348 a 0.5 0.5 0 0 1 0 -0.707 l 0.944 -0.944 a 2.41 2.41 0 0 1 3.408 0 l 0.944 0.944 a 0.5 0.5 0 0 0 0.707 0 z">
+                    <PathGeometry.Transform>
+                        <MatrixTransform Matrix="0.666667,0,0,0.666667,0,0" />
+                    </PathGeometry.Transform>
+                </PathGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFCED0D6" LineCap="Round" LineJoin="Round" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <PathGeometry FillRule="NonZero" Figures="M 9 8 c -1.804 2.71 -3.97 3.46 -6.583 3.948 a 0.507 0.507 0 0 0 -0.302 0.819 l 7.32 8.883 a 1 1 0 0 0 1.185 0.204 C 12.735 20.405 16 16.792 16 15">
+                    <PathGeometry.Transform>
+                        <MatrixTransform Matrix="0.666667,0,0,0.666667,0,0" />
+                    </PathGeometry.Transform>
+                </PathGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFCED0D6" LineCap="Round" LineJoin="Round" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+    </DrawingGroup>
+
+    <!--  octagon-exclamation-point  -->
+    <DrawingGroup x:Key="Toolwindows.Problems">
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <PathGeometry FillRule="NonZero" Figures="M 12 16 h 0.01">
+                    <PathGeometry.Transform>
+                        <MatrixTransform Matrix="0.666667,0,0,0.666667,0,0" />
+                    </PathGeometry.Transform>
+                </PathGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFCED0D6" LineCap="Round" LineJoin="Round" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <PathGeometry FillRule="NonZero" Figures="M 12 8 v 4">
+                    <PathGeometry.Transform>
+                        <MatrixTransform Matrix="0.666667,0,0,0.666667,0,0" />
+                    </PathGeometry.Transform>
+                </PathGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFCED0D6" LineCap="Round" LineJoin="Round" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <PathGeometry FillRule="NonZero" Figures="M 15.312 2 a 2 2 0 0 1 1.414 0.586 l 4.688 4.688 A 2 2 0 0 1 22 8.688 v 6.624 a 2 2 0 0 1 -0.586 1.414 l -4.688 4.688 a 2 2 0 0 1 -1.414 0.586 H 8.688 a 2 2 0 0 1 -1.414 -0.586 l -4.688 -4.688 A 2 2 0 0 1 2 15.312 V 8.688 a 2 2 0 0 1 0.586 -1.414 l 4.688 -4.688 A 2 2 0 0 1 8.688 2 z">
+                    <PathGeometry.Transform>
+                        <MatrixTransform Matrix="0.666667,0,0,0.666667,0,0" />
+                    </PathGeometry.Transform>
+                </PathGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFCED0D6" LineCap="Round" LineJoin="Round" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+    </DrawingGroup>
+
+    <!--  chart-column  -->
+    <DrawingGroup x:Key="Toolwindows.Profiler">
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <PathGeometry FillRule="NonZero" Figures="M 3 3 v 16 a 2 2 0 0 0 2 2 h 16">
+                    <PathGeometry.Transform>
+                        <MatrixTransform Matrix="0.666667,0,0,0.666667,0,0" />
+                    </PathGeometry.Transform>
+                </PathGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFCED0D6" LineCap="Round" LineJoin="Round" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <PathGeometry FillRule="NonZero" Figures="M 18 17 V 9">
+                    <PathGeometry.Transform>
+                        <MatrixTransform Matrix="0.666667,0,0,0.666667,0,0" />
+                    </PathGeometry.Transform>
+                </PathGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFCED0D6" LineCap="Round" LineJoin="Round" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <PathGeometry FillRule="NonZero" Figures="M 13 17 V 5">
+                    <PathGeometry.Transform>
+                        <MatrixTransform Matrix="0.666667,0,0,0.666667,0,0" />
+                    </PathGeometry.Transform>
+                </PathGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFCED0D6" LineCap="Round" LineJoin="Round" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <PathGeometry FillRule="NonZero" Figures="M 8 17 v -3">
+                    <PathGeometry.Transform>
+                        <MatrixTransform Matrix="0.666667,0,0,0.666667,0,0" />
+                    </PathGeometry.Transform>
+                </PathGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFCED0D6" LineCap="Round" LineJoin="Round" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+    </DrawingGroup>
+
+    <!--  library-big  -->
+    <DrawingGroup x:Key="Toolwindows.Project">
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <PathGeometry FillRule="NonZero" Figures="M 4 3 H 10 A 1 1 0 0 1 11 4 V 20 A 1 1 0 0 1 10 21 H 4 A 1 1 0 0 1 3 20 V 4 A 1 1 0 0 1 4 3 Z">
+                    <PathGeometry.Transform>
+                        <MatrixTransform Matrix="0.666667,0,0,0.666667,0,0" />
+                    </PathGeometry.Transform>
+                </PathGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFCED0D6" LineCap="Round" LineJoin="Round" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <PathGeometry FillRule="NonZero" Figures="M 7 3 v 18">
+                    <PathGeometry.Transform>
+                        <MatrixTransform Matrix="0.666667,0,0,0.666667,0,0" />
+                    </PathGeometry.Transform>
+                </PathGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFCED0D6" LineCap="Round" LineJoin="Round" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <PathGeometry FillRule="NonZero" Figures="M 20.4 18.9 c 0.2 0.5 -0.1 1.1 -0.6 1.3 l -1.9 0.7 c -0.5 0.2 -1.1 -0.1 -1.3 -0.6 L 11.1 5.1 c -0.2 -0.5 0.1 -1.1 0.6 -1.3 l 1.9 -0.7 c 0.5 -0.2 1.1 0.1 1.3 0.6 Z">
+                    <PathGeometry.Transform>
+                        <MatrixTransform Matrix="0.666667,0,0,0.666667,0,0" />
+                    </PathGeometry.Transform>
+                </PathGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFCED0D6" LineCap="Round" LineJoin="Round" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+    </DrawingGroup>
+
+    <!--  bot  -->
+    <DrawingGroup x:Key="Toolwindows.Run">
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <PathGeometry FillRule="NonZero" Figures="M 12 8 V 4 H 8">
+                    <PathGeometry.Transform>
+                        <MatrixTransform Matrix="0.666667,0,0,0.666667,0,0" />
+                    </PathGeometry.Transform>
+                </PathGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFCED0D6" LineCap="Round" LineJoin="Round" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <PathGeometry FillRule="NonZero" Figures="M 6 8 H 18 A 2 2 0 0 1 20 10 V 18 A 2 2 0 0 1 18 20 H 6 A 2 2 0 0 1 4 18 V 10 A 2 2 0 0 1 6 8 Z">
+                    <PathGeometry.Transform>
+                        <MatrixTransform Matrix="0.666667,0,0,0.666667,0,0" />
+                    </PathGeometry.Transform>
+                </PathGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFCED0D6" LineCap="Round" LineJoin="Round" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <PathGeometry FillRule="NonZero" Figures="M 2 14 h 2">
+                    <PathGeometry.Transform>
+                        <MatrixTransform Matrix="0.666667,0,0,0.666667,0,0" />
+                    </PathGeometry.Transform>
+                </PathGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFCED0D6" LineCap="Round" LineJoin="Round" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <PathGeometry FillRule="NonZero" Figures="M 20 14 h 2">
+                    <PathGeometry.Transform>
+                        <MatrixTransform Matrix="0.666667,0,0,0.666667,0,0" />
+                    </PathGeometry.Transform>
+                </PathGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFCED0D6" LineCap="Round" LineJoin="Round" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <PathGeometry FillRule="NonZero" Figures="M 15 13 v 2">
+                    <PathGeometry.Transform>
+                        <MatrixTransform Matrix="0.666667,0,0,0.666667,0,0" />
+                    </PathGeometry.Transform>
+                </PathGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFCED0D6" LineCap="Round" LineJoin="Round" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <PathGeometry FillRule="NonZero" Figures="M 9 13 v 2">
+                    <PathGeometry.Transform>
+                        <MatrixTransform Matrix="0.666667,0,0,0.666667,0,0" />
+                    </PathGeometry.Transform>
+                </PathGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFCED0D6" LineCap="Round" LineJoin="Round" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+    </DrawingGroup>
+
+    <!--  blocks  -->
+    <DrawingGroup x:Key="Toolwindows.Services">
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <PathGeometry FillRule="NonZero" Figures="M 10 22 V 7 a 1 1 0 0 0 -1 -1 H 4 a 2 2 0 0 0 -2 2 v 12 a 2 2 0 0 0 2 2 h 12 a 2 2 0 0 0 2 -2 v -5 a 1 1 0 0 0 -1 -1 H 2">
+                    <PathGeometry.Transform>
+                        <MatrixTransform Matrix="0.666667,0,0,0.666667,0,0" />
+                    </PathGeometry.Transform>
+                </PathGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFCED0D6" LineCap="Round" LineJoin="Round" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <PathGeometry FillRule="NonZero" Figures="M 15 2 H 21 A 1 1 0 0 1 22 3 V 9 A 1 1 0 0 1 21 10 H 15 A 1 1 0 0 1 14 9 V 3 A 1 1 0 0 1 15 2 Z">
+                    <PathGeometry.Transform>
+                        <MatrixTransform Matrix="0.666667,0,0,0.666667,0,0" />
+                    </PathGeometry.Transform>
+                </PathGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFCED0D6" LineCap="Round" LineJoin="Round" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+    </DrawingGroup>
+
+    <!--  list  -->
+    <DrawingGroup x:Key="Toolwindows.Structure">
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <PathGeometry FillRule="NonZero" Figures="M 3 5 h 0.01">
+                    <PathGeometry.Transform>
+                        <MatrixTransform Matrix="0.666667,0,0,0.666667,0,0" />
+                    </PathGeometry.Transform>
+                </PathGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFCED0D6" LineCap="Round" LineJoin="Round" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <PathGeometry FillRule="NonZero" Figures="M 3 12 h 0.01">
+                    <PathGeometry.Transform>
+                        <MatrixTransform Matrix="0.666667,0,0,0.666667,0,0" />
+                    </PathGeometry.Transform>
+                </PathGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFCED0D6" LineCap="Round" LineJoin="Round" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <PathGeometry FillRule="NonZero" Figures="M 3 19 h 0.01">
+                    <PathGeometry.Transform>
+                        <MatrixTransform Matrix="0.666667,0,0,0.666667,0,0" />
+                    </PathGeometry.Transform>
+                </PathGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFCED0D6" LineCap="Round" LineJoin="Round" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <PathGeometry FillRule="NonZero" Figures="M 8 5 h 13">
+                    <PathGeometry.Transform>
+                        <MatrixTransform Matrix="0.666667,0,0,0.666667,0,0" />
+                    </PathGeometry.Transform>
+                </PathGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFCED0D6" LineCap="Round" LineJoin="Round" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <PathGeometry FillRule="NonZero" Figures="M 8 12 h 13">
+                    <PathGeometry.Transform>
+                        <MatrixTransform Matrix="0.666667,0,0,0.666667,0,0" />
+                    </PathGeometry.Transform>
+                </PathGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFCED0D6" LineCap="Round" LineJoin="Round" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <PathGeometry FillRule="NonZero" Figures="M 8 19 h 13">
+                    <PathGeometry.Transform>
+                        <MatrixTransform Matrix="0.666667,0,0,0.666667,0,0" />
+                    </PathGeometry.Transform>
+                </PathGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFCED0D6" LineCap="Round" LineJoin="Round" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+    </DrawingGroup>
+
+    <!--  map  -->
+    <DrawingGroup x:Key="Toolwindows.Web">
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <PathGeometry FillRule="NonZero" Figures="M 14.106 5.553 a 2 2 0 0 0 1.788 0 l 3.659 -1.83 A 1 1 0 0 1 21 4.619 v 12.764 a 1 1 0 0 1 -0.553 0.894 l -4.553 2.277 a 2 2 0 0 1 -1.788 0 l -4.212 -2.106 a 2 2 0 0 0 -1.788 0 l -3.659 1.83 A 1 1 0 0 1 3 19.381 V 6.618 a 1 1 0 0 1 0.553 -0.894 l 4.553 -2.277 a 2 2 0 0 1 1.788 0 z">
+                    <PathGeometry.Transform>
+                        <MatrixTransform Matrix="0.666667,0,0,0.666667,0,0" />
+                    </PathGeometry.Transform>
+                </PathGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFCED0D6" LineCap="Round" LineJoin="Round" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <PathGeometry FillRule="NonZero" Figures="M 15 5.764 v 15">
+                    <PathGeometry.Transform>
+                        <MatrixTransform Matrix="0.666667,0,0,0.666667,0,0" />
+                    </PathGeometry.Transform>
+                </PathGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFCED0D6" LineCap="Round" LineJoin="Round" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+        <GeometryDrawing>
+            <GeometryDrawing.Geometry>
+                <PathGeometry FillRule="NonZero" Figures="M 9 3.236 v 15">
+                    <PathGeometry.Transform>
+                        <MatrixTransform Matrix="0.666667,0,0,0.666667,0,0" />
+                    </PathGeometry.Transform>
+                </PathGeometry>
+            </GeometryDrawing.Geometry>
+            <GeometryDrawing.Pen>
+                <Pen Brush="#FFCED0D6" LineCap="Round" LineJoin="Round" Thickness="1" />
+            </GeometryDrawing.Pen>
+        </GeometryDrawing>
+    </DrawingGroup>
+</ResourceDictionary>
