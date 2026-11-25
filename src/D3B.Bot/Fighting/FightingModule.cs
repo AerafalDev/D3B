@@ -84,6 +84,11 @@ public sealed class FightingModule : IModule
         settings.Flag(s => s.FarmAnomalyFragments, FightTexts.Text("FarmAnomalyFragments"))
             .Help(FightTexts.Text("FarmAnomalyFragmentsHelp"));
 
+        settings.Flag(s => s.CaptureMounts, FightTexts.Text("CaptureMounts")).Help(FightTexts.Text("CaptureMountsHelp"));
+        settings.Flag(s => s.CaptureDragodindes, FightTexts.Text("CaptureDragodindes")).VisibleWhen(s => s.CaptureMounts);
+        settings.Flag(s => s.CaptureMuldos, FightTexts.Text("CaptureMuldos")).VisibleWhen(s => s.CaptureMounts);
+        settings.Flag(s => s.CaptureVolkornes, FightTexts.Text("CaptureVolkornes")).VisibleWhen(s => s.CaptureMounts);
+
         settings.Choice(s => s.ChallengeReward, FightTexts.Text("ChallengeReward"), reward => FightTexts.Text($"ChallengeReward{reward}"))
             .Help(FightTexts.Text("ChallengeRewardHelp"));
         settings.Choice(s => s.Challenges, FightTexts.Text("Challenges"), play => FightTexts.Text($"Challenges{play}"))

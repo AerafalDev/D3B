@@ -146,6 +146,21 @@
   <data name="FarmAnomalyFragmentsHelp" xml:space="preserve">
     <value>Boit un Élixir uchronique mineur si son effet manque au démarrage ou expire ensuite, puis reprend la chasse.</value>
   </data>
+  <data name="CaptureMounts" xml:space="preserve">
+    <value>Capturer des montures</value>
+  </data>
+  <data name="CaptureMountsHelp" xml:space="preserve">
+    <value>Apprivoise une monture sauvage par combat avec le filet de capture équipé dans l’emplacement consommable de combat, avant tout coup, pour la capturer à la fin du combat. Sans filet équipé, la chasse continue sans capturer et le journal le signale. En groupe, seul le personnage principal capture.</value>
+  </data>
+  <data name="CaptureDragodindes" xml:space="preserve">
+    <value>Dragodindes</value>
+  </data>
+  <data name="CaptureMuldos" xml:space="preserve">
+    <value>Muldos</value>
+  </data>
+  <data name="CaptureVolkornes" xml:space="preserve">
+    <value>Volkornes</value>
+  </data>
   <data name="FoodHelp" xml:space="preserve">
     <value>Dans l'ordre, jusqu'à la vie pleine ; sans choix, ce que l'inventaire contient qui ne fait que soigner, le plus petit soin d'abord ; sinon la vie se régénère jusqu'au seuil.</value>
   </data>

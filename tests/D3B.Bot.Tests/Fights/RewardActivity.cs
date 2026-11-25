@@ -16,11 +16,16 @@ internal sealed class RewardActivity : BotActivity
     /// <summary>Gets or sets which challenges the AI plays for.</summary>
     public ChallengePlay Play { get; init; }
 
+    /// <summary>Gets or sets the families of the wild mounts the profile captures (D533).</summary>
+    public IReadOnlyList<int> Races { get; init; } = [];
+
     public override bool FightsItsFights => Fights;
 
     public override ChallengeReward ChallengeReward => Reward;
 
     public override ChallengePlay Challenges => Play;
+
+    public override IReadOnlyList<int> MountRaces => Races;
 
     public override async Task<bool> StepAsync(BotContext context, CancellationToken cancellationToken)
     {

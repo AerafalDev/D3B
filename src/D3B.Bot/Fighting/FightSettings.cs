@@ -76,6 +76,18 @@ public sealed class FightSettings
     /// <summary>Gets or sets which challenges the AI plays for; the easy ones unless the profile says otherwise (D466).</summary>
     public ChallengePlay Challenges { get; set; } = ChallengePlay.Easy;
 
+    /// <summary>Gets or sets whether the character captures the wild mounts of the families ticked, taming one a fight with the capture net it wears (D533).</summary>
+    public bool CaptureMounts { get; set; }
+
+    /// <summary>Gets or sets whether the wild Dragodindes are captured, when <see cref="CaptureMounts"/> is on.</summary>
+    public bool CaptureDragodindes { get; set; } = true;
+
+    /// <summary>Gets or sets whether the wild Muldos are captured, when <see cref="CaptureMounts"/> is on.</summary>
+    public bool CaptureMuldos { get; set; } = true;
+
+    /// <summary>Gets or sets whether the wild Volkornes are captured, when <see cref="CaptureMounts"/> is on.</summary>
+    public bool CaptureVolkornes { get; set; } = true;
+
     /// <summary>Gets or sets what the activity does once a fight is lost.</summary>
     public FightAfterLoss AfterLostFight { get; set; } = FightAfterLoss.Resume;
 

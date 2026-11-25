@@ -26,6 +26,9 @@ public sealed record FightKnowledge
     /// <summary>Gets the rounds each spell of the fighter playing still waits, as the server said, by spell.</summary>
     public ImmutableDictionary<int, int> Cooldowns { get; init; } = ImmutableDictionary<int, int>.Empty;
 
+    /// <summary>Gets the fighters no cast of the fighter playing may kill, such as a wild mount not yet tamed for its capture (D533).</summary>
+    public ImmutableArray<long> Spared { get; init; } = [];
+
     /// <summary>Gets what is known, every fighter's spells but some left out.</summary>
     /// <param name="spellIds">The spells left out.</param>
     /// <returns>The knowledge without them.</returns>

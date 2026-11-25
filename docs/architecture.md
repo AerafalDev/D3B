@@ -442,7 +442,11 @@ The bots run in `D3B.Bot`: what each part does today, with the decisions that ma
   as harvesting's (`HuntingGround.Rank`, `FightRotationZone`, D391). Its fights are its own, the AI playing them; it counts
   them won and lost, banks its loot, and answers a lost fight as harvesting does, three in a row ending it. With its flag
   `FarmAnomalyFragments` on (D501), it drinks a carried Minor Uchronic Elixir through `ObjectUse` when alteration 50 is absent
-  or at 0, before a step or an attack, and waits for the grant, three uses not granted in a row ending the tries. Its
+  or at 0, before a step or an attack, and waits for the grant, three uses not granted in a row ending the tries. With its
+  flag `CaptureMounts` on (D533), the families ticked of Dragodindes, Muldos and Volkornes (`BotActivity.MountRaces`, races
+  21, 155 and 183), the main, never a follower nor a summon, tames a wild mount with the taming spell its worn capture net
+  gives (`MountCapture.TamingSpells`) before any blow, its mounts spared meanwhile, and says once a fight that it wears no
+  net when it holds no such spell; a taming the server does not take ends the fight's capture. Its
   sub-areas are suggested by the
   monsters chosen (`GameReferences.SubAreasLiving`). `FightPreviews`, one per host, says in the profile editor what the
   settings lead to: the ground's mini-map, its maps, monsters and their levels, the nearest bank (`NearestBank`, shared
@@ -1373,7 +1377,9 @@ Pure logic with no I/O, in `D3B.Engine`, which references `D3B.Data` for the cel
     Forgelance's, whose lances strike (D462), and searched again with them when it finds nothing to do (D408), a summon every
     character has, such as "Invocation de Chaferfu", a last resort whatever the breed (`IsLastResort`, D503); a spell every
     character has whose casts reach the summons' control, effect 2027, such as "Maîtrise des invocations", never searched,
-    the control left as the player set it (`WithoutSummonControl`, D500); given a `TurnChallenge` (D466), the plan searched again
+    the control left as the player set it (`WithoutSummonControl`, D500); no cast that kills a fighter of
+    `FightKnowledge.Spared` searched, such as a wild mount not yet tamed (D533), and `Taming` giving the walk and the cast that
+    tame one this turn, pending while only the reach or the AP stand in the way (`TamingPlan`); given a `TurnChallenge` (D466), the plan searched again
     keeping it when the best breaks it, its casts, walks and ends those the challenge allows, chosen while its loss stays
     within `TurnChallenge.MostLoss` of the best's gain (`TurnPlan.KeepsChallenge`); each cast judged by `TurnChallenge.Cast`
     against the fight before and after it, which gives the challenge as it then stands (`ChallengeKills`, `ChallengeStrikes`,
