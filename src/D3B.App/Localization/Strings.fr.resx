@@ -419,6 +419,9 @@
   <data name="AreaNamed" xml:space="preserve">
     <value>Zone {0}</value>
   </data>
+  <data name="DungeonNamed" xml:space="preserve">
+    <value>Donjon {0}</value>
+  </data>
   <data name="MonsterFamilyNamed" xml:space="preserve">
     <value>Famille {0}</value>
   </data>

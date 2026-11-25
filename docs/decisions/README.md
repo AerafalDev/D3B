@@ -135,7 +135,7 @@ Each file holds the decisions of one group of [the index](../decisions-index.md)
 - [The studio made simpler, the settings and the statistics (D516)](d516-settings-and-statistics.md): 1 decision, 3 KB.
 - [Movement and banking, a walk refused with its confirmation (D517)](d517-miner-refused-door.md): 1 decision, 4 KB.
 - [Activities, never idle until the server's kick, the recovery ladder and the run's restart (D518, D519)](d518-d519-never-idle.md): 2 decisions, 8 KB.
-- [Dungeons, the first version's shape and the rooms (D520 to D525)](d520-d523-dungeons.md): 6 decisions, 14 KB.
+- [Dungeons, the first version (D520 to D527)](d520-d523-dungeons.md): 8 decisions, 19 KB.
 - [The studio made simpler, next's dark islands (D530)](d530-next-dark-islands.md): 1 decision, 3 KB.
 - [The studio made simpler, next's layout (D531)](d531-next-layout.md): 1 decision, 3 KB.
 - [The studio made simpler, next's icons (D532)](d532-lucide-icons.md): 1 decision, 3 KB.
