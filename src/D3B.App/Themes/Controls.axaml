@@ -196,4 +196,9 @@
             </ControlTemplate>
         </Setter>
     </ControlTheme>
+    <!--  The title bar's layout toggles, as next's and VS Code's: a window with its left, bottom or right part drawn, on the grid of 24
+         the icons' lines use (D531).  -->
+    <StreamGeometry x:Key="PanelLeftGeometry">M4 5H20V19H4Z M9.5 5V19</StreamGeometry>
+    <StreamGeometry x:Key="PanelBottomGeometry">M4 5H20V19H4Z M4 13.5H20</StreamGeometry>
+    <StreamGeometry x:Key="PanelRightGeometry">M4 5H20V19H4Z M14.5 5V19</StreamGeometry>
 </ResourceDictionary>
