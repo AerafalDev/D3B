@@ -8,6 +8,7 @@
 #:include extract/BreedsExtractor.cs
 #:include extract/ChallengesExtractor.cs
 #:include extract/CharacteristicsExtractor.cs
+#:include extract/DungeonsExtractor.cs
 #:include extract/ClientMapLayout.cs
 #:include extract/EffectsExtractor.cs
 #:include extract/HintsExtractor.cs
