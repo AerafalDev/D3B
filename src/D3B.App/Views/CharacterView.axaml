@@ -18,14 +18,14 @@
         </LinearGradientBrush>
         <SolidColorBrush Color="{DynamicResource VeilColor}" x:Key="BarTrack" />
         <SolidColorBrush Color="{DynamicResource MutedColor}" x:Key="RuleFill" />
-        <SolidColorBrush Color="#E0605A" x:Key="LifeRuleFill" />
+        <SolidColorBrush Color="{DynamicResource ErrorColor}" x:Key="LifeRuleFill" />
     </UserControl.Resources>
     <UserControl.Styles>
         <Style Selector="Border.Pill">
             <Setter Property="Height" Value="28" />
             <Setter Property="Padding" Value="11,0" />
             <Setter Property="CornerRadius" Value="14" />
-            <Setter Property="Background" Value="#E0161619" />
+            <Setter Property="Background" Value="{DynamicResource GlassColor}" />
             <Setter Property="BorderBrush" Value="{DynamicResource OutlineColor}" />
             <Setter Property="BorderThickness" Value="1" />
         </Style>
@@ -35,13 +35,13 @@
             <Setter Property="MinHeight" Value="28" />
             <Setter Property="Padding" Value="11,0" />
             <Setter Property="CornerRadius" Value="14" />
-            <Setter Property="Background" Value="#E0161619" />
+            <Setter Property="Background" Value="{DynamicResource GlassColor}" />
             <Setter Property="BorderBrush" Value="{DynamicResource OutlineColor}" />
             <Setter Property="BorderThickness" Value="1" />
             <Setter Property="FontWeight" Value="Normal" />
         </Style>
         <Style Selector="Button.Pill:pointerover">
-            <Setter Property="Background" Value="#F226262C" />
+            <Setter Property="Background" Value="{DynamicResource GlassHoverColor}" />
         </Style>
         <Style Selector="Button.Pill.Preview">
             <Setter Property="Background" Value="#E61E2A44" />
@@ -49,7 +49,7 @@
         </Style>
         <Style Selector="Border.Now">
             <Setter Property="Padding" Value="14" />
-            <Setter Property="CornerRadius" Value="12" />
+            <Setter Property="CornerRadius" Value="8" />
             <Setter Property="BorderThickness" Value="1" />
             <Setter Property="BorderBrush" Value="{DynamicResource BorderColor}" />
             <Setter Property="Background" Value="{DynamicResource HeaderColor}" />
@@ -79,7 +79,7 @@
             <Setter Property="BorderBrush" Value="#38E9AD3C" />
             <Setter Property="Background">
                 <LinearGradientBrush EndPoint="100%,100%" StartPoint="0%,0%">
-                    <GradientStop Color="#24E9AD3C" Offset="0" />
+                    <GradientStop Color="{DynamicResource WarningColor20}" Offset="0" />
                     <GradientStop Color="#08E9AD3C" Offset="0.6" />
                 </LinearGradientBrush>
             </Setter>
@@ -88,7 +88,7 @@
             <Setter Property="BorderBrush" Value="#38EA5D52" />
             <Setter Property="Background">
                 <LinearGradientBrush EndPoint="100%,100%" StartPoint="0%,0%">
-                    <GradientStop Color="#24EA5D52" Offset="0" />
+                    <GradientStop Color="{DynamicResource ErrorColor20}" Offset="0" />
                     <GradientStop Color="#08EA5D52" Offset="0.6" />
                 </LinearGradientBrush>
             </Setter>
@@ -96,7 +96,7 @@
         <Style Selector="Border.NowIcon">
             <Setter Property="Width" Value="38" />
             <Setter Property="Height" Value="38" />
-            <Setter Property="CornerRadius" Value="10" />
+            <Setter Property="CornerRadius" Value="8" />
             <Setter Property="Background" Value="{DynamicResource RaisedColor}" />
         </Style>
         <Style Selector="Border.Now.Playing Border.NowIcon">
@@ -106,7 +106,7 @@
             <Setter Property="Background" Value="#2EE9AD3C" />
         </Style>
         <Style Selector="Border.Now.Fighting Border.NowIcon">
-            <Setter Property="Background" Value="#2EEA5D52" />
+            <Setter Property="Background" Value="{DynamicResource ErrorColor20}" />
         </Style>
         <Style Selector="Border.NowIcon c|GlyphIcon">
             <Setter Property="Foreground" Value="{DynamicResource MutedColor}" />
@@ -136,7 +136,7 @@
             <Setter Property="Theme" Value="{DynamicResource StudioButton}" />
             <Setter Property="Padding" Value="0" />
             <Setter Property="Foreground" Value="{DynamicResource AccentColor}" />
-            <Setter Property="FontSize" Value="11.5" />
+            <Setter Property="FontSize" Value="11" />
             <Setter Property="FontWeight" Value="Normal" />
             <Setter Property="HorizontalAlignment" Value="Right" />
             <Setter Property="VerticalAlignment" Value="Center" />
@@ -149,9 +149,9 @@
             <Setter Property="Height" Value="24" />
             <Setter Property="MinHeight" Value="24" />
             <Setter Property="Padding" Value="4,0,8,0" />
-            <Setter Property="CornerRadius" Value="7" />
+            <Setter Property="CornerRadius" Value="6" />
             <Setter Property="Background" Value="{DynamicResource FieldColor}" />
-            <Setter Property="FontSize" Value="11.5" />
+            <Setter Property="FontSize" Value="11" />
             <Setter Property="FontWeight" Value="Medium" />
             <Setter Property="HorizontalAlignment" Value="Right" />
             <Setter Property="MaxWidth" Value="180" />
@@ -214,7 +214,7 @@
         </Style>
         <Style Selector="Border.Tile">
             <Setter Property="Padding" Value="10" />
-            <Setter Property="CornerRadius" Value="10" />
+            <Setter Property="CornerRadius" Value="8" />
             <Setter Property="Background" Value="{DynamicResource CardBackgroundColor}" />
         </Style>
         <Style Selector="Border.Fact">
@@ -327,10 +327,10 @@
                         </Border>
                     </WrapPanel>
                     <Border
-                        Background="#E6141417"
+                        Background="{DynamicResource GlassColor}"
                         BorderBrush="{DynamicResource OutlineColor}"
                         BorderThickness="1"
-                        CornerRadius="10"
+                        CornerRadius="8"
                         HorizontalAlignment="Left"
                         IsVisible="{Binding Map.HoverItems.Count}"
                         MaxWidth="320"
@@ -399,10 +399,10 @@
                     </Button.Flyout>
                 </Button>
                 <Border
-                    Background="#E6161619"
+                    Background="{DynamicResource GlassColor}"
                     BorderBrush="{DynamicResource OutlineColor}"
                     BorderThickness="1"
-                    CornerRadius="10"
+                    CornerRadius="8"
                     HorizontalAlignment="Left"
                     IsVisible="{Binding Map.HasTour}"
                     Margin="12"
@@ -506,7 +506,7 @@
                             <StackPanel Grid.Column="1" VerticalAlignment="Center">
                                 <TextBlock
                                     Classes="Bright"
-                                    FontSize="15"
+                                    FontSize="16"
                                     FontWeight="SemiBold"
                                     Text="{Binding Name}"
                                     TextTrimming="CharacterEllipsis" />
@@ -647,13 +647,13 @@
                                             Width="12" />
                                         <TextBlock
                                             Classes="Muted Figures"
-                                            FontSize="11.5"
+                                            FontSize="11"
                                             Text="{Binding Elapsed}"
                                             VerticalAlignment="Center" />
                                     </StackPanel>
                                     <TextBlock
                                         Classes="Muted Figures"
-                                        FontSize="11.5"
+                                        FontSize="11"
                                         Grid.Column="1"
                                         HorizontalAlignment="Right"
                                         Text="{Binding EndEstimate}"
@@ -783,7 +783,7 @@
                                 <TextBlock Classes="Heading" Text="{l:Tr ColumnSession}" />
                                 <TextBlock
                                     Classes="Dim"
-                                    FontSize="11.5"
+                                    FontSize="11"
                                     Grid.Column="1"
                                     HorizontalAlignment="Right"
                                     Text="{Binding Since}"
@@ -802,7 +802,7 @@
                                                 <Border
                                                     BorderBrush="{DynamicResource BorderColor}"
                                                     BorderThickness="1"
-                                                    CornerRadius="7"
+                                                    CornerRadius="6"
                                                     Height="26"
                                                     HorizontalAlignment="Left"
                                                     Width="26">
@@ -814,7 +814,7 @@
                                                 </Border>
                                                 <TextBlock
                                                     Classes="Bright Figures"
-                                                    FontSize="17"
+                                                    FontSize="16"
                                                     FontWeight="SemiBold"
                                                     LineHeight="17"
                                                     Text="{Binding Count}" />
@@ -831,7 +831,7 @@
                             </ItemsControl>
                             <Border
                                 Background="{DynamicResource CardBackgroundColor}"
-                                CornerRadius="10"
+                                CornerRadius="8"
                                 IsVisible="{Binding HasFightFigures}"
                                 Margin="0,6,0,0"
                                 Padding="12,10">
@@ -877,7 +877,7 @@
                             </Border>
                             <Border
                                 Background="{DynamicResource CardBackgroundColor}"
-                                CornerRadius="10"
+                                CornerRadius="8"
                                 IsVisible="{Binding HasProfession}"
                                 Margin="0,6,0,0"
                                 Padding="12,10">
@@ -912,7 +912,7 @@
                                         <Border Classes="Fact">
                                             <TextBlock
                                                 Classes="Muted Figures"
-                                                FontSize="11.5"
+                                                FontSize="11"
                                                 Text="{Binding}"
                                                 VerticalAlignment="Center" />
                                         </Border>

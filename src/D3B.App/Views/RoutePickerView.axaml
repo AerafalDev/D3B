@@ -32,7 +32,7 @@
                             <TextBlock Classes="Bright" Text="{Binding Name}" />
                             <TextBlock
                                 Classes="Dim"
-                                FontSize="11.5"
+                                FontSize="11"
                                 Text="{Binding Detail}"
                                 TextWrapping="Wrap" />
                         </StackPanel>

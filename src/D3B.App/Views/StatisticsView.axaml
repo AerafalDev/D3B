@@ -12,7 +12,7 @@
         <StyleInclude Source="avares://D3B.App/Themes/Panels.axaml" />
         <Style Selector="Border.Stat">
             <Setter Property="Background" Value="{DynamicResource CardBackgroundColor}" />
-            <Setter Property="CornerRadius" Value="10" />
+            <Setter Property="CornerRadius" Value="8" />
             <Setter Property="Padding" Value="12" />
         </Style>
         <Style Selector="TextBlock.StatTitle">
@@ -29,7 +29,7 @@
         <Style Selector="Border.ItemSquare">
             <Setter Property="Width" Value="22" />
             <Setter Property="Height" Value="22" />
-            <Setter Property="CornerRadius" Value="5" />
+            <Setter Property="CornerRadius" Value="6" />
             <Setter Property="Background" Value="{DynamicResource RaisedColor}" />
             <Setter Property="BorderBrush" Value="{DynamicResource VeilColor}" />
             <Setter Property="BorderThickness" Value="1" />
@@ -57,7 +57,7 @@
         </Style>
         <Style Selector="TextBlock.RunEnd">
             <Setter Property="Foreground" Value="{DynamicResource MutedColor}" />
-            <Setter Property="FontSize" Value="11.5" />
+            <Setter Property="FontSize" Value="11" />
             <Setter Property="FontFeatures" Value="+tnum" />
             <Setter Property="VerticalAlignment" Value="Center" />
         </Style>

@@ -10,7 +10,7 @@
     <UserControl.Styles>
         <Style Selector="TextBlock.GroupTitle">
             <Setter Property="Foreground" Value="{DynamicResource DimColor}" />
-            <Setter Property="FontSize" Value="11.5" />
+            <Setter Property="FontSize" Value="11" />
             <Setter Property="FontWeight" Value="SemiBold" />
             <Setter Property="Margin" Value="10,0" />
             <Setter Property="Height" Value="28" />
@@ -19,7 +19,7 @@
         <Style Selector="Border.Problem">
             <Setter Property="Padding" Value="10,7" />
             <Setter Property="Margin" Value="6,0" />
-            <Setter Property="CornerRadius" Value="7" />
+            <Setter Property="CornerRadius" Value="6" />
             <Setter Property="Background" Value="Transparent" />
         </Style>
         <Style Selector="Border.Problem:pointerover">
@@ -30,7 +30,7 @@
             <Setter Property="Height" Value="24" />
             <Setter Property="MinHeight" Value="24" />
             <Setter Property="Padding" Value="10,0" />
-            <Setter Property="CornerRadius" Value="7" />
+            <Setter Property="CornerRadius" Value="6" />
             <Setter Property="Background" Value="{DynamicResource FieldColor}" />
             <Setter Property="FontSize" Value="12" />
             <Setter Property="FontWeight" Value="Normal" />

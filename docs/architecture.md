@@ -796,8 +796,8 @@ bottom panel and the Details hidden until needed.
   that hides it after: the Characters view is the Outliner's characters, the World view its routes and zones (`OutlinerViewModel.Scope`,
   `OutlinerScope`, which follows `StudioLayout.View`), its header making a route or a zone (D515), the Library view the assets'
   tree with its tools.
-- **The parts** (D321, D397, D513, `StudioLayout` in `D3B.App.ViewModels.Studio`): the side bar, the editor's tabs over the bottom
-  panel in the centre, the Details panel on the right, rounded panels with a hairline edge, 5 pixels apart, none outlined (D531).
+- **The parts** (D321, D397, D513, `StudioLayout` in `D3B.App.ViewModels.Studio`): the side bar, the editor's tabs in the centre,
+  the Details panel on the right, the bottom panel under both to the window's right edge (D547), rounded panels with a hairline edge, 5 pixels apart, none outlined (D531).
   The studio opens on the side bar and the editor; the bottom panel and the Details start hidden. The
   Details show when something is selected (a character, a route, a step, a zone) and stay as the hand left them while it stays
   selected (`MainViewModel.OnSelectionChanged`); the bottom panel when its journal, trace or a route's Sequencer is
@@ -905,26 +905,29 @@ bottom panel and the Details hidden until needed.
   letter is typed, shows in preview in the tab of the character chosen, else of the first online or known (D341). Help's
   Shortcuts opens it on the commands.
 - **The status bar**, 24 pixels as `next`'s (D531, D541, `StatusBarViewModel` and `StatusFacts` in `D3B.App.ViewModels.Studio`,
-  read at the window's refresh): on the left, after a small blue dot, the app's name and version, then the relay as `next` says it
-  (« Relais prêt · N en jeu », starting, closed, stopped in red with the host's failure), its tooltip only what the bar does not say;
-  on the right the client build and, once the host opened it, the data pack's format, its extractor in the tooltip, the bots playing,
+  read at the window's refresh), every item on the right since D546: the relay's dot, its colour where it stands, the characters it
+  carries beside it, its words as `next` says them (« Relais prêt · N en jeu », starting, closed, stopped with the host's failure)
+  and its advice in its tooltip; then, in icons and figures whose words are their tooltips (D544), the client build and, once the host opened it, the data pack's format, its extractor in the tooltip, the bots playing,
   the problems' errors and warnings (read at every refresh, `BottomPanelViewModel.Refresh`), whether everything is saved, and once an
   update is downloaded, « Redémarrer pour passer à … » (D173). Each item opens what it names: the settings' About, the journal, the
-  settings' Files, the Characters view, the problems' tab; the saving item saves all, the update's restarts into it. A host that
+  settings' Files, the Characters view, the problems' tab; the saving item saves all, the update's restarts into it; last the
+  version's blue dot, « D3B … · À propos » in its tooltip. A host that
   failed counts its failure among the problems, and its relay, red, opens them (D543).
 - **Empty states that guide** (D543, `StackPanel.EmptyState` in `Themes/Styles.axaml`): an empty view says what fills it, with a
   title, steps and a button: the Characters view how to connect a character (keep D3B open until « Relais prêt », start Dofus, choose
   a character; `OutlinerViewModel.IsGuiding`, `EmptySteps`), the World's « Nouvelle route » and « Nouvelle zone » (`ShowsMakeButtons`),
   the Library's « Nouveau profil » (`AssetsViewModel.NewProfileCommand`), the statistics' « Voir toutes les sessions »
   (`StatisticsViewModel.ShowsAllRuns`), the journal what fills it; a search that finds nothing says so and guides nowhere.
-- **Motions** (D320, D347): short and easing out. The studio's buttons fade their surface, edge and text, a tool gives
+- **Motions** (D320, D347, D545): short and easing out. The side bar, the bottom panel and the Details slide open or closed in
+  200 ms on next's curve (`DockSlide`), their content held at its size against its edge and clipped while it slides (D546), a drag following the pointer; the window's corners are rounded on Windows 11 (`WindowCorners`). The studio's buttons fade their surface, edge and text, a tool gives
   under the press; menus and tooltips fade in; gauges (`ShareBar`) ease to their share; chevrons turn; what unfolds or is
   chosen fades in (`FadeIn`). A surface lit on hover rests on `ClearColor`, the hover's grey with no alpha, never on
   `Transparent`, white with no alpha, which a brush transition would flash through.
 - **One scale** (D159, D163, D335), held by `Themes/Styles.axaml` and the views: spacings 4, 8, 12, 16, 24 and 32; the
   studio's text 12.5, its small text 11, the pages' fonts 12, 14, 16, 22 and 28 (`Caption`, text, `Title`, `PageTitle`,
   `Figure`); the studio's controls 24 to 30 high (`StudioButton` and its classes: `Tool`, `TabFace`, `TitleSearch`,
-  `Status`), the pages' 32 and 36; radii 4, 5, 6 and 8, ShadUI's included, the islands 6 (D530); icons 12, 14, 16 and 20. Keycaps (`Border.Key`)
+  `Status`), the pages' 32 and 36; radii 4 for rows and chips, 6 for fields, buttons and parts, 8 for menus and cards (D547), the
+  islands 6 (D530); icons 12, 14, 16 and 20; colours by the palette's keys only, the glass over a map `GlassColor` (D547). Keycaps (`Border.Key`)
   say a shortcut, and a tooltip's shortcut is a `KeyTip`. A module's page is an `AppPage` (`D3B.App.Controls`): its title
   or a header of its own, its actions on the right, the same margins; docked, its title is the tab's and its margins
   narrower. A setting's help is a tooltip on a mark beside its name.
@@ -937,8 +940,8 @@ bottom panel and the Details hidden until needed.
 - **The characters** (D323, D344, D397, `CharactersViewModel` in `D3B.App.ViewModels.Characters`): the model behind the
   Outliner's character rows, the run block and the menus: the bots (`BotViewModel`: the ring of its state `PlayState`, its
   level, where it is, what it does and its progress, life and pods) and the characters offline (`CharacterLineViewModel`), only
-  those played through D3B once (`KnownCharacter.LastPlayed`, D544); the view's header plays every one connected
-  (`RunBlockViewModel.PlayAll`, also a command of the palette). The
+  those played through D3B once (`KnownCharacter.LastPlayed`, D544); the view's header plays, pauses and stops every one connected
+  (`RunBlockViewModel.PlayAll`, `PauseAll`, `StopAll`, also commands of the palette). The
   cards of D323 are gone, the Outliner's rows say it shorter (D397). A click chooses the character for the run block and the
   Details, a double click or Enter opens its tab, the right click chooses it and opens its menu, made as it opens: open, play,
   pause, stop, a profile, the start on connection, forgetting its account after a question (`CharacterAccounts`). The profiles'

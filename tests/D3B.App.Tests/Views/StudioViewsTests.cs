@@ -178,6 +178,7 @@ public sealed class StudioViewsTests : IAsyncDisposable
             main.Layout.Show(StudioPanel.Details, true);
             window.Show();
             Dispatcher.UIThread.RunJobs();
+            Slides.Finish();
 
             var editor = window.GetVisualDescendants().OfType<Border>().Single(border => border.Name == "EditorDock");
             var before = (editor.Bounds.Width, editor.Bounds.Height);
@@ -186,6 +187,7 @@ public sealed class StudioViewsTests : IAsyncDisposable
             main.Layout.Close(StudioPanel.Bottom);
             main.Layout.Close(StudioPanel.Details);
             Dispatcher.UIThread.RunJobs();
+            Slides.Finish();
             Drawings.Draw(window, "studio-closed");
 
             var after = (editor.Bounds.Width, editor.Bounds.Height);

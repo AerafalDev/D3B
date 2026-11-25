@@ -15,12 +15,12 @@
             <Setter Property="Background" Value="#C70E0E10" />
             <Setter Property="BorderBrush" Value="#0DFFFFFF" />
             <Setter Property="BorderThickness" Value="1" />
-            <Setter Property="CornerRadius" Value="9" />
+            <Setter Property="CornerRadius" Value="6" />
             <Setter Property="Padding" Value="10,5" />
             <Setter Property="IsHitTestVisible" Value="False" />
         </Style>
         <Style Selector="Border.PlayFrame">
-            <Setter Property="BorderBrush" Value="#4ADE80" />
+            <Setter Property="BorderBrush" Value="{DynamicResource PlayingColor}" />
             <Setter Property="BorderThickness" Value="2" />
             <Setter Property="BoxShadow" Value="inset 0 0 28 0 #334ADE80" />
             <Setter Property="IsHitTestVisible" Value="False" />
@@ -238,7 +238,7 @@
                             </StackPanel>
                         </Button>
                         <Border
-                            Background="#17FFFFFF"
+                            Background="{DynamicResource CommandCentreEdgeColor}"
                             Height="18"
                             IsVisible="{Binding ShowsAdd}"
                             Margin="3,0"
@@ -320,7 +320,7 @@
                                         <CheckBox Content="{l:Tr RouteViewShared}" IsChecked="{Binding ShowShared}" />
                                         <StackPanel IsVisible="{Binding Hints.IsAvailable}" Spacing="8">
                                             <Border
-                                                Background="#17FFFFFF"
+                                                Background="{DynamicResource CommandCentreEdgeColor}"
                                                 Height="1"
                                                 Margin="0,2" />
                                             <CheckBox Content="{l:Tr WorldHints}" IsChecked="{Binding Hints.ShowHints}" />
@@ -343,7 +343,7 @@
                         </Button.Flyout>
                     </Button>
                     <Border
-                        Background="#17FFFFFF"
+                        Background="{DynamicResource CommandCentreEdgeColor}"
                         Height="18"
                         Margin="3,0"
                         Width="1" />
@@ -466,7 +466,7 @@
             VerticalAlignment="Bottom">
             <StackPanel Orientation="Horizontal" Spacing="7">
                 <Ellipse
-                    Fill="#4ADE80"
+                    Fill="{DynamicResource PlayingColor}"
                     Height="8"
                     VerticalAlignment="Center"
                     Width="8" />
@@ -504,7 +504,7 @@
                 <StackPanel Orientation="Horizontal" Spacing="7">
                     <Line
                         EndPoint="20,0"
-                        Stroke="#EA5D52"
+                        Stroke="{DynamicResource ErrorColor}"
                         StrokeDashArray="2,1.6"
                         StrokeThickness="3"
                         VerticalAlignment="Center" />
@@ -541,7 +541,7 @@
                 </StackPanel>
                 <StackPanel Orientation="Horizontal" Spacing="7">
                     <Border
-                        BorderBrush="#EA5D52"
+                        BorderBrush="{DynamicResource ErrorColor}"
                         BorderThickness="1.5"
                         CornerRadius="2"
                         Height="12"
