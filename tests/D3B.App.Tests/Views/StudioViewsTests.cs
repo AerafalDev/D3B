@@ -33,7 +33,7 @@ public sealed class StudioViewsTests : IAsyncDisposable
     }
 
     [Fact]
-    public async Task TheRunBlockShowsOnlyTheButtonsTheChosenCharactersStateAllows()
+    public async Task TheRunBlockOffersOnlyWhatTheChosenCharactersStateAllowsAndTheTitleBarHoldsTheLayoutToggles()
     {
         using var host = TestHosts.Of(_play, new ActivityDefinition("patrol", "Patrol", _ => new TestActivity()));
         var runner = await TestHosts.RunningAsync(host);
@@ -49,14 +49,16 @@ public sealed class StudioViewsTests : IAsyncDisposable
             var main = new MainViewModel(runner, localizer);
             var window = new MainWindow { DataContext = main, Width = 1440, Height = 900 };
 
+            // The run block left the title bar for next's layout toggles (D531): it stays the model behind F5, F6, the tab's and the
+            // home card's buttons, whose state it gives.
             List<string> Buttons()
             {
                 main.Refresh();
                 Dispatcher.UIThread.RunJobs();
 
-                var run = window.GetVisualDescendants().OfType<Border>().Single(border => border.Classes.Contains("Run"));
+                var block = main.RunBlock;
 
-                return [.. run.GetVisualDescendants().OfType<Button>().Where(button => button.Classes.Contains("Run") && button.IsVisible).Select(button => button.IsEnabled ? "on" : "off")];
+                return [.. new[] { (block.ShowsPlay, block.CanPlay), (block.ShowsPause, true), (block.ShowsStop, true) }.Where(button => button.Item1).Select(button => button.Item2 ? "on" : "off")];
             }
 
             main.Refresh();
@@ -65,7 +67,7 @@ public sealed class StudioViewsTests : IAsyncDisposable
 
             var none = (Buttons(), main.RunBlock.Name);
 
-            Drawings.DrawPart(window.GetVisualDescendants().OfType<Border>().Single(border => border.Classes.Contains("Run")), "part-run-none");
+            Assert.Equal(3, window.GetVisualDescendants().OfType<StackPanel>().Single(panel => panel.Name == "LayoutToggles").Children.Count);
             Drawings.DrawPart(window.GetVisualDescendants().OfType<Button>().Single(button => button.Classes.Contains("TitleSearch")), "part-search");
 
             main.Bots.Items[0].ChooseCommand.Execute(null);
@@ -77,7 +79,6 @@ public sealed class StudioViewsTests : IAsyncDisposable
             var playing = (Buttons(), main.RunBlock.State);
 
             Drawings.Draw(window, "studio-playing");
-            Drawings.DrawPart(window.GetVisualDescendants().OfType<Border>().Single(border => border.Classes.Contains("Run")), "part-run-playing");
             Drawings.DrawPart(window.GetVisualDescendants().OfType<Border>().Single(border => border.Name == "SideDock"), "part-characters");
             Drawings.DrawPart(window.GetVisualDescendants().OfType<Border>().Single(border => border.Name == "BottomDock"), "part-bottom");
             main.RunBlock.PauseCommand.Execute(null);
@@ -200,6 +201,47 @@ public sealed class StudioViewsTests : IAsyncDisposable
         Assert.Equal(1440 - 2 - 45 - 300 - 5 - 340 - 5 - 5, widths.before.Width, 1);
         Assert.Equal(1440 - 2 - 45 - 5, widths.after.Width, 1);
         Assert.True(widths.after.Height > widths.before.Height + 200);
+    }
+
+    [Fact]
+    public async Task TheTitleBarsTogglesAreLitWhileTheirPartShowsAndShowAndHideIt()
+    {
+        var (start, pressed, version) = await OnTheUIThreadAsync(() =>
+        {
+            var main = new MainViewModel(new D3B.App.Hosting.HostRunner(_ => new TaskCompletionSource<D3B.Bot.Hosting.BotHostStart>().Task), Localizer.Instance);
+            var window = new MainWindow { DataContext = main, Width = 1440, Height = 900 };
+
+            window.Show();
+            Dispatcher.UIThread.RunJobs();
+
+            var toggles = window.GetVisualDescendants().OfType<StackPanel>().Single(panel => panel.Name == "LayoutToggles").Children.OfType<Button>().ToList();
+
+            List<bool> Lit()
+            {
+                Dispatcher.UIThread.RunJobs();
+
+                return [.. toggles.Select(toggle => toggle.Classes.Contains("Lit"))];
+            }
+
+            var start = Lit();
+
+            // The side bar's toggle hides it; the bottom panel's and the Details' show theirs.
+            foreach (var toggle in toggles)
+                toggle.Command!.Execute(toggle.CommandParameter);
+
+            var pressed = (Lit(), main.Layout.IsSideOpen, main.Layout.IsBottomOpen, main.Layout.IsDetailsOpen);
+            var version = main.StatusVersion == "D3B " + main.Updates.Version;
+
+            window.Close();
+
+            return (start, pressed, version);
+        });
+
+        // As next's (D531): the side bar shows at start, the bottom panel and the Details do not.
+        Assert.Equal([true, false, false], start);
+        Assert.Equal([false, true, true], pressed.Item1);
+        Assert.Equal((false, true, true), (pressed.IsSideOpen, pressed.IsBottomOpen, pressed.IsDetailsOpen));
+        Assert.True(version);
     }
 
     [Fact]

@@ -48,92 +48,12 @@
         <KeyBinding Command="{Binding RunBlock.StopCommand}" Gesture="Shift+F5" />
     </shadui:Window.KeyBindings>
     <shadui:Window.Styles>
-        <Style Selector="Border.Run">
-            <Setter Property="Height" Value="34" />
-            <Setter Property="Padding" Value="2" />
-            <Setter Property="CornerRadius" Value="11" />
-            <Setter Property="Background" Value="{DynamicResource PanelColor}" />
-            <Setter Property="BorderBrush" Value="{DynamicResource BorderColor60}" />
-            <Setter Property="BorderThickness" Value="1" />
-            <Setter Property="Transitions">
-                <Transitions>
-                    <BrushTransition Duration="0:0:0.2" Property="BorderBrush" />
-                    <BoxShadowsTransition Duration="0:0:0.2" Property="BoxShadow" />
-                </Transitions>
-            </Setter>
-        </Style>
-        <Style Selector="Border.Run.Playing">
-            <Setter Property="BorderBrush" Value="{DynamicResource PlayingEdgeColor}" />
-            <Setter Property="BoxShadow" Value="0 0 18 -6 #733ECF5C" />
-        </Style>
-        <Style Selector="Border.Run.Paused">
-            <Setter Property="BorderBrush" Value="{DynamicResource PausedEdgeColor}" />
-        </Style>
-        <Style Selector="Button.RunWho">
-            <Setter Property="Theme" Value="{DynamicResource StudioButton}" />
-            <Setter Property="Height" Value="30" />
-            <Setter Property="MinHeight" Value="30" />
-            <Setter Property="MinWidth" Value="176" />
-            <Setter Property="Padding" Value="4,0,6,0" />
-            <Setter Property="CornerRadius" Value="9" />
-            <Setter Property="Background" Value="{DynamicResource ClearColor}" />
-            <Setter Property="BorderThickness" Value="0" />
-            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
-            <Setter Property="VerticalContentAlignment" Value="Center" />
-            <Setter Property="FontWeight" Value="Normal" />
-        </Style>
-        <Style Selector="Button.RunWho:pointerover, Button.RunWho:pressed">
-            <Setter Property="Background" Value="{DynamicResource HoverColor}" />
-        </Style>
-        <Style Selector="Border.Avatar">
-            <Setter Property="Width" Value="24" />
-            <Setter Property="Height" Value="24" />
-            <Setter Property="CornerRadius" Value="7" />
-            <Setter Property="Background" Value="{DynamicResource RaisedColor}" />
-        </Style>
-        <Style Selector="Ellipse.StateDot">
-            <Setter Property="Width" Value="9" />
-            <Setter Property="Height" Value="9" />
-            <Setter Property="Stroke" Value="{DynamicResource PanelColor}" />
-            <Setter Property="StrokeThickness" Value="2" />
-            <Setter Property="Fill" Value="{DynamicResource DimColor}" />
-            <Setter Property="HorizontalAlignment" Value="Right" />
-            <Setter Property="VerticalAlignment" Value="Bottom" />
-            <Setter Property="Margin" Value="0,0,-3,-3" />
-        </Style>
-        <Style Selector="Ellipse.StateDot.Playing">
-            <Setter Property="Fill" Value="{DynamicResource PlayingColor}" />
-        </Style>
-        <Style Selector="Ellipse.StateDot.Paused">
-            <Setter Property="Fill" Value="{DynamicResource PausedColor}" />
-        </Style>
-        <Style Selector="TextBlock.RunDetail.Playing">
-            <Setter Property="Foreground" Value="{DynamicResource PlayingTextColor}" />
-        </Style>
-        <Style Selector="TextBlock.RunDetail.Paused">
-            <Setter Property="Foreground" Value="{DynamicResource PausedColor}" />
-        </Style>
-        <Style Selector="Button.Choice">
-            <Setter Property="Theme" Value="{DynamicResource StudioButton}" />
-            <Setter Property="Height" Value="40" />
-            <Setter Property="MinHeight" Value="40" />
-            <Setter Property="Padding" Value="8,0" />
-            <Setter Property="CornerRadius" Value="7" />
-            <Setter Property="Background" Value="{DynamicResource ClearColor}" />
-            <Setter Property="BorderThickness" Value="0" />
-            <Setter Property="HorizontalAlignment" Value="Stretch" />
-            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
-            <Setter Property="VerticalContentAlignment" Value="Center" />
-            <Setter Property="FontWeight" Value="Normal" />
-        </Style>
-        <Style Selector="Button.Choice:pointerover">
-            <Setter Property="Background" Value="{DynamicResource HoverColor}" />
-        </Style>
-        <Style Selector="Button.Choice.Chosen">
-            <Setter Property="Background" Value="{DynamicResource AccentSoftColor}" />
-        </Style>
         <Style Selector="Button.Tool.Lit">
             <Setter Property="Background" Value="{DynamicResource AccentSoftColor}" />
+        </Style>
+        <Style Selector="Button.Tool.Toggle.Lit">
+            <Setter Property="Background" Value="{DynamicResource RaisedColor}" />
+            <Setter Property="Foreground" Value="{DynamicResource BrightColor}" />
         </Style>
         <Style Selector="TextBox.PropertySearch">
             <Setter Property="Height" Value="28" />
@@ -169,12 +89,6 @@
         </Style>
         <Style Selector="Ellipse.HostDot.Failed">
             <Setter Property="Fill" Value="{DynamicResource ErrorColor}" />
-        </Style>
-        <Style Selector="Border.Glow">
-            <Setter Property="Width" Value="13" />
-            <Setter Property="Height" Value="13" />
-            <Setter Property="CornerRadius" Value="7" />
-            <Setter Property="Background" Value="#263ECF5C" />
         </Style>
     </shadui:Window.Styles>
 
@@ -226,6 +140,10 @@
                 </MenuItem>
                 <MenuItem Header="{l:Tr MenuView}">
                     <MenuItem Command="{Binding ShowHomeCommand}" Header="{l:Tr Home}" />
+                    <MenuItem
+                        Command="{Binding ShowStatisticsCommand}"
+                        Header="{l:Tr ActivityStatistics}"
+                        IsChecked="{Binding IsStatisticsShown, Mode=OneWay}" />
                     <Separator />
                     <MenuItem Classes="Heading" Header="{l:Tr MenuViews}" />
                     <MenuItem
@@ -318,167 +236,44 @@
     </shadui:Window.MenuBarContent>
 
     <shadui:Window.RightWindowTitleBarContent>
-        <StackPanel Orientation="Horizontal" Spacing="4">
-            <Border
-                Classes="Run"
-                Classes.Paused="{Binding RunBlock.IsPaused}"
-                Classes.Playing="{Binding RunBlock.IsPlaying}">
-                <StackPanel Orientation="Horizontal" Spacing="2">
-                    <Button
-                        Classes="RunWho"
-                        Name="RunWho">
-                        <ToolTip.Tip>
-                            <c:KeyTip Text="{l:Tr RunWhoTip}" />
-                        </ToolTip.Tip>
-                        <Button.Flyout>
-                            <Flyout FlyoutPresenterClasses="Bare" Placement="BottomEdgeAlignedLeft">
-                                <Border Classes="MenuPopup" MinWidth="260">
-                                    <StackPanel>
-                                        <TextBlock
-                                            Classes="Dim"
-                                            FontSize="11"
-                                            Margin="10,6,10,3"
-                                            Text="{l:Tr RunOnline}" />
-                                        <TextBlock
-                                            Classes="Muted"
-                                            IsVisible="{Binding RunBlock.IsNobodyOnline}"
-                                            Margin="10,4,10,8"
-                                            Text="{l:Tr RunNobodyOnline}" />
-                                        <ItemsControl ItemsSource="{Binding RunBlock.Online}">
-                                            <ItemsControl.ItemTemplate>
-                                                <DataTemplate x:DataType="vm:BotViewModel">
-                                                    <Button
-                                                        Classes="Choice"
-                                                        Classes.Chosen="{Binding IsChosen}"
-                                                        Click="OnRunChoiceClick">
-                                                        <Grid ColumnDefinitions="Auto,*,Auto">
-                                                            <Panel VerticalAlignment="Center">
-                                                                <c:Portrait
-                                                                    Color="{Binding PortraitColor}"
-                                                                    Head="{Binding Head}"
-                                                                    Height="26"
-                                                                    Initials="{Binding Initials}"
-                                                                    Radius="7"
-                                                                    Width="26" />
-                                                                <Ellipse
-                                                                    Classes="StateDot"
-                                                                    Classes.Paused="{Binding IsPaused}"
-                                                                    Classes.Playing="{Binding IsActivityRunning}"
-                                                                    Stroke="{DynamicResource PopupColor}" />
-                                                            </Panel>
-                                                            <StackPanel
-                                                                Grid.Column="1"
-                                                                Margin="10,0"
-                                                                VerticalAlignment="Center">
-                                                                <TextBlock
-                                                                    Classes="Bright"
-                                                                    FontWeight="SemiBold"
-                                                                    Text="{Binding Name}"
-                                                                    TextTrimming="CharacterEllipsis" />
-                                                                <TextBlock
-                                                                    Classes="Dim Small"
-                                                                    Text="{Binding Doing}"
-                                                                    TextTrimming="CharacterEllipsis" />
-                                                            </StackPanel>
-                                                            <TextBlock
-                                                                Classes="Dim Small Figures"
-                                                                Grid.Column="2"
-                                                                Text="{Binding Level}"
-                                                                VerticalAlignment="Center" />
-                                                        </Grid>
-                                                    </Button>
-                                                </DataTemplate>
-                                            </ItemsControl.ItemTemplate>
-                                        </ItemsControl>
-                                    </StackPanel>
-                                </Border>
-                            </Flyout>
-                        </Button.Flyout>
-                        <Grid ColumnDefinitions="Auto,*,Auto">
-                            <Panel VerticalAlignment="Center">
-                                <Border Classes="Avatar" IsVisible="{Binding RunBlock.PortraitColor, Converter={x:Static ObjectConverters.IsNull}}">
-                                    <c:Icon
-                                        Drawing="{StaticResource General.User}"
-                                        Height="14"
-                                        HorizontalAlignment="Center"
-                                        Opacity="0.7"
-                                        VerticalAlignment="Center"
-                                        Width="14" />
-                                </Border>
-                                <c:Portrait
-                                    Color="{Binding RunBlock.PortraitColor}"
-                                    Head="{Binding RunBlock.Head}"
-                                    Height="24"
-                                    Initials="{Binding RunBlock.Initials}"
-                                    IsVisible="{Binding RunBlock.PortraitColor, Converter={x:Static ObjectConverters.IsNotNull}}"
-                                    Radius="7"
-                                    Width="24" />
-                                <Ellipse
-                                    Classes="StateDot"
-                                    Classes.Paused="{Binding RunBlock.IsPaused}"
-                                    Classes.Playing="{Binding RunBlock.IsPlaying}"
-                                    IsVisible="{Binding RunBlock.IsChosen}" />
-                            </Panel>
-                            <StackPanel
-                                Grid.Column="1"
-                                Margin="8,0"
-                                VerticalAlignment="Center">
-                                <TextBlock
-                                    Classes.Bright="{Binding RunBlock.IsChosen}"
-                                    Classes.Muted="{Binding !RunBlock.IsChosen}"
-                                    FontWeight="SemiBold"
-                                    LineHeight="15"
-                                    Text="{Binding RunBlock.Name}"
-                                    TextTrimming="CharacterEllipsis" />
-                                <TextBlock
-                                    Classes="Dim Small RunDetail"
-                                    Classes.Paused="{Binding RunBlock.IsPaused}"
-                                    Classes.Playing="{Binding RunBlock.IsPlaying}"
-                                    LineHeight="13"
-                                    MaxWidth="200"
-                                    Text="{Binding RunBlock.Detail}"
-                                    TextTrimming="CharacterEllipsis" />
-                            </StackPanel>
-                            <c:Icon
-                                Drawing="{StaticResource General.ChevronDown}"
-                                Grid.Column="2"
-                                Height="10"
-                                Opacity="0.55"
-                                VerticalAlignment="Center"
-                                Width="10" />
-                        </Grid>
-                    </Button>
-                    <Button
-                        Classes="Tool Run"
-                        Command="{Binding RunBlock.PlayCommand}"
-                        IsEnabled="{Binding RunBlock.CanPlay}"
-                        IsVisible="{Binding RunBlock.ShowsPlay}"
-                        ToolTip.ShowOnDisabled="True">
-                        <ToolTip.Tip>
-                            <c:KeyTip Keys="F5" Text="{Binding RunBlock.PlayTip}" />
-                        </ToolTip.Tip>
-                        <c:Icon Drawing="{StaticResource Run.Run}" />
-                    </Button>
-                    <Button
-                        Classes="Tool Run"
-                        Command="{Binding RunBlock.PauseCommand}"
-                        IsVisible="{Binding RunBlock.ShowsPause}">
-                        <ToolTip.Tip>
-                            <c:KeyTip Keys="F6" Text="{l:Tr RunPause}" />
-                        </ToolTip.Tip>
-                        <c:Icon Drawing="{StaticResource Run.Pause}" />
-                    </Button>
-                    <Button
-                        Classes="Tool Run"
-                        Command="{Binding RunBlock.StopCommand}"
-                        IsVisible="{Binding RunBlock.ShowsStop}">
-                        <ToolTip.Tip>
-                            <c:KeyTip Keys="{l:Tr KeysShiftF5}" Text="{l:Tr RunStopTip}" />
-                        </ToolTip.Tip>
-                        <c:Icon Drawing="{StaticResource Run.Stop}" />
-                    </Button>
-                </StackPanel>
-            </Border>
+        <!--  next's layout toggles (D531): the side bar, the bottom panel, the Details, each pressed while it shows.  -->
+        <StackPanel
+            Name="LayoutToggles"
+            Orientation="Horizontal"
+            Spacing="2"
+            VerticalAlignment="Center">
+            <Button
+                AutomationProperties.Name="{l:Tr PanelSide}"
+                Classes="Tool Small Toggle"
+                Classes.Lit="{Binding Layout.IsSideOpen}"
+                Command="{Binding Layout.ToggleCommand}"
+                CommandParameter="{x:Static studio:StudioPanel.Side}">
+                <ToolTip.Tip>
+                    <c:KeyTip Keys="Ctrl B" Text="{l:Tr PanelSide}" />
+                </ToolTip.Tip>
+                <c:Icon Data="{StaticResource PanelLeftGeometry}" />
+            </Button>
+            <Button
+                AutomationProperties.Name="{l:Tr PanelBottom}"
+                Classes="Tool Small Toggle"
+                Classes.Lit="{Binding Layout.IsBottomOpen}"
+                Command="{Binding ToggleBottomCommand}">
+                <ToolTip.Tip>
+                    <c:KeyTip Keys="Ctrl J" Text="{l:Tr PanelBottom}" />
+                </ToolTip.Tip>
+                <c:Icon Data="{StaticResource PanelBottomGeometry}" />
+            </Button>
+            <Button
+                AutomationProperties.Name="{l:Tr PanelDetails}"
+                Classes="Tool Small Toggle"
+                Classes.Lit="{Binding Layout.IsDetailsOpen}"
+                Command="{Binding Layout.ToggleCommand}"
+                CommandParameter="{x:Static studio:StudioPanel.Details}">
+                <ToolTip.Tip>
+                    <c:KeyTip Keys="Ctrl Alt B" Text="{l:Tr PanelDetails}" />
+                </ToolTip.Tip>
+                <c:Icon Data="{StaticResource PanelRightGeometry}" />
+            </Button>
         </StackPanel>
     </shadui:Window.RightWindowTitleBarContent>
 
@@ -488,30 +283,14 @@
     </shadui:Window.Hosts>
 
     <Panel>
-        <Grid RowDefinitions="*,34">
+        <Grid RowDefinitions="*,24">
             <Grid ColumnDefinitions="Auto,*">
-                <!--  The activity bar (D513): the side bar's views at the top, the places that open elsewhere at its foot, as next's.  -->
+                <!--  The activity bar (D513, D531): the side bar's views, as next's, and the settings at its foot as VS Code's Manage.  -->
                 <DockPanel
                     Margin="4,0,5,0"
                     Name="ActivityBar"
                     Width="36">
                     <StackPanel DockPanel.Dock="Bottom" Spacing="4">
-                        <Button
-                            AutomationProperties.Name="{l:Tr ActivityJournal}"
-                            Classes="Activity"
-                            Classes.On="{Binding Bottom.IsJournalOpen}"
-                            Command="{Binding ToggleJournalCommand}"
-                            ToolTip.Tip="{l:Tr ActivityJournal}">
-                            <c:Icon Drawing="{StaticResource Toolwindows.Messages}" />
-                        </Button>
-                        <Button
-                            AutomationProperties.Name="{l:Tr ActivityStatistics}"
-                            Classes="Activity"
-                            Classes.On="{Binding IsStatisticsShown}"
-                            Command="{Binding ShowStatisticsCommand}"
-                            ToolTip.Tip="{l:Tr ActivityStatistics}">
-                            <c:Icon Drawing="{StaticResource Toolwindows.Profiler}" />
-                        </Button>
                         <Button
                             AutomationProperties.Name="{l:Tr Settings}"
                             Classes="Activity"
@@ -575,37 +354,36 @@
                     <DockPanel>
                         <Border Classes="Strip" DockPanel.Dock="Top">
                             <DockPanel LastChildFill="False">
-                                <Border Classes="TabHost On">
-                                    <StackPanel Orientation="Horizontal">
-                                        <TextBlock
-                                            Classes="TabTitle"
-                                            IsVisible="{Binding Layout.IsCharactersShown}"
-                                            Margin="9,0,7,0"
-                                            Text="{l:Tr ViewCharacters}" />
-                                        <TextBlock
-                                            Classes="TabTitle"
-                                            IsVisible="{Binding Layout.IsLibraryShown}"
-                                            Margin="9,0,7,0"
-                                            Text="{l:Tr ViewLibrary}" />
-                                        <TextBlock
-                                            Classes="TabTitle"
-                                            IsVisible="{Binding Layout.IsWorldShown}"
-                                            Margin="9,0,7,0"
-                                            Text="{l:Tr ViewWorld}" />
-                                        <Button
-                                            Classes="TabClose"
-                                            Command="{Binding Layout.CloseCommand}"
-                                            CommandParameter="{x:Static studio:StudioPanel.Side}">
-                                            <ToolTip.Tip>
-                                                <c:KeyTip Keys="Ctrl B" Text="{l:Tr Hide}" />
-                                            </ToolTip.Tip>
-                                            <c:Icon
-                                                Drawing="{StaticResource General.Close}"
-                                                Height="12"
-                                                Width="12" />
-                                        </Button>
-                                    </StackPanel>
-                                </Border>
+                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                    <TextBlock
+                                        Classes="PartTitle"
+                                        IsVisible="{Binding Layout.IsCharactersShown}"
+                                        Text="{l:Tr ViewCharacters}" />
+                                    <TextBlock
+                                        Classes="PartTitle"
+                                        IsVisible="{Binding Layout.IsLibraryShown}"
+                                        Text="{l:Tr ViewLibrary}" />
+                                    <TextBlock
+                                        Classes="PartTitle"
+                                        IsVisible="{Binding Layout.IsWorldShown}"
+                                        Text="{l:Tr ViewWorld}" />
+                                </StackPanel>
+                                <Button
+                                    AutomationProperties.Name="{l:Tr Hide}"
+                                    Classes="Tool Small"
+                                    Command="{Binding Layout.CloseCommand}"
+                                    CommandParameter="{x:Static studio:StudioPanel.Side}"
+                                    DockPanel.Dock="Right"
+                                    Margin="0,0,4,0"
+                                    VerticalAlignment="Center">
+                                    <ToolTip.Tip>
+                                        <c:KeyTip Keys="Ctrl B" Text="{l:Tr Hide}" />
+                                    </ToolTip.Tip>
+                                    <c:Icon
+                                        Drawing="{StaticResource General.Close}"
+                                        Height="12"
+                                        Width="12" />
+                                </Button>
                                 <TextBlock
                                     Classes="Dim Figures"
                                     DockPanel.Dock="Right"
@@ -718,12 +496,11 @@
                         <RowDefinition Height="5" />
                         <RowDefinition Height="260" />
                     </Grid.RowDefinitions>
-                    <Border
-                        Classes="Dock Recess Focused"
-                        Name="EditorDock">
-                        <DockPanel>
-                            <Border Classes="Strip" DockPanel.Dock="Top">
-                                <ItemsControl ItemsSource="{Binding Editor.Items}" VerticalAlignment="Center">
+                    <!--  The editor area as next's (D531): the tabs lie on the window's frame, the one shown rises into the editor's island
+                         with rounded top corners; with no tab, the island shows the mark and the main keys.  -->
+                    <DockPanel Name="EditorArea">
+                            <Border Classes="EditorStrip" DockPanel.Dock="Top">
+                                <ItemsControl ItemsSource="{Binding Editor.Items}" VerticalAlignment="Bottom">
                                     <ItemsControl.ItemsPanel>
                                         <ItemsPanelTemplate>
                                             <StackPanel Orientation="Horizontal" Spacing="2" />
@@ -731,7 +508,7 @@
                                     </ItemsControl.ItemsPanel>
                                     <ItemsControl.ItemTemplate>
                                         <DataTemplate x:DataType="studio:EditorTab">
-                                            <Border Classes="TabHost" Classes.On="{Binding IsSelected}">
+                                            <Border Classes="TabHost EditorTabHost" Classes.On="{Binding IsSelected}">
                                                 <Grid ColumnDefinitions="*,Auto">
                                                     <Button
                                                         Classes="TabFace"
@@ -787,6 +564,9 @@
                                     </ItemsControl.ItemTemplate>
                                 </ItemsControl>
                             </Border>
+                            <Border
+                                Classes="Dock Recess"
+                                Name="EditorDock">
                             <Panel>
                                 <ItemsControl ItemsSource="{Binding Editor.Items}">
                                     <ItemsControl.ItemsPanel>
@@ -868,9 +648,46 @@
                                     </Border.IsVisible>
                                     <views:HostStateView />
                                 </Border>
+                                <StackPanel
+                                    HorizontalAlignment="Center"
+                                    IsHitTestVisible="False"
+                                    IsVisible="{Binding Editor.IsEmpty}"
+                                    Name="Watermark"
+                                    Spacing="32"
+                                    VerticalAlignment="Center">
+                                    <Image
+                                        Height="128"
+                                        Opacity="0.12"
+                                        RenderOptions.BitmapInterpolationMode="HighQuality"
+                                        Source="/Assets/d3b.png"
+                                        Width="128" />
+                                    <Grid
+                                        ColumnDefinitions="Auto,Auto"
+                                        ColumnSpacing="16"
+                                        HorizontalAlignment="Center"
+                                        RowDefinitions="Auto,Auto,Auto,Auto"
+                                        RowSpacing="10">
+                                        <TextBlock Classes="Muted" HorizontalAlignment="Right" Text="{l:Tr HomeSearch}" />
+                                        <Border Classes="Key" Grid.Column="1" HorizontalAlignment="Left">
+                                            <TextBlock Text="Ctrl K" />
+                                        </Border>
+                                        <TextBlock Classes="Muted" Grid.Row="1" HorizontalAlignment="Right" Text="{l:Tr PanelSide}" />
+                                        <Border Classes="Key" Grid.Column="1" Grid.Row="1" HorizontalAlignment="Left">
+                                            <TextBlock Text="Ctrl B" />
+                                        </Border>
+                                        <TextBlock Classes="Muted" Grid.Row="2" HorizontalAlignment="Right" Text="{l:Tr PanelBottom}" />
+                                        <Border Classes="Key" Grid.Column="1" Grid.Row="2" HorizontalAlignment="Left">
+                                            <TextBlock Text="Ctrl J" />
+                                        </Border>
+                                        <TextBlock Classes="Muted" Grid.Row="3" HorizontalAlignment="Right" Text="{l:Tr HomePlay}" />
+                                        <Border Classes="Key" Grid.Column="1" Grid.Row="3" HorizontalAlignment="Left">
+                                            <TextBlock Text="F5" />
+                                        </Border>
+                                    </Grid>
+                                </StackPanel>
                             </Panel>
-                        </DockPanel>
-                    </Border>
+                            </Border>
+                    </DockPanel>
                     <c:DockSplitter
                         Grid.Row="1"
                         Height="8"
@@ -956,15 +773,62 @@
             </Grid>
             </Grid>
 
+            <!--  The status bar as next's (D531): the app's state on the left, after its one accent, a small blue dot; its context on
+                 the right, colour only for a problem or the update offered.  -->
             <Grid
-                ColumnDefinitions="*,Auto"
+                ColumnDefinitions="Auto,*,Auto"
                 Grid.Row="1"
-                Margin="5,0">
+                Margin="6,0"
+                Name="StatusBar">
                 <StackPanel
-                    Grid.Column="1"
                     Orientation="Horizontal"
-                    Spacing="4"
+                    Spacing="2"
                     VerticalAlignment="Center">
+                    <Button Classes="Status">
+                        <StackPanel Orientation="Horizontal" Spacing="6">
+                            <Ellipse
+                                Fill="{DynamicResource AccentColor}"
+                                Height="6"
+                                VerticalAlignment="Center"
+                                Width="6" />
+                            <TextBlock Text="{Binding StatusVersion}" VerticalAlignment="Center" />
+                        </StackPanel>
+                    </Button>
+                    <Button Classes="Status" ToolTip.Tip="{Binding HostDetail}">
+                        <StackPanel Orientation="Horizontal" Spacing="6">
+                            <Ellipse
+                                Classes="HostDot"
+                                Classes.Failed="{Binding IsFailed}"
+                                Classes.Running="{Binding IsRunning}"
+                                Classes.Starting="{Binding IsStarting}"
+                                Classes.Stopping="{Binding IsStopping}"
+                                VerticalAlignment="Center" />
+                            <TextBlock Text="{Binding HostTitle}" VerticalAlignment="Center" />
+                        </StackPanel>
+                    </Button>
+                </StackPanel>
+                <StackPanel
+                    Grid.Column="2"
+                    Orientation="Horizontal"
+                    Spacing="2"
+                    VerticalAlignment="Center">
+                    <Button Classes="Status" Content="{Binding ClientText}" />
+                    <Button Classes="Status">
+                        <StackPanel Orientation="Horizontal" Spacing="6">
+                            <c:Icon
+                                Drawing="{StaticResource Status.Success}"
+                                Height="12"
+                                IsVisible="{Binding IsSaved}"
+                                Width="12" />
+                            <c:Icon
+                                Drawing="{StaticResource Status.Warning}"
+                                Height="12"
+                                IsVisible="{Binding !IsSaved}"
+                                Width="12" />
+                            <TextBlock Text="{l:Tr StatusSaved}" IsVisible="{Binding IsSaved}" />
+                            <TextBlock Text="{l:Tr StatusUnsaved}" IsVisible="{Binding !IsSaved}" />
+                        </StackPanel>
+                    </Button>
                     <Button
                         Classes="Status Accent"
                         Command="{Binding Updates.RestartCommand}"
@@ -973,42 +837,9 @@
                         <StackPanel Orientation="Horizontal" Spacing="6">
                             <c:Icon
                                 Drawing="{StaticResource General.IdeUpdate}"
-                                Height="14"
-                                Width="14" />
+                                Height="12"
+                                Width="12" />
                             <TextBlock Text="{l:Tr UpdateRestart}" />
-                        </StackPanel>
-                    </Button>
-                    <Button Classes="Status" ToolTip.Tip="{Binding HostDetail}">
-                        <StackPanel Orientation="Horizontal" Spacing="7">
-                            <Panel VerticalAlignment="Center">
-                                <Border Classes="Glow" IsVisible="{Binding IsRunning}" />
-                                <Ellipse
-                                    Classes="HostDot"
-                                    Classes.Failed="{Binding IsFailed}"
-                                    Classes.Running="{Binding IsRunning}"
-                                    Classes.Starting="{Binding IsStarting}"
-                                    Classes.Stopping="{Binding IsStopping}"
-                                    HorizontalAlignment="Center"
-                                    VerticalAlignment="Center" />
-                            </Panel>
-                            <TextBlock Text="{Binding HostTitle}" VerticalAlignment="Center" />
-                        </StackPanel>
-                    </Button>
-                    <Button Classes="Status" Content="{Binding ClientText}" />
-                    <Button Classes="Status">
-                        <StackPanel Orientation="Horizontal" Spacing="6">
-                            <c:Icon
-                                Drawing="{StaticResource Status.Success}"
-                                Height="14"
-                                IsVisible="{Binding IsSaved}"
-                                Width="14" />
-                            <c:Icon
-                                Drawing="{StaticResource Status.Warning}"
-                                Height="14"
-                                IsVisible="{Binding !IsSaved}"
-                                Width="14" />
-                            <TextBlock Text="{l:Tr StatusSaved}" IsVisible="{Binding IsSaved}" />
-                            <TextBlock Text="{l:Tr StatusUnsaved}" IsVisible="{Binding !IsSaved}" />
                         </StackPanel>
                     </Button>
                 </StackPanel>

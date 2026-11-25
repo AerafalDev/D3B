@@ -264,6 +264,7 @@ public sealed class SettingsViewModelTests : IAsyncDisposable
         var main = await RunningAsync(AppPreferences.Load(PreferencesPath));
         var settings = main.Settings;
 
+        main.ShowHome();
         Assert.True(settings.IsEnglish);
 
         settings.UseFrenchCommand.Execute(null);

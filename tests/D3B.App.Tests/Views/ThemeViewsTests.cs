@@ -34,6 +34,13 @@ public sealed class ThemeViewsTests : IAsyncDisposable
     }
 
     [Fact]
+    public void AKindsSquareIsItsColourAtAFifthOnAnyGround()
+    {
+        Assert.Equal(Color.Parse("#33C9A7F2"), D3B.App.ViewModels.Assets.AssetKinds.TintOf(D3B.Studio.Assets.AssetKind.Profile));
+        Assert.Equal(Color.Parse("#335FD3C0"), D3B.App.ViewModels.Assets.AssetKinds.TintOf(D3B.Studio.Assets.AssetKind.Route));
+    }
+
+    [Fact]
     public async Task EveryPartOfTheStudioIsDrawnOnNextsIslands()
     {
         await _store.OpenedAsync();
@@ -57,13 +64,13 @@ public sealed class ThemeViewsTests : IAsyncDisposable
             main.Refresh();
             window.Show();
 
-            void Draw(string theme)
+            void Draw()
             {
                 main.Layout.Reveal(SideView.Characters);
                 main.ShowHome();
                 main.Refresh();
                 Dispatcher.UIThread.RunJobs();
-                Drawings.Draw(window, "theme-home-" + theme);
+                Drawings.Draw(window, "theme-home");
 
                 var docks = window.GetVisualDescendants().OfType<Border>().ToList();
 
@@ -72,40 +79,40 @@ public sealed class ThemeViewsTests : IAsyncDisposable
                 main.OpenCharacter(TestPlay.Key);
                 main.Refresh();
                 Dispatcher.UIThread.RunJobs();
-                Drawings.Draw(window, "theme-character-" + theme);
+                Drawings.Draw(window, "theme-character");
 
                 main.Layout.Reveal(SideView.Library);
                 main.OpenAsset(walker.Id);
                 main.Refresh();
                 Dispatcher.UIThread.RunJobs();
-                Drawings.Draw(window, "theme-profile-" + theme);
+                Drawings.Draw(window, "theme-profile");
 
                 main.Layout.Reveal(SideView.World);
                 main.OpenAsset("north");
                 main.Refresh();
                 Dispatcher.UIThread.RunJobs();
-                Drawings.Draw(window, "theme-world-" + theme);
+                Drawings.Draw(window, "theme-world");
 
                 main.ToggleJournal();
                 main.ShowStatistics();
                 main.Refresh();
                 Dispatcher.UIThread.RunJobs();
-                Drawings.Draw(window, "theme-statistics-" + theme);
+                Drawings.Draw(window, "theme-statistics");
 
                 main.ShowSettings();
                 main.Refresh();
                 Dispatcher.UIThread.RunJobs();
-                Drawings.Draw(window, "theme-settings-" + theme);
+                Drawings.Draw(window, "theme-settings");
 
                 main.Search.Open();
                 Dispatcher.UIThread.RunJobs();
-                Drawings.Draw(window, "theme-search-" + theme);
+                Drawings.Draw(window, "theme-search");
                 main.Search.Close();
                 main.ToggleJournal();
                 main.Layout.Close(StudioPanel.Details);
             }
 
-            Draw("dark");
+            Draw();
             localizer.Use(Localizer.English);
             window.Close();
 

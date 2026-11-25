@@ -122,7 +122,7 @@ public sealed class WorldViewTests
             return (kept, tracing, stations, selecting, undone, erasing, subArea, painting, main.Editor.Items.Count);
         });
 
-        Assert.Equal((2, "world", false), result.kept);
+        Assert.Equal((1, "world", false), result.kept);
         Assert.Equal((WorldTool.Route, WorldMapTool.Trace, true), result.tracing);
         Assert.Equal(2, result.stations);
         Assert.Equal((WorldTool.Select, WorldMapTool.Select, WorldMapTool.Select), result.selecting);
@@ -131,8 +131,8 @@ public sealed class WorldViewTests
         Assert.Equal((WorldMapTool.Region, WorldMapTool.Region), result.subArea);
         Assert.Equal((WorldTool.Zone, WorldMapTool.Trace), result.painting);
 
-        // No tab for the route nor the zone: the home page and the world are the only two.
-        Assert.Equal(2, result.Item9);
+        // No tab for the route nor the zone: the world is the only one, the studio opening on none (D531).
+        Assert.Equal(1, result.Item9);
     }
 
     [Fact]

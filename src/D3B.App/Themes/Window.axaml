@@ -4,7 +4,7 @@
     xmlns:shadui="clr-namespace:ShadUI;assembly=ShadUI"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
     <!--  ShadUI's window drawn as the studio's one title row (D322): the logo and menus left, the search in the middle, the
-         run block and settings right, then the window's buttons. Its parts keep ShadUI's names, which its code looks for: the
+         layout toggles right (D531), then the window's buttons. Its parts keep ShadUI's names, which its code looks for: the
          row's background moves the window and maximizes it on a double click, and the buttons minimize, maximize with
          Windows' snap layouts, and close.  -->
     <ControlTheme TargetType="WindowDrawnDecorations" x:Key="SuppressedDecorations">
@@ -63,7 +63,7 @@
                         <Panel>
                             <Panel Name="PART_Root">
                                 <DockPanel>
-                                    <Panel DockPanel.Dock="Top" Height="44">
+                                    <Panel DockPanel.Dock="Top" Height="35">
                                         <Border Background="Transparent" Name="PART_TitleBarBackground" />
                                         <c:TitleBarPanel Gap="12">
                                             <ContentPresenter Content="{TemplateBinding LogoContent}" VerticalAlignment="Center" />

@@ -973,7 +973,9 @@ or refines another says so in its own entry. Add a line here with every new deci
 - [D519](decisions/d518-d519-never-idle.md#d519-a-run-that-fails-or-makes-no-progress-for-ten-minutes-puts-the-character-back-in-order-and-restarts-its-activity-after-30-s-doubling-to-8-min-six-times-an-hour-at-most-a-failure-no-restart-would-change-or-a-stop-still-ends-it) A run that fails, or makes no progress for ten minutes, puts the character back in order and restarts its activity, after 30 s doubling to 8 min, six times an hour at most; a failure no restart would change, or a stop, still ends it (2026-11-25)
   - A profile's setting, on for the harvest and the hunt; a restart from the host, at once, uncapped, or map changes taken for no progress.
 
-## The studio in next's dark islands (D530)
+## The studio in next's dark islands and layout (D530, D531)
 
 - [D530](decisions/d530-next-dark-islands.md#d530-the-studio-takes-nexts-dark-style-vs-codes-dark-modern-as-discreet-islands-and-stays-dark-only) The studio takes next's dark style, VS Code's Dark Modern as discreet islands, and stays dark only (2026-11-25)
   - The owner's ask; a light theme made then removed at the owner's word; seen in the running app and in the headless drawings.
+- [D531](decisions/d531-next-layout.md#d531-the-studio-takes-nexts-layout-a-thin-title-bar-with-the-layout-toggles-the-views-alone-in-the-activity-bar-tabs-on-the-frame-no-tab-at-start) The studio takes next's layout: a thin title bar with the layout toggles, the views alone in the activity bar, tabs on the frame, no tab at start (2026-11-25)
+  - The owner's ask; the run block, the journal and statistics entries leave the bars; the character's column on the left.

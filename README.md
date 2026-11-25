@@ -38,8 +38,8 @@ D3B updates itself. After an update of the game, wait for the D3B version that s
 
 1. Start D3B, **then** start Dofus and choose a character. It shows in D3B's **Characters**, the first entry of the bar
    on the left.
-2. Click its card on the **Home** page (or double-click it in Characters): its tab's header chooses its profile and
-   plays it (or press F5).
+2. Double-click it in Characters: its tab opens, and the column on its left chooses its profile and plays it (or press
+   F5).
 3. To take the character back, just play it: the bot pauses until you press Play again.
 
 For a group, make a **Follow** profile for the followers (*Add* in the **Library**, the bar's second entry) and name their leader in it. The
