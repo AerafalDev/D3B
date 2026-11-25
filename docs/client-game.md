@@ -1636,3 +1636,30 @@ writes, counting messages only.
   still list it at 0. None of the owner's connections holds a grant.
 - **An alteration ended.** Its end came with `TextInformationEvent` of the information kind, text 1665, whose field 4, the
   text's parameters, holds the alteration's id first.
+
+## The game, in a dungeon
+
+Measured on 2026-11-25 for the dungeons' first session (D520) on the owner's 74 game captures, with `scripts/capture.cs` and a
+measuring tool never committed that reads them by message type, the client's ids and times only. 12 connections went into four
+dungeons, Champs and Château Ensablé on 21 November, Forgerons and the Bworks on 24 November: 32 character runs and 148 fights,
+every request the player's client's.
+
+- **Entering.** On the dungeon's entrance map the keeper is talked to (action 3), and asks a question offering a reply that
+  gives the key ("Donner la clef et entrer.": Champs 2802, Ensablé 2944, Bworks 2794) or uses the keyring ("Utiliser le trousseau
+  de clefs.": Champs 6615, Forgerons 6633); then a question asking whether to use a key, answered "Oui." (20904, 20326, 20302,
+  20336). The dialog ends and the first room's map comes 28 to 41 ms after that reply. A key is spent, deleted between the two
+  (20 entries of 20); the keyring spends nothing. Keepers seen: NPC 780 (Champs), 798 (Ensablé), 775 (Bworks), 1162 (Forgerons).
+  In a party each character talked to the keeper itself; "Téléporter les membres du groupe." was answered once, its effect not
+  measured.
+- **The rooms.** On a room, the party's leader attacks its group, the others joining as anywhere; each fight is on a map of its
+  own, as every fight is. At a room's win the server names the next room in the fight end's millisecond, under 5 ms, unasked,
+  128 times; Forgerons' and the Bworks' rooms are also left on foot, by map actions and a door the world graph holds. Champs was
+  entered at the fourth room the table lists, then its first, fifth, second and third.
+- **The boss and the exit.** After the boss's fight the server moves the character, in the fight end's millisecond, to a map
+  of the dungeon's sub-area that is no room (Champs 190318594, Ensablé 193730560, Bworks 104598019); an NPC there is talked to
+  and a reply leaves (Champs 15920 "Sortir.", Ensablé 2945, Bworks 55364), and the exit map comes (28 exits). Forgerons' 4 runs
+  left by a reply with no final map.
+- **The challenges.** The server proposes challenges at about every dungeon fight (296 proposals inside, 123 elsewhere), the
+  client choosing (317 choices).
+- **Not measured.** A character alone, a lost fight inside, the dungeon's save ("Reprendre …", "Retourner dans cette salle."),
+  a refusal for the level or the party's size, and the keyring's weekly charge.

@@ -1,0 +1,14 @@
+namespace D3B.Bot.Dungeons;
+
+/// <summary>The dungeon activity's settings: which dungeons, and how the character goes there (D520, D524).</summary>
+public sealed class DungeonSettings
+{
+    /// <summary>Gets or sets the dungeons, by their ids in the client's table, entered in turn in this order (D524).</summary>
+    public IReadOnlyList<int> Dungeons { get; set; } = [];
+
+    /// <summary>Gets or sets whether the journey to the dungeon's door may teleport to a zaap.</summary>
+    public bool UseZaaps { get; set; } = true;
+
+    /// <summary>Gets or sets whether a failed or stalled run is put in order and restarted (D519).</summary>
+    public bool RestartAfterFailure { get; set; } = true;
+}

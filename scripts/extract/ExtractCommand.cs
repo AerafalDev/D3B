@@ -5,6 +5,7 @@ using System.Security.Cryptography;
 using D3B.Data;
 using D3B.Data.Banks;
 using D3B.Data.Challenges;
+using D3B.Data.Dungeons;
 using D3B.Data.Hints;
 using D3B.Data.Npcs;
 using D3B.Data.Breeds;
@@ -106,6 +107,7 @@ internal static class ExtractCommand
             .Concat(NpcsExtractor.Inputs(client))
             .Concat(HintsExtractor.Inputs(client))
             .Concat(ChallengesExtractor.Inputs(client))
+            .Concat(DungeonsExtractor.Inputs(client))
             .Concat(IconsExtractor.Inputs(client))
             .Concat(EffectsExtractor.Inputs(client))
             .Concat(CharacteristicsExtractor.Inputs(client))
@@ -146,13 +148,14 @@ internal static class ExtractCommand
         var npcs = NpcsExtractor.Read(client, TextsExtractor.Held(client));
         var hints = HintsExtractor.Read(client, TextsExtractor.Held(client));
         var challenges = ChallengesExtractor.Read(client, TextsExtractor.Held(client));
+        var dungeons = DungeonsExtractor.Read(client, TextsExtractor.Held(client));
         var icons = IconsExtractor.Read(client, items, jobs, spells, breeds, monsters, atlas);
         var fights = new FightTables(spells, states, effects, monsters, breeds, characteristics);
         var (worldMaps, worldMapTiles) = WorldMapsExtractor.Read(client);
 
         WorldExtractor.Check(graph, atlas, maps);
 
-        var texts = TextsExtractor.Read(client, TextsExtractor.Named(atlas, items, jobs, interactives, banks, npcs, hints, challenges, fights, worldMaps));
+        var texts = TextsExtractor.Read(client, TextsExtractor.Named(atlas, items, jobs, interactives, banks, npcs, hints, challenges, dungeons, fights, worldMaps));
 
         Console.WriteLine($"Read in {reading.Elapsed.TotalSeconds:F1} s");
 
@@ -187,6 +190,7 @@ internal static class ExtractCommand
             writer.Add(IconCatalog.EntryName, icons);
             writer.Add(HintCatalog.EntryName, hints);
             writer.Add(ChallengeCatalog.EntryName, challenges);
+            writer.Add(DungeonCatalog.EntryName, dungeons);
             writer.Add(SpellCatalog.EntryName, spells);
             writer.Add(SpellStateCatalog.EntryName, states);
             writer.Add(EffectCatalog.EntryName, effects);
