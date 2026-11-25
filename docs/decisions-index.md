@@ -1053,3 +1053,8 @@ or refines another says so in its own entry. Add a line here with every new deci
 
 - [D554](decisions/d554-spanish.md#d554-spanish-is-the-apps-third-language-its-texts-translated-and-the-games-own-read-from-the-clients-spanish-pack-format-15) Spanish is the app's third language, its texts translated and the game's own read from the client's Spanish, pack format 15 (2026-11-25)
   - The owner's ask and choice of the game's texts in Spanish too; `.es.resx` for every text, `texts/es` in the pack.
+
+## The app's 1.0.0 (D561)
+
+- [D561](decisions/d561-release-1-0-0.md#d561-the-apps-release-after-099-is-100-its-pack-of-format-15-published-first) The app's release after 0.9.9 is 1.0.0, its pack of format 15 published first (2026-11-25)
+  - The owner's choice of 1.0.0 over 0.9.10; `data-15.pack` on `client-3.7.14.18`, the sequencer's flaky test fixed first.

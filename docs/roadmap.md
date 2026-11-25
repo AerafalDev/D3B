@@ -470,7 +470,7 @@ follower) on the same map, the capture of every connection on; a capture's conte
 - **Spanish** (D554), the owner's ask of 2026-11-25, made on 2026-11-25 in code and tests: the studio's and the modules'
   texts in Spanish beside French and English, chosen in the settings or taken from a Spanish system, and the game's names
   from the client's Spanish texts, pack format 15. Left: the texts read by a Spanish speaker. The pack of format 15
-  is published on `client-3.7.14.18` (2026-11-25), for the app's 0.9.10.
+  is published on `client-3.7.14.18` (2026-11-25), for the app's 1.0.0 (D561).
 - **The transfer between the bank and the guild's chest** (D550 to D552), the owner's ask of 2026-11-25, made on 2026-11-25 in code
   and tests: an activity, either way, everything or by category, type and item with exclusions, all, at most or all but N of
   each, in as many rounds as the pods need, a refusal put back, kept or stopping it, a dry run; then it says what it moved.
