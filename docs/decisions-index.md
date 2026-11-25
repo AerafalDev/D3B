@@ -1063,3 +1063,8 @@ or refines another says so in its own entry. Add a line here with every new deci
 
 - [D562](decisions/d561-release-1-0-0.md#d562-the-apps-101-shows-the-profiles-menu-again-which-opened-empty-in-100) The app's 1.0.1 shows the profile's menu again, which opened empty in 1.0.0 (2026-11-25)
   - The owner's ask; the menu owns its items from the start, as Avalonia 12 never shows those added to an empty flyout as it opens.
+
+## Hunting, capture nets and soul stones worn (D565)
+
+- [D565](decisions/d565-capture-gear.md#d565-the-hunt-wears-the-best-capture-net-or-the-smallest-soul-stone-that-suffices-before-a-group-to-capture-and-casts-the-soul-capture-against-an-archmonster) The hunt wears the best capture net or the smallest soul stone that suffices before a group to capture, and casts the soul capture against an archmonster (2026-11-25)
+  - The owner's ask and choices; slot 31 measured on a capture, `ito` pinned (mapping format 26); dungeon bosses and wearing one at a time set aside.

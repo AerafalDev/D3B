@@ -150,7 +150,7 @@
     <value>Capturer des montures</value>
   </data>
   <data name="CaptureMountsHelp" xml:space="preserve">
-    <value>Apprivoise une monture sauvage par combat avec le filet de capture équipé dans l’emplacement consommable de combat, avant tout coup, pour la capturer à la fin du combat. Sans filet équipé, la chasse continue sans capturer et le journal le signale. En groupe, seul le personnage principal capture.</value>
+    <value>Capture une monture sauvage par combat : avant d’attaquer un groupe qui en contient une, le personnage équipe dans l’emplacement consommable de combat le meilleur filet de capture qu’il porte pour cette espèce et son niveau d’Éleveur, puis l’apprivoise avant tout coup pour la capturer à la fin du combat. Sans filet qui convienne, la chasse continue sans capturer et le journal le signale. En groupe, seul le personnage principal capture.</value>
   </data>
   <data name="CaptureDragodindes" xml:space="preserve">
     <value>Dragodindes</value>
@@ -160,6 +160,12 @@
   </data>
   <data name="CaptureVolkornes" xml:space="preserve">
     <value>Volkornes</value>
+  </data>
+  <data name="CaptureSouls" xml:space="preserve">
+    <value>Capturer les âmes d’archimonstres</value>
+  </data>
+  <data name="CaptureSoulsHelp" xml:space="preserve">
+    <value>Avant d’attaquer un groupe qui contient un archimonstre, le personnage équipe dans l’emplacement consommable de combat la plus petite pierre d’âme qu’il porte qui capture le niveau le plus haut du groupe, puis lance Capture d’âmes dès qu’il le peut pendant le combat. Sans pierre assez grande, la chasse continue sans capturer et le journal le signale. En groupe, seul le personnage principal capture.</value>
   </data>
   <data name="FoodHelp" xml:space="preserve">
     <value>Dans l'ordre, jusqu'à la vie pleine ; sans choix, ce que l'inventaire contient qui ne fait que soigner, le plus petit soin d'abord ; sinon la vie se régénère jusqu'au seuil.</value>

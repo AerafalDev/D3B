@@ -88,6 +88,7 @@ public sealed class FightingModule : IModule
         settings.Flag(s => s.CaptureDragodindes, FightTexts.Text("CaptureDragodindes")).VisibleWhen(s => s.CaptureMounts);
         settings.Flag(s => s.CaptureMuldos, FightTexts.Text("CaptureMuldos")).VisibleWhen(s => s.CaptureMounts);
         settings.Flag(s => s.CaptureVolkornes, FightTexts.Text("CaptureVolkornes")).VisibleWhen(s => s.CaptureMounts);
+        settings.Flag(s => s.CaptureSouls, FightTexts.Text("CaptureSouls")).Help(FightTexts.Text("CaptureSoulsHelp"));
 
         settings.Choice(s => s.ChallengeReward, FightTexts.Text("ChallengeReward"), reward => FightTexts.Text($"ChallengeReward{reward}"))
             .Help(FightTexts.Text("ChallengeRewardHelp"));

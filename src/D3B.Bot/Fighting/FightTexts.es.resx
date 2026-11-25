@@ -150,7 +150,7 @@
     <value>Capturar monturas</value>
   </data>
   <data name="CaptureMountsHelp" xml:space="preserve">
-    <value>Doma una montura salvaje por combate con la red de captura equipada en la ranura de consumible de combate, antes de cualquier golpe, para que quede capturada al terminar el combate. Sin red equipada, la caza continúa sin capturar y el diario lo indica. En grupo, solo captura el personaje principal.</value>
+    <value>Captura una montura salvaje por combate: antes de atacar a un grupo que la contenga, el personaje equipa en la ranura de consumible de combate la mejor red de captura que lleve para esa especie y su nivel de Criador, y luego la doma antes de cualquier golpe para que quede capturada al terminar el combate. Sin una red adecuada, la caza continúa sin capturar y el diario lo indica. En grupo, solo captura el personaje principal.</value>
   </data>
   <data name="CaptureDragodindes" xml:space="preserve">
     <value>Dragopavos</value>
@@ -160,6 +160,12 @@
   </data>
   <data name="CaptureVolkornes" xml:space="preserve">
     <value>Volkornes</value>
+  </data>
+  <data name="CaptureSouls" xml:space="preserve">
+    <value>Capturar almas de archimonstruos</value>
+  </data>
+  <data name="CaptureSoulsHelp" xml:space="preserve">
+    <value>Antes de atacar a un grupo que contenga un archimonstruo, el personaje equipa en la ranura de consumible de combate la piedra de alma más pequeña que lleve que capture el nivel más alto del grupo, y luego lanza Captura de almas siempre que pueda durante el combate. Sin una piedra lo bastante grande, la caza continúa sin capturar y el diario lo indica. En grupo, solo captura el personaje principal.</value>
   </data>
   <data name="FoodHelp" xml:space="preserve">
     <value>En orden, hasta tener la vida completa; sin elección, lo que el inventario contiene que solo cura, la cura más pequeña primero; si no, la vida se regenera hasta el umbral.</value>

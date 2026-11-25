@@ -1,4 +1,5 @@
 using System.Collections.Immutable;
+using D3B.Bot.Characters;
 using D3B.Bot.Fights;
 using D3B.Bot.Runtime;
 using D3B.Data.Monsters;
@@ -39,6 +40,11 @@ public sealed class MountCaptureTests
         };
     }
 
+    private static InventoryItem Stack(int uid, int itemId, int position = InventoryItem.NotWorn)
+    {
+        return new InventoryItem(uid, itemId, 3, position);
+    }
+
     private static FightState Fight(params Fighter[] fighters)
     {
         return new FightState { Team = FightTeam.Challenger, Fighters = fighters.ToImmutableSortedDictionary(fighter => fighter.Id, fighter => fighter) };
@@ -62,6 +68,49 @@ public sealed class MountCaptureTests
     public void NoRaceCapturedLeavesNoTarget()
     {
         Assert.Empty(MountCapture.Targets(Fight(Monster(-1, Muldo)), _monsters, []));
+    }
+
+    [Theory]
+    [InlineData(0, new[] { MountCapture.Muldos }, 32_521)]
+    [InlineData(99, new[] { MountCapture.Muldos }, 32_521)]
+    [InlineData(100, new[] { MountCapture.Muldos }, 32_527)]
+    [InlineData(150, new[] { MountCapture.Muldos }, 32_524)]
+    [InlineData(200, new[] { MountCapture.Muldos }, 32_530)]
+    [InlineData(200, new[] { MountCapture.Dragodindes }, 32_521)]
+    public void TheBestNetCarriedIsTheOneTheBreederLevelAllowsForTheGroupsMounts(int breeder, int[] races, int net)
+    {
+        // Measured in the client 3.7.14.18 (D533): the universal net fits every species with no criterion, the Muldo's need
+        // Éleveur above 99 to multiply, above 149 for several, 200 for several multiplied.
+        var carried = new[] { Stack(1, 32_521), Stack(2, 32_524), Stack(3, 32_527), Stack(4, 32_530), Stack(5, 9_686) };
+
+        Assert.Equal(net, MountCapture.NetFor(carried, breeder, races)?.ItemId);
+    }
+
+    [Fact]
+    public void ANetWornThatIsTheBestStaysAndNoNetFittingLeavesNone()
+    {
+        var worn = Stack(1, 32_521, InventoryItem.FightConsumable);
+
+        Assert.Same(worn, MountCapture.NetFor([Stack(2, 32_521), worn], 0, [MountCapture.Volkornes]));
+        Assert.Null(MountCapture.NetFor([Stack(3, 32_522), Stack(4, 9_686)], 200, [MountCapture.Muldos]));
+        Assert.Null(MountCapture.NetFor([Stack(5, 32_521, 2)], 0, [MountCapture.Muldos]));
+    }
+
+    [Fact]
+    public void AWornSpeciesNetTamesOnlyItsSpecies()
+    {
+        Assert.Equal([MountCapture.Muldos], MountCapture.RacesFor(32_524, [MountCapture.Dragodindes, MountCapture.Muldos]));
+        Assert.Equal([MountCapture.Dragodindes, MountCapture.Muldos], MountCapture.RacesFor(32_521, [MountCapture.Dragodindes, MountCapture.Muldos]));
+        Assert.Equal([MountCapture.Dragodindes, MountCapture.Muldos], MountCapture.RacesFor(null, [MountCapture.Dragodindes, MountCapture.Muldos]));
+    }
+
+    [Fact]
+    public void TheGroupsMountsAreItsMonstersOfTheRacesCaptured()
+    {
+        var group = new MapMonsterGroup(-1, 100, [new MonsterInGroup(Larva, 1, 10), new MonsterInGroup(Muldo, 1, 62)]);
+
+        Assert.Equal([MountCapture.Muldos], MountCapture.RacesIn(group, _monsters, [MountCapture.Muldos, MountCapture.Dragodindes]));
+        Assert.Empty(MountCapture.RacesIn(group, _monsters, [MountCapture.Dragodindes]));
     }
 
     [Theory]

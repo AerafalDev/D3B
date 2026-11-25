@@ -79,6 +79,16 @@ message ObjectMovementEvent {
   int32 position = 3;
 }
 
+// Wears a stack's objects at a position, or takes them off to 63: measured on the client 3.7.14.18 (D565), 233 requests
+// of the owner's equipping answered by the stacks' movements. A capture net or a soul stone goes to 31, the fight
+// consumable, where a stack is worn: the whole stack moves there, part of one becomes a new stack there or adds to the
+// stack of the same item worn there, and the stack worn before goes back to 63.
+message ObjectSetPositionRequest {
+  int32 quantity = 1;
+  int32 uid = 2;
+  int32 position = 3;
+}
+
 // Uses one object of a stack, as eating or opening a resource bag does. Food heals: the server ends the life's
 // regeneration, starts it again, then sends the stack's new quantity, a text, the characteristics holding the new life and
 // the weight; at full life, a text alone, and nothing is used. A bag gives what it holds, a stack added to or a new one,

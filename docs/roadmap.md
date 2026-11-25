@@ -457,8 +457,11 @@ follower) on the same map, the capture of every connection on; a capture's conte
 - **Wild mounts captured** (D533), the owner's ask of 2026-11-25 (mounts, then souls of archmonsters and dungeon bosses),
   studied in `artifacts/studies/captures.md` (git-ignored) and the mounts' first part made in code and tests: a hunt profile's
   « Capturer des montures » and its families, the main taming a wild mount with its worn net before any blow, the mount spared
-  until then. Left: a capture of a net's fight, then the net worn by the bot from the bag; the souls, the dungeons' bosses with
-  the dungeons' session (D520 to D529).
+  until then. Left: a capture of a net's fight; the dungeons' bosses with the dungeons' session (D520 to D529).
+- **Capture nets and soul stones worn** (D565), the owner's ask of 2026-11-25 before the next release, measured on the owner's
+  capture of the day and made in code and tests: the slot's request in the readable protocol (mapping format 26), the hunt
+  wearing the best net or the smallest stone that suffices before a group to capture, and the new « Capturer les âmes
+  d'archimonstres » casting the soul capture against an archmonster. Left: seen in game, a fight with a net or a stone worn.
 - **The miner's door refused on the bank's journey** (D517), the owner's report of 2026-11-25, made in code and tests from the
   capture of the night: a walk the server refused after showing it was taken for arrived, the door used from 19 cells away, and
   the bank's journey's no path taken for no bank, the run failing still full. A walk so refused is refused, and the bank's journey
