@@ -960,3 +960,8 @@ or refines another says so in its own entry. Add a line here with every new deci
   - Stage 3 of 4 of the redesign, taken by the lead under the owner's delegation; the World's view makes a route or a zone.
 - [D516](decisions/d516-settings-and-statistics.md#d516-the-statistics-are-a-tab-of-their-own-and-the-settings-read-general-bots-files-advanced-and-about) The statistics are a tab of their own, and the settings read General, Bots, Files, Advanced and About (2026-11-25)
   - Stage 4 of 4 of the redesign, taken by the lead under the owner's delegation; the panels' styles shared in `Themes/Panels.axaml`.
+
+## Movement and banking, a walk refused with its confirmation (D517)
+
+- [D517](decisions/d517-miner-refused-door.md#d517-a-walk-refused-after-it-was-shown-has-not-arrived-and-a-banks-journey-whose-way-failed-is-not-travelled-not-without-a-bank) A walk refused after it was shown has not arrived, and a bank's journey whose way failed is not travelled, not without a bank (2026-11-25)
+  - Every journey failed once a way failed on it, a refused walk's way tried again, ending no run on a failed unloading.

@@ -147,6 +147,30 @@ public sealed class MapWalkTests
     }
 
     [Fact]
+    public async Task AWalkShownThenRefusedWithItsConfirmationIsRefusedNotArrived()
+    {
+        // Measured on the owner's miner of 24 November: the walk to a mine's door shown, then the refusal and the confirmation's
+        // response in one batch; taken for arrived, the door was used from 19 cells away and refused, and the bank's journey ended.
+        await using var play = new TestPlay();
+        var (connection, bot) = await play.EnterAsync(433);
+        var walk = bot.WalkAsync(300, TestContext.Current.CancellationToken);
+        var request = Assert.IsType<MapMovementRequest>(await connection.SentAsync(1));
+
+        Assert.True(CellPathfinder.TryFind(play.Maps.Get(request.MapId).Cells.Span, 433, 300, out var path));
+
+        var stood = MapGeometry.PointOf(path.Cells.Span[1]);
+
+        connection.Server(new MapMovementEvent { ActorId = TestPlay.CharacterId, Cells = { path.Cells.ToArray() } });
+        connection.Client(new MapMovementConfirmRequest());
+        connection.Server(new MapMovementRefusedEvent { X = stood.X, Y = stood.Y });
+        connection.Response(new MapMovementConfirmResponse());
+
+        Assert.Equal(WalkOutcome.Refused, await TestWalks.AdvanceUntilDoneAsync(play.Time, walk));
+        await bot.ProcessedAsync();
+        Assert.Equal(path.Cells.Span[1], bot.State.Cell);
+    }
+
+    [Fact]
     public async Task AWalkTheServerDoesNotAnswerIsOverAfterItsDelay()
     {
         await using var play = new TestPlay();
