@@ -115,7 +115,8 @@ public sealed class BotsModule : IModule
                 world.Graph,
                 services.GetRequiredService<GraphicPlaces>(),
                 services.GetRequiredService<GraphicSkills>(),
-                tables.Monsters);
+                tables.Monsters,
+                tables.Dungeons);
         });
     }
 }

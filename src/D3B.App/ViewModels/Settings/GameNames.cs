@@ -37,6 +37,7 @@ internal sealed class GameNames
             SettingKind.ItemType => "ItemTypeNamed",
             SettingKind.Monster => "MonsterNamed",
             SettingKind.MonsterFamily => "MonsterFamilyNamed",
+            SettingKind.Dungeon => "DungeonNamed",
             _ => "ResourceNamed",
         };
 
