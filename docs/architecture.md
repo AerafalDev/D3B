@@ -452,7 +452,8 @@ The bots run in `D3B.Bot`: what each part does today, with the decisions that ma
   catalogue of activities, which its third pull request joins. It reads the dungeons of the pack's `DungeonCatalog` the profile
   lists, and each step does what the character's map wants: in a room of one of them, that one is run; else the next of the list
   in turn after the one last entered whose level the character has and whose keyring, when the dungeon is on it, or every
-  required object it carries, those it cannot enter or whose keeper turned it away in the run left out (D524), the run ending
+  required object it carries, those it cannot enter, whose door three journeys did not reach or whose keeper turned it away
+  in the run left out (D524), until a restart opens them again, the run ending
   when none is left, which no restart changes; it travels to that dungeon's entrance map; on it, it talks to each NPC the server shows there, bankers aside, until
   one lets it in, each reply chosen among those the question offers (`NpcTalk`'s chooser, D522): the keyring's first, then the
   key's, then the keeper's confirmation. On a room it ends for now: the rooms' chain and the exit come next.

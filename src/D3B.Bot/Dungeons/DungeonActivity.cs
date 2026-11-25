@@ -151,6 +151,16 @@ public sealed class DungeonActivity : BotActivity
         return InterruptionResponse.Resume;
     }
 
+    /// <inheritdoc/>
+    public override void Restart()
+    {
+        // A dungeon shut by a journey or a keeper that did not answer may open once the character is put in order (D519).
+        _busy.Reset();
+        _shut.Clear();
+        _failedJourneys = 0;
+        _unanswered = 0;
+    }
+
     private (int Index, Dungeon Dungeon) NextEnterable(CharacterState state)
     {
         var listed = _settings.Dungeons;
@@ -159,22 +169,27 @@ public sealed class DungeonActivity : BotActivity
             throw Impossible("The profile lists no dungeon.", GameText.Of(DungeonTexts.Text("FailNoDungeon")));
 
         ActivityException? refused = null;
+        var final = true;
 
         for (var turn = 0; turn < listed.Count; turn++)
         {
             var index = (_next + turn) % listed.Count;
 
-            if (Refusal(state, listed[index], out var dungeon) is { } why)
-                refused ??= why;
-            else
+            if (Refusal(state, listed[index], out var dungeon) is not { } why)
                 return (index, dungeon);
+
+            refused ??= why;
+            final &= why.IsFinal;
         }
 
-        // One dungeon says what keeps it shut; several, that none opens.
+        // One dungeon says what keeps it shut; several, that none opens. A journey's failure may come right on a restart.
         if (listed.Count is 1)
             throw refused!;
 
-        throw Impossible("No dungeon of the profile can be entered: the character lacks the level or the key of each.", GameText.Of(DungeonTexts.Text("FailNoneEnterable")));
+        throw new ActivityException("No dungeon of the profile can be entered: the character lacks the level or the key of each, or no way leads to them.", GameText.Of(DungeonTexts.Text("FailNoneEnterable")))
+        {
+            IsFinal = final,
+        };
     }
 
     private ActivityException? Refusal(CharacterState state, int id, out Dungeon dungeon)
@@ -212,11 +227,16 @@ public sealed class DungeonActivity : BotActivity
             case TravelOutcome.Busy:
                 await context.WaitUntilAsync(state => !state.IsBusy, _busyDelay, cancellationToken).ConfigureAwait(false);
                 break;
-            case TravelOutcome.NoPath:
-                throw Impossible($"No way leads to the door of dungeon {dungeon.Id}, map {dungeon.EntranceMapId}.", GameText.Of(DungeonTexts.Text("FailNoPath")));
-            default:
+            case var failed:
+                // No path may be a transition this journey banned (D517): it counts as a failed journey. Three in a row shut the
+                // dungeon for the run, the others of the profile still entered (D524).
                 if (++_failedJourneys >= MostFailedJourneys)
-                    throw Failure($"The journey to the door of dungeon {dungeon.Id} failed {MostFailedJourneys} times in a row.", "FailJourney");
+                {
+                    _failedJourneys = 0;
+                    _shut[dungeon.Id] = failed is TravelOutcome.NoPath
+                        ? Failure($"No way leads to the door of dungeon {dungeon.Id}, map {dungeon.EntranceMapId}.", "FailNoPath")
+                        : Failure($"The journey to the door of dungeon {dungeon.Id} failed {MostFailedJourneys} times in a row.", "FailJourney");
+                }
 
                 break;
         }
@@ -244,6 +264,8 @@ public sealed class DungeonActivity : BotActivity
             return replies.FirstOrDefault(dungeons.IsConfirmation) is > 0 and var confirmed ? confirmed : null;
         }
 
+        var unanswered = false;
+
         // The server places the NPCs with the map, and no table says which is the keeper: each is asked in turn.
         foreach (var npcId in context.State.Npcs.Values.Select(npc => npc.NpcId).Where(npc => !_tables.Banks.TryGetBanker(npc, out _)).Distinct().ToList())
         {
@@ -261,20 +283,23 @@ public sealed class DungeonActivity : BotActivity
                 return true;
             }
 
-            // An NPC who did not answer may still be the keeper: the step is tried again, a few times only.
-            if (outcome is NpcTalkOutcome.NoAnswer or NpcTalkOutcome.Busy or NpcTalkOutcome.NotPlaced)
-            {
-                if (++_unanswered >= MostUnanswered)
-                    throw Failure($"No NPC at the door of dungeon {dungeon.Id} answered, {MostUnanswered} times in a row.", "FailNoKeeper");
-
-                return false;
-            }
+            // An NPC who did not answer may still be the keeper: the others are asked, and the door tried again a few times.
+            unanswered |= outcome is NpcTalkOutcome.NoAnswer or NpcTalkOutcome.Busy or NpcTalkOutcome.NotPlaced;
         }
 
-        var shut = Impossible($"No NPC at the door of dungeon {dungeon.Id} let the character in.", GameText.Of(DungeonTexts.Text("FailNoKeeper")));
+        if (unanswered)
+        {
+            if (++_unanswered >= MostUnanswered)
+            {
+                _unanswered = 0;
+                _shut[dungeon.Id] = Failure($"No NPC at the door of dungeon {dungeon.Id} answered, {MostUnanswered} times in a row.", "FailNoKeeper");
+            }
+
+            return false;
+        }
 
         // A keeper may turn away one dungeon of several, its keyring's charge spent: the others are still entered (D524).
-        _shut[dungeon.Id] = shut;
+        _shut[dungeon.Id] = Impossible($"No NPC at the door of dungeon {dungeon.Id} let the character in.", GameText.Of(DungeonTexts.Text("FailNoKeeper")));
 
         return false;
     }

@@ -107,6 +107,60 @@ public sealed class DungeonActivityTests : IAsyncDisposable
     }
 
     [Fact]
+    public async Task TheKeyringAloneOpensADungeonOnIt()
+    {
+        var (connection, bot) = await CarryingAsync(TestPlay.InsideMapId, 300, Stack(13, TestPlay.KeyringId, 1));
+        var run = bot.StartActivity(Activity());
+
+        Assert.IsType<NpcActionRequest>(await TestWalks.SentAsync(_play, connection, 1));
+        connection.Server(new NpcDialogCreationEvent { MapId = TestPlay.InsideMapId, NpcActorId = TestPlay.WayActorId });
+        connection.Server(Question(KeeperQuestion, TestPlay.KeyReplyId, TestPlay.KeyringReplyId));
+
+        Assert.Equal(new NpcDialogReplyRequest { ReplyId = TestPlay.KeyringReplyId }, await TestWalks.SentAsync(_play, connection, 2));
+        connection.Server(new DialogLeaveEvent { Type = DialogType.Npc });
+        TestWalks.Arrive(connection, TestPlay.OtherInsideMapId, 300);
+
+        Assert.Equal(ActivityOutcome.Done, await run.Completion);
+    }
+
+    [Fact]
+    public async Task WithoutTheKeyAndTheKeyringTheActivityEndsSayingSoBeforeAnyJourney()
+    {
+        var (connection, bot) = await CarryingAsync(TestPlay.MapId, 300, Stack(14, TestPlay.Ash, 3));
+        var run = bot.StartActivity(Activity());
+
+        Assert.Equal(ActivityOutcome.Failed, await run.Completion);
+        Assert.Equal("The character carries neither the dungeon's key nor a keyring that opens it.", Said(run));
+        Assert.Empty(connection.Sent);
+    }
+
+    [Fact]
+    public async Task ADoorNoWayLeadsToIsLeftForTheNextDungeonOfTheProfile()
+    {
+        var (connection, bot) = await CarryingAsync(TestPlay.InsideMapId, 300, Stack(12, TestPlay.DungeonKeyId, 1));
+
+        // The far dungeon's door is off the graph: three journeys find no path, and its turn goes to the next (D524).
+        var run = bot.StartActivity(Activity(TestPlay.FarDungeonId, TestPlay.DungeonId));
+
+        Assert.Equal(new NpcActionRequest { Action = 3, MapId = TestPlay.InsideMapId, NpcActorId = TestPlay.WayActorId }, await TestWalks.SentAsync(_play, connection, 1));
+
+        run.Stop();
+        Assert.Equal(ActivityOutcome.Stopped, await run.Completion);
+    }
+
+    [Fact]
+    public async Task ADoorNoWayLeadsToFailsAProfileOfThatDungeonAloneSoThatARestartMayTryAgain()
+    {
+        var (connection, bot) = await CarryingAsync(TestPlay.MapId, 300);
+        var run = bot.StartActivity(Activity(TestPlay.FarDungeonId));
+
+        Assert.Equal(ActivityOutcome.Failed, await run.Completion);
+        Assert.Equal("No way leads to the dungeon's door from where the character stands.", Said(run));
+        Assert.False(Assert.IsType<ActivityException>(run.Failure).IsFinal);
+        Assert.Empty(connection.Sent);
+    }
+
+    [Fact]
     public async Task AwayFromTheDoorTheCharacterTravelsThere()
     {
         var (connection, bot) = await CarryingAsync(TestPlay.MapId, 300, Stack(12, TestPlay.DungeonKeyId, 1));
@@ -121,14 +175,15 @@ public sealed class DungeonActivityTests : IAsyncDisposable
     }
 
     [Fact]
-    public async Task WithNeitherKeyNorKeyringTheActivityEndsSayingSoBeforeAnyJourney()
+    public async Task AKeyringCarriedOpensNoDungeonOffItsRingAndNoRestartChangesThat()
     {
         var (connection, bot) = await CarryingAsync(TestPlay.MapId, 300, Stack(13, TestPlay.KeyringId, 1));
 
-        // The high dungeon is on no keyring: the keyring carried opens nothing.
-        var run = bot.StartActivity(new DungeonActivity(new DungeonSettings { Dungeons = [TestPlay.HighDungeonId] }, _play.Tables));
+        // The other dungeon is on no keyring: the keyring carried opens nothing, its profile's restart on (D519).
+        var run = bot.StartActivity(new DungeonActivity(new DungeonSettings { Dungeons = [TestPlay.OtherDungeonId] }, _play.Tables));
 
         Assert.Equal(ActivityOutcome.Failed, await run.Completion);
+        Assert.Equal("The character carries neither the dungeon's key nor a keyring that opens it.", Said(run));
         Assert.Equal(0, run.Restarts);
         Assert.Empty(connection.Sent);
     }
@@ -220,7 +275,7 @@ public sealed class DungeonActivityTests : IAsyncDisposable
         var run = bot.StartActivity(Activity(TestPlay.HighDungeonId, 99));
 
         Assert.Equal(ActivityOutcome.Failed, await run.Completion);
-        Assert.Equal("No dungeon of the profile can be entered: the character lacks the level or the key of each.", Said(run));
+        Assert.Equal("No dungeon of the profile can be entered: the character lacks the level or the key of each, or no way leads to them.", Said(run));
         Assert.Empty(connection.Sent);
     }
 }

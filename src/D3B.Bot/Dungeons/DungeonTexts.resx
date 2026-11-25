@@ -93,6 +93,6 @@
     <value>The profile lists no dungeon.</value>
   </data>
   <data name="FailNoneEnterable" xml:space="preserve">
-    <value>No dungeon of the profile can be entered: the character lacks the level or the key of each.</value>
+    <value>No dungeon of the profile can be entered: the character lacks the level or the key of each, or no way leads to them.</value>
   </data>
 </root>

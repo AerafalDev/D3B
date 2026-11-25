@@ -123,10 +123,12 @@ internal sealed class TestPlay : IAsyncDisposable
 
     // The world's dungeon, as client 3.7.14.18 numbers Champs': its keeper the NPC who is no banker, in the inside, its first
     // room the other inside; its key and the keyring, and the keeper's replies as measured (D520, D522). A second dungeon of
-    // the same door asks a level no character has, and a third of the same door, whose room is the map east, asks none.
+    // the same door asks a level no character has, a third of the same door, whose room is the map east, asks none, and a
+    // fourth, an expedition with no key, has its door on the zaap's map the graph does not hold.
     public const int DungeonId = 1;
     public const int HighDungeonId = 2;
     public const int OtherDungeonId = 3;
+    public const int FarDungeonId = 4;
     public const int DungeonKeyId = 1_568;
     public const int KeyringId = 10_207;
     public const int KeyReplyId = 2_802;
@@ -353,6 +355,7 @@ internal sealed class TestPlay : IAsyncDisposable
                 new(DungeonId, 52_011, 20, 30, InsideMapId, InsideMapId, true, 0, 1, 0, 1, 0, 0, 0, 0),
                 new(HighDungeonId, 52_012, 201, 201, InsideMapId, InsideMapId, false, 1, 0, 1, 1, 0, 0, 0, 0),
                 new(OtherDungeonId, 52_013, 1, 1, InsideMapId, InsideMapId, false, 1, 1, 2, 1, 0, 0, 0, 0),
+                new(FarDungeonId, 52_014, 1, 1, AwayZaapMapId, AwayZaapMapId, false, 2, 0, 3, 0, 0, 0, 0, 0),
             },
             new[] { OtherInsideMapId, EastMapId },
             new DungeonObject[] { new(DungeonKeyId, 1), new(DungeonKeyId, 1), new(DungeonKeyId, 1) },

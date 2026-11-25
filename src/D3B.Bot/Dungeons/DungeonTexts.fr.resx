@@ -93,6 +93,6 @@
     <value>Le profil ne liste aucun donjon.</value>
   </data>
   <data name="FailNoneEnterable" xml:space="preserve">
-    <value>Aucun donjon du profil ne peut être ouvert : il manque au perso le niveau ou la clef de chacun.</value>
+    <value>Aucun donjon du profil ne peut être ouvert : il manque au perso le niveau ou la clef de chacun, ou aucun chemin n'y mène.</value>
   </data>
 </root>
