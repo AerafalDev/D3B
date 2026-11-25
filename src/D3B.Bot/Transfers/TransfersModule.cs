@@ -3,11 +3,12 @@ using D3B.Bot.Runtime;
 using D3B.Bot.Settings;
 using D3B.Core.Modules;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 
 namespace D3B.Bot.Transfers;
 
 /// <summary>Transfers: the activity that moves objects between the character's bank and its guild's chest, either way (D560).</summary>
-/// <remarks>Registers <see cref="TransferActivity"/> as <c>transfer</c>, with its settings. Requires the bots module.</remarks>
+/// <remarks>Registers <see cref="TransferActivity"/> as <c>transfer</c>, with its settings, and the host's <see cref="TransferBags"/>. Requires the bots module.</remarks>
 public sealed class TransfersModule : IModule
 {
     /// <summary>The activity's id in the host's catalogue, which profiles name.</summary>
@@ -22,6 +23,7 @@ public sealed class TransfersModule : IModule
     {
         ArgumentNullException.ThrowIfNull(services);
 
+        services.TryAddSingleton<TransferBags>();
         services.AddActivity<TransferActivity, TransferSettings>(ActivityId, TransferTexts.Text("Name"), Describe);
     }
 
@@ -56,6 +58,7 @@ public sealed class TransfersModule : IModule
 
         settings.Section(TransferTexts.Text("SectionOptions"));
         settings.Choice(s => s.WhenRefused, TransferTexts.Text("WhenRefused"), refusal => TransferTexts.Text($"WhenRefused{refusal}")).Help(TransferTexts.Text("WhenRefusedHelp"));
+        settings.Flag(s => s.EmptyBagsFirst, TransferTexts.Text("EmptyBagsFirst")).Help(TransferTexts.Text("EmptyBagsFirstHelp")).VisibleWhen(s => s.Direction is TransferDirection.GuildChestToBank);
         settings.Flag(s => s.DryRun, TransferTexts.Text("DryRun")).Help(TransferTexts.Text("DryRunHelp"));
         settings.Flag(s => s.UseZaaps, TransferTexts.Text("UseZaaps")).Help(TransferTexts.Text("UseZaapsHelp")).Advanced();
     }

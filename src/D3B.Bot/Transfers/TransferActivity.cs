@@ -17,7 +17,9 @@ namespace D3B.Bot.Transfers;
 /// insides (D153), so a round's journeys are short, often none. Only what the transfer took moves: what the character carried before
 /// stays in its bags. Before its takes, a round notes how much of each stack in the bags is the character's own, so that a put never
 /// takes from it, whether the inventory joined the stack taken to the character's or gave it a stack of its own, as it does an object
-/// with its own effects; after a reconnection, whose stacks have new ids, what the transfer carried stays in the bags, and it says so.
+/// with its own effects. Those shares and what is carried outlive the run in the host's <see cref="TransferBags"/>, so that a run
+/// stopped between a take and its put leaves the next one on the same connection to put it in first (D563); after a reconnection,
+/// whose stacks have new ids, what the transfer carried stays in the bags, and it says so.
 /// The guild's chest holds no kamas and opens on one tab, the one the transfer works on.
 /// </para>
 /// <para>
@@ -33,6 +35,9 @@ public sealed class TransferActivity : BotActivity
     // As the zaaps' discovery (D167): a zaap costs kamas and saves little on the short ways between banks.
     private const int ZaapSaving = 5;
 
+    // A source closed before its takes is opened again, as the recovery ladder tries an opening three times in all (D518).
+    private const int ClosingsTried = 3;
+
     private readonly TransferSettings _settings;
     private readonly TransferFilter _filter;
     private readonly IReadOnlySet<long> _chests;
@@ -40,14 +45,16 @@ public sealed class TransferActivity : BotActivity
     private readonly RecoveryLadder _openings = new();
     private readonly BusyWait _busy = new();
     private readonly Dictionary<int, long> _taken = [];
-    private readonly Dictionary<int, int> _own = [];
-    private readonly SortedSet<int> _carrying = [];
-    private readonly SortedSet<int> _givingBack = [];
     private readonly SortedDictionary<int, long> _moved = [];
     private readonly SortedDictionary<int, StorageMoveOutcome> _givenUp = [];
+    private readonly TransferBags _bags;
     private readonly string _source;
     private readonly string _destination;
+    private TransferCarry _carry = new();
     private int _rounds;
+    private int _closings;
+    private bool _begun;
+    private bool _emptied;
     private bool _disconnected;
     private bool _leftInBags;
     private volatile ActivityReport? _report;
@@ -71,7 +78,8 @@ public sealed class TransferActivity : BotActivity
     /// <param name="tables">The installed build's tables: the items, their types and weights.</param>
     /// <param name="places">Where each graphic is drawn, which says where the guild's chests stand.</param>
     /// <param name="banking">The general banking settings, whose zaap rule the journeys follow (D405); the defaults when none is given.</param>
-    public TransferActivity(TransferSettings settings, GameTables tables, GraphicPlaces places, BankingPreferences? banking = null)
+    /// <param name="bags">What each character's transfer carries between its runs, the host's one; a run's own when none is given.</param>
+    public TransferActivity(TransferSettings settings, GameTables tables, GraphicPlaces places, BankingPreferences? banking = null, TransferBags? bags = null)
     {
         ArgumentNullException.ThrowIfNull(settings);
         ArgumentNullException.ThrowIfNull(tables);
@@ -81,6 +89,7 @@ public sealed class TransferActivity : BotActivity
         _filter = new TransferFilter(settings, tables.Items);
         _chests = places.MapsDrawing(GuildChest.GfxId);
         _banking = banking ?? new BankingPreferences();
+        _bags = bags ?? new TransferBags();
         _source = PlaceOf(FromBank);
         _destination = PlaceOf(!FromBank);
     }
@@ -128,12 +137,18 @@ public sealed class TransferActivity : BotActivity
         if (await _busy.WaitAsync(context, Failure, cancellationToken).ConfigureAwait(false))
             return true;
 
-        if (_disconnected)
+        if (!_begun)
+            Begin(context);
+
+        if (_disconnected || (!_settings.DryRun && _carry.ConnectionId != context.Actor.ConnectionId))
             Forget(context);
 
-        _carrying.RemoveWhere(itemId => Carried(context.State, itemId) <= 0);
+        if (!_emptied && _settings.EmptyBagsFirst && !FromBank && !_settings.DryRun)
+            return await EmptyBagsAsync(context, cancellationToken).ConfigureAwait(false);
 
-        return _carrying.Count > 0
+        _carry.Carrying.RemoveWhere(itemId => Carried(context.State, itemId) <= 0);
+
+        return _carry.Carrying.Count > 0
             ? await PutAsync(context, cancellationToken).ConfigureAwait(false)
             : await TakeAsync(context, cancellationToken).ConfigureAwait(false);
     }
@@ -154,11 +169,17 @@ public sealed class TransferActivity : BotActivity
         var moves = 0;
         var character = context.State.Key.CharacterId;
 
+        // Measured on the owner's run of 2026-11-25 (D563): the client leaves the storage by itself just after the bot's
+        // leaving, and closed a chest the bot opened again 31 ms later. A storage closed is no storage holding nothing.
+        var closed = context.State.Storage is null;
+
         foreach (var stack in Stored(context.State))
         {
             var state = context.State;
 
-            if (state.Storage is null || refusedForPods)
+            closed |= state.Storage is null;
+
+            if (closed || refusedForPods)
                 break;
 
             var quantity = Math.Min(Allowance(state, stack.ItemId), Fitting(state, stack.ItemId));
@@ -176,7 +197,7 @@ public sealed class TransferActivity : BotActivity
             var quantityTaken = Math.Min(quantity, stack.Quantity);
 
             // Counted as carried before the request: a step cut before the answer still finds in the bags what the server moved.
-            _carrying.Add(stack.ItemId);
+            _carry.Carrying.Add(stack.ItemId);
 
             switch (await context.TakeFromStorageAsync(stack.Uid, quantityTaken, cancellationToken).ConfigureAwait(false))
             {
@@ -204,7 +225,18 @@ public sealed class TransferActivity : BotActivity
         await LeaveAsync(context, cancellationToken).ConfigureAwait(false);
 
         if (took)
+        {
+            _closings = 0;
             return true;
+        }
+
+        if (closed)
+        {
+            if (++_closings < ClosingsTried)
+                return true;
+
+            throw Failure($"The {_source} closed each time it opened.", FromBank ? "FailBankNotOpened" : "FailChestNotOpened");
+        }
 
         // Nothing fit though something was left to move: the character's own load leaves no room, which no round would change.
         if (tooHeavy)
@@ -223,7 +255,7 @@ public sealed class TransferActivity : BotActivity
         var character = context.State.Key.CharacterId;
         var moves = 0;
 
-        foreach (var itemId in _carrying.ToList())
+        foreach (var itemId in _carry.Carrying.ToList())
         {
             var refusal = StorageMoveOutcome.Moved;
 
@@ -245,7 +277,7 @@ public sealed class TransferActivity : BotActivity
             if (refusal is StorageMoveOutcome.Busy)
                 break;
 
-            _carrying.Remove(itemId);
+            _carry.Carrying.Remove(itemId);
 
             if (refusal is StorageMoveOutcome.Moved || Carried(context.State, itemId) <= 0)
                 continue;
@@ -261,7 +293,7 @@ public sealed class TransferActivity : BotActivity
             switch (_settings.WhenRefused)
             {
                 case TransferRefusal.GiveBack:
-                    _givingBack.Add(itemId);
+                    _carry.GivingBack.Add(itemId);
                     break;
                 case TransferRefusal.Stop:
                     await LeaveAsync(context, cancellationToken).ConfigureAwait(false);
@@ -279,9 +311,45 @@ public sealed class TransferActivity : BotActivity
         return true;
     }
 
+    // The owner's ask after a take left in the bags by a reconnection, which no run can tell from the character's own (D564): the
+    // bank is the destination, so everything the bags hold goes where the transfer takes the chest's objects anyway.
+    private async Task<bool> EmptyBagsAsync(BotContext context, CancellationToken cancellationToken)
+    {
+        Publish(context.State, "DoingEmptyBags");
+        await OpenAsync(context, true, cancellationToken).ConfigureAwait(false);
+
+        var state = context.State;
+        var carried = _carry.Carrying.ToDictionary(itemId => itemId, itemId => Carried(state, itemId));
+        var uids = state.Inventory.Values.Where(stack => !stack.IsWorn).Select(stack => stack.Uid).ToList();
+        var outcome = uids.Count > 0 ? await context.DepositAsync(uids, 0, cancellationToken).ConfigureAwait(false) : BankOutcome.Done;
+
+        // What the transfer carried and the bank took counts as moved; the stacks it left, such as a quest's objects, stay.
+        foreach (var (itemId, quantity) in carried)
+        {
+            var put = quantity - Carried(context.State, itemId);
+
+            if (put <= 0)
+                continue;
+
+            _moved[itemId] = _moved.GetValueOrDefault(itemId) + put;
+            TransferLog.Put(context.Log, state.Key.CharacterId, itemId, put, _destination);
+        }
+
+        await LeaveAsync(context, cancellationToken).ConfigureAwait(false);
+
+        // A bank closed under the deposit is opened again, as one closed under the takes is.
+        if (outcome is BankOutcome.Busy && ++_closings < ClosingsTried)
+            return true;
+
+        _closings = 0;
+        _emptied = true;
+
+        return true;
+    }
+
     private async Task GiveBackAsync(BotContext context, CancellationToken cancellationToken)
     {
-        foreach (var itemId in _givingBack.ToList())
+        foreach (var itemId in _carry.GivingBack.ToList())
         {
             foreach (var (stack, quantity) in Takens(context.State, itemId))
             {
@@ -292,7 +360,7 @@ public sealed class TransferActivity : BotActivity
                 await Task.Delay(context.Delays.Display, context.Time, cancellationToken).ConfigureAwait(false);
             }
 
-            _givingBack.Remove(itemId);
+            _carry.GivingBack.Remove(itemId);
         }
     }
 
@@ -359,30 +427,52 @@ public sealed class TransferActivity : BotActivity
         }
     }
 
+    // Takes up what the character's last run left carried, so that a run stopped between a take and its put leaves this one
+    // to put it in (D563). A dry run moves nothing, so it neither puts that in nor notes the bags for the next run.
+    private void Begin(BotContext context)
+    {
+        _begun = true;
+
+        if (_settings.DryRun)
+            return;
+
+        _carry = _bags.For(context.State.Key);
+
+        // Between the runs the player may have moved stacks by hand: only the stacks of the items carried keep their shares.
+        var bags = context.State.Inventory.Values.Where(stack => !stack.IsWorn).ToDictionary(stack => stack.Uid);
+
+        foreach (var uid in _carry.Own.Keys.Where(uid => !bags.ContainsKey(uid)).ToList())
+            _carry.Own.Remove(uid);
+
+        foreach (var stack in bags.Values.Where(stack => !_carry.Carrying.Contains(stack.ItemId) && !_carry.GivingBack.Contains(stack.ItemId)))
+            _carry.Own[stack.Uid] = stack.Quantity;
+    }
+
     private void Forget(BotContext context)
     {
         _disconnected = false;
+        _carry.ConnectionId = context.Actor.ConnectionId;
 
-        if (_carrying.Count + _givingBack.Count is 0)
+        if (!_carry.IsCarrying)
         {
-            _own.Clear();
+            _carry.Own.Clear();
             return;
         }
 
-        foreach (var itemId in _carrying.Concat(_givingBack).Distinct())
+        foreach (var itemId in _carry.Carrying.Concat(_carry.GivingBack).Distinct())
             TransferLog.LeftInBags(context.Log, context.State.Key.CharacterId, itemId);
 
-        _own.Clear();
-        _carrying.Clear();
-        _givingBack.Clear();
+        _carry.Own.Clear();
+        _carry.Carrying.Clear();
+        _carry.GivingBack.Clear();
         _leftInBags = true;
     }
 
     // Each stack of the bags not noted yet is the character's own, whole: called before a round's takes, once what was refused went back.
     private void Remember(CharacterState state)
     {
-        foreach (var stack in state.Inventory.Values.Where(stack => !stack.IsWorn && !_own.ContainsKey(stack.Uid)))
-            _own[stack.Uid] = stack.Quantity;
+        foreach (var stack in state.Inventory.Values.Where(stack => !stack.IsWorn && !_carry.Own.ContainsKey(stack.Uid)))
+            _carry.Own[stack.Uid] = stack.Quantity;
     }
 
     private int Carried(CharacterState state, int itemId)
@@ -395,7 +485,7 @@ public sealed class TransferActivity : BotActivity
     {
         return [.. state.Inventory.Values
             .Where(stack => stack.ItemId == itemId && !stack.IsWorn)
-            .Select(stack => (Stack: stack, Quantity: stack.Quantity - _own.GetValueOrDefault(stack.Uid)))
+            .Select(stack => (Stack: stack, Quantity: stack.Quantity - _carry.Own.GetValueOrDefault(stack.Uid)))
             .Where(taken => taken.Quantity > 0)];
     }
 
@@ -449,7 +539,7 @@ public sealed class TransferActivity : BotActivity
     private void Publish(CharacterState state, string doing)
     {
         var moved = _moved.Values.Sum();
-        var total = moved + _carrying.Sum(itemId => (long)Carried(state, itemId)) + Stored(state).Sum(stack => (long)Math.Min(stack.Quantity, Allowance(state, stack.ItemId)));
+        var total = moved + _carry.Carrying.Sum(itemId => (long)Carried(state, itemId)) + Stored(state).Sum(stack => (long)Math.Min(stack.Quantity, Allowance(state, stack.ItemId)));
 
         _report = new ActivityReport
         {

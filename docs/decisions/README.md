@@ -154,4 +154,4 @@ Each file holds the decisions of one group of [the index](../decisions-index.md)
 - [The studio's character map, zoomed (D553)](d553-map-zoom.md): 1 decision, 3 KB.
 - [Spanish beside French and English (D554)](d554-spanish.md): 1 decision, 3 KB.
 - [The studio's glass, tiles and drawn colours one each (D560)](d560-glass-tiles-and-drawn-colours.md): 1 decision, 2 KB.
-- [The app's 1.0.0 and 1.0.1 (D561, D562)](d561-release-1-0-0.md): 2 decisions, 4 KB.
+- [The app's 1.0.0 and 1.0.1, the transfer taken up after a stop (D561 to D564)](d561-release-1-0-0.md): 4 decisions, 8 KB.

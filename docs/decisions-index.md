@@ -1063,3 +1063,10 @@ or refines another says so in its own entry. Add a line here with every new deci
 
 - [D562](decisions/d561-release-1-0-0.md#d562-the-apps-101-shows-the-profiles-menu-again-which-opened-empty-in-100) The app's 1.0.1 shows the profile's menu again, which opened empty in 1.0.0 (2026-11-25)
   - The owner's ask; the menu owns its items from the start, as Avalonia 12 never shows those added to an empty flyout as it opens.
+
+## The transfer taken up after a stop, the bags emptied first (D563, D564)
+
+- [D563](decisions/d561-release-1-0-0.md#d563-a-transfer-run-takes-up-what-the-characters-last-run-left-carried-on-the-same-connection-and-a-storage-closed-under-its-takes-is-opened-again) A transfer run takes up what the character's last run left carried on the same connection, and a storage closed under its takes is opened again (2026-11-25)
+  - The owner's first run in game; `TransferBags`, one per host, and a storage closed before any take opened three times in all.
+- [D564](decisions/d561-release-1-0-0.md#d564-a-transfer-from-the-guilds-chest-to-the-bank-may-first-put-in-the-bank-all-the-bags-hold-but-what-is-worn) A transfer from the guild's chest to the bank may first put in the bank all the bags hold but what is worn (2026-11-25)
+  - The owner's ask; `EmptyBagsFirst`, off by default, shown only from the chest to the bank, one deposit at the run's first step.
