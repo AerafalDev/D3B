@@ -1,6 +1,6 @@
 namespace D3B.App.Controls;
 
-/// <summary>How far a character's map is zoomed in its control, and which part of it shows (D550).</summary>
+/// <summary>How far a character's map is zoomed in its control, and which part of it shows (D553).</summary>
 /// <remarks>
 /// <para>
 /// The scale is a multiple of the map fitted to the control (<see cref="MapLayout.Fit"/>), so that 1 is the whole map and the

@@ -259,7 +259,7 @@
                         <GradientStop Color="#121212" Offset="1" />
                     </RadialGradientBrush>
                 </Panel.Background>
-                <!--  Zoomed, the map runs past the canvas's margin to the panel's edge, which clips it (D550).  -->
+                <!--  Zoomed, the map runs past the canvas's margin to the panel's edge, which clips it (D553).  -->
                 <c:MapCanvas
                     ClipToBounds="False"
                     HoveredCell="{Binding Map.HoveredCell}"
@@ -428,7 +428,7 @@
                             Scene="{Binding Map.Tour}" />
                     </StackPanel>
                 </Border>
-                <!--  The world's viewport's zoom, its look and its steps (D550).  -->
+                <!--  The world's viewport's zoom, its look and its steps (D553).  -->
                 <Border
                     Classes="Glass"
                     HorizontalAlignment="Right"

@@ -176,7 +176,7 @@ internal sealed partial class MapViewModel : ObservableObject
     [ObservableProperty]
     public partial IReadOnlyList<string> HoverItems { get; private set; } = [];
 
-    /// <summary>Gets or sets how many times the map is enlarged from its fit, which the map's wheel sets too (D550).</summary>
+    /// <summary>Gets or sets how many times the map is enlarged from its fit, which the map's wheel sets too (D553).</summary>
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(ZoomText))]
     [NotifyCanExecuteChangedFor(nameof(ZoomInCommand), nameof(ZoomOutCommand), nameof(FitCommand))]

@@ -1,9 +1,9 @@
-# The studio's character map, zoomed (D550)
+# The studio's character map, zoomed (D553)
 
 A part of [the decisions](README.md); each decision has one line in [the index](../decisions-index.md). After the map of
 [D120 to D122](d110-d125-step-5.md) and the world's viewport of [D308](d293-d358-step-7.md).
 
-## D550: A character's map zooms with the wheel around the pointer from its fit to four times it, a drag pans it once zoomed, and the world's zoom bar says and steps it
+## D553: A character's map zooms with the wheel around the pointer from its fit to four times it, a drag pans it once zoomed, and the world's zoom bar says and steps it
 
 *2026-11-25, the studio after the shell's stages; the owner's « sur la view de la map du personnage faudrait qu'on puisse zoom
 dezoom et faudrait mettre un zoom », passed on by the shell's session: **taken by this session**. Builds D120 to D122, D308, D325.*

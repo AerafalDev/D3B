@@ -11,7 +11,7 @@ using D3B.Data.Maps;
 
 namespace D3B.App.Controls;
 
-/// <summary>A map of the pack drawn flat, cell by cell, with what stands on it in layers, and the cell under the pointer (D120 to D122), zoomed by the wheel and panned by a drag (D550).</summary>
+/// <summary>A map of the pack drawn flat, cell by cell, with what stands on it in layers, and the cell under the pointer (D120 to D122), zoomed by the wheel and panned by a drag (D553).</summary>
 /// <remarks>
 /// <para>
 /// The cells' shapes are built once per map and size, so that a refresh of the bot's state, four times a second (D94),
