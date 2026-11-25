@@ -64,4 +64,51 @@ public sealed class ProfileMenuTests : IAsyncDisposable
         Assert.Equal("No profile", headers[^1]);
         Assert.Contains("Patrol", headers);
     }
+
+    [Fact]
+    public async Task TheOpenedMenuShowsTheProfilesUnderTheField()
+    {
+        using var host = TestHosts.Of(_play, new ActivityDefinition("patrol", "Patrol", _ => new TestActivity()));
+        var runner = await TestHosts.RunningAsync(host);
+        var (_, bot) = await _play.EnterAsync(300);
+
+        var shown = await OnTheUIThreadAsync(() =>
+        {
+            var localizer = Localizer.Instance;
+
+            localizer.Use(Localizer.English);
+
+            var main = new MainViewModel(runner, localizer);
+
+            main.Refresh();
+            main.Selection.SelectCharacter(bot.Key);
+
+            // A plain window: the headless platform has no popup of its own, and the studio's window no overlay for one.
+            var field = new Button { Content = "Profile" };
+            var window = new Window { Content = field, Width = 400, Height = 400 };
+
+            ProfileMenu.Attach(field, () => main.Properties.Character);
+            window.Show();
+            Dispatcher.UIThread.RunJobs();
+            field.Flyout!.ShowAt(field);
+            Dispatcher.UIThread.RunJobs();
+
+            // The menu opened empty when its items were added to a flyout made with none (Avalonia 12).
+            var drawn = window.GetVisualDescendants()
+                .Concat(TopLevel.GetTopLevel(field)!.GetVisualDescendants())
+                .OfType<MenuItem>()
+                .Where(item => item.IsEffectivelyVisible && item.Bounds.Height > 0)
+                .Select(item => item.Header as string)
+                .Distinct()
+                .ToList();
+
+            field.Flyout.Hide();
+            window.Close();
+
+            return drawn;
+        });
+
+        Assert.Contains("Patrol", shown);
+        Assert.Equal("No profile", shown[^1]);
+    }
 }

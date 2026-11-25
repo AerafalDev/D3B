@@ -22,3 +22,18 @@ numbers the lead put. Builds on D173, D428, D554.*
   studio redesigned, the dungeons, three languages). The lead's reservation, given before the choice: five of its features
   are not yet seen in game (the dungeons, the mounts' capture, the transfer to the guild's chest, the run's restarts, the
   harvest's rotation), which the release's notes say.
+
+## D562: The app's 1.0.1 shows the profile's menu again, which opened empty in 1.0.0
+
+*2026-11-25, a release session outside the roadmap's steps, the owner's « On vois plus le contenu dans le select des profils », « faut
+vite corriger et re publish release », then, checked in the running app, « Oui, publie 1.0.1 ». Refines D548; builds on D561.*
+
+- **Found**: the profile's field opened a frame 240 wide and 10 high, the `MenuPopup`'s width and padding, with no row. Avalonia
+  12's `MenuFlyout` makes its presenter over its `Items` the first time it opens; made over an empty `Items`, it never shows the
+  items `Opening` adds to them, which is how D548's `ProfileMenu.Attach` filled it. Measured in a headless window: filled before,
+  two rows of 28; filled as it opens from empty, none, on every opening.
+- **Made**: the menu owns an `ObservableCollection` given as its `ItemsSource` from the start, cleared and filled as it opens.
+  `ProfileMenuTests` opens the menu under a field and reads its rows, red before the fix. Seen in the running app by the owner.
+- **Released**: 1.0.1 (a fix after 1.0.0). The pack is still of format 15, already on `client-3.7.14.18`, so nothing else is published.
+- **Rejected**: keeping `Items` with a first item put at `Attach`, so that the presenter is made over a list not empty, which the
+  probe showed works too, since it leans on the same undocumented behavior; filling them from the field's `Click`, which Avalonia raises after it opened the flyout.

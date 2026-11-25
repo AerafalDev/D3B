@@ -1058,3 +1058,8 @@ or refines another says so in its own entry. Add a line here with every new deci
 
 - [D561](decisions/d561-release-1-0-0.md#d561-the-apps-release-after-099-is-100-its-pack-of-format-15-published-first) The app's release after 0.9.9 is 1.0.0, its pack of format 15 published first (2026-11-25)
   - The owner's choice of 1.0.0 over 0.9.10; `data-15.pack` on `client-3.7.14.18`, the sequencer's flaky test fixed first.
+
+## The app's 1.0.1 (D562)
+
+- [D562](decisions/d561-release-1-0-0.md#d562-the-apps-101-shows-the-profiles-menu-again-which-opened-empty-in-100) The app's 1.0.1 shows the profile's menu again, which opened empty in 1.0.0 (2026-11-25)
+  - The owner's ask; the menu owns its items from the start, as Avalonia 12 never shows those added to an empty flyout as it opens.

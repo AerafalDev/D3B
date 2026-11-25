@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Collections.ObjectModel;
 using Avalonia.Controls;
 using D3B.App.Localization;
 using D3B.App.ViewModels.Characters;
@@ -21,14 +22,17 @@ internal static class ProfileMenu
         ArgumentNullException.ThrowIfNull(field);
         ArgumentNullException.ThrowIfNull(character);
 
-        var menu = new MenuFlyout { Placement = PlacementMode.BottomEdgeAlignedLeft };
+        // Its own collection from the start: Avalonia 12's presenter, made over a flyout's still empty Items, never shows the
+        // items added to them as it opens, and the menu opened empty.
+        var items = new ObservableCollection<object>();
+        var menu = new MenuFlyout { Placement = PlacementMode.BottomEdgeAlignedLeft, ItemsSource = items };
 
         menu.Opening += (_, _) =>
         {
-            menu.Items.Clear();
+            items.Clear();
 
             if (character() is { } shown)
-                Fill(menu.Items, shown);
+                Fill(items, shown);
         };
         field.Flyout = menu;
     }
