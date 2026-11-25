@@ -47,7 +47,7 @@ internal static class AssetKinds
         };
     }
 
-    /// <summary>Gets a kind's tint, its icon's square: its colour, faint, so that it reads on the dark and the light theme alike (D530).</summary>
+    /// <summary>Gets a kind's tint, its icon's square: its colour, faint, on whatever ground it lies (D530).</summary>
     /// <param name="kind">The kind.</param>
     /// <returns>The colour.</returns>
     public static Color TintOf(AssetKind kind)

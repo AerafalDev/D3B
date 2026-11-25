@@ -204,6 +204,47 @@ public sealed class StudioViewsTests : IAsyncDisposable
     }
 
     [Fact]
+    public async Task TheTitleBarsTogglesAreLitWhileTheirPartShowsAndShowAndHideIt()
+    {
+        var (start, pressed, version) = await OnTheUIThreadAsync(() =>
+        {
+            var main = new MainViewModel(new D3B.App.Hosting.HostRunner(_ => new TaskCompletionSource<D3B.Bot.Hosting.BotHostStart>().Task), Localizer.Instance);
+            var window = new MainWindow { DataContext = main, Width = 1440, Height = 900 };
+
+            window.Show();
+            Dispatcher.UIThread.RunJobs();
+
+            var toggles = window.GetVisualDescendants().OfType<StackPanel>().Single(panel => panel.Name == "LayoutToggles").Children.OfType<Button>().ToList();
+
+            List<bool> Lit()
+            {
+                Dispatcher.UIThread.RunJobs();
+
+                return [.. toggles.Select(toggle => toggle.Classes.Contains("Lit"))];
+            }
+
+            var start = Lit();
+
+            // The side bar's toggle hides it; the bottom panel's and the Details' show theirs.
+            foreach (var toggle in toggles)
+                toggle.Command!.Execute(toggle.CommandParameter);
+
+            var pressed = (Lit(), main.Layout.IsSideOpen, main.Layout.IsBottomOpen, main.Layout.IsDetailsOpen);
+            var version = main.StatusVersion == "D3B " + main.Updates.Version;
+
+            window.Close();
+
+            return (start, pressed, version);
+        });
+
+        // As next's (D531): the side bar shows at start, the bottom panel and the Details do not.
+        Assert.Equal([true, false, false], start);
+        Assert.Equal([false, true, true], pressed.Item1);
+        Assert.Equal((false, true, true), (pressed.IsSideOpen, pressed.IsBottomOpen, pressed.IsDetailsOpen));
+        Assert.True(version);
+    }
+
+    [Fact]
     public void TheSearchSitsInTheMiddleOfTheRowUntilASideWouldTouchIt()
     {
         Assert.Equal((550d, 340d), TitleBarPanel.Middle(1440, 300, 450, 340, 200, 12));

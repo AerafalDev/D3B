@@ -51,6 +51,10 @@
         <Style Selector="Button.Tool.Lit">
             <Setter Property="Background" Value="{DynamicResource AccentSoftColor}" />
         </Style>
+        <Style Selector="Button.Tool.Toggle.Lit">
+            <Setter Property="Background" Value="{DynamicResource RaisedColor}" />
+            <Setter Property="Foreground" Value="{DynamicResource BrightColor}" />
+        </Style>
         <Style Selector="TextBox.PropertySearch">
             <Setter Property="Height" Value="28" />
             <Setter Property="MinHeight" Value="28" />
@@ -136,6 +140,10 @@
                 </MenuItem>
                 <MenuItem Header="{l:Tr MenuView}">
                     <MenuItem Command="{Binding ShowHomeCommand}" Header="{l:Tr Home}" />
+                    <MenuItem
+                        Command="{Binding ShowStatisticsCommand}"
+                        Header="{l:Tr ActivityStatistics}"
+                        IsChecked="{Binding IsStatisticsShown, Mode=OneWay}" />
                     <Separator />
                     <MenuItem Classes="Heading" Header="{l:Tr MenuViews}" />
                     <MenuItem
@@ -557,7 +565,7 @@
                                 </ItemsControl>
                             </Border>
                             <Border
-                                Classes="Dock Recess Focused"
+                                Classes="Dock Recess"
                                 Name="EditorDock">
                             <Panel>
                                 <ItemsControl ItemsSource="{Binding Editor.Items}">

@@ -131,7 +131,7 @@ public sealed class WorldViewTests
         Assert.Equal((WorldMapTool.Region, WorldMapTool.Region), result.subArea);
         Assert.Equal((WorldTool.Zone, WorldMapTool.Trace), result.painting);
 
-        // No tab for the route nor the zone: the home page and the world are the only two.
+        // No tab for the route nor the zone: the world is the only one, the studio opening on none (D531).
         Assert.Equal(1, result.Item9);
     }
 

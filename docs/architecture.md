@@ -792,7 +792,7 @@ bottom panel and the Details hidden until needed.
     the step of their run), routes (each unfolds into its steps, with the dots of what they do), zones, each with an eye; a
     search; a click selects here, a double click opens a character's tab, the right click on a character opens its menu
     (`CharacterMenu`, which the cards had). The rows keep their objects between readings so that a scroll stays.
-  - **Play in Editor**: the run block keeps its place; while the chosen character plays, the viewport has a green frame and a
+  - **Play in Editor**: while the chosen character plays, the viewport has a green frame and a
     caption (`FrameText`, which says the step and lap of the route it follows), and the character's disc a green ring.
   - **Following a run** (D419): `BotViewModel.Route` and `RouteText` read `RouteRuns` for the character ("North · step 4/8 · lap 3", "to step"
     while walking there, "back"), which the card's `Step`, the Outliner's character row, the Home page and the run block's detail say. `FollowedRuns`

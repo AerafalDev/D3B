@@ -486,10 +486,6 @@
         <Setter Property="Margin" Value="8,0,0,0" />
         <Setter Property="VerticalAlignment" Value="Center" />
     </Style>
-    <Style Selector="Button.Tool.Toggle.Lit">
-        <Setter Property="Background" Value="{DynamicResource RaisedColor}" />
-        <Setter Property="Foreground" Value="{DynamicResource BrightColor}" />
-    </Style>
 
     <Style Selector="Button.TitleSearch">
         <Setter Property="Theme" Value="{DynamicResource StudioButton}" />
