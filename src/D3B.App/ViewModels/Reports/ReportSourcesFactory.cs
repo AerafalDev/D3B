@@ -2,6 +2,7 @@ using System.Globalization;
 using D3B.App.Hosting;
 using D3B.App.Localization;
 using D3B.App.ViewModels.Characters;
+using D3B.Bot.Journal;
 using D3B.Bot.Runtime;
 using D3B.Bot.Reports;
 using D3B.Data;
@@ -20,6 +21,10 @@ namespace D3B.App.ViewModels.Reports;
 /// <summary>Reads, from the running host, what a character's report is made of (D410).</summary>
 internal static class ReportSourcesFactory
 {
+    private const long ReportJournalBytes = 8L * 1024 * 1024;
+
+    private static readonly TimeSpan _lastDay = TimeSpan.FromHours(24);
+
     /// <summary>Gets the folder reports are written in by default: <c>%LOCALAPPDATA%\D3B\reports</c>.</summary>
     public static string DefaultFolder => Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "D3B", "reports");
 
@@ -74,6 +79,8 @@ internal static class ReportSourcesFactory
         var library = services.GetService<AssetLibrary>();
         var contexts = services.GetService<IDbContextFactory<StorageContext>>();
         var build = services.GetService<ClientBuild>();
+        var time = services.GetService<TimeProvider>() ?? TimeProvider.System;
+        var recorder = services.GetService<JournalRecorder>();
 
         return new ReportSources
         {
@@ -85,6 +92,9 @@ internal static class ReportSourcesFactory
             CapturePath = games is not null ? ReportCaptures.Find(games, bot?.ConnectionId) : null,
             Translation = services.GetService<ProtocolTranslation>(),
             Journal = bot?.Journal.All() ?? [],
+            JournalOnDisk = recorder is null || choice is null ? null : () => LastDay(recorder, JournalFiles.SourceOf(key), time),
+            HostJournal = recorder is null ? null : () => LastDay(recorder, JournalFiles.HostSource, time),
+            UserFolder = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
             Trace = bot?.Trace.All() ?? [],
             Assets = library is not null && known?.Profile is { } profile ? ReportAssets.Parts(library, profile) : [],
             Knowledge = contexts is null ? null : token => ReportKnowledge.ReadAsync(contexts, token),
@@ -94,7 +104,23 @@ internal static class ReportSourcesFactory
             Pack = GamePack.FormatVersion.ToString(CultureInfo.InvariantCulture),
             Mapping = MappingFile.FormatVersion.ToString(CultureInfo.InvariantCulture),
             Folder = folder,
-            Time = services.GetService<TimeProvider>() ?? TimeProvider.System,
+            Time = time,
         };
+    }
+
+    // The last day, the owner's choice (D504), cut to its newest lines once it outgrows what a report can carry beside its capture.
+    private static string? LastDay(JournalRecorder recorder, string source, TimeProvider time)
+    {
+        try
+        {
+            // What came in the last second goes to disk first, so that the report holds it.
+            recorder.Flush();
+
+            return recorder.Files.Read(source, time.GetUtcNow() - _lastDay, ReportJournalBytes);
+        }
+        catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
+        {
+            return null;
+        }
     }
 }

@@ -361,6 +361,10 @@ follower) on the same map, the capture of every connection on; a capture's conte
 
   Order: BR1, BR2, BR3, BR4; BR2 and BR3 may be swapped, and BR3 is useful alone (the owner can ask a player for the file).
 
+  Since D504 (U2 of the next release, **made on 2026-11-24** in code and tests), each bot's journal and the host's problems are kept on
+  disk for 7 days and 250 MB, saved from the journal's toolbar, and a report holds the character's journal of the last 24 hours from
+  disk instead of the 2,000 entries in memory, with the host's problems of that day as a part of its own (`host.txt`).
+
   **BR1's brief.** Goal: after it, a player who plays a session leaves a capture of its game connection on disk, bounded in age and
   size, and the cleaner of BR2 knows what to overwrite. Read D409, D410, D411, D37, D53, `src/D3B.Network/Captures/`,
   `RelaySettings` and the Network section of the app's settings (`SettingsViewModel`). Do: (1) `Network:Captures:Enabled` on by

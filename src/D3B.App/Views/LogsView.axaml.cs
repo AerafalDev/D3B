@@ -2,12 +2,13 @@ using System.Collections.Specialized;
 using Avalonia.Controls;
 using Avalonia.Input.Platform;
 using Avalonia.Interactivity;
+using Avalonia.Platform.Storage;
 using Avalonia.Threading;
 using D3B.App.ViewModels.Logs;
 
 namespace D3B.App.Views;
 
-/// <summary>The journal: the lines of a bot, of the host or of all, which it follows as they come (D111, D327).</summary>
+/// <summary>The journal: the lines of a bot, of the host or of all, which it follows as they come, copied or saved (D111, D327, D504).</summary>
 internal sealed partial class LogsView : UserControl
 {
     private LogsViewModel? _model;
@@ -81,5 +82,21 @@ internal sealed partial class LogsView : UserControl
             await clipboard.SetTextAsync(_model.Text());
             _model.Copied();
         }
+    }
+
+    private async void OnSaveClick(object? sender, RoutedEventArgs e)
+    {
+        if (_model is null || TopLevel.GetTopLevel(this)?.StorageProvider is not { } storage)
+            return;
+
+        var file = await storage.SaveFilePickerAsync(new FilePickerSaveOptions
+        {
+            SuggestedFileName = _model.SaveName(),
+            DefaultExtension = ".txt",
+            FileTypeChoices = [FilePickerFileTypes.TextPlain],
+        });
+
+        if (file?.TryGetLocalPath() is { } path)
+            await _model.SaveAsync(path);
     }
 }
