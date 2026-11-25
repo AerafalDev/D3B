@@ -35,6 +35,9 @@ internal sealed class AppPreferences
     /// <summary>Gets the studio's layout as it was left, if it was changed.</summary>
     public StudioLayoutState? Layout { get; private set; }
 
+    /// <summary>Gets the editor's tabs and the bottom panel's, as the app was left (D542).</summary>
+    public StudioTabsState? Tabs { get; private set; }
+
     /// <summary>Gets the assets' folders folded, relative to the project's, as the tree was left (D358).</summary>
     public IReadOnlyList<string> FoldedAssets { get; private set; } = [];
 
@@ -75,7 +78,7 @@ internal sealed class AppPreferences
         {
             var stored = JsonSerializer.Deserialize<Stored>(File.ReadAllText(path));
 
-            return new AppPreferences(path, stored?.Language, stored?.Layout, stored?.Host, stored?.FoldedAssets, stored?.CapturesNoticeSeen is true, stored?.LibraryByFolder is true);
+            return new AppPreferences(path, stored?.Language, stored?.Layout, stored?.Host, stored?.FoldedAssets, stored?.CapturesNoticeSeen is true, stored?.LibraryByFolder is true) { Tabs = stored?.Tabs };
         }
         catch (Exception exception) when (exception is IOException or UnauthorizedAccessException or JsonException)
         {
@@ -96,6 +99,19 @@ internal sealed class AppPreferences
     public void RememberLayout(StudioLayoutState? layout)
     {
         Layout = layout;
+        Save();
+    }
+
+    /// <summary>Remembers the editor's tabs and the bottom panel's, for the next start (D542).</summary>
+    /// <param name="tabs">The tabs.</param>
+    public void RememberTabs(StudioTabsState tabs)
+    {
+        ArgumentNullException.ThrowIfNull(tabs);
+
+        if (Tabs is { } kept && kept.Shown == tabs.Shown && kept.Bottom == tabs.Bottom && kept.Open.SequenceEqual(tabs.Open))
+            return;
+
+        Tabs = tabs;
         Save();
     }
 
@@ -146,7 +162,7 @@ internal sealed class AppPreferences
         try
         {
             Directory.CreateDirectory(System.IO.Path.GetDirectoryName(Path)!);
-            File.WriteAllText(Path, JsonSerializer.Serialize(new Stored(Language, Layout, _host.Count > 0 ? _host : null, FoldedAssets.Count > 0 ? FoldedAssets : null, CapturesNoticeSeen ? true : null, LibraryByFolder ? true : null), _json));
+            File.WriteAllText(Path, JsonSerializer.Serialize(new Stored(Language, Layout, _host.Count > 0 ? _host : null, FoldedAssets.Count > 0 ? FoldedAssets : null, CapturesNoticeSeen ? true : null, LibraryByFolder ? true : null, Tabs), _json));
         }
         catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
         {
@@ -154,5 +170,5 @@ internal sealed class AppPreferences
         }
     }
 
-    private sealed record Stored(string? Language, StudioLayoutState? Layout, IReadOnlyDictionary<string, string>? Host, IReadOnlyList<string>? FoldedAssets = null, bool? CapturesNoticeSeen = null, bool? LibraryByFolder = null);
+    private sealed record Stored(string? Language, StudioLayoutState? Layout, IReadOnlyDictionary<string, string>? Host, IReadOnlyList<string>? FoldedAssets = null, bool? CapturesNoticeSeen = null, bool? LibraryByFolder = null, StudioTabsState? Tabs = null);
 }
