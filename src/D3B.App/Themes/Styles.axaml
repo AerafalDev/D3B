@@ -643,6 +643,16 @@
         </Style.Animations>
     </Style>
 
+    <!--  A bar of tools floating over a map, the world's viewport's and the character's map's zoom (D550): dark glass with a shadow.  -->
+    <Style Selector="Border.Glass">
+        <Setter Property="Background" Value="#DB161619" />
+        <Setter Property="BorderBrush" Value="#17FFFFFF" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="CornerRadius" Value="11" />
+        <Setter Property="Padding" Value="3" />
+        <Setter Property="BoxShadow" Value="0 8 24 0 #66000000" />
+    </Style>
+
     <!--  A gauge eases to its new share, as the mockup's: life and pods move, never jump.  -->
     <Style Selector="c|ShareBar">
         <Setter Property="Transitions">

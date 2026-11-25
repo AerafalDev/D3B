@@ -1014,3 +1014,8 @@ or refines another says so in its own entry. Add a line here with every new deci
   - Stage 4 of 4, under the owner's delegation; a block of its own, a search that finds nothing guiding nowhere.
 - [D544](decisions/d544-details-tidied.md#d544-the-details-play-pause-and-stop-the-character-the-characters-view-plays-every-one-connected-and-lists-only-those-played-through-d3b-and-what-is-not-in-the-app-leaves-the-details) The Details play, pause and stop the character, the Characters view plays every one connected and lists only those played through D3B, and what is not in the app leaves the Details (2026-11-25)
   - The owner's asks while checking D540 to D543 in the running app.
+
+## The studio's character map, zoomed (D550)
+
+- [D550](decisions/d550-map-zoom.md#d550-a-characters-map-zooms-with-the-wheel-around-the-pointer-from-its-fit-to-four-times-it-a-drag-pans-it-once-zoomed-and-the-worlds-zoom-bar-says-and-steps-it) A character's map zooms with the wheel around the pointer from its fit to four times it, a drag pans it once zoomed, and the world's zoom bar says and steps it (2026-11-25)
+  - The owner's ask, passed on by the shell's session; the world viewport's notch, step and bar, its 100 % the map's fit.

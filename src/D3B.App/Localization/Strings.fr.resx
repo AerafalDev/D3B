@@ -1811,6 +1811,18 @@
   <data name="MapHoverHint" xml:space="preserve">
     <value>Survole une cellule</value>
   </data>
+  <data name="MapZoomIn" xml:space="preserve">
+    <value>Zoomer</value>
+  </data>
+  <data name="MapZoomOut" xml:space="preserve">
+    <value>Dézoomer</value>
+  </data>
+  <data name="MapFit" xml:space="preserve">
+    <value>Voir toute la carte</value>
+  </data>
+  <data name="MapZoomTip" xml:space="preserve">
+    <value>La molette zoome autour du pointeur ; une fois zoomée, la carte se déplace en la glissant</value>
+  </data>
   <data name="MapPreview" xml:space="preserve">
     <value>Aperçu de {0} · Revenir à {1}</value>
   </data>

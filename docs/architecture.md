@@ -1015,6 +1015,10 @@ bottom panel and the Details hidden until needed.
   its life, AP and MP, a monster by its name (D184); a resource by its icon, faded once harvested (D141). A running
   activity's report rings the elements it wants and the one it goes for and marks the exit it heads to, and its tour's
   mini-map, gone through, probable, to see, without a resource, growing back and isolated (D131, D138, D145, D149).
+  The map zooms (D550): the wheel around the pointer, from its fit to four times it, a drag pans it once zoomed, never
+  past its edges; `MapZoom` holds the arithmetic and the canvas binds its scale both ways to `MapViewModel.Zoom`, which the
+  world viewport's bar at the map's bottom right says in % of the fit and steps (−, +, the fit). The zoomed shapes are built
+  for the scale, so that the lines keep their width, and a pan draws them moved; the zoom stays from one map to the next.
 - **Published** (D171): pushing a tag `v<version>` has `.github/workflows/release.yml` publish the app self-contained for
   win-x64, put the pack, schema and mapping of the build `ClientVersion` names in `data/<version>/` beside it with
   `scripts/embed.cs` (D172), and pack it with Velopack into the release `v<version>`: an installer, a portable zip, full and
