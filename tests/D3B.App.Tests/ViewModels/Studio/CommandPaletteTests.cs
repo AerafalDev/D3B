@@ -135,7 +135,7 @@ public sealed class CommandPaletteTests : IAsyncDisposable
         await using var store = new TestStore();
 
         await store.OpenedAsync();
-        await store.SeeAsync(TestPlay.Account, (TestPlay.CharacterId, "Aerafa", 200));
+        await store.PlayedAsync(TestPlay.Account, (TestPlay.CharacterId, "Aerafa", 200));
 
         var main = new MainViewModel(await TestHosts.RunningAsync(store.Host), _localizer);
 

@@ -884,7 +884,13 @@ bottom panel and the Details hidden until needed.
   on the right the client build and, once the host opened it, the data pack's format, its extractor in the tooltip, the bots playing,
   the problems' errors and warnings (read at every refresh, `BottomPanelViewModel.Refresh`), whether everything is saved, and once an
   update is downloaded, « Redémarrer pour passer à … » (D173). Each item opens what it names: the settings' About, the journal, the
-  settings' Files, the Characters view, the problems' tab; the saving item saves all, the update's restarts into it.
+  settings' Files, the Characters view, the problems' tab; the saving item saves all, the update's restarts into it. A host that
+  failed counts its failure among the problems, and its relay, red, opens them (D543).
+- **Empty states that guide** (D543, `StackPanel.EmptyState` in `Themes/Styles.axaml`): an empty view says what fills it, with a
+  title, steps and a button: the Characters view how to connect a character (keep D3B open until « Relais prêt », start Dofus, choose
+  a character; `OutlinerViewModel.IsGuiding`, `EmptySteps`), the World's « Nouvelle route » and « Nouvelle zone » (`ShowsMakeButtons`),
+  the Library's « Nouveau profil » (`AssetsViewModel.NewProfileCommand`), the statistics' « Voir toutes les sessions »
+  (`StatisticsViewModel.ShowsAllRuns`), the journal what fills it; a search that finds nothing says so and guides nowhere.
 - **Motions** (D320, D347): short and easing out. The studio's buttons fade their surface, edge and text, a tool gives
   under the press; menus and tooltips fade in; gauges (`ShareBar`) ease to their share; chevrons turn; what unfolds or is
   chosen fades in (`FadeIn`). A surface lit on hover rests on `ClearColor`, the hover's grey with no alpha, never on
@@ -904,7 +910,9 @@ bottom panel and the Details hidden until needed.
   only open, close and say, tested without a window.
 - **The characters** (D323, D344, D397, `CharactersViewModel` in `D3B.App.ViewModels.Characters`): the model behind the
   Outliner's character rows, the run block and the menus: the bots (`BotViewModel`: the ring of its state `PlayState`, its
-  level, where it is, what it does and its progress, life and pods) and the characters offline (`CharacterLineViewModel`). The
+  level, where it is, what it does and its progress, life and pods) and the characters offline (`CharacterLineViewModel`), only
+  those played through D3B once (`KnownCharacter.LastPlayed`, D544); the view's header plays every one connected
+  (`RunBlockViewModel.PlayAll`, also a command of the palette). The
   cards of D323 are gone, the Outliner's rows say it shorter (D397). A click chooses the character for the run block and the
   Details, a double click or Enter opens its tab, the right click chooses it and opens its menu, made as it opens: open, play,
   pause, stop, a profile, the start on connection, forgetting its account after a question (`CharacterAccounts`). The profiles'
@@ -912,9 +920,10 @@ bottom panel and the Details hidden until needed.
   bot meets while the app looks is a toast with a way to its journal or tab (D162).
 - **The Details panel** (D324, D345, D397, `PropertiesViewModel` in `D3B.App.ViewModels.Properties`, `PropertiesView`; it was
   the inspector): what is selected, under its search, which filters the rows; sections under a rule, faint labels whose column
-  its edge resizes. A character (`CharacterPropertiesViewModel`): its head, name, breed and level and a way to its tab; State,
-  where it stands, its life and pods; Game, its profile as a field whose menu opens it or gives another, the start on connection
-  with an arrow resetting it, the planning and fight preferences disabled until 7f and 7h; Variables, the character's own, each
+  its edge resizes. A character (`CharacterPropertiesViewModel`): its head, name, breed and level, play, pause and stop as its
+  state allows through the run block (D544), and a way to its tab; State,
+  where it stands, its life and pods; Game, its profile as a field whose menu opens it or gives another (`Button.Pick`, shared with
+  a character's tab), the start on connection with an arrow resetting it; Variables, once a behavior declared one, the character's own, each
   with a dot of its type and its editor (`VariableRowViewModel`), which sets what its behaviors read; Account, the account, its
   subscription and forgetting it. An asset (`AssetPropertiesViewModel`), selected in the world, the Library or the
   search: its name, kind, file and format, what it uses and what uses it, characters included; for a route its course, what it

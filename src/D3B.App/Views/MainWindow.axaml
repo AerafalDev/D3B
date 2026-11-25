@@ -384,6 +384,24 @@
                                         Height="12"
                                         Width="12" />
                                 </Button>
+                                <!--  Every character connected played at once (D544).  -->
+                                <Button
+                                    AutomationProperties.Name="{l:Tr CommandPlayAll}"
+                                    Classes="Tool Small"
+                                    Command="{Binding RunBlock.PlayAllCommand}"
+                                    DockPanel.Dock="Right"
+                                    Margin="0,0,2,0"
+                                    Name="PlayAll"
+                                    ToolTip.Tip="{l:Tr CommandPlayAll}"
+                                    VerticalAlignment="Center">
+                                    <Button.IsVisible>
+                                        <MultiBinding Converter="{x:Static BoolConverters.And}">
+                                            <Binding Path="Layout.IsCharactersShown" />
+                                            <Binding Path="!RunBlock.IsNobodyOnline" />
+                                        </MultiBinding>
+                                    </Button.IsVisible>
+                                    <c:Icon Drawing="{StaticResource Run.Run}" />
+                                </Button>
                                 <TextBlock
                                     Classes="Dim Figures"
                                     DockPanel.Dock="Right"

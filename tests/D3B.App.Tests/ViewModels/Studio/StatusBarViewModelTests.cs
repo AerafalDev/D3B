@@ -101,4 +101,22 @@ public sealed class StatusBarViewModelTests
 
         Assert.Equal(["about", "journal", "files", "characters", "problems", "save", "restart"], opened);
     }
+
+    [Fact]
+    public void AHostThatFailedCountsItsFailureAmongTheProblemsAndTheRelayOpensThem()
+    {
+        var opened = new List<string>();
+        var bar = new StatusBarViewModel(new Localizer(Localizer.English), "0.9.10")
+        {
+            ShowRelay = () => opened.Add("journal"),
+            ShowProblems = () => opened.Add("problems"),
+        };
+
+        bar.Refresh(new StatusFacts { Host = HostStatus.Failed, Failure = "No pack for client 3.7.14.18", Errors = 1 });
+        bar.ShowRelayJournalCommand.Execute(null);
+
+        // Its failure is a problem, with its fix: the relay stopped leads there, not to an empty journal.
+        Assert.Equal(("1", true), (bar.ErrorsText, bar.HasProblems));
+        Assert.Equal(["problems"], opened);
+    }
 }
