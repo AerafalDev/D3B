@@ -32,16 +32,28 @@ public sealed class HomeViewModelTests : IAsyncDisposable
         main.Routes.Use(TestRouteWorld.Services(_store.Assets));
         main.Refresh();
 
+        // The studio opens on no tab, as next's (D531): these start from the home page the View menu opens.
+        main.ShowHome();
+
         return main;
     }
 
     [Fact]
-    public async Task TheStudioOpensOnTheHomePageAndTheWorldIsNotOpenYet()
+    public async Task TheStudioOpensOnNoTabAndTheViewMenuShowsTheHomePage()
     {
-        var main = await StudioAsync();
+        await _store.OpenedAsync();
+
+        var main = new MainViewModel(await TestHosts.RunningAsync(_store.Host), _localizer);
+
+        main.Refresh();
+
+        // As next's (D531): the editor shows the mark and the main keys until something is opened.
+        Assert.Empty(main.Editor.Items);
+        Assert.True(main.Editor.IsEmpty);
+
+        main.ShowHomeCommand.Execute(null);
 
         Assert.Equal(["home"], main.Editor.Items.Select(tab => tab.Key));
-        Assert.True(main.Editor.IsShown("home"));
         Assert.Equal("Home", main.Editor.Selected?.Title);
         Assert.Same(main, main.Editor.Selected?.Content);
     }
@@ -187,6 +199,7 @@ public sealed class HomeViewModelTests : IAsyncDisposable
         var main = new MainViewModel(await TestHosts.RunningAsync(_store.Host), _localizer);
 
         main.Refresh();
+        main.ShowHome();
         main.Outliner.Select(main.Outliner.Rows.Single(row => row.Kind is OutlinerRowKind.Character));
 
         Assert.True(main.Editor.IsShown("home"));

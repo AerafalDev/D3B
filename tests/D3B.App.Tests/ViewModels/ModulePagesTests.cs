@@ -67,8 +67,9 @@ public sealed class ModulePagesTests : IAsyncDisposable
         Assert.Equal([true, false], icons);
         Assert.All(contents, Assert.Null);
         Assert.True(main.HasPages);
-        Assert.True(main.Editor.IsShown("home"));
-        Assert.Equal(["home"], main.Editor.Items.Select(tab => tab.Key));
+
+        // The pages open from the View menu, not with the studio, which opens on no tab (D531).
+        Assert.Empty(main.Editor.Items);
     }
 
     [Fact]

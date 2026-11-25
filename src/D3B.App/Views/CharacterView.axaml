@@ -263,120 +263,11 @@
         </Style>
     </UserControl.Styles>
     <DockPanel>
-        <!--  The header (D514): who the character is, the profile it plays, its start on connection and the buttons its state allows, as the run block and the right click had them.  -->
-        <Border
-            BorderBrush="{DynamicResource BorderColor}"
-            BorderThickness="0,0,0,1"
-            DockPanel.Dock="Top"
-            Name="Header"
-            Padding="14,8">
-            <Grid ColumnDefinitions="Auto,*,Auto,Auto,Auto" ColumnSpacing="12">
-                <c:Portrait
-                    Color="{Binding Character.PortraitColor}"
-                    Head="{Binding Character.Head}"
-                    Height="32"
-                    Initials="{Binding Character.Initials}"
-                    Radius="8"
-                    VerticalAlignment="Center"
-                    Width="32" />
-                <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                    <TextBlock
-                        Classes="Bright"
-                        FontSize="14"
-                        FontWeight="SemiBold"
-                        Text="{Binding Name}"
-                        TextTrimming="CharacterEllipsis" />
-                    <TextBlock
-                        Classes="Dim"
-                        FontSize="11"
-                        Text="{Binding Character.Subtitle}"
-                        TextTrimming="CharacterEllipsis" />
-                </StackPanel>
-                <StackPanel
-                    Grid.Column="2"
-                    Orientation="Horizontal"
-                    Spacing="6"
-                    VerticalAlignment="Center">
-                    <TextBlock
-                        Classes="Dim"
-                        Text="{l:Tr PropertyProfile}"
-                        VerticalAlignment="Center" />
-                    <Button
-                        AutomationProperties.Name="{l:Tr PropertyProfile}"
-                        Classes="HeadPick"
-                        Click="OnProfileClick"
-                        MaxWidth="260"
-                        Name="ProfileField">
-                        <StackPanel Orientation="Horizontal" Spacing="6">
-                            <c:Icon
-                                Drawing="{StaticResource Nodes.Template}"
-                                Height="12"
-                                Tint="{DynamicResource ProfileTintColor}"
-                                VerticalAlignment="Center"
-                                Width="12" />
-                            <TextBlock
-                                Classes.Dim="{Binding !Character.HasProfile}"
-                                Text="{Binding Character.Profile.Name}"
-                                TextTrimming="CharacterEllipsis"
-                                ToolTip.Tip="{Binding Character.Profile.Detail}"
-                                VerticalAlignment="Center" />
-                            <c:Icon
-                                Drawing="{StaticResource General.ChevronDown}"
-                                Height="10"
-                                Opacity="0.5"
-                                VerticalAlignment="Center"
-                                Width="10" />
-                        </StackPanel>
-                    </Button>
-                </StackPanel>
-                <CheckBox
-                    Content="{l:Tr PropertyStart}"
-                    FontSize="12.5"
-                    FontWeight="Normal"
-                    Grid.Column="3"
-                    IsChecked="{Binding Character.StartsOnConnection}"
-                    IsEnabled="{Binding Character.HasProfile}"
-                    ToolTip.Tip="{l:Tr PropertyStartHelp}"
-                    VerticalAlignment="Center" />
-                <StackPanel
-                    Grid.Column="4"
-                    Orientation="Horizontal"
-                    Spacing="4"
-                    VerticalAlignment="Center">
-                    <Button
-                        AutomationProperties.Name="{Binding PlayTip}"
-                        Classes="Tool Run"
-                        Command="{Binding PlayCommand}"
-                        IsEnabled="{Binding CanPlay}"
-                        IsVisible="{Binding ShowsPlay}"
-                        Name="TabPlay"
-                        ToolTip.ShowOnDisabled="True"
-                        ToolTip.Tip="{Binding PlayTip}">
-                        <c:Icon Drawing="{StaticResource Run.Run}" />
-                    </Button>
-                    <Button
-                        AutomationProperties.Name="{l:Tr RunPause}"
-                        Classes="Tool Run"
-                        Command="{Binding PauseCommand}"
-                        IsVisible="{Binding ShowsPause}"
-                        Name="TabPause"
-                        ToolTip.Tip="{l:Tr RunPause}">
-                        <c:Icon Drawing="{StaticResource Run.Pause}" />
-                    </Button>
-                    <Button
-                        AutomationProperties.Name="{l:Tr RunStopTip}"
-                        Classes="Tool Run"
-                        Command="{Binding StopCommand}"
-                        IsVisible="{Binding ShowsStop}"
-                        Name="TabStop"
-                        ToolTip.Tip="{l:Tr RunStopTip}">
-                        <c:Icon Drawing="{StaticResource Run.Stop}" />
-                    </Button>
-                </StackPanel>
-            </Grid>
-        </Border>
-        <Grid ColumnDefinitions="*,320">
-            <Panel ClipToBounds="True" Name="Surface">
+        <Grid ColumnDefinitions="320,*">
+            <Panel
+                ClipToBounds="True"
+                Grid.Column="1"
+                Name="Surface">
                 <Panel.Background>
                     <RadialGradientBrush Center="50%,45%" GradientOrigin="50%,45%" RadiusX="75%" RadiusY="75%">
                         <GradientStop Color="#1A1A1A" Offset="0" />
@@ -552,10 +443,115 @@
             </Panel>
             <Border
                 BorderBrush="{DynamicResource BorderColor}"
-                BorderThickness="1,0,0,0"
-                Grid.Column="1">
+                BorderThickness="0,0,1,0"
+                Grid.Column="0">
                 <ScrollViewer>
                     <StackPanel Margin="14">
+                    <!--  Who the character is, the profile it plays, its start on connection and the buttons its state allows, at the top of
+                         its column, as next's character tab (D514, D531).  -->
+                    <StackPanel Margin="0,0,0,16" Name="Header" Spacing="10">
+                        <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="10">
+                            <c:Portrait
+                                Color="{Binding Character.PortraitColor}"
+                                Head="{Binding Character.Head}"
+                                Height="36"
+                                Initials="{Binding Character.Initials}"
+                                Radius="8"
+                                VerticalAlignment="Center"
+                                Width="36" />
+                            <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                <TextBlock
+                                    Classes="Bright"
+                                    FontSize="15"
+                                    FontWeight="SemiBold"
+                                    Text="{Binding Name}"
+                                    TextTrimming="CharacterEllipsis" />
+                                <TextBlock
+                                    Classes="Muted"
+                                    FontSize="12"
+                                    Text="{Binding Character.Subtitle}"
+                                    TextTrimming="CharacterEllipsis" />
+                            </StackPanel>
+                            <StackPanel
+                                Grid.Column="2"
+                                Orientation="Horizontal"
+                                Spacing="4"
+                                VerticalAlignment="Center">
+                                <Button
+                                    AutomationProperties.Name="{Binding PlayTip}"
+                                    Classes="Tool Run"
+                                    Command="{Binding PlayCommand}"
+                                    IsEnabled="{Binding CanPlay}"
+                                    IsVisible="{Binding ShowsPlay}"
+                                    Name="TabPlay"
+                                    ToolTip.ShowOnDisabled="True"
+                                    ToolTip.Tip="{Binding PlayTip}">
+                                    <c:Icon Drawing="{StaticResource Run.Run}" />
+                                </Button>
+                                <Button
+                                    AutomationProperties.Name="{l:Tr RunPause}"
+                                    Classes="Tool Run"
+                                    Command="{Binding PauseCommand}"
+                                    IsVisible="{Binding ShowsPause}"
+                                    Name="TabPause"
+                                    ToolTip.Tip="{l:Tr RunPause}">
+                                    <c:Icon Drawing="{StaticResource Run.Pause}" />
+                                </Button>
+                                <Button
+                                    AutomationProperties.Name="{l:Tr RunStopTip}"
+                                    Classes="Tool Run"
+                                    Command="{Binding StopCommand}"
+                                    IsVisible="{Binding ShowsStop}"
+                                    Name="TabStop"
+                                    ToolTip.Tip="{l:Tr RunStopTip}">
+                                    <c:Icon Drawing="{StaticResource Run.Stop}" />
+                                </Button>
+                            </StackPanel>
+                        </Grid>
+                        <StackPanel Spacing="4">
+                            <TextBlock
+                                Classes="Muted"
+                                FontSize="12"
+                                Text="{l:Tr PropertyProfile}" />
+                            <Button
+                                AutomationProperties.Name="{l:Tr PropertyProfile}"
+                                Classes="HeadPick"
+                                Click="OnProfileClick"
+                                HorizontalAlignment="Stretch"
+                                HorizontalContentAlignment="Stretch"
+                                Name="ProfileField">
+                                <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="6">
+                                    <c:Icon
+                                        Drawing="{StaticResource Nodes.Template}"
+                                        Height="12"
+                                        Tint="{DynamicResource ProfileTintColor}"
+                                        VerticalAlignment="Center"
+                                        Width="12" />
+                                    <TextBlock
+                                        Classes.Dim="{Binding !Character.HasProfile}"
+                                        Grid.Column="1"
+                                        Text="{Binding Character.Profile.Name}"
+                                        TextTrimming="CharacterEllipsis"
+                                        ToolTip.Tip="{Binding Character.Profile.Detail}"
+                                        VerticalAlignment="Center" />
+                                    <c:Icon
+                                        Drawing="{StaticResource General.ChevronDown}"
+                                        Grid.Column="2"
+                                        Height="10"
+                                        Opacity="0.5"
+                                        VerticalAlignment="Center"
+                                        Width="10" />
+                                </Grid>
+                            </Button>
+                        </StackPanel>
+                        <CheckBox
+                            Content="{l:Tr PropertyStart}"
+                            FontSize="12.5"
+                            FontWeight="Normal"
+                            IsChecked="{Binding Character.StartsOnConnection}"
+                            IsEnabled="{Binding Character.HasProfile}"
+                            ToolTip.Tip="{l:Tr PropertyStartHelp}" />
+                    </StackPanel>
                         <Border
                             Classes="Now"
                             Classes.Fighting="{Binding IsFighting}"

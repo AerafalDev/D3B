@@ -212,6 +212,9 @@ internal sealed partial class MainViewModel : ObservableObject
     /// <summary>Gets whether the host does not run, which the panels that read it say.</summary>
     public bool IsNotRunning => !IsRunning;
 
+    /// <summary>Gets the app's name and version, at the left of the status bar after its blue dot, as next's (D531).</summary>
+    public string StatusVersion => $"D3B {Updates.Version}";
+
     /// <summary>Gets the app's version and the client build it ships, under the welcome's logo.</summary>
     public string VersionText => _localizer.Format("HomeVersion", Updates.Version, Updates.ClientVersion);
 
@@ -306,7 +309,6 @@ internal sealed partial class MainViewModel : ObservableObject
         };
         World.PropertyChanged += (_, e) => FollowEditor(e.PropertyName);
         Editor.PropertyChanged += (_, e) => FollowEditor(e.PropertyName);
-        ShowHome();
     }
 
     // The Library's view keeps the Outliner as the World left it: it is not shown there.
@@ -460,7 +462,7 @@ internal sealed partial class MainViewModel : ObservableObject
         World.SetTool(WorldTool.Zone);
     }
 
-    /// <summary>Shows the home page, the first tab, opened with the studio; it closes like the others and the Window menu opens it again (D406, D412).</summary>
+    /// <summary>Shows the home page, from the View menu: the studio opens on no tab, as next's, the editor showing the mark and the main keys (D406, D412, D531).</summary>
     [RelayCommand]
     public void ShowHome()
     {

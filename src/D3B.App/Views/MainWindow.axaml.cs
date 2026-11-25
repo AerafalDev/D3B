@@ -62,9 +62,6 @@ internal sealed partial class MainWindow : ShadUI.Window
         foreach (var splitter in new[] { LeftSplitter, RightSplitter, BottomSplitter })
             splitter.DragCompleted += (_, _) => _main?.Layout.Remember();
 
-        // The panel last pressed is outlined in the accent, as the mockup's focused panel.
-        foreach (var dock in new[] { SideDock, EditorDock, BottomDock, DetailsDock })
-            dock.AddHandler(PointerPressedEvent, (_, _) => Focus(dock), RoutingStrategies.Tunnel, handledEventsToo: true);
     }
 
     /// <inheritdoc/>
@@ -133,20 +130,6 @@ internal sealed partial class MainWindow : ShadUI.Window
 
         centre[1].Height = new GridLength(layout.IsBottomOpen ? Gap : 0);
         centre[2].Height = new GridLength(layout.IsBottomOpen ? layout.BottomHeight : 0);
-    }
-
-    private void Focus(Border dock)
-    {
-        foreach (var other in new[] { SideDock, EditorDock, BottomDock, DetailsDock })
-            other.Classes.Set("Focused", other == dock);
-    }
-
-    private void OnRunChoiceClick(object? sender, RoutedEventArgs e)
-    {
-        if (sender is Control { DataContext: BotViewModel bot })
-            _main?.RunBlock.Choose(bot);
-
-        RunWho.Flyout?.Hide();
     }
 
     private void OnScrimPressed(object? sender, PointerPressedEventArgs e)

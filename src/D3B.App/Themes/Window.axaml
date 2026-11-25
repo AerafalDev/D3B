@@ -63,7 +63,7 @@
                         <Panel>
                             <Panel Name="PART_Root">
                                 <DockPanel>
-                                    <Panel DockPanel.Dock="Top" Height="44">
+                                    <Panel DockPanel.Dock="Top" Height="35">
                                         <Border Background="Transparent" Name="PART_TitleBarBackground" />
                                         <c:TitleBarPanel Gap="12">
                                             <ContentPresenter Content="{TemplateBinding LogoContent}" VerticalAlignment="Center" />

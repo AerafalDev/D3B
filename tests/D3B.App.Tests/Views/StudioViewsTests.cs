@@ -33,7 +33,7 @@ public sealed class StudioViewsTests : IAsyncDisposable
     }
 
     [Fact]
-    public async Task TheRunBlockShowsOnlyTheButtonsTheChosenCharactersStateAllows()
+    public async Task TheRunBlockOffersOnlyWhatTheChosenCharactersStateAllowsAndTheTitleBarHoldsTheLayoutToggles()
     {
         using var host = TestHosts.Of(_play, new ActivityDefinition("patrol", "Patrol", _ => new TestActivity()));
         var runner = await TestHosts.RunningAsync(host);
@@ -49,14 +49,16 @@ public sealed class StudioViewsTests : IAsyncDisposable
             var main = new MainViewModel(runner, localizer);
             var window = new MainWindow { DataContext = main, Width = 1440, Height = 900 };
 
+            // The run block left the title bar for next's layout toggles (D531): it stays the model behind F5, F6, the tab's and the
+            // home card's buttons, whose state it gives.
             List<string> Buttons()
             {
                 main.Refresh();
                 Dispatcher.UIThread.RunJobs();
 
-                var run = window.GetVisualDescendants().OfType<Border>().Single(border => border.Classes.Contains("Run"));
+                var block = main.RunBlock;
 
-                return [.. run.GetVisualDescendants().OfType<Button>().Where(button => button.Classes.Contains("Run") && button.IsVisible).Select(button => button.IsEnabled ? "on" : "off")];
+                return [.. new[] { (block.ShowsPlay, block.CanPlay), (block.ShowsPause, true), (block.ShowsStop, true) }.Where(button => button.Item1).Select(button => button.Item2 ? "on" : "off")];
             }
 
             main.Refresh();
@@ -65,7 +67,7 @@ public sealed class StudioViewsTests : IAsyncDisposable
 
             var none = (Buttons(), main.RunBlock.Name);
 
-            Drawings.DrawPart(window.GetVisualDescendants().OfType<Border>().Single(border => border.Classes.Contains("Run")), "part-run-none");
+            Assert.Equal(3, window.GetVisualDescendants().OfType<StackPanel>().Single(panel => panel.Name == "LayoutToggles").Children.Count);
             Drawings.DrawPart(window.GetVisualDescendants().OfType<Button>().Single(button => button.Classes.Contains("TitleSearch")), "part-search");
 
             main.Bots.Items[0].ChooseCommand.Execute(null);
@@ -77,7 +79,6 @@ public sealed class StudioViewsTests : IAsyncDisposable
             var playing = (Buttons(), main.RunBlock.State);
 
             Drawings.Draw(window, "studio-playing");
-            Drawings.DrawPart(window.GetVisualDescendants().OfType<Border>().Single(border => border.Classes.Contains("Run")), "part-run-playing");
             Drawings.DrawPart(window.GetVisualDescendants().OfType<Border>().Single(border => border.Name == "SideDock"), "part-characters");
             Drawings.DrawPart(window.GetVisualDescendants().OfType<Border>().Single(border => border.Name == "BottomDock"), "part-bottom");
             main.RunBlock.PauseCommand.Execute(null);

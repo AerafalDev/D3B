@@ -114,7 +114,8 @@ public sealed class MainWindowTests : IAsyncDisposable
 
         Assert.DoesNotContain("Outliner", english);
         Assert.Contains("Characters", english);
-        Assert.Contains("Home", english);
+        // The studio opens on no tab: the editor shows the mark and the main keys, as next's (D531).
+        Assert.Contains("Search everywhere", english);
         Assert.Contains("Character", english);
         Assert.Contains("Stopped", english);
         Assert.Contains("Running", english);
@@ -122,7 +123,7 @@ public sealed class MainWindowTests : IAsyncDisposable
         Assert.DoesNotContain("Connected", english);
         Assert.DoesNotContain(english, text => text.StartsWith('[') && text.EndsWith(']'));
         Assert.Contains("Personnages", french);
-        Assert.Contains("Accueil", french);
+        Assert.Contains("Chercher partout", french);
         Assert.Contains("Arrêté", french);
         Assert.Contains("En marche", french);
         Assert.DoesNotContain("Running", french);
@@ -437,7 +438,7 @@ public sealed class MainWindowTests : IAsyncDisposable
             return (english, french, map);
         });
 
-        Assert.Equal((true, 2, "Character", 300), map);
+        Assert.Equal((true, 1, "Character", 300), map);
         Assert.Contains("Character", english);
         Assert.Contains("4,-18", english);
         Assert.Contains("Sub-area 440, cell 300", english);

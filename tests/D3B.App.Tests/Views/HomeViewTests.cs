@@ -31,7 +31,7 @@ public sealed class HomeViewTests : IAsyncDisposable
     }
 
     [Fact]
-    public async Task TheStudioOpensOnTheHomePageInBothLanguagesAndTheWorldAppearsOnceARouteIsSelected()
+    public async Task TheHomePageShowsInBothLanguagesAndTheWorldAppearsOnceARouteIsSelected()
     {
         await _store.OpenedAsync();
         await _store.Assets.SaveAsync(new RouteAsset { Id = "north", Name = "North", Anchors = [new RouteAnchor { MapId = 1 }, new RouteAnchor { MapId = 2 }] }, TestContext.Current.CancellationToken);
@@ -49,6 +49,9 @@ public sealed class HomeViewTests : IAsyncDisposable
 
             main.Routes.Use(TestRouteWorld.Services(_store.Assets));
             main.Refresh();
+
+            // The studio opens on no tab, as next's (D531); the View menu shows the home page.
+            main.ShowHome();
             window.Show();
             Dispatcher.UIThread.RunJobs();
 

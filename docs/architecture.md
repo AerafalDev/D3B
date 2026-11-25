@@ -705,10 +705,11 @@ bottom panel and the Details hidden until needed.
   the clients and gives them their configuration back. The window shows the host getting ready, running for the
   installed client's build, or why it did not start.
 - **The studio's frame** (D320 to D322, D339), the mockup `docs/mockups/studio-7c.html` its reference: ShadUI's window
-  given D3B's own template (`Themes/Window.axaml`), one title row 44 pixels high, the logo and the menus File, Edit,
-  Window and Help on the left (`Themes/Menus.axaml`), the search in the middle of the window while it does not touch a side
-  (`TitleBarPanel`), then the run block, the settings' gear and the window's buttons; under it the docks, then the status
-  bar. Dark only (D320, D530): `Themes/Colors.axaml` gives ShadUI's keys D3B's values, `next`'s Dark Modern as discreet
+  given D3B's own template (`Themes/Window.axaml`), one title row 35 pixels high as `next`'s (D531), the logo and the menus
+  File, Edit, View and Help on the left (`Themes/Menus.axaml`), the search in the middle of the window while it does not touch
+  a side (`TitleBarPanel`), then `next`'s layout toggles, the side bar, the bottom panel and the Details, each pressed while it
+  shows (`LayoutToggles`, drawn from `PanelLeftGeometry` and its kin), and the window's buttons; under it the parts, then the
+  status bar. Dark only (D320, D530): `Themes/Colors.axaml` gives ShadUI's keys D3B's values, `next`'s Dark Modern as discreet
   islands (the frame `#111111`, the parts `#181818`, the editor `#1f1f1f`, their edge `#232323`), and holds the studio's
   surfaces, one blue accent kept rare, green, amber and red for states. The app's own icon is the owner's logo (D231):
   `Assets/d3b.ico` for the window, the taskbar, the executable and the installer, `Assets/d3b.png` in the title row and
@@ -723,15 +724,15 @@ bottom panel and the Details hidden until needed.
   `BreedColors`, D343).
 - **The activity bar and the side bar** (D513, as `next`'s shell): on the left of the window, a column of buttons (`Button.Activity`):
   Characters, Library and World at the top, each a view of the side bar (`SideView`), the one shown a rounded pill, chosen again
-  it hides the side bar; Journal, Statistics and Settings at its foot: Journal opens the bottom panel on its tab or hides it
-  (`BottomPanelViewModel.ToggleTab`, `IsJournalOpen`), Statistics opens their tab (`MainViewModel.ShowStatistics`,
-  `IsStatisticsShown`, D516), Settings theirs. The side bar shows one view, its header
-  naming it: the Characters view is the Outliner's characters, the World view its routes and zones (`OutlinerViewModel.Scope`,
+  it hides the side bar; the settings' gear at its foot, as VS Code's Manage (D531: the journal is the bottom panel's, its
+  toggle in the title bar; the statistics open from the View menu or the search, `MainViewModel.ShowStatistics`, D516). The
+  side bar shows one view, its header naming it small and muted, as `next`'s (`TextBlock.PartTitle`), its tools and the button
+  that hides it after: the Characters view is the Outliner's characters, the World view its routes and zones (`OutlinerViewModel.Scope`,
   `OutlinerScope`, which follows `StudioLayout.View`), its header making a route or a zone (D515), the Library view the assets'
   tree with its tools.
 - **The parts** (D321, D397, D513, `StudioLayout` in `D3B.App.ViewModels.Studio`): the side bar, the editor's tabs over the bottom
-  panel in the centre, the Details panel on the right, rounded panels with a hairline edge, 5 pixels apart, the one last pressed
-  outlined in the accent. The studio opens on the side bar and the editor; the bottom panel and the Details start hidden. The
+  panel in the centre, the Details panel on the right, rounded panels with a hairline edge, 5 pixels apart, none outlined (D531).
+  The studio opens on the side bar and the editor; the bottom panel and the Details start hidden. The
   Details show when something is selected (a character, a route, a step, a zone) and stay as the hand left them while it stays
   selected (`MainViewModel.OnSelectionChanged`); the bottom panel when its journal, trace or a route's Sequencer is
   asked. Every edge is dragged on its own (`DockSplitter`), within bounds; a part hides by its × and shows again from the View
@@ -743,7 +744,9 @@ bottom panel and the Details hidden until needed.
 - **Advanced tools** (D513, `StudioLayout.AdvancedTools`), off by default, checked in the View menu, the search and the settings'
   Interface section: the Protocol tab of the bottom panel only with them (`BottomPanelViewModel.HasProtocol`); turned off
   while it shows, the journal takes its place.
-- **The editor's tabs** (`EditorTabs`, `EditorTab`): the home page first, shown at start (D406) and closed like any tab, the View menu opening it again (D412;
+- **The editor's tabs** (`EditorTabs`, `EditorTab`), as `next`'s (D531): they lie on the window's frame (`Border.EditorStrip`), the one
+  shown rising with rounded top corners into the editor's island (`Border.TabHost.EditorTabHost`); the studio opens on no tab, the
+  island then showing the mark and the main keys (`Watermark`, while `EditorTabs.IsEmpty`); the home page opens from the View menu (D406, D412;
   `EditorTab.IsPinned` is for a tab that must not close: no ×, `CloseAll` keeps it), then those that something opens: the world (`ShowWorld`, opened once a route, a step or a zone is
   selected, from the Outliner, the assets, the search or the home page, closed like any tab), a profile, a list of steps, a
   character, the settings, a module's page; each tab opened once, its view kept while it is open, closed by its ×, its
@@ -815,9 +818,9 @@ bottom panel and the Details hidden until needed.
   character (`SequencerPlayhead`: a column outlined and dashed while the character walks to the step, filled with a bar and initials once
   there), `RunStatus` says it in the toolbar, "Follow the run" (`KeepsInSight`) has the view scroll the ruler to the playhead
   (`BringIntoView`); `Hover` and `StepLit` tell the viewport which column the pointer is on, which `WorldMapScene.LitStep` lights on the map.
-- **The run block** (D322, D338, `RunBlockViewModel`): the chosen character's portrait with a dot of its state, its name and
-  what it does live (the route's step when it follows one, D419), a menu of the characters online, and only the buttons its state allows: none chosen, play disabled;
-  stopped, play; playing, pause and stop; paused, play and stop; its edge green while it plays, amber paused. Play starts
+- **The run block** (D322, D338, `RunBlockViewModel`), no more drawn in the title row since D531, the model behind F5, F6, a
+  character's tab and its home card: the chosen character, what it does live (the route's step when it follows one, D419), and only
+  what its state allows: none chosen, play disabled; stopped, play; playing, pause and stop; paused, play and stop. Play starts
   what its card would, its own profile first, or resumes it; pause is `BotActor.Pause`, which cuts the step as the player's
   hand does and says it in the journal (`BotEvent.PausedFromApp`); stop ends the activity. F5 plays or pauses, F6 pauses,
   Shift F5 stops. A click on a character's card chooses it too, the inspector then showing it; a character chosen
@@ -829,8 +832,9 @@ bottom panel and the Details hidden until needed.
   section; a map, found by coordinates or name once a
   letter is typed, shows in preview in the tab of the character chosen, else of the first online or known (D341). Help's
   Shortcuts opens it on the commands.
-- **The status bar**: where the host stands with a dot, its detail in a tooltip; the client build; whether everything is
-  saved, no profile's tab with changes or some; once an update is downloaded, a button that restarts the app into it (D173).
+- **The status bar**, 24 pixels as `next`'s (D531): on the left, after a small blue dot, the app's name and version
+  (`MainViewModel.StatusVersion`), then where the host stands with a dot, its detail in a tooltip; on the right the client build,
+  whether everything is saved, and once an update is downloaded, a button that restarts the app into it (D173).
 - **Motions** (D320, D347): short and easing out. The studio's buttons fade their surface, edge and text, a tool gives
   under the press; menus and tooltips fade in; gauges (`ShareBar`) ease to their share; chevrons turn; what unfolds or is
   chosen fades in (`FadeIn`). A surface lit on hover rests on `ClearColor`, the hover's grey with no alpha, never on
@@ -867,10 +871,11 @@ bottom panel and the Details hidden until needed.
   does with a map no path reaches, its steps with their count and gaps, and the actions of the step chosen, a clip's values
   and the actions several steps share (the Sequencer's, D413); for a zone its contents (`AssetPropertiesViewModel.Zone`: its size and sub-areas, each taken
   out by its ×).
-- **A character's tab** (D325, D346, D514, `CharacterTabViewModel`, `CharacterView`): a header with its portrait, name and level,
+- **A character's tab** (D325, D346, D514, D531, `CharacterTabViewModel`, `CharacterView`), `next`'s layout: a column on the left
+  of 320 pixels, its top the character's portrait, name and level,
   its profile in a field whose menu opens it or gives another (`ProfileMenu`, shared with the Details; `CharacterTabViewModel.Character`
   is a `CharacterPropertiesViewModel` of its own), its start on connection, and play, pause and stop as its state allows, which drive
-  the run block (`Run`), so that F5 and the title row follow; then the character's map live
+  the run block (`Run`), so that F5 follows; the map, on the right, live
   (`MapViewModel`, drawn for that character alone): its coordinates and place, the cell under the pointer and what stands
   there, its layers in a menu, its tour's mini-map, a map the search found in preview; and a column: what it does now,
   tinted by its state, with its progress, the time spent and when it should end, its failure and warnings; its behavior's

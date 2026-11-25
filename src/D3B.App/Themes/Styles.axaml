@@ -276,7 +276,7 @@
 
 
     <!--  The studio's frame (D320 to D322, D530): next's islands, parts as cards of 6 pixels' corners with a faint edge on the
-         window's darker frame, the focused one outlined in the accent; tabs as lit buttons; thin dark scrollbars seen on hover.  -->
+         window's darker frame, none outlined, as next's (D531); tabs as lit buttons; thin dark scrollbars seen on hover.  -->
     <Style Selector="Border.Dock">
         <Setter Property="Background" Value="{DynamicResource PanelColor}" />
         <Setter Property="BorderBrush" Value="{DynamicResource BorderColor60}" />
@@ -286,9 +286,6 @@
     </Style>
     <Style Selector="Border.Dock.Recess">
         <Setter Property="Background" Value="{DynamicResource RecessColor}" />
-    </Style>
-    <Style Selector="Border.Dock.Focused">
-        <Setter Property="BorderBrush" Value="{DynamicResource AccentEdgeColor}" />
     </Style>
     <Style Selector="Border.Strip">
         <Setter Property="Height" Value="36" />
@@ -324,6 +321,26 @@
                     Property="Background" />
             </Transitions>
         </Setter>
+    </Style>
+    <!--  The editor's tabs, as next's (D531): on the frame, 35 high; the one shown rises with rounded top corners on the editor's
+         ground and merges into its island, the others dimmer.  -->
+    <Style Selector="Border.EditorStrip">
+        <Setter Property="Height" Value="35" />
+        <Setter Property="Padding" Value="4,5,4,0" />
+    </Style>
+    <Style Selector="Border.TabHost.EditorTabHost">
+        <Setter Property="Height" Value="30" />
+        <Setter Property="CornerRadius" Value="6,6,0,0" />
+        <Setter Property="VerticalAlignment" Value="Bottom" />
+    </Style>
+    <Style Selector="Border.TabHost.EditorTabHost.On">
+        <Setter Property="Background" Value="{DynamicResource RecessColor}" />
+    </Style>
+    <Style Selector="Border.TabHost.EditorTabHost:pointerover">
+        <Setter Property="Background" Value="{DynamicResource PanelColor}" />
+    </Style>
+    <Style Selector="Border.TabHost.EditorTabHost.On:pointerover">
+        <Setter Property="Background" Value="{DynamicResource RecessColor}" />
     </Style>
     <Style Selector="Border.TabHost:pointerover">
         <Setter Property="Background" Value="{DynamicResource HoverColor}" />
@@ -460,6 +477,18 @@
     <Style Selector="Button.Activity c|Icon">
         <Setter Property="Width" Value="20" />
         <Setter Property="Height" Value="20" />
+    </Style>
+
+    <!--  A side bar's or the panel's name in its header, small and muted, as next's (D531).  -->
+    <Style Selector="TextBlock.PartTitle">
+        <Setter Property="Foreground" Value="{DynamicResource MutedColor}" />
+        <Setter Property="FontSize" Value="12" />
+        <Setter Property="Margin" Value="8,0,0,0" />
+        <Setter Property="VerticalAlignment" Value="Center" />
+    </Style>
+    <Style Selector="Button.Tool.Toggle.Lit">
+        <Setter Property="Background" Value="{DynamicResource RaisedColor}" />
+        <Setter Property="Foreground" Value="{DynamicResource BrightColor}" />
     </Style>
 
     <Style Selector="Button.TitleSearch">
@@ -624,15 +653,15 @@
 
     <Style Selector="Button.Status">
         <Setter Property="Theme" Value="{DynamicResource StudioButton}" />
-        <Setter Property="Height" Value="26" />
-        <Setter Property="MinHeight" Value="26" />
-        <Setter Property="Padding" Value="9,0" />
-        <Setter Property="CornerRadius" Value="13" />
+        <Setter Property="Height" Value="20" />
+        <Setter Property="MinHeight" Value="20" />
+        <Setter Property="Padding" Value="6,0" />
+        <Setter Property="CornerRadius" Value="4" />
         <Setter Property="Background" Value="{DynamicResource ClearColor}" />
         <Setter Property="BorderThickness" Value="0" />
         <Setter Property="Foreground" Value="{DynamicResource MutedColor}" />
         <Setter Property="FontWeight" Value="Normal" />
-        <Setter Property="FontSize" Value="12.5" />
+        <Setter Property="FontSize" Value="12" />
         <Setter Property="VerticalContentAlignment" Value="Center" />
     </Style>
     <Style Selector="Button.Status:pointerover">
