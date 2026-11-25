@@ -271,14 +271,16 @@ The bots run in `D3B.Bot`: what each part does today, with the decisions that ma
   resource on the most maps; `PlaceRotation.Draw`, shared with the fight, draws the rotation from the ten richest the character
   reaches (`SubAreaReach`), those worth under a quarter of the richest left out, the tops kept up to half the count and the rest
   drawn at random, the richer likelier, an unreachable one replaced by the next. Each zone of the rotation has its own tour
-  (`HarvestRotationZone`); a tour done or held back by growing resources, `HarvestRotation.Next` goes to the zone left longest ago
-  that has maps to go through, and the activity waits only when none has (`WakeAt`); once every zone was left, the rotation is
-  drawn again at the character's levels. The preset of every profession sets `HarvestOrder.Balanced`: the tops are taken in the
+  (`HarvestRotationZone`); a tour done or held back by growing resources, `HarvestRotation.Next` goes, of the zones that have
+  maps to go through, to the nearest not yet gone to since the draw, by the world graph's map changes from where the character
+  stands, the zone just left last, else to the one left longest ago (D506), and the activity waits only when none has
+  (`WakeAt`); once every zone was left, the rotation is drawn again at the character's levels. The preset of every profession sets `HarvestOrder.Balanced`: the tops are taken in the
   order of the professions harvested least lately and `HarvestBalance`, which counts the last 50 harvests by profession, gives
-  the resources of a map their priority. The journey to the tour's next map stops on the first map it crosses, not yet gone
-  through, where the server offers a wanted element, even one the tour holds back as growing (D392), and even out of the zone
-  (D439): there the step takes the profile's resources once a tour and marks the map `HarvestTour.Cross`, apart from the maps
-  gone through, so the tour's progress and `HasHarvested` stay the zone's. The journey to the bank stops nowhere. Any journey
+  the resources of a map their priority. The journey to the tour's next map stops on the first map it crosses where the server
+  offers a wanted element it can reach, even one the tour holds back as growing (D392), even out of the zone (D439), and even on
+  a map gone through or crossed in the tour, unless the element's use failed there in this tour
+  (`HarvestTour.LeaveElement`, D507), a harvest out of the zone counting for D488's going round (`HarvestedOnTheWay`): out of the zone the step takes the profile's resources and marks the map
+  `HarvestTour.Cross`, apart from the maps gone through, so the tour's progress and `HasHarvested` stay the zone's. The journey to the bank stops nowhere. Any journey
   of the tour stays on the map it is about to leave where a wanted element it can reach is offered that was not as it came
   (`MapHarvest.Regrown`), and harvests it there, crossed already or not (D495).
   A use whose walk the server cut by moving the character to another map, as a map action's cell does, leaves the map it
@@ -450,6 +452,13 @@ The bots run in `D3B.Bot`: what each part does today, with the decisions that ma
   unloading and end. An action begun within another (`BotContext.BeginAction`) is one deeper, and a walk made for
   another action has no entry. Entries name the game's ids, never the protocol's messages. `RecentItems<T>` keeps them,
   read by the app as they come.
+- **The journals on disk** (D504), in `D3B.Bot.Journal`: `JournalRecorder`, a hosted service of `BotsModule`, reads every
+  second what each bot's journal and `HostProblems` got since its last pass and appends it through `JournalFiles` to
+  `Journal:Directory` (`%LOCALAPPDATA%\D3B\journals`), a folder a source (`<account>-<character>`, `host`) and a file a UTC day,
+  a day's file stopping at 20 MB; it writes once more as the host stops and is flushed by a report or a save before they
+  read. `JournalText` writes a line: the UTC time, then the record in the invariant culture, the same text a report holds.
+  `JournalRetention` deletes the oldest day files past 7 days and 250 MB (`Journal:Retention`), as the host starts and at
+  each new day.
 - **The trace** (D349, D350), written by `D3B.Studio.Behaviors`, its records in `D3B.Bot.Runtime` (D393): each bot's last 1,000 decisions of its behaviors' runs
   (`BotActor.Trace`, `TraceEntry`), apart from the journal, which says what the bot did: a state entered or none holding,
   an urgent state's cut, a rule played or failed, each step of an action or activity played, done, cut or failed with
@@ -580,7 +589,8 @@ Built in session 3b (D35 to D38): the relay of the connection phase, in `D3B.Net
   bytes for a name of 6 bytes or more). A capture with no character list, or whose copy still holds a secret or a name of 6 bytes
   or more, is refused (`CaptureScrubException`).
   `CleanCapture` is the only form of capture `ReportContent` takes. `ReportTexts` writes the journal, the trace and the
-  settings that differ as text, `ReportIdentity` turning the character's name into its number. `ReportWriter` writes the
+  settings that differ as text, `ReportIdentity` turning the character's name into its number and the player's folder into
+  `%USERPROFILE%`. `ReportWriter` writes the
   zip with `manifest.json` last (sizes, SHA-256, `hasMessage`); `ReportReader` reads one as untrusted input (64 entries,
   256 MiB an entry and 512 MiB in all by `ReportLimits`, expanded bytes counted as they come, only the names of
   `ReportFiles`, every file checked against the manifest). `ReportAssets` (`D3B.Studio`) gives the profile played and the
@@ -589,7 +599,8 @@ Built in session 3b (D35 to D38): the relay of the connection phase, in `D3B.Net
   Report a bug) is `ReportDialogViewModel` in `D3B.App.ViewModels.Reports`, three steps in one dialog: the form (area,
   character, the optional message of 1,500 characters that the field stops at, with the warning about personal data), the
   preview and the report written. `ReportSourcesFactory` reads from the host what a character's report is made of: its
-  bot's journal and trace, the profile it plays through `AccountBook` and `ReportAssets`, what the bots learned, the
+  bot's journal of the last 24 hours from disk, at most 8 MB (memory's when the disk has none), the host's problems of the
+  same day (`host.txt`, D504), its trace, the profile it plays through `AccountBook` and `ReportAssets`, what the bots learned, the
   settings the player changed, and its capture, found by the id of its bot's last game connection
   (`BotActor.ConnectionId`, `ReportCaptures.Find`: the relay ends a capture's name with it), read while the relay may still
   hold it open. `ReportDraft` cleans the capture, makes each part a `ReportPartChoice` the player reads and unchecks (the
@@ -879,7 +890,7 @@ D356), the pages of D101 and D162 gone.
   pack (`GameIcons`).
 - **The bottom panel** (D327, D353, `BottomPanelViewModel` in `D3B.App.ViewModels.Bottom`, `BottomPanelView`): its tabs,
   each with a toolbar; only the one shown reads the host, while the panel is open. The journal (`LogsViewModel`, D111 to
-  D114): every source by time or one bot's, by level and text, followed and copied, each line with its source's head;
+  D114): every source by time or one bot's, by level and text, followed, copied, and saved from the disk's journals (D504), each line with its source's head;
   `JournalLines` says each entry in the app's language. The trace (`TraceViewModel`, D350): the chosen character's runs,
   newest first, each decision with its state, its words and how it ended. The problems (`ProblemsViewModel`): the
   project's files that do not read, the characters without a profile, the host's failure and problems, each with its

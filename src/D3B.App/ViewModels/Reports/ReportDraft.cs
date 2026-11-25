@@ -13,6 +13,8 @@ namespace D3B.App.ViewModels.Reports;
 /// </remarks>
 internal sealed class ReportDraft
 {
+    private const int PreviewLines = 2_000;
+
     private readonly ReportSources _sources;
     private readonly CleanCapture? _capture;
 
@@ -61,7 +63,7 @@ internal sealed class ReportDraft
         ArgumentNullException.ThrowIfNull(sources);
         ArgumentNullException.ThrowIfNull(localizer);
 
-        var identity = new ReportIdentity(sources.CharacterId, sources.CharacterName, sources.OtherNames);
+        var identity = new ReportIdentity(sources.CharacterId, sources.CharacterName, sources.OtherNames, sources.UserFolder);
         var parts = new List<ReportPartChoice>();
         ReportPartChoice? capture = null;
         CleanCapture? clean = null;
@@ -85,11 +87,31 @@ internal sealed class ReportDraft
             }
         }
 
-        var journal = ReportTexts.Journal(sources.Journal, identity);
         var trace = ReportTexts.Trace(sources.Trace, identity);
 
-        parts.Add(Text(localizer["ReportPartJournal"], localizer.Format("ReportPartJournalDetail", sources.Journal.Count), ReportFiles.Journal, journal));
-        parts.Add(Text(localizer["ReportPartTrace"], localizer.Format("ReportPartTraceDetail", sources.Trace.Count), ReportFiles.Trace, trace));
+        // Up to two days of files, a few megabytes each: read off the UI's thread.
+        var (onDisk, hostOnDisk) = await Task.Run(() => (sources.JournalOnDisk?.Invoke(), sources.HostJournal?.Invoke()), cancellationToken).ConfigureAwait(false);
+
+        // The disk keeps what memory has dropped and what a restart lost (D504); memory serves a host whose journals are not written.
+        if (onDisk is { Length: > 0 } disk)
+        {
+            var journal = ReportTexts.Journal(disk, identity);
+
+            parts.Add(Text(localizer["ReportPartJournal"], localizer.Format("ReportPartJournalDiskDetail", LinesOf(journal)), ReportFiles.Journal, journal, localizer));
+        }
+        else
+        {
+            parts.Add(Text(localizer["ReportPartJournal"], localizer.Format("ReportPartJournalDetail", sources.Journal.Count), ReportFiles.Journal, ReportTexts.Journal(sources.Journal, identity), localizer));
+        }
+
+        if (hostOnDisk is { Length: > 0 } hostLines)
+        {
+            var host = ReportTexts.Journal(hostLines, identity);
+
+            parts.Add(Text(localizer["ReportPartHost"], localizer.Format("ReportPartHostDetail", LinesOf(host)), ReportFiles.Host, host, localizer));
+        }
+
+        parts.Add(Text(localizer["ReportPartTrace"], localizer.Format("ReportPartTraceDetail", sources.Trace.Count), ReportFiles.Trace, trace, localizer));
 
         if (sources.Assets.Count > 0)
         {
@@ -105,7 +127,7 @@ internal sealed class ReportDraft
 
         var settings = ReportTexts.Settings(sources.Settings);
 
-        parts.Add(Text(localizer["ReportPartSettings"], localizer.Format("ReportPartSettingsDetail", sources.Settings.Count), ReportFiles.Settings, settings));
+        parts.Add(Text(localizer["ReportPartSettings"], localizer.Format("ReportPartSettingsDetail", sources.Settings.Count), ReportFiles.Settings, settings, localizer));
 
         if (sources.Knowledge is { } knowledge)
         {
@@ -217,11 +239,28 @@ internal sealed class ReportDraft
         return string.Join("\n\n", files.Select(file => $"// {file.Name}\n{Encoding.UTF8.GetString(file.Data)}"));
     }
 
-    private static ReportPartChoice Text(string title, string detail, string name, string text)
+    private static ReportPartChoice Text(string title, string detail, string name, string text, Localizer localizer)
     {
         var bytes = Encoding.UTF8.GetBytes(text);
 
-        return new ReportPartChoice { Title = title, Detail = detail, Size = SizeOf(bytes.Length), Preview = text, Files = [new ReportPart(name, bytes)] };
+        return new ReportPartChoice { Title = title, Detail = detail, Size = SizeOf(bytes.Length), Preview = PreviewOf(text, localizer), Files = [new ReportPart(name, bytes)] };
+    }
+
+    // A day of a journal is tens of thousands of lines, which a text block lays out slowly: the dialog shows the last ones, and says so.
+    private static string PreviewOf(string text, Localizer localizer)
+    {
+        var lines = text.Split('\n');
+        var count = lines.Length - (text.EndsWith('\n') ? 1 : 0);
+
+        if (count <= PreviewLines)
+            return text;
+
+        return localizer.Format("ReportPreviewCut", (count - PreviewLines).ToString("N0", localizer.Culture)) + "\n" + string.Join('\n', lines.Skip(count - PreviewLines));
+    }
+
+    private static int LinesOf(string text)
+    {
+        return text.Count(character => character == '\n');
     }
 
     // The capture by structure, never by content: how long, what was overwritten, and what stays.
