@@ -448,6 +448,14 @@ The bots run in `D3B.Bot`: what each part does today, with the decisions that ma
   settings lead to: the ground's mini-map, its maps, monsters and their levels, the nearest bank (`NearestBank`, shared
   with harvesting's) and isolated maps, and the place for each character (D246). Harvesting's fights are the AI's as its
   profile's "The AI fights" says (D235).
+- **Dungeons** (D520 to D524), in `D3B.Bot.Dungeons`: `DungeonActivity`, its settings `DungeonSettings`, not yet in the
+  catalogue of activities, which its third pull request joins. It reads the dungeons of the pack's `DungeonCatalog` the profile
+  lists, and each step does what the character's map wants: in a room of one of them, that one is run; else the next of the list
+  in turn after the one last entered whose level the character has and whose keyring, when the dungeon is on it, or every
+  required object it carries, those it cannot enter or whose keeper turned it away in the run left out (D524), the run ending
+  when none is left, which no restart changes; it travels to that dungeon's entrance map; on it, it talks to each NPC the server shows there, bankers aside, until
+  one lets it in, each reply chosen among those the question offers (`NpcTalk`'s chooser, D522): the keyring's first, then the
+  key's, then the keeper's confirmation. On a room it ends for now: the rooms' chain and the exit come next.
 - **The zaaps' discovery** (D499), in `D3B.Bot.Zaaps`, registered by `ZaapsModule`: `ZaapDiscoveryActivity`, the "Discover
   the zaaps" activity, with no setting. It seeks the activated zaaps of the pack's atlas the character does not know as it
   starts (`ZaapTargets`); each step finds the nearest left by the world's path with the zaaps known so far, travels there,
@@ -651,7 +659,7 @@ Built at step 2 (D24 to D33):
   `PackWriter` writes it, compressing several entries at once in a deterministic order (D28). `GamePack` opens it by
   reading the index, then reads each entry when asked, from any thread. `PackCache` keeps the entries last read within
   a budget. A test fails when the serialized layout changes without a new `GamePack.FormatVersion`.
-- A pack of format 13 holds (D27, D29, D139, D182, D219, D237, D238, D257, D265, D343, D369, D385, D414, D466):
+- A pack of format 14 holds (D27, D29, D139, D182, D219, D237, D238, D257, D265, D343, D369, D385, D414, D466, D520):
   - every map as its own entry, its neighbours, cells and interactive elements with their graphics (`MapData`), read
     through a `PackCache` by `GameMaps`;
   - the client's world graph, a vertex per zone of a map and transitions between them (`WorldGraph`), and the atlas
@@ -687,6 +695,10 @@ Built at step 2 (D24 to D33):
     6 categories, and the hints' pictures, 64 pixels in raw RGBA by picture number (`HintCatalog`, `GameTables.Hints`, an entry of its own);
   - the challenges, from format 13 (D466): the client's 842 with their name, description, category, icon, monster, the challenges
     each excludes, and their completion and activation criteria as the client writes them (`ChallengeCatalog`, `GameTables.Challenges`);
+  - the dungeons, from format 14 (D520, D522): the client's 187 with their name, levels, entrance and exit maps, whether the
+    keyring opens them, their rooms, the objects they require, their bosses and the sub-areas that name them, and the replies of
+    their keepers and exits the extraction finds by their French words, a key's, the keyring's, a keeper's "Oui." and the exits'
+    (`DungeonCatalog`, `GameTables.Dungeons`);
   - in French and English, the texts these name (`GameTexts`).
 - Which interactive an element of a map is, and which skills it offers, the client's data does not say: the server
   does, when a character enters the map. The data links a profession's skill to its resource, and the resource to the

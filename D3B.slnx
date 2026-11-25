@@ -62,6 +62,7 @@
     <File Path="scripts/extract/BanksExtractor.cs" />
     <File Path="scripts/extract/BreedsExtractor.cs" />
     <File Path="scripts/extract/ChallengesExtractor.cs" />
+    <File Path="scripts/extract/DungeonsExtractor.cs" />
     <File Path="scripts/extract/CharacteristicsExtractor.cs" />
     <File Path="scripts/extract/ClientMapLayout.cs" />
     <File Path="scripts/extract/EffectsExtractor.cs" />

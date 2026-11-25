@@ -18,7 +18,7 @@ done when its code, the tests it needs and its docs are in, and every check is g
 | 9 | Fights | In progress, before the blueprints (D169): 9a to 9e3, 9f's states, 9f2's summons, 9f3's bombs, 9f4's marks, 9f5's marks weighed, 9g to 9g6 done, one AI for every character (D244), Incarnam left through its portal (D253); set aside after 9f5 for step 7's studio, every session of it first (D292, D306), but for the owner's reports from game, answered as they come: the hunt attacking every group (D387), its tour leaving interiors out (D388), the AI fleeing less (D390), the harvest and the hunt rotating through sub-areas and the harvest varying its professions (D391, D392), the AI after the players' reports (D407), the harvest and the zones of a map (D424: a resource in another zone is out of reach; D425: the tour goes there through the world graph, out and back, once per tour), the Eliotrope's portals, set and cast through by every character of the bot as the references model them (D468), measured on the captures and walked and pushed through (D492); then the Roublard measured in game against big enemies, the Féca's glyphs and 9f's other mechanisms (D291) |
 | 10 | Several accounts and groups | Begun on 2026-11-18, ahead of step 7's measure in game and 7e, the owner's choice (D429): designed in four sessions (D429 to D434); 10a, the party's protocol, done (D435); 10b next |
 | 11 | Marketplace and crafting | To do |
-| 12 | Treasure hunts and dungeons | To do |
+| 12 | Treasure hunts and dungeons | Dungeons begun on 2026-11-25 (D520 to D524): the pack's table and entering made in code; the rooms, the exit and the group next |
 | 13 | The owner's profession scripts | To do |
 
 ## 0. Foundation
@@ -342,6 +342,16 @@ follower) on the same map, the capture of every connection on; a capture's conte
 ## 12. Treasure hunts and dungeons
 
 - Clue solving, hint NPCs, dungeon routes.
+- **Dungeons** (D520 to D524), begun on 2026-11-25 at the owner's ask, ahead of steps 7e and 11: an activity of its own that
+  reads the client's dungeon table and follows the server from room to room, several dungeons of a profile in turn, a character alone first, every keyed dungeon by
+  its keepers' replies' French words, entered with the keyring or a key carried. Four pull requests, each test-first on the fake
+  game:
+  1. The pack's dungeon table, format 14 (`DungeonCatalog`), and entering: the level and the key checked, the door reached, the
+     keeper talked to, each reply chosen among those offered. Made in code and tests.
+  2. The rooms' chain: each room's group fought, the server's move to the next room waited for, the rooms left on foot through
+     the graph, a lost fight inside.
+  3. The end: the final map's exit, the runs counted, the bank, the profile's form in the studio, the activity in the catalogue.
+  4. The group (D521): the follower entering behind its master with its own key.
 
 ## 13. The owner's profession scripts
 

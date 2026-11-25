@@ -1,3 +1,4 @@
+using D3B.Bot.Characters;
 using D3B.Bot.Movement;
 using D3B.Bot.Runtime;
 using D3B.Data.Banks;
@@ -30,10 +31,26 @@ public static class NpcTalk
     /// <param name="replies">The replies, by id: the first is given to the first question, and so on; none, the dialog is opened and left.</param>
     /// <param name="cancellationToken">The behavior's token.</param>
     /// <returns>How it ended.</returns>
-    public static async Task<NpcTalkOutcome> TalkAsync(this BotContext context, int npcId, IReadOnlyList<int> replies, CancellationToken cancellationToken)
+    public static Task<NpcTalkOutcome> TalkAsync(this BotContext context, int npcId, IReadOnlyList<int> replies, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(replies);
+
+        var given = 0;
+
+        return context.TalkAsync(npcId, _ => given < replies.Count ? replies[given++] : null, cancellationToken);
+    }
+
+    /// <summary>Talks to an NPC of the character's map, within a behavior, each reply chosen among those its question offers.</summary>
+    /// <remarks>A keeper's replies are its own ids, so that a dungeon's are chosen by what they do, not by a chain known before (D522).</remarks>
+    /// <param name="context">The behavior's context.</param>
+    /// <param name="npcId">Which NPC, by id in the client's tables.</param>
+    /// <param name="reply">The reply to give a question, by id, asked once a question; none leaves the dialog. One the question does not offer leaves it refused.</param>
+    /// <param name="cancellationToken">The behavior's token.</param>
+    /// <returns>How it ended.</returns>
+    public static async Task<NpcTalkOutcome> TalkAsync(this BotContext context, int npcId, Func<NpcDialog, int?> reply, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(context);
-        ArgumentNullException.ThrowIfNull(replies);
+        ArgumentNullException.ThrowIfNull(reply);
 
         await context.ReleaseHeldWalkAsync(cancellationToken).ConfigureAwait(false);
 
@@ -61,7 +78,7 @@ public static class NpcTalk
                 return Of(await MapChange.ArrivedAsync(context, current, placed, cancellationToken).ConfigureAwait(false));
         }
 
-        for (var given = 0; ; given++)
+        while (true)
         {
             if (context.State.Dialog is not { } dialog)
                 return NpcTalkOutcome.NoAnswer;
@@ -69,14 +86,14 @@ public static class NpcTalk
             // The client shows the question before the reply or the leaving closes it.
             await Task.Delay(context.Delays.Display, context.Time, cancellationToken).ConfigureAwait(false);
 
-            if (given >= replies.Count)
+            if (reply(dialog) is not { } chosen)
             {
                 await MapChange.LeaveDialogAsync(context, cancellationToken).ConfigureAwait(false);
 
                 return NpcTalkOutcome.Done;
             }
 
-            if (!dialog.Replies.Contains(replies[given]))
+            if (!dialog.Replies.Contains(chosen))
             {
                 await MapChange.LeaveDialogAsync(context, cancellationToken).ConfigureAwait(false);
 
@@ -85,7 +102,7 @@ public static class NpcTalk
 
             var answered = context.Expect((side, message, _) => side is RelayDirection.FromServer && message is NpcDialogQuestionEvent or DialogLeaveEvent or MapCurrentEvent);
 
-            await context.SendAsync(new NpcDialogReplyRequest { ReplyId = replies[given] }, cancellationToken).ConfigureAwait(false);
+            await context.SendAsync(new NpcDialogReplyRequest { ReplyId = chosen }, cancellationToken).ConfigureAwait(false);
 
             switch (await answered.WaitAsync(context.Delays.Answer, cancellationToken).ConfigureAwait(false))
             {
