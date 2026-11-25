@@ -21,6 +21,9 @@ choix tout seul »: **taken by the session under that delegation**. Refines D513
   - **Statistics**, nothing in the period: what fills them, and « Voir toutes les sessions » while the period is not all
     (`StatisticsViewModel.ShowsAllRuns`);
   - **Journal**: « Les actions de chaque personnage s'affichent ici dès qu'il joue ».
+- **A host that did not start says where to look**: its message points to « Relais arrêté » in the status bar instead of a
+  welcome page that no longer opens at start (D531); stopped, the relay opens the problems, where the failure and its fix are,
+  and the bar counts that failure among them (found in the running app: a pack of format 13 where `main` reads 14).
 - **A search that finds nothing says so** (« Rien ne correspond à … ») and guides nowhere: the steps are for an empty view, not
   an empty search.
 - **Rejected.**

@@ -1674,7 +1674,7 @@
     <value>Jouer</value>
   </data>
   <data name="HostFailedShort" xml:space="preserve">
-    <value>D3B n'a pas démarré : la page Bienvenue dit pourquoi.</value>
+    <value>D3B n'a pas démarré : cliquez sur « Relais arrêté », en bas à gauche, pour voir pourquoi et comment y remédier.</value>
   </data>
   <data name="JournalPausedFromApp" xml:space="preserve">
     <value>Mis en pause depuis D3B</value>

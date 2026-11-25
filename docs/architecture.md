@@ -875,7 +875,8 @@ bottom panel and the Details hidden until needed.
   on the right the client build and, once the host opened it, the data pack's format, its extractor in the tooltip, the bots playing,
   the problems' errors and warnings (read at every refresh, `BottomPanelViewModel.Refresh`), whether everything is saved, and once an
   update is downloaded, « Redémarrer pour passer à … » (D173). Each item opens what it names: the settings' About, the journal, the
-  settings' Files, the Characters view, the problems' tab; the saving item saves all, the update's restarts into it.
+  settings' Files, the Characters view, the problems' tab; the saving item saves all, the update's restarts into it. A host that
+  failed counts its failure among the problems, and its relay, red, opens them (D543).
 - **Empty states that guide** (D543, `StackPanel.EmptyState` in `Themes/Styles.axaml`): an empty view says what fills it, with a
   title, steps and a button: the Characters view how to connect a character (keep D3B open until « Relais prêt », start Dofus, choose
   a character; `OutlinerViewModel.IsGuiding`, `EmptySteps`), the World's « Nouvelle route » and « Nouvelle zone » (`ShowsMakeButtons`),
