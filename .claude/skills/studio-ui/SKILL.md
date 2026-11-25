@@ -21,8 +21,8 @@ decisions behind them are D159 to D163, D320 to D356 and D395 to D397 in the ind
   the classes the views use most. A new style goes in `Themes/Styles.axaml`, not in a view.
 - **A surface lit on hover rests on `ClearColor`**, the hover's grey with no alpha, never on `Transparent`, which a brush
   transition flashes through.
-- **Icons**: IntelliJ's, as `<Icon>` with a key such as `General.Search`, from `Themes/IntelliJIcons.axaml`, which
-  `scripts/icons.cs` writes and `--check` compares (D331): never edit it by hand. The game's own concepts are `GlyphIcon`,
+- **Icons**: Lucide's, as the next line's, as `<Icon>` with a key such as `General.Search`, from `Themes/Icons.axaml`, which
+  `scripts/icons.cs` writes and `--check` compares (D331, D532): never edit it by hand; a new icon is a line of its table. The game's own concepts are `GlyphIcon`,
   characters `Portrait`. A new control goes in `D3B.App.Controls`.
 - **Motion** is short and eases out (D320, D347): reuse the transitions of `Themes/Controls.axaml` and `FadeIn`.
 - **A page** is an `AppPage`: its title or a header of its own, its actions on the right, the same margins. A shortcut is

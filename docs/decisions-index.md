@@ -986,9 +986,16 @@ or refines another says so in its own entry. Add a line here with every new deci
 - [D524](decisions/d520-d523-dungeons.md#d524-a-profile-lists-several-dungeons-entered-in-turn-those-the-character-cannot-enter-left-out) A profile lists several dungeons, entered in turn, those the character cannot enter left out (2026-11-25)
   - The owner's ask; the next of the list in turn after the one last entered, a keeper's refusal shutting a dungeon for the run alone.
 
-## The studio in next's dark islands and layout (D530, D531)
+## The studio in next's dark islands, layout and icons (D530 to D532)
 
 - [D530](decisions/d530-next-dark-islands.md#d530-the-studio-takes-nexts-dark-style-vs-codes-dark-modern-as-discreet-islands-and-stays-dark-only) The studio takes next's dark style, VS Code's Dark Modern as discreet islands, and stays dark only (2026-11-25)
   - The owner's ask; a light theme made then removed at the owner's word; seen in the running app and in the headless drawings.
 - [D531](decisions/d531-next-layout.md#d531-the-studio-takes-nexts-layout-a-thin-title-bar-with-the-layout-toggles-the-views-alone-in-the-activity-bar-tabs-on-the-frame-no-tab-at-start) The studio takes next's layout: a thin title bar with the layout toggles, the views alone in the activity bar, tabs on the frame, no tab at start (2026-11-25)
   - The owner's ask; the run block, the journal and statistics entries leave the bars; the character's column on the left.
+- [D532](decisions/d532-lucide-icons.md#d532-the-studio-draws-lucides-icons-as-next-does-under-the-keys-its-intellij-icons-had) The studio draws Lucide's icons, as next does, under the keys its IntelliJ icons had (2026-11-25)
+  - The owner's ask; Lucide 1.72.0, next's version, written by `scripts/icons.cs` with its ISC license checked.
+
+## The studio's shell after next (D540)
+
+- [D540](decisions/d540-command-palette.md#d540-the-search-is-also-nexts-command-palette-ctrl-shift-p-types-its-sign-the-title-bars-command-centre-names-the-app-the-views-and-each-characters-play-pause-stop-and-forget-are-commands) The search is also next's command palette: Ctrl Shift P types its sign, the title bar's command centre names the app, the views and each character's play, pause, stop and forget are commands (2026-11-25)
+  - Stage 1 of 4 of the shell after `next`, under the owner's delegation; begun by the redesign session, finished here.

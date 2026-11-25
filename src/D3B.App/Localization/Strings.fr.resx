@@ -1478,35 +1478,14 @@
   <data name="KeyEnter" xml:space="preserve">
     <value>Entrée</value>
   </data>
-  <data name="TitleSearch" xml:space="preserve">
-    <value>Chercher</value>
-  </data>
-  <data name="SearchEverywhere" xml:space="preserve">
-    <value>Chercher partout</value>
-  </data>
   <data name="SearchWatermark" xml:space="preserve">
-    <value>Chercher un asset, un personnage, une commande</value>
-  </data>
-  <data name="SearchHintMove" xml:space="preserve">
-    <value>naviguer</value>
-  </data>
-  <data name="SearchHintOpen" xml:space="preserve">
-    <value>ouvrir</value>
-  </data>
-  <data name="SearchHintScope" xml:space="preserve">
-    <value>portée</value>
-  </data>
-  <data name="SearchHintCommands" xml:space="preserve">
-    <value>commandes</value>
-  </data>
-  <data name="SearchHintCharacters" xml:space="preserve">
-    <value>personnages</value>
+    <value>Chercher un profil, une route, un personnage · &gt; commandes · @ personnages</value>
   </data>
   <data name="SearchScopeAll" xml:space="preserve">
     <value>Tout</value>
   </data>
   <data name="SearchScopeAssets" xml:space="preserve">
-    <value>Assets</value>
+    <value>Bibliothèque</value>
   </data>
   <data name="SearchScopeCharacters" xml:space="preserve">
     <value>Personnages</value>
@@ -1545,7 +1524,7 @@
     <value>Afficher ou cacher le journal</value>
   </data>
   <data name="CommandGoToAssets" xml:space="preserve">
-    <value>Aller aux assets</value>
+    <value>Afficher la bibliothèque</value>
   </data>
   <data name="CommandPlay" xml:space="preserve">
     <value>Jouer le personnage choisi</value>
@@ -3652,5 +3631,44 @@
   </data>
   <data name="LibraryByFolder" xml:space="preserve">
     <value>Afficher les dossiers</value>
+  </data>
+  <data name="CommandOpenPalette" xml:space="preserve">
+    <value>Afficher toutes les commandes</value>
+  </data>
+  <data name="CommandShowCharacters" xml:space="preserve">
+    <value>Afficher les personnages</value>
+  </data>
+  <data name="CommandShowWorld" xml:space="preserve">
+    <value>Afficher le monde</value>
+  </data>
+  <data name="CommandShowHome" xml:space="preserve">
+    <value>Afficher l'accueil</value>
+  </data>
+  <data name="CommandPlayCharacter" xml:space="preserve">
+    <value>Jouer {0}</value>
+  </data>
+  <data name="CommandPauseCharacter" xml:space="preserve">
+    <value>Mettre {0} en pause</value>
+  </data>
+  <data name="CommandStopCharacter" xml:space="preserve">
+    <value>Arrêter {0}</value>
+  </data>
+  <data name="CommandForgetCharacter" xml:space="preserve">
+    <value>Oublier le compte de {0}</value>
+  </data>
+  <data name="KeysCtrlShiftP" xml:space="preserve">
+    <value>Ctrl Maj P</value>
+  </data>
+  <data name="CommandShowProblems" xml:space="preserve">
+    <value>Afficher les problèmes</value>
+  </data>
+  <data name="CommandShowTrace" xml:space="preserve">
+    <value>Afficher la trace</value>
+  </data>
+  <data name="CommandShowProtocol" xml:space="preserve">
+    <value>Afficher le protocole</value>
+  </data>
+  <data name="CommandCentre" xml:space="preserve">
+    <value>Chercher et lancer une commande</value>
   </data>
 </root>

@@ -26,6 +26,7 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
     <shadui:Window.KeyBindings>
         <KeyBinding Command="{Binding Search.OpenCommand}" Gesture="Ctrl+K" />
+        <KeyBinding Command="{Binding ShowCommandPaletteCommand}" Gesture="Ctrl+Shift+P" />
         <KeyBinding Command="{Binding ToggleBottomCommand}" Gesture="Ctrl+J" />
         <KeyBinding
             Command="{Binding Layout.ToggleCommand}"
@@ -214,24 +215,23 @@
     </shadui:Window.LogoContent>
 
     <shadui:Window.MenuBarContent>
-        <Button Classes="TitleSearch" Command="{Binding Search.OpenCommand}">
+        <!--  next's command centre (D540): the search's glyph and the app's name, centred; Ctrl K searches, Ctrl Shift P the commands.  -->
+        <Button
+            AutomationProperties.Name="{l:Tr CommandCentre}"
+            Classes="TitleSearch"
+            Command="{Binding Search.OpenCommand}">
             <ToolTip.Tip>
-                <c:KeyTip Keys="Ctrl K" Text="{l:Tr SearchEverywhere}" />
+                <c:KeyTip Keys="Ctrl K" Text="{l:Tr CommandCentre}" />
             </ToolTip.Tip>
-            <Grid ColumnDefinitions="Auto,*,Auto">
-                <c:Icon Drawing="{StaticResource General.Search}" VerticalAlignment="Center" />
-                <TextBlock
-                    Grid.Column="1"
-                    Margin="8,0"
-                    Text="{l:Tr TitleSearch}"
-                    VerticalAlignment="Center" />
-                <Border
-                    Classes="Key Flat"
-                    Grid.Column="2"
-                    VerticalAlignment="Center">
-                    <TextBlock Text="Ctrl K" />
-                </Border>
-            </Grid>
+            <StackPanel Orientation="Horizontal" Spacing="6">
+                <c:Icon
+                    Drawing="{StaticResource General.Search}"
+                    Height="14"
+                    Opacity="0.8"
+                    VerticalAlignment="Center"
+                    Width="14" />
+                <TextBlock Text="D3B" VerticalAlignment="Center" />
+            </StackPanel>
         </Button>
     </shadui:Window.MenuBarContent>
 
@@ -251,7 +251,7 @@
                 <ToolTip.Tip>
                     <c:KeyTip Keys="Ctrl B" Text="{l:Tr PanelSide}" />
                 </ToolTip.Tip>
-                <c:Icon Data="{StaticResource PanelLeftGeometry}" />
+                <c:Icon Drawing="{StaticResource Layout.PanelLeft}" />
             </Button>
             <Button
                 AutomationProperties.Name="{l:Tr PanelBottom}"
@@ -261,7 +261,7 @@
                 <ToolTip.Tip>
                     <c:KeyTip Keys="Ctrl J" Text="{l:Tr PanelBottom}" />
                 </ToolTip.Tip>
-                <c:Icon Data="{StaticResource PanelBottomGeometry}" />
+                <c:Icon Drawing="{StaticResource Layout.PanelBottom}" />
             </Button>
             <Button
                 AutomationProperties.Name="{l:Tr PanelDetails}"
@@ -272,7 +272,7 @@
                 <ToolTip.Tip>
                     <c:KeyTip Keys="Ctrl Alt B" Text="{l:Tr PanelDetails}" />
                 </ToolTip.Tip>
-                <c:Icon Data="{StaticResource PanelRightGeometry}" />
+                <c:Icon Drawing="{StaticResource Layout.PanelRight}" />
             </Button>
         </StackPanel>
     </shadui:Window.RightWindowTitleBarContent>
@@ -847,7 +847,7 @@
         </Grid>
 
         <Panel IsVisible="{Binding Search.IsOpen}">
-            <Border Background="{DynamicResource ScrimColor}" PointerPressed="OnScrimPressed" />
+            <Border Background="Transparent" PointerPressed="OnScrimPressed" />
             <views:SearchView DataContext="{Binding Search}" />
         </Panel>
     </Panel>

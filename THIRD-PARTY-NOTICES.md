@@ -1,14 +1,16 @@
 # Third-party notices
 
-The app published from this repository (D171) ships the components below, each under its own license: the IntelliJ
-Platform's icons in its code, and the libraries, runtime and typeface it is built with. The studio's mockup in the
-repository draws some of Lucide's icons too. Their licenses' texts follow the list.
+The app published from this repository (D171) ships the components below, each under its own license: Lucide's icons in
+its code, and the libraries, runtime and typeface it is built with. The studio's mockup in the repository draws some of the
+IntelliJ Platform's icons too. Their licenses' texts follow the list.
 
 ## Lucide
 
-The studio's mockup, `docs/mockups/studio-7c.html` (D319), draws some of the geometries of [Lucide](https://lucide.dev)
-1.64.0, under the following license. The app drew them until session 7c4 (D161), which replaced them with the IntelliJ
-Platform's (D355).
+The studio's icons, in `src/D3B.App/Themes/Icons.axaml`, which `scripts/icons.cs` writes (D532), are
+[Lucide](https://lucide.dev)'s, from lucide-icons/lucide 1.72.0, the version the next line draws, under the following
+license, which the tool checks before it writes anything. The studio's mockup, `docs/mockups/studio-7c.html` (D319), draws
+some of Lucide 1.64.0's geometries too. The app drew Lucide's until session 7c4 (D161, D355), then the IntelliJ Platform's
+until D532.
 
 ```text
 ISC License
@@ -58,8 +60,7 @@ SOFTWARE.
 
 ## IntelliJ Platform's icons
 
-The studio's icons, in `src/D3B.App/Themes/IntelliJIcons.axaml`, which `scripts/icons.cs` writes (D331), and its mockup,
-`docs/mockups/studio-7c.html` (D319), are the dark variants of these SVG icons of the IntelliJ Platform, from
+The studio's mockup, `docs/mockups/studio-7c.html` (D319), draws, as the app did from D331 to D532, the dark variants of these SVG icons of the IntelliJ Platform, from
 `platform/icons/src/expui` in [JetBrains/intellij-community](https://github.com/JetBrains/intellij-community), each of
 whose files says "Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache
 2.0 license" (the years from 2000-2022 to 2000-2025, by file). Only files carrying that notice are taken, the tool checking

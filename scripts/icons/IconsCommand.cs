@@ -5,96 +5,164 @@ using System.Text;
 
 namespace D3B.Scripts.Icons;
 
-/// <summary>The command that takes the IntelliJ Platform's icons the app draws and writes them for Avalonia (D331).</summary>
+/// <summary>The command that takes the Lucide icons the app draws, as the next line's, and writes them for Avalonia (D331, D532).</summary>
 internal static class IconsCommand
 {
     private const int Done = 0;
     private const int Refused = 1;
     private const int Unreachable = 2;
 
-    // The revision of JetBrains/intellij-community the icons come from: pinned, so that writing them again changes nothing
-    // unless the revision does.
-    private const string Revision = "74546168a76169cc3b4ddd81e4c5d63d0e06e624";
+    // The version of lucide-icons/lucide the icons come from, the next line's own (lucide-react 1.72.0): pinned, so that
+    // writing them again changes nothing unless the version does.
+    private const string Version = "1.72.0";
 
-    private const string Folder = "platform/icons/src/expui";
+    // next draws them in the grey of the text around it and with a stroke of 1.5 on Lucide's grid of 24; colour only for a
+    // problem or an offer (docs/shell.md on the next line). The grey is the one Icon repaints with a tint.
+    private const string Neutral = "#FFCED0D6";
+    private const double Stroke = 1.5;
 
-    // Those the app draws, by their folder and name in expui: their dark variant, <name>_dark.svg, is taken. The mockup's
-    // debugger/freeze and toolwindows/dataflow carry no notice, and are not here (D331).
-    private static readonly string[] _names =
+    // The app's keys, kept from its IntelliJ icons so that no view changes, each drawn now by a Lucide icon, with its colour
+    // when it says a state.
+    private static readonly (string Key, string Lucide, string? Tone)[] _icons =
     [
-        "actions/newFolder", "actions/selectAll", "actions/stopWatch",
-        "debugger/threadRunning", "debugger/watch",
-        "general/add", "general/chevronDown", "general/chevronRight", "general/chevronUp", "general/close", "general/collapseAll",
-        "general/copy", "general/delete", "general/edit", "general/editorOnly", "general/expandAll", "general/export",
-        "general/filter", "general/groups", "general/hide", "general/history", "general/ideUpdate", "general/import",
-        "general/language", "general/layout", "general/listFiles", "general/locate", "general/locked", "general/menu",
-        "general/moreHorizontal", "general/moveDown", "general/moveUp", "general/open", "general/pin", "general/questionMark",
-        "general/refresh", "general/remove", "general/reset", "general/save", "general/scrollDown", "general/search",
-        "general/settings", "general/user", "general/vcs",
-        "ide/externalLink",
-        "nodes/dataTables", "nodes/desktop", "nodes/folder", "nodes/function", "nodes/securityRole", "nodes/tag", "nodes/template",
-        "nodes/variable",
-        "run/pause", "run/resume", "run/run", "run/stepOver", "run/stop",
-        "status/error", "status/info", "status/infoOutline", "status/success", "status/warning",
-        "toolwindows/debug", "toolwindows/hierarchy", "toolwindows/messages", "toolwindows/notifications", "toolwindows/palette",
-        "toolwindows/problems", "toolwindows/profiler", "toolwindows/project", "toolwindows/run", "toolwindows/services",
-        "toolwindows/structure", "toolwindows/web",
+        ("Actions.NewFolder", "folder-plus", null),
+        ("Actions.SelectAll", "square-dashed", null),
+        ("Actions.StopWatch", "timer", null),
+        ("Debugger.ThreadRunning", "activity", null),
+        ("Debugger.Watch", "eye", null),
+        ("General.Add", "plus", null),
+        ("General.ChevronDown", "chevron-down", null),
+        ("General.ChevronRight", "chevron-right", null),
+        ("General.ChevronUp", "chevron-up", null),
+        ("General.Close", "x", null),
+        ("General.CollapseAll", "chevrons-down-up", null),
+        ("General.Copy", "copy", null),
+        ("General.Delete", "trash", null),
+        ("General.Edit", "pencil", null),
+        ("General.EditorOnly", "app-window", null),
+        ("General.ExpandAll", "chevrons-up-down", null),
+        ("General.Export", "file-output", null),
+        ("General.Filter", "funnel", null),
+        ("General.Groups", "users", null),
+        ("General.Hide", "eye-off", null),
+        ("General.History", "clock-arrow-left", null),
+        ("General.IdeUpdate", "circle-arrow-down", "#FFC77D55"),
+        ("General.Import", "file-input", null),
+        ("General.Language", "languages", null),
+        ("General.Layout", "layout-dashboard", null),
+        ("General.ListFiles", "list", null),
+        ("General.Locate", "locate", null),
+        ("General.Locked", "lock", null),
+        ("General.Menu", "menu", null),
+        ("General.MoreHorizontal", "ellipsis", null),
+        ("General.MoveDown", "arrow-down", null),
+        ("General.MoveUp", "arrow-up", null),
+        ("General.Open", "external-link", null),
+        ("General.Pin", "pin", null),
+        ("General.QuestionMark", "circle-question-mark", null),
+        ("General.Refresh", "refresh-cw", null),
+        ("General.Remove", "minus", null),
+        ("General.Reset", "rotate-ccw", null),
+        ("General.Save", "save", null),
+        ("General.ScrollDown", "arrow-down-to-line", null),
+        ("General.Search", "search", null),
+        ("General.Settings", "settings", null),
+        ("General.User", "user", null),
+        ("General.Vcs", "route", null),
+        ("Ide.ExternalLink", "external-link", null),
+        ("Layout.PanelBottom", "panel-bottom", null),
+        ("Layout.PanelLeft", "panel-left", null),
+        ("Layout.PanelRight", "panel-right", null),
+        ("Nodes.DataTables", "table", null),
+        ("Nodes.Desktop", "monitor", null),
+        ("Nodes.Folder", "folder", null),
+        ("Nodes.Function", "square-function", null),
+        ("Nodes.SecurityRole", "shield", null),
+        ("Nodes.Tag", "hash", null),
+        ("Nodes.Template", "workflow", null),
+        ("Nodes.Variable", "variable", null),
+        ("Run.Pause", "pause", null),
+        ("Run.Resume", "play", "#FF3FB950"),
+        ("Run.Run", "play", "#FF3FB950"),
+        ("Run.StepOver", "step-forward", null),
+        ("Run.Stop", "square", "#FFF85149"),
+        ("Status.Error", "circle-exclamation-point", "#FFDB5C5C"),
+        ("Status.Info", "info", null),
+        ("Status.InfoOutline", "info", null),
+        ("Status.Success", "circle-check", "#FF3FB950"),
+        ("Status.Warning", "triangle-exclamation-point", "#FFF2C55C"),
+        ("Toolwindows.Debug", "bug", null),
+        ("Toolwindows.Hierarchy", "list-tree", null),
+        ("Toolwindows.Messages", "scroll-text", null),
+        ("Toolwindows.Notifications", "bell", null),
+        ("Toolwindows.Palette", "paintbrush", null),
+        ("Toolwindows.Problems", "octagon-exclamation-point", null),
+        ("Toolwindows.Profiler", "chart-column", null),
+        ("Toolwindows.Project", "library-big", null),
+        ("Toolwindows.Run", "bot", null),
+        ("Toolwindows.Services", "blocks", null),
+        ("Toolwindows.Structure", "list", null),
+        ("Toolwindows.Web", "map", null),
     ];
 
     public static RootCommand Create()
     {
-        var revision = new Option<string>("--revision")
+        var version = new Option<string>("--version")
         {
-            Description = "The revision of JetBrains/intellij-community to take the icons from.",
-            DefaultValueFactory = _ => Revision,
+            Description = "The version of lucide-icons/lucide to take the icons from.",
+            DefaultValueFactory = _ => Version,
         };
         var output = new Option<FileInfo?>("--output")
         {
-            Description = @"The file to write. Defaults to src\D3B.App\Themes\IntelliJIcons.axaml in the repository.",
+            Description = @"The file to write. Defaults to src\D3B.App\Themes\Icons.axaml in the repository.",
         };
         var check = new Option<bool>("--check")
         {
             Description = "Writes nothing: says whether the file holds what the tool would write.",
         };
-        var command = new RootCommand("Takes the IntelliJ Platform's icons the app draws, checked file by file, and writes them for Avalonia (D331).")
+        var command = new RootCommand("Takes the Lucide icons the app draws, as the next line's, under Lucide's ISC license, and writes them for Avalonia (D532).")
         {
-            revision,
+            version,
             output,
             check,
         };
 
-        command.SetAction((result, cancellationToken) => RunAsync(result.GetValue(revision)!, result.GetValue(output), result.GetValue(check), cancellationToken));
+        command.SetAction((result, cancellationToken) => RunAsync(result.GetValue(version)!, result.GetValue(output), result.GetValue(check), cancellationToken));
 
         return command;
     }
 
-    private static async Task<int> RunAsync(string revision, FileInfo? output, bool check, CancellationToken cancellationToken)
+    private static async Task<int> RunAsync(string version, FileInfo? output, bool check, CancellationToken cancellationToken)
     {
-        var path = output?.FullName ?? Path.Combine(RepositoryRoot(), "src", "D3B.App", "Themes", "IntelliJIcons.axaml");
-        var icons = new List<(string Name, SvgIcon Icon)>();
+        var path = output?.FullName ?? Path.Combine(RepositoryRoot(), "src", "D3B.App", "Themes", "Icons.axaml");
+        var icons = new Dictionary<string, LucideIcon>(StringComparer.Ordinal);
         var refused = new List<string>();
 
         using var http = new HttpClient();
 
-        foreach (var name in _names)
+        // The license is the repository's, one for every icon: the tool takes nothing unless it is Lucide's ISC license.
+        var license = await FetchAsync(http, $"https://raw.githubusercontent.com/lucide-icons/lucide/{version}/LICENSE", cancellationToken);
+
+        if (license is null)
+            return Unreachable;
+
+        if (!license.StartsWith("ISC License", StringComparison.Ordinal) || !license.Contains("Lucide Icons and Contributors", StringComparison.Ordinal))
         {
-            var url = $"https://raw.githubusercontent.com/JetBrains/intellij-community/{revision}/{Folder}/{name}_dark.svg";
-            string text;
+            await Console.Error.WriteLineAsync($"lucide-icons/lucide {version}: its license is not the ISC license of Lucide's contributors; nothing written.");
 
-            try
-            {
-                text = await http.GetStringAsync(new Uri(url), cancellationToken);
-            }
-            catch (HttpRequestException exception)
-            {
-                await Console.Error.WriteLineAsync($"{name}: {url} could not be fetched{(exception.StatusCode is HttpStatusCode code ? $", {(int)code}" : "")}: {exception.Message}");
+            return Refused;
+        }
 
+        foreach (var name in _icons.Select(icon => icon.Lucide).Distinct(StringComparer.Ordinal))
+        {
+            var text = await FetchAsync(http, $"https://raw.githubusercontent.com/lucide-icons/lucide/{version}/icons/{name}.svg", cancellationToken);
+
+            if (text is null)
                 return Unreachable;
-            }
 
             try
             {
-                icons.Add((name, SvgIcon.Read(name, text)));
+                icons[name] = LucideIcon.Read(name, text);
             }
             catch (InvalidDataException exception)
             {
@@ -112,40 +180,54 @@ internal static class IconsCommand
             return Refused;
         }
 
-        var written = Write(revision, icons);
+        var written = Write(version, icons);
 
         if (check)
         {
             var same = File.Exists(path) && (await File.ReadAllTextAsync(path, cancellationToken)).ReplaceLineEndings() == written.ReplaceLineEndings();
 
-            Console.WriteLine(same ? $"{path} holds the {icons.Count} icons as the tool writes them." : $"{path} differs from what the tool writes: run it without --check.");
+            Console.WriteLine(same ? $"{path} holds the {_icons.Length} icons as the tool writes them." : $"{path} differs from what the tool writes: run it without --check.");
 
             return same ? Done : Refused;
         }
 
         await File.WriteAllTextAsync(path, written, new UTF8Encoding(false), cancellationToken);
-        Console.WriteLine($"{icons.Count} icons, each under the Apache 2.0 license as its file says, written to {path}.");
+        Console.WriteLine($"{_icons.Length} icons from {icons.Count} of Lucide's, under its ISC license, written to {path}.");
 
         return Done;
     }
 
-    private static string Write(string revision, List<(string Name, SvgIcon Icon)> icons)
+    private static async Task<string?> FetchAsync(HttpClient http, string url, CancellationToken cancellationToken)
+    {
+        try
+        {
+            return await http.GetStringAsync(new Uri(url), cancellationToken);
+        }
+        catch (HttpRequestException exception)
+        {
+            await Console.Error.WriteLineAsync($"{url} could not be fetched{(exception.StatusCode is HttpStatusCode code ? $", {(int)code}" : "")}: {exception.Message}");
+
+            return null;
+        }
+    }
+
+    private static string Write(string version, Dictionary<string, LucideIcon> icons)
     {
         var text = new StringBuilder();
 
         text.AppendLine("<ResourceDictionary xmlns=\"https://github.com/avaloniaui\" xmlns:x=\"http://schemas.microsoft.com/winfx/2006/xaml\">");
-        text.AppendLine("    <!--  Written by scripts/icons.cs: run it again rather than edit this file (D331). The IntelliJ Platform's icons,");
-        text.AppendLine(CultureInfo.InvariantCulture, $"         the dark variants of {Folder} in JetBrains/intellij-community at {revision},");
-        text.AppendLine("         each under the Apache 2.0 license as its notice below says, which THIRD-PARTY-NOTICES.md holds whole.  -->");
+        text.AppendLine("    <!--  Written by scripts/icons.cs: run it again rather than edit this file (D331, D532). Lucide's icons, as the next");
+        text.AppendLine(CultureInfo.InvariantCulture, $"         line draws them, from lucide-icons/lucide {version}, under Lucide's ISC license, which THIRD-PARTY-NOTICES.md");
+        text.AppendLine("         holds whole; each key is the app's own, drawn on a grid of 16, Lucide's 24 scaled.  -->");
 
-        foreach (var (name, icon) in icons)
+        foreach (var (key, lucide, tone) in _icons)
         {
             text.AppendLine();
-            text.AppendLine(CultureInfo.InvariantCulture, $"    <!--  {name}: {icon.Notice}  -->");
-            text.AppendLine(CultureInfo.InvariantCulture, $"    <DrawingGroup x:Key=\"{Key(name)}\">");
+            text.AppendLine(CultureInfo.InvariantCulture, $"    <!--  {lucide}  -->");
+            text.AppendLine(CultureInfo.InvariantCulture, $"    <DrawingGroup x:Key=\"{key}\">");
 
-            foreach (var shape in icon.Shapes)
-                WriteShape(text, shape);
+            foreach (var outline in icons[lucide].Outlines)
+                WriteShape(text, outline, tone ?? Neutral);
 
             text.AppendLine("    </DrawingGroup>");
         }
@@ -155,47 +237,24 @@ internal static class IconsCommand
         return text.ToString();
     }
 
-    private static void WriteShape(StringBuilder text, IconShape shape)
+    private static void WriteShape(StringBuilder text, string outline, string stroke)
     {
-        var fill = shape.Fill is { } brush ? $" Brush=\"{brush}\"" : "";
+        // Lucide's grid of 24 drawn on the app's of 16: the outline scaled by two thirds, the pen, which is not, given in the
+        // grid of 16 already.
+        var rule = outline.StartsWith("F0", StringComparison.Ordinal) ? "EvenOdd" : "NonZero";
 
-        text.AppendLine(CultureInfo.InvariantCulture, $"        <GeometryDrawing{fill}>");
+        text.AppendLine("        <GeometryDrawing>");
         text.AppendLine("            <GeometryDrawing.Geometry>");
-
-        if (shape.Transform is { } transform)
-        {
-            // A path geometry, unlike a stream geometry written as text, takes a transform; its rule is its own attribute.
-            var rule = shape.Data.StartsWith("F0", StringComparison.Ordinal) ? "EvenOdd" : "NonZero";
-
-            text.AppendLine(CultureInfo.InvariantCulture, $"                <PathGeometry FillRule=\"{rule}\" Figures=\"{shape.Data[2..].Trim()}\">");
-            text.AppendLine("                    <PathGeometry.Transform>");
-            text.AppendLine(CultureInfo.InvariantCulture, $"                        <MatrixTransform Matrix=\"{transform}\" />");
-            text.AppendLine("                    </PathGeometry.Transform>");
-            text.AppendLine("                </PathGeometry>");
-        }
-        else
-        {
-            text.AppendLine(CultureInfo.InvariantCulture, $"                <StreamGeometry>{shape.Data}</StreamGeometry>");
-        }
-
+        text.AppendLine(CultureInfo.InvariantCulture, $"                <PathGeometry FillRule=\"{rule}\" Figures=\"{outline[2..].Trim()}\">");
+        text.AppendLine("                    <PathGeometry.Transform>");
+        text.AppendLine("                        <MatrixTransform Matrix=\"0.666667,0,0,0.666667,0,0\" />");
+        text.AppendLine("                    </PathGeometry.Transform>");
+        text.AppendLine("                </PathGeometry>");
         text.AppendLine("            </GeometryDrawing.Geometry>");
-
-        if (shape.Stroke is { } stroke)
-        {
-            text.AppendLine("            <GeometryDrawing.Pen>");
-            text.AppendLine(CultureInfo.InvariantCulture, $"                <Pen Brush=\"{stroke}\" LineCap=\"{shape.LineCap}\" LineJoin=\"{shape.LineJoin}\" Thickness=\"{shape.StrokeWidth.ToString("R", CultureInfo.InvariantCulture)}\" />");
-            text.AppendLine("            </GeometryDrawing.Pen>");
-        }
-
+        text.AppendLine("            <GeometryDrawing.Pen>");
+        text.AppendLine(CultureInfo.InvariantCulture, $"                <Pen Brush=\"{stroke}\" LineCap=\"Round\" LineJoin=\"Round\" Thickness=\"{(Stroke * 16 / 24).ToString("R", CultureInfo.InvariantCulture)}\" />");
+        text.AppendLine("            </GeometryDrawing.Pen>");
         text.AppendLine("        </GeometryDrawing>");
-    }
-
-    private static string Key(string name)
-    {
-        // general/chevronDown is drawn as {StaticResource General.ChevronDown}.
-        var (folder, icon) = (name[..name.IndexOf('/', StringComparison.Ordinal)], name[(name.IndexOf('/', StringComparison.Ordinal) + 1)..]);
-
-        return $"{char.ToUpperInvariant(folder[0])}{folder[1..]}.{char.ToUpperInvariant(icon[0])}{icon[1..]}";
     }
 
     private static string RepositoryRoot()

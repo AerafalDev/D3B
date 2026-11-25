@@ -138,3 +138,5 @@ Each file holds the decisions of one group of [the index](../decisions-index.md)
 - [Dungeons, the first version's shape (D520 to D524)](d520-d523-dungeons.md): 5 decisions, 11 KB.
 - [The studio made simpler, next's dark islands (D530)](d530-next-dark-islands.md): 1 decision, 3 KB.
 - [The studio made simpler, next's layout (D531)](d531-next-layout.md): 1 decision, 3 KB.
+- [The studio made simpler, next's icons (D532)](d532-lucide-icons.md): 1 decision, 3 KB.
+- [The studio's shell after next, the command palette (D540)](d540-command-palette.md): 1 decision, 3 KB.

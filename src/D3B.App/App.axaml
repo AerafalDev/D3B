@@ -41,7 +41,7 @@
             <CornerRadius x:Key="XlCornerRadius">8</CornerRadius>
             <ResourceDictionary.MergedDictionaries>
                 <ResourceInclude Source="avares://D3B.App/Themes/Colors.axaml" />
-                <ResourceInclude Source="avares://D3B.App/Themes/IntelliJIcons.axaml" />
+                <ResourceInclude Source="avares://D3B.App/Themes/Icons.axaml" />
                 <ResourceInclude Source="avares://D3B.App/Themes/Controls.axaml" />
                 <ResourceInclude Source="avares://D3B.App/Themes/Menus.axaml" />
                 <ResourceInclude Source="avares://D3B.App/Themes/Window.axaml" />
