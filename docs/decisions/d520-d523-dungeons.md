@@ -1,4 +1,4 @@
-# Dungeons, the first version's shape and the rooms (D520 to D525)
+# Dungeons, the first version (D520 to D527)
 
 A part of [the decisions](README.md); each decision has one line in [the index](../decisions-index.md). The activities' model
 is [D87](d064-d090-step-4.md); the NPCs' dialogs, [D253](d253-d292-step-9.md) and [D385](d369-d389-step-7.md); the groups,
@@ -120,3 +120,39 @@ choices the session's within D520. Builds D87, D153, D236, D384, D520, D524.*
   - A fight lost answered as the hunt's (resume, pause or stop, D198): a dungeon entered again after a loss spends another key
     on a fight the character just lost; the other dungeons of the profile go on instead.
   - Food before a room's fight, as the hunt's: kept for the third pull request's profile, with the bank.
+
+## D526: The exit's NPC lets the character out of a dungeon, the runs are counted, and its loot is banked outside, keys kept
+
+*2026-11-25, roadmap step 12, the end, the third pull request of D520, the owner's go ("Oui, la sortie"); the choices the
+session's within D520. Builds D405, D518, D520, D524, D525.*
+
+- **Measured** (client-game.md): after the boss's fight the server moves the character to a map of the dungeon's sub-area that
+  is no room, where an NPC's reply leaves for the exit map (28 exits: Champs 15920 "Sortir.", Ensablé 2945, Bworks 55364);
+  Forgerons' 4 runs left by a reply with no such map, its exit in the last room.
+- **Made**: on that map, or in the last room once every room is won, the character talks to each NPC the server shows there,
+  bankers aside, the reply the pack's exits name chosen among those offered, then a keeper's confirmation; once out, the run of
+  the dungeon is counted, and the activity is done when the profile's count of runs is (`Runs`, 0 for no end), else it goes on
+  to the next dungeon of the list. No NPC letting it out fails the run, which a restart may try again. The loot of its fights is
+  banked outside a dungeon, never in one, a dungeon's key and the keyring kept for the next runs; banking failures climb the
+  ladder (D518). The activity is in the catalogue as `dungeon`, "Donjons", its form the dungeons (`SettingKind.Dungeon`, offered
+  with the least level each lets in from), the runs, the share of life before a room's fight, the zaaps and the restart.
+- **Rejected.**
+  - Leaving by the client's own "leave the dungeon" request, which a reference names: no capture holds it, so its message
+    cannot be named in the obfuscated schema.
+  - Banking inside a dungeon: leaving would lose the run; the bank waits for the exit.
+  - Depositing everything but what is worn, as a hunt may: the keys would go to the bank with the loot.
+
+## D527: Out of a dungeon the character banks once its weight and the pods the next run is likely to bring reach the banking share
+
+*2026-11-25, roadmap step 12, the owner's ask ("quand on termine/commence un dj faut estimer si un perso va être plein en cours
+de route et si oui aller se vider"), the estimate the session's within the ask. Builds D405, D526.*
+
+- **Made**: each run's pods are measured, the weight at its exit less the weight at its entry, the most kept per dungeon. Out of
+  every dungeon, before travelling to the next door and as it leaves one, the character banks once its weight and the most a run
+  of the next dungeon brought reach the banking share (D405); a dungeon never run counts the most any run brought, none before
+  the first run. Once banked, the estimate waits for the next exit, so that loot the bank does not take never ends the run as
+  still full.
+- **Rejected.**
+  - An estimate from the dungeon's monsters and their drops: the drops are chances, the pods of each drop the items' table's,
+    and a run measured says it better.
+  - The average of the runs: a run that drops more than the average would still fill the character in the middle.

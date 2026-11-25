@@ -1,4 +1,5 @@
 using D3B.Bot.Data;
+using D3B.Bot.Dungeons;
 using D3B.Bot.Fighting;
 using D3B.Bot.Groups;
 using D3B.Bot.Harvesting;
@@ -78,10 +79,18 @@ public sealed class DefaultModulesTests
     }
 
     [Fact]
+    public void TheDungeonsModuleBuildsAfterTheZaapsModule()
+    {
+        var bot = new BotBuilder(new HostApplicationBuilderSettings { DisableDefaults = true }).AddModules(new DefaultModules());
+
+        Assert.IsType<DungeonsModule>(bot.Modules[8]);
+    }
+
+    [Fact]
     public void TheDataModuleCanBeDisabledWithTheModulesRequiringIt()
     {
         var bot = new BotBuilder(new HostApplicationBuilderSettings { DisableDefaults = true })
-            .AddModules(new DefaultModules(), group => group.Disable<ZaapsModule>().Disable<GroupsModule>().Disable<FightingModule>().Disable<HarvestingModule>().Disable<BotsModule>().Disable<NetworkModule>().Disable<ProtocolModule>().Disable<DataModule>());
+            .AddModules(new DefaultModules(), group => group.Disable<DungeonsModule>().Disable<ZaapsModule>().Disable<GroupsModule>().Disable<FightingModule>().Disable<HarvestingModule>().Disable<BotsModule>().Disable<NetworkModule>().Disable<ProtocolModule>().Disable<DataModule>());
 
         Assert.False(bot.HasModule<DataModule>());
     }

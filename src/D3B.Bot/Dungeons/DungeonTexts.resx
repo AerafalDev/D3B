@@ -116,4 +116,67 @@
   <data name="FailNoRoom" xml:space="preserve">
     <value>No room of the dungeon left to win can be walked to.</value>
   </data>
+  <data name="DoingExit" xml:space="preserve">
+    <value>Leaving the dungeon</value>
+  </data>
+  <data name="DoingBank" xml:space="preserve">
+    <value>Banking the dungeons' loot</value>
+  </data>
+  <data name="CountRunOne" xml:space="preserve">
+    <value>{0} dungeon done</value>
+  </data>
+  <data name="CountRunMany" xml:space="preserve">
+    <value>{0} dungeons done</value>
+  </data>
+  <data name="CountLoot" xml:space="preserve">
+    <value>{0} {1}</value>
+  </data>
+  <data name="FailNoExit" xml:space="preserve">
+    <value>No NPC of the dungeon's last map let the character out.</value>
+  </data>
+  <data name="Name" xml:space="preserve">
+    <value>Dungeons</value>
+  </data>
+  <data name="SectionWhat" xml:space="preserve">
+    <value>Dungeons</value>
+  </data>
+  <data name="Dungeons" xml:space="preserve">
+    <value>Dungeons</value>
+  </data>
+  <data name="DungeonsHelp" xml:space="preserve">
+    <value>Entered in turn in this order, with the keyring or a key carried; a dungeon the character cannot enter is left out of its turn.</value>
+  </data>
+  <data name="Runs" xml:space="preserve">
+    <value>Runs</value>
+  </data>
+  <data name="RunsUnit" xml:space="preserve">
+    <value>dungeons</value>
+  </data>
+  <data name="RunsHelp" xml:space="preserve">
+    <value>How many dungeons to finish before the activity is done; 0 goes on until none of the list can be entered.</value>
+  </data>
+  <data name="SectionCare" xml:space="preserve">
+    <value>Care</value>
+  </data>
+  <data name="LifeShare" xml:space="preserve">
+    <value>Life before a room's fight</value>
+  </data>
+  <data name="LifeShareHelp" xml:space="preserve">
+    <value>The character regenerates to this share of its life before it attacks a room's group.</value>
+  </data>
+  <data name="UseZaaps" xml:space="preserve">
+    <value>Take the zaaps</value>
+  </data>
+  <data name="UseZaapsHelp" xml:space="preserve">
+    <value>The journey to a dungeon's door, and to the bank, may teleport to a zaap the character knows.</value>
+  </data>
+  <data name="RestartAfterFailure" xml:space="preserve">
+    <value>Restart after a failure</value>
+  </data>
+  <data name="RestartAfterFailureHelp" xml:space="preserve">
+    <value>A run that fails or stalls is put in order and restarted, rather than ended.</value>
+  </data>
+  <data name="RuleDungeons" xml:space="preserve">
+    <value>Choose at least one dungeon.</value>
+  </data>
 </root>

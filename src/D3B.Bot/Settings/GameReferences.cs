@@ -1,5 +1,6 @@
 using System.Collections.Frozen;
 using D3B.Bot.Interactives;
+using D3B.Data.Dungeons;
 using D3B.Data.Items;
 using D3B.Data.Jobs;
 using D3B.Data.Monsters;
@@ -43,6 +44,7 @@ public sealed class GameReferences
     private readonly Lazy<Dictionary<int, int>> _superRaceOfFamily;
     private readonly Lazy<Dictionary<int, int>> _superRaceOfMonster;
     private readonly Lazy<IReadOnlyList<GameReference>> _monsters;
+    private readonly Lazy<IReadOnlyList<GameReference>> _dungeons;
 
     /// <summary>Gets the professions whose skills gather a resource, <c>Base</c> last, whose resources no profession needs (D150, D165).</summary>
     public IReadOnlyList<GameReference> GatheringJobs => _gathering.Value;
@@ -58,6 +60,7 @@ public sealed class GameReferences
     /// <param name="places">Where each graphic is drawn, which places the resources no sub-area lists (D150); without it, they are placed nowhere.</param>
     /// <param name="graphics">What the host learned of the graphics, with <paramref name="places"/>.</param>
     /// <param name="monsters">The monsters and their races; without them, no monster is offered.</param>
+    /// <param name="dungeons">The dungeons; without them, none is offered.</param>
     public GameReferences(
         WorldAtlas atlas,
         JobCatalog jobs,
@@ -65,7 +68,8 @@ public sealed class GameReferences
         WorldGraph? graph = null,
         GraphicPlaces? places = null,
         GraphicSkills? graphics = null,
-        MonsterCatalog? monsters = null)
+        MonsterCatalog? monsters = null,
+        DungeonCatalog? dungeons = null)
     {
         ArgumentNullException.ThrowIfNull(atlas);
         ArgumentNullException.ThrowIfNull(jobs);
@@ -93,6 +97,7 @@ public sealed class GameReferences
         _resourcesByJob = new Lazy<ILookup<int, GameReference>>(() => ResourcesByJob(jobs, items));
         _items = new Lazy<IReadOnlyList<GameReference>>(() => [.. items.Items.ToArray().Select(item => new GameReference(item.Id, item.NameId, item.Level))]);
         _itemTypes = new Lazy<Dictionary<int, int>>(() => items.Items.ToArray().ToDictionary(item => item.Id, item => (int)item.TypeId));
+        _dungeons = new Lazy<IReadOnlyList<GameReference>>(() => dungeons is null ? [] : [.. dungeons.Dungeons.ToArray().Select(dungeon => new GameReference(dungeon.Id, dungeon.NameId, dungeon.MinLevel))]);
         _superRaces = new Lazy<IReadOnlyList<GameReference>>(() => monsters is null ? [] : [.. monsters.SuperRaces.ToArray().Select(race => new GameReference(race.Id, race.NameId, null))]);
         _superRaceOfMonster = new Lazy<Dictionary<int, int>>(() => SuperRacesOfMonsters(monsters, atlas));
         _monsters = new Lazy<IReadOnlyList<GameReference>>(() => monsters is null ? [] : [.. _superRaceOfMonster.Value.Keys.Order().Select(id => MonsterOf(monsters, id))]);
@@ -198,6 +203,7 @@ public sealed class GameReferences
             (SettingKind.Resource, { } job) => [.. _resourcesByJob.Value[job]],
             (SettingKind.Item, _) => _items.Value,
             (SettingKind.MonsterFamily, _) => _families.Value,
+            (SettingKind.Dungeon, _) => _dungeons.Value,
             (SettingKind.Monster, null) => _monsters.Value,
             (SettingKind.Monster, { } superRace) => [.. _monsters.Value.Where(monster => _superRaceOfMonster.Value[monster.Id] == superRace)],
             _ => throw new ArgumentOutOfRangeException(nameof(kind), kind, "The kind names nothing of the game's."),
@@ -219,6 +225,7 @@ public sealed class GameReferences
             SettingKind.Item => _itemTypes.Value.ContainsKey(id),
             SettingKind.Monster => _superRaceOfMonster.Value.ContainsKey(id),
             SettingKind.MonsterFamily => _families.Value.Any(family => family.Id == id),
+            SettingKind.Dungeon => _dungeons.Value.Any(dungeon => dungeon.Id == id),
             _ => false,
         };
     }

@@ -106,6 +106,17 @@ public sealed class GameReferencesTests
     }
 
     [Fact]
+    public async Task TheDungeonsAreOfferedWithTheLeastLevelTheyLetInFrom()
+    {
+        await using var play = new TestPlay();
+        var game = new GameReferences(play.World.Atlas, play.Tables.Jobs, play.Tables.Items, dungeons: play.Tables.Dungeons);
+
+        Assert.Contains(new GameReference(TestPlay.DungeonId, 52_011, 20), game.Options(SettingKind.Dungeon));
+        Assert.True(game.Exists(SettingKind.Dungeon, TestPlay.OtherDungeonId));
+        Assert.False(game.Exists(SettingKind.Dungeon, 99));
+    }
+
+    [Fact]
     public async Task BasesOwnResourcesAreOfferedWithoutALevelAndPlacedByTheLearnedGraphics()
     {
         const int well = 102;

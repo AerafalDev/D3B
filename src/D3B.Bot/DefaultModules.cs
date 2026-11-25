@@ -1,4 +1,5 @@
 using D3B.Bot.Data;
+using D3B.Bot.Dungeons;
 using D3B.Bot.Fighting;
 using D3B.Bot.Groups;
 using D3B.Bot.Harvesting;
@@ -30,5 +31,6 @@ public sealed class DefaultModules : IModuleGroup
         group.Add<FightingModule>();
         group.Add<GroupsModule>();
         group.Add<ZaapsModule>();
+        group.Add<DungeonsModule>();
     }
 }

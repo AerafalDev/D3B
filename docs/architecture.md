@@ -452,8 +452,9 @@ The bots run in `D3B.Bot`: what each part does today, with the decisions that ma
   settings lead to: the ground's mini-map, its maps, monsters and their levels, the nearest bank (`NearestBank`, shared
   with harvesting's) and isolated maps, and the place for each character (D246). Harvesting's fights are the AI's as its
   profile's "The AI fights" says (D235).
-- **Dungeons** (D520 to D525), in `D3B.Bot.Dungeons`: `DungeonActivity`, its settings `DungeonSettings`, not yet in the
-  catalogue of activities, which its third pull request joins. It reads the dungeons of the pack's `DungeonCatalog` the profile
+- **Dungeons** (D520 to D527), in `D3B.Bot.Dungeons`, registered by `DungeonsModule` as `dungeon`: `DungeonActivity`, its
+  settings `DungeonSettings`, the dungeons chosen in the form as `SettingKind.Dungeon` (`GameReferences`, each with the least
+  level it lets in from). It reads the dungeons of the pack's `DungeonCatalog` the profile
   lists, and each step does what the character's map wants: in a room of one of them, that one is run; else the next of the list
   in turn after the one last entered whose level the character has and whose keyring, when the dungeon is on it, or every
   required object it carries, those it cannot enter, whose door three journeys did not reach or whose keeper turned it away
@@ -464,8 +465,9 @@ The bots run in `D3B.Bot`: what each part does today, with the decisions that ma
   profile's share of life, then fights the room's groups through `MapFight`, the AI playing each, and the server's move after a
   win makes the next step the next room's (D525); a room is won by a fight won in it, or with no group it can attack, and from a
   won room the server did not leave the nearest room not won in the run is travelled to through the graph. A fight lost leaves
-  the dungeon for the run. With every room won, or on the map of the
-  dungeon's sub-area the boss's win leads to, the run ends for now: the exit comes next.
+  the dungeon for the run. With every room won, or on the map of the dungeon's sub-area the boss's win leads to, it talks to the NPCs there until one lets it out by a reply of the pack's exits,
+  and counts the run (D526), done once the profile's `Runs` are. Out of every dungeon it banks the loot of its fights, keys and
+  the keyring kept, once its weight and the most a run of the next dungeon brought reach the banking share (D527); never inside.
 - **The zaaps' discovery** (D499), in `D3B.Bot.Zaaps`, registered by `ZaapsModule`: `ZaapDiscoveryActivity`, the "Discover
   the zaaps" activity, with no setting. It seeks the activated zaaps of the pack's atlas the character does not know as it
   starts (`ZaapTargets`); each step finds the nearest left by the world's path with the zaaps known so far, travels there,

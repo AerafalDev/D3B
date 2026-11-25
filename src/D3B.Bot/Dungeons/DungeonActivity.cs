@@ -1,4 +1,6 @@
+using System.Collections.Immutable;
 using D3B.Bot.Activities;
+using D3B.Bot.Banks;
 using D3B.Bot.Characters;
 using D3B.Bot.Fighting;
 using D3B.Bot.Fights;
@@ -28,7 +30,14 @@ namespace D3B.Bot.Dungeons;
 /// room's win the server names the next room in the fight end's millisecond, unasked (client-game.md): the next step is that
 /// room's. A room whose groups are beaten and that the server did not leave is left on foot, through the world graph, for the
 /// nearest room of the dungeon not yet won (D525). A fight lost leaves the dungeon for the run, the others of the profile still
-/// entered; on the map the boss's win leads to, or once every room is won, the activity ends: the exit comes next (D520).
+/// entered.
+/// </para>
+/// <para>
+/// On the map the boss's win leads to, or once every room is won, the character talks to the NPCs there until one lets it
+/// out, by a reply of the pack's exits, and the run of the dungeon is counted (D526). Out of every dungeon, it banks the loot of
+/// its fights, keys and the keyring kept, once its weight and the pods the next run is likely to bring reach the banking share:
+/// the most a run of that dungeon brought, else the most any run did (D527); the activity is done once the profile's count
+/// of runs is, or goes on until no dungeon of the profile can be entered.
 /// </para>
 /// </remarks>
 public sealed class DungeonActivity : BotActivity
@@ -51,6 +60,10 @@ public sealed class DungeonActivity : BotActivity
     private readonly Dictionary<int, ActivityException> _shut = [];
     private readonly HashSet<int> _beaten = [];
     private readonly HashSet<long> _won = [];
+    private readonly Dictionary<int, long> _loot = [];
+    private readonly Dictionary<int, int> _gains = [];
+    private readonly RecoveryLadder _bankings = new();
+    private readonly BankingPreferences _banking;
     private ActivityReport? _report;
     private int? _inside;
     private long? _fightingIn;
@@ -59,6 +72,10 @@ public sealed class DungeonActivity : BotActivity
     private int _entered;
     private int _rooms;
     private int _lost;
+    private int _runs;
+    private int _banks;
+    private int? _weightAtEntry;
+    private bool _estimateWaived;
     private int _next;
 
     /// <inheritdoc/>
@@ -76,16 +93,24 @@ public sealed class DungeonActivity : BotActivity
     /// <inheritdoc/>
     public override bool FightsItsFights => true;
 
+    /// <inheritdoc/>
+    public override bool BanksByTeleport => _banking.UseZaapsOf(false, _settings.UseZaaps);
+
+    /// <inheritdoc/>
+    public override ImmutableArray<ActivityWatch> Watches => [new ActivityWatch(WatchedGauge.Pods, _banking.FullAt, WatchAction.Bank)];
+
     /// <summary>Initializes a new instance of the <see cref="DungeonActivity"/> class.</summary>
     /// <param name="settings">Which dungeon, and the journey there.</param>
     /// <param name="tables">The installed build's tables: the dungeons, and the bankers no keeper is.</param>
-    public DungeonActivity(DungeonSettings settings, GameTables tables)
+    /// <param name="banking">The general banking settings (D405); the defaults when none is given.</param>
+    public DungeonActivity(DungeonSettings settings, GameTables tables, BankingPreferences? banking = null)
     {
         ArgumentNullException.ThrowIfNull(settings);
         ArgumentNullException.ThrowIfNull(tables);
 
         _settings = settings;
         _tables = tables;
+        _banking = banking ?? new BankingPreferences();
         _report = new ActivityReport { Doing = GameText.Of(DungeonTexts.Text("DoingStart")) };
     }
 
@@ -157,11 +182,7 @@ public sealed class DungeonActivity : BotActivity
 
             // The boss's win leads to a map of the dungeon's sub-area that is no room, where its exit stands (client-game.md).
             if (_inside == inside.Id && IsFinalMap(state, inside))
-            {
-                Publish("DoingRooms");
-
-                return false;
-            }
+                return await ExitAsync(context, inside, cancellationToken).ConfigureAwait(false);
         }
 
         var (index, dungeon) = NextEnterable(state);
@@ -191,6 +212,12 @@ public sealed class DungeonActivity : BotActivity
     /// <inheritdoc/>
     public override InterruptionResponse OnFightOver(FightEnd? ending, InterruptionResponse response)
     {
+        if (ending is { } end)
+        {
+            foreach (var (item, quantity) in end.Items)
+                _loot[item] = _loot.GetValueOrDefault(item) + quantity;
+        }
+
         if (ending is { Outcome: FightOutcome.Lost })
         {
             // Measured nowhere yet: the references wake the character at its saved zaap. The dungeon is left for the run (D525).
@@ -214,10 +241,90 @@ public sealed class DungeonActivity : BotActivity
     }
 
     /// <inheritdoc/>
+    /// <remarks>Inside a dungeon the character never banks: leaving would lose the run, the bank waits for the exit (D526).</remarks>
+    public override bool IsFull(CharacterState state)
+    {
+        ArgumentNullException.ThrowIfNull(state);
+
+        if (InDungeon(state) || state.MaxWeight <= 0)
+            return false;
+
+        // The pods the next run is likely to bring: banked before the door rather than full in the middle of a dungeon (D527).
+        var expected = _estimateWaived ? 0 : ExpectedGain();
+
+        return (state.Weight + (long)expected) * 100L >= (long)_banking.FullAt * state.MaxWeight;
+    }
+
+    /// <summary>Gets the pods a run of the next dungeon of the profile is likely to bring: the most one brought, else the most any run did.</summary>
+    /// <returns>The pods; none before a run was measured (D527).</returns>
+    public int ExpectedGain()
+    {
+        var listed = _settings.Dungeons;
+
+        if (listed.Count > 0 && _gains.TryGetValue(listed[_next % listed.Count], out var known))
+            return known;
+
+        return _gains.Count is 0 ? 0 : _gains.Values.Max();
+    }
+
+    // In a dungeon run, or in a room of one of the profile's, as a run started or restarted there is.
+    private bool InDungeon(CharacterState state)
+    {
+        if (_inside is not null)
+            return true;
+
+        if (state.MapId is not { } mapId)
+            return false;
+
+        var dungeons = _tables.Dungeons;
+
+        foreach (var listed in _settings.Dungeons)
+        {
+            if (dungeons.TryGetDungeon(listed, out var dungeon) && dungeons.RoomsOf(dungeon).Contains(mapId))
+                return true;
+        }
+
+        return false;
+    }
+
+    /// <inheritdoc/>
+    /// <remarks>The loot of its fights, but a dungeon's key and the keyring, which the next runs open the dungeons with (D526).</remarks>
+    public override bool Deposits(InventoryItem stack)
+    {
+        ArgumentNullException.ThrowIfNull(stack);
+
+        return _loot.ContainsKey(stack.ItemId) && !IsKey(stack.ItemId);
+    }
+
+    /// <inheritdoc/>
+    public override async Task<bool> UnloadAsync(BotContext context, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(context);
+
+        Publish("DoingBank");
+
+        // Any banking that fails is tried again up the ladder, as the hunt's (D518).
+        var useZaaps = _banking.UseZaapsOf(false, _settings.UseZaaps);
+        var outcome = await _bankings.TryAsync(context, "the bank", token => context.BankAsync(Deposits, 0, useZaaps, token), banked => banked is BankOutcome.Done, cancellationToken).ConfigureAwait(false);
+
+        if (outcome is not BankOutcome.Done)
+            return false;
+
+        _banks++;
+
+        // What the bank could not take stays: the estimate waits for the next run's exit, rather than banking again for nothing.
+        _estimateWaived = true;
+        Publish("DoingStart");
+
+        return true;
+    }
+
+    /// <inheritdoc/>
     public override void Restart()
     {
         // A dungeon shut by a journey or a keeper that did not answer may open once the character is put in order (D519).
         _busy.Reset();
+        _bankings.Reset();
         _shut.Clear();
         _failedJourneys = 0;
         _unanswered = 0;
@@ -280,6 +387,80 @@ public sealed class DungeonActivity : BotActivity
         return null;
     }
 
+    private bool IsKey(int itemId)
+    {
+        if (itemId is DungeonCatalog.KeyringItemId)
+            return true;
+
+        var dungeons = _tables.Dungeons;
+
+        foreach (var listed in _settings.Dungeons)
+        {
+            if (dungeons.TryGetDungeon(listed, out var dungeon))
+            {
+                foreach (var required in dungeons.ObjectsOf(dungeon))
+                {
+                    if (required.ItemId == itemId)
+                        return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    // Measured (client-game.md): the exit's NPC asks a question offering a reply that leaves, the exit map coming after it.
+    private async Task<bool> ExitAsync(BotContext context, Dungeon dungeon, CancellationToken cancellationToken)
+    {
+        Publish("DoingExit");
+
+        var dungeons = _tables.Dungeons;
+        var mapId = context.State.MapId;
+
+        int? Choose(NpcDialog dialog)
+        {
+            var replies = dialog.Replies;
+
+            if (replies.FirstOrDefault(dungeons.IsExitReply) is > 0 and var exit)
+                return exit;
+
+            return replies.FirstOrDefault(dungeons.IsConfirmation) is > 0 and var confirmed ? confirmed : null;
+        }
+
+        var unanswered = false;
+
+        foreach (var npcId in context.State.Npcs.Values.Select(npc => npc.NpcId).Where(npc => !_tables.Banks.TryGetBanker(npc, out _)).Distinct().ToList())
+        {
+            var outcome = await context.TalkAsync(npcId, Choose, cancellationToken).ConfigureAwait(false);
+
+            if (context.State.MapId != mapId)
+            {
+                // Out of the dungeon: its run is counted, what it brought measured, and the next is the next dungeon's of the profile (D524, D527).
+                if (_weightAtEntry is { } before)
+                    _gains[dungeon.Id] = Math.Max(_gains.GetValueOrDefault(dungeon.Id), Math.Max(0, context.State.Weight - before));
+
+                _weightAtEntry = null;
+                _estimateWaived = false;
+                _runs++;
+                _inside = null;
+                _won.Clear();
+                _unanswered = 0;
+                Publish("DoingStart");
+
+                return _settings.Runs is 0 || _runs < _settings.Runs;
+            }
+
+            unanswered |= outcome is NpcTalkOutcome.NoAnswer or NpcTalkOutcome.Busy or NpcTalkOutcome.NotPlaced;
+        }
+
+        if (unanswered && ++_unanswered < MostUnanswered)
+            return true;
+
+        _unanswered = 0;
+
+        throw Failure($"No NPC of the last map of dungeon {dungeon.Id} let the character out.", "FailNoExit");
+    }
+
     private bool IsFinalMap(CharacterState state, Dungeon dungeon)
     {
         var dungeons = _tables.Dungeons;
@@ -333,12 +514,9 @@ public sealed class DungeonActivity : BotActivity
                 left.Add(room);
         }
 
+        // Every room won and no map the boss's win led to: the exit is in the last room, as Forgerons' (client-game.md).
         if (left.Count is 0)
-        {
-            Publish("DoingRooms");
-
-            return false;
-        }
+            return await ExitAsync(context, dungeon, cancellationToken).ConfigureAwait(false);
 
         switch (await context.TravelAsync(left, state => state.MonsterGroups.Count > 0, _settings.UseZaaps, cancellationToken).ConfigureAwait(false))
         {
@@ -449,6 +627,7 @@ public sealed class DungeonActivity : BotActivity
 
                 _entered++;
                 _unanswered = 0;
+                _weightAtEntry = context.State.Weight;
                 _inside = dungeon.Id;
                 _won.Clear();
                 Publish("DoingRooms");
@@ -484,9 +663,11 @@ public sealed class DungeonActivity : BotActivity
             Doing = GameText.Of(DungeonTexts.Text(doing)),
             Counts =
             [
+                new ActivityCount(GameText.Counted(DungeonTexts.Text("CountRunOne"), DungeonTexts.Text("CountRunMany"), _runs)),
                 new ActivityCount(GameText.Counted(DungeonTexts.Text("CountEnteredOne"), DungeonTexts.Text("CountEnteredMany"), _entered)),
                 new ActivityCount(GameText.Counted(DungeonTexts.Text("CountRoomOne"), DungeonTexts.Text("CountRoomMany"), _rooms)),
                 new ActivityCount(GameText.Counted(DungeonTexts.Text("CountLostOne"), DungeonTexts.Text("CountLostMany"), _lost)),
+                .. _loot.OrderByDescending(pair => pair.Value).Select(pair => new ActivityCount(GameText.Of(DungeonTexts.Text("CountLoot"), GameTextValue.Number(pair.Value), GameTextValue.Item(pair.Key)), pair.Key)),
             ],
         });
     }
