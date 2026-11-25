@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Globalization;
 using D3B.Bot.Characters;
 using D3B.Bot.Localization;
@@ -113,6 +114,19 @@ internal static class TestGroup
         {
             Assert.True(play.Time.GetUtcNow() < deadline, $"Not {what} in five minutes of the clock.");
             play.Time.Advance(TimeSpan.FromMilliseconds(100));
+            await Task.Delay(5, TestContext.Current.CancellationToken);
+        }
+    }
+
+    /// <summary>Waits until a condition holds, the clock still, at most ten seconds of real time.</summary>
+    /// <remarks>For what must come with no time passing, as a wake: a fixed settle missed it on a slow runner.</remarks>
+    public static async Task StillUntilAsync(Func<bool> condition, string what)
+    {
+        var watch = Stopwatch.StartNew();
+
+        while (!condition())
+        {
+            Assert.True(watch.Elapsed < TimeSpan.FromSeconds(10), $"Not {what} in ten seconds, the clock still.");
             await Task.Delay(5, TestContext.Current.CancellationToken);
         }
     }

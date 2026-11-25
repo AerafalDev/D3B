@@ -382,6 +382,7 @@ public sealed class GroupFightTests
 
         // Opened, the follower joins at once, the clock still: the master's fight opening wakes it.
         masterConnection.Server(new FightOptionUpdateEvent { Option = FightOption.Closed, Enabled = false });
+        await TestGroup.StillUntilAsync(() => followerConnection.Sent.Count > 2, "the follower's join sent");
         await TestGroup.SettleAsync(master, follower);
 
         Assert.Equal(new FightJoinRequest { FightId = FightId, FighterId = TestGroup.MasterId }, Assert.Single(followerConnection.Sent.Skip(2)));
