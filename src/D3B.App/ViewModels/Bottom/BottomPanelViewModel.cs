@@ -159,6 +159,13 @@ internal sealed partial class BottomPanelViewModel : ObservableObject
         Refresh(_services());
     }
 
+    /// <summary>Chooses the tab the panel shows, without opening it, as the layout kept from the last run asks (D542).</summary>
+    /// <param name="tab">The tab.</param>
+    public void Choose(BottomTab tab)
+    {
+        Tab = tab;
+    }
+
     /// <summary>Shows a tab, or hides the panel when it shows that tab already, as the activity bar's entries do (D513).</summary>
     /// <param name="tab">The tab.</param>
     [RelayCommand]
