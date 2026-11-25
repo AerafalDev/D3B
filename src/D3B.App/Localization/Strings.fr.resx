@@ -3755,4 +3755,7 @@
   <data name="StatusUnsavedTip" xml:space="preserve">
     <value>Modifications non enregistrées : cliquer pour tout enregistrer</value>
   </data>
+  <data name="StatusVersionAbout" xml:space="preserve">
+    <value>{0} · À propos</value>
+  </data>
 </root>

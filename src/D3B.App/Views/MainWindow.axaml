@@ -823,33 +823,22 @@
             </Grid>
             </Grid>
 
-            <!--  The status bar, VS Code's and next's (D531, D541): the app's state on the left, after its one accent, a small blue dot,
-                 then the relay; its context on the right, the client and its data, the bots playing, the problems, the saving and the
-                 update. Each item opens what it names; colour only for a problem or the update offered.  -->
+            <!--  The status bar, VS Code's and next's (D531, D541): on the right, in icons whose words are their tooltips (D544, D546),
+                 the relay, the client and its data, the bots playing, the problems, the saving, the update and the version. Each item
+                 opens what it names; colour only for a problem or the update offered.  -->
             <Grid
                 ColumnDefinitions="Auto,*,Auto"
                 Grid.Row="1"
                 Margin="6,0"
                 Name="StatusBar">
                 <StackPanel
+                    Grid.Column="2"
                     Orientation="Horizontal"
                     Spacing="2"
                     VerticalAlignment="Center">
+                    <!--  The relay's dot, its colour where it stands, and the characters it carries; its words in the tooltip (D546).  -->
                     <Button
-                        Classes="Status"
-                        Command="{Binding StatusBar.ShowAboutPageCommand}"
-                        Name="VersionItem"
-                        ToolTip.Tip="{l:Tr StatusVersionTip}">
-                        <StackPanel Orientation="Horizontal" Spacing="6">
-                            <Ellipse
-                                Fill="{DynamicResource AccentColor}"
-                                Height="6"
-                                VerticalAlignment="Center"
-                                Width="6" />
-                            <TextBlock Text="{Binding StatusBar.VersionText}" VerticalAlignment="Center" />
-                        </StackPanel>
-                    </Button>
-                    <Button
+                        AutomationProperties.Name="{Binding StatusBar.RelayText}"
                         Classes="Status"
                         Classes.Failed="{Binding StatusBar.IsRelayFailed}"
                         Command="{Binding StatusBar.ShowRelayJournalCommand}"
@@ -857,7 +846,7 @@
                         <ToolTip.Tip>
                             <TextBlock
                                 MaxWidth="360"
-                                Text="{Binding StatusBar.RelayTip}"
+                                Text="{Binding StatusBar.RelayHover}"
                                 TextWrapping="Wrap" />
                         </ToolTip.Tip>
                         <StackPanel Orientation="Horizontal" Spacing="6">
@@ -868,15 +857,12 @@
                                 Classes.Starting="{Binding IsStarting}"
                                 Classes.Stopping="{Binding IsStopping}"
                                 VerticalAlignment="Center" />
-                            <TextBlock Text="{Binding StatusBar.RelayText}" VerticalAlignment="Center" />
+                            <TextBlock
+                                IsVisible="{Binding StatusBar.RelayFigure, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
+                                Text="{Binding StatusBar.RelayFigure}"
+                                VerticalAlignment="Center" />
                         </StackPanel>
                     </Button>
-                </StackPanel>
-                <StackPanel
-                    Grid.Column="2"
-                    Orientation="Horizontal"
-                    Spacing="2"
-                    VerticalAlignment="Center">
                     <Button
                         Classes="Status"
                         Command="{Binding StatusBar.ShowDataFilesCommand}"
@@ -955,6 +941,19 @@
                                 Width="12" />
                             <TextBlock Text="{Binding StatusBar.UpdateText}" />
                         </StackPanel>
+                    </Button>
+                    <!--  The version's dot alone, its words in the tooltip, About on a click (D546).  -->
+                    <Button
+                        AutomationProperties.Name="{Binding StatusBar.VersionText}"
+                        Classes="Status"
+                        Command="{Binding StatusBar.ShowAboutPageCommand}"
+                        Name="VersionItem"
+                        ToolTip.Tip="{Binding StatusBar.VersionTip}">
+                        <Ellipse
+                            Fill="{DynamicResource AccentColor}"
+                            Height="6"
+                            VerticalAlignment="Center"
+                            Width="6" />
                     </Button>
                 </StackPanel>
             </Grid>

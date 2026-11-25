@@ -30,6 +30,18 @@ internal sealed partial class StatusBarViewModel : ObservableObject
     [ObservableProperty]
     public partial string RelayTip { get; private set; } = "";
 
+    /// <summary>Gets how many characters the relay carries into the game, a figure beside its dot once it is ready (D546).</summary>
+    [ObservableProperty]
+    public partial string RelayFigure { get; private set; } = "";
+
+    /// <summary>Gets the relay's tooltip: where it stands, then what the bar does not say (D546).</summary>
+    [ObservableProperty]
+    public partial string RelayHover { get; private set; } = "";
+
+    /// <summary>Gets the version's tooltip: the app's name and version, and that a click opens About (D546).</summary>
+    [ObservableProperty]
+    public partial string VersionTip { get; private set; } = "";
+
     /// <summary>Gets the tone of the relay's dot.</summary>
     [ObservableProperty]
     public partial Tone RelayTone { get; private set; }
@@ -149,6 +161,9 @@ internal sealed partial class StatusBarViewModel : ObservableObject
             tip.Add(_localizer["RelayStartAfter"]);
 
         RelayTip = string.Join('\n', tip);
+        RelayFigure = running ? facts.InGame.ToString(_localizer.Culture) : "";
+        RelayHover = string.Join('\n', [RelayText, .. tip]);
+        VersionTip = _localizer.Format("StatusVersionAbout", VersionText);
 
         // The pack's version once the host opened it: before, only the build the app ships is known.
         ClientText = facts.ClientBuild;

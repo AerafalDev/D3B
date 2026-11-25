@@ -3755,4 +3755,7 @@
   <data name="StatusUnsavedTip" xml:space="preserve">
     <value>Changes not saved: click to save everything</value>
   </data>
+  <data name="StatusVersionAbout" xml:space="preserve">
+    <value>{0} · About</value>
+  </data>
 </root>

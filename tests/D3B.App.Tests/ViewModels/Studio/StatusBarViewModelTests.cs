@@ -121,4 +121,19 @@ public sealed class StatusBarViewModelTests
         Assert.Equal(("1", true), (bar.ErrorsText, bar.HasProblems));
         Assert.Equal(["problems"], opened);
     }
+
+    [Fact]
+    public void TheRelayAndTheVersionAreIconsOnTheRightTheirWordsInTheirTooltips()
+    {
+        var bar = Bar(new StatusFacts { Host = HostStatus.Running, InGame = 2 });
+
+        // The owner's ask (D546): the relay's dot and the characters it carries, the version's dot, their words in the tooltips.
+        Assert.Equal("2", bar.RelayFigure);
+        Assert.StartsWith("Relais prêt · 2 en jeu\n", bar.RelayHover, StringComparison.Ordinal);
+        Assert.Equal("D3B 0.9.10 · À propos", bar.VersionTip);
+
+        var starting = Bar(new StatusFacts { Host = HostStatus.Starting });
+
+        Assert.Equal(("", "Relais en démarrage…"), (starting.RelayFigure, starting.RelayHover));
+    }
 }

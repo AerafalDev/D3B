@@ -137,14 +137,14 @@ internal sealed partial class MainWindow : ShadUI.Window
         columns[1].Width = new GridLength(layout.IsSideOpen ? Gap : 0);
         columns[3].Width = new GridLength(layout.IsDetailsOpen ? Gap : 0);
         centre[1].Height = new GridLength(layout.IsBottomOpen ? Gap : 0);
-        Place(SideDock, ref _sideShown, layout.IsSideOpen, layout.LeftWidth, columns[0].Width.Value, size => columns[0].Width = new GridLength(size));
-        Place(DetailsDock, ref _detailsShown, layout.IsDetailsOpen, layout.RightWidth, columns[4].Width.Value, size => columns[4].Width = new GridLength(size));
-        Place(BottomDock, ref _bottomShown, layout.IsBottomOpen, layout.BottomHeight, centre[2].Height.Value, size => centre[2].Height = new GridLength(size));
+        Place(SideDock, ref _sideShown, layout.IsSideOpen, layout.LeftWidth, columns[0].Width.Value, size => columns[0].Width = new GridLength(size), DockEdge.Left);
+        Place(DetailsDock, ref _detailsShown, layout.IsDetailsOpen, layout.RightWidth, columns[4].Width.Value, size => columns[4].Width = new GridLength(size), DockEdge.Right);
+        Place(BottomDock, ref _bottomShown, layout.IsBottomOpen, layout.BottomHeight, centre[2].Height.Value, size => centre[2].Height = new GridLength(size), DockEdge.Bottom);
     }
 
     // A part shown or hidden since the last layout slides to its size or to nothing, its content showing until it is closed; else it
     // takes its size at once, as a drag asks, unless it is sliding.
-    private void Place(Control dock, ref bool? shown, bool open, double size, double current, Action<double> resize)
+    private void Place(Border dock, ref bool? shown, bool open, double size, double current, Action<double> resize, DockEdge edge)
     {
         var slides = shown is { } was && was != open;
 
@@ -168,6 +168,10 @@ internal sealed partial class MainWindow : ShadUI.Window
         _slides[dock] = slide;
         dock.IsVisible = true;
 
+        // The content keeps its size and is uncovered or covered by the dock's edge, as VS Code's: laid out again at each step, a
+        // view that adapts to its width would move under the slide.
+        Hold(dock.Child, edge, size);
+
         void Frame(TimeSpan now)
         {
             // A later toggle took over this part.
@@ -188,10 +192,31 @@ internal sealed partial class MainWindow : ShadUI.Window
             }
 
             _slides.Remove(dock);
+            Hold(dock.Child, edge, null);
             dock.IsVisible = open;
         }
 
         RequestAnimationFrame(Frame);
+    }
+
+    // Fixes a dock's content at its size against the edge it slides from, or lets it fill the dock again.
+    private static void Hold(Control? content, DockEdge edge, double? size)
+    {
+        if (content is null)
+            return;
+
+        if (edge is DockEdge.Bottom)
+        {
+            content.Height = size ?? double.NaN;
+            content.VerticalAlignment = size is null ? Avalonia.Layout.VerticalAlignment.Stretch : Avalonia.Layout.VerticalAlignment.Top;
+
+            return;
+        }
+
+        content.Width = size ?? double.NaN;
+        content.HorizontalAlignment = size is null ? Avalonia.Layout.HorizontalAlignment.Stretch
+            : edge is DockEdge.Left ? Avalonia.Layout.HorizontalAlignment.Left
+            : Avalonia.Layout.HorizontalAlignment.Right;
     }
 
     private void OnScrimPressed(object? sender, PointerPressedEventArgs e)
