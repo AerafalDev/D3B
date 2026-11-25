@@ -338,6 +338,11 @@
                 Grid.Column="1"
                 Margin="0,0,5,0"
                 Name="Docks">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="*" />
+                    <RowDefinition Height="5" />
+                    <RowDefinition Height="260" />
+                </Grid.RowDefinitions>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="300" />
                     <ColumnDefinition Width="5" />
@@ -350,6 +355,7 @@
                 <Border
                     Classes="Dock Compact"
                     ClipToBounds="True"
+                    Grid.RowSpan="3"
                     Name="SideDock">
                     <DockPanel>
                         <Border Classes="Strip" DockPanel.Dock="Top">
@@ -532,6 +538,7 @@
                 </Border>
                 <c:DockSplitter
                     Grid.Column="1"
+                    Grid.RowSpan="3"
                     HorizontalAlignment="Center"
                     IsVisible="{Binding Layout.IsSideOpen}"
                     LineBrush="{DynamicResource AccentColor}"
@@ -541,11 +548,6 @@
                     Width="8" />
 
                 <Grid Grid.Column="2" Name="CentreColumn">
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="*" />
-                        <RowDefinition Height="5" />
-                        <RowDefinition Height="260" />
-                    </Grid.RowDefinitions>
                     <!--  The editor area as next's (D531): the tabs lie on the window's frame, the one shown rises into the editor's island
                          with rounded top corners; with no tab, the island shows the mark and the main keys.  -->
                     <DockPanel Name="EditorArea">
@@ -738,22 +740,6 @@
                             </Panel>
                             </Border>
                     </DockPanel>
-                    <c:DockSplitter
-                        Grid.Row="1"
-                        Height="8"
-                        IsVisible="{Binding Layout.IsBottomOpen}"
-                        LineBrush="{DynamicResource AccentColor}"
-                        Margin="0,-1.5"
-                        Name="BottomSplitter"
-                        Orientation="Horizontal"
-                        VerticalAlignment="Center" />
-                    <Border
-                        Classes="Dock Compact"
-                        ClipToBounds="True"
-                        Grid.Row="2"
-                        Name="BottomDock">
-                        <views:BottomPanelView DataContext="{Binding Bottom}" />
-                    </Border>
                 </Grid>
                 <c:DockSplitter
                     Grid.Column="3"
@@ -764,6 +750,28 @@
                     Name="RightSplitter"
                     Orientation="Vertical"
                     Width="8" />
+
+                <!--  The bottom panel spans the editor and the Details, to the window's right edge (D547); the side bar keeps its height.  -->
+                <c:DockSplitter
+                    Grid.Column="2"
+                    Grid.ColumnSpan="3"
+                    Grid.Row="1"
+                    Height="8"
+                    IsVisible="{Binding Layout.IsBottomOpen}"
+                    LineBrush="{DynamicResource AccentColor}"
+                    Margin="0,-1.5"
+                    Name="BottomSplitter"
+                    Orientation="Horizontal"
+                    VerticalAlignment="Center" />
+                <Border
+                    Classes="Dock Compact"
+                    ClipToBounds="True"
+                    Grid.Column="2"
+                    Grid.ColumnSpan="3"
+                    Grid.Row="2"
+                    Name="BottomDock">
+                    <views:BottomPanelView DataContext="{Binding Bottom}" />
+                </Border>
 
                 <Border
                     Classes="Dock"

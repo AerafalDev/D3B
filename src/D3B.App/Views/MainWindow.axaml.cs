@@ -61,7 +61,7 @@ internal sealed partial class MainWindow : ShadUI.Window
         RightSplitter.DragStarted += (_, _) => _dragStart = _main?.Layout.RightWidth ?? 0;
         RightSplitter.DragDelta += (_, e) => _main?.Layout.ResizeRight(_dragStart - e.Vector.X, Bounds.Width);
         BottomSplitter.DragStarted += (_, _) => _dragStart = _main?.Layout.BottomHeight ?? 0;
-        BottomSplitter.DragDelta += (_, e) => _main?.Layout.ResizeBottom(_dragStart - e.Vector.Y, CentreColumn.Bounds.Height - Gap);
+        BottomSplitter.DragDelta += (_, e) => _main?.Layout.ResizeBottom(_dragStart - e.Vector.Y, Docks.Bounds.Height - Gap);
 
         foreach (var splitter in new[] { LeftSplitter, RightSplitter, BottomSplitter })
             splitter.DragCompleted += (_, _) => _main?.Layout.Remember();
@@ -132,14 +132,14 @@ internal sealed partial class MainWindow : ShadUI.Window
         // A closed panel's row or column takes no room, and its gap goes with it: its neighbour takes the room. Shown or hidden,
         // a part slides as next's (D545); dragged, it follows the pointer.
         var columns = Docks.ColumnDefinitions;
-        var centre = CentreColumn.RowDefinitions;
+        var rows = Docks.RowDefinitions;
 
         columns[1].Width = new GridLength(layout.IsSideOpen ? Gap : 0);
         columns[3].Width = new GridLength(layout.IsDetailsOpen ? Gap : 0);
-        centre[1].Height = new GridLength(layout.IsBottomOpen ? Gap : 0);
+        rows[1].Height = new GridLength(layout.IsBottomOpen ? Gap : 0);
         Place(SideDock, ref _sideShown, layout.IsSideOpen, layout.LeftWidth, columns[0].Width.Value, size => columns[0].Width = new GridLength(size), DockEdge.Left);
         Place(DetailsDock, ref _detailsShown, layout.IsDetailsOpen, layout.RightWidth, columns[4].Width.Value, size => columns[4].Width = new GridLength(size), DockEdge.Right);
-        Place(BottomDock, ref _bottomShown, layout.IsBottomOpen, layout.BottomHeight, centre[2].Height.Value, size => centre[2].Height = new GridLength(size), DockEdge.Bottom);
+        Place(BottomDock, ref _bottomShown, layout.IsBottomOpen, layout.BottomHeight, rows[2].Height.Value, size => rows[2].Height = new GridLength(size), DockEdge.Bottom);
     }
 
     // A part shown or hidden since the last layout slides to its size or to nothing, its content showing until it is closed; else it
