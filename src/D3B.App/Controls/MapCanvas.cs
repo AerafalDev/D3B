@@ -210,6 +210,13 @@ internal sealed class MapCanvas : Control
         if (change.Property == BoundsProperty)
         {
             _view.Resize(Bounds.Width, Bounds.Height);
+
+            // A zoom bound before the first layout was made around a middle of no size: made again around the real one.
+            if (change.GetOldValue<Rect>().Size is { Width: <= 0 } or { Height: <= 0 })
+            {
+                _view.Fit();
+                _view.ZoomAt(Bounds.Width / 2, Bounds.Height / 2, Zoom);
+            }
         }
         else if (change.Property == ZoomProperty)
         {

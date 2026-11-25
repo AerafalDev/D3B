@@ -80,6 +80,7 @@ public sealed class CharacterMapViewTests : IAsyncDisposable
             var canvas = window.GetVisualDescendants().OfType<MapCanvas>().Single(map => map.Name == "MapCanvas");
             var bar = window.GetVisualDescendants().OfType<Border>().Single(border => border.Name == "MapZoomBar");
             var pointer = canvas.TranslatePoint(new Point(canvas.Bounds.Width * 0.3, canvas.Bounds.Height * 0.6), window)!.Value;
+            var middle = canvas.TranslatePoint(new Point(canvas.Bounds.Width / 2, canvas.Bounds.Height / 2), window)!.Value;
 
             window.MouseMove(pointer);
 
@@ -102,14 +103,42 @@ public sealed class CharacterMapViewTests : IAsyncDisposable
             window.MouseMove(pointer);
             seen.Add($"moved:{tab.Map.HoveredCell != under}");
 
+            // The bar zooms around the map's middle: the middle's cell stays, one off it changes.
+            window.MouseMove(middle);
+
+            var centred = tab.Map.HoveredCell;
+
+            window.MouseMove(pointer);
+
+            var offCentre = tab.Map.HoveredCell;
+
             Named(bar, "Zoom in").Command!.Execute(null);
             Dispatcher.UIThread.RunJobs();
-            seen.Add(ZoomShown(bar));
+            window.MouseMove(pointer);
+
+            var zoomed = tab.Map.HoveredCell != offCentre;
+
+            window.MouseMove(middle);
+            seen.Add($"{ZoomShown(bar)} same middle:{tab.Map.HoveredCell == centred} zoomed:{zoomed}");
 
             Named(bar, "See the whole map").Command!.Execute(null);
             Dispatcher.UIThread.RunJobs();
             window.MouseMove(pointer);
             seen.Add($"{ZoomShown(bar)} same cell:{tab.Map.HoveredCell == under} fit:{Named(bar, "See the whole map").IsEffectivelyEnabled}");
+
+            // A tab opened again on a zoomed map shows its middle, the zoom applied once the canvas has its size.
+            window.MouseMove(middle);
+
+            var fittedMiddle = tab.Map.HoveredCell;
+
+            Named(bar, "Zoom in").Command!.Execute(null);
+            Named(bar, "Zoom in").Command!.Execute(null);
+            main.Editor.Close(main.Editor.Selected);
+            main.Bots.Items[0].ShowMapCommand.Execute(null);
+            Dispatcher.UIThread.RunJobs();
+            bar = window.GetVisualDescendants().OfType<Border>().Single(border => border.Name == "MapZoomBar");
+            window.MouseMove(middle);
+            seen.Add($"{ZoomShown(bar)} same middle:{tab.Map.HoveredCell == fittedMiddle} same tab:{ReferenceEquals(main.Editor.Selected!.Content, tab)}");
 
             main.Settings.UseFrenchCommand.Execute(null);
             Dispatcher.UIThread.RunJobs();
@@ -126,9 +155,10 @@ public sealed class CharacterMapViewTests : IAsyncDisposable
                 "100 % on a cell:True out:False fit:False",
                 "149 % same cell:True out:True",
                 "moved:True",
-                "186 %",
+                "186 % same middle:True zoomed:True",
                 "100 % same cell:True fit:False",
-                "100 % Dézoomer",
+                "156 % same middle:True same tab:True",
+                "156 % Dézoomer",
             ],
             seen);
     }
