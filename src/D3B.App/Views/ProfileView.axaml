@@ -79,7 +79,7 @@
             <StackPanel DockPanel.Dock="Top" Margin="24,16,24,0" Name="Header">
                 <Grid ColumnDefinitions="Auto,*,Auto" RowDefinitions="Auto,Auto">
                     <Border
-                        Background="#2A2238"
+                        Background="{DynamicResource ProfileSquareColor}"
                         CornerRadius="10"
                         Height="38"
                         VerticalAlignment="Top"
@@ -87,7 +87,7 @@
                         <c:Icon
                             Drawing="{StaticResource Nodes.Template}"
                             Height="18"
-                            Tint="#C9A7F2"
+                            Tint="{DynamicResource ProfileTintColor}"
                             Width="18" />
                     </Border>
                     <TextBox

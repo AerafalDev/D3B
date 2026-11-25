@@ -12,12 +12,12 @@
         <Style Selector="Border.Frame">
             <Setter Property="MinHeight" Value="26" />
             <Setter Property="Padding" Value="10,0" />
-            <Setter Property="BorderBrush" Value="#06FFFFFF" />
+            <Setter Property="BorderBrush" Value="{DynamicResource SoftLineColor}" />
             <Setter Property="BorderThickness" Value="0,0,0,1" />
             <Setter Property="Background" Value="Transparent" />
         </Style>
         <Style Selector="Border.Frame:pointerover">
-            <Setter Property="Background" Value="#06FFFFFF" />
+            <Setter Property="Background" Value="{DynamicResource SoftLineColor}" />
         </Style>
         <Style Selector="Border.Frame.Open">
             <Setter Property="Background" Value="#143B82F6" />
@@ -29,7 +29,7 @@
         </Style>
         <Style Selector="TextBlock.Arrow">
             <Setter Property="FontWeight" Value="SemiBold" />
-            <Setter Property="Foreground" Value="#8FE3A2" />
+            <Setter Property="Foreground" Value="{DynamicResource SuccessTextColor}" />
         </Style>
         <Style Selector="TextBlock.Arrow.Out">
             <Setter Property="Foreground" Value="{DynamicResource AccentTextColor}" />
@@ -58,14 +58,14 @@
             <Setter Property="LineHeight" Value="19" />
         </Style>
         <Style Selector="TextBlock.Field">
-            <Setter Property="Foreground" Value="#C9A7F2" />
+            <Setter Property="Foreground" Value="{DynamicResource ProfileTintColor}" />
         </Style>
         <Style Selector="TextBlock.Field.Note">
             <Setter Property="Foreground" Value="{DynamicResource MutedColor}" />
             <Setter Property="FontStyle" Value="Italic" />
         </Style>
         <Style Selector="SelectableTextBlock.Value">
-            <Setter Property="Foreground" Value="#8FE3A2" />
+            <Setter Property="Foreground" Value="{DynamicResource SuccessTextColor}" />
         </Style>
         <Style Selector="TextBlock.Hidden">
             <Setter Property="Foreground" Value="{DynamicResource WarningColor}" />

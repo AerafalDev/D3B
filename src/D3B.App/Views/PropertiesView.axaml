@@ -13,13 +13,13 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
     <UserControl.Styles>
         <Style Selector="Border.Step:pointerover">
-            <Setter Property="Background" Value="#2A2A30" />
+            <Setter Property="Background" Value="{DynamicResource HoverColor}" />
         </Style>
         <Style Selector="Border.Step.Selected">
             <Setter Property="Background" Value="#173B82F6" />
         </Style>
         <Style Selector="TextBlock.Broken">
-            <Setter Property="Foreground" Value="#FF9D95" />
+            <Setter Property="Foreground" Value="{DynamicResource ErrorTextColor}" />
         </Style>
         <Style Selector="Border.Section">
             <Setter Property="BorderBrush" Value="{DynamicResource BorderColor}" />
@@ -59,7 +59,7 @@
             <Setter Property="FontWeight" Value="Normal" />
         </Style>
         <Style Selector="Button.Pick:pointerover">
-            <Setter Property="Background" Value="#222227" />
+            <Setter Property="Background" Value="{DynamicResource HoverColor}" />
         </Style>
         <Style Selector="Button.Pick:disabled">
             <Setter Property="Opacity" Value="0.5" />
@@ -104,7 +104,7 @@
             <Setter Property="Padding" Value="10,0" />
             <Setter Property="Margin" Value="-10,0,0,0" />
             <Setter Property="CornerRadius" Value="7" />
-            <Setter Property="Foreground" Value="#F3A19A" />
+            <Setter Property="Foreground" Value="{DynamicResource ErrorTextColor}" />
             <Setter Property="HorizontalAlignment" Value="Left" />
             <Setter Property="FontWeight" Value="Normal" />
         </Style>
@@ -204,11 +204,11 @@
                                 Click="OnProfileClick"
                                 Grid.Column="1">
                                 <Grid ColumnDefinitions="Auto,*,Auto">
-                                    <Border Background="#2A2238" Classes="Kind">
+                                    <Border Background="{DynamicResource ProfileSquareColor}" Classes="Kind">
                                         <c:Icon
                                             Drawing="{StaticResource Nodes.Template}"
                                             Height="11"
-                                            Tint="#C9A7F2"
+                                            Tint="{DynamicResource ProfileTintColor}"
                                             Width="11" />
                                     </Border>
                                     <TextBlock
@@ -271,7 +271,7 @@
                                 Grid.Column="1"
                                 IsEnabled="False">
                                 <Grid ColumnDefinitions="Auto,*,Auto">
-                                    <Border Background="#1F2A38" Classes="Kind">
+                                    <Border Background="#338FB8F2" Classes="Kind">
                                         <c:Icon
                                             Drawing="{StaticResource General.History}"
                                             Height="11"
@@ -302,7 +302,7 @@
                                 Grid.Column="1"
                                 IsEnabled="False">
                                 <Grid ColumnDefinitions="Auto,*,Auto">
-                                    <Border Background="#382422" Classes="Kind">
+                                    <Border Background="#33F3A19A" Classes="Kind">
                                         <c:Icon
                                             Drawing="{StaticResource Nodes.Function}"
                                             Height="11"
@@ -497,7 +497,7 @@
                 <Border BorderBrush="{DynamicResource BorderColor}" BorderThickness="0,0,0,1" Padding="14">
                     <Grid ColumnDefinitions="34,*">
                         <Border
-                            Background="#2A2238"
+                            Background="{DynamicResource ProfileSquareColor}"
                             CornerRadius="10"
                             Height="34"
                             IsVisible="{Binding !Asset.HasRoute}"
@@ -505,11 +505,11 @@
                             <c:Icon
                                 Drawing="{StaticResource Nodes.Template}"
                                 Height="16"
-                                Tint="#C9A7F2"
+                                Tint="{DynamicResource ProfileTintColor}"
                                 Width="16" />
                         </Border>
                         <Border
-                            Background="#172B29"
+                            Background="#335FD3C0"
                             CornerRadius="10"
                             Height="34"
                             IsVisible="{Binding Asset.HasRoute}"
@@ -697,11 +697,11 @@
                                 <Grid ColumnDefinitions="*,Auto">
                                     <StackPanel Spacing="2">
                                         <TextBlock
-                                            Foreground="#FFB4AD"
+                                            Foreground="{DynamicResource ErrorTextColor}"
                                             Text="{Binding Problem}"
                                             TextWrapping="Wrap" />
                                         <TextBlock
-                                            Foreground="#FFB4AD"
+                                            Foreground="{DynamicResource ErrorTextColor}"
                                             Opacity="0.7"
                                             Text="{l:Tr RouteProblemDetail}"
                                             TextWrapping="Wrap" />
@@ -972,7 +972,7 @@
                                         Margin="14,0,8,0"
                                         MinHeight="30">
                                         <Border
-                                            Background="#1F2A3D"
+                                            Background="#337FA7FF"
                                             Classes="Kind"
                                             VerticalAlignment="Center">
                                             <c:Icon

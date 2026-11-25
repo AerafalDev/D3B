@@ -23,7 +23,7 @@
             <Setter Property="Background" Value="Transparent" />
         </Style>
         <Style Selector="Border.Problem:pointerover">
-            <Setter Property="Background" Value="#08FFFFFF" />
+            <Setter Property="Background" Value="{DynamicResource SoftLineColor}" />
         </Style>
         <Style Selector="Button.Fix">
             <Setter Property="Theme" Value="{DynamicResource StudioButton}" />

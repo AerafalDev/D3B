@@ -35,10 +35,10 @@
                 Zone2="#2B1F36"
                 Zone3="#1F3328"
                 Zone4="#36261D" />
-            <CornerRadius x:Key="SmCornerRadius">6</CornerRadius>
-            <CornerRadius x:Key="MdCornerRadius">7</CornerRadius>
-            <CornerRadius x:Key="LgCornerRadius">10</CornerRadius>
-            <CornerRadius x:Key="XlCornerRadius">12</CornerRadius>
+            <CornerRadius x:Key="SmCornerRadius">4</CornerRadius>
+            <CornerRadius x:Key="MdCornerRadius">5</CornerRadius>
+            <CornerRadius x:Key="LgCornerRadius">6</CornerRadius>
+            <CornerRadius x:Key="XlCornerRadius">8</CornerRadius>
             <ResourceDictionary.MergedDictionaries>
                 <ResourceInclude Source="avares://D3B.App/Themes/Colors.axaml" />
                 <ResourceInclude Source="avares://D3B.App/Themes/IntelliJIcons.axaml" />

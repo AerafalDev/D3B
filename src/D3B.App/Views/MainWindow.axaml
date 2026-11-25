@@ -1016,7 +1016,7 @@
         </Grid>
 
         <Panel IsVisible="{Binding Search.IsOpen}">
-            <Border Background="#8C050507" PointerPressed="OnScrimPressed" />
+            <Border Background="{DynamicResource ScrimColor}" PointerPressed="OnScrimPressed" />
             <views:SearchView DataContext="{Binding Search}" />
         </Panel>
     </Panel>

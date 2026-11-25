@@ -82,7 +82,7 @@
                             <Ellipse
                                 Canvas.Left="10"
                                 Canvas.Top="10"
-                                Fill="#24242A"
+                                Fill="{DynamicResource GridDotColor}"
                                 Height="2.2"
                                 Width="2.2" />
                         </Canvas>
@@ -363,7 +363,7 @@
                                                         <c:Icon
                                                             Drawing="{StaticResource Nodes.Template}"
                                                             Height="11"
-                                                            Tint="#C9A7F2"
+                                                            Tint="{DynamicResource ProfileTintColor}"
                                                             VerticalAlignment="Center"
                                                             Width="11" />
                                                         <TextBlock
