@@ -271,7 +271,7 @@
             <Setter Property="Background" Value="{DynamicResource RaisedColor}" />
         </Style>
         <Style Selector="Border.About Button.Ghost:pointerover">
-            <Setter Property="Background" Value="{DynamicResource HoverColor}" />
+            <Setter Property="Background" Value="{DynamicResource FieldHoverColor}" />
         </Style>
         <Style Selector="CheckBox">
             <Setter Property="VerticalAlignment" Value="Center" />

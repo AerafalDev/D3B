@@ -20,6 +20,12 @@ taille à droite aussi ». Refines D159, D335, D513 and D530.*
   `GlassColor` and `GlassHoverColor` (43 colours moved). Written in `Themes/Styles.axaml` and the `studio-ui` skill.
 - **The bottom panel spans the editor and the Details**, to the window's right edge, the side bar keeping its height: the
   docks' grid holds the bottom panel's row (`MainWindow`), its edge dragged within the grid's height.
+- **A field's hover is opaque** (`FieldHoverColor`): from a field's grey to `HoverColor`'s white veil, the brush's transition flashed
+  white for a frame (the owner: « quand on est en hover y'a une frame où ça affiche du blanc »); the profile's field, the tab's
+  and the About's buttons take it.
+- **The profile's field is a select** (the owner: « un toggle qui affiche/désaffiche son contenu quand on clique/reclique ou perd
+  focus »): the field's own flyout (`Button.Flyout`, `ProfileMenu.Attach`), which a click opens, the next closes, and a click
+  elsewhere or the focus leaving closes; `MenuReopenGuard` (D544) goes.
 - **Left for later**, each a change of its own: the same control styled several times made one style (the section titles, the
   fields, the pills, the kind squares, the links), the colours of the map and the Sequencer drawn in C#, and the colours with no
   key in the palette (the kinds' and the routes' own).

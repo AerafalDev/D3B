@@ -66,6 +66,8 @@
     <Color x:Key="HeaderColor">#212121</Color>
     <Color x:Key="FieldColor">#313131</Color>
     <Color x:Key="InputColor">#313131</Color>
+    <!--  A field's hover, opaque as the field: a brush moving from an opaque grey to HoverColor's white veil flashes white midway.  -->
+    <Color x:Key="FieldHoverColor">#3A3A3A</Color>
     <Color x:Key="RaisedColor">#2A2D2E</Color>
     <Color x:Key="PopupColor">#1F1F1F</Color>
     <Color x:Key="TipColor">#202020</Color>

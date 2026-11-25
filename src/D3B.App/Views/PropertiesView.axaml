@@ -216,7 +216,7 @@
                             <TextBlock Classes="Key" Text="{l:Tr PropertyProfile}" />
                             <Button
                                 Classes="Pick"
-                                Click="OnProfileClick"
+                                Name="ProfileField"
                                 Grid.Column="1">
                                 <Grid ColumnDefinitions="Auto,*,Auto">
                                     <Border Background="{DynamicResource ProfileSquareColor}" Classes="Kind">
