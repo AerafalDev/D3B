@@ -815,4 +815,19 @@ public sealed class FightActivityTests : IAsyncDisposable
 
         Assert.Equal(ActivityOutcome.Stopped, await run.Completion);
     }
+
+    [Fact]
+    public void AProfileCapturingMountsNamesTheFamiliesTicked()
+    {
+        // D533: the Dragodindes, Muldos and Volkornes are races 21, 155 and 183 of the client 3.7.14.18.
+        var activity = Activity(new FightSettings { CaptureMounts = true, CaptureMuldos = false });
+
+        Assert.Equal([21, 183], activity.MountRaces);
+    }
+
+    [Fact]
+    public void AProfileThatCapturesNoMountNamesNoFamily()
+    {
+        Assert.Empty(Activity(new FightSettings()).MountRaces);
+    }
 }

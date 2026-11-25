@@ -16,7 +16,7 @@ and fights, alone or in a group, and a desktop app shows what each bot does.
 
 - **Harvest**: tours the zones that suit your level and banks what it gathers. Ready-made profiles for each profession.
 - **Hunt**: attacks the groups of monsters your profile allows, only those it expects to beat; to farm anomaly fragments, it
-  can keep a Minor Uchronic Elixir going.
+  can keep a Minor Uchronic Elixir going; with a capture net worn, it can capture wild Dragodindes, Muldos and Volkornes.
 - **Fight AI**: plays every class, and the fight's easy challenges.
 - **Groups**: one character leads, the others follow it, fight beside it and bank with it.
 - **Studio**: your characters live, profile and route editors, a journal per bot, kept on disk for a week and saved in one click. In French and English.
@@ -43,6 +43,7 @@ D3B updates itself. After an update of the game, wait for the D3B version that s
 3. To take the character back, just play it: the bot pauses until you press Play again.
 
 Ctrl K finds a profile, a route, a character or a map; Ctrl Shift P lists every command, a character's Play and Stop among them.
+D3B opens again as you left it: its tabs, its panels and their sizes.
 
 For a group, make a **Follow** profile for the followers (*Add* in the **Library**, the bar's second entry) and name their leader in it. The
 leader plays any profile. When every account is subscribed and the followers are level 10 or more, they follow, join

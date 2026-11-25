@@ -50,7 +50,8 @@ namespace D3B.Bot.Tests.Runtime;
 /// <see cref="SubAreaId"/>, which lists <see cref="Ash"/>, which the tree's skill gathers, and <see cref="Chestnut"/>,
 /// which a lumberjack gathers from level 20. The pack's fight data holds one spell, <see cref="BlowSpellId"/>, an earth blow
 /// of 10 to 12 on an enemy for 3 AP at a range of 1 to 4, spell 0's punch, a sword, <see cref="SwordItemId"/>, striking
-/// earth 20 to 25 for 3 AP once a turn, and the two effects of the tactics' tests; no monster, breed or state.
+/// earth 20 to 25 for 3 AP once a turn, the universal capture net's taming spell, <see cref="TamingSpellId"/>, 1 AP at a range
+/// of 1 to 7 once a fight, and the two effects of the tactics' tests; no breed or state.
 /// </remarks>
 internal sealed class TestPlay : IAsyncDisposable
 {
@@ -116,6 +117,12 @@ internal sealed class TestPlay : IAsyncDisposable
     public const int VersatileChallenge = 6;
     public const int PrudentChallenge = 40;
     public const int BlowLevelId = 1_100;
+
+    // The universal capture net's taming spell and its level, as the client 3.7.14.18 holds them (D533), and a wild Muldo.
+    public const int TamingSpellId = 32_260;
+    public const int TamingLevelId = 84_805;
+    public const int MuldoId = 4_434;
+    public const short MuldoRace = 155;
     public const int SwordItemId = 6_751;
 
     // The one monster of the world, living in its sub-area, its grades from level 10 to 14.
@@ -409,8 +416,8 @@ internal sealed class TestPlay : IAsyncDisposable
                 new(108, 0, 0, '\0', 2, 2, 0, 0, 0, 0, EffectProperties.UseInFight),
             }));
             writer.Add(MonsterCatalog.EntryName, new MonsterCatalog(
-                new[] { new Monster { Id = LarvaId, FirstGrade = 0, GradeCount = 2 } },
-                new[] { new MonsterGrade { Grade = 1, Level = 10 }, new MonsterGrade { Grade = 2, Level = 14 } },
+                new[] { new Monster { Id = LarvaId, FirstGrade = 0, GradeCount = 2 }, new Monster { Id = MuldoId, Race = MuldoRace, FirstGrade = 2, GradeCount = 1 } },
+                new[] { new MonsterGrade { Grade = 1, Level = 10 }, new MonsterGrade { Grade = 2, Level = 14 }, new MonsterGrade { Grade = 1, Level = 62 } },
                 Array.Empty<MonsterSpell>(),
                 Array.Empty<byte>(),
                 Array.Empty<MonsterRatio>(),
@@ -433,14 +440,15 @@ internal sealed class TestPlay : IAsyncDisposable
         [
             new SpellLevel { Id = BlowLevelId, SpellId = BlowSpellId, Grade = 1, ApCost = 3, MinRange = 1, Range = 4, StatesCriterion = SpellLevel.NoCriterion, FirstEffect = 0, EffectCount = 1 },
             new SpellLevel { Id = 10_461, SpellId = 0, Grade = 1, ApCost = 3, MinRange = 1, Range = 1, StatesCriterion = SpellLevel.NoCriterion, FirstEffect = 1, EffectCount = 1 },
+            new SpellLevel { Id = TamingLevelId, SpellId = TamingSpellId, Grade = 1, ApCost = 1, MinRange = 1, Range = 7, MinCastInterval = 63, StatesCriterion = SpellLevel.NoCriterion, FirstEffect = 2, EffectCount = 0 },
         ];
         SpellEffect[] effects =
         [
             new SpellEffect { Uid = 1, EffectId = 97, TargetMask = 0, Triggers = 1, DiceNum = 10, DiceSide = 12, Zone = point },
             new SpellEffect { Uid = 2, EffectId = 97, TargetMask = 3, Triggers = 1, DiceNum = 6, DiceSide = 7, Zone = point },
         ];
-        Spell[] spells = [new Spell { Id = 0, NameId = 1, FirstLevel = 0, LevelCount = 1 }, new Spell { Id = BlowSpellId, NameId = BlowSpellId, FirstLevel = 1, LevelCount = 1 }];
-        int[] levelIds = [10_461, BlowLevelId];
+        Spell[] spells = [new Spell { Id = 0, NameId = 1, FirstLevel = 0, LevelCount = 1 }, new Spell { Id = BlowSpellId, NameId = BlowSpellId, FirstLevel = 1, LevelCount = 1 }, new Spell { Id = TamingSpellId, NameId = 2, FirstLevel = 2, LevelCount = 1 }];
+        int[] levelIds = [10_461, BlowLevelId, TamingLevelId];
         string[] strings = ["A", "I", "a", "a,A"];
 
         return new SpellCatalog(spells, levels, levelIds, effects, Array.Empty<SpellPreviewZone>(), Array.Empty<int>(), strings, Array.Empty<SpellVariant>(), Array.Empty<SpellBomb>(), Array.Empty<SpellBombWall>());

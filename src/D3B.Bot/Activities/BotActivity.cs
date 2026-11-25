@@ -65,6 +65,10 @@ public abstract class BotActivity
     /// <remarks>None by default: the AI plays as before.</remarks>
     public virtual ChallengePlay Challenges => ChallengePlay.None;
 
+    /// <summary>Gets the families of the wild mounts the character tames in the fights the AI plays, by their race's id (D533).</summary>
+    /// <remarks>None by default: the AI tames none.</remarks>
+    public virtual IReadOnlyList<int> MountRaces => [];
+
     /// <summary>Gets whether the run restarts the activity once it failed or made no progress a while, rather than ending it (D519).</summary>
     /// <remarks>No by default: an activity restarted begins anew (<see cref="Restart"/>), which it must allow. A failure that <see cref="ActivityException.IsFinal"/> still ends it.</remarks>
     public virtual bool RestartsAfterFailure => false;

@@ -228,6 +228,7 @@ Unreal's look made modern, all docked (D319 to D332). The breeds come back once 
 | 7s7 | Stage 7: next's icons (D532), the owner's ask. Done: Lucide 1.72.0, next's version, written by `scripts/icons.cs` under the app's keys, grey with next's stroke, its colours for a warning, an error and an update. | Done on 2026-11-25 in code and tests and in headless drawings |
 | 7s8 | The studio's shell after `next`, stage 1 of 4: the command palette (D540, the owner's « Oui, les 4 premières », the choices delegated). Done: Ctrl Shift P opens the search with `>` typed, as VS Code's; next's command centre in the title bar and next's palette (600 pixels, rows of 26); the studio's views and each character's play, pause, stop and forget as commands; the Library's word in the search. | Done on 2026-11-25 in code and tests and in headless drawings |
 | 7s9 | Stage 2: the status bar as VS Code's (D541). Done: the version and next's relay (« Relais prêt · N en jeu », red once stopped, its hover) on the left; the client and the data pack's format, the bots playing, the problems' counts, the saving and the update's restart on the right; each item opens what it names. | Done on 2026-11-25 in code and tests and in headless drawings |
+| 7s10 | Stage 3: the layout kept after a restart (D542). Done: the editor's tabs in their order, the one shown and the bottom panel's tab kept in `app.json` beside the sizes, parts and view D513 kept, back once the host runs; a tab whose subject is gone left out quietly. | Done on 2026-11-25 in code and tests |
 | 7e | The canvas of behaviors, D3B's own, as beautiful and practical as Unreal's (D311): its view, nodes, wires, selection, adding by search, undo and the stack of states (D305, D307). | To do |
 | 7e2 | The canvas finished (D311): arranging, comment boxes, collapsing into a behavior, the minimap, bookmarks, the live flow and the polish, checked with the owner. | To do |
 | 7f | The low-level nodes, conditions, events and the planning (D298). | To do |
@@ -449,6 +450,11 @@ follower) on the same map, the capture of every connection on; a capture's conte
   zones taking 478 minutes, and goes now to the nearest zone of the round not yet gone to; a journey passed by the resources
   grown back on maps its tour went through, about 1,800 for the farmer, and stops now for them, unless the tour left that
   element there. The walks and uses refused, D488's and D495's maps measured as holding. Left: seen in game.
+- **Wild mounts captured** (D533), the owner's ask of 2026-11-25 (mounts, then souls of archmonsters and dungeon bosses),
+  studied in `artifacts/studies/captures.md` (git-ignored) and the mounts' first part made in code and tests: a hunt profile's
+  « Capturer des montures » and its families, the main taming a wild mount with its worn net before any blow, the mount spared
+  until then. Left: a capture of a net's fight, then the net worn by the bot from the bag; the souls, the dungeons' bosses with
+  the dungeons' session (D520 to D529).
 - **The miner's door refused on the bank's journey** (D517), the owner's report of 2026-11-25, made in code and tests from the
   capture of the night: a walk the server refused after showing it was taken for arrived, the door used from 19 cells away, and
   the bank's journey's no path taken for no bank, the run failing still full. A walk so refused is refused, and the bank's journey
