@@ -684,6 +684,8 @@
                                 <Border Background="{DynamicResource RecessColor}">
                                     <Border.IsVisible>
                                         <MultiBinding Converter="{x:Static BoolConverters.And}">
+                                            <!--  A tab open: with none, the watermark shows, and the status bar says where the host stands.  -->
+                                            <Binding Path="!Editor.IsEmpty" />
                                             <Binding Path="Editor.Selected.NeedsHost" FallbackValue="False" />
                                             <Binding Path="IsNotRunning" />
                                         </MultiBinding>
