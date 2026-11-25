@@ -509,7 +509,9 @@ public sealed class FightActivityTests : IAsyncDisposable
         var (_, bot) = await _play.EnterAsync(GroupCell);
         var run = bot.StartActivity(Activity(new FightSettings { Place = FightPlace.Zone, Zone = zone, Heal = false }, zones: new TestPlaceZones().Add("empty")));
 
+        // No restart would bring the zone back: the run ends at once, its profile's restart on (D519).
         Assert.Equal(ActivityOutcome.Failed, await run.Completion);
+        Assert.Equal(0, run.Restarts);
 
         var reason = Assert.IsType<ActivityException>(run.Failure).Reason!;
 
@@ -789,5 +791,28 @@ public sealed class FightActivityTests : IAsyncDisposable
         Assert.Equal(InterruptionResponse.Stop, activity.OnFightOver(Ended(FightOutcome.Lost), InterruptionResponse.Resume));
         // Counted: one fight won, three lost.
         Assert.Equal(["1 fight won", "3 fights lost"], activity.Report!.Counts.Select(count => string.Format(System.Globalization.CultureInfo.InvariantCulture, (count.Text.Many is { } many && count.Text.Count != 1 ? many : count.Text.Format).In(System.Globalization.CultureInfo.InvariantCulture), [.. count.Text.Values.Select(value => value.Text ?? value.Id.ToString(System.Globalization.CultureInfo.InvariantCulture))])));
+    }
+
+    [Fact]
+    public async Task AnUnloadingThatNeverReachesABankIsTriedUpTheLadderThenRestartsTheHunt()
+    {
+        // As the harvest's (D518, D519): full in an inside whose only way out the server never walks, the banking is tried again
+        // rung after rung, then the run begins the hunt anew rather than leave the character idle.
+        var (connection, bot) = await _play.EnterAsync(300, TestPlay.OtherInsideMapId);
+
+        connection.Server(new InventoryWeightEvent { Weight = 990, MaxWeight = 1_000 });
+        await bot.ProcessedAsync();
+
+        var run = bot.StartActivity(Activity(new FightSettings { Place = FightPlace.Chosen, SubAreas = [TestPlay.SubAreaId], Heal = false }));
+
+        await _play.AdvanceUntilAsync(() => run.LastRestart is not null, TimeSpan.FromMilliseconds(500));
+
+        Assert.True(connection.Sent.Count > RecoveryLadder.Height);
+        Assert.Contains(_play.Log.GetSnapshot(), record => record.Message.Contains("the bank failed; before the next try, rung 5 of 5", StringComparison.Ordinal));
+        Assert.False(run.IsOver);
+
+        run.Stop();
+
+        Assert.Equal(ActivityOutcome.Stopped, await run.Completion);
     }
 }

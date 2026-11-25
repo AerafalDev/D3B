@@ -39,8 +39,8 @@ namespace D3B.Bot.Harvesting;
 /// </para>
 /// <para>
 /// Full at the settings' share of its pods, the character banks at the nearest bank (D79, D80), what harvesting brings or
-/// all it does not wear, no kamas, two more times after a failure that may pass; then the next step goes on from where it
-/// stands. A fight, a new connection of the client and the player's pause resume the activity, which waits as long as it
+/// all it does not wear, no kamas, tried again up the recovery ladder after a failure (D518); then the next step goes on from
+/// where it stands. A fight, a new connection of the client and the player's pause resume the activity, which waits as long as it
 /// must (D87, D88, D89). A journey or a banking that fails climbs the recovery ladder before it is tried again, and fails the
 /// activity once no rung is left (<see cref="RecoveryLadder"/>, D518); the run then restarts it, as the profile says (D519).
 /// </para>
@@ -431,7 +431,6 @@ public sealed class HarvestActivity : BotActivity
         _regrownOn = null;
         _fight = null;
         _fightItem = null;
-        _regaining = false;
         Volatile.Write(ref _waitingUntil, NotWaiting);
     }
 

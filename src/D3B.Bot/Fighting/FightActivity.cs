@@ -309,7 +309,6 @@ public sealed class FightActivity : BotActivity
         _skippedOn = null;
         _failedJourneys = 0;
         _healing = false;
-        _regaining = false;
     }
 
     /// <inheritdoc/>

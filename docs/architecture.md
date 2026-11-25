@@ -206,7 +206,8 @@ The bots run in `D3B.Bot`: what each part does today, with the decisions that ma
   error (`ActivityRun.Failure`), which the app shows (D103); one that is `IDisposable` is disposed once over.
 - **The run's restart** (D519): an activity that `RestartsAfterFailure` (the harvest's and the hunt's, by their profiles'
   `RestartAfterFailure`, on by default) is not ended by a step's error, an unloading that did not unload, or no progress for
-  `ActivityRestarts.NoProgress` (10 min with no map changed, no fight begun, no pod gained or banked; a watch of the run's own
+  `ActivityRestarts.NoProgress` (10 min with no map changed, no fight begun, no pod gained or banked, no life coming back
+  (`BotActor.LifeAt`); a watch of the run's own
   cancels the behavior it waits on, the connection gone, the player's hand, a fight and `BotActivity.WaitingUntil` excused).
   The run puts the character back in order (`Recovery.SettleAsync`, status `Restarting`), waits 30 s doubled for each
   restart of the last hour, 8 min at most, then `BotActivity.Restart` begins the activity anew, its counts kept. A failure

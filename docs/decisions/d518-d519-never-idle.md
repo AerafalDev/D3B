@@ -53,9 +53,12 @@ after being put in order, the activity fails). Builds D2, D87, D89, D504.*
 - **Why a net**: the ladder bounds the failures someone foresaw. A step that waits on what never comes, or one no one foresaw,
   a bug included, still ends or stalls the activity; the run is the one place every activity's steps go through.
 - **Made, what fails**: a step's error; an unloading that did not unload, which ended the run still full; and no progress
-  for `ActivityRestarts.NoProgress`, 10 min with no map changed, no fight begun and no pod gained or banked, the run's watch then
+  for `ActivityRestarts.NoProgress`, 10 min with no map changed, no fight begun, no pod gained or banked and no life coming
+  back, the run's watch then
   cancelling the behavior it waits on. Not counted: the connection gone, the player's hand, a fight, the wait before a restart,
-  and a wait the activity makes on purpose (`BotActivity.WaitingUntil`, the harvest's for its zones to grow back).
+  and a wait the activity makes on purpose (`BotActivity.WaitingUntil`, the harvest's for its zones to grow back). Life coming
+  back is progress, found by the review: a point each half second (D153), a character of 3,000 back from a lost fight at half
+  waits 12.5 minutes for its whole life (D481), which a watch blind to it would cut.
 - **Made, the restart**, for an activity that `RestartsAfterFailure`: the character put back in order as after an interruption
   (`Recovery.SettleAsync`), a wait of 30 s doubled for each restart of the last hour, 8 min at most, then
   `BotActivity.Restart`, which begins it anew, its counts kept, the harvest's rotation drawn again and its tours begun again. The

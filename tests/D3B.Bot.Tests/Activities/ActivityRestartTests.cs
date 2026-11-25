@@ -207,6 +207,28 @@ public sealed class ActivityRestartTests : IAsyncDisposable
     }
 
     [Fact]
+    public async Task LifeComingBackIsProgress()
+    {
+        // Measured (D153): a point each half second; back from a lost fight at a tenth of 3,000, the life takes 22 minutes to come
+        // back whole, which the harvest waits for (D481).
+        var (connection, bot) = await _play.EnterAsync(300);
+
+        connection.Server(new LifeRegenEndEvent { Life = 300, MaxLife = 3_000 });
+        connection.Server(new LifeRegenStartEvent { Interval = 5 });
+        await bot.ProcessedAsync();
+
+        var activity = new FailingActivity { Failure = _ => null };
+        var run = bot.StartActivity(activity);
+
+        await _play.AdvanceUntilAsync(() => _play.Time.GetUtcNow() - run.StartedAt >= TimeSpan.FromMinutes(20), TimeSpan.FromSeconds(5));
+
+        Assert.Equal((1, 0), (activity.Started, run.Restarts));
+
+        run.Stop();
+        await run.Completion;
+    }
+
+    [Fact]
     public async Task ThePlayersHandIsNoLackOfProgress()
     {
         var (_, bot) = await _play.EnterAsync(300);

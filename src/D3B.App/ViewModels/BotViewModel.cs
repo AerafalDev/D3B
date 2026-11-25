@@ -783,7 +783,7 @@ internal sealed partial class BotViewModel : ObservableObject
             : steps;
 
         // A run that restarted its activity says why while it runs, and that it stopped restarting once over (D519).
-        ActivityProblem = !run.IsOver ? run.LastRestart is { } restart ? _localizer.Format("ActivityRestarted", restart.Restart, CauseOf(restart.Cause)) : ""
+        ActivityProblem = !run.IsOver ? run.LastRestart is { } restart && _time.GetUtcNow() - restart.At < TimeSpan.FromHours(1) ? _localizer.Format("ActivityRestarted", restart.Restart, CauseOf(restart.Cause)) : ""
             : run.GaveUp ? _localizer.Format("ActivityGaveUp", run.LastRestart?.Restart ?? run.Restarts, run.IsStillFull ? _localizer["ActivityLeftFull"] : CauseOf(run.Failure))
             : run.Failure is ActivityException { Reason: { } reason } ? _says.Say(reason)
             : run.IsStillFull ? _localizer["ActivityLeftFull"]

@@ -126,6 +126,11 @@ public sealed class ActivityRun
         _startedAt = bot.Time.GetUtcNow();
     }
 
+    private static ActivityException NotUnloaded()
+    {
+        return new ActivityException("The character could not be unloaded, even once put back in order and out of its map.", GameText.Of(ActivityTexts.Text("NotUnloaded")));
+    }
+
     /// <summary>Stops the activity: the step in progress is cancelled, and no other starts.</summary>
     public void Stop()
     {
@@ -161,11 +166,6 @@ public sealed class ActivityRun
             // On the bot's loop, which must see the next message whatever an activity's watch does.
             BotLog.ActivityFailed(_bot.Log, _bot.Key.CharacterId, Activity.Name, exception);
         }
-    }
-
-    private static ActivityException NotUnloaded()
-    {
-        return new ActivityException("The character could not be unloaded, even once put back in order and out of its map.", GameText.Of(ActivityTexts.Text("NotUnloaded")));
     }
 
     private async Task RunAsync()
@@ -456,12 +456,13 @@ public sealed class ActivityRun
         return attempt.Token;
     }
 
-    // Looks at the bot every while: a map changed, a fight begun, pods gained or banked are progress, and so is a while when the
-    // activity could not act or waits on purpose. None for NoProgress, the behavior the run waits on is cancelled, as a failure.
+    // Looks at the bot every while: a map changed, a fight begun, pods gained or banked, life coming back are progress, and so is a
+    // while when the activity could not act or waits on purpose. Measured (D153): a point each half second, so a character of 3,000
+    // life back from a lost fight at half regains it for 12.5 minutes, which the harvest waits for whole (D481). None for NoProgress, the behavior the run waits on is cancelled, as a failure.
     private async Task WatchProgressAsync(CancellationToken cancellationToken)
     {
-        var seen = Mark();
         var since = _bot.Time.GetUtcNow();
+        var seen = Mark(since);
 
         while (!cancellationToken.IsCancellationRequested)
         {
@@ -470,7 +471,7 @@ public sealed class ActivityRun
             await Task.Delay(restarts.LookEvery, _bot.Time, cancellationToken).ConfigureAwait(false);
 
             var now = _bot.Time.GetUtcNow();
-            var mark = Mark();
+            var mark = Mark(now);
 
             if (mark != seen || IsExcused(now))
             {
@@ -497,11 +498,11 @@ public sealed class ActivityRun
         }
     }
 
-    private (long? MapId, int Fights, int Weight, bool Fighting) Mark()
+    private (long? MapId, int Fights, int Weight, bool Fighting, int? Life) Mark(DateTimeOffset now)
     {
         var state = _bot.State;
 
-        return (state.MapId, _bot.FightsBegun, state.Weight, state.IsFighting);
+        return (state.MapId, _bot.FightsBegun, state.Weight, state.IsFighting, _bot.LifeAt(now));
     }
 
     // The game connection gone, the player's hand, a fight, the wait before a restart, or the activity's own wait: none is the run stuck.
