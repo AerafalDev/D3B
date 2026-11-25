@@ -6,11 +6,11 @@ using Avalonia.Media;
 
 namespace D3B.App.Controls;
 
-/// <summary>An icon: an IntelliJ drawing on a grid of 16 units in its own colours, or a line geometry on a grid of 24 in the colour of the text around it.</summary>
+/// <summary>An icon: a drawing on a grid of 16 units in its own colours, or a line geometry on a grid of 24 in the colour of the text around it.</summary>
 /// <remarks>
 /// <para>
-/// The drawings are the IntelliJ Platform's, in <c>Themes/IntelliJIcons.axaml</c>, which <c>scripts/icons.cs</c> writes
-/// (D305, D331): they keep their colours, as IntelliJ draws them, and a tint repaints their neutral strokes and fills, such
+/// The drawings are Lucide's, as the next line's, in <c>Themes/Icons.axaml</c>, which <c>scripts/icons.cs</c> writes
+/// (D331, D532): they keep their colours, and a tint repaints their neutral strokes and fills, such
 /// as the white of an icon on the accent.
 /// </para>
 /// <para>
@@ -23,7 +23,7 @@ internal sealed class Icon : Control, ICustomHitTest
     /// <summary>The geometry's grid: an icon of any size draws it scaled from 24 units.</summary>
     private const double Grid = 24;
 
-    /// <summary>The drawings' grid, IntelliJ's.</summary>
+    /// <summary>The drawings' grid, the app's, Lucide's 24 scaled to it.</summary>
     private const double DrawingGrid = 16;
 
     /// <summary>Defines the <see cref="Data"/> property.</summary>
@@ -51,14 +51,14 @@ internal sealed class Icon : Control, ICustomHitTest
         set => SetValue(DataProperty, value);
     }
 
-    /// <summary>Gets or sets the IntelliJ drawing the icon shows, on a grid of 16 units; it wins over <see cref="Data"/>.</summary>
+    /// <summary>Gets or sets the drawing the icon shows, on a grid of 16 units; it wins over <see cref="Data"/>.</summary>
     public DrawingGroup? Drawing
     {
         get => GetValue(DrawingProperty);
         set => SetValue(DrawingProperty, value);
     }
 
-    /// <summary>Gets or sets the colour the drawing's neutral strokes and fills take, or <see langword="null"/> for IntelliJ's own.</summary>
+    /// <summary>Gets or sets the colour the drawing's neutral strokes and fills take, or <see langword="null"/> for the drawing's own.</summary>
     public IBrush? Tint
     {
         get => GetValue(TintProperty);
@@ -134,13 +134,13 @@ internal sealed class Icon : Control, ICustomHitTest
 
     private static bool IsNeutral(IBrush? brush)
     {
-        // IntelliJ's dark icons draw their lines in these greys, the ones its tinted icons repaint.
+        // The icons draw their lines in these greys, the ones a tint repaints: Lucide's in the first, as scripts/icons.cs writes them.
         return brush is ISolidColorBrush { Color: var color } && (color == Color.FromRgb(0xCE, 0xD0, 0xD6) || color == Color.FromRgb(0xB4, 0xB8, 0xBF));
     }
 
     private static IBrush? Grey(IBrush? brush)
     {
-        // A disabled control's icon loses its colour, as IntelliJ draws it: a green play turns grey.
+        // A disabled control's icon loses its colour: a green play turns grey.
         if (brush is not ISolidColorBrush { Color: var color })
             return brush;
 

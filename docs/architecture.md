@@ -732,10 +732,11 @@ bottom panel and the Details hidden until needed.
   `Assets/d3b.ico` for the window, the taskbar, the executable and the installer, `Assets/d3b.png` in the title row and
   the home page.
   The logo opens the home page; the gear moved to the activity bar (D513).
-- **Icons** (D305, D331, D337): the IntelliJ Platform's, `Themes/IntelliJIcons.axaml`, which `scripts/icons.cs` writes, each
-  file's Apache 2.0 notice checked, keyed as `General.Search`; `Icon` draws one on its grid of 16 in IntelliJ's colours,
-  repaints its neutral greys with a `Tint`, and greys it while its control is disabled; Lucide's are gone (D355), `Icon`
-  drawing a geometry for a module page's own icon alone. The game's own concepts take the client's own
+- **Icons** (D305, D331, D337, D532): Lucide's, as the next line draws them (1.72.0, a stroke of 1.5 on its grid of 24, grey
+  but for a warning, an error, an update offered, play and success), `Themes/Icons.axaml`, which `scripts/icons.cs` writes, its
+  ISC license checked, under the app's own keys such as `General.Search`, which stayed the IntelliJ icons' so that no view
+  changed; `Icon` draws one on its grid of 16, repaints its neutral greys with a `Tint`, and greys it while its control is
+  disabled, and draws a geometry for a module page's own icon. The game's own concepts take the client's own
   glyphs from the pack, painted in the colour of the text around them by `GlyphIcon`, a neutral dot without the pack
   (D336, D343); a character's portrait is its class's head on its breed's colour, its initials without it (`Portrait`,
   `BreedColors`, D343).
@@ -908,7 +909,7 @@ bottom panel and the Details hidden until needed.
   folder shows them. In the folders' view, as an IDE's
   explorer, several rows chosen, the keyboard, drag and drop, cut and paste, IntelliJ's menus, the kinds shown, the open
   tab located, the folds kept in `app.json`; Add and a search over the project's tree, its folders first, then their assets and the files that do not read, then those given with
-  D3B, read only; each kind its IntelliJ icon on its colour (`AssetKinds`), how many use it, a dot while its tab has
+  D3B, read only; each kind its icon on its colour (`AssetKinds`), how many use it, a dot while its tab has
   changes not saved. A click chooses an asset for the inspector or folds a folder, a double click or Enter opens a
   profile in its tab; the right click opens, finds what uses it, renames in place (F2), duplicates (Ctrl D), moves,
   exports, shows its file and deletes, a given asset copied into the project instead. Add makes a profile, a folder named
