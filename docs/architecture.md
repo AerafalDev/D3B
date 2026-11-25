@@ -854,9 +854,13 @@ bottom panel and the Details hidden until needed.
   section; a map, found by coordinates or name once a
   letter is typed, shows in preview in the tab of the character chosen, else of the first online or known (D341). Help's
   Shortcuts opens it on the commands.
-- **The status bar**, 24 pixels as `next`'s (D531): on the left, after a small blue dot, the app's name and version
-  (`MainViewModel.StatusVersion`), then where the host stands with a dot, its detail in a tooltip; on the right the client build,
-  whether everything is saved, and once an update is downloaded, a button that restarts the app into it (D173).
+- **The status bar**, 24 pixels as `next`'s (D531, D541, `StatusBarViewModel` and `StatusFacts` in `D3B.App.ViewModels.Studio`,
+  read at the window's refresh): on the left, after a small blue dot, the app's name and version, then the relay as `next` says it
+  (« Relais prêt · N en jeu », starting, closed, stopped in red with the host's failure), its tooltip only what the bar does not say;
+  on the right the client build and, once the host opened it, the data pack's format, its extractor in the tooltip, the bots playing,
+  the problems' errors and warnings (read at every refresh, `BottomPanelViewModel.Refresh`), whether everything is saved, and once an
+  update is downloaded, « Redémarrer pour passer à … » (D173). Each item opens what it names: the settings' About, the journal, the
+  settings' Files, the Characters view, the problems' tab; the saving item saves all, the update's restarts into it.
 - **Motions** (D320, D347): short and easing out. The studio's buttons fade their surface, edge and text, a tool gives
   under the press; menus and tooltips fade in; gauges (`ShareBar`) ease to their share; chevrons turn; what unfolds or is
   chosen fades in (`FadeIn`). A surface lit on hover rests on `ClearColor`, the hover's grey with no alpha, never on

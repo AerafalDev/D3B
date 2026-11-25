@@ -36,7 +36,7 @@ D3B updates itself. After an update of the game, wait for the D3B version that s
 
 ## Getting started
 
-1. Start D3B, **then** start Dofus and choose a character. It shows in D3B's **Characters**, the first entry of the bar
+1. Start D3B, and once its status bar says *Relay ready*, start Dofus and choose a character. It shows in D3B's **Characters**, the first entry of the bar
    on the left.
 2. Double-click it in Characters: its tab opens, and the column on its left chooses its profile and plays it (or press
    F5).
