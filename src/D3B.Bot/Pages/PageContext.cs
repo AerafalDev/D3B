@@ -17,18 +17,16 @@ namespace D3B.Bot.Pages;
 /// </remarks>
 public abstract class PageContext
 {
-    private const string French = "fr";
-
     private readonly Dictionary<ResourceManager, PageTexts> _texts = [];
 
     /// <summary>Gets the host's services: the bots, the activities, the pack's data, and the services the page's module registered.</summary>
     public abstract IServiceProvider Services { get; }
 
-    /// <summary>Gets the language the app shows its texts in: French or English.</summary>
+    /// <summary>Gets the language the app shows its texts in: French, English or Spanish.</summary>
     public abstract CultureInfo Culture { get; }
 
     /// <summary>Gets the language of the pack's texts that goes with the app's (<see cref="TextLanguages"/>).</summary>
-    public string GameLanguage => Culture.TwoLetterISOLanguageName == French ? TextLanguages.French : TextLanguages.English;
+    public string GameLanguage => TextLanguages.Of(Culture.TwoLetterISOLanguageName);
 
     /// <summary>Raised when the app's language changes.</summary>
     public event EventHandler? CultureChanged;

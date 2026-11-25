@@ -1,0 +1,548 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="Name" xml:space="preserve">
+    <value>Recolección</value>
+  </data>
+  <data name="SectionWhat" xml:space="preserve">
+    <value>Qué</value>
+  </data>
+  <data name="SectionWhere" xml:space="preserve">
+    <value>Dónde</value>
+  </data>
+  <data name="SectionBank" xml:space="preserve">
+    <value>Banco</value>
+  </data>
+  <data name="Resources" xml:space="preserve">
+    <value>Lista</value>
+  </data>
+  <data name="ResourcesHelp" xml:space="preserve">
+    <value>En orden, la primera primero, de cualquier oficio o sin oficio.</value>
+  </data>
+  <data name="Area" xml:space="preserve">
+    <value>Región</value>
+  </data>
+  <data name="AreaHelp" xml:space="preserve">
+    <value>Sola, equivale a sus subzonas donde crecen los recursos.</value>
+  </data>
+  <data name="SubAreas" xml:space="preserve">
+    <value>Subzonas</value>
+  </data>
+  <data name="SubAreasHelp" xml:space="preserve">
+    <value>Primero, aquellas donde crecen los recursos.</value>
+  </data>
+  <data name="OwnBanking" xml:space="preserve">
+    <value>Reglas de banco propias</value>
+  </data>
+  <data name="OwnBankingHelp" xml:space="preserve">
+    <value>Desactivado, este perfil va al banco como dicen los ajustes de la aplicación (Ajustes, Bots): la parte de pods y si toma un zaap hacia el banco. Activado, va al banco con la parte de abajo y toma un zaap hacia el banco según su ajuste de zaaps.</value>
+  </data>
+  <data name="FullAt" xml:space="preserve">
+    <value>Pods llenos al</value>
+  </data>
+  <data name="UseZaaps" xml:space="preserve">
+    <value>Tomar zaaps</value>
+  </data>
+  <data name="UseZaapsHelp" xml:space="preserve">
+    <value>Desactivado, el personaje siempre camina, en cada trayecto del perfil: hacia su lugar, de vuelta y hacia el banco. Activado, toma un zaap cuando ahorra suficientes mapas y puede pagarlo; hacia el banco, solo si los ajustes de la aplicación también lo permiten, salvo si el perfil va al banco según sus propias reglas.</value>
+  </data>
+  <data name="Deposit" xml:space="preserve">
+    <value>Qué se deposita</value>
+  </data>
+  <data name="DepositHarvest" xml:space="preserve">
+    <value>Lo que da la recolección</value>
+  </data>
+  <data name="DepositAll" xml:space="preserve">
+    <value>Todo menos lo equipado</value>
+  </data>
+  <data name="RuleWhat" xml:space="preserve">
+    <value>Elige recursos.</value>
+  </data>
+  <data name="RuleWhere" xml:space="preserve">
+    <value>Elige una región o subzonas.</value>
+  </data>
+  <data name="FigureNumber" xml:space="preserve">
+    <value>{0}</value>
+  </data>
+  <data name="FigureOutOf" xml:space="preserve">
+    <value>{0} de {1}</value>
+  </data>
+  <data name="FigureNone" xml:space="preserve">
+    <value>Ninguno</value>
+  </data>
+  <data name="FigureMapsOne" xml:space="preserve">
+    <value>mapa por recorrer</value>
+  </data>
+  <data name="FigureMapsMany" xml:space="preserve">
+    <value>mapas por recorrer</value>
+  </data>
+  <data name="FigureProbableOne" xml:space="preserve">
+    <value>mapa probable</value>
+  </data>
+  <data name="FigureProbableMany" xml:space="preserve">
+    <value>mapas probables</value>
+  </data>
+  <data name="FigureResourcesPresent" xml:space="preserve">
+    <value>recursos presentes</value>
+  </data>
+  <data name="FigureResourcesOne" xml:space="preserve">
+    <value>recurso en la zona</value>
+  </data>
+  <data name="FigureResourcesMany" xml:space="preserve">
+    <value>recursos en la zona</value>
+  </data>
+  <data name="FigureBankOne" xml:space="preserve">
+    <value>{0} mapa</value>
+  </data>
+  <data name="FigureBankMany" xml:space="preserve">
+    <value>{0} mapas</value>
+  </data>
+  <data name="FigureBank" xml:space="preserve">
+    <value>hasta el banco más cercano</value>
+  </data>
+  <data name="FigureNoBank" xml:space="preserve">
+    <value>banco al alcance a pie</value>
+  </data>
+  <data name="DoingStart" xml:space="preserve">
+    <value>Preparándose</value>
+  </data>
+  <data name="DoingHarvestOne" xml:space="preserve">
+    <value>Recolectando {1}, {0} más en el mapa</value>
+  </data>
+  <data name="DoingHarvestMany" xml:space="preserve">
+    <value>Recolectando {1}, {0} más en el mapa</value>
+  </data>
+  <data name="DoingHarvestLast" xml:space="preserve">
+    <value>Recolectando {0}</value>
+  </data>
+  <data name="DoingTravel" xml:space="preserve">
+    <value>Hacia el mapa siguiente</value>
+  </data>
+  <data name="DoingReturn" xml:space="preserve">
+    <value>Volviendo a la zona</value>
+  </data>
+  <data name="DoingBank" xml:space="preserve">
+    <value>Yendo al banco</value>
+  </data>
+  <data name="DoingWaitGrow" xml:space="preserve">
+    <value>Esperando a que los recursos vuelvan a crecer</value>
+  </data>
+  <data name="DoingPlayer" xml:space="preserve">
+    <value>En pausa, en tus manos</value>
+  </data>
+  <data name="DoingDisconnected" xml:space="preserve">
+    <value>Esperando a que el cliente se reconecte</value>
+  </data>
+  <data name="Progress" xml:space="preserve">
+    <value>Ronda {0}, mapa {1} de {2}</value>
+  </data>
+  <data name="CountItem" xml:space="preserve">
+    <value>{0} {1}</value>
+  </data>
+  <data name="CountBanksOne" xml:space="preserve">
+    <value>{0} banco</value>
+  </data>
+  <data name="CountBanksMany" xml:space="preserve">
+    <value>{0} bancos</value>
+  </data>
+  <data name="WarningLevel" xml:space="preserve">
+    <value>{0} requiere {1} {2}, el personaje es {3}</value>
+  </data>
+  <data name="WarningGoneRound" xml:space="preserve">
+    <value>La ronda {0} daba vueltas sin recolectar nada ni recorrer ningún mapa nuevo, y terminó en el mapa {1}</value>
+  </data>
+  <data name="FailNoZone" xml:space="preserve">
+    <value>La zona no contiene ningún mapa que recolectar.</value>
+  </data>
+  <data name="FailNothing" xml:space="preserve">
+    <value>Ningún mapa de la zona tiene un recurso que recolectar.</value>
+  </data>
+  <data name="FailUnreachable" xml:space="preserve">
+    <value>No se puede llegar a ningún mapa de la zona.</value>
+  </data>
+  <data name="FailLost" xml:space="preserve">
+    <value>El camino por la zona falló tres veces seguidas.</value>
+  </data>
+  <data name="FailStillFullHarvest" xml:space="preserve">
+    <value>Sigue lleno tras pasar por el banco, {0} de {1} pods: lo que queda no es de la recolección. Deposita todo menos lo equipado, o sube la parte del {2} %.</value>
+  </data>
+  <data name="FailStillFullAll" xml:space="preserve">
+    <value>Sigue lleno tras pasar por el banco, {0} de {1} pods: lo que lleva equipado pesa más que la parte del {2} %. Súbela.</value>
+  </data>
+  <data name="IsolatedMaps" xml:space="preserve">
+    <value>Mapas aislados</value>
+  </data>
+  <data name="IsolatedMapsHelp" xml:space="preserve">
+    <value>Solo accesibles con un gran rodeo, se recorren al final.</value>
+  </data>
+  <data name="FigureIsolatedOne" xml:space="preserve">
+    <value>mapa aislado, descartado</value>
+  </data>
+  <data name="FigureIsolatedMany" xml:space="preserve">
+    <value>mapas aislados, descartados</value>
+  </data>
+  <data name="FigureIsolatedLastOne" xml:space="preserve">
+    <value>mapa aislado, recorrido al final</value>
+  </data>
+  <data name="FigureIsolatedLastMany" xml:space="preserve">
+    <value>mapas aislados, recorridos al final</value>
+  </data>
+  <data name="AfterFight" xml:space="preserve">
+    <value>Tras un combate</value>
+  </data>
+  <data name="AfterFightHelp" xml:space="preserve">
+    <value>Al terminar el combate, la recolección se reanuda, se pausa o se detiene.</value>
+  </data>
+  <data name="AfterFightResume" xml:space="preserve">
+    <value>Reanudar</value>
+  </data>
+  <data name="AfterFightPause" xml:space="preserve">
+    <value>Pausar</value>
+  </data>
+  <data name="AfterFightStop" xml:space="preserve">
+    <value>Detener</value>
+  </data>
+  <data name="DoingFightProtector" xml:space="preserve">
+    <value>Un protector atacó: esperando el final del combate</value>
+  </data>
+  <data name="DoingFightAggression" xml:space="preserve">
+    <value>Atacado: esperando el final del combate</value>
+  </data>
+  <data name="NoteProtectorOf" xml:space="preserve">
+    <value>un protector, al terminar de recolectar {0}</value>
+  </data>
+  <data name="NoteProtector" xml:space="preserve">
+    <value>un protector, al terminar una recolección</value>
+  </data>
+  <data name="NoteAggression" xml:space="preserve">
+    <value>una agresión</value>
+  </data>
+  <data name="CountFightsOne" xml:space="preserve">
+    <value>{0} combate, protectores: {1}</value>
+  </data>
+  <data name="CountFightsMany" xml:space="preserve">
+    <value>{0} combates, protectores: {1}</value>
+  </data>
+  <data name="DoingWaitGrowFor" xml:space="preserve">
+    <value>Esperando a que los recursos vuelvan a crecer, el próximo en {0} s</value>
+  </data>
+  <data name="ProgressGrowing" xml:space="preserve">
+    <value>Ronda {0}, mapa {1} de {2}, {3} volviendo a crecer</value>
+  </data>
+  <data name="CountItemRate" xml:space="preserve">
+    <value>{0} {1}, {2}/h</value>
+  </data>
+  <data name="CountExperience" xml:space="preserve">
+    <value>{0} +{1} XP</value>
+  </data>
+  <data name="DepositTo" xml:space="preserve">
+    <value>Cofre</value>
+  </data>
+  <data name="DepositToOwnChest" xml:space="preserve">
+    <value>Su propio cofre en el banco</value>
+  </data>
+  <data name="DepositToGuildChest" xml:space="preserve">
+    <value>El cofre del gremio</value>
+  </data>
+  <data name="DepositToHelp" xml:space="preserve">
+    <value>Lo que el cofre del gremio rechaza va al suyo propio.</value>
+  </data>
+  <data name="SectionCare" xml:space="preserve">
+    <value>Cuidados y combates</value>
+  </data>
+  <data name="OpenBags" xml:space="preserve">
+    <value>Abrir los sacos de recursos</value>
+  </data>
+  <data name="OpenBagsHelp" xml:space="preserve">
+    <value>En cuanto una recolección da uno.</value>
+  </data>
+  <data name="Heal" xml:space="preserve">
+    <value>Curarse</value>
+  </data>
+  <data name="HealBelow" xml:space="preserve">
+    <value>Curarse por debajo de</value>
+  </data>
+  <data name="Food" xml:space="preserve">
+    <value>Comida</value>
+  </data>
+  <data name="FoodHelp" xml:space="preserve">
+    <value>En orden, hasta tener la vida llena; sin elección, lo que el inventario contiene que solo cura, la cura más pequeña primero; si no, la vida se regenera hasta la parte.</value>
+  </data>
+  <data name="DoingOpenBag" xml:space="preserve">
+    <value>Abriendo {0}</value>
+  </data>
+  <data name="AfterLostFight" xml:space="preserve">
+    <value>Tras un combate perdido</value>
+  </data>
+  <data name="AfterLostFightHelp" xml:space="preserve">
+    <value>El personaje vuelve con la mitad de su vida: al reanudar, primero recupera toda su vida, comiendo o esperando. La recolección continúa sin importar cuántos combates se pierdan seguidos.</value>
+  </data>
+  <data name="AfterLostFightResume" xml:space="preserve">
+    <value>Reanudar una vez curado</value>
+  </data>
+  <data name="AfterLostFightPause" xml:space="preserve">
+    <value>Pausar</value>
+  </data>
+  <data name="AfterLostFightStop" xml:space="preserve">
+    <value>Detener</value>
+  </data>
+  <data name="DoingRegain" xml:space="preserve">
+    <value>Recuperando vida tras un combate perdido: {0} de {1}</value>
+  </data>
+  <data name="DoingEat" xml:space="preserve">
+    <value>Curándose: come {0}</value>
+  </data>
+  <data name="DoingRegenerate" xml:space="preserve">
+    <value>Esperando a que su vida se regenere, {0} s</value>
+  </data>
+  <data name="CountBagsOne" xml:space="preserve">
+    <value>{0} saco abierto</value>
+  </data>
+  <data name="CountBagsMany" xml:space="preserve">
+    <value>{0} sacos abiertos</value>
+  </data>
+  <data name="CountEatenOne" xml:space="preserve">
+    <value>{0} alimento comido</value>
+  </data>
+  <data name="CountEatenMany" xml:space="preserve">
+    <value>{0} alimentos comidos</value>
+  </data>
+  <data name="WarningChestRefused" xml:space="preserve">
+    <value>El cofre del gremio rechazó algunas pilas: fueron al cofre propio del personaje</value>
+  </data>
+  <data name="WarningChestNone" xml:space="preserve">
+    <value>No se llegó a ningún cofre del gremio: la recolección fue al cofre propio del personaje</value>
+  </data>
+  <data name="RuleJobs" xml:space="preserve">
+    <value>Elige al menos un oficio.</value>
+  </data>
+  <data name="Mode" xml:space="preserve">
+    <value>Recursos</value>
+  </data>
+  <data name="ModeHelp" xml:space="preserve">
+    <value>Por oficio, deciden los niveles de cada personaje; como lista, en su orden.</value>
+  </data>
+  <data name="ModeByProfession" xml:space="preserve">
+    <value>Por oficio</value>
+  </data>
+  <data name="ModeList" xml:space="preserve">
+    <value>Lista</value>
+  </data>
+  <data name="Jobs" xml:space="preserve">
+    <value>Oficios</value>
+  </data>
+  <data name="JobsHelp" xml:space="preserve">
+    <value>Todos marca los cinco oficios; sin oficio, el agua de los pozos y lo demás.</value>
+  </data>
+  <data name="Excluded" xml:space="preserve">
+    <value>Descartados</value>
+  </data>
+  <data name="ExcludedHelp" xml:space="preserve">
+    <value>Nunca se recolectan, aunque sean de un oficio elegido.</value>
+  </data>
+  <data name="Order" xml:space="preserve">
+    <value>Orden</value>
+  </data>
+  <data name="OrderHelp" xml:space="preserve">
+    <value>En cada mapa; los demás recursos del mapa van después. Por turnos: primero el oficio recolectado hace más tiempo, y las zonas que elige la actividad se reparten entre los oficios.</value>
+  </data>
+  <data name="OrderNearest" xml:space="preserve">
+    <value>El más cercano primero</value>
+  </data>
+  <data name="OrderHighestLevel" xml:space="preserve">
+    <value>Mayor nivel primero</value>
+  </data>
+  <data name="OrderBalanced" xml:space="preserve">
+    <value>Cada oficio por turnos</value>
+  </data>
+  <data name="Place" xml:space="preserve">
+    <value>Lugar</value>
+  </data>
+  <data name="PlaceHelp" xml:space="preserve">
+    <value>Automático: las subzonas más ricas en lo que cada personaje puede recolectar a sus niveles, recorridas por turnos. Subzonas: las que tú nombras. Zona: los mapas de una de las zonas del proyecto.</value>
+  </data>
+  <data name="PlaceAutomatic" xml:space="preserve">
+    <value>Automático</value>
+  </data>
+  <data name="PlaceChosen" xml:space="preserve">
+    <value>Subzonas</value>
+  </data>
+  <data name="SafeLevel" xml:space="preserve">
+    <value>No por encima de su nivel</value>
+  </data>
+  <data name="SafeLevelHelp" xml:space="preserve">
+    <value>Descarta las subzonas por encima del nivel del personaje, cuyos monstruos lo atacarían.</value>
+  </data>
+  <data name="Rotation" xml:space="preserve">
+    <value>Subzonas en rotación</value>
+  </data>
+  <data name="RotationUnit" xml:space="preserve">
+    <value>subzonas</value>
+  </data>
+  <data name="RotationHelp" xml:space="preserve">
+    <value>La actividad recorre, una tras otra, ese número de subzonas de entre las diez más ricas a las que llega, y las vuelve a sortear una vez recorrida cada una, para que los recursos vuelvan a crecer mientras tanto; las zonas del mejor recurso de cada oficio siempre están entre ellas. 1 se queda en la más rica. Las subzonas que valen menos de un cuarto de la más rica se descartan.</value>
+  </data>
+  <data name="ZaapSaving" xml:space="preserve">
+    <value>Zaap si ahorra al menos</value>
+  </data>
+  <data name="ZaapSavingUnit" xml:space="preserve">
+    <value>mapas</value>
+  </data>
+  <data name="ZaapSavingHelp" xml:space="preserve">
+    <value>En cada trayecto de la ronda, incluido el del banco. 1 toma un zaap en cuanto ahorra un mapa.</value>
+  </data>
+  <data name="PlaceOne" xml:space="preserve">
+    <value>{1}, {0} mapa</value>
+  </data>
+  <data name="PlaceMany" xml:space="preserve">
+    <value>{1}, {0} mapas</value>
+  </data>
+  <data name="PlaceUnseen" xml:space="preserve">
+    <value>Niveles aún no vistos</value>
+  </data>
+  <data name="PlaceNone" xml:space="preserve">
+    <value>Nada que recolectar a sus niveles</value>
+  </data>
+  <data name="FigureAutomatic" xml:space="preserve">
+    <value>Auto</value>
+  </data>
+  <data name="FigureAutomaticLabel" xml:space="preserve">
+    <value>lugar elegido para cada personaje</value>
+  </data>
+  <data name="FailNoPlace" xml:space="preserve">
+    <value>Ninguna subzona de su nivel tiene un recurso que pueda recolectar.</value>
+  </data>
+  <data name="ProgressAt" xml:space="preserve">
+    <value>{4}, ronda {0}, mapa {1} de {2}</value>
+  </data>
+  <data name="ProgressAtGrowing" xml:space="preserve">
+    <value>{4}, ronda {0}, mapa {1} de {2}, {3} volviendo a crecer</value>
+  </data>
+  <data name="PresetAuto" xml:space="preserve">
+    <value>Recolección automática</value>
+  </data>
+  <data name="PresetLumberjack" xml:space="preserve">
+    <value>Leñador auto</value>
+  </data>
+  <data name="PresetMiner" xml:space="preserve">
+    <value>Minero auto</value>
+  </data>
+  <data name="PresetAlchemist" xml:space="preserve">
+    <value>Alquimista auto</value>
+  </data>
+  <data name="PresetFarmer" xml:space="preserve">
+    <value>Campesino auto</value>
+  </data>
+  <data name="PresetFisherman" xml:space="preserve">
+    <value>Pescador auto</value>
+  </data>
+  <data name="ChallengeReward" xml:space="preserve">
+    <value>Bonificación de los desafíos</value>
+  </data>
+  <data name="ChallengeRewardHelp" xml:space="preserve">
+    <value>Lo que dan los desafíos superados del combate. El bot lo ajusta durante la colocación de cada combate que juega su IA; en grupo, cuenta el del líder. Como lo ajusta el cliente: no se envía nada.</value>
+  </data>
+  <data name="ChallengeRewardDrop" xml:space="preserve">
+    <value>Botín</value>
+  </data>
+  <data name="ChallengeRewardExperience" xml:space="preserve">
+    <value>Experiencia</value>
+  </data>
+  <data name="ChallengeRewardClient" xml:space="preserve">
+    <value>Como lo ajusta el cliente</value>
+  </data>
+  <data name="Challenges" xml:space="preserve">
+    <value>Desafíos</value>
+  </data>
+  <data name="ChallengesHelp" xml:space="preserve">
+    <value>Los desafíos que la IA intenta superar. Fáciles: los que solo piden cosas de su propio turno (sus PM, sus hechizos, la celda donde termina). Abandona uno cuando el combate se considera arriesgado, o cuando mantenerlo costaría más de lo que da su bonificación; en grupo, cuenta la elección del líder.</value>
+  </data>
+  <data name="ChallengesNone" xml:space="preserve">
+    <value>Ninguno</value>
+  </data>
+  <data name="ChallengesEasy" xml:space="preserve">
+    <value>Fáciles</value>
+  </data>
+  <data name="AiFights" xml:space="preserve">
+    <value>La IA combate</value>
+  </data>
+  <data name="AiFightsHelp" xml:space="preserve">
+    <value>La IA juega el combate de un protector o de una agresión; desmarcado, lo juegas tú.</value>
+  </data>
+  <data name="MessageAutomatic" xml:space="preserve">
+    <value>El lugar se elige según los niveles de cada personaje que juega este perfil: dáselo a uno, en la página Cuentas, para verlo.</value>
+  </data>
+  <data name="PlaceZone" xml:space="preserve">
+    <value>Zona</value>
+  </data>
+  <data name="Zone" xml:space="preserve">
+    <value>Zona</value>
+  </data>
+  <data name="ZoneHelp" xml:space="preserve">
+    <value>El personaje solo recolecta en los mapas de esta zona, que recorre en una ronda, y va allí por sí mismo. Las zonas se dibujan en el mapa del mundo.</value>
+  </data>
+  <data name="RuleZone" xml:space="preserve">
+    <value>Elige una zona.</value>
+  </data>
+  <data name="FailZoneGone" xml:space="preserve">
+    <value>La zona que nombra este perfil no está en el proyecto.</value>
+  </data>
+  <data name="FailStuckMapUnknown" xml:space="preserve">
+    <value>El mapa del personaje sigue siendo desconocido tras dos minutos.</value>
+  </data>
+  <data name="FailStuckUsing" xml:space="preserve">
+    <value>Sigue usando un elemento tras dos minutos, incluso tras poner orden.</value>
+  </data>
+  <data name="FailStuckInDialog" xml:space="preserve">
+    <value>Sigue en un diálogo o un intercambio tras dos minutos, incluso tras poner orden.</value>
+  </data>
+  <data name="FailStuckWalking" xml:space="preserve">
+    <value>Sigue caminando tras dos minutos, incluso tras poner orden.</value>
+  </data>
+  <data name="RestartAfterFailure" xml:space="preserve">
+    <value>Reiniciar tras un fallo</value>
+  </data>
+  <data name="RestartAfterFailureHelp" xml:space="preserve">
+    <value>Cuando la actividad falla por un motivo que puede pasar, o no hace nada durante diez minutos, el personaje se vuelve a poner en orden y la actividad empieza de nuevo, tras 30 segundos y luego cada vez más tarde, seis veces por hora como máximo: el personaje no se queda inactivo hasta que el juego lo desconecte. Un perfil que no puede funcionar, o que la detengas tú, la termina igualmente.</value>
+  </data>
+</root>

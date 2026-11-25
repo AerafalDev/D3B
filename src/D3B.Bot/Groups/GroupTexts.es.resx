@@ -1,0 +1,152 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="Name" xml:space="preserve">
+    <value>Seguir</value>
+  </data>
+  <data name="Master" xml:space="preserve">
+    <value>Líder</value>
+  </data>
+  <data name="MasterHelp" xml:space="preserve">
+    <value>El personaje al que sigue este, mapa tras mapa, en el grupo que dirige: el líder juega su propio perfil y dirige en cuanto este bot lo sigue.</value>
+  </data>
+  <data name="RuleMaster" xml:space="preserve">
+    <value>Elige al líder.</value>
+  </data>
+  <data name="DoingStart" xml:space="preserve">
+    <value>Empieza a seguir</value>
+  </data>
+  <data name="DoingNoMaster" xml:space="preserve">
+    <value>Espera a que su líder se conecte</value>
+  </data>
+  <data name="DoingMasterDisconnected" xml:space="preserve">
+    <value>Espera a {0}, desconectado</value>
+  </data>
+  <data name="DoingMasterPaused" xml:space="preserve">
+    <value>Espera a {0}, en pausa</value>
+  </data>
+  <data name="DoingFollows" xml:space="preserve">
+    <value>Sigue a {0}</value>
+  </data>
+  <data name="DoingJoinsFight" xml:space="preserve">
+    <value>Se une al combate de {0}</value>
+  </data>
+  <data name="DoingGives" xml:space="preserve">
+    <value>Da sus objetos a {0}</value>
+  </data>
+  <data name="DoingJoins" xml:space="preserve">
+    <value>Va hacia {0}</value>
+  </data>
+  <data name="DoingStuck" xml:space="preserve">
+    <value>No encuentra camino hacia {0}, vuelve a intentarlo</value>
+  </data>
+  <data name="DoingToDungeon" xml:space="preserve">
+    <value>Va a la mazmorra en la que está {0}</value>
+  </data>
+  <data name="DoingEntersDungeon" xml:space="preserve">
+    <value>Entra en la mazmorra detrás de {0}</value>
+  </data>
+  <data name="DoingNoDungeonKey" xml:space="preserve">
+    <value>Espera en la puerta: no tiene llave para entrar en la mazmorra detrás de {0}</value>
+  </data>
+  <data name="DoingTurnedAway" xml:space="preserve">
+    <value>Espera en la puerta: el guardián no lo dejó entrar en la mazmorra detrás de {0}</value>
+  </data>
+  <data name="DoingLeavesDungeon" xml:space="preserve">
+    <value>Sale de la mazmorra detrás de {0}</value>
+  </data>
+  <data name="DoingParty" xml:space="preserve">
+    <value>Se une al grupo de {0}</value>
+  </data>
+  <data name="DoingLeaves" xml:space="preserve">
+    <value>Deja un grupo que su líder no dirige</value>
+  </data>
+  <data name="WaitingDisconnected" xml:space="preserve">
+    <value>Espera a {0}, desconectado</value>
+  </data>
+  <data name="WaitingPaused" xml:space="preserve">
+    <value>Espera a {0}, en pausa</value>
+  </data>
+  <data name="WaitingFighting" xml:space="preserve">
+    <value>Espera a {0}, en combate</value>
+  </data>
+  <data name="WaitingAway" xml:space="preserve">
+    <value>Espera a {0}, en camino</value>
+  </data>
+  <data name="WaitingOutOfParty" xml:space="preserve">
+    <value>Espera a que {0} se una al grupo</value>
+  </data>
+  <data name="WaitingHealing" xml:space="preserve">
+    <value>Espera a {0}, que recupera su vida</value>
+  </data>
+  <data name="DoingEat" xml:space="preserve">
+    <value>Se cura: come {0}</value>
+  </data>
+  <data name="DoingRegenerate" xml:space="preserve">
+    <value>Espera a que su vida se regenere, {0} s</value>
+  </data>
+  <data name="LeftBehind" xml:space="preserve">
+    <value>Sigue sin {0}, ausente desde hace cinco minutos</value>
+  </data>
+  <data name="WaitingSeveral" xml:space="preserve">
+    <value>Espera a {0}</value>
+  </data>
+  <data name="FailItself" xml:space="preserve">
+    <value>Un personaje no puede seguirse a sí mismo.</value>
+  </data>
+  <data name="FailMasterFollows" xml:space="preserve">
+    <value>Su líder sigue a otro personaje: un seguidor nunca dirige.</value>
+  </data>
+  <data name="FailLeads" xml:space="preserve">
+    <value>Este personaje dirige a sus propios seguidores: no puede seguir a otro.</value>
+  </data>
+  <data name="FailFull" xml:space="preserve">
+    <value>Su líder ya dirige a siete seguidores, tantos como caben en un grupo además de él.</value>
+  </data>
+  <data name="FailFollows" xml:space="preserve">
+    <value>Este personaje ya sigue a un líder.</value>
+  </data>
+  <data name="FailNoMaster" xml:space="preserve">
+    <value>No se ha elegido ningún líder.</value>
+  </data>
+</root>

@@ -50,7 +50,7 @@ public sealed class PageTexts : INotifyPropertyChanged
     /// <returns>The text.</returns>
     public string Plural(string key, long count)
     {
-        // French counts 0 as singular, English as plural, as the app's own texts do (D94).
+        // French counts 0 as singular, English and Spanish as plural, as the app's own texts do (D94).
         var one = Culture.TwoLetterISOLanguageName == French ? count is 0 or 1 : count is 1;
 
         return Format(key + (one ? "One" : "Other"), count);

@@ -3,7 +3,7 @@ using D3B.Bot.Localization;
 
 namespace D3B.Studio.Behaviors;
 
-/// <summary>The behaviors' texts, D3B's nodes' sentences among them, in English and French (<c>BehaviorTexts.resx</c>, <c>BehaviorTexts.fr.resx</c>), which the app shows in its language (D96).</summary>
+/// <summary>The behaviors' texts, D3B's nodes' sentences among them, in English, French and Spanish (<c>BehaviorTexts.resx</c>, <c>BehaviorTexts.fr.resx</c>, <c>BehaviorTexts.es.resx</c>), which the app shows in its language (D96).</summary>
 internal static class BehaviorTexts
 {
     /// <summary>Gets the texts' resources.</summary>

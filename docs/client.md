@@ -621,8 +621,9 @@ The five files share one Ankama format, little-endian throughout:
 Every file has 339,912 numbered texts, identifiers 1 to 1,200,860, and 7,501 keyed ones, 347,413 distinct texts; every
 offset starts a text. The texts take 24.0 MiB in French and 21.7 MiB in English.
 
-Packs keep, in French and English, the numbered texts the extracted tables name (D25, D29): 26,411 per language,
-21,554 of them items' names. The 15,409 map positions name 3,135 distinct texts, and 12,274 positions name text 0,
+Packs keep, in French and English, and in Spanish from format 15 (D554), the numbered texts the extracted tables name
+(D25, D29): 26,411 per language on the first build measured, 21,554 of them items' names; 177,264 on 3.7.14.18 in format
+15, the NPCs' replies and questions among them, the Spanish lacking none that French and English hold. The 15,409 map positions name 3,135 distinct texts, and 12,274 positions name text 0,
 which no file holds: those maps have no name.
 
 ## Icons

@@ -21,18 +21,21 @@ public sealed class LocalizerTests
     }
 
     [Fact]
-    public void EveryTextIsInEnglishAndInFrench()
+    public void EveryTextIsInEnglishFrenchAndSpanish()
     {
         var english = Keys(CultureInfo.InvariantCulture);
 
         Assert.NotEmpty(english);
         Assert.Equal(english, Keys(Localizer.French));
+        Assert.Equal(english, Keys(Localizer.Spanish));
     }
 
     [Theory]
     [InlineData("fr-FR", "fr")]
     [InlineData("fr-CA", "fr")]
     [InlineData("en-US", "en")]
+    [InlineData("es-ES", "es")]
+    [InlineData("es-MX", "es")]
     [InlineData("de-DE", "en")]
     public void TheLanguageStartsAsTheSystemsWhenTheAppHasIt(string system, string expected)
     {
@@ -53,6 +56,11 @@ public sealed class LocalizerTests
 
         Assert.Equal("Démarrer", localizer["Start"]);
         Assert.Equal(TextLanguages.French, localizer.GameLanguage);
+
+        localizer.Use(Localizer.Spanish);
+
+        Assert.Equal("Iniciar", localizer["Start"]);
+        Assert.Equal(TextLanguages.Spanish, localizer.GameLanguage);
     }
 
     [Fact]
@@ -75,6 +83,9 @@ public sealed class LocalizerTests
     [InlineData("fr", 0, "0 étape")]
     [InlineData("fr", 1, "1 étape")]
     [InlineData("fr", 2, "2 étapes")]
+    [InlineData("es", 0, "0 pasos")]
+    [InlineData("es", 1, "1 paso")]
+    [InlineData("es", 2, "2 pasos")]
     public void ACountTakesTheSingularOrThePluralAsTheLanguageHasIt(string language, long count, string expected)
     {
         Assert.Equal(expected, new Localizer(CultureInfo.GetCultureInfo(language)).Plural("Steps", count));

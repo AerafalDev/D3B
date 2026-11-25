@@ -3,7 +3,7 @@ using D3B.Bot.Localization;
 
 namespace D3B.Bot.Fighting;
 
-/// <summary>The fighting module's texts, in English and French (<c>FightTexts.resx</c>, <c>FightTexts.fr.resx</c>), which the app shows in its language (D96).</summary>
+/// <summary>The fighting module's texts, in English, French and Spanish (<c>FightTexts.resx</c>, <c>FightTexts.fr.resx</c>, <c>FightTexts.es.resx</c>), which the app shows in its language (D96).</summary>
 internal static class FightTexts
 {
     /// <summary>Gets the module's resources.</summary>

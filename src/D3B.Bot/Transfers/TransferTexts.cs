@@ -3,7 +3,7 @@ using D3B.Bot.Localization;
 
 namespace D3B.Bot.Transfers;
 
-/// <summary>The transfers module's texts, in English and French (<c>TransferTexts.resx</c>, <c>TransferTexts.fr.resx</c>), which the app shows in its language (D96).</summary>
+/// <summary>The transfers module's texts, in English, French and Spanish (<c>TransferTexts.resx</c>, <c>TransferTexts.fr.resx</c>, <c>TransferTexts.es.resx</c>), which the app shows in its language (D96).</summary>
 public static class TransferTexts
 {
     /// <summary>Gets the module's resources.</summary>

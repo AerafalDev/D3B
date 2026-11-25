@@ -68,7 +68,7 @@ public sealed class SettingsViewTests : IAsyncDisposable
     }
 
     [Fact]
-    public async Task TheSettingsTabIsDrawnInBothLanguages()
+    public async Task TheSettingsTabIsDrawnInEachLanguage()
     {
         using var host = TestHost();
         var runner = await TestHosts.RunningAsync(host);
@@ -76,7 +76,7 @@ public sealed class SettingsViewTests : IAsyncDisposable
 
         await _play.EnterAsync(300);
 
-        var (english, french, raised, boxes) = await HeadlessUnitTestSession.GetOrStartForAssembly(typeof(SettingsViewTests).Assembly).Dispatch(
+        var (english, french, spanish, raised, boxes) = await HeadlessUnitTestSession.GetOrStartForAssembly(typeof(SettingsViewTests).Assembly).Dispatch(
             () =>
             {
                 // The views bind to the app's own texts, which only the window's tests change, and give back.
@@ -126,10 +126,17 @@ public sealed class SettingsViewTests : IAsyncDisposable
 
                 boxes.Add(Boxes(window));
                 Drawings.Draw(window, "settings-fr");
+                main.Settings.UseSpanishCommand.Execute(null);
+                Dispatcher.UIThread.RunJobs();
+
+                var spanish = Sections("es");
+
+                boxes.Add(Boxes(window));
+                Drawings.Draw(window, "settings-es");
                 localizer.Use(Localizer.English);
                 window.Close();
 
-                return (english, french, raised, boxes);
+                return (english, french, spanish, raised, boxes);
             },
             TestContext.Current.CancellationToken);
 
@@ -158,6 +165,13 @@ public sealed class SettingsViewTests : IAsyncDisposable
         Assert.Contains("Emplacements", french);
         Assert.DoesNotContain("Display time", french);
         Assert.DoesNotContain(french, text => text.StartsWith('[') && text.EndsWith(']'));
+        Assert.Contains("Ajustes", spanish);
+        Assert.Contains("Tiempo de visualización", spanish);
+        Assert.Contains("1,2 s", spanish);
+        Assert.Contains("Español", spanish);
+        Assert.DoesNotContain("Display time", spanish);
+        Assert.DoesNotContain("Temps d'affichage", spanish);
+        Assert.DoesNotContain(spanish, text => text.StartsWith('[') && text.EndsWith(']'));
 
         // The display time and the relay's first delay, raised: each with its bar in the margin.
         Assert.Equal(2, raised);
@@ -165,5 +179,6 @@ public sealed class SettingsViewTests : IAsyncDisposable
         // In the app's language, not the system's.
         Assert.Equal(["90", "3.0", "1.0", "0.5", "10.0", "2.0", "1.0", "30.0", "0.5", "0.3", "20.0", "5.0", "5.0", "60.0", "7", "1024"], boxes[0]);
         Assert.Equal("3,0", boxes[1][1]);
+        Assert.Equal("3,0", boxes[2][1]);
     }
 }

@@ -71,6 +71,7 @@ public sealed class PageTextsTests
     {
         Assert.Equal(TextLanguages.French, new TestPageContext(_services, CultureInfo.GetCultureInfo("fr-BE")).GameLanguage);
         Assert.Equal(TextLanguages.English, new TestPageContext(_services, _english).GameLanguage);
+        Assert.Equal(TextLanguages.Spanish, new TestPageContext(_services, CultureInfo.GetCultureInfo("es-AR")).GameLanguage);
         Assert.Equal(TextLanguages.English, new TestPageContext(_services, CultureInfo.GetCultureInfo("de")).GameLanguage);
     }
 

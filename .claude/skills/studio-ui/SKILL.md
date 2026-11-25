@@ -1,6 +1,6 @@
 ---
 name: studio-ui
-description: Build or change a view of the D3B studio - Avalonia, ShadUI, CommunityToolkit.Mvvm - its look, its scale, its texts in French and English, its view model and its tests. Use before touching a file of src/D3B.App.
+description: Build or change a view of the D3B studio - Avalonia, ShadUI, CommunityToolkit.Mvvm - its look, its scale, its texts in French, English and Spanish, its view model and its tests. Use before touching a file of src/D3B.App.
 ---
 
 The studio is dark, docked and drawn from one scale. Read `docs/architecture.md`, section "Desktop app", and the mockup
@@ -36,8 +36,9 @@ decisions behind them are D159 to D163, D320 to D356 and D395 to D397 in the ind
   class, in `D3B.App.ViewModels`. A view model never holds a control.
 - **Dialogs and toasts** go through `Dialogs` (a `QuestionViewModel` or a dialog's own view model) and `Toasts`; the view
   model opens, closes and says, and is tested without a window.
-- **Every text is a resource**: `{l:Tr Key}` in a view, `Localizer.Instance["Key"]` in a view model, and the key in both
-  `Localization/Strings.resx` (English) and `Strings.fr.resx` (French, with its accents). A key missing shows as `[Key]`.
+- **Every text is a resource**: `{l:Tr Key}` in a view, `Localizer.Instance["Key"]` in a view model, and the key in all three of
+  `Localization/Strings.resx` (English), `Strings.fr.resx` (French, with its accents) and `Strings.es.resx` (Spanish), a
+  test failing on a key one lacks. A key missing shows as `[Key]`.
 - Work for the bots and the host never runs on the UI thread (D91); a view model that reaches back to it goes through the
   dispatcher.
 
@@ -51,5 +52,5 @@ decisions behind them are D159 to D163, D320 to D356 and D395 to D397 in the ind
 - The look is judged by the owner against the mockup, not by a screenshot test. Run the app with
   `dotnet run --project src/D3B.App` when the task changes what is drawn, and say what you saw, or that you did not run it.
 
-Done when `dotnet build` is green, both `.resx` files carry the new keys, `dotnet test --project tests/D3B.App.Tests` passes,
+Done when `dotnet build` is green, the three `.resx` files carry the new keys, `dotnet test --project tests/D3B.App.Tests` passes,
 and the report says whether the change was seen in the running app.

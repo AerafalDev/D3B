@@ -1,0 +1,191 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="DoingStart" xml:space="preserve">
+    <value>Se prepara para la mazmorra</value>
+  </data>
+  <data name="DoingTravel" xml:space="preserve">
+    <value>De camino a la puerta de la mazmorra</value>
+  </data>
+  <data name="DoingEnter" xml:space="preserve">
+    <value>Habla con el guardián de la mazmorra</value>
+  </data>
+  <data name="DoingRooms" xml:space="preserve">
+    <value>En la mazmorra</value>
+  </data>
+  <data name="CountEnteredOne" xml:space="preserve">
+    <value>{0} entrada</value>
+  </data>
+  <data name="CountEnteredMany" xml:space="preserve">
+    <value>{0} entradas</value>
+  </data>
+  <data name="FailUnknownDungeon" xml:space="preserve">
+    <value>La mazmorra que indica este perfil no está en los datos del cliente.</value>
+  </data>
+  <data name="FailTooLow" xml:space="preserve">
+    <value>El personaje es de nivel {0}, y la mazmorra admite a partir del nivel {1}.</value>
+  </data>
+  <data name="FailNoKey" xml:space="preserve">
+    <value>El personaje no lleva ni la llave de la mazmorra ni un llavero que la abra.</value>
+  </data>
+  <data name="FailFollowerTooLow" xml:space="preserve">
+    <value>{0}, que sigue al personaje, es de nivel {1}, y la mazmorra admite a partir del nivel {2}.</value>
+  </data>
+  <data name="FailFollowerNoKey" xml:space="preserve">
+    <value>{0}, que sigue al personaje, no lleva ni la llave de la mazmorra ni un llavero que la abra.</value>
+  </data>
+  <data name="FailFollowerTurnedAway" xml:space="preserve">
+    <value>El guardián de la mazmorra rechazó a {0}, que sigue al personaje.</value>
+  </data>
+  <data name="FailNoPath" xml:space="preserve">
+    <value>Ningún camino lleva a la puerta de la mazmorra desde donde está el personaje.</value>
+  </data>
+  <data name="FailJourney" xml:space="preserve">
+    <value>El trayecto a la puerta de la mazmorra falló tres veces seguidas.</value>
+  </data>
+  <data name="FailNoKeeper" xml:space="preserve">
+    <value>Ningún PNJ de la puerta de la mazmorra dejó entrar al personaje.</value>
+  </data>
+  <data name="FailStuckMapUnknown" xml:space="preserve">
+    <value>El mapa del personaje sigue siendo desconocido tras dos minutos.</value>
+  </data>
+  <data name="FailStuckUsing" xml:space="preserve">
+    <value>Sigue usando un elemento tras dos minutos, incluso tras volver a ponerlo en orden.</value>
+  </data>
+  <data name="FailStuckInDialog" xml:space="preserve">
+    <value>Sigue en un diálogo o un intercambio tras dos minutos, incluso tras volver a ponerlo en orden.</value>
+  </data>
+  <data name="FailStuckWalking" xml:space="preserve">
+    <value>Sigue caminando tras dos minutos, incluso tras volver a ponerlo en orden.</value>
+  </data>
+  <data name="FailNoDungeon" xml:space="preserve">
+    <value>El perfil no incluye ninguna mazmorra.</value>
+  </data>
+  <data name="FailNoneEnterable" xml:space="preserve">
+    <value>No se puede entrar en ninguna mazmorra del perfil: al personaje le falta el nivel o la llave de cada una, o ningún camino lleva a ellas.</value>
+  </data>
+  <data name="DoingRegenerate" xml:space="preserve">
+    <value>Regenera su vida antes del combate de la sala, {0} s</value>
+  </data>
+  <data name="CountRoomOne" xml:space="preserve">
+    <value>{0} sala ganada</value>
+  </data>
+  <data name="CountRoomMany" xml:space="preserve">
+    <value>{0} salas ganadas</value>
+  </data>
+  <data name="CountLostOne" xml:space="preserve">
+    <value>{0} combate perdido</value>
+  </data>
+  <data name="CountLostMany" xml:space="preserve">
+    <value>{0} combates perdidos</value>
+  </data>
+  <data name="FailLost" xml:space="preserve">
+    <value>Se perdió un combate en la mazmorra: se descarta durante el resto de la ejecución.</value>
+  </data>
+  <data name="FailNoRoom" xml:space="preserve">
+    <value>No se puede llegar a pie a ninguna sala de la mazmorra que quede por ganar.</value>
+  </data>
+  <data name="DoingExit" xml:space="preserve">
+    <value>Sale de la mazmorra</value>
+  </data>
+  <data name="DoingBank" xml:space="preserve">
+    <value>Deposita en el banco el botín de las mazmorras</value>
+  </data>
+  <data name="CountRunOne" xml:space="preserve">
+    <value>{0} mazmorra hecha</value>
+  </data>
+  <data name="CountRunMany" xml:space="preserve">
+    <value>{0} mazmorras hechas</value>
+  </data>
+  <data name="CountLoot" xml:space="preserve">
+    <value>{0} {1}</value>
+  </data>
+  <data name="FailNoExit" xml:space="preserve">
+    <value>Ningún PNJ del último mapa de la mazmorra dejó salir al personaje.</value>
+  </data>
+  <data name="Name" xml:space="preserve">
+    <value>Mazmorras</value>
+  </data>
+  <data name="SectionWhat" xml:space="preserve">
+    <value>Mazmorras</value>
+  </data>
+  <data name="Dungeons" xml:space="preserve">
+    <value>Mazmorras</value>
+  </data>
+  <data name="DungeonsHelp" xml:space="preserve">
+    <value>Se hacen por turnos en este orden, con el llavero o una llave que se lleve encima; una mazmorra en la que el personaje no puede entrar pierde su turno.</value>
+  </data>
+  <data name="Runs" xml:space="preserve">
+    <value>Ejecuciones</value>
+  </data>
+  <data name="RunsUnit" xml:space="preserve">
+    <value>mazmorras</value>
+  </data>
+  <data name="RunsHelp" xml:space="preserve">
+    <value>Cuántas mazmorras terminar antes de que la actividad acabe; 0 continúa hasta que no se pueda entrar en ninguna de la lista.</value>
+  </data>
+  <data name="SectionCare" xml:space="preserve">
+    <value>Cuidados</value>
+  </data>
+  <data name="LifeShare" xml:space="preserve">
+    <value>Vida antes del combate de una sala</value>
+  </data>
+  <data name="LifeShareHelp" xml:space="preserve">
+    <value>El personaje se regenera hasta esta parte de su vida antes de atacar al grupo de una sala.</value>
+  </data>
+  <data name="UseZaaps" xml:space="preserve">
+    <value>Usar los zaaps</value>
+  </data>
+  <data name="UseZaapsHelp" xml:space="preserve">
+    <value>El trayecto a la puerta de una mazmorra, y al banco, puede pasar por un zaap que el personaje conozca.</value>
+  </data>
+  <data name="RestartAfterFailure" xml:space="preserve">
+    <value>Reiniciar tras un fallo</value>
+  </data>
+  <data name="RestartAfterFailureHelp" xml:space="preserve">
+    <value>Una ejecución que falla o se estanca se vuelve a poner en orden y se reinicia, en lugar de terminar.</value>
+  </data>
+  <data name="RuleDungeons" xml:space="preserve">
+    <value>Elige al menos una mazmorra.</value>
+  </data>
+</root>

@@ -235,6 +235,10 @@ internal sealed partial class SettingsViewModel : ObservableObject
     [ObservableProperty]
     public partial bool IsEnglish { get; private set; }
 
+    /// <summary>Gets whether the app is in Spanish.</summary>
+    [ObservableProperty]
+    public partial bool IsSpanish { get; private set; }
+
     /// <summary>Gets whether a delay was raised above its default, which the tab restores.</summary>
     [ObservableProperty]
     [NotifyCanExecuteChangedFor(nameof(RestoreDelaysCommand))]
@@ -375,7 +379,8 @@ internal sealed partial class SettingsViewModel : ObservableObject
     public void Refresh(IServiceProvider? services)
     {
         IsFrench = _localizer.Culture.Equals(Localizer.French);
-        IsEnglish = !IsFrench;
+        IsSpanish = _localizer.Culture.Equals(Localizer.Spanish);
+        IsEnglish = !IsFrench && !IsSpanish;
 
         if (!_localizer.Culture.Equals(_labelled))
         {
@@ -804,5 +809,11 @@ internal sealed partial class SettingsViewModel : ObservableObject
     private void UseEnglish()
     {
         _useLanguage(Localizer.English);
+    }
+
+    [RelayCommand]
+    private void UseSpanish()
+    {
+        _useLanguage(Localizer.Spanish);
     }
 }

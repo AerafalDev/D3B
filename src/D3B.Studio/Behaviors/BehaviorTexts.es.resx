@@ -1,0 +1,452 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="Doing" xml:space="preserve">
+    <value>Estado {0}</value>
+  </data>
+  <data name="ListStep" xml:space="preserve">
+    <value>Paso {0} de {1}</value>
+  </data>
+  <data name="Branch" xml:space="preserve">
+    <value>Si {Condition}</value>
+  </data>
+  <data name="BranchHelp" xml:space="preserve">
+    <value>Sigue por su salida verdadero cuando la condición se cumple; si no, por su salida falso.</value>
+  </data>
+  <data name="BranchCondition" xml:space="preserve">
+    <value>Condición</value>
+  </data>
+  <data name="SetVariable" xml:space="preserve">
+    <value>Asignar una variable</value>
+  </data>
+  <data name="SetVariableHelp" xml:space="preserve">
+    <value>Se ejecuta en el acto, una vez cada vez que se entra en el estado.</value>
+  </data>
+  <data name="GetVariable" xml:space="preserve">
+    <value>Leer una variable</value>
+  </data>
+  <data name="GetVariableHelp" xml:space="preserve">
+    <value>Da el valor de la variable al nodo al que llega su cable.</value>
+  </data>
+  <data name="ActivityHelp" xml:space="preserve">
+    <value>Ejecuta la actividad entera, con sus ajustes, hasta que termina.</value>
+  </data>
+  <data name="PodsAtLeast" xml:space="preserve">
+    <value>Pods al menos al {Percent} %</value>
+  </data>
+  <data name="PodsAtLeastHelp" xml:space="preserve">
+    <value>Lo que lleva el personaje, respecto a lo que puede llevar.</value>
+  </data>
+  <data name="LifeAtLeast" xml:space="preserve">
+    <value>Vida al menos al {Percent} %</value>
+  </data>
+  <data name="LifeAtLeastHelp" xml:space="preserve">
+    <value>La vida del personaje tal como la dio el servidor por última vez, respecto a su máximo.</value>
+  </data>
+  <data name="Percent" xml:space="preserve">
+    <value>Parte</value>
+  </data>
+  <data name="LevelAtLeast" xml:space="preserve">
+    <value>Nivel al menos {Level}</value>
+  </data>
+  <data name="LevelAtLeastHelp" xml:space="preserve">
+    <value>El nivel del personaje.</value>
+  </data>
+  <data name="Level" xml:space="preserve">
+    <value>Nivel</value>
+  </data>
+  <data name="JobLevelAtLeast" xml:space="preserve">
+    <value>{Job} al menos de nivel {Level}</value>
+  </data>
+  <data name="JobLevelAtLeastHelp" xml:space="preserve">
+    <value>El nivel de un oficio; un oficio que el personaje no tiene no se cumple.</value>
+  </data>
+  <data name="JobLevelAtLeastExample" xml:space="preserve">
+    <value>Leñador al menos de nivel 40: los fresnos quedan atrás.</value>
+  </data>
+  <data name="Job" xml:space="preserve">
+    <value>Oficio</value>
+  </data>
+  <data name="KamasAtLeast" xml:space="preserve">
+    <value>Al menos {Amount} kamas</value>
+  </data>
+  <data name="KamasAtLeastHelp" xml:space="preserve">
+    <value>Los kamas que lleva el personaje, no los de su banco.</value>
+  </data>
+  <data name="Amount" xml:space="preserve">
+    <value>Cantidad</value>
+  </data>
+  <data name="ItemsAtLeast" xml:space="preserve">
+    <value>Al menos {Amount} de {Items}</value>
+  </data>
+  <data name="ItemsAtLeastHelp" xml:space="preserve">
+    <value>Los objetos del inventario, contados juntos.</value>
+  </data>
+  <data name="ItemsAtLeastExample" xml:space="preserve">
+    <value>Al menos 100 de Madera de fresno: ir a fabricar.</value>
+  </data>
+  <data name="Items" xml:space="preserve">
+    <value>Objetos</value>
+  </data>
+  <data name="InSubArea" xml:space="preserve">
+    <value>En {SubAreas}</value>
+  </data>
+  <data name="InSubAreaHelp" xml:space="preserve">
+    <value>La subzona en la que el servidor dice que está el personaje.</value>
+  </data>
+  <data name="SubAreas" xml:space="preserve">
+    <value>Subzonas</value>
+  </data>
+  <data name="InArea" xml:space="preserve">
+    <value>En la región {Areas}</value>
+  </data>
+  <data name="InAreaHelp" xml:space="preserve">
+    <value>Cualquier subzona de las regiones, según el pack.</value>
+  </data>
+  <data name="Areas" xml:space="preserve">
+    <value>Regiones</value>
+  </data>
+  <data name="LastFight" xml:space="preserve">
+    <value>Último combate {Result}</value>
+  </data>
+  <data name="LastFightHelp" xml:space="preserve">
+    <value>El último combate que el bot vio terminar; ninguno antes del primero.</value>
+  </data>
+  <data name="Result" xml:space="preserve">
+    <value>Resultado</value>
+  </data>
+  <data name="ResultAny" xml:space="preserve">
+    <value>ganado o perdido</value>
+  </data>
+  <data name="ResultWon" xml:space="preserve">
+    <value>ganado</value>
+  </data>
+  <data name="ResultLost" xml:space="preserve">
+    <value>perdido</value>
+  </data>
+  <data name="RunLongerThan" xml:space="preserve">
+    <value>En curso desde hace al menos {Minutes} min</value>
+  </data>
+  <data name="RunLongerThanHelp" xml:space="preserve">
+    <value>Desde que se inició el perfil en el personaje.</value>
+  </data>
+  <data name="Minutes" xml:space="preserve">
+    <value>Minutos</value>
+  </data>
+  <data name="MinutesUnit" xml:space="preserve">
+    <value>min</value>
+  </data>
+  <data name="FlagOn" xml:space="preserve">
+    <value>{First} es verdadero</value>
+  </data>
+  <data name="FlagOnHelp" xml:space="preserve">
+    <value>Lee un indicador, como el de una variable.</value>
+  </data>
+  <data name="FlagOff" xml:space="preserve">
+    <value>{First} es falso</value>
+  </data>
+  <data name="FlagOffHelp" xml:space="preserve">
+    <value>No: una condición que no se cumple.</value>
+  </data>
+  <data name="Flag" xml:space="preserve">
+    <value>Indicador</value>
+  </data>
+  <data name="FlagAnd" xml:space="preserve">
+    <value>{First} y {Second}</value>
+  </data>
+  <data name="FlagAndHelp" xml:space="preserve">
+    <value>Se cumplen ambas condiciones.</value>
+  </data>
+  <data name="FlagOr" xml:space="preserve">
+    <value>{First} o {Second}</value>
+  </data>
+  <data name="FlagOrHelp" xml:space="preserve">
+    <value>Se cumple al menos una condición.</value>
+  </data>
+  <data name="First" xml:space="preserve">
+    <value>Primera</value>
+  </data>
+  <data name="Second" xml:space="preserve">
+    <value>Segunda</value>
+  </data>
+  <data name="NumberAtLeast" xml:space="preserve">
+    <value>{Value} al menos {Least}</value>
+  </data>
+  <data name="NumberAtLeastHelp" xml:space="preserve">
+    <value>Compara un número, como el de una variable, con un límite.</value>
+  </data>
+  <data name="NumberAtLeastExample" xml:space="preserve">
+    <value>Combates ganados al menos 10: ir al banco.</value>
+  </data>
+  <data name="Number" xml:space="preserve">
+    <value>Número</value>
+  </data>
+  <data name="Least" xml:space="preserve">
+    <value>Al menos</value>
+  </data>
+  <data name="MapChanged" xml:space="preserve">
+    <value>Cuando cambia el mapa</value>
+  </data>
+  <data name="MapChangedHelp" xml:space="preserve">
+    <value>El personaje llegó a otro mapa.</value>
+  </data>
+  <data name="FightBegan" xml:space="preserve">
+    <value>Cuando empieza un combate</value>
+  </data>
+  <data name="FightBeganHelp" xml:space="preserve">
+    <value>El personaje entró en combate, el suyo o uno en el que lo atacaron.</value>
+  </data>
+  <data name="FightOver" xml:space="preserve">
+    <value>Cuando un combate termina {Result}</value>
+  </data>
+  <data name="FightOverHelp" xml:space="preserve">
+    <value>El final del combate, tal como lo dio el servidor.</value>
+  </data>
+  <data name="FightOverExample" xml:space="preserve">
+    <value>Cuando un combate termina perdido: poner perdido a verdadero, luego un estado cura.</value>
+  </data>
+  <data name="LevelGained" xml:space="preserve">
+    <value>Cuando se gana un nivel</value>
+  </data>
+  <data name="LevelGainedHelp" xml:space="preserve">
+    <value>El nivel del personaje, en la misma conexión.</value>
+  </data>
+  <data name="JobLevelGained" xml:space="preserve">
+    <value>Cuando {Job} gana un nivel</value>
+  </data>
+  <data name="JobLevelGainedHelp" xml:space="preserve">
+    <value>El nivel de un oficio, en la misma conexión.</value>
+  </data>
+  <data name="ItemReceived" xml:space="preserve">
+    <value>Cuando {Items} llega al inventario</value>
+  </data>
+  <data name="ItemReceivedHelp" xml:space="preserve">
+    <value>Más de un objeto de lo que había, en la misma conexión.</value>
+  </data>
+  <data name="ItemReceivedItemsHelp" xml:space="preserve">
+    <value>Ninguno: cualquier objeto.</value>
+  </data>
+  <data name="Connected" xml:space="preserve">
+    <value>Cuando una conexión juega el personaje</value>
+  </data>
+  <data name="ConnectedHelp" xml:space="preserve">
+    <value>El cliente se conectó, o se volvió a conectar.</value>
+  </data>
+  <data name="Disconnected" xml:space="preserve">
+    <value>Cuando se pierde la conexión</value>
+  </data>
+  <data name="DisconnectedHelp" xml:space="preserve">
+    <value>El cliente se cerró, o perdió el servidor.</value>
+  </data>
+  <data name="Wait" xml:space="preserve">
+    <value>Esperar {Seconds} s</value>
+  </data>
+  <data name="WaitHelp" xml:space="preserve">
+    <value>Se ejecuta entera, y de nuevo si una interrupción la cortó.</value>
+  </data>
+  <data name="Seconds" xml:space="preserve">
+    <value>Segundos</value>
+  </data>
+  <data name="SecondsUnit" xml:space="preserve">
+    <value>s</value>
+  </data>
+  <data name="Note" xml:space="preserve">
+    <value>Anotar {Text}</value>
+  </data>
+  <data name="NoteHelp" xml:space="preserve">
+    <value>Escribe en el diario del bot; se ejecuta en el acto.</value>
+  </data>
+  <data name="NoteExample" xml:space="preserve">
+    <value>Anotar "Banco lleno": aparece en el diario.</value>
+  </data>
+  <data name="NoteText" xml:space="preserve">
+    <value>Texto</value>
+  </data>
+  <data name="Pause" xml:space="preserve">
+    <value>Pausar el bot</value>
+  </data>
+  <data name="PauseHelp" xml:space="preserve">
+    <value>Como hace la mano del jugador: el bot espera hasta que se reanude.</value>
+  </data>
+  <data name="Stop" xml:space="preserve">
+    <value>Detener la ejecución</value>
+  </data>
+  <data name="StopHelp" xml:space="preserve">
+    <value>La ejecución termina, completada, una vez acabado su paso.</value>
+  </data>
+  <data name="RouteHarvest" xml:space="preserve">
+    <value>Recolectar {Resources}</value>
+  </data>
+  <data name="RouteHarvestHelp" xml:space="preserve">
+    <value>Recolecta los recursos del mapa, en su orden, y luego sigue.</value>
+  </data>
+  <data name="Resources" xml:space="preserve">
+    <value>Recursos</value>
+  </data>
+  <data name="RouteFight" xml:space="preserve">
+    <value>Combatir {Monsters}, grupos de {LeastMonsters} a {MostMonsters}</value>
+  </data>
+  <data name="RouteFightHelp" xml:space="preserve">
+    <value>Combate los grupos del mapa que el filtro deja pasar, y luego sigue. Sin monstruo elegido, todos los grupos.</value>
+  </data>
+  <data name="RouteFightRule" xml:space="preserve">
+    <value>El mínimo de monstruos de un grupo no puede superar el máximo.</value>
+  </data>
+  <data name="Monsters" xml:space="preserve">
+    <value>Monstruos</value>
+  </data>
+  <data name="LeastMonsters" xml:space="preserve">
+    <value>Mínimo en un grupo</value>
+  </data>
+  <data name="MostMonsters" xml:space="preserve">
+    <value>Máximo en un grupo</value>
+  </data>
+  <data name="RouteDoor" xml:space="preserve">
+    <value>Tomar la puerta de la celda {Cell}</value>
+  </data>
+  <data name="RouteDoorHelp" xml:space="preserve">
+    <value>Usa la puerta cuyo elemento está en la celda, y luego sigue.</value>
+  </data>
+  <data name="Cell" xml:space="preserve">
+    <value>Celda</value>
+  </data>
+  <data name="RouteExit" xml:space="preserve">
+    <value>Salir por {Direction}, o por la celda {Cell}</value>
+  </data>
+  <data name="RouteExitHelp" xml:space="preserve">
+    <value>Fuerza la salida: por la celda, si se elige una; si no, por el lado del mapa.</value>
+  </data>
+  <data name="Direction" xml:space="preserve">
+    <value>Lado</value>
+  </data>
+  <data name="DirectionTop" xml:space="preserve">
+    <value>arriba</value>
+  </data>
+  <data name="DirectionRight" xml:space="preserve">
+    <value>la derecha</value>
+  </data>
+  <data name="DirectionBottom" xml:space="preserve">
+    <value>abajo</value>
+  </data>
+  <data name="DirectionLeft" xml:space="preserve">
+    <value>la izquierda</value>
+  </data>
+  <data name="RouteZaap" xml:space="preserve">
+    <value>Tomar el zaap</value>
+  </data>
+  <data name="RouteZaapHelp" xml:space="preserve">
+    <value>Se teletransporta al zaap más cercano al paso siguiente.</value>
+  </data>
+  <data name="RouteBag" xml:space="preserve">
+    <value>Ir al merkasako</value>
+  </data>
+  <data name="RouteBagHelp" xml:space="preserve">
+    <value>Entra en el merkasako desde el mapa.</value>
+  </data>
+  <data name="RouteFollow" xml:space="preserve">
+    <value>Seguir la ruta {Route}</value>
+  </data>
+  <data name="RouteFollowHelp" xml:space="preserve">
+    <value>Recorre la ruta del proyecto: sus mapas en orden, como dice su recorrido, y lo que hace en cada uno. Un bucle continúa hasta que otro estado toma el control.</value>
+  </data>
+  <data name="Route" xml:space="preserve">
+    <value>Ruta</value>
+  </data>
+  <data name="RouteNotPlayed" xml:space="preserve">
+    <value>La ruta contiene la acción {0}, que el host no conoce: no se inicia.</value>
+  </data>
+  <data name="RouteUnreachableFails" xml:space="preserve">
+    <value>El paso {0} de la ruta, mapa {1}, está fuera de alcance: la ruta falla.</value>
+  </data>
+  <data name="RouteStepReached" xml:space="preserve">
+    <value>Ruta {0}: paso {1} de {2}, mapa {3}.</value>
+  </data>
+  <data name="RouteUnreachablePassed" xml:space="preserve">
+    <value>El paso {0} de la ruta, mapa {1}, está fuera de alcance: se omite.</value>
+  </data>
+  <data name="RouteNothingReachable" xml:space="preserve">
+    <value>No se puede llegar a ningún paso de la ruta desde aquí: la ruta falla.</value>
+  </data>
+  <data name="RouteMissing" xml:space="preserve">
+    <value>La ruta {0} no está en el proyecto.</value>
+  </data>
+  <data name="SequencePlay" xml:space="preserve">
+    <value>Ejecutar la secuencia {Sequence}</value>
+  </data>
+  <data name="SequencePlayHelp" xml:space="preserve">
+    <value>Ejecuta una lista de pasos del proyecto como un solo paso: sus pasos en orden, una vez, tantas veces como se repita este paso. Su propia repetición se deja a este paso.</value>
+  </data>
+  <data name="Sequence" xml:space="preserve">
+    <value>Secuencia</value>
+  </data>
+  <data name="SequenceMissing" xml:space="preserve">
+    <value>La secuencia {0} no está en el proyecto, o no es una lista de pasos: la ejecución termina.</value>
+  </data>
+  <data name="SequenceCycle" xml:space="preserve">
+    <value>La secuencia {0} se ejecuta a sí misma, directamente o a través de otras: la ejecución termina.</value>
+  </data>
+  <data name="SequenceProblems" xml:space="preserve">
+    <value>La secuencia {0} no es válida: {1}</value>
+  </data>
+  <data name="RouteNpc" xml:space="preserve">
+    <value>Hablar con el PNJ {Npc}, respondiendo {Replies}</value>
+  </data>
+  <data name="RouteNpcHelp" xml:space="preserve">
+    <value>Habla con el PNJ del mapa y le da las respuestas, la primera a su primera pregunta, y así sucesivamente. Sin respuesta elegida, el diálogo se abre y se cierra.</value>
+  </data>
+  <data name="Npc" xml:space="preserve">
+    <value>PNJ</value>
+  </data>
+  <data name="NpcReplies" xml:space="preserve">
+    <value>Respuestas</value>
+  </data>
+  <data name="RouteActionFailed" xml:space="preserve">
+    <value>La acción {0} de la ruta no se pudo ejecutar en el mapa {1} ({2}): la ruta falla.</value>
+  </data>
+  <data name="RouteZaapNoNext" xml:space="preserve">
+    <value>La ruta no va a ninguna parte después de este paso: ningún zaap que tomar.</value>
+  </data>
+  <data name="RouteZaapNone" xml:space="preserve">
+    <value>Ningún zaap ahorra un cambio de mapa hacia el mapa {0}: no se toma ninguno.</value>
+  </data>
+</root>

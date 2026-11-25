@@ -3,7 +3,7 @@ using D3B.Bot.Localization;
 
 namespace D3B.Bot.Groups;
 
-/// <summary>The groups module's texts, in English and French (<c>GroupTexts.resx</c>, <c>GroupTexts.fr.resx</c>), which the app shows in its language (D96).</summary>
+/// <summary>The groups module's texts, in English, French and Spanish (<c>GroupTexts.resx</c>, <c>GroupTexts.fr.resx</c>, <c>GroupTexts.es.resx</c>), which the app shows in its language (D96).</summary>
 public static class GroupTexts
 {
     /// <summary>Gets the module's resources.</summary>

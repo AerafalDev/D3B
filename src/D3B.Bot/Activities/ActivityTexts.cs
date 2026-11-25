@@ -3,7 +3,7 @@ using D3B.Bot.Localization;
 
 namespace D3B.Bot.Activities;
 
-/// <summary>The texts of an activity's run, in English and French (<c>ActivityTexts.resx</c>, <c>ActivityTexts.fr.resx</c>), which the app shows in its language (D96).</summary>
+/// <summary>The texts of an activity's run, in English, French and Spanish (<c>ActivityTexts.resx</c>, <c>ActivityTexts.fr.resx</c>, <c>ActivityTexts.es.resx</c>), which the app shows in its language (D96).</summary>
 internal static class ActivityTexts
 {
     /// <summary>Gets the run's resources.</summary>

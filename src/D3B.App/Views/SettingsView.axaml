@@ -815,6 +815,11 @@
                                                     Classes.Selected="{Binding IsEnglish}"
                                                     Command="{Binding UseEnglishCommand}"
                                                     Content="English" />
+                                                <Button
+                                                    Classes="Segment"
+                                                    Classes.Selected="{Binding IsSpanish}"
+                                                    Command="{Binding UseSpanishCommand}"
+                                                    Content="Español" />
                                             </StackPanel>
                                         </Border>
                                     </Grid>

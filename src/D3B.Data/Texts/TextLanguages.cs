@@ -9,6 +9,25 @@ public static class TextLanguages
     /// <summary>English.</summary>
     public const string English = "en";
 
+    /// <summary>Spanish.</summary>
+    public const string Spanish = "es";
+
     /// <summary>Gets every language a pack holds.</summary>
-    public static IReadOnlyList<string> All { get; } = [French, English];
+    public static IReadOnlyList<string> All { get; } = [French, English, Spanish];
+
+    /// <summary>Gets the language of the pack's texts that goes with a language of the app.</summary>
+    /// <param name="twoLetterCode">The app's language, by its two-letter ISO code, such as <c>fr</c>.</param>
+    /// <returns>The language when a pack holds it, else <see cref="English"/>.</returns>
+    public static string Of(string twoLetterCode)
+    {
+        ArgumentNullException.ThrowIfNull(twoLetterCode);
+
+        foreach (var language in All)
+        {
+            if (string.Equals(language, twoLetterCode, StringComparison.OrdinalIgnoreCase))
+                return language;
+        }
+
+        return English;
+    }
 }

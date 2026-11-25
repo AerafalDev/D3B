@@ -5,10 +5,10 @@ using D3B.Data.Texts;
 
 namespace D3B.App.Localization;
 
-/// <summary>The app's texts, in French or English, which every view follows when the language changes (D14).</summary>
+/// <summary>The app's texts, in French, English or Spanish, which every view follows when the language changes (D14, D504).</summary>
 /// <remarks>
-/// The texts are the resources of <c>Strings.resx</c>, in English, and <c>Strings.fr.resx</c>. The language starts as the
-/// system's, French when it is French, else English. Views bind to the indexer through <see cref="TrExtension"/>, which
+/// The texts are the resources of <c>Strings.resx</c>, in English, <c>Strings.fr.resx</c> and <c>Strings.es.resx</c>. The
+/// language starts as the system's, French or Spanish when it is one of them, else English. Views bind to the indexer through <see cref="TrExtension"/>, which
 /// changes with the language; view models read texts each time they refresh.
 /// </remarks>
 internal sealed class Localizer : INotifyPropertyChanged
@@ -23,6 +23,9 @@ internal sealed class Localizer : INotifyPropertyChanged
     /// <summary>Gets French.</summary>
     public static CultureInfo French { get; } = CultureInfo.GetCultureInfo("fr");
 
+    /// <summary>Gets Spanish.</summary>
+    public static CultureInfo Spanish { get; } = CultureInfo.GetCultureInfo("es");
+
     /// <summary>Gets the app's texts.</summary>
     public static Localizer Instance { get; } = new(CultureInfo.CurrentUICulture);
 
@@ -30,7 +33,7 @@ internal sealed class Localizer : INotifyPropertyChanged
     public CultureInfo Culture => _culture;
 
     /// <summary>Gets the language of the game's texts in the pack that goes with the app's (<see cref="TextLanguages"/>).</summary>
-    public string GameLanguage => _culture.Equals(French) ? TextLanguages.French : TextLanguages.English;
+    public string GameLanguage => TextLanguages.Of(_culture.TwoLetterISOLanguageName);
 
     /// <summary>Gets a text.</summary>
     /// <param name="key">The text's key in the resources.</param>
@@ -41,7 +44,7 @@ internal sealed class Localizer : INotifyPropertyChanged
     public event PropertyChangedEventHandler? PropertyChanged;
 
     /// <summary>Initializes a new instance of the <see cref="Localizer"/> class.</summary>
-    /// <param name="culture">The system's language: French when it is French, else English.</param>
+    /// <param name="culture">The system's language: French or Spanish when it is one of them, else English.</param>
     internal Localizer(CultureInfo culture)
     {
         _culture = Supported(culture);
@@ -49,7 +52,9 @@ internal sealed class Localizer : INotifyPropertyChanged
 
     private static CultureInfo Supported(CultureInfo culture)
     {
-        return culture.TwoLetterISOLanguageName == French.TwoLetterISOLanguageName ? French : English;
+        var code = culture.TwoLetterISOLanguageName;
+
+        return code == French.TwoLetterISOLanguageName ? French : code == Spanish.TwoLetterISOLanguageName ? Spanish : English;
     }
 
     /// <summary>Gets a text whose placeholders take values, formatted in the language chosen.</summary>
@@ -67,7 +72,7 @@ internal sealed class Localizer : INotifyPropertyChanged
     /// <returns>The text.</returns>
     public string Plural(string key, long count)
     {
-        // French counts 0 as singular, English as plural.
+        // French counts 0 as singular, English and Spanish as plural.
         var one = _culture.Equals(French) ? count is 0 or 1 : count is 1;
 
         return Format(key + (one ? "One" : "Other"), count);
@@ -85,7 +90,7 @@ internal sealed class Localizer : INotifyPropertyChanged
     }
 
     /// <summary>Changes the language of every text.</summary>
-    /// <param name="culture">The language: French when it is French, else English.</param>
+    /// <param name="culture">The language: French or Spanish when it is one of them, else English.</param>
     public void Use(CultureInfo culture)
     {
         ArgumentNullException.ThrowIfNull(culture);

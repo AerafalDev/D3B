@@ -3,7 +3,7 @@ using D3B.Bot.Localization;
 
 namespace D3B.Bot.Harvesting;
 
-/// <summary>The harvesting module's texts, in English and French (<c>HarvestTexts.resx</c>, <c>HarvestTexts.fr.resx</c>), which the app shows in its language (D96).</summary>
+/// <summary>The harvesting module's texts, in English, French and Spanish (<c>HarvestTexts.resx</c>, <c>HarvestTexts.fr.resx</c>, <c>HarvestTexts.es.resx</c>), which the app shows in its language (D96).</summary>
 internal static class HarvestTexts
 {
     /// <summary>Gets the module's resources.</summary>

@@ -1048,3 +1048,8 @@ or refines another says so in its own entry. Add a line here with every new deci
 
 - [D553](decisions/d553-map-zoom.md#d553-a-characters-map-zooms-with-the-wheel-around-the-pointer-from-its-fit-to-four-times-it-a-drag-pans-it-once-zoomed-and-the-worlds-zoom-bar-says-and-steps-it) A character's map zooms with the wheel around the pointer from its fit to four times it, a drag pans it once zoomed, and the world's zoom bar says and steps it (2026-11-25)
   - The owner's ask, passed on by the shell's session; the world viewport's notch, step and bar, its 100 % the map's fit.
+
+## Spanish beside French and English (D554)
+
+- [D554](decisions/d554-spanish.md#d554-spanish-is-the-apps-third-language-its-texts-translated-and-the-games-own-read-from-the-clients-spanish-pack-format-15) Spanish is the app's third language, its texts translated and the game's own read from the client's Spanish, pack format 15 (2026-11-25)
+  - The owner's ask and choice of the game's texts in Spanish too; `.es.resx` for every text, `texts/es` in the pack.
