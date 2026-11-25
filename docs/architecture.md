@@ -904,7 +904,8 @@ bottom panel and the Details hidden until needed.
   a character; `OutlinerViewModel.IsGuiding`, `EmptySteps`), the World's « Nouvelle route » and « Nouvelle zone » (`ShowsMakeButtons`),
   the Library's « Nouveau profil » (`AssetsViewModel.NewProfileCommand`), the statistics' « Voir toutes les sessions »
   (`StatisticsViewModel.ShowsAllRuns`), the journal what fills it; a search that finds nothing says so and guides nowhere.
-- **Motions** (D320, D347): short and easing out. The studio's buttons fade their surface, edge and text, a tool gives
+- **Motions** (D320, D347, D545): short and easing out. The side bar, the bottom panel and the Details slide open or closed in
+  200 ms on next's curve (`DockSlide`), a drag following the pointer; the window's corners are rounded on Windows 11 (`WindowCorners`). The studio's buttons fade their surface, edge and text, a tool gives
   under the press; menus and tooltips fade in; gauges (`ShareBar`) ease to their share; chevrons turn; what unfolds or is
   chosen fades in (`FadeIn`). A surface lit on hover rests on `ClearColor`, the hover's grey with no alpha, never on
   `Transparent`, white with no alpha, which a brush transition would flash through.

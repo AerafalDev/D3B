@@ -1002,7 +1002,7 @@ or refines another says so in its own entry. Add a line here with every new deci
 - [D533](decisions/d533-mount-capture.md#d533-a-hunt-profile-may-capture-wild-mounts-the-main-wears-a-carried-capture-net-casts-its-taming-spell-on-a-mount-at-its-first-chance-and-hunts-on-without-capturing-once-it-has-none) A hunt profile may capture wild mounts: the main wears a carried capture net, casts its taming spell on a mount at its first chance, and hunts on without capturing once it has none (2026-11-25)
   - The owner's ask; nets and spells measured in the client, none in the captures; buying, crafting, every member capturing set aside.
 
-## The studio's shell after next (D540 to D544)
+## The studio's shell after next (D540 to D545)
 
 - [D540](decisions/d540-command-palette.md#d540-the-search-is-also-nexts-command-palette-ctrl-shift-p-types-its-sign-the-title-bars-command-centre-names-the-app-the-views-and-each-characters-play-pause-stop-and-forget-are-commands) The search is also next's command palette: Ctrl Shift P types its sign, the title bar's command centre names the app, the views and each character's play, pause, stop and forget are commands (2026-11-25)
   - Stage 1 of 4 of the shell after `next`, under the owner's delegation; begun by the redesign session, finished here.
@@ -1014,6 +1014,8 @@ or refines another says so in its own entry. Add a line here with every new deci
   - Stage 4 of 4, under the owner's delegation; a block of its own, a search that finds nothing guiding nowhere.
 - [D544](decisions/d544-details-tidied.md#d544-the-details-play-pause-and-stop-the-character-the-characters-view-plays-every-one-connected-and-lists-only-those-played-through-d3b-and-what-is-not-in-the-app-leaves-the-details) The Details play, pause and stop the character, the Characters view plays every one connected and lists only those played through D3B, and what is not in the app leaves the Details (2026-11-25)
   - The owner's asks while checking D540 to D543 in the running app.
+- [D545](decisions/d545-slides-and-corners.md#d545-a-part-shown-or-hidden-slides-open-or-closed-in-200-ms-on-nexts-curve-and-the-windows-corners-are-rounded-on-windows-11) A part shown or hidden slides open or closed in 200 ms on next's curve, and the window's corners are rounded on Windows 11 (2026-11-25)
+  - The owner's asks; a drag follows the pointer, Windows 10 keeps its corners.
 
 ## Banking, the transfer between the bank and the guild's chest (D550 to D552)
 

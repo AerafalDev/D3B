@@ -349,7 +349,7 @@
                 <!--  The side bar (D513): one view at a time, the one the activity bar chose, its header naming it.  -->
                 <Border
                     Classes="Dock Compact"
-                    IsVisible="{Binding Layout.IsSideOpen}"
+                    ClipToBounds="True"
                     Name="SideDock">
                     <DockPanel>
                         <Border Classes="Strip" DockPanel.Dock="Top">
@@ -749,8 +749,8 @@
                         VerticalAlignment="Center" />
                     <Border
                         Classes="Dock Compact"
+                        ClipToBounds="True"
                         Grid.Row="2"
-                        IsVisible="{Binding Layout.IsBottomOpen}"
                         Name="BottomDock">
                         <views:BottomPanelView DataContext="{Binding Bottom}" />
                     </Border>
@@ -767,8 +767,8 @@
 
                 <Border
                     Classes="Dock"
+                    ClipToBounds="True"
                     Grid.Column="4"
-                    IsVisible="{Binding Layout.IsDetailsOpen}"
                     Name="DetailsDock">
                     <DockPanel>
                         <Border Classes="Strip" DockPanel.Dock="Top">
