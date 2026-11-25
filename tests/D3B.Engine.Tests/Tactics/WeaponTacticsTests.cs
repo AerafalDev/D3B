@@ -70,10 +70,10 @@ public sealed class WeaponTacticsTests
             _zones);
     }
 
-    private static TurnPlan Plan(int weapon)
+    private static TurnPlan Plan(int weapon, int[]? states = null)
     {
         // The character, its 4 AP for two casts, beside an enemy too strong to kill this turn.
-        var actor = Caster() with { ActionPoints = 4, MovementPoints = 0 };
+        var actor = Caster() with { ActionPoints = 4, MovementPoints = 0, States = [.. states ?? []] };
         var enemy = Enemy(-1, Off(1, 0)) with { Life = 500, MaxLife = 500 };
         Assert.True(_blows.TryGetBlow(weapon, out var blow));
         Assert.True(_blows.Spells.TryGetLevel(1100, out var spell));
@@ -90,6 +90,17 @@ public sealed class WeaponTacticsTests
 
         Assert.Contains(TacticAction.Cast(WeaponBlows.SpellId, WeaponBlows.FirstLevelId + Strong, Off(1, 0)), plan.Actions);
         Assert.Contains(TacticAction.Cast(Blow, 1100, Off(1, 0)), plan.Actions);
+    }
+
+    [Fact]
+    public void ACharacterInAStateThatPreventsFightingStrikesNoBlowButCastsItsSpells()
+    {
+        // Measured on the owner's captures of 22 to 24 November (D511): the server refused 74 of the AI's weapon blows with
+        // text 372, each struck in state 1 or 42, whose flag preventsFight the rules did not read; none it let through.
+        var plan = Plan(Strong, [13]);
+
+        Assert.DoesNotContain(plan.Actions, action => action.SpellId is WeaponBlows.SpellId && action.Kind is TacticActionKind.Cast);
+        Assert.Equal(2, plan.Actions.Count(action => action.SpellId is Blow && action.Kind is TacticActionKind.Cast));
     }
 
     [Fact]

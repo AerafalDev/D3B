@@ -1,5 +1,6 @@
 using System.Collections.ObjectModel;
 using System.Globalization;
+using System.Text;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using D3B.App.Controls;
@@ -7,6 +8,7 @@ using D3B.App.Localization;
 using D3B.App.ViewModels.Characters;
 using D3B.Bot.Characters;
 using D3B.Bot.Hosting;
+using D3B.Bot.Journal;
 using D3B.Bot.Runtime;
 using D3B.Data;
 using D3B.Data.Texts;
@@ -16,11 +18,15 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace D3B.App.ViewModels.Logs;
 
-/// <summary>The journal, in the bottom panel: a bot's journal, the host's problems, or both by time, filtered by level and text (D111 to D114, D327).</summary>
+/// <summary>The journal, in the bottom panel: a bot's journal, the host's problems, or both by time, filtered by level and text, copied or saved (D111 to D114, D327, D504).</summary>
 /// <remarks>
 /// <para>
 /// The journals and problems live in the host, in memory (D113): the page reads only what came since its last refresh,
 /// every 250 ms on the UI's thread, and says each line once, in the app's language. A new language says them again.
+/// </para>
+/// <para>
+/// The host also writes them to disk, for days (D504): saving the journal writes what the disk keeps of the source shown, older
+/// than what memory holds and than the app's start, in the maintainers' words, so that a stop in the night can be read and sent.
 /// </para>
 /// <para>
 /// The bot it shows is the one the inspector shows too (<see cref="BotChoice"/>): a bot's card opens its journal here.
@@ -111,6 +117,32 @@ internal sealed partial class LogsViewModel : ObservableObject
         Sources.Add(new LogSourceViewModel(LogSourceKind.Host, null, Choose));
     }
 
+    private static string Saved(JournalRecorder? recorder, IReadOnlyList<(string? Title, string Source)> sources, string shown)
+    {
+        if (recorder is null)
+            return shown;
+
+        // What came in the last second is on disk first.
+        recorder.Flush();
+
+        var text = new StringBuilder();
+        var any = false;
+
+        foreach (var (title, source) in sources)
+        {
+            if (title is not null)
+                text.Append("# ").Append(title).Append('\n');
+
+            var lines = recorder.Files.Read(source);
+
+            any |= lines.Length > 0;
+            text.Append(lines);
+        }
+
+        // A disk the recorder cannot write holds nothing, while memory still does.
+        return any ? text.ToString() : shown;
+    }
+
     /// <summary>Reads the bots and what came since, in the language chosen.</summary>
     /// <param name="services">The host's services while it runs, else <see langword="null"/>: what was read stays.</param>
     public void Refresh(IServiceProvider? services)
@@ -159,6 +191,54 @@ internal sealed partial class LogsViewModel : ObservableObject
     public string Text()
     {
         return string.Join(Environment.NewLine, Lines);
+    }
+
+    /// <summary>Gets the name a saved journal is offered under: its source and the day.</summary>
+    /// <returns>A file's name, such as <c>journal-3-11-2026-11-24.txt</c>.</returns>
+    public string SaveName()
+    {
+        var day = (_services?.GetService<TimeProvider>() ?? TimeProvider.System).GetUtcNow().ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
+        var source = Source switch
+        {
+            { Bot: { } bot } => JournalFiles.SourceOf(bot.Key),
+            { Kind: LogSourceKind.Host } => JournalFiles.HostSource,
+            _ => null,
+        };
+
+        return source is null ? $"journal-{day}.txt" : $"journal-{source}-{day}.txt";
+    }
+
+    /// <summary>Saves the journal of the source shown: every day the disk keeps of it, as the maintainers read it, or the lines shown when the disk holds none (D504).</summary>
+    /// <remarks>The file is the player's own, as the disk keeps it: unlike a report's copy, it still names the characters and the player's folder.</remarks>
+    /// <param name="path">The file chosen.</param>
+    /// <returns>A task that completes once it is written, or said not to be.</returns>
+    public async Task SaveAsync(string path)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(path);
+
+        var recorder = _services?.GetService<JournalRecorder>();
+        var sources = SavedSources();
+        var shown = Text();
+
+        try
+        {
+            await Task.Run(() => File.WriteAllText(path, Saved(recorder, sources, shown)));
+            _toasts.Show(new Toast(_localizer.Format("JournalSaved", Path.GetFileName(path)), Tone.Success));
+        }
+        catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
+        {
+            _toasts.Show(new Toast(_localizer.Format("JournalNotSaved", exception.Message), Tone.Danger));
+        }
+    }
+
+    private List<(string? Title, string Source)> SavedSources()
+    {
+        return Source switch
+        {
+            { Bot: { } bot } => [(null, JournalFiles.SourceOf(bot.Key))],
+            { Kind: LogSourceKind.Host } => [(null, JournalFiles.HostSource)],
+            _ => [(_localizer["LogsHost"], JournalFiles.HostSource), .. Sources.Where(source => source.Bot is not null).Select(source => ((string?)source.Name, JournalFiles.SourceOf(source.Bot!.Key)))],
+        };
     }
 
     partial void OnSearchChanged(string value)

@@ -9,6 +9,10 @@ there, and what leaves your computer if you choose to send a bug report.
   server exchanged, so that a bug can be replayed. A capture holds your session's login ticket and what the server told
   your client: your characters, their inventory and maps, and the names of the other players around them. It is kept 7
   days and up to 1 GB by default, then deleted; the Network settings change both and turn the recording off.
+- **The journals of your bots**, in `%LOCALAPPDATA%\D3B\journals`: what each bot did, by the game's ids, and the warnings
+  and errors of D3B itself, a file a bot and a day. They hold your characters' names where a bot's note says them and the
+  paths of your files, never a login ticket. They are kept 7 days and up to 250 MB, then deleted. "Save the journal" copies
+  them as they are: unlike a report, that file is not cleaned of your characters' names or your folder.
 - **A database and your settings** in `%LOCALAPPDATA%\D3B`: the accounts and characters D3B saw, what the bots learned, your
   profiles and routes.
 
@@ -23,7 +27,8 @@ each one:
 | Part | What it holds |
 | --- | --- |
 | The capture of the session | Required for a bug of the game: without it the bug cannot be replayed. **Cleaned** first: the login ticket, the other secrets your client sent, and the names of your characters are overwritten. It still holds the game's own data: your character's inventory and maps, the names of other players your client was sent, numbers and dates. |
-| Journal and decisions | What your character's bot did, as text; your character is told by its number, not its name. |
+| Journal and decisions | What your character's bot did over the last 24 hours, as text; your character is told by its number, not its name. |
+| Problems of the host | The warnings and errors of D3B itself over the last 24 hours, which name no character; your Windows folder is written `%USERPROFILE%`. |
 | Profile and routes | The profile your character plays and the routes and zones it uses. |
 | Settings | The settings you changed from their defaults. |
 | What the bots learned | Fight placements and NPC dialogs, by game ids; no name, no account. |

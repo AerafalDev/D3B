@@ -21,4 +21,7 @@ public sealed record TurnSearchLimits
 
     /// <summary>Gets how long a search may last.</summary>
     public TimeSpan Budget { get; init; } = TimeSpan.FromMilliseconds(800);
+
+    /// <summary>Gets the clock the search's time is read on.</summary>
+    public TimeProvider Clock { get; init; } = TimeProvider.System;
 }
