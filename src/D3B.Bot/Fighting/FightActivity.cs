@@ -116,6 +116,10 @@ public sealed class FightActivity : BotActivity
     /// <inheritdoc/>
     public override ChallengePlay Challenges => _settings.Challenges;
 
+    /// <inheritdoc/>
+    public override IReadOnlyList<int> MountRaces => !_settings.CaptureMounts ? [] :
+        [.. new[] { (_settings.CaptureDragodindes, MountCapture.Dragodindes), (_settings.CaptureMuldos, MountCapture.Muldos), (_settings.CaptureVolkornes, MountCapture.Volkornes) }.Where(pair => pair.Item1).Select(pair => pair.Item2)];
+
     /// <summary>Initializes a new instance of the <see cref="FightActivity"/> class.</summary>
     /// <param name="settings">Which groups to attack, where, the upkeep and the bank.</param>
     /// <param name="world">The installed build's world: the zone's maps.</param>

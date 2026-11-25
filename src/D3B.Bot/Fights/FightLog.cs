@@ -29,6 +29,12 @@ internal static partial class FightLog
     [LoggerMessage(Level = LogLevel.Information, Message = "Bot {Character}: plans {Actions} actions, worth {Score:F0} against {Standing:F0} ending now, {Weighed} weighed in {Milliseconds} ms")]
     public static partial void Planned(ILogger logger, long character, int actions, double score, double standing, int weighed, long milliseconds);
 
+    [LoggerMessage(Level = LogLevel.Information, Message = "Bot {Character}: tames the wild mount on cell {Cell} for its capture")]
+    public static partial void Taming(ILogger logger, long character, int cell);
+
+    [LoggerMessage(Level = LogLevel.Warning, Message = "Bot {Character}: wears no capture net, so the fight's {Mounts} wild mounts are not captured")]
+    public static partial void NoCaptureNet(ILogger logger, long character, int mounts);
+
     [LoggerMessage(Level = LogLevel.Information, Message = "Bot {Character}: casts spell {Spell} on cell {Cell}, {Outcome}")]
     public static partial void Cast(ILogger logger, long character, int spell, int cell, string outcome);
 

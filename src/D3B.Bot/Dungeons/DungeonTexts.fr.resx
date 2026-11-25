@@ -95,4 +95,25 @@
   <data name="FailNoneEnterable" xml:space="preserve">
     <value>Aucun donjon du profil ne peut être ouvert : il manque au perso le niveau ou la clef de chacun, ou aucun chemin n'y mène.</value>
   </data>
+  <data name="DoingRegenerate" xml:space="preserve">
+    <value>Régénère sa vie avant le combat de la salle, {0} s</value>
+  </data>
+  <data name="CountRoomOne" xml:space="preserve">
+    <value>{0} salle gagnée</value>
+  </data>
+  <data name="CountRoomMany" xml:space="preserve">
+    <value>{0} salles gagnées</value>
+  </data>
+  <data name="CountLostOne" xml:space="preserve">
+    <value>{0} combat perdu</value>
+  </data>
+  <data name="CountLostMany" xml:space="preserve">
+    <value>{0} combats perdus</value>
+  </data>
+  <data name="FailLost" xml:space="preserve">
+    <value>Un combat a été perdu dans le donjon : il est laissé pour la session.</value>
+  </data>
+  <data name="FailNoRoom" xml:space="preserve">
+    <value>Aucune salle du donjon encore à gagner n'est accessible à pied.</value>
+  </data>
 </root>

@@ -973,7 +973,7 @@ or refines another says so in its own entry. Add a line here with every new deci
 - [D519](decisions/d518-d519-never-idle.md#d519-a-run-that-fails-or-makes-no-progress-for-ten-minutes-puts-the-character-back-in-order-and-restarts-its-activity-after-30-s-doubling-to-8-min-six-times-an-hour-at-most-a-failure-no-restart-would-change-or-a-stop-still-ends-it) A run that fails, or makes no progress for ten minutes, puts the character back in order and restarts its activity, after 30 s doubling to 8 min, six times an hour at most; a failure no restart would change, or a stop, still ends it (2026-11-25)
   - A profile's setting, on for the harvest and the hunt; a restart from the host, at once, uncapped, or map changes taken for no progress.
 
-## Dungeons, the first version's shape (D520 to D524)
+## Dungeons, the first version's shape and the rooms (D520 to D525)
 
 - [D520](decisions/d520-d523-dungeons.md#d520-a-dungeon-is-an-activity-of-its-own-that-reads-the-clients-dungeon-table-and-follows-the-server-from-room-to-room) A dungeon is an activity of its own that reads the client's dungeon table and follows the server from room to room (2026-11-25)
   - The owner's ask; the client's 187 dungeons and 12 captured connections in four dungeons; a route step and the table's order rejected.
@@ -985,6 +985,8 @@ or refines another says so in its own entry. Add a line here with every new deci
   - The owner's choice; a key spent at each entry, the keyring none; keys from the bank next, bought or crafted with step 11.
 - [D524](decisions/d520-d523-dungeons.md#d524-a-profile-lists-several-dungeons-entered-in-turn-those-the-character-cannot-enter-left-out) A profile lists several dungeons, entered in turn, those the character cannot enter left out (2026-11-25)
   - The owner's ask; the next of the list in turn after the one last entered, a keeper's refusal shutting a dungeon for the run alone.
+- [D525](decisions/d520-d523-dungeons.md#d525-in-a-room-the-character-regenerates-fights-its-groups-and-lets-the-server-move-it-a-won-room-it-was-not-moved-from-is-left-on-foot-and-a-fight-lost-leaves-the-dungeon-for-the-run) In a room the character regenerates, fights its groups and lets the server move it; a won room it was not moved from is left on foot, and a fight lost leaves the dungeon for the run (2026-11-25)
+  - The server's move measured 128 times; the rooms' order rejected, a loss answered as the hunt's rejected.
 
 ## The studio in next's dark islands, layout and icons (D530 to D532)
 
@@ -994,6 +996,11 @@ or refines another says so in its own entry. Add a line here with every new deci
   - The owner's ask; the run block, the journal and statistics entries leave the bars; the character's column on the left.
 - [D532](decisions/d532-lucide-icons.md#d532-the-studio-draws-lucides-icons-as-next-does-under-the-keys-its-intellij-icons-had) The studio draws Lucide's icons, as next does, under the keys its IntelliJ icons had (2026-11-25)
   - The owner's ask; Lucide 1.72.0, next's version, written by `scripts/icons.cs` with its ISC license checked.
+
+## Hunting, wild mounts captured (D533)
+
+- [D533](decisions/d533-mount-capture.md#d533-a-hunt-profile-may-capture-wild-mounts-the-main-wears-a-carried-capture-net-casts-its-taming-spell-on-a-mount-at-its-first-chance-and-hunts-on-without-capturing-once-it-has-none) A hunt profile may capture wild mounts: the main wears a carried capture net, casts its taming spell on a mount at its first chance, and hunts on without capturing once it has none (2026-11-25)
+  - The owner's ask; nets and spells measured in the client, none in the captures; buying, crafting, every member capturing set aside.
 
 ## The studio's shell after next (D540 to D544)
 
