@@ -21,10 +21,8 @@
             <Setter Property="HorizontalAlignment" Value="Right" />
             <Setter Property="FontFeatures" Value="+tnum" />
         </Style>
-        <Style Selector="Border.ItemSquare">
-            <Setter Property="Width" Value="22" />
-            <Setter Property="Height" Value="22" />
-            <Setter Property="CornerRadius" Value="6" />
+        <!--  The shared kind square (Themes/Styles.axaml) on the raised grey, edged, an item's picture on it.  -->
+        <Style Selector="Border.Kind.Item">
             <Setter Property="Background" Value="{DynamicResource RaisedColor}" />
             <Setter Property="BorderBrush" Value="{DynamicResource VeilColor}" />
             <Setter Property="BorderThickness" Value="1" />
@@ -180,7 +178,7 @@
                                     <ItemsControl.ItemTemplate>
                                         <DataTemplate x:DataType="vm:StatisticsResourceViewModel">
                                             <Grid ColumnDefinitions="22,90,*,54,54" ColumnSpacing="8">
-                                                <Border Classes="ItemSquare">
+                                                <Border Classes="Kind Large Item">
                                                     <Image
                                                         IsVisible="{Binding HasIcon}"
                                                         Margin="2"
@@ -243,7 +241,7 @@
                                     <ItemsControl.ItemTemplate>
                                         <DataTemplate x:DataType="ch:SessionFigureViewModel">
                                             <Grid ColumnDefinitions="22,*,Auto,54" ColumnSpacing="8">
-                                                <Border Classes="ItemSquare">
+                                                <Border Classes="Kind Large Item">
                                                     <c:GlyphIcon
                                                         Foreground="{DynamicResource MutedColor}"
                                                         Margin="4"

@@ -14,15 +14,8 @@
             <Setter Property="BorderThickness" Value="0,0,1,0" />
             <Setter Property="Padding" Value="8,12" />
         </Style>
-        <Style Selector="TextBox.Find">
-            <Setter Property="Height" Value="30" />
-            <Setter Property="MinHeight" Value="30" />
-            <Setter Property="CornerRadius" Value="6" />
-            <Setter Property="Background" Value="{DynamicResource InputColor}" />
-            <Setter Property="BorderThickness" Value="1" />
-            <Setter Property="BorderBrush" Value="{DynamicResource BorderColor}" />
-            <Setter Property="FontSize" Value="12.5" />
-            <Setter Property="VerticalContentAlignment" Value="Center" />
+        <!--  The shared search (Themes/Styles.axaml), set above the sections.  -->
+        <Style Selector="TextBox.Search.Find">
             <Setter Property="Margin" Value="2,0,2,10" />
         </Style>
         <Style Selector="Button.Section">
@@ -106,18 +99,9 @@
             <Setter Property="Margin" Value="0,2,0,0" />
             <Setter Property="TextWrapping" Value="Wrap" />
         </Style>
-        <Style Selector="Border.Badge">
-            <Setter Property="Height" Value="20" />
-            <Setter Property="Padding" Value="8,0" />
-            <Setter Property="CornerRadius" Value="10" />
-            <Setter Property="Background" Value="{DynamicResource WarningColor10}" />
-            <Setter Property="VerticalAlignment" Value="Center" />
+        <!--  The shared badge (Themes/Styles.axaml), in the warning's tone, beside what it marks.  -->
+        <Style Selector="Border.Badge.Warn">
             <Setter Property="Margin" Value="8,0,0,0" />
-        </Style>
-        <Style Selector="Border.Badge > TextBlock">
-            <Setter Property="FontSize" Value="11" />
-            <Setter Property="Foreground" Value="{DynamicResource WarningTextColor}" />
-            <Setter Property="VerticalAlignment" Value="Center" />
         </Style>
         <Style Selector="Border.Number">
             <Setter Property="Height" Value="28" />
@@ -198,25 +182,6 @@
             <Setter Property="Foreground" Value="{DynamicResource MutedColor}" />
             <Setter Property="TextTrimming" Value="PrefixCharacterEllipsis" />
             <Setter Property="VerticalAlignment" Value="Center" />
-        </Style>
-        <Style Selector="Button.Tiny">
-            <Setter Property="Theme" Value="{DynamicResource StudioButton}" />
-            <Setter Property="Width" Value="22" />
-            <Setter Property="Height" Value="22" />
-            <Setter Property="Padding" Value="0" />
-            <Setter Property="CornerRadius" Value="6" />
-            <Setter Property="HorizontalContentAlignment" Value="Center" />
-        </Style>
-        <Style Selector="Button.Tiny.Wide">
-            <Setter Property="Width" Value="26" />
-            <Setter Property="Height" Value="26" />
-            <Setter Property="CornerRadius" Value="6" />
-        </Style>
-        <Style Selector="Button.Tiny:pointerover">
-            <Setter Property="Background" Value="{DynamicResource HoverColor}" />
-        </Style>
-        <Style Selector="Button.Tiny:disabled">
-            <Setter Property="Opacity" Value="0.4" />
         </Style>
         <Style Selector="Button.Ghost">
             <Setter Property="Theme" Value="{DynamicResource StudioButton}" />
@@ -321,7 +286,7 @@
             <StackPanel>
                 <TextBox
                     AutomationProperties.Name="{l:Tr SettingsSearch}"
-                    Classes="Find"
+                    Classes="Search Find"
                     Text="{Binding Filter}"
                     PlaceholderText="{l:Tr SettingsSearch}">
                     <TextBox.InnerLeftContent>
@@ -602,7 +567,7 @@
                         <StackPanel Classes="Group">
                             <Grid Classes="GroupTitle" ColumnDefinitions="Auto,Auto">
                                 <TextBlock Classes="GroupTitle" Text="{l:Tr GroupRelayDelays}" />
-                                <Border Classes="Badge" Grid.Column="1">
+                                <Border Classes="Badge Warn" Grid.Column="1">
                                     <TextBlock Text="{l:Tr AppliesNextStart}" />
                                 </Border>
                             </Grid>
@@ -625,7 +590,7 @@
                                         <StackPanel VerticalAlignment="Center">
                                             <StackPanel Orientation="Horizontal">
                                                 <TextBlock Classes="RowTitle" Text="{Binding Captures.Label}" />
-                                                <Border Classes="Badge">
+                                                <Border Classes="Badge Warn">
                                                     <TextBlock Text="{l:Tr AppliesNextStart}" />
                                                 </Border>
                                             </StackPanel>
@@ -668,7 +633,7 @@
                                         <StackPanel VerticalAlignment="Center">
                                             <StackPanel Orientation="Horizontal">
                                                 <TextBlock Classes="RowTitle" Text="{Binding CaptureDaysRow.Label}" />
-                                                <Border Classes="Badge">
+                                                <Border Classes="Badge Warn">
                                                     <TextBlock Text="{l:Tr AppliesNextStart}" />
                                                 </Border>
                                             </StackPanel>
@@ -715,7 +680,7 @@
                                         <StackPanel VerticalAlignment="Center">
                                             <StackPanel Orientation="Horizontal">
                                                 <TextBlock Classes="RowTitle" Text="{Binding CaptureMegabytesRow.Label}" />
-                                                <Border Classes="Badge">
+                                                <Border Classes="Badge Warn">
                                                     <TextBlock Text="{l:Tr AppliesNextStart}" />
                                                 </Border>
                                             </StackPanel>
@@ -770,7 +735,7 @@
                                                     <TextBlock Text="{Binding CapturesPath}" ToolTip.Tip="{Binding CapturesPath}" />
                                                     <Button
                                                         AutomationProperties.Name="{l:Tr CopyPath}"
-                                                        Classes="Tiny"
+                                                        Classes="Tool Small"
                                                         Click="OnCopyPathClick"
                                                         Grid.Column="1"
                                                         Tag="{Binding CapturesPath}"
@@ -784,7 +749,7 @@
                                             </Border>
                                             <Button
                                                 AutomationProperties.Name="{l:Tr OpenFolder}"
-                                                Classes="Tiny Wide"
+                                                Classes="Tool"
                                                 Grid.Column="1"
                                                 Command="{Binding OpenPathCommand}"
                                                 CommandParameter="{Binding CapturesPath}"
@@ -900,7 +865,7 @@
                                                     <TextBlock Text="{Binding ProjectPath}" ToolTip.Tip="{Binding ProjectPath}" />
                                                     <Button
                                                         AutomationProperties.Name="{l:Tr CopyPath}"
-                                                        Classes="Tiny"
+                                                        Classes="Tool Small"
                                                         Click="OnCopyPathClick"
                                                         Grid.Column="1"
                                                         Tag="{Binding ProjectPath}"
@@ -914,7 +879,7 @@
                                             </Border>
                                             <Button
                                                 AutomationProperties.Name="{l:Tr OpenFolder}"
-                                                Classes="Tiny Wide"
+                                                Classes="Tool"
                                                 Grid.Column="1"
                                                 Command="{Binding OpenPathCommand}"
                                                 CommandParameter="{Binding ProjectPath}"
@@ -947,7 +912,7 @@
                                                     <TextBlock Text="{Binding DatabasePath}" ToolTip.Tip="{Binding DatabasePath}" />
                                                     <Button
                                                         AutomationProperties.Name="{l:Tr CopyPath}"
-                                                        Classes="Tiny"
+                                                        Classes="Tool Small"
                                                         Click="OnCopyPathClick"
                                                         Grid.Column="1"
                                                         Tag="{Binding DatabasePath}"
@@ -961,7 +926,7 @@
                                             </Border>
                                             <Button
                                                 AutomationProperties.Name="{l:Tr OpenFolder}"
-                                                Classes="Tiny Wide"
+                                                Classes="Tool"
                                                 Grid.Column="1"
                                                 Command="{Binding OpenPathCommand}"
                                                 CommandParameter="{Binding DatabasePath}"
@@ -983,7 +948,7 @@
                                         <StackPanel VerticalAlignment="Center">
                                             <StackPanel Orientation="Horizontal">
                                                 <TextBlock Classes="RowTitle" Text="{Binding ClientFolder.Label}" />
-                                                <Border Classes="Badge">
+                                                <Border Classes="Badge Warn">
                                                     <TextBlock Text="{l:Tr AppliesNextStart}" />
                                                 </Border>
                                             </StackPanel>
@@ -1000,7 +965,7 @@
                                                     <TextBlock Text="{Binding ClientFolderPath}" ToolTip.Tip="{Binding ClientFolderPath}" />
                                                     <Button
                                                         AutomationProperties.Name="{l:Tr CopyPath}"
-                                                        Classes="Tiny"
+                                                        Classes="Tool Small"
                                                         Click="OnCopyPathClick"
                                                         Grid.Column="1"
                                                         Tag="{Binding ClientFolderPath}"
@@ -1014,7 +979,7 @@
                                             </Border>
                                             <Button
                                                 AutomationProperties.Name="{l:Tr ChooseFolder}"
-                                                Classes="Tiny Wide"
+                                                Classes="Tool"
                                                 Click="OnChooseClientFolderClick"
                                                 ToolTip.Tip="{l:Tr ChooseFolder}">
                                                 <c:Icon
@@ -1024,7 +989,7 @@
                                             </Button>
                                             <Button
                                                 AutomationProperties.Name="{l:Tr OpenFolder}"
-                                                Classes="Tiny Wide"
+                                                Classes="Tool"
                                                 Command="{Binding OpenFolderPathCommand}"
                                                 CommandParameter="{Binding ClientFolderPath}"
                                                 ToolTip.Tip="{l:Tr OpenFolder}">
@@ -1068,7 +1033,7 @@
                                                     <TextBlock Text="{Binding ClientDataPath}" ToolTip.Tip="{Binding ClientDataPath}" />
                                                     <Button
                                                         AutomationProperties.Name="{l:Tr CopyPath}"
-                                                        Classes="Tiny"
+                                                        Classes="Tool Small"
                                                         Click="OnCopyPathClick"
                                                         Grid.Column="1"
                                                         IsEnabled="{Binding IsPackKnown}"
@@ -1083,7 +1048,7 @@
                                             </Border>
                                             <Button
                                                 AutomationProperties.Name="{l:Tr OpenFolder}"
-                                                Classes="Tiny Wide"
+                                                Classes="Tool"
                                                 Grid.Column="1"
                                                 Command="{Binding OpenPathCommand}"
                                                 CommandParameter="{Binding ClientDataPath}"
@@ -1117,7 +1082,7 @@
                                                     <TextBlock Text="{Binding SettingsPath}" ToolTip.Tip="{Binding SettingsPath}" />
                                                     <Button
                                                         AutomationProperties.Name="{l:Tr CopyPath}"
-                                                        Classes="Tiny"
+                                                        Classes="Tool Small"
                                                         Click="OnCopyPathClick"
                                                         Grid.Column="1"
                                                         Tag="{Binding SettingsPath}"
@@ -1131,7 +1096,7 @@
                                             </Border>
                                             <Button
                                                 AutomationProperties.Name="{l:Tr OpenFolder}"
-                                                Classes="Tiny Wide"
+                                                Classes="Tool"
                                                 Grid.Column="1"
                                                 Command="{Binding OpenPathCommand}"
                                                 CommandParameter="{Binding SettingsPath}"

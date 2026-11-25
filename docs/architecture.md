@@ -917,7 +917,9 @@ bottom panel and the Details hidden until needed.
   `Figure`); the studio's controls 24 to 30 high (`StudioButton` and its classes: `Tool`, `TabFace`, `TitleSearch`,
   `Status`), the pages' 32 and 36; radii 4 for rows and chips, 6 for fields, buttons and parts, 8 for menus and cards (D547), the
   islands 6 (D530); icons 12, 14, 16 and 20; colours by the palette's keys only, the glass over a map `GlassColor`, a field's hover opaque `FieldHoverColor` (D547, D548); a
-  section's title `TextBlock.SectionTitle`, a group's `TextBlock.GroupTitle`, a link `Button.Link`, shared (D548). Keycaps (`Border.Key`)
+  section's title `TextBlock.SectionTitle`, a group's `TextBlock.GroupTitle`, a link `Button.Link`, shared (D548); a value's field
+  `TextBox.Field`, a search `TextBox.Search`, a kind's square `Border.Kind` (`Large` in a card), a badge `Border.Badge` (`Good`,
+  `Bad`, `Warn`), a toolbar's button `Tool` or `Tool Small` with `On` for a toggle that is on (D549). Keycaps (`Border.Key`)
   say a shortcut, and a tooltip's shortcut is a `KeyTip`. A module's page is an `AppPage` (`D3B.App.Controls`): its title
   or a header of its own, its actions on the right, the same margins; docked, its title is the tab's and its margins
   narrower. A setting's help is a tooltip on a mark beside its name.

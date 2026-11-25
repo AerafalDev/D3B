@@ -219,7 +219,7 @@
                 <StackPanel Grid.Column="4">
                     <Button
                         AutomationProperties.Name="{l:Tr HideUnread}"
-                        Classes="Ib"
+                        Classes="Tool Small"
                         Classes.On="{Binding HidesUnread}"
                         Command="{Binding ToggleHidesUnreadCommand}"
                         ToolTip.Tip="{l:Tr HideUnreadHint}">
@@ -227,7 +227,7 @@
                     </Button>
                     <Button
                         AutomationProperties.Name="{l:Tr Follow}"
-                        Classes="Ib"
+                        Classes="Tool Small"
                         Classes.On="{Binding Follow}"
                         Command="{Binding ToggleFollowCommand}"
                         ToolTip.Tip="{l:Tr FollowHint}">
@@ -235,7 +235,7 @@
                     </Button>
                     <Button
                         AutomationProperties.Name="{l:Tr Freeze}"
-                        Classes="Ib"
+                        Classes="Tool Small"
                         Classes.On="{Binding IsFrozen}"
                         Command="{Binding ToggleFreezeCommand}"
                         IsEnabled="{Binding IsLive}"
@@ -247,7 +247,7 @@
                     </Button>
                     <Button
                         AutomationProperties.Name="{l:Tr ClearFrames}"
-                        Classes="Ib"
+                        Classes="Tool Small"
                         Command="{Binding ClearCommand}"
                         ToolTip.Tip="{l:Tr ClearFrames}">
                         <c:Icon Drawing="{StaticResource General.Delete}" />
