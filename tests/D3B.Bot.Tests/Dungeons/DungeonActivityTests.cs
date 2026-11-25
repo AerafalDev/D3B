@@ -502,6 +502,12 @@ public sealed class DungeonActivityTests : IAsyncDisposable
 
         Assert.True(activity.IsFull(outside with { Weight = 650 }));
         Assert.False(activity.IsFull(outside with { Weight = 550 }));
+
+        // Banked by its group, what the bank or an exchange left waits for the next exit, as its own banking does (D529).
+        activity.OnGroupUnloaded();
+
+        Assert.False(activity.IsFull(outside with { Weight = 650 }));
+        Assert.True(activity.IsFull(outside with { Weight = 950 }));
     }
 
     [Fact]

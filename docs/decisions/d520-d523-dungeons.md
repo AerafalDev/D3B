@@ -177,7 +177,8 @@ choice among three the session put, the rest the session's within D521. Builds D
 - **Made**, the owner's choice: before its journey, the master leaves out of its turn (D524) a dungeon one of its followers
   cannot enter, its level too low or neither the key nor a keyring that opens it carried, saying which follower; a follower left
   behind (D490) counts not. A follower that still cannot enter, such as a keeper turning it away, waits at the door, and its
-  master goes on without it after five minutes (D490).
+  master goes on without it after five minutes (D490); a keeper that turned a follower away shuts that dungeon for the group's
+  run from then on, as one turning the master away does (D524), lest each run of it wait five minutes for that follower.
 - **Rejected.**
   - The keeper's "Téléporter les membres du groupe.": its effect is not measured.
   - The master entering without the follower that cannot: five minutes lost at each run, and a fighter less in every room.

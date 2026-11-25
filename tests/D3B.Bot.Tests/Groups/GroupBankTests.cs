@@ -128,6 +128,9 @@ public sealed class GroupBankTests
         Assert.DoesNotContain(connection.Sent, request => request is ExchangeTransferFromInventoryRequest transfer && transfer.Uids.Contains(41));
         Assert.DoesNotContain(connection.Sent, request => request is ExchangeObjectMoveRequest);
         Assert.Equal(0, activity.OwnUnloads);
+
+        // The run tells the activity its group banked, as a dungeon's estimate waits on it (D529).
+        await TestGroup.UntilAsync(play, () => activity.GroupUnloads is 1, "the activity told");
         leading.Stop();
         run.Stop();
     }
@@ -156,6 +159,38 @@ public sealed class GroupBankTests
         Assert.Equal(new NpcActionRequest { Action = 3, MapId = TestPlay.InsideMapId, NpcActorId = TestPlay.WayActorId }, await TestGroup.SentAsync(play, masterConnection, 11));
         Assert.Contains(TestPlay.DungeonKeyId, master.State.Inventory.Values.Select(stack => stack.ItemId));
         Assert.Contains(TestPlay.KeyringId, follower.State.Inventory.Values.Select(stack => stack.ItemId));
+        leading.Stop();
+        run.Stop();
+    }
+
+    [Fact]
+    public async Task AFollowerFullInADungeonsRoomTakesTheGroupToNoBank()
+    {
+        // D526, D529: leaving a dungeon would lose the run, so the group's bank waits for the exit.
+        await using var play = new TestPlay();
+        var (masterConnection, master) = await TestGroup.MasterAsync(play, 300, TestPlay.OtherInsideMapId);
+        var (connection, follower) = await TestGroup.FollowerAsync(play, 301, TestPlay.OtherInsideMapId);
+
+        masterConnection.Server(new InventoryContentEvent { Objects = { Stack(15, TestPlay.DungeonKeyId, 1) } });
+        connection.Server(new InventoryContentEvent { Objects = { Stack(AshUid, TestPlay.Ash, 10), Stack(45, TestPlay.DungeonKeyId, 1) } });
+        connection.Server(new InventoryWeightEvent { Weight = 950, MaxWeight = 1_000 });
+        masterConnection.Server(TestGroup.Party(TestGroup.PartyId, TestGroup.MasterId, TestGroup.MasterId, TestGroup.FollowerId));
+        connection.Server(TestGroup.Party(TestGroup.PartyId, TestGroup.MasterId, TestGroup.MasterId, TestGroup.FollowerId));
+
+        var run = follower.StartActivity(new FollowActivity(new FollowSettings { Master = TestGroup.Master.ToId() }, play.Bots, play.Tables));
+
+        await TestGroup.UntilAsync(play, () => play.Bots.Groups.FollowersOf(TestGroup.Master).Count is 1, "the follower in its master's group");
+
+        var activity = new DungeonActivity(new DungeonSettings { Dungeons = [TestPlay.DungeonId], RestartAfterFailure = false }, play.Tables, bots: play.Bots);
+        var leading = master.StartActivity(activity);
+
+        // The room shows no group: once its wait is over, the master walks on to the next room, never to the bank.
+        await TestGroup.UntilAsync(play, () => masterConnection.Sent.Count > 0, "the master's first request");
+        play.Time.Advance(TimeSpan.FromSeconds(10));
+        await TestGroup.SettleAsync(master, follower);
+
+        Assert.DoesNotContain(masterConnection.Sent, request => request is NpcActionRequest);
+        Assert.DoesNotContain(connection.Sent, request => request is ExchangePlayerRequest);
         leading.Stop();
         run.Stop();
     }

@@ -113,6 +113,7 @@ public sealed class FollowActivity : BotActivity, IDisposable
     private int? _turnedAway;
 
     private volatile IDisposable? _membership;
+    private volatile ImmutableHashSet<int> _turnedAwayFrom = [];
     private volatile ActivityReport _report = new() { Doing = GameText.Of(GroupTexts.Text("DoingStart")) };
 
     /// <inheritdoc/>
@@ -120,6 +121,10 @@ public sealed class FollowActivity : BotActivity, IDisposable
 
     /// <inheritdoc/>
     public override ActivityReport? Report => _report;
+
+    /// <summary>Gets the dungeons whose keeper turned the follower away in its run, which its master leaves out of the group's turn (D528).</summary>
+    /// <remarks>Read from another thread than the activity's while it runs.</remarks>
+    public IReadOnlySet<int> TurnedAwayFrom => _turnedAwayFrom;
 
     /// <inheritdoc/>
     /// <remarks>The AI plays its master's fights it joins, and those it meets on its way, such as an aggression.</remarks>
@@ -409,7 +414,10 @@ public sealed class FollowActivity : BotActivity, IDisposable
                 _dungeon = dungeon.Id;
                 break;
             case DoorOutcome.Refused:
+                // Such as a keyring's charge spent, which nothing the character carries says: its master would wait for it
+                // at every run of that dungeon (D490), so it leaves the dungeon out of the group's turn, as its own (D524).
                 _turnedAway = dungeon.Id;
+                _turnedAwayFrom = _turnedAwayFrom.Add(dungeon.Id);
                 break;
             case DoorOutcome.Unanswered:
                 await StuckAsync(context, master, name, cancellationToken).ConfigureAwait(false);

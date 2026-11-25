@@ -74,6 +74,9 @@
   <data name="FailFollowerNoKey" xml:space="preserve">
     <value>{0}, who follows the character, carries neither the dungeon's key nor a keyring that opens it.</value>
   </data>
+  <data name="FailFollowerTurnedAway" xml:space="preserve">
+    <value>{0}, who follows the character, was turned away by the dungeon's keeper.</value>
+  </data>
   <data name="FailNoPath" xml:space="preserve">
     <value>No way leads to the dungeon's door from where the character stands.</value>
   </data>

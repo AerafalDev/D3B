@@ -468,6 +468,10 @@ public sealed class DungeonActivity : BotActivity
 
             if (!CarriesKey(theirs, dungeons, dungeon))
                 return Impossible($"Follower {follower.Key.CharacterId} carries neither the key of dungeon {dungeon.Id} nor a keyring that opens it.", GameText.Of(DungeonTexts.Text("FailFollowerNoKey"), name));
+
+            // A keeper turning a follower away, such as its keyring's charge spent, shuts the dungeon for the group's run (D524).
+            if (follower.Activity is { IsOver: false, Activity: FollowActivity follow } && follow.TurnedAwayFrom.Contains(dungeon.Id))
+                return Impossible($"The keeper of dungeon {dungeon.Id} turned follower {follower.Key.CharacterId} away.", GameText.Of(DungeonTexts.Text("FailFollowerTurnedAway"), name));
         }
 
         return null;

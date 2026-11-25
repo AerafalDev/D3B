@@ -137,6 +137,9 @@ public sealed class FollowActivityDungeonTests
         await TestGroup.UntilAsync(play, () => Doing(run) == "Waits at the door: the keeper turned it away from the dungeon behind Master", "waiting, turned away");
         connection.Server(new DialogLeaveEvent { Type = DialogType.Npc });
 
+        // Its master leaves the dungeon out of the group's turn from then on, as a keeper turning it away does (D524, D528).
+        Assert.Contains(TestPlay.DungeonId, Assert.IsType<FollowActivity>(run.Activity).TurnedAwayFrom);
+
         var sent = connection.Sent.Count;
 
         play.Time.Advance(TimeSpan.FromMinutes(1));

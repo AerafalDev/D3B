@@ -480,7 +480,8 @@ The bots run in `D3B.Bot`: what each part does today, with the decisions that ma
   and counts the run (D526), done once the profile's `Runs` are. Out of every dungeon it banks the loot of its fights, keys and
   the keyring kept, once its weight and the most a run of the next dungeon brought reach the banking share (D527); never inside.
   The keeper's and the exit's talks are `DungeonDoors`', which a follower uses too. A master leaves out of its turn a dungeon one
-  of its followers connected and not left behind cannot enter, its level or its key (D528, the host's `Bots`); it says which
+  of its followers connected and not left behind cannot enter, its level or its key, or whose keeper turned one away
+  (`FollowActivity.TurnedAwayFrom`) (D528, the host's `Bots`); it says which
   dungeon it is in (`DungeonInside`) for its followers to enter behind it; and its group banks together, as each member is full by
   the same estimate, every member keeping its keys and the keyring (D529, `BanksTheGroup`, `Keeps`).
 - **The zaaps' discovery** (D499), in `D3B.Bot.Zaaps`, registered by `ZaapsModule`: `ZaapDiscoveryActivity`, the "Discover
