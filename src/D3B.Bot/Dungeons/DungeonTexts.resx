@@ -95,4 +95,25 @@
   <data name="FailNoneEnterable" xml:space="preserve">
     <value>No dungeon of the profile can be entered: the character lacks the level or the key of each, or no way leads to them.</value>
   </data>
+  <data name="DoingRegenerate" xml:space="preserve">
+    <value>Regenerating its life before the room's fight, {0} s</value>
+  </data>
+  <data name="CountRoomOne" xml:space="preserve">
+    <value>{0} room won</value>
+  </data>
+  <data name="CountRoomMany" xml:space="preserve">
+    <value>{0} rooms won</value>
+  </data>
+  <data name="CountLostOne" xml:space="preserve">
+    <value>{0} fight lost</value>
+  </data>
+  <data name="CountLostMany" xml:space="preserve">
+    <value>{0} fights lost</value>
+  </data>
+  <data name="FailLost" xml:space="preserve">
+    <value>A fight was lost in the dungeon: it is left for the run.</value>
+  </data>
+  <data name="FailNoRoom" xml:space="preserve">
+    <value>No room of the dungeon left to win can be walked to.</value>
+  </data>
 </root>

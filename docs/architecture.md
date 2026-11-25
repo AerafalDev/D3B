@@ -448,7 +448,7 @@ The bots run in `D3B.Bot`: what each part does today, with the decisions that ma
   settings lead to: the ground's mini-map, its maps, monsters and their levels, the nearest bank (`NearestBank`, shared
   with harvesting's) and isolated maps, and the place for each character (D246). Harvesting's fights are the AI's as its
   profile's "The AI fights" says (D235).
-- **Dungeons** (D520 to D524), in `D3B.Bot.Dungeons`: `DungeonActivity`, its settings `DungeonSettings`, not yet in the
+- **Dungeons** (D520 to D525), in `D3B.Bot.Dungeons`: `DungeonActivity`, its settings `DungeonSettings`, not yet in the
   catalogue of activities, which its third pull request joins. It reads the dungeons of the pack's `DungeonCatalog` the profile
   lists, and each step does what the character's map wants: in a room of one of them, that one is run; else the next of the list
   in turn after the one last entered whose level the character has and whose keyring, when the dungeon is on it, or every
@@ -456,7 +456,11 @@ The bots run in `D3B.Bot`: what each part does today, with the decisions that ma
   in the run left out (D524) until a restart, the run ending when none is left, a restart changing nothing of a level or a
   key; it travels to that dungeon's entrance map; on it, it talks to each NPC the server shows there, bankers aside, until
   one lets it in, each reply chosen among those the question offers (`NpcTalk`'s chooser, D522): the keyring's first, then the
-  key's, then the keeper's confirmation. On a room it ends for now: the rooms' chain and the exit come next.
+  key's, then the keeper's confirmation. In a room, its information come and a group shown within 5 s, it regenerates to the
+  profile's share of life, then fights the room's groups through `MapFight`, the AI playing each, and the server's move after a
+  win makes the next step the next room's (D525); a room with no group is won, and the nearest room not won in the run is
+  travelled to through the graph. A fight lost leaves the dungeon for the run. With every room won, or on the map of the
+  dungeon's sub-area the boss's win leads to, the run ends for now: the exit comes next.
 - **The zaaps' discovery** (D499), in `D3B.Bot.Zaaps`, registered by `ZaapsModule`: `ZaapDiscoveryActivity`, the "Discover
   the zaaps" activity, with no setting. It seeks the activated zaaps of the pack's atlas the character does not know as it
   starts (`ZaapTargets`); each step finds the nearest left by the world's path with the zaaps known so far, travels there,

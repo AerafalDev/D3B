@@ -121,10 +121,11 @@ internal sealed class TestPlay : IAsyncDisposable
     // The one monster of the world, living in its sub-area, its grades from level 10 to 14.
     public const int LarvaId = 489;
 
-    // The world's dungeon, as client 3.7.14.18 numbers Champs': its keeper the NPC who is no banker, in the inside, its first
-    // room the other inside; its key and the keyring, and the keeper's replies as measured (D520, D522). A second dungeon of
-    // the same door asks a level no character has, a third of the same door, whose room is the map east, asks none, and a
-    // fourth, an expedition with no key, has its door on the zaap's map the graph does not hold.
+    // The world's dungeon, as client 3.7.14.18 numbers Champs': its keeper the NPC who is no banker, in the inside, its rooms
+    // the other inside, then the map north, a map action and a scroll apart; its key and the keyring, and the keeper's replies
+    // as measured (D520, D522). A second dungeon of the same door asks a level no character has; a third of the same door, whose
+    // room is the map east and whose sub-area is the world's, so that the first map is the map its boss's win leads to, asks
+    // none; and a fourth, an expedition with no key, has its door on the zaap's map the graph does not hold.
     public const int DungeonId = 1;
     public const int HighDungeonId = 2;
     public const int OtherDungeonId = 3;
@@ -352,15 +353,15 @@ internal sealed class TestPlay : IAsyncDisposable
         return new DungeonCatalog(
             new Dungeon[]
             {
-                new(DungeonId, 52_011, 20, 30, InsideMapId, InsideMapId, true, 0, 1, 0, 1, 0, 0, 0, 0),
-                new(HighDungeonId, 52_012, 201, 201, InsideMapId, InsideMapId, false, 1, 0, 1, 1, 0, 0, 0, 0),
-                new(OtherDungeonId, 52_013, 1, 1, InsideMapId, InsideMapId, false, 1, 1, 2, 1, 0, 0, 0, 0),
-                new(FarDungeonId, 52_014, 1, 1, AwayZaapMapId, AwayZaapMapId, false, 2, 0, 3, 0, 0, 0, 0, 0),
+                new(DungeonId, 52_011, 20, 30, InsideMapId, InsideMapId, true, 0, 2, 0, 1, 0, 0, 0, 0),
+                new(HighDungeonId, 52_012, 201, 201, InsideMapId, InsideMapId, false, 2, 0, 1, 1, 0, 0, 0, 0),
+                new(OtherDungeonId, 52_013, 1, 1, InsideMapId, InsideMapId, false, 2, 1, 2, 1, 0, 0, 0, 1),
+                new(FarDungeonId, 52_014, 1, 1, AwayZaapMapId, AwayZaapMapId, false, 3, 0, 3, 0, 0, 0, 1, 0),
             },
-            new[] { OtherInsideMapId, EastMapId },
+            new[] { OtherInsideMapId, NorthMapId, EastMapId },
             new DungeonObject[] { new(DungeonKeyId, 1), new(DungeonKeyId, 1), new(DungeonKeyId, 1) },
             Array.Empty<int>(),
-            Array.Empty<int>(),
+            new[] { SubAreaId },
             new[] { KeyReplyId },
             new[] { KeyringReplyId },
             new[] { ConfirmReplyId },

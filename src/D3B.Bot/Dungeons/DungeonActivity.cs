@@ -1,11 +1,14 @@
 using D3B.Bot.Activities;
 using D3B.Bot.Characters;
+using D3B.Bot.Fighting;
+using D3B.Bot.Fights;
 using D3B.Bot.Localization;
 using D3B.Bot.Movement;
 using D3B.Bot.Npcs;
 using D3B.Bot.Runtime;
 using D3B.Data;
 using D3B.Data.Dungeons;
+using D3B.Protocol.Game;
 
 namespace D3B.Bot.Dungeons;
 
@@ -20,23 +23,41 @@ namespace D3B.Bot.Dungeons;
 /// the pack names from their French words (D522). Measured on the owner's captures (client-game.md): the first room comes
 /// 28 to 41 ms after the confirmation, a key spent and the keyring nothing.
 /// </para>
-/// <para>In a room of the dungeon the activity ends: the rooms' chain comes next (D520).</para>
+/// <para>
+/// In a room the character regenerates to its share of life, then fights the room's groups, the AI playing each fight. At a
+/// room's win the server names the next room in the fight end's millisecond, unasked (client-game.md): the next step is that
+/// room's. A room whose groups are beaten and that the server did not leave is left on foot, through the world graph, for the
+/// nearest room of the dungeon not yet won (D525). A fight lost leaves the dungeon for the run, the others of the profile still
+/// entered; on the map the boss's win leads to, or once every room is won, the activity ends: the exit comes next (D520).
+/// </para>
 /// </remarks>
 public sealed class DungeonActivity : BotActivity
 {
     private const int MostFailedJourneys = 3;
     private const int MostUnanswered = 3;
 
+    // Tenths of a second a life point takes, when the server did not say: as measured in every capture (D153).
+    private const int RegainPoll = 5;
+
     private static readonly TimeSpan _busyDelay = TimeSpan.FromSeconds(10);
+    private static readonly TimeSpan _regainStep = TimeSpan.FromSeconds(10);
+
+    // A room's groups come with its map's information; a room left with none is walked on from after this.
+    private static readonly TimeSpan _groupDelay = TimeSpan.FromSeconds(5);
 
     private readonly DungeonSettings _settings;
     private readonly GameTables _tables;
     private readonly BusyWait _busy = new();
+    private readonly Dictionary<int, ActivityException> _shut = [];
+    private readonly HashSet<int> _beaten = [];
+    private readonly HashSet<long> _won = [];
     private ActivityReport? _report;
+    private int? _inside;
     private int _failedJourneys;
     private int _unanswered;
     private int _entered;
-    private readonly Dictionary<int, ActivityException> _shut = [];
+    private int _rooms;
+    private int _lost;
     private int _next;
 
     /// <inheritdoc/>
@@ -119,7 +140,21 @@ public sealed class DungeonActivity : BotActivity
 
         foreach (var listed in _settings.Dungeons)
         {
-            if (dungeons.TryGetDungeon(listed, out var inside) && dungeons.RoomsOf(inside).Contains(mapId))
+            if (!dungeons.TryGetDungeon(listed, out var inside))
+                continue;
+
+            if (dungeons.RoomsOf(inside).Contains(mapId))
+            {
+                if (_inside != inside.Id)
+                    _won.Clear();
+
+                _inside = inside.Id;
+
+                return await RoomAsync(context, inside, mapId, cancellationToken).ConfigureAwait(false);
+            }
+
+            // The boss's win leads to a map of the dungeon's sub-area that is no room, where its exit stands (client-game.md).
+            if (_inside == inside.Id && IsFinalMap(state, inside))
             {
                 Publish("DoingRooms");
 
@@ -149,6 +184,29 @@ public sealed class DungeonActivity : BotActivity
         _busy.Reset();
 
         return InterruptionResponse.Resume;
+    }
+
+    /// <inheritdoc/>
+    public override InterruptionResponse OnFightOver(FightEnd? ending, InterruptionResponse response)
+    {
+        if (ending is { Outcome: FightOutcome.Lost })
+        {
+            // Measured nowhere yet: the references wake the character at its saved zaap. The dungeon is left for the run (D525).
+            _lost++;
+
+            if (_inside is { } dungeon)
+                _beaten.Add(dungeon);
+
+            _inside = null;
+        }
+        else if (ending is not null)
+        {
+            _rooms++;
+        }
+
+        Publish(_inside is null ? "DoingStart" : "DoingRooms");
+
+        return response;
     }
 
     /// <inheritdoc/>
@@ -202,6 +260,9 @@ public sealed class DungeonActivity : BotActivity
         if (_shut.TryGetValue(id, out var shut))
             return shut;
 
+        if (_beaten.Contains(id))
+            return Impossible($"A fight was lost in dungeon {id}: it is left for the run.", GameText.Of(DungeonTexts.Text("FailLost")));
+
         if (state.Level is { } level && level < dungeon.MinLevel)
         {
             return Impossible(
@@ -213,6 +274,105 @@ public sealed class DungeonActivity : BotActivity
             return Impossible($"The character carries neither the key of dungeon {dungeon.Id} nor a keyring that opens it.", GameText.Of(DungeonTexts.Text("FailNoKey")));
 
         return null;
+    }
+
+    private bool IsFinalMap(CharacterState state, Dungeon dungeon)
+    {
+        var dungeons = _tables.Dungeons;
+
+        return state.MapId is { } map
+            && state.SubAreaId is { } subArea
+            && map != dungeon.EntranceMapId
+            && map != dungeon.ExitMapId
+            && dungeons.SubAreasOf(dungeon).Contains(subArea)
+            && !dungeons.RoomsOf(dungeon).Contains(map);
+    }
+
+    private async Task<bool> RoomAsync(BotContext context, Dungeon dungeon, long mapId, CancellationToken cancellationToken)
+    {
+        // The map's information names the room's groups: until it came, the character has no cell.
+        if (context.State.Cell is null)
+        {
+            await context.WaitUntilAsync(state => state.Cell is not null, _busyDelay, cancellationToken).ConfigureAwait(false);
+
+            return true;
+        }
+
+        Publish("DoingRooms");
+
+        if (context.State.MonsterGroups.Count is 0)
+            await context.WaitUntilAsync(state => state.MapId != mapId || state.MonsterGroups.Count > 0, _groupDelay, cancellationToken).ConfigureAwait(false);
+
+        if (context.State.MapId != mapId)
+            return true;
+
+        if (context.State.MonsterGroups.Count > 0)
+        {
+            if (await RegainAsync(context, cancellationToken).ConfigureAwait(false))
+                return true;
+
+            // A fight that begins cuts the step; the run plays it, and the next step is the next room's.
+            await MapFight.FightAsync(context, [], 1, 8, cancellationToken).ConfigureAwait(false);
+
+            return true;
+        }
+
+        // The room is won and the server did not move the character: the next room is walked to (D525).
+        _won.Add(mapId);
+
+        var left = new HashSet<long>();
+
+        foreach (var room in _tables.Dungeons.RoomsOf(dungeon))
+        {
+            if (!_won.Contains(room))
+                left.Add(room);
+        }
+
+        if (left.Count is 0)
+        {
+            Publish("DoingRooms");
+
+            return false;
+        }
+
+        switch (await context.TravelAsync(left, state => state.MonsterGroups.Count > 0, _settings.UseZaaps, cancellationToken).ConfigureAwait(false))
+        {
+            case TravelOutcome.Arrived:
+                _failedJourneys = 0;
+                break;
+            case TravelOutcome.Busy:
+                await context.WaitUntilAsync(state => !state.IsBusy, _busyDelay, cancellationToken).ConfigureAwait(false);
+                break;
+            default:
+                if (++_failedJourneys >= MostFailedJourneys)
+                    throw Failure($"No room of dungeon {dungeon.Id} left to win can be walked to from room {mapId}.", "FailNoRoom");
+
+                break;
+        }
+
+        return true;
+    }
+
+    // Before a room's fight the character regenerates to its share of life, a point each interval the server gave (D153).
+    private async Task<bool> RegainAsync(BotContext context, CancellationToken cancellationToken)
+    {
+        var state = context.State;
+
+        if (context.Life is not { } life || state.MaxLife is not { } most || most <= 0)
+            return false;
+
+        var share = (((long)_settings.LifeShare * most) + 99) / 100;
+
+        if (life >= share)
+            return false;
+
+        var point = TimeSpan.FromMilliseconds(100 * (state.LifeRegenInterval ?? RegainPoll));
+        var regenerating = TimeSpan.FromTicks(point.Ticks * (share - life));
+
+        Volatile.Write(ref _report, Report! with { Doing = GameText.Of(DungeonTexts.Text("DoingRegenerate"), GameTextValue.Number((long)Math.Ceiling(regenerating.TotalSeconds))) });
+        await context.WaitUntilAsync(_ => false, regenerating < _regainStep ? regenerating : _regainStep, cancellationToken).ConfigureAwait(false);
+
+        return true;
     }
 
     private async Task TravelAsync(BotContext context, Dungeon dungeon, CancellationToken cancellationToken)
@@ -278,6 +438,8 @@ public sealed class DungeonActivity : BotActivity
 
                 _entered++;
                 _unanswered = 0;
+                _inside = dungeon.Id;
+                _won.Clear();
                 Publish("DoingRooms");
 
                 return true;
@@ -309,7 +471,12 @@ public sealed class DungeonActivity : BotActivity
         Volatile.Write(ref _report, new ActivityReport
         {
             Doing = GameText.Of(DungeonTexts.Text(doing)),
-            Counts = [new ActivityCount(GameText.Counted(DungeonTexts.Text("CountEnteredOne"), DungeonTexts.Text("CountEnteredMany"), _entered))],
+            Counts =
+            [
+                new ActivityCount(GameText.Counted(DungeonTexts.Text("CountEnteredOne"), DungeonTexts.Text("CountEnteredMany"), _entered)),
+                new ActivityCount(GameText.Counted(DungeonTexts.Text("CountRoomOne"), DungeonTexts.Text("CountRoomMany"), _rooms)),
+                new ActivityCount(GameText.Counted(DungeonTexts.Text("CountLostOne"), DungeonTexts.Text("CountLostMany"), _lost)),
+            ],
         });
     }
 }

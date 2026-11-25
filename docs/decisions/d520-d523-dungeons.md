@@ -1,4 +1,4 @@
-# Dungeons, the first version's shape (D520 to D524)
+# Dungeons, the first version's shape and the rooms (D520 to D525)
 
 A part of [the decisions](README.md); each decision has one line in [the index](../decisions-index.md). The activities' model
 is [D87](d064-d090-step-4.md); the NPCs' dialogs, [D253](d253-d292-step-9.md) and [D385](d369-d389-step-7.md); the groups,
@@ -96,3 +96,24 @@ aussi"), the order and what is left out the session's within the ask. Refines D5
     already move the turn on; the runs' count, if the owner wants one, is the end's (the third pull request).
   - One dungeon per profile, a list of profiles for several: a sequence of profiles would end each on its first dungeon
     shut, where the turn leaves it out and goes on.
+
+## D525: In a room the character regenerates, fights its groups and lets the server move it; a won room it was not moved from is left on foot, and a fight lost leaves the dungeon for the run
+
+*2026-11-25, roadmap step 12, the rooms' chain, the second pull request of D520, the owner's go ("Oui, les salles"); the
+choices the session's within D520. Builds D87, D153, D236, D384, D520, D524.*
+
+- **Measured** (client-game.md, "The game, in a dungeon"): at a room's win the server names the next room in the fight end's
+  millisecond, unasked, 128 times; Forgerons' and the Bworks' rooms are also left on foot, through map actions and a door the
+  world graph holds; the table's order of the rooms is not the walk's. Nothing measured a lost fight inside.
+- **Made**: in a room of a listed dungeon, its information come, the step waits up to 5 s for a group; with one, the character
+  regenerates to the profile's share of life (`LifeShare`, 80 % by default, a point each interval the server gave, D153), then
+  fights the room's groups as a route's fight does (`MapFight`, D384), the AI playing each; the next step is the next room's.
+  A room with no group is won: the character travels through the graph to the nearest room of the dungeon not yet won in that
+  run, stopping on the first that shows a group; with every room won, or on a map of the dungeon's sub-area that is no room,
+  entrance or exit, the map the boss's win leads to, the run of the dungeon ends, the exit being the third pull request's.
+  A fight lost leaves that dungeon for the activity's run, a restart included, the others of the profile still entered.
+- **Rejected.**
+  - The rooms walked in the table's order, or the next room guessed from it: the captures contradict the order.
+  - A fight lost answered as the hunt's (resume, pause or stop, D198): a dungeon entered again after a loss spends another key
+    on a fight the character just lost; the other dungeons of the profile go on instead.
+  - Food before a room's fight, as the hunt's: kept for the third pull request's profile, with the bank.
