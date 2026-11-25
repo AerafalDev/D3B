@@ -405,6 +405,7 @@ internal sealed partial class BotViewModel : ObservableObject
             ActivityStatus.Stepping => ("ActivityStepping", Tone.Success),
             ActivityStatus.Unloading => ("ActivityUnloading", Tone.Info),
             ActivityStatus.Recovering => ("ActivityRecovering", Tone.Info),
+            ActivityStatus.Restarting => ("ActivityRestarting", Tone.Warning),
             _ => ("ActivityEnding", Tone.Neutral),
         };
     }
@@ -781,11 +782,18 @@ internal sealed partial class BotViewModel : ObservableObject
             ? _localizer.Format("StepsInterrupted", steps, _localizer[InterruptionOf(interruption)])
             : steps;
 
-        ActivityProblem = !run.IsOver ? ""
+        // A run that restarted its activity says why while it runs, and that it stopped restarting once over (D519).
+        ActivityProblem = !run.IsOver ? run.LastRestart is { } restart ? _localizer.Format("ActivityRestarted", restart.Restart, CauseOf(restart.Cause)) : ""
+            : run.GaveUp ? _localizer.Format("ActivityGaveUp", run.LastRestart?.Restart ?? run.Restarts, run.IsStillFull ? _localizer["ActivityLeftFull"] : CauseOf(run.Failure))
             : run.Failure is ActivityException { Reason: { } reason } ? _says.Say(reason)
             : run.IsStillFull ? _localizer["ActivityLeftFull"]
             : run.Failure?.Message ?? "";
         RefreshReport(run, run.Activity.Report);
+    }
+
+    private string CauseOf(Exception? cause)
+    {
+        return cause is ActivityException { Reason: { } reason } ? _says.Say(reason) : cause?.Message ?? "";
     }
 
     private void Announce(CharacterState state)

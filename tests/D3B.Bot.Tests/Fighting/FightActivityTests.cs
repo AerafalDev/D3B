@@ -524,8 +524,9 @@ public sealed class FightActivityTests : IAsyncDisposable
         connection.Server(new NpcDialogCreationEvent { MapId = TestPlay.MapId, NpcActorId = TestPlay.WayActorId });
         await bot.ProcessedAsync();
 
+        // The activity's own failure, which its run would restart otherwise (D519).
         var started = _play.Time.GetUtcNow();
-        var run = bot.StartActivity(Activity(new FightSettings { Place = FightPlace.Chosen, SubAreas = [TestPlay.SubAreaId], Heal = false }));
+        var run = bot.StartActivity(Activity(new FightSettings { Place = FightPlace.Chosen, SubAreas = [TestPlay.SubAreaId], Heal = false, RestartAfterFailure = false }));
 
         // The owner's choice (D484): busy a minute, the character is put back in order; still busy a minute later, the hunt fails.
         Assert.Equal(new DialogLeaveRequest(), await TestWalks.SentAsync(_play, connection, 1));

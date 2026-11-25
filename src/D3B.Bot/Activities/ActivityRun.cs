@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using D3B.Bot.Characters;
 using D3B.Bot.Fights;
@@ -20,12 +21,22 @@ namespace D3B.Bot.Activities;
 /// to resume, the run waits until the bot can act, recovers the character (<see cref="BotActivity.RecoverAsync"/>), then goes
 /// on with the next step. The host stopping ends the run, as <see cref="Stop"/> does.
 /// </para>
+/// <para>
+/// An activity that <see cref="BotActivity.RestartsAfterFailure"/> is restarted rather than ended when a step fails, the character
+/// cannot be unloaded, or the run sees no progress for a while (<see cref="ActivityRestarts.NoProgress"/>: no map changed, no fight
+/// begun, no pod gained or banked, the activity waiting on nothing): the character is put back in order as after an interruption,
+/// the run waits a delay that doubles each time, then the activity begins anew (<see cref="BotActivity.Restart"/>). A failure that
+/// <see cref="ActivityException.IsFinal"/>, or one past <see cref="ActivityRestarts.MostPerHour"/> restarts in the hour, ends it
+/// (D519). A run stopped, by the player or by the activity's own answer to an interruption, is never restarted.
+/// </para>
 /// </remarks>
 [SuppressMessage("Design", "CA1001", Justification = "The stop's token source holds no timer, and nothing reads its wait handle; disposed, a stop asked once the run is over would throw.")]
 public sealed class ActivityRun
 {
     private const int NoInterruption = -1;
     private const long NotEnded = -1;
+
+    private static readonly TimeSpan _hour = TimeSpan.FromHours(1);
 
     private readonly BotActor _bot;
     private readonly CancellationTokenSource _stop = new();
@@ -37,11 +48,21 @@ public sealed class ActivityRun
     private int _steps;
     private Exception? _failure;
     private RunFights _fights = new();
+    private ActivityRestart? _lastRestart;
+    private int _restarts;
+
+    // The token of the behavior the run waits on now, which the watch of its progress cancels once it sees none (D519).
+    private CancellationTokenSource? _attempt;
+
+    // Until when the run waits before a restart, which the watch takes for no lack of progress.
+    private long _restingUntil = NotEnded;
 
     // Only the run's own sequence of behaviors reads and writes them.
     private bool _unloaded;
     private bool _stillFull;
+    private bool _gaveUp;
     private int _fightsSeen;
+    private readonly List<DateTimeOffset> _restartTimes = [];
 
     /// <summary>Gets the activity.</summary>
     public BotActivity Activity { get; }
@@ -73,12 +94,22 @@ public sealed class ActivityRun
     /// <summary>Gets the error that made the activity fail, as it threw it; none when it failed for a character still full.</summary>
     public Exception? Failure => Volatile.Read(ref _failure);
 
+    /// <summary>Gets the last restart of the activity, once its run restarted it after a failure (D519).</summary>
+    public ActivityRestart? LastRestart => Volatile.Read(ref _lastRestart);
+
+    /// <summary>Gets how many times the run restarted the activity (D519).</summary>
+    public int Restarts => Volatile.Read(ref _restarts);
+
     /// <summary>Gets whether the activity is over.</summary>
     public bool IsOver => _completion.Task.IsCompleted;
 
     /// <summary>Gets whether the activity failed for a character still full once unloaded, which no error says.</summary>
     /// <remarks>Read once the run is over: the run writes it before it completes.</remarks>
     public bool IsStillFull => IsOver && _stillFull;
+
+    /// <summary>Gets whether the activity failed once its run had restarted it as often as an hour allows (D519).</summary>
+    /// <remarks>Read once the run is over: the run writes it before it completes.</remarks>
+    public bool GaveUp => IsOver && _gaveUp;
 
     /// <summary>Gets a task that completes once the activity is over, with how it ended.</summary>
     public Task<ActivityOutcome> Completion => _completion.Task;
@@ -132,6 +163,11 @@ public sealed class ActivityRun
         }
     }
 
+    private static ActivityException NotUnloaded()
+    {
+        return new ActivityException("The character could not be unloaded, even once put back in order and out of its map.", GameText.Of(ActivityTexts.Text("NotUnloaded")));
+    }
+
     private async Task RunAsync()
     {
         BotLog.ActivityStarted(_bot.Log, _bot.Key.CharacterId, Activity.Name);
@@ -140,7 +176,7 @@ public sealed class ActivityRun
         var outcome = await LoopAsync().ConfigureAwait(false);
 
         BotLog.ActivityOver(_bot.Log, _bot.Key.CharacterId, Activity.Name, Steps, outcome);
-        _bot.Journal.Add(new ActivityOverEntry(_bot.Time.GetUtcNow(), Activity.Name, Steps, outcome, Failure?.Message, _stillFull));
+        _bot.Journal.Add(new ActivityOverEntry(_bot.Time.GetUtcNow(), Activity.Name, Steps, outcome, Failure?.Message, _stillFull, _gaveUp));
 
         // An activity is made for one start (D93): nothing but its run holds it, so what it holds is let go of once over.
         if (Activity is IDisposable disposable)
@@ -162,13 +198,33 @@ public sealed class ActivityRun
 
     private async Task<ActivityOutcome> LoopAsync()
     {
+        using var watching = new CancellationTokenSource();
+        var watch = Activity.RestartsAfterFailure ? WatchProgressAsync(watching.Token) : Task.CompletedTask;
+
+        try
+        {
+            return await StepsAsync().ConfigureAwait(false);
+        }
+        finally
+        {
+            await watching.CancelAsync().ConfigureAwait(false);
+            await watch.ConfigureAwait(ConfigureAwaitOptions.SuppressThrowing);
+            Interlocked.Exchange(ref _attempt, null)?.Dispose();
+        }
+    }
+
+    private async Task<ActivityOutcome> StepsAsync()
+    {
         Interruption? interrupted = null;
 
         _fightsSeen = _bot.FightsBegun;
 
         while (true)
         {
-            Interruption cut;
+            Interruption? interruption = null;
+            Exception? failure = null;
+            var notUnloaded = false;
+            var attempt = Attempt();
 
             SetStatus(ActivityStatus.Waiting);
 
@@ -176,12 +232,12 @@ public sealed class ActivityRun
             {
                 if (interrupted is { } reason)
                 {
-                    await _bot.RunWhenReadyAsync((context, token) => RecoverAsync(context, reason, token), _stop.Token).ConfigureAwait(false);
+                    await _bot.RunWhenReadyAsync((context, token) => RecoverAsync(context, reason, token), attempt).ConfigureAwait(false);
                     interrupted = null;
                     SetStatus(ActivityStatus.Waiting);
                 }
 
-                switch (await _bot.RunWhenReadyAsync(StepAsync, _stop.Token).ConfigureAwait(false))
+                switch (await _bot.RunWhenReadyAsync(StepAsync, attempt).ConfigureAwait(false))
                 {
                     case Next.Done:
                         return ActivityOutcome.Done;
@@ -190,17 +246,20 @@ public sealed class ActivityRun
                         _stillFull = true;
 
                         return ActivityOutcome.Failed;
+                    case Next.Step:
+                        // Measured through the app: steps sent one after another went faster than the client showed them. The
+                        // client's display time at least, fixed and the owner's to raise, is let pass after each (D154).
+                        await Task.Delay(_bot.Delays.BetweenSteps, _bot.Time, attempt).ConfigureAwait(false);
+
+                        continue;
                 }
 
-                // Measured through the app: steps sent one after another went faster than the client showed them. The
-                // client's display time at least, fixed and the owner's to raise, is let pass after each (D154).
-                await Task.Delay(_bot.Delays.BetweenSteps, _bot.Time, _stop.Token).ConfigureAwait(false);
-
-                continue;
+                failure = NotUnloaded();
+                notUnloaded = true;
             }
             catch (BotInterruptedException exception) when (exception.Reason is not Interruption.Stopped)
             {
-                cut = exception.Reason;
+                interruption = exception.Reason;
             }
             catch (BotInterruptedException)
             {
@@ -214,13 +273,31 @@ public sealed class ActivityRun
             {
                 return ActivityOutcome.Stopped;
             }
+            catch (OperationCanceledException) when (attempt.IsCancellationRequested)
+            {
+                // Only the watch of the run's progress cancels a behavior so, the run's stop aside.
+                var minutes = (long)_bot.RestartsOf().NoProgress.TotalMinutes;
+
+                failure = new ActivityException($"Nothing done for {minutes} minutes: no map changed, no fight, nothing harvested or banked.", GameText.Of(ActivityTexts.Text("NoProgress"), GameTextValue.Number(minutes)));
+            }
             catch (Exception exception)
             {
-                BotLog.ActivityFailed(_bot.Log, _bot.Key.CharacterId, Activity.Name, exception);
-                Volatile.Write(ref _failure, exception);
-
-                return ActivityOutcome.Failed;
+                failure = exception;
             }
+
+            if (failure is not null)
+            {
+                if (await RestartAsync(failure, notUnloaded).ConfigureAwait(false) is { } ended)
+                    return ended;
+
+                // An unloading cut short is no unloading, and one that failed is tried again by the activity begun anew.
+                _unloaded = false;
+
+                continue;
+            }
+
+            // The step neither went on nor failed: an interruption cut it.
+            var cut = interruption ?? throw new UnreachableException();
 
             interrupted = cut;
             _fightsSeen = _bot.FightsBegun;
@@ -239,10 +316,7 @@ public sealed class ActivityRun
             }
             catch (Exception exception)
             {
-                BotLog.ActivityFailed(_bot.Log, _bot.Key.CharacterId, Activity.Name, exception);
-                Volatile.Write(ref _failure, exception);
-
-                return ActivityOutcome.Failed;
+                return Fail(exception, false);
             }
 
             BotLog.ActivityInterrupted(_bot.Log, _bot.Key.CharacterId, Activity.Name, cut, response);
@@ -265,10 +339,7 @@ public sealed class ActivityRun
                 }
                 catch (Exception exception)
                 {
-                    BotLog.ActivityFailed(_bot.Log, _bot.Key.CharacterId, Activity.Name, exception);
-                    Volatile.Write(ref _failure, exception);
-
-                    return ActivityOutcome.Failed;
+                    return Fail(exception, false);
                 }
             }
 
@@ -278,6 +349,167 @@ public sealed class ActivityRun
             if (response is InterruptionResponse.Pause)
                 _bot.PauseAfterStep();
         }
+    }
+
+    // The activity failed: restarted as its profile says, or ended. Null once restarted, else how the run ends.
+    private async Task<ActivityOutcome?> RestartAsync(Exception failure, bool notUnloaded)
+    {
+        var now = _bot.Time.GetUtcNow();
+        var restarts = _bot.RestartsOf();
+
+        _restartTimes.RemoveAll(at => now - at >= _hour);
+
+        if (!Activity.RestartsAfterFailure || failure is ActivityException { IsFinal: true })
+            return Fail(failure, notUnloaded);
+
+        if (_restartTimes.Count >= restarts.MostPerHour)
+        {
+            _gaveUp = true;
+
+            return Fail(failure, notUnloaded);
+        }
+
+        _restartTimes.Add(now);
+
+        var restart = new ActivityRestart(now, _restartTimes.Count, restarts.DelayOf(_restartTimes.Count), failure);
+
+        Volatile.Write(ref _lastRestart, restart);
+        Interlocked.Increment(ref _restarts);
+        BotLog.ActivityRestarting(_bot.Log, _bot.Key.CharacterId, Activity.Name, restart.Restart, restart.Delay, failure);
+        _bot.Journal.Add(new ActivityRestartedEntry(now, Activity.Name, restart.Restart, restart.Delay, failure.Message));
+        SetStatus(ActivityStatus.Restarting);
+
+        var attempt = Attempt();
+
+        try
+        {
+            await _bot.RunWhenReadyAsync(PutInOrderAsync, attempt).ConfigureAwait(false);
+        }
+        catch (BotInterruptedException exception) when (exception.Reason is Interruption.Stopped)
+        {
+            return ActivityOutcome.Stopped;
+        }
+        catch (OperationCanceledException) when (_stop.IsCancellationRequested)
+        {
+            return ActivityOutcome.Stopped;
+        }
+        catch (ObjectDisposedException exception) when (exception.ObjectName == typeof(BotActor).FullName)
+        {
+            return ActivityOutcome.Stopped;
+        }
+        catch (Exception exception) when (exception is BotInterruptedException or OperationCanceledException)
+        {
+            // A fight, the player's hand or a new connection, which the next step waits for as after any; or no progress while the
+            // character was put in order, which the restart is for anyway.
+        }
+
+        Volatile.Write(ref _restingUntil, (_bot.Time.GetUtcNow() + restart.Delay).UtcTicks);
+
+        try
+        {
+            await Task.Delay(restart.Delay, _bot.Time, _stop.Token).ConfigureAwait(false);
+        }
+        catch (OperationCanceledException) when (_stop.IsCancellationRequested)
+        {
+            return ActivityOutcome.Stopped;
+        }
+        finally
+        {
+            Volatile.Write(ref _restingUntil, NotEnded);
+        }
+
+        try
+        {
+            Activity.Restart();
+        }
+        catch (Exception exception)
+        {
+            return Fail(exception, false);
+        }
+
+        return null;
+    }
+
+    private ActivityOutcome Fail(Exception failure, bool notUnloaded)
+    {
+        if (notUnloaded)
+        {
+            BotLog.ActivityStillFull(_bot.Log, _bot.Key.CharacterId, Activity.Name);
+            _stillFull = true;
+        }
+        else
+        {
+            BotLog.ActivityFailed(_bot.Log, _bot.Key.CharacterId, Activity.Name, failure);
+            Volatile.Write(ref _failure, failure);
+        }
+
+        return ActivityOutcome.Failed;
+    }
+
+    // A token of its own for the next behavior the run waits on, cancelled by the run's stop or by the watch of its progress.
+    private CancellationToken Attempt()
+    {
+        var attempt = CancellationTokenSource.CreateLinkedTokenSource(_stop.Token);
+
+        Interlocked.Exchange(ref _attempt, attempt)?.Dispose();
+
+        return attempt.Token;
+    }
+
+    // Looks at the bot every while: a map changed, a fight begun, pods gained or banked are progress, and so is a while when the
+    // activity could not act or waits on purpose. None for NoProgress, the behavior the run waits on is cancelled, as a failure.
+    private async Task WatchProgressAsync(CancellationToken cancellationToken)
+    {
+        var seen = Mark();
+        var since = _bot.Time.GetUtcNow();
+
+        while (!cancellationToken.IsCancellationRequested)
+        {
+            var restarts = _bot.RestartsOf();
+
+            await Task.Delay(restarts.LookEvery, _bot.Time, cancellationToken).ConfigureAwait(false);
+
+            var now = _bot.Time.GetUtcNow();
+            var mark = Mark();
+
+            if (mark != seen || IsExcused(now))
+            {
+                seen = mark;
+                since = now;
+
+                continue;
+            }
+
+            if (now - since < restarts.NoProgress)
+                continue;
+
+            since = now;
+            BotLog.ActivityStalled(_bot.Log, _bot.Key.CharacterId, Activity.Name, restarts.NoProgress);
+
+            try
+            {
+                Volatile.Read(ref _attempt)?.Cancel();
+            }
+            catch (ObjectDisposedException)
+            {
+                // The behavior ended meanwhile, and the next one is watched from now on.
+            }
+        }
+    }
+
+    private (long? MapId, int Fights, int Weight, bool Fighting) Mark()
+    {
+        var state = _bot.State;
+
+        return (state.MapId, _bot.FightsBegun, state.Weight, state.IsFighting);
+    }
+
+    // The game connection gone, the player's hand, a fight, the wait before a restart, or the activity's own wait: none is the run stuck.
+    private bool IsExcused(DateTimeOffset now)
+    {
+        return !_bot.IsConnected || _bot.IsPaused || _bot.State.IsFighting
+            || Volatile.Read(ref _restingUntil) > now.UtcTicks
+            || Activity.WaitingUntil > now;
     }
 
     private async Task<FightEnd?> FoughtAsync()
@@ -294,6 +526,13 @@ public sealed class ActivityRun
     {
         SetStatus(ActivityStatus.Recovering);
         await Activity.RecoverAsync(context, reason, cancellationToken).ConfigureAwait(false);
+
+        return true;
+    }
+
+    private async Task<bool> PutInOrderAsync(BotContext context, CancellationToken cancellationToken)
+    {
+        await Recovery.SettleAsync(context, cancellationToken).ConfigureAwait(false);
 
         return true;
     }
@@ -325,7 +564,7 @@ public sealed class ActivityRun
                 ? await Activity.UnloadAsync(context, cancellationToken).ConfigureAwait(false)
                 : await group.UnloadAsync(context, Activity, cancellationToken).ConfigureAwait(false);
 
-            return unloaded ? Next.Step : Next.StillFull;
+            return unloaded ? Next.Step : Next.NotUnloaded;
         }
 
         _unloaded = false;
@@ -349,5 +588,6 @@ public sealed class ActivityRun
         Step,
         Done,
         StillFull,
+        NotUnloaded,
     }
 }

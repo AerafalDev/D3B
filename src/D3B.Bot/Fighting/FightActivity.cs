@@ -38,7 +38,6 @@ public sealed class FightActivity : BotActivity
     private const int MostFailedElixirs = 3;
     private const int MostLostInARow = 3;
     private const int MostFailedJourneys = 3;
-    private const int MostBankings = 3;
     private const int MostWalksToAGroup = 3;
 
     // Tenths of a second a life point takes, when the server did not say: as measured in every capture (D153).
@@ -58,6 +57,7 @@ public sealed class FightActivity : BotActivity
     private readonly BankingPreferences _banking;
     private readonly IPlaceZones? _zones;
     private readonly BusyWait _busy = new();
+    private readonly RecoveryLadder _bankings = new();
     private readonly HashSet<long> _skipped = [];
     private readonly HashSet<int> _unusable = [];
     private readonly Dictionary<int, long> _loot = [];
@@ -77,6 +77,9 @@ public sealed class FightActivity : BotActivity
     private int _banks;
 
     private int FullAt => _banking.FullAtOf(_settings.OwnBanking, _settings.FullAt);
+
+    /// <inheritdoc/>
+    public override bool RestartsAfterFailure => _settings.RestartAfterFailure;
 
     /// <inheritdoc/>
     public override string Name => "Fighting";
@@ -149,6 +152,12 @@ public sealed class FightActivity : BotActivity
         return new ActivityException(message, GameText.Of(FightTexts.Text(key)));
     }
 
+    // What the profile or the character's level makes impossible, which no restart would change (D519).
+    private static ActivityException Impossible(string message, string key)
+    {
+        return new ActivityException(message, GameText.Of(FightTexts.Text(key))) { IsFinal = true };
+    }
+
     /// <inheritdoc/>
     public override async Task<bool> StepAsync(BotContext context, CancellationToken cancellationToken)
     {
@@ -210,36 +219,32 @@ public sealed class FightActivity : BotActivity
 
         Publish(GameText.Of(FightTexts.Text("DoingBank")));
 
-        for (var attempt = 0; attempt < MostBankings; attempt++)
+        // Any banking that fails is tried again up the ladder, a journey of its own each time, as the harvest's (D518).
+        var useZaaps = _banking.UseZaapsOf(_settings.OwnBanking, _settings.UseZaaps);
+        var outcome = await _bankings.TryAsync(context, "the bank", token => context.BankAsync(Deposits, 0, useZaaps, token), banked => banked is BankOutcome.Done, cancellationToken).ConfigureAwait(false);
+
+        if (outcome is not BankOutcome.Done)
+            return false;
+
+        _banks++;
+        Tally();
+
+        // What the settings leave in the inventory may weigh more than the share the character banks at (D129).
+        if (IsFull(context.State))
         {
-            switch (await context.BankAsync(Deposits, 0, _banking.UseZaapsOf(_settings.OwnBanking, _settings.UseZaaps), cancellationToken).ConfigureAwait(false))
+            var state = context.State;
+
+            throw new ActivityException(
+                $"The character is still full once banked, {state.Weight} of {state.MaxWeight} pods.",
+                GameText.Of(FightTexts.Text("FailStillFull"), GameTextValue.Number(state.Weight), GameTextValue.Number(state.MaxWeight), GameTextValue.Number(FullAt)))
             {
-                case BankOutcome.Done:
-                    _banks++;
-                    Tally();
-
-                    // What the settings leave in the inventory may weigh more than the share the character banks at (D129).
-                    if (IsFull(context.State))
-                    {
-                        var state = context.State;
-
-                        throw new ActivityException(
-                            $"The character is still full once banked, {state.Weight} of {state.MaxWeight} pods.",
-                            GameText.Of(FightTexts.Text("FailStillFull"), GameTextValue.Number(state.Weight), GameTextValue.Number(state.MaxWeight), GameTextValue.Number(FullAt)));
-                    }
-
-                    Publish(GameText.Of(FightTexts.Text("DoingReturn")));
-
-                    return true;
-                case BankOutcome.NoBank:
-                    return false;
-                case BankOutcome.Busy:
-                    await context.WaitUntilAsync(state => !state.IsBusy, _busyDelay, cancellationToken).ConfigureAwait(false);
-                    break;
-            }
+                IsFinal = true,
+            };
         }
 
-        return false;
+        Publish(GameText.Of(FightTexts.Text("DoingReturn")));
+
+        return true;
     }
 
     /// <inheritdoc/>
@@ -292,6 +297,22 @@ public sealed class FightActivity : BotActivity
     }
 
     /// <inheritdoc/>
+    /// <remarks>The rotation is drawn again; what the activity counted and the loot it banks stay, and the fights lost in a row (D198, D519).</remarks>
+    public override void Restart()
+    {
+        _busy.Reset();
+        _bankings.Reset();
+        _skipped.Clear();
+        _unusable.Clear();
+        _grounds = [];
+        _current = null;
+        _skippedOn = null;
+        _failedJourneys = 0;
+        _healing = false;
+        _regaining = false;
+    }
+
+    /// <inheritdoc/>
     public override async Task RecoverAsync(BotContext context, Interruption reason, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(context);
@@ -331,7 +352,7 @@ public sealed class FightActivity : BotActivity
         Draw(context);
 
         if (_current is not { } first)
-            throw _settings.Place is FightPlace.Zone ? Failure("The zone holds no map to hunt on.", "FailNoZone") : Failure("No sub-area holds monsters to fight at the character's level.", "FailNowhere");
+            throw _settings.Place is FightPlace.Zone ? Impossible("The zone holds no map to hunt on.", "FailNoZone") : Impossible("No sub-area holds monsters to fight at the character's level.", "FailNowhere");
 
         Say(first);
 
@@ -370,7 +391,7 @@ public sealed class FightActivity : BotActivity
             IReadOnlySet<long>? within = null;
 
             if (_settings.Place is FightPlace.Zone && (_zones is null || !_zones.TryResolve(_settings.Zone, out within)))
-                throw Failure("The zone this profile names is not in the project.", "FailZoneGone");
+                throw Impossible("The zone this profile names is not in the project.", "FailZoneGone");
 
             var ground = HuntingGround.Of(_settings, _atlas, _graph, _tables.Monsters, level, subscribed, within);
 

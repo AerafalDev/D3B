@@ -173,6 +173,9 @@ public sealed class BotActor : IAsyncDisposable, IRequestWithholder
     /// <summary>Gets how long the bot's behaviors wait now, which the app may change while they run (D151).</summary>
     internal BotDelays Delays => _delays();
 
+    /// <summary>Gets how the bot's runs restart an activity whose profile asks it (D519): the host's, a test's own.</summary>
+    internal Func<ActivityRestarts> RestartsOf { get; init; } = () => ActivityRestarts.Default;
+
     /// <summary>Gets when the client has drawn the map the server last placed the character on.</summary>
     /// <remarks>Reckoned from the display time now: raised, it holds the requests to come on a map placed before.</remarks>
     internal DateTimeOffset DrawnAt => new DateTimeOffset(Volatile.Read(ref _placedAt), TimeSpan.Zero) + Delays.Display;

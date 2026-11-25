@@ -204,15 +204,30 @@ The bots run in `D3B.Bot`: what each part does today, with the decisions that ma
   activity's as one that cut a step (D273). A full character is unloaded before the next step.
   Nothing of the activity's position is kept: the next step starts from the state. An activity that fails keeps its
   error (`ActivityRun.Failure`), which the app shows (D103); one that is `IDisposable` is disposed once over.
+- **The run's restart** (D519): an activity that `RestartsAfterFailure` (the harvest's and the hunt's, by their profiles'
+  `RestartAfterFailure`, on by default) is not ended by a step's error, an unloading that did not unload, or no progress for
+  `ActivityRestarts.NoProgress` (10 min with no map changed, no fight begun, no pod gained or banked; a watch of the run's own
+  cancels the behavior it waits on, the connection gone, the player's hand, a fight and `BotActivity.WaitingUntil` excused).
+  The run puts the character back in order (`Recovery.SettleAsync`, status `Restarting`), waits 30 s doubled for each
+  restart of the last hour, 8 min at most, then `BotActivity.Restart` begins the activity anew, its counts kept. A failure
+  that `ActivityException.IsFinal`, or the seventh of an hour (`ActivityRun.GaveUp`), ends the run; a stopped run is never
+  restarted. The journal says each restart (`ActivityRestartedEntry`), the card why (`ActivityRun.LastRestart`). `Bots.Restarts`
+  holds the numbers, a test's own.
 - **The activities the app starts** (D93): a module registers each one, by an id unique in the host and a name in the
   app's language (D96), with `AddActivity<T>`, or `AddActivity<T, TSettings>` with its settings (D98), and the bots
   module lists them in the `ActivityCatalog`; one is made, with the host's services and its settings, for each start.
 - **Recovery** (D89): before going on after an interruption, `Recovery.SettleAsync` lets a use and a walk end, leaves a
   dialog or exchange still open, and lets go of a walk the server holds, each wait bounded.
+- **The recovery ladder** (D518): an action that failed, a journey or a banking, climbs one rung of a `RecoveryLadder` before
+  it is tried again: twice as it is, then the character put in order (`Recovery.SettleAsync`), a step aside
+  (`MapWalk.StepAsideAsync`), and out of its map by the exit nearest a walk away (`MapChange.LeaveByNearestExitAsync`, no zaap
+  nor NPC); with no rung left (`RecoveryLadder.Height`), the action fails. `TryAsync` tries an action up the ladder, the
+  harvest's and the hunt's bankings so; the harvest climbs it once per failed journey, a journey arrived putting it back at
+  its foot.
 - **A busy character at a step's start** (D484): the harvest's and the hunt's steps wait through a `BusyWait` for a
   character walking, using, in a dialog or exchange, or on a map not known yet, 10 s a step. Busy a minute
   (`BusyWait.Bound`), it is put back in order with `Recovery.SettleAsync`; still busy a minute later, the activity fails
-  saying what held (`BusyKind`). A step finding the character free, an interruption, or steps stopped over 20 s (a pause between two)
+  saying what held (`BusyKind`), which the run then restarts (D519). A step finding the character free, an interruption, or steps stopped over 20 s (a pause between two)
   starts the count again.
 - **An activity's report** (D131): what it does, how far it is, what it counts, its warnings and what it looks at on the
   map (`BotActivity.Report`, `ActivityReport`), replaced whole and read by the app; its texts name the game's values by
@@ -235,8 +250,9 @@ The bots run in `D3B.Bot`: what each part does today, with the decisions that ma
   a mine's ledge below a cliff, holding wanted elements (`MapHarvest.OtherLevel`, `MapLevel`), is the tour's next place once the map
   is done, once per tour (`HarvestTour.WantLevel`, `TakeLevel`): the journey goes to the neighbour on the side the ledge touches,
   and the character scrolls back from a cell straight across one of that edge's cells leading to it (D495). Full at its
-  share of pods, it banks at the nearest bank, what the settings say, and the next step goes back; still full, it says
-  why. A fight, a new connection and the player's pause resume it. `HarvestPreviews` reckons what settings lead to for the
+  share of pods, it banks at the nearest bank, what the settings say, each failed banking tried again up the recovery ladder
+  (D518), and the next step goes back; still full, it says why (a failure `IsFinal`). A failed journey climbs the ladder too,
+  the sixth in a row failing the activity. A fight, a new connection and the player's pause resume it. `HarvestPreviews` reckons what settings lead to for the
   app. Banking waits the client's display time, half a second measured, after the banker's question and after the bank
   opens, so that the client shows its windows before D3B closes them (D132, D151).
   Its card and figures are `HarvestReporter`'s, and its bags, food and wait for life `HarvestUpkeep`'s; the food item types are `Food.Types` (D399).

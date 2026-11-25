@@ -41,18 +41,17 @@ namespace D3B.Bot.Harvesting;
 /// Full at the settings' share of its pods, the character banks at the nearest bank (D79, D80), what harvesting brings or
 /// all it does not wear, no kamas, two more times after a failure that may pass; then the next step goes on from where it
 /// stands. A fight, a new connection of the client and the player's pause resume the activity, which waits as long as it
-/// must (D87, D88, D89). Three failed journeys in a row end it.
+/// must (D87, D88, D89). A journey or a banking that fails climbs the recovery ladder before it is tried again, and fails the
+/// activity once no rung is left (<see cref="RecoveryLadder"/>, D518); the run then restarts it, as the profile says (D519).
 /// </para>
 /// </remarks>
 public sealed class HarvestActivity : BotActivity
 {
-    private const int MostFailedJourneys = 3;
-    private const int MostBankings = 3;
+    private const long NotWaiting = -1;
 
     // The way out of a map and back into its other zone: through one neighbour map it is two changes; a resource is not worth much more.
     private const int MostZoneChanges = 6;
 
-    private static readonly TimeSpan _busyDelay = TimeSpan.FromSeconds(10);
     private static readonly TimeSpan _regrowthDelay = TimeSpan.FromSeconds(60);
     private static readonly TimeSpan _objectsDelay = TimeSpan.FromSeconds(1);
 
@@ -80,6 +79,8 @@ public sealed class HarvestActivity : BotActivity
     private readonly HarvestUpkeep _upkeep;
     private readonly HarvestReporter _reporter;
     private readonly BusyWait _busy = new();
+    private readonly RecoveryLadder _journeys = new();
+    private readonly RecoveryLadder _bankings = new();
     private readonly HashSet<int> _skipped = [];
     private List<HarvestRotationZone> _rotation = [];
     private HarvestRotationZone? _current;
@@ -89,7 +90,7 @@ public sealed class HarvestActivity : BotActivity
 
     // The map a journey stayed on for a resource grown back there (D495): harvested though the tour crossed it already.
     private long? _regrownOn;
-    private int _failedJourneys;
+    private long _waitingUntil = NotWaiting;
     private BotContext? _context;
     private int? _lastTarget;
     private FightKind? _fight;
@@ -99,6 +100,13 @@ public sealed class HarvestActivity : BotActivity
     private HarvestZone? Zone => _current?.Zone;
 
     private int FullAt => _banking.FullAtOf(_settings.OwnBanking, _settings.FullAt);
+
+    /// <inheritdoc/>
+    public override bool RestartsAfterFailure => _settings.RestartAfterFailure;
+
+    /// <inheritdoc/>
+    /// <remarks>While every zone of the rotation grows back, until the first should be ready, or a minute when the host does not know (D145).</remarks>
+    public override DateTimeOffset? WaitingUntil => Volatile.Read(ref _waitingUntil) is var ticks and not NotWaiting ? new DateTimeOffset(ticks, TimeSpan.Zero) : null;
 
     /// <inheritdoc/>
     public override string Name => "Harvesting";
@@ -192,6 +200,12 @@ public sealed class HarvestActivity : BotActivity
     private static ActivityException Failure(string message, string key)
     {
         return new ActivityException(message, GameText.Of(HarvestTexts.Text(key)));
+    }
+
+    // What the profile or the character's levels make impossible, which no restart would change (D519).
+    private static ActivityException Impossible(string message, string key)
+    {
+        return new ActivityException(message, GameText.Of(HarvestTexts.Text(key))) { IsFinal = true };
     }
 
     private static bool HasWanted(HarvestZone zone, CharacterState state)
@@ -303,32 +317,29 @@ public sealed class HarvestActivity : BotActivity
         if (_settings.DepositTo is HarvestDepositPlace.GuildChest && await GuildChestAsync(context, deposited, cancellationToken).ConfigureAwait(false))
             return true;
 
-        for (var attempt = 0; attempt < MostBankings; attempt++)
-        {
-            var outcome = await context.BankAsync(stack => _settings.Deposit is HarvestDeposit.AllButWorn || deposited.Contains(stack.ItemId), 0, _banking.UseZaapsOf(_settings.OwnBanking, _settings.UseZaaps), cancellationToken).ConfigureAwait(false);
+        // Measured on the owner's miner of 24 November (D517): no bank found from a mine whose door the server refused once. Any
+        // banking that fails is tried again up the ladder, a journey of its own each time (D518).
+        var useZaaps = _banking.UseZaapsOf(_settings.OwnBanking, _settings.UseZaaps);
+        var outcome = await _bankings.TryAsync(
+            context,
+            "the bank",
+            token => context.BankAsync(stack => _settings.Deposit is HarvestDeposit.AllButWorn || deposited.Contains(stack.ItemId), 0, useZaaps, token),
+            banked => banked is BankOutcome.Done,
+            cancellationToken).ConfigureAwait(false);
 
-            switch (outcome)
-            {
-                case BankOutcome.Done:
-                    _reporter.Banked();
+        if (outcome is not BankOutcome.Done)
+            return false;
 
-                    // Measured: what the settings leave in the inventory may weigh more than the share the character banks at;
-                    // the activity says so, rather than go back to the bank at every step.
-                    if (IsFull(context.State))
-                        throw StillFull(context.State);
+        _reporter.Banked();
 
-                    Publish(context.State, GameText.Of(HarvestTexts.Text("DoingReturn")));
+        // Measured: what the settings leave in the inventory may weigh more than the share the character banks at;
+        // the activity says so, rather than go back to the bank at every step.
+        if (IsFull(context.State))
+            throw StillFull(context.State);
 
-                    return true;
-                case BankOutcome.NoBank:
-                    return false;
-                case BankOutcome.Busy:
-                    await context.WaitUntilAsync(state => !state.IsBusy, _busyDelay, cancellationToken).ConfigureAwait(false);
-                    break;
-            }
-        }
+        Publish(context.State, GameText.Of(HarvestTexts.Text("DoingReturn")));
 
-        return false;
+        return true;
     }
 
     /// <inheritdoc/>
@@ -406,6 +417,25 @@ public sealed class HarvestActivity : BotActivity
     }
 
     /// <inheritdoc/>
+    /// <remarks>The rotation is drawn again and every tour begins anew; what the activity counted and the balance of its professions stay (D519).</remarks>
+    public override void Restart()
+    {
+        _busy.Reset();
+        _journeys.Reset();
+        _bankings.Reset();
+        _skipped.Clear();
+        _rotation = [];
+        _current = null;
+        _skippedOn = default;
+        _unarrivedOn = null;
+        _regrownOn = null;
+        _fight = null;
+        _fightItem = null;
+        _regaining = false;
+        Volatile.Write(ref _waitingUntil, NotWaiting);
+    }
+
+    /// <inheritdoc/>
     public override GameText? Describe(Interruption reason)
     {
         return (reason, _fight, _fightItem) switch
@@ -422,7 +452,7 @@ public sealed class HarvestActivity : BotActivity
         var key = _settings.Deposit is HarvestDeposit.Harvest ? "FailStillFullHarvest" : "FailStillFullAll";
         var reason = GameText.Of(HarvestTexts.Text(key), GameTextValue.Number(state.Weight), GameTextValue.Number(state.MaxWeight), GameTextValue.Number(FullAt));
 
-        return new ActivityException($"The character is still full once banked, {state.Weight} of {state.MaxWeight} pods.", reason);
+        return new ActivityException($"The character is still full once banked, {state.Weight} of {state.MaxWeight} pods.", reason) { IsFinal = true };
     }
 
     private async Task<bool> GuildChestAsync(BotContext context, FrozenSet<int> deposited, CancellationToken cancellationToken)
@@ -462,7 +492,7 @@ public sealed class HarvestActivity : BotActivity
             Draw(context);
 
             if (_current is null)
-                throw Failure("No sub-area holds a resource the character can harvest.", "FailNoPlace");
+                throw Impossible("No sub-area holds a resource the character can harvest.", "FailNoPlace");
 
             return _current;
         }
@@ -470,12 +500,12 @@ public sealed class HarvestActivity : BotActivity
         IReadOnlySet<long>? within = null;
 
         if (_settings.Place is HarvestPlace.Zone && (_zones is null || !_zones.TryResolve(_settings.Zone, out within)))
-            throw Failure("The zone this profile names is not in the project.", "FailZoneGone");
+            throw Impossible("The zone this profile names is not in the project.", "FailZoneGone");
 
         var zone = HarvestZone.Of(_settings, _atlas, _graph, _tables.Jobs, _maps, HarvestZone.PlacedFor(_settings, _tables.Jobs, _places, _graphics), within: within);
 
         if (zone.Maps.Count is 0 || zone.Targets.Count is 0)
-            throw Failure("The zone holds no map to harvest.", "FailNoZone");
+            throw Impossible("The zone holds no map to harvest.", "FailNoZone");
 
         _rotation = [new HarvestRotationZone(null, zone, NewTour())];
 
@@ -723,7 +753,7 @@ public sealed class HarvestActivity : BotActivity
         switch (await context.TravelAsync(remaining, zones, Harvestable, Regrown, true, cancellationToken).ConfigureAwait(false))
         {
             case TravelOutcome.Arrived:
-                _failedJourneys = 0;
+                _journeys.Reset();
 
                 if (tour.Arrived())
                     GoneRound(context, current);
@@ -745,13 +775,13 @@ public sealed class HarvestActivity : BotActivity
                 {
                     _rotation.Remove(current);
                     _current = NextOf(context, null) ?? _rotation[0];
-                    _failedJourneys = 0;
+                    _journeys.Reset();
 
                     break;
                 }
 
-                if (++_failedJourneys >= MostFailedJourneys)
-                    throw Failure("No map of the zone can be reached.", "FailUnreachable");
+                if (await _journeys.ClimbAsync(context, "the journey to the zone", cancellationToken).ConfigureAwait(false) is null)
+                    throw Failure("No map of the zone can be reached, even once put back in order and out of the map.", "FailUnreachable");
 
                 break;
             default:
@@ -766,8 +796,8 @@ public sealed class HarvestActivity : BotActivity
                 if (target is { } unreached)
                     tour.Unreach(_graph.Vertices.Span[unreached].MapId);
 
-                if (++_failedJourneys >= MostFailedJourneys)
-                    throw Failure("The way through the zone failed three times in a row.", "FailLost");
+                if (await _journeys.ClimbAsync(context, "the journey through the zone", cancellationToken).ConfigureAwait(false) is null)
+                    throw Failure("The way through the zone failed again and again, even once put back in order and out of the map.", "FailLost");
 
                 break;
         }
@@ -793,7 +823,7 @@ public sealed class HarvestActivity : BotActivity
                 _rotation.Remove(current);
 
                 if (_rotation.Count is 0)
-                    throw Failure("No map of the zone holds a resource to harvest.", "FailNothing");
+                    throw Impossible("No map of the zone holds a resource to harvest.", "FailNothing");
 
                 _current = NextOf(context, null) ?? _rotation[0];
 
@@ -828,7 +858,7 @@ public sealed class HarvestActivity : BotActivity
         }
 
         Publish(context.State, GameText.Of(HarvestTexts.Text("DoingWaitGrow")));
-        await context.WaitUntilAsync(state => HasWanted(zone, state), _regrowthDelay, cancellationToken).ConfigureAwait(false);
+        await WaitAsync(context, zone, now + _regrowthDelay, cancellationToken).ConfigureAwait(false);
     }
 
     // The zone of the rotation to go through next, the nearest of the round not yet gone to, the zone just left last (D506).
@@ -959,7 +989,22 @@ public sealed class HarvestActivity : BotActivity
             return;
 
         Publish(context.State, GameText.Of(HarvestTexts.Text("DoingWaitGrowFor"), GameTextValue.Number((long)Math.Ceiling(wait.TotalSeconds))));
-        await context.WaitUntilAsync(state => HasWanted(zone, state), wait, cancellationToken).ConfigureAwait(false);
+        await WaitAsync(context, zone, ready, cancellationToken).ConfigureAwait(false);
+    }
+
+    // A wait on purpose, which the run's safety net does not take for an activity stuck (D519).
+    private async Task WaitAsync(BotContext context, HarvestZone zone, DateTimeOffset until, CancellationToken cancellationToken)
+    {
+        Volatile.Write(ref _waitingUntil, until.UtcTicks);
+
+        try
+        {
+            await context.WaitUntilAsync(state => HasWanted(zone, state), until - context.Time.GetUtcNow(), cancellationToken).ConfigureAwait(false);
+        }
+        finally
+        {
+            Volatile.Write(ref _waitingUntil, NotWaiting);
+        }
     }
 
     private void Publish(CharacterState state, GameText doing, int? target = null, long? next = null)
