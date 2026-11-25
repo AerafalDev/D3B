@@ -11,14 +11,6 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:z="clr-namespace:D3B.App.ViewModels.Zones">
     <UserControl.Styles>
-        <Style Selector="Border.Glass">
-            <Setter Property="Background" Value="#DB161619" />
-            <Setter Property="BorderBrush" Value="#17FFFFFF" />
-            <Setter Property="BorderThickness" Value="1" />
-            <Setter Property="CornerRadius" Value="11" />
-            <Setter Property="Padding" Value="3" />
-            <Setter Property="BoxShadow" Value="0 8 24 0 #66000000" />
-        </Style>
         <Style Selector="Border.Hud">
             <Setter Property="Background" Value="#C70E0E10" />
             <Setter Property="BorderBrush" Value="#0DFFFFFF" />

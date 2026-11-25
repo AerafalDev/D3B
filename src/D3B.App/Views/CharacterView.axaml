@@ -259,14 +259,17 @@
                         <GradientStop Color="#121212" Offset="1" />
                     </RadialGradientBrush>
                 </Panel.Background>
+                <!--  Zoomed, the map runs past the canvas's margin to the panel's edge, which clips it (D553).  -->
                 <c:MapCanvas
+                    ClipToBounds="False"
                     HoveredCell="{Binding Map.HoveredCell}"
                     IsVisible="{Binding Map.HasScene}"
                     Layers="{Binding Map.Layers}"
                     Margin="40,48,40,40"
                     Name="MapCanvas"
                     Palette="{DynamicResource MapPalette}"
-                    Scene="{Binding Map.Scene}" />
+                    Scene="{Binding Map.Scene}"
+                    Zoom="{Binding Map.Zoom}" />
                 <TextBlock
                     Classes="Muted"
                     HorizontalAlignment="Center"
@@ -423,6 +426,62 @@
                             Height="72"
                             Palette="{DynamicResource MapPalette}"
                             Scene="{Binding Map.Tour}" />
+                    </StackPanel>
+                </Border>
+                <!--  The world's viewport's zoom, its look and its steps (D553).  -->
+                <Border
+                    Classes="Glass"
+                    HorizontalAlignment="Right"
+                    IsVisible="{Binding Map.HasScene}"
+                    Margin="12"
+                    Name="MapZoomBar"
+                    VerticalAlignment="Bottom">
+                    <StackPanel Orientation="Horizontal" Spacing="3">
+                        <Button
+                            AutomationProperties.Name="{l:Tr MapZoomOut}"
+                            Classes="Tool Small"
+                            Command="{Binding Map.ZoomOutCommand}"
+                            ToolTip.Tip="{l:Tr MapZoomOut}">
+                            <c:Icon
+                                Drawing="{StaticResource General.Remove}"
+                                Height="12"
+                                Width="12" />
+                        </Button>
+                        <TextBlock
+                            Background="Transparent"
+                            Foreground="{DynamicResource BrightColor}"
+                            HorizontalAlignment="Center"
+                            Text="{Binding Map.ZoomText}"
+                            TextAlignment="Center"
+                            ToolTip.Tip="{l:Tr MapZoomTip}"
+                            VerticalAlignment="Center"
+                            Width="44" />
+                        <Button
+                            AutomationProperties.Name="{l:Tr MapZoomIn}"
+                            Classes="Tool Small"
+                            Command="{Binding Map.ZoomInCommand}"
+                            ToolTip.Tip="{l:Tr MapZoomIn}">
+                            <c:Icon
+                                Drawing="{StaticResource General.Add}"
+                                Height="12"
+                                Width="12" />
+                        </Button>
+                        <Button
+                            AutomationProperties.Name="{l:Tr MapFit}"
+                            Classes="Tool Small"
+                            Command="{Binding Map.FitCommand}"
+                            ToolTip.Tip="{l:Tr MapFit}">
+                            <Viewbox Height="14" Width="14">
+                                <Canvas Height="16" Width="16">
+                                    <Path
+                                        Data="M3 6V3h3M13 6V3h-3M3 10v3h3M13 10v3h-3"
+                                        Stroke="{Binding $parent[Button].Foreground}"
+                                        StrokeJoin="Round"
+                                        StrokeLineCap="Round"
+                                        StrokeThickness="1.6" />
+                                </Canvas>
+                            </Viewbox>
+                        </Button>
                     </StackPanel>
                 </Border>
             </Panel>
