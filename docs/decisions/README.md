@@ -126,3 +126,4 @@ Each file holds the decisions of one group of [the index](../decisions-index.md)
 - [Fights, the Chaferfu a last resort and Saoul's share dispelled (D503)](d503-chaferfu-and-saoul.md): 1 decision, 5 KB.
 - [The journal kept on disk (D504)](d504-journal-on-disk.md): 1 decision, 5 KB.
 - [A fighting profile's numbers (D505)](d505-run-fight-figures.md): 1 decision, 3 KB.
+- [The harvest's audit, the rotation's order and resources grown back on the way (D506, D507)](d506-harvest-audit.md): 2 decisions, 6 KB.

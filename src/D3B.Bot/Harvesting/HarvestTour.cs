@@ -1,3 +1,4 @@
+using System.Collections.Frozen;
 using System.Collections.Immutable;
 using D3B.Bot.Activities;
 using D3B.Bot.Characters;
@@ -33,6 +34,7 @@ internal sealed class HarvestTour
     private readonly HashSet<int> _wanted = [];
     private readonly HashSet<int> _entered = [];
     private readonly HashSet<long> _levelsTried = [];
+    private readonly Dictionary<long, HashSet<int>> _leftElements = [];
     private readonly HarvestSightings _sightings;
     private readonly GraphicSkills _graphics;
     private readonly Regrowths? _regrowths;
@@ -199,6 +201,25 @@ internal sealed class HarvestTour
         return _crossed.Contains(mapId);
     }
 
+    /// <summary>Marks an element of a map whose use failed in this tour: no journey of the tour stops for it again (D507).</summary>
+    /// <param name="mapId">The map.</param>
+    /// <param name="elementId">The element.</param>
+    public void LeaveElement(long mapId, int elementId)
+    {
+        if (!_leftElements.TryGetValue(mapId, out var elements))
+            _leftElements[mapId] = elements = [];
+
+        elements.Add(elementId);
+    }
+
+    /// <summary>Gets the elements of a map whose use failed in this tour.</summary>
+    /// <param name="mapId">The map.</param>
+    /// <returns>The elements, by id.</returns>
+    public IReadOnlySet<int> ElementsLeftOn(long mapId)
+    {
+        return _leftElements.TryGetValue(mapId, out var elements) ? elements : FrozenSet<int>.Empty;
+    }
+
     /// <summary>Marks a map the way to failed: left out of the rest of the tour.</summary>
     /// <param name="mapId">The map.</param>
     public void Unreach(long mapId)
@@ -270,6 +291,13 @@ internal sealed class HarvestTour
         _harvests++;
     }
 
+    /// <summary>Marks a harvest out of the zone, on the way: something done for <see cref="Arrived"/>, nothing of the zone's (D439, D507).</summary>
+    /// <remarks>A journey may stop again on a map out of the zone the tour crossed already, for a resource grown back: crossing it again adds nothing to the tour, so the harvest must.</remarks>
+    public void HarvestedOnTheWay()
+    {
+        _harvests++;
+    }
+
     /// <summary>Counts a journey of the tour that arrived.</summary>
     /// <returns>Whether the tour goes round: <see cref="MostRounds"/> journeys in a row arrived with nothing done since the one before.</returns>
     /// <remarks>
@@ -317,6 +345,7 @@ internal sealed class HarvestTour
         _wanted.Clear();
         _entered.Clear();
         _levelsTried.Clear();
+        _leftElements.Clear();
         OtherLevel = null;
         HasHarvested = false;
         _harvests = 0;

@@ -928,3 +928,10 @@ or refines another says so in its own entry. Add a line here with every new deci
 
 - [D505](decisions/d505-run-fight-figures.md#d505-a-run-counts-its-characters-fights-won-and-lost-its-deaths-and-the-experience-and-kamas-they-gave) A run counts its character's fights won and lost, its deaths, and the experience and kamas they gave (2026-11-24)
   - U3 of the next release; kept in the run's record, on the card and in the Statistics by hour of the runs that fought.
+
+## The harvest's audit, the rotation's order and resources grown back on the way (D506, D507)
+
+- [D506](decisions/d506-harvest-audit.md#d506-the-harvests-rotation-goes-to-the-nearest-zone-of-the-round-not-yet-gone-to-the-zone-just-left-last) The harvest's rotation goes to the nearest zone of the round not yet gone to, the zone just left last (2026-11-24)
+  - The nearest ready zone alone, a loop computed once, a draw weighed by the distance.
+- [D507](decisions/d506-harvest-audit.md#d507-a-journey-stops-on-a-map-the-tour-went-through-already-where-a-resource-grew-back-unless-the-tour-left-that-element-there) A journey stops on a map the tour went through already where a resource grew back, unless the tour left that element there (2026-11-24)
+  - Stopping for any element offered, only for elements grown back since the visit.
