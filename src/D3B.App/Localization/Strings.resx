@@ -615,7 +615,7 @@
     <value>The journal could not be saved. {0}</value>
   </data>
   <data name="LogsEmpty" xml:space="preserve">
-    <value>The bots' actions show here.</value>
+    <value>Each character's actions show here as soon as it plays.</value>
   </data>
   <data name="LinesKeptOne" xml:space="preserve">
     <value>{0:N0} line kept</value>
@@ -1188,7 +1188,7 @@
     <value>Running</value>
   </data>
   <data name="StatisticsEmpty" xml:space="preserve">
-    <value>Nothing in this period.</value>
+    <value>Nothing in this period: each session a bot plays adds its harvests and fights here.</value>
   </data>
   <data name="StatisticsUnavailable" xml:space="preserve">
     <value>D3B's database did not open.</value>
@@ -1677,7 +1677,7 @@
     <value>Play</value>
   </data>
   <data name="HostFailedShort" xml:space="preserve">
-    <value>D3B did not start: the welcome says why.</value>
+    <value>D3B did not start: click « Relay stopped », at the bottom left, to see why and how to fix it.</value>
   </data>
   <data name="JournalPausedFromApp" xml:space="preserve">
     <value>Paused from D3B</value>
@@ -1776,7 +1776,7 @@
     <value>{0} · {1}</value>
   </data>
   <data name="CharactersEmpty" xml:space="preserve">
-    <value>Start the client from Ankama's launcher: its characters show here once D3B relays it.</value>
+    <value>D3B relays the game: a client started through it shows its characters here.</value>
   </data>
   <data name="CharactersOffline" xml:space="preserve">
     <value>Offline</value>
@@ -2451,7 +2451,7 @@
     <value>Show the project in Explorer</value>
   </data>
   <data name="AssetsEmptyProject" xml:space="preserve">
-    <value>The project is empty. Add a profile, or drop asset files here.</value>
+    <value>No profile yet: a profile says what a character plays and how.</value>
   </data>
   <data name="RouteSaved" xml:space="preserve">
     <value>Route {0} saved</value>
@@ -3537,7 +3537,7 @@
     <value>Search the characters</value>
   </data>
   <data name="WorldEmpty" xml:space="preserve">
-    <value>No route or zone yet. Add one from the Library, or trace one on the world's map.</value>
+    <value>A route is the maps a character goes through; a zone, the maps it works in.</value>
   </data>
   <data name="MenuView" xml:space="preserve">
     <value>View</value>
@@ -3715,5 +3715,26 @@
   </data>
   <data name="StatusRestartTo" xml:space="preserve">
     <value>Restart to update to {0}</value>
+  </data>
+  <data name="CharactersEmptyTitle" xml:space="preserve">
+    <value>No character connected</value>
+  </data>
+  <data name="CharactersEmptyStep1" xml:space="preserve">
+    <value>1. Keep D3B open: its status bar says « Relay ready ».</value>
+  </data>
+  <data name="CharactersEmptyStep2" xml:space="preserve">
+    <value>2. Start Dofus from Ankama's launcher.</value>
+  </data>
+  <data name="CharactersEmptyStep3" xml:space="preserve">
+    <value>3. Choose a character: it shows here.</value>
+  </data>
+  <data name="WorldEmptyTitle" xml:space="preserve">
+    <value>No route or zone yet</value>
+  </data>
+  <data name="StatisticsAllRuns" xml:space="preserve">
+    <value>See every session</value>
+  </data>
+  <data name="CommandPlayAll" xml:space="preserve">
+    <value>Play every character connected</value>
   </data>
 </root>

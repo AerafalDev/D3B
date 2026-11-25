@@ -1006,7 +1006,7 @@ or refines another says so in its own entry. Add a line here with every new deci
 - [D533](decisions/d533-mount-capture.md#d533-a-hunt-profile-may-capture-wild-mounts-the-main-wears-a-carried-capture-net-casts-its-taming-spell-on-a-mount-at-its-first-chance-and-hunts-on-without-capturing-once-it-has-none) A hunt profile may capture wild mounts: the main wears a carried capture net, casts its taming spell on a mount at its first chance, and hunts on without capturing once it has none (2026-11-25)
   - The owner's ask; nets and spells measured in the client, none in the captures; buying, crafting, every member capturing set aside.
 
-## The studio's shell after next (D540 to D542)
+## The studio's shell after next (D540 to D544)
 
 - [D540](decisions/d540-command-palette.md#d540-the-search-is-also-nexts-command-palette-ctrl-shift-p-types-its-sign-the-title-bars-command-centre-names-the-app-the-views-and-each-characters-play-pause-stop-and-forget-are-commands) The search is also next's command palette: Ctrl Shift P types its sign, the title bar's command centre names the app, the views and each character's play, pause, stop and forget are commands (2026-11-25)
   - Stage 1 of 4 of the shell after `next`, under the owner's delegation; begun by the redesign session, finished here.
@@ -1014,3 +1014,7 @@ or refines another says so in its own entry. Add a line here with every new deci
   - Stage 2 of 4, under the owner's delegation; next's relay words and hover, the problems read at every refresh.
 - [D542](decisions/d542-layout-kept.md#d542-the-editors-tabs-the-one-shown-and-the-bottom-panels-tab-come-back-after-a-restart-once-the-host-runs-a-tab-whose-subject-is-gone-falls-back-quietly) The editor's tabs, the one shown and the bottom panel's tab come back after a restart, once the host runs; a tab whose subject is gone falls back quietly (2026-11-25)
   - Stage 3 of 4, under the owner's delegation; next keeps nothing on disk, the studio already kept the sizes and parts (D513).
+- [D543](decisions/d543-empty-states.md#d543-an-empty-view-guides-the-characters-view-says-how-to-connect-a-character-through-d3b-the-worlds-and-the-librarys-offer-to-make-a-route-a-zone-or-a-profile-the-statistics-every-session) An empty view guides: the Characters view says how to connect a character through D3B, the World's and the Library's offer to make a route, a zone or a profile, the statistics every session (2026-11-25)
+  - Stage 4 of 4, under the owner's delegation; a block of its own, a search that finds nothing guiding nowhere.
+- [D544](decisions/d544-details-tidied.md#d544-the-details-play-pause-and-stop-the-character-the-characters-view-plays-every-one-connected-and-lists-only-those-played-through-d3b-and-what-is-not-in-the-app-leaves-the-details) The Details play, pause and stop the character, the Characters view plays every one connected and lists only those played through D3B, and what is not in the app leaves the Details (2026-11-25)
+  - The owner's asks while checking D540 to D543 in the running app.

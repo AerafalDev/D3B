@@ -53,7 +53,7 @@ internal sealed partial class StatisticsViewModel : ObservableObject
 
     /// <summary>Gets which runs the page counts, by when they began.</summary>
     [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(IsToday), nameof(IsWeek), nameof(IsAll))]
+    [NotifyPropertyChangedFor(nameof(IsToday), nameof(IsWeek), nameof(IsAll), nameof(ShowsAllRuns))]
     public partial StatisticsPeriod Period { get; private set; } = StatisticsPeriod.Today;
 
     /// <summary>Gets or sets the character whose runs are counted, or every one.</summary>
@@ -94,6 +94,7 @@ internal sealed partial class StatisticsViewModel : ObservableObject
 
     /// <summary>Gets whether no run is counted.</summary>
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(ShowsAllRuns))]
     public partial bool IsEmpty { get; private set; } = true;
 
     /// <summary>Gets whether the page counts today's runs.</summary>
@@ -108,6 +109,9 @@ internal sealed partial class StatisticsViewModel : ObservableObject
 
     /// <summary>Gets whether the page counts every run.</summary>
     public bool IsAll => Period is StatisticsPeriod.All;
+
+    /// <summary>Gets whether the empty statistics offer every run, the period holding none (D543).</summary>
+    public bool ShowsAllRuns => IsEmpty && !IsAll;
 
     /// <summary>Initializes a new instance of the <see cref="StatisticsViewModel"/> class.</summary>
     /// <param name="localizer">The app's texts.</param>

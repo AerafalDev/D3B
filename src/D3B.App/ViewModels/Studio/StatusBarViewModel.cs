@@ -81,7 +81,7 @@ internal sealed partial class StatusBarViewModel : ObservableObject
     /// <summary>Gets or sets what the version opens: the settings' About.</summary>
     public Action? ShowAbout { get; set; }
 
-    /// <summary>Gets or sets what the relay opens: the journal.</summary>
+    /// <summary>Gets or sets what the relay opens: the journal, or the problems once it stopped.</summary>
     public Action? ShowRelay { get; set; }
 
     /// <summary>Gets or sets what the client and its data open: the settings' Files.</summary>
@@ -147,9 +147,12 @@ internal sealed partial class StatusBarViewModel : ObservableObject
         ClientTip = facts.PackExtractor is { } extractor ? _localizer.Format("StatusDataTip", extractor) : "";
         ShowsPlaying = running;
         PlayingText = _localizer.Plural("StatusPlaying", facts.Playing);
-        ErrorsText = (running ? facts.Errors : 0).ToString(_localizer.Culture);
-        WarningsText = (running ? facts.Warnings : 0).ToString(_localizer.Culture);
-        HasProblems = running && facts.Errors + facts.Warnings > 0;
+        // A host that failed counts its failure, a problem with its fix; one starting has read nothing yet.
+        var counted = facts.Host is not HostStatus.Starting;
+
+        ErrorsText = (counted ? facts.Errors : 0).ToString(_localizer.Culture);
+        WarningsText = (counted ? facts.Warnings : 0).ToString(_localizer.Culture);
+        HasProblems = counted && facts.Errors + facts.Warnings > 0;
         IsSaved = facts.Saved;
         IsUpdateReady = facts.UpdateVersion is not null;
         UpdateText = facts.UpdateVersion is { } update ? _localizer.Format("StatusRestartTo", update) : "";
@@ -170,7 +173,11 @@ internal sealed partial class StatusBarViewModel : ObservableObject
     [RelayCommand]
     private void ShowRelayJournal()
     {
-        ShowRelay?.Invoke();
+        // Stopped, the relay leads to why and its fix, which the problems hold, not to an empty journal.
+        if (IsRelayFailed)
+            ShowProblems?.Invoke();
+        else
+            ShowRelay?.Invoke();
     }
 
     [RelayCommand]

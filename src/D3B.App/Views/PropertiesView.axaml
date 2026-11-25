@@ -47,28 +47,6 @@
         <Style Selector="TextBlock.Key.Changed">
             <Setter Property="Foreground" Value="{DynamicResource ForegroundColor}" />
         </Style>
-        <Style Selector="Button.Pick">
-            <Setter Property="Theme" Value="{DynamicResource StudioButton}" />
-            <Setter Property="Height" Value="28" />
-            <Setter Property="Padding" Value="6,0" />
-            <Setter Property="CornerRadius" Value="6" />
-            <Setter Property="Background" Value="{DynamicResource FieldColor}" />
-            <Setter Property="HorizontalAlignment" Value="Stretch" />
-            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
-            <Setter Property="VerticalContentAlignment" Value="Center" />
-            <Setter Property="FontWeight" Value="Normal" />
-        </Style>
-        <Style Selector="Button.Pick:pointerover">
-            <Setter Property="Background" Value="{DynamicResource HoverColor}" />
-        </Style>
-        <Style Selector="Button.Pick:disabled">
-            <Setter Property="Opacity" Value="0.5" />
-        </Style>
-        <Style Selector="Border.Kind">
-            <Setter Property="Width" Value="18" />
-            <Setter Property="Height" Value="18" />
-            <Setter Property="CornerRadius" Value="4" />
-        </Style>
         <Style Selector="Border.Field">
             <Setter Property="Height" Value="28" />
             <Setter Property="CornerRadius" Value="6" />
@@ -149,7 +127,7 @@
             Name="CharacterPart">
             <StackPanel>
                 <Border BorderBrush="{DynamicResource BorderColor}" BorderThickness="0,0,0,1" Padding="14">
-                    <Grid ColumnDefinitions="34,*,Auto">
+                    <Grid ColumnDefinitions="34,*,Auto,Auto">
                         <c:Portrait
                             Color="{Binding Character.PortraitColor}"
                             Head="{Binding Character.Head}"
@@ -175,10 +153,47 @@
                                 Text="{Binding Character.Subtitle}"
                                 TextTrimming="CharacterEllipsis" />
                         </StackPanel>
+                        <!--  Play, pause and stop as the character's tab gives them, through the run block (D544).  -->
+                        <StackPanel
+                            Grid.Column="2"
+                            Margin="0,0,4,0"
+                            Orientation="Horizontal"
+                            Spacing="2"
+                            VerticalAlignment="Center">
+                            <Button
+                                AutomationProperties.Name="{l:Tr HomePlay}"
+                                Classes="Tool Small"
+                                Command="{Binding Character.PlayCommand}"
+                                IsEnabled="{Binding Character.CanPlay}"
+                                IsVisible="{Binding Character.ShowsPlay}"
+                                Name="DetailsPlay"
+                                ToolTip.ShowOnDisabled="True"
+                                ToolTip.Tip="{Binding Character.PlayTip}">
+                                <c:Icon Drawing="{StaticResource Run.Run}" />
+                            </Button>
+                            <Button
+                                AutomationProperties.Name="{l:Tr RunPause}"
+                                Classes="Tool Small"
+                                Command="{Binding Character.PauseCommand}"
+                                IsVisible="{Binding Character.ShowsPause}"
+                                Name="DetailsPause"
+                                ToolTip.Tip="{l:Tr RunPause}">
+                                <c:Icon Drawing="{StaticResource Run.Pause}" />
+                            </Button>
+                            <Button
+                                AutomationProperties.Name="{l:Tr RunStopTip}"
+                                Classes="Tool Small"
+                                Command="{Binding Character.StopCommand}"
+                                IsVisible="{Binding Character.ShowsStop}"
+                                Name="DetailsStop"
+                                ToolTip.Tip="{l:Tr RunStopTip}">
+                                <c:Icon Drawing="{StaticResource Run.Stop}" />
+                            </Button>
+                        </StackPanel>
                         <Button
                             Classes="Open"
                             Command="{Binding Character.OpenTabCommand}"
-                            Grid.Column="2">
+                            Grid.Column="3">
                             <ToolTip.Tip>
                                 <c:KeyTip Keys="{l:Tr KeysEnter}" Text="{l:Tr OpenCharacterTab}" />
                             </ToolTip.Tip>
@@ -254,68 +269,6 @@
                                     Height="12"
                                     Tint="#E9AD3C"
                                     Width="12" />
-                            </Button>
-                        </Grid>
-                        <Grid
-                            Classes="Prop"
-                            IsVisible="{Binding Character.ShowsPlanning}"
-                            ToolTip.Tip="{l:Tr ComesIn7f}">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="{Binding LabelShare, Converter={x:Static c:ShareColumn.Instance}}" />
-                                <ColumnDefinition Width="{Binding LabelShare, Converter={x:Static c:ShareColumn.Instance}, ConverterParameter=Value}" />
-                                <ColumnDefinition Width="20" />
-                            </Grid.ColumnDefinitions>
-                            <TextBlock Classes="Key" Text="{l:Tr PropertyPlanning}" />
-                            <Button
-                                Classes="Pick"
-                                Grid.Column="1"
-                                IsEnabled="False">
-                                <Grid ColumnDefinitions="Auto,*,Auto">
-                                    <Border Background="#338FB8F2" Classes="Kind">
-                                        <c:Icon
-                                            Drawing="{StaticResource General.History}"
-                                            Height="11"
-                                            Tint="#8FB8F2"
-                                            Width="11" />
-                                    </Border>
-                                    <TextBlock
-                                        Classes="Dim"
-                                        Grid.Column="1"
-                                        Margin="7,0"
-                                        Text="{l:Tr NoneValue}"
-                                        VerticalAlignment="Center" />
-                                </Grid>
-                            </Button>
-                        </Grid>
-                        <Grid
-                            Classes="Prop"
-                            IsVisible="{Binding Character.ShowsFight}"
-                            ToolTip.Tip="{l:Tr ComesIn7h}">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="{Binding LabelShare, Converter={x:Static c:ShareColumn.Instance}}" />
-                                <ColumnDefinition Width="{Binding LabelShare, Converter={x:Static c:ShareColumn.Instance}, ConverterParameter=Value}" />
-                                <ColumnDefinition Width="20" />
-                            </Grid.ColumnDefinitions>
-                            <TextBlock Classes="Key" Text="{l:Tr PropertyFight}" />
-                            <Button
-                                Classes="Pick"
-                                Grid.Column="1"
-                                IsEnabled="False">
-                                <Grid ColumnDefinitions="Auto,*,Auto">
-                                    <Border Background="#33F3A19A" Classes="Kind">
-                                        <c:Icon
-                                            Drawing="{StaticResource Nodes.Function}"
-                                            Height="11"
-                                            Tint="#F3A19A"
-                                            Width="11" />
-                                    </Border>
-                                    <TextBlock
-                                        Classes="Dim"
-                                        Grid.Column="1"
-                                        Margin="7,0"
-                                        Text="{l:Tr NoneValue}"
-                                        VerticalAlignment="Center" />
-                                </Grid>
                             </Button>
                         </Grid>
                     </StackPanel>
