@@ -41,11 +41,15 @@ internal sealed class AppPreferences
     /// <summary>Gets whether the player has read that the game sessions are recorded on this machine (D409).</summary>
     public bool CapturesNoticeSeen { get; private set; }
 
+    /// <summary>Gets whether the Library shows the project in its folders rather than by kind (D515).</summary>
+    public bool LibraryByFolder { get; private set; }
+
     /// <summary>Gets the host's settings the app changed, by their configuration's keys, which it gives the host as it starts.</summary>
     public IReadOnlyDictionary<string, string?> Host => _host.ToDictionary(setting => setting.Key, string? (setting) => setting.Value, StringComparer.OrdinalIgnoreCase);
 
-    private AppPreferences(string path, string? language, StudioLayoutState? layout, IReadOnlyDictionary<string, string>? host, IReadOnlyList<string>? folded = null, bool capturesNoticeSeen = false)
+    private AppPreferences(string path, string? language, StudioLayoutState? layout, IReadOnlyDictionary<string, string>? host, IReadOnlyList<string>? folded = null, bool capturesNoticeSeen = false, bool libraryByFolder = false)
     {
+        LibraryByFolder = libraryByFolder;
         Path = path;
         Language = language;
         Layout = layout;
@@ -71,7 +75,7 @@ internal sealed class AppPreferences
         {
             var stored = JsonSerializer.Deserialize<Stored>(File.ReadAllText(path));
 
-            return new AppPreferences(path, stored?.Language, stored?.Layout, stored?.Host, stored?.FoldedAssets, stored?.CapturesNoticeSeen is true);
+            return new AppPreferences(path, stored?.Language, stored?.Layout, stored?.Host, stored?.FoldedAssets, stored?.CapturesNoticeSeen is true, stored?.LibraryByFolder is true);
         }
         catch (Exception exception) when (exception is IOException or UnauthorizedAccessException or JsonException)
         {
@@ -105,6 +109,14 @@ internal sealed class AppPreferences
         Save();
     }
 
+    /// <summary>Remembers whether the Library shows the project in its folders (D515).</summary>
+    /// <param name="byFolder">Whether it does, rather than by kind.</param>
+    public void RememberLibraryByFolder(bool byFolder)
+    {
+        LibraryByFolder = byFolder;
+        Save();
+    }
+
     /// <summary>Remembers that the player has read the notice of the recorded sessions.</summary>
     public void RememberCapturesNoticeSeen()
     {
@@ -134,7 +146,7 @@ internal sealed class AppPreferences
         try
         {
             Directory.CreateDirectory(System.IO.Path.GetDirectoryName(Path)!);
-            File.WriteAllText(Path, JsonSerializer.Serialize(new Stored(Language, Layout, _host.Count > 0 ? _host : null, FoldedAssets.Count > 0 ? FoldedAssets : null, CapturesNoticeSeen ? true : null), _json));
+            File.WriteAllText(Path, JsonSerializer.Serialize(new Stored(Language, Layout, _host.Count > 0 ? _host : null, FoldedAssets.Count > 0 ? FoldedAssets : null, CapturesNoticeSeen ? true : null, LibraryByFolder ? true : null), _json));
         }
         catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
         {
@@ -142,5 +154,5 @@ internal sealed class AppPreferences
         }
     }
 
-    private sealed record Stored(string? Language, StudioLayoutState? Layout, IReadOnlyDictionary<string, string>? Host, IReadOnlyList<string>? FoldedAssets = null, bool? CapturesNoticeSeen = null);
+    private sealed record Stored(string? Language, StudioLayoutState? Layout, IReadOnlyDictionary<string, string>? Host, IReadOnlyList<string>? FoldedAssets = null, bool? CapturesNoticeSeen = null, bool? LibraryByFolder = null);
 }

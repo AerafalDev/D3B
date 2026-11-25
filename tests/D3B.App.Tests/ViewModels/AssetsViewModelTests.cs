@@ -23,7 +23,8 @@ public sealed class AssetsViewModelTests : IAsyncDisposable
     private (AssetsViewModel Assets, ProfilesViewModel Profiles) Panel()
     {
         var profiles = new ProfilesViewModel(_localizer, new Dialogs(), new Toasts());
-        var assets = new AssetsViewModel(_localizer, profiles.Dialogs, profiles.Toasts, profiles);
+        // These test the folders, the view the Library keeps on demand (D515).
+        var assets = new AssetsViewModel(_localizer, profiles.Dialogs, profiles.Toasts, profiles, byFolder: true);
 
         profiles.Refresh(_store.Host.Services);
         assets.Refresh(_store.Host.Services);
@@ -36,7 +37,7 @@ public sealed class AssetsViewModelTests : IAsyncDisposable
         return string.Join(" | ", assets.Rows.Select(row => new string(' ', row.Depth) + row.Kind switch
         {
             AssetRowKind.Folder => (row.IsExpanded ? "v " : "> ") + row.Name,
-            AssetRowKind.Given => "# " + row.Name,
+            AssetRowKind.Heading => "# " + row.Name,
             AssetRowKind.Problem => "! " + row.Name,
             _ => row.Name + (row.Count.Length > 0 ? " " + row.Count : ""),
         }));

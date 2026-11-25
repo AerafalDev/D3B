@@ -6,7 +6,8 @@ namespace D3B.App.ViewModels.Assets;
 /// <param name="Filter">The text the assets are searched by.</param>
 /// <param name="Hidden">The kinds hidden.</param>
 /// <param name="Folded">The folders folded.</param>
-/// <param name="GivenFolded">Whether the assets given with D3B are folded.</param>
+/// <param name="FoldedGroups">The headings folded, by what they group: <c>given</c>, <c>problems</c>, <c>kind:</c> and a kind (D515).</param>
+/// <param name="ByKind">Whether the project is grouped by kind rather than shown in its folders (D515).</param>
 /// <param name="Selected">The keys of the rows chosen.</param>
 /// <param name="Cut">The keys of the rows cut.</param>
 /// <param name="FocusKey">The key of the row the keyboard is on.</param>
@@ -15,7 +16,8 @@ internal sealed record AssetTreeState(
     string Filter,
     IReadOnlySet<AssetKind> Hidden,
     IReadOnlySet<string> Folded,
-    bool GivenFolded,
+    IReadOnlySet<string> FoldedGroups,
+    bool ByKind,
     IReadOnlySet<string> Selected,
     IReadOnlySet<string> Cut,
     string? FocusKey,

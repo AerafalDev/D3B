@@ -40,7 +40,7 @@ internal sealed partial class AssetsViewModel : ObservableObject
     private AssetLibrary? _assets;
     private AccountBook? _book;
     private string _shown = "";
-    private bool _givenFolded;
+    private readonly HashSet<string> _foldedGroups = new(StringComparer.Ordinal);
     private string? _anchor;
     private AssetRowViewModel? _newFolder;
 
@@ -78,6 +78,10 @@ internal sealed partial class AssetsViewModel : ObservableObject
     /// <summary>Gets whether some kinds are hidden, which the filter's button says.</summary>
     [ObservableProperty]
     public partial bool IsFiltered { get; private set; }
+
+    /// <summary>Gets whether the project shows by kind, a heading each, rather than in its folders (D515).</summary>
+    [ObservableProperty]
+    public partial bool IsByKind { get; private set; } = true;
 
     /// <summary>Gets the asset chosen alone, by its id, if one is.</summary>
     public string? ChosenId => _selected.Count == 1 && _selected.First() is { } key && !key.StartsWith(FolderKey, StringComparison.Ordinal) && !key.StartsWith(ProblemKey, StringComparison.Ordinal) ? key : null;
@@ -124,6 +128,9 @@ internal sealed partial class AssetsViewModel : ObservableObject
     /// <summary>Gets or sets what remembers the folders folded, for the next start.</summary>
     public Action<IReadOnlyCollection<string>>? FoldsChanged { get; set; }
 
+    /// <summary>Gets or sets what remembers whether the project shows in its folders, for the next start (D515).</summary>
+    public Action<bool>? ByFolderChanged { get; set; }
+
     /// <summary>Gets every folder of the project, relative to its own, folded ones included.</summary>
     public IReadOnlyList<string> AllFolderPaths => [.. AssetPaths.AllFolders(_assets)];
 
@@ -136,8 +143,10 @@ internal sealed partial class AssetsViewModel : ObservableObject
     /// <param name="toasts">What the window says in its toasts.</param>
     /// <param name="profiles">The profiles, whose editors and dialogs a profile's row uses.</param>
     /// <param name="folded">The folders folded when the app was left.</param>
-    public AssetsViewModel(Localizer localizer, Dialogs dialogs, Toasts toasts, ProfilesViewModel profiles, IEnumerable<string>? folded = null)
+    /// <param name="byFolder">Whether the project showed in its folders when the app was left, rather than by kind (D515).</param>
+    public AssetsViewModel(Localizer localizer, Dialogs dialogs, Toasts toasts, ProfilesViewModel profiles, IEnumerable<string>? folded = null, bool byFolder = false)
     {
+        IsByKind = !byFolder;
         _localizer = localizer;
         _dialogs = dialogs;
         _toasts = toasts;
@@ -171,7 +180,7 @@ internal sealed partial class AssetsViewModel : ObservableObject
         IsAvailable = _assets is not null;
 
         var unsaved = string.Join(',', _profiles.Open.Where(item => item.IsDirty).Select(item => item.Id).Concat(Routes?.Open.Where(item => item.IsDirty).Select(item => item.Id) ?? []).Concat(Zones?.Open.Where(item => item.IsDirty).Select(item => item.Id) ?? []));
-        var shown = string.Join('|', _assets?.Version, _book?.Version, _localizer.Culture.Name, Filter, string.Join(',', _folded), _givenFolded, string.Join(',', _selected), string.Join(',', _cut), string.Join(',', _hidden), FocusKey, unsaved);
+        var shown = string.Join('|', _assets?.Version, _book?.Version, _localizer.Culture.Name, Filter, string.Join(',', _folded), string.Join(',', _foldedGroups), IsByKind, string.Join(',', _selected), string.Join(',', _cut), string.Join(',', _hidden), FocusKey, unsaved);
 
         // A name being typed keeps its row: the tree waits for it.
         if (shown == _shown || _newFolder is not null || Rows.Any(row => row.IsRenaming))
@@ -190,9 +199,9 @@ internal sealed partial class AssetsViewModel : ObservableObject
     {
         ArgumentNullException.ThrowIfNull(row);
 
-        if (row.IsGivenHeading)
+        if (row.IsHeading)
         {
-            _givenFolded = !_givenFolded;
+            Fold(row.Group);
             Rebuild();
 
             return;
@@ -239,8 +248,8 @@ internal sealed partial class AssetsViewModel : ObservableObject
     {
         ArgumentNullException.ThrowIfNull(row);
 
-        if (row.IsGivenHeading)
-            _givenFolded = !_givenFolded;
+        if (row.IsHeading)
+            Fold(row.Group);
         else if (row.IsFolder && !_folded.Remove(row.Folder))
             _folded.Add(row.Folder);
 
@@ -253,7 +262,7 @@ internal sealed partial class AssetsViewModel : ObservableObject
     /// <param name="range">Whether Shift is held.</param>
     public void MoveFocus(int step, bool range = false)
     {
-        var rows = Rows.Where(row => row.IsSelectable || row.IsGivenHeading).ToList();
+        var rows = Rows.Where(row => row.IsSelectable || row.IsHeading).ToList();
 
         if (rows.Count == 0)
             return;
@@ -261,7 +270,11 @@ internal sealed partial class AssetsViewModel : ObservableObject
         var at = FocusKey is { } key ? rows.FindIndex(row => string.Equals(row.Key, key, StringComparison.OrdinalIgnoreCase)) : -1;
         var next = rows[Math.Clamp(at < 0 ? (step > 0 ? 0 : rows.Count - 1) : at + step, 0, rows.Count - 1)];
 
-        Click(next, range: range);
+        // The keyboard stops on a heading without folding it, as on a folder: a click folds, Left and Right fold and unfold.
+        if (next.IsHeading)
+            Focus(next);
+        else
+            Click(next, range: range);
     }
 
     /// <summary>Unfolds the folder the keyboard is on, or goes to its first row once unfolded: the right arrow.</summary>
@@ -270,9 +283,9 @@ internal sealed partial class AssetsViewModel : ObservableObject
         if (Focused() is not { } row)
             return;
 
-        if ((row.IsFolder && !row.IsExpanded) || (row.IsGivenHeading && _givenFolded))
+        if ((row.IsFolder && !row.IsExpanded) || (row.IsHeading && _foldedGroups.Contains(row.Group)))
             Toggle(row);
-        else if (row.IsFolder || row.IsGivenHeading)
+        else if (row.IsFolder || row.IsHeading)
             MoveFocus(1);
     }
 
@@ -282,9 +295,17 @@ internal sealed partial class AssetsViewModel : ObservableObject
         if (Focused() is not { } row)
             return;
 
-        if (row.IsFolder && row.IsExpanded)
+        if ((row.IsFolder || row.IsHeading) && row.IsExpanded)
         {
             Toggle(row);
+
+            return;
+        }
+
+        // By kind, a row goes back to the heading above it.
+        if (IsByKind && !row.IsHeading && Rows.Take(Rows.IndexOf(row)).LastOrDefault(item => item.IsHeading) is { } heading)
+        {
+            Focus(heading);
 
             return;
         }
@@ -301,7 +322,7 @@ internal sealed partial class AssetsViewModel : ObservableObject
     {
         ArgumentNullException.ThrowIfNull(row);
 
-        if (row.IsFolder || row.IsGivenHeading)
+        if (row.IsFolder || row.IsHeading)
         {
             Toggle(row);
 
@@ -333,8 +354,7 @@ internal sealed partial class AssetsViewModel : ObservableObject
         if (_assets?.Find(id) is not { } asset)
             return;
 
-        if (asset.IsGiven)
-            _givenFolded = false;
+        _foldedGroups.Remove(asset.IsGiven ? AssetTreeBuilder.GivenGroup : AssetTreeBuilder.KindGroup + asset.Kind);
 
         for (var folder = AssetPaths.ParentOf(asset.Path ?? ""); folder.Length > 0; folder = AssetPaths.ParentOf(folder))
             _folded.Remove(folder);
@@ -653,12 +673,25 @@ internal sealed partial class AssetsViewModel : ObservableObject
             _ = zones.CreateAsync(ChosenFolder);
     }
 
-    /// <summary>Starts a folder in the folder chosen, or at the root when nothing is, its name typed in place.</summary>
+    /// <summary>Shows the project in its folders, or by kind again, and remembers it (D515).</summary>
+    [RelayCommand]
+    public void ToggleByKind()
+    {
+        IsByKind = !IsByKind;
+        ByFolderChanged?.Invoke(!IsByKind);
+        Rebuild();
+    }
+
+    /// <summary>Starts a folder in the folder chosen, or at the root when nothing is, its name typed in place: the folders show for it.</summary>
     [RelayCommand]
     public void NewFolder()
     {
         if (!IsAvailable || _newFolder is not null)
             return;
+
+        // A folder lives among folders: by kind, there is none to put it in.
+        if (IsByKind)
+            ToggleByKind();
 
         var parent = ChosenFolder;
 
@@ -726,7 +759,7 @@ internal sealed partial class AssetsViewModel : ObservableObject
     public void ExpandAll()
     {
         _folded.Clear();
-        _givenFolded = false;
+        _foldedGroups.Clear();
         RememberFolds();
         Rebuild();
     }
@@ -738,7 +771,9 @@ internal sealed partial class AssetsViewModel : ObservableObject
         foreach (var folder in AssetPaths.AllFolders(_assets))
             _folded.Add(folder);
 
-        _givenFolded = true;
+        foreach (var row in Rows.Where(row => row.IsHeading))
+            _foldedGroups.Add(row.Group);
+
         RememberFolds();
         Rebuild();
     }
@@ -849,6 +884,12 @@ internal sealed partial class AssetsViewModel : ObservableObject
         return name;
     }
 
+    private void Fold(string group)
+    {
+        if (!_foldedGroups.Remove(group))
+            _foldedGroups.Add(group);
+    }
+
     private void RememberFolds()
     {
         FoldsChanged?.Invoke(_folded);
@@ -863,7 +904,7 @@ internal sealed partial class AssetsViewModel : ObservableObject
     private void Build()
     {
         var tree = _assets is { } assets
-            ? new AssetTreeBuilder(_localizer, assets, _book, new AssetTreeState(Filter, _hidden, _folded, _givenFolded, _selected, _cut, FocusKey, IsUnsaved)).Build()
+            ? new AssetTreeBuilder(_localizer, assets, _book, new AssetTreeState(Filter, _hidden, _folded, _foldedGroups, IsByKind, _selected, _cut, FocusKey, IsUnsaved)).Build()
             : null;
 
         if (tree is not null)

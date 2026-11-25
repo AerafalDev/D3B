@@ -94,15 +94,19 @@ public sealed class AssetsViewsTests
             return (english, french, tab, add);
         });
 
-        Assert.Contains("Lumberjack", english);
+        // By kind, the Library's default: the folder Lumberjack shows with the folders' view (D515).
+        Assert.Contains("Profiles", english);
+        Assert.Contains("Files that do not read", english);
+        Assert.DoesNotContain("Lumberjack", english);
         Assert.Contains("Walker", english);
         Assert.Contains("Broken.profile.json", english);
         Assert.Contains("Given with D3B", english);
-        Assert.Contains("Variant of", english);
+        Assert.Contains("Based on", english);
         Assert.Contains("Preview", english);
         Assert.DoesNotContain(english, text => text.StartsWith('[') && text.EndsWith(']'));
         Assert.Contains("Donnés avec D3B", french);
-        Assert.Contains("Variante de", french);
+        Assert.Contains("Profils", french);
+        Assert.Contains("Basé sur", french);
         Assert.Contains("Tout remettre", french);
         Assert.DoesNotContain(french, text => text.StartsWith('[') && text.EndsWith(']'));
         Assert.Equal(("profile:" + walker.Id, "Walker", true), tab);

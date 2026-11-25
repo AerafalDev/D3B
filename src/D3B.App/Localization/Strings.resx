@@ -1950,10 +1950,10 @@
     <value>on connection</value>
   </data>
   <data name="ValuesChangedOne" xml:space="preserve">
-    <value>{0:N0} value changed</value>
+    <value>{0:N0} setting changed</value>
   </data>
   <data name="ValuesChangedOther" xml:space="preserve">
-    <value>{0:N0} values changed</value>
+    <value>{0:N0} settings changed</value>
   </data>
   <data name="VariableFlag" xml:space="preserve">
     <value>Flag</value>
@@ -1983,10 +1983,10 @@
     <value>{0} copied into the project</value>
   </data>
   <data name="NoValueChanged" xml:space="preserve">
-    <value>no value changed</value>
+    <value>no setting changed</value>
   </data>
   <data name="VariantOf" xml:space="preserve">
-    <value>Variant of</value>
+    <value>Based on</value>
   </data>
   <data name="ResetAll" xml:space="preserve">
     <value>Reset all</value>
@@ -3613,5 +3613,32 @@
   </data>
   <data name="HomeMake" xml:space="preserve">
     <value>Make</value>
+  </data>
+  <data name="AssetGroupProfile" xml:space="preserve">
+    <value>Profiles</value>
+  </data>
+  <data name="AssetGroupRoute" xml:space="preserve">
+    <value>Routes</value>
+  </data>
+  <data name="AssetGroupZone" xml:space="preserve">
+    <value>Zones</value>
+  </data>
+  <data name="AssetGroupBehavior" xml:space="preserve">
+    <value>Behaviors</value>
+  </data>
+  <data name="AssetGroupList" xml:space="preserve">
+    <value>Lists</value>
+  </data>
+  <data name="AssetGroupPlanning" xml:space="preserve">
+    <value>Plannings</value>
+  </data>
+  <data name="AssetGroupFightPreferences" xml:space="preserve">
+    <value>Fight preferences</value>
+  </data>
+  <data name="AssetGroupProblems" xml:space="preserve">
+    <value>Files that do not read</value>
+  </data>
+  <data name="LibraryByFolder" xml:space="preserve">
+    <value>Show the folders</value>
   </data>
 </root>

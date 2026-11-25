@@ -294,12 +294,12 @@ public sealed class MainWindowTests : IAsyncDisposable
         Assert.Contains("Walker", english);
         Assert.Contains("Auto start", english);
         Assert.Contains("nickname#tag", english);
-        Assert.Contains("Variant of", english);
+        Assert.Contains("Based on", english);
         Assert.Contains("Preview", english);
         Assert.Contains("Save", english);
         Assert.DoesNotContain(english, text => text.StartsWith('[') && text.EndsWith(']'));
         Assert.Contains("Détails", french);
-        Assert.Contains("Variante de", french);
+        Assert.Contains("Basé sur", french);
         Assert.Contains("Aperçu", french);
         Assert.Contains("Enregistrer", french);
         Assert.Contains("Auto-démarrage", french);

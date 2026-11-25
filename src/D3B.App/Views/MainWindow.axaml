@@ -621,11 +621,46 @@
                                 </TextBlock>
                                 <StackPanel
                                     DockPanel.Dock="Right"
+                                    IsVisible="{Binding Layout.IsWorldShown}"
+                                    Margin="0,0,6,0"
+                                    Orientation="Horizontal"
+                                    Spacing="2"
+                                    VerticalAlignment="Center">
+                                    <Button
+                                        AutomationProperties.Name="{l:Tr HomeNewRoute}"
+                                        Classes="Tool Small"
+                                        Command="{Binding Home.NewRouteCommand}"
+                                        IsEnabled="{Binding IsRunning}"
+                                        Name="WorldNewRoute"
+                                        ToolTip.Tip="{l:Tr HomeNewRoute}">
+                                        <c:Icon Drawing="{StaticResource General.Vcs}" />
+                                    </Button>
+                                    <Button
+                                        AutomationProperties.Name="{l:Tr HomeNewZone}"
+                                        Classes="Tool Small"
+                                        Command="{Binding Home.NewZoneCommand}"
+                                        IsEnabled="{Binding IsRunning}"
+                                        Name="WorldNewZone"
+                                        ToolTip.Tip="{l:Tr HomeNewZone}">
+                                        <c:Icon Drawing="{StaticResource Actions.SelectAll}" />
+                                    </Button>
+                                </StackPanel>
+                                <StackPanel
+                                    DockPanel.Dock="Right"
                                     IsVisible="{Binding Layout.IsLibraryShown}"
                                     Margin="0,0,6,0"
                                     Orientation="Horizontal"
                                     Spacing="2"
                                     VerticalAlignment="Center">
+                                    <Button
+                                        AutomationProperties.Name="{l:Tr LibraryByFolder}"
+                                        Classes="Tool Small"
+                                        Classes.Lit="{Binding !Assets.IsByKind}"
+                                        Command="{Binding Assets.ToggleByKindCommand}"
+                                        IsEnabled="{Binding Assets.IsAvailable}"
+                                        ToolTip.Tip="{l:Tr LibraryByFolder}">
+                                        <c:Icon Drawing="{StaticResource Nodes.Folder}" />
+                                    </Button>
                                     <Button
                                         AutomationProperties.Name="{l:Tr KindsShown}"
                                         Classes="Tool Small"
