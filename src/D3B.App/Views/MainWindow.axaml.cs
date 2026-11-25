@@ -37,6 +37,10 @@ internal sealed partial class MainWindow : ShadUI.Window
     private MainViewModel? _main;
     private object? _dialog;
     private double _dragStart;
+    private bool? _sideShown;
+    private bool? _detailsShown;
+    private bool? _bottomShown;
+    private readonly Dictionary<Control, int> _slides = [];
 
     /// <summary>Gets the view models the window shows as dialogs.</summary>
     internal static IReadOnlyList<Type> DialogViewModels => [.. _kinds.Select(kind => kind.ViewModel)];
@@ -102,6 +106,13 @@ internal sealed partial class MainWindow : ShadUI.Window
     }
 
     /// <inheritdoc/>
+    protected override void OnOpened(EventArgs e)
+    {
+        base.OnOpened(e);
+        WindowCorners.Round(this);
+    }
+
+    /// <inheritdoc/>
     protected override void OnClosed(EventArgs e)
     {
         base.OnClosed(e);
@@ -118,18 +129,69 @@ internal sealed partial class MainWindow : ShadUI.Window
         if (_main?.Layout is not { } layout)
             return;
 
-        // A closed panel's row or column takes no room, and its gap goes with it: its neighbour takes the room.
+        // A closed panel's row or column takes no room, and its gap goes with it: its neighbour takes the room. Shown or hidden,
+        // a part slides as next's (D545); dragged, it follows the pointer.
         var columns = Docks.ColumnDefinitions;
-
-        columns[0].Width = new GridLength(layout.IsSideOpen ? layout.LeftWidth : 0);
-        columns[1].Width = new GridLength(layout.IsSideOpen ? Gap : 0);
-        columns[3].Width = new GridLength(layout.IsDetailsOpen ? Gap : 0);
-        columns[4].Width = new GridLength(layout.IsDetailsOpen ? layout.RightWidth : 0);
-
         var centre = CentreColumn.RowDefinitions;
 
+        columns[1].Width = new GridLength(layout.IsSideOpen ? Gap : 0);
+        columns[3].Width = new GridLength(layout.IsDetailsOpen ? Gap : 0);
         centre[1].Height = new GridLength(layout.IsBottomOpen ? Gap : 0);
-        centre[2].Height = new GridLength(layout.IsBottomOpen ? layout.BottomHeight : 0);
+        Place(SideDock, ref _sideShown, layout.IsSideOpen, layout.LeftWidth, columns[0].Width.Value, size => columns[0].Width = new GridLength(size));
+        Place(DetailsDock, ref _detailsShown, layout.IsDetailsOpen, layout.RightWidth, columns[4].Width.Value, size => columns[4].Width = new GridLength(size));
+        Place(BottomDock, ref _bottomShown, layout.IsBottomOpen, layout.BottomHeight, centre[2].Height.Value, size => centre[2].Height = new GridLength(size));
+    }
+
+    // A part shown or hidden since the last layout slides to its size or to nothing, its content showing until it is closed; else it
+    // takes its size at once, as a drag asks, unless it is sliding.
+    private void Place(Control dock, ref bool? shown, bool open, double size, double current, Action<double> resize)
+    {
+        var slides = shown is { } was && was != open;
+
+        shown = open;
+
+        if (!slides)
+        {
+            if (!_slides.ContainsKey(dock))
+            {
+                resize(open ? size : 0);
+                dock.IsVisible = open;
+            }
+
+            return;
+        }
+
+        var slide = _slides.GetValueOrDefault(dock) + 1;
+        var to = open ? size : 0;
+        TimeSpan? began = null;
+
+        _slides[dock] = slide;
+        dock.IsVisible = true;
+
+        void Frame(TimeSpan now)
+        {
+            // A later toggle took over this part.
+            if (_slides.GetValueOrDefault(dock) != slide)
+                return;
+
+            began ??= now;
+
+            var elapsed = now - began.Value;
+
+            resize(DockSlide.At(current, to, elapsed));
+
+            if (elapsed < DockSlide.Duration)
+            {
+                RequestAnimationFrame(Frame);
+
+                return;
+            }
+
+            _slides.Remove(dock);
+            dock.IsVisible = open;
+        }
+
+        RequestAnimationFrame(Frame);
     }
 
     private void OnScrimPressed(object? sender, PointerPressedEventArgs e)

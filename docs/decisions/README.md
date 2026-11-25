@@ -145,3 +145,4 @@ Each file holds the decisions of one group of [the index](../decisions-index.md)
 - [The studio's shell after next, the layout kept (D542)](d542-layout-kept.md): 1 decision, 2 KB.
 - [The studio's shell after next, empty states that guide (D543)](d543-empty-states.md): 1 decision, 3 KB.
 - [The studio's Details tidied, a character played from them (D544)](d544-details-tidied.md): 1 decision, 3 KB.
+- [The studio's parts slide and its window is rounded (D545)](d545-slides-and-corners.md): 1 decision, 2 KB.
