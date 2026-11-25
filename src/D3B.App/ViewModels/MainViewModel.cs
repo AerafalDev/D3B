@@ -871,6 +871,8 @@ internal sealed partial class MainViewModel : ObservableObject
         yield return Command("CommandDefaultLayout", "", Layout.Reset);
         yield return Command("CommandPlay", "F5", RunBlock.PlayOrPause);
         yield return Command("CommandPlayAll", "", RunBlock.PlayAll);
+        yield return Command("CommandPauseAll", "", RunBlock.PauseAll);
+        yield return Command("CommandStopAll", "", RunBlock.StopAll);
         yield return Command("CommandPause", "F6", RunBlock.Pause);
         yield return Command("CommandStop", _localizer["KeysShiftF5"], RunBlock.Stop);
         yield return Command("CommandSettings", "Ctrl ,", ShowSettings);

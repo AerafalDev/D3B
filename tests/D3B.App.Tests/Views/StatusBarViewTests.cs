@@ -70,8 +70,9 @@ public sealed class StatusBarViewTests : IAsyncDisposable
         });
 
         Assert.Equal(["D3B " + D3B.App.Updates.AppRelease.Version, "Relais prêt · 1 en jeu"], left);
-        Assert.Contains("0 bot actif", right);
-        Assert.Contains("Tout est enregistré", right);
+        // Icons and figures on the right, their words in the tooltips (D544).
+        Assert.Contains("0", right);
+        Assert.DoesNotContain("Tout est enregistré", right);
         Assert.Equal(BottomTab.Problems, tab);
     }
 }

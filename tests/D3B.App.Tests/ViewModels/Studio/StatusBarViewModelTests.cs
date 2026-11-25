@@ -51,9 +51,11 @@ public sealed class StatusBarViewModelTests
     {
         var bar = Bar(new StatusFacts { Host = HostStatus.Running, ClientBuild = "3.7.14.18", PackFormat = 13, PackExtractor = "0.9.10", Playing = 1, Errors = 2, Warnings = 3 });
 
-        Assert.Equal("Client 3.7.14.18 · données v13", bar.ClientText);
-        Assert.Equal("Données extraites par D3B.Data 0.9.10", bar.ClientTip);
-        Assert.Equal(("1 bot actif", true), (bar.PlayingText, bar.ShowsPlaying));
+        // Short beside their icons, the words in the tooltips (the owner's ask, D544).
+        Assert.Equal("3.7.14.18", bar.ClientText);
+        Assert.Equal("Client Dofus 3.7.14.18 · données de jeu v13, extraites par D3B.Data 0.9.10", bar.ClientTip);
+        Assert.Equal(("1", "1 bot actif sur 0 connectés", true), (bar.PlayingText, bar.PlayingTip, bar.ShowsPlaying));
+        Assert.Equal("Tout est enregistré", bar.SavedTip);
         Assert.Equal(("2", "3", true), (bar.ErrorsText, bar.WarningsText, bar.HasProblems));
     }
 
@@ -62,7 +64,7 @@ public sealed class StatusBarViewModelTests
     {
         var bar = Bar(new StatusFacts { Host = HostStatus.Starting, ClientBuild = "3.7.14.18" }, "en");
 
-        Assert.Equal(("Client 3.7.14.18", false), (bar.ClientText, bar.ShowsPlaying));
+        Assert.Equal(("3.7.14.18", "Dofus client 3.7.14.18", false), (bar.ClientText, bar.ClientTip, bar.ShowsPlaying));
         Assert.Equal(("0", "0", false), (bar.ErrorsText, bar.WarningsText, bar.HasProblems));
     }
 

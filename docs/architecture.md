@@ -894,7 +894,7 @@ bottom panel and the Details hidden until needed.
 - **The status bar**, 24 pixels as `next`'s (D531, D541, `StatusBarViewModel` and `StatusFacts` in `D3B.App.ViewModels.Studio`,
   read at the window's refresh): on the left, after a small blue dot, the app's name and version, then the relay as `next` says it
   (« Relais prêt · N en jeu », starting, closed, stopped in red with the host's failure), its tooltip only what the bar does not say;
-  on the right the client build and, once the host opened it, the data pack's format, its extractor in the tooltip, the bots playing,
+  on the right, in icons and figures whose words are their tooltips (D544), the client build and, once the host opened it, the data pack's format, its extractor in the tooltip, the bots playing,
   the problems' errors and warnings (read at every refresh, `BottomPanelViewModel.Refresh`), whether everything is saved, and once an
   update is downloaded, « Redémarrer pour passer à … » (D173). Each item opens what it names: the settings' About, the journal, the
   settings' Files, the Characters view, the problems' tab; the saving item saves all, the update's restarts into it. A host that
@@ -924,8 +924,8 @@ bottom panel and the Details hidden until needed.
 - **The characters** (D323, D344, D397, `CharactersViewModel` in `D3B.App.ViewModels.Characters`): the model behind the
   Outliner's character rows, the run block and the menus: the bots (`BotViewModel`: the ring of its state `PlayState`, its
   level, where it is, what it does and its progress, life and pods) and the characters offline (`CharacterLineViewModel`), only
-  those played through D3B once (`KnownCharacter.LastPlayed`, D544); the view's header plays every one connected
-  (`RunBlockViewModel.PlayAll`, also a command of the palette). The
+  those played through D3B once (`KnownCharacter.LastPlayed`, D544); the view's header plays, pauses and stops every one connected
+  (`RunBlockViewModel.PlayAll`, `PauseAll`, `StopAll`, also commands of the palette). The
   cards of D323 are gone, the Outliner's rows say it shorter (D397). A click chooses the character for the run block and the
   Details, a double click or Enter opens its tab, the right click chooses it and opens its menu, made as it opens: open, play,
   pause, stop, a profile, the start on connection, forgetting its account after a question (`CharacterAccounts`). The profiles'

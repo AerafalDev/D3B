@@ -46,9 +46,17 @@ internal sealed partial class StatusBarViewModel : ObservableObject
     [ObservableProperty]
     public partial string ClientTip { get; private set; } = "";
 
-    /// <summary>Gets how many bots play.</summary>
+    /// <summary>Gets how many bots play, a figure beside the play icon.</summary>
     [ObservableProperty]
     public partial string PlayingText { get; private set; } = "";
+
+    /// <summary>Gets how many bots play of those connected, in words.</summary>
+    [ObservableProperty]
+    public partial string PlayingTip { get; private set; } = "";
+
+    /// <summary>Gets whether everything is saved, in words.</summary>
+    [ObservableProperty]
+    public partial string SavedTip { get; private set; } = "";
 
     /// <summary>Gets whether the bots playing show: once the host runs.</summary>
     [ObservableProperty]
@@ -143,10 +151,11 @@ internal sealed partial class StatusBarViewModel : ObservableObject
         RelayTip = string.Join('\n', tip);
 
         // The pack's version once the host opened it: before, only the build the app ships is known.
-        ClientText = facts.PackFormat is { } format ? _localizer.Format("StatusClientData", facts.ClientBuild, format) : _localizer.Format("StatusClient", facts.ClientBuild);
-        ClientTip = facts.PackExtractor is { } extractor ? _localizer.Format("StatusDataTip", extractor) : "";
+        ClientText = facts.ClientBuild;
+        ClientTip = facts.PackFormat is { } format ? _localizer.Format("StatusClientDataTip", facts.ClientBuild, format, facts.PackExtractor ?? "?") : _localizer.Format("StatusClientTip", facts.ClientBuild);
         ShowsPlaying = running;
-        PlayingText = _localizer.Plural("StatusPlaying", facts.Playing);
+        PlayingText = facts.Playing.ToString(_localizer.Culture);
+        PlayingTip = _localizer.Format("StatusPlayingTip", _localizer.Plural("StatusPlaying", facts.Playing), facts.InGame);
         // A host that failed counts its failure, a problem with its fix; one starting has read nothing yet.
         var counted = facts.Host is not HostStatus.Starting;
 
@@ -154,6 +163,7 @@ internal sealed partial class StatusBarViewModel : ObservableObject
         WarningsText = (counted ? facts.Warnings : 0).ToString(_localizer.Culture);
         HasProblems = counted && facts.Errors + facts.Warnings > 0;
         IsSaved = facts.Saved;
+        SavedTip = _localizer[facts.Saved ? "StatusSaved" : "StatusUnsavedTip"];
         IsUpdateReady = facts.UpdateVersion is not null;
         UpdateText = facts.UpdateVersion is { } update ? _localizer.Format("StatusRestartTo", update) : "";
     }

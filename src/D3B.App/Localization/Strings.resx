@@ -3737,4 +3737,22 @@
   <data name="CommandPlayAll" xml:space="preserve">
     <value>Play every character connected</value>
   </data>
+  <data name="CommandPauseAll" xml:space="preserve">
+    <value>Pause every character playing</value>
+  </data>
+  <data name="CommandStopAll" xml:space="preserve">
+    <value>Stop every character</value>
+  </data>
+  <data name="StatusClientTip" xml:space="preserve">
+    <value>Dofus client {0}</value>
+  </data>
+  <data name="StatusClientDataTip" xml:space="preserve">
+    <value>Dofus client {0} · game data v{1}, extracted by D3B.Data {2}</value>
+  </data>
+  <data name="StatusPlayingTip" xml:space="preserve">
+    <value>{0} of {1} connected</value>
+  </data>
+  <data name="StatusUnsavedTip" xml:space="preserve">
+    <value>Changes not saved: click to save everything</value>
+  </data>
 </root>

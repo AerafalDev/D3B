@@ -142,7 +142,7 @@ public sealed class CharacterPlayTests : IAsyncDisposable
     }
 
     [Fact]
-    public async Task PlayAllStartsEveryCharacterConnectedThatCanPlay()
+    public async Task PlayAllPauseAllAndStopAllActOnEveryCharacterConnected()
     {
         var activity = new TestActivity();
 
@@ -161,5 +161,15 @@ public sealed class CharacterPlayTests : IAsyncDisposable
 
         Assert.True(bot.Activity is not null);
         Assert.Equal(1, main.Bots.Items.Count(item => RunBlockViewModel.Read(item, _localizer).State is RunState.Playing));
+
+        main.RunBlock.PauseAllCommand.Execute(null);
+        await Waiting.UntilAsync(() => bot.IsPaused);
+        main.Refresh();
+
+        Assert.Equal(RunState.Paused, RunBlockViewModel.Read(main.Bots.Items[0], _localizer).State);
+
+        main.RunBlock.StopAllCommand.Execute(null);
+
+        Assert.Equal(ActivityOutcome.Stopped, await bot.Activity!.Completion);
     }
 }
