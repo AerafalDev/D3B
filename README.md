@@ -42,6 +42,8 @@ D3B updates itself. After an update of the game, wait for the D3B version that s
    F5).
 3. To take the character back, just play it: the bot pauses until you press Play again.
 
+Ctrl K finds a profile, a route, a character or a map; Ctrl Shift P lists every command, a character's Play and Stop among them.
+
 For a group, make a **Follow** profile for the followers (*Add* in the **Library**, the bar's second entry) and name their leader in it. The
 leader plays any profile. When every account is subscribed and the followers are level 10 or more, they follow, join
 the fights and get ready through the game's own party options, and D3B still watches that none is left behind.

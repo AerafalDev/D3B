@@ -91,6 +91,14 @@ internal sealed partial class SearchViewModel : ObservableObject
         Search();
     }
 
+    /// <summary>Opens the search as the command palette, its commands' sign typed, as VS Code's Ctrl Shift P does (D540).</summary>
+    /// <remarks>The sign, not the scope: a backspace takes it away and the palette searches everything, as VS Code's does.</remarks>
+    public void OpenCommands()
+    {
+        Open();
+        Query = ">";
+    }
+
     /// <summary>Closes the search.</summary>
     [RelayCommand]
     public void Close()

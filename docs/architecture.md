@@ -727,8 +727,8 @@ bottom panel and the Details hidden until needed.
   installed client's build, or why it did not start.
 - **The studio's frame** (D320 to D322, D339), the mockup `docs/mockups/studio-7c.html` its reference: ShadUI's window
   given D3B's own template (`Themes/Window.axaml`), one title row 35 pixels high as `next`'s (D531), the logo and the menus
-  File, Edit, View and Help on the left (`Themes/Menus.axaml`), the search in the middle of the window while it does not touch
-  a side (`TitleBarPanel`), then `next`'s layout toggles, the side bar, the bottom panel and the Details, each pressed while it
+  File, Edit, View and Help on the left (`Themes/Menus.axaml`), the command centre in the middle of the window, up to 600 pixels,
+  while it does not touch a side (`TitleBarPanel`, D540), then `next`'s layout toggles, the side bar, the bottom panel and the Details, each pressed while it
   shows (`LayoutToggles`, drawn from `PanelLeftGeometry` and its kin), and the window's buttons; under it the parts, then the
   status bar. Dark only (D320, D530): `Themes/Colors.axaml` gives ShadUI's keys D3B's values, `next`'s Dark Modern as discreet
   islands (the frame `#111111`, the parts `#181818`, the editor `#1f1f1f`, their edge `#232323`), and holds the studio's
@@ -847,9 +847,13 @@ bottom panel and the Details hidden until needed.
   hand does and says it in the journal (`BotEvent.PausedFromApp`); stop ends the activity. F5 plays or pauses, F6 pauses,
   Shift F5 stops. A click on a character's card chooses it too, the inspector then showing it; a character chosen
   offline shows disconnected.
-- **The search** (D328, D334, `SearchViewModel`, `SearchView`), Ctrl K or the title's field: over the studio, the recent
-  items first, then the assets, the characters, the maps, the commands with their shortcuts and the settings, grouped,
-  the text found lit; scopes by a click or Tab, `>` for the commands, `@` for the characters; the arrows, Enter and
+- **The search and the command palette** (D328, D334, D540, `SearchViewModel`, `SearchView`), Ctrl K or the title bar's command
+  centre (`next`'s: the search's glyph and "D3B", 24 pixels), Ctrl Shift P with `>` typed (`SearchViewModel.OpenCommands`), which a
+  backspace takes away: `next`'s palette, 600 pixels 4 under the title bar, rows of 26 pixels, the one chosen `PaletteActiveColor`,
+  no scrim; the recent items first, then the Library's assets, the characters, the maps, the commands with their shortcuts
+  (the studio's views among them, the protocol only with the advanced tools, and each character's play, pause and stop as its state
+  allows, or forget offline, with its portrait, driving the run block as its tab does) and the settings, grouped,
+  the text found lit; scopes by a click or Tab, `>` for the commands, `@` for the characters, which the watermark says; the arrows, Enter and
   Escape. An asset opens its tab, a profile's, or shows in the inspector; a character opens its tab; a setting opens its
   section; a map, found by coordinates or name once a
   letter is typed, shows in preview in the tab of the character chosen, else of the first online or known (D341). Help's

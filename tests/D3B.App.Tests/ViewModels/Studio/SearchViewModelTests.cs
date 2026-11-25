@@ -59,7 +59,7 @@ public sealed class SearchViewModelTests
         var groups = search.Groups.Select(group => (group.Title, group.Results.Count, group.More)).ToList();
         var first = search.Groups[0].Results[0];
 
-        Assert.Equal([("Assets", 4, "1 de plus · Tab")], groups);
+        Assert.Equal([("Bibliothèque", 4, "1 de plus · Tab")], groups);
         Assert.Equal(("", "Min", "eur Astrub", true), (first.Before, first.Match, first.After, first.IsActive));
     }
 
@@ -74,7 +74,7 @@ public sealed class SearchViewModelTests
         search.Open();
 
         Assert.Equal(["Aerafal-Iop"], _ran);
-        Assert.Equal(["Récents", "Assets", "Personnages"], search.Groups.Select(group => group.Title));
+        Assert.Equal(["Récents", "Bibliothèque", "Personnages"], search.Groups.Select(group => group.Title));
         Assert.Equal("Aerafal-Iop", search.Groups[0].Results[0].Item.Title);
     }
 
@@ -103,7 +103,7 @@ public sealed class SearchViewModelTests
         search.Cycle(forward: false);
 
         Assert.Equal(SearchScope.Assets, search.ShownScope);
-        Assert.Equal(["Assets", "Personnages", "Cartes", "Commandes", "Paramètres"], search.Chips.Skip(1).Select(chip => chip.Name));
+        Assert.Equal(["Bibliothèque", "Personnages", "Cartes", "Commandes", "Paramètres"], search.Chips.Skip(1).Select(chip => chip.Name));
         Assert.True(search.Chips.Single(chip => chip.Scope is SearchScope.Assets).IsOn);
     }
 

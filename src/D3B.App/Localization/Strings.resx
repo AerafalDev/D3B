@@ -1478,35 +1478,14 @@
   <data name="KeyEnter" xml:space="preserve">
     <value>Enter</value>
   </data>
-  <data name="TitleSearch" xml:space="preserve">
-    <value>Search</value>
-  </data>
-  <data name="SearchEverywhere" xml:space="preserve">
-    <value>Search everywhere</value>
-  </data>
   <data name="SearchWatermark" xml:space="preserve">
-    <value>Search an asset, a character, a command</value>
-  </data>
-  <data name="SearchHintMove" xml:space="preserve">
-    <value>move</value>
-  </data>
-  <data name="SearchHintOpen" xml:space="preserve">
-    <value>open</value>
-  </data>
-  <data name="SearchHintScope" xml:space="preserve">
-    <value>scope</value>
-  </data>
-  <data name="SearchHintCommands" xml:space="preserve">
-    <value>commands</value>
-  </data>
-  <data name="SearchHintCharacters" xml:space="preserve">
-    <value>characters</value>
+    <value>Search a profile, a route, a character · &gt; commands · @ characters</value>
   </data>
   <data name="SearchScopeAll" xml:space="preserve">
     <value>All</value>
   </data>
   <data name="SearchScopeAssets" xml:space="preserve">
-    <value>Assets</value>
+    <value>Library</value>
   </data>
   <data name="SearchScopeCharacters" xml:space="preserve">
     <value>Characters</value>
@@ -1545,7 +1524,7 @@
     <value>Show or hide the journal</value>
   </data>
   <data name="CommandGoToAssets" xml:space="preserve">
-    <value>Go to the assets</value>
+    <value>Show the library</value>
   </data>
   <data name="CommandPlay" xml:space="preserve">
     <value>Play the chosen character</value>
@@ -3652,5 +3631,44 @@
   </data>
   <data name="LibraryByFolder" xml:space="preserve">
     <value>Show the folders</value>
+  </data>
+  <data name="CommandOpenPalette" xml:space="preserve">
+    <value>Show all commands</value>
+  </data>
+  <data name="CommandShowCharacters" xml:space="preserve">
+    <value>Show the characters</value>
+  </data>
+  <data name="CommandShowWorld" xml:space="preserve">
+    <value>Show the world</value>
+  </data>
+  <data name="CommandShowHome" xml:space="preserve">
+    <value>Show the home page</value>
+  </data>
+  <data name="CommandPlayCharacter" xml:space="preserve">
+    <value>Play {0}</value>
+  </data>
+  <data name="CommandPauseCharacter" xml:space="preserve">
+    <value>Pause {0}</value>
+  </data>
+  <data name="CommandStopCharacter" xml:space="preserve">
+    <value>Stop {0}</value>
+  </data>
+  <data name="CommandForgetCharacter" xml:space="preserve">
+    <value>Forget {0}'s account</value>
+  </data>
+  <data name="KeysCtrlShiftP" xml:space="preserve">
+    <value>Ctrl Shift P</value>
+  </data>
+  <data name="CommandShowProblems" xml:space="preserve">
+    <value>Show the problems</value>
+  </data>
+  <data name="CommandShowTrace" xml:space="preserve">
+    <value>Show the trace</value>
+  </data>
+  <data name="CommandShowProtocol" xml:space="preserve">
+    <value>Show the protocol</value>
+  </data>
+  <data name="CommandCentre" xml:space="preserve">
+    <value>Search and run a command</value>
   </data>
 </root>
