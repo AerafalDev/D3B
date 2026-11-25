@@ -597,6 +597,13 @@ internal sealed partial class MainViewModel : ObservableObject
             OpenFolder?.Invoke(folder);
     }
 
+    /// <summary>Opens the command palette, the search with its commands' sign typed: Ctrl Shift P, as next's and VS Code's (D540).</summary>
+    [RelayCommand]
+    public void ShowCommandPalette()
+    {
+        Search.OpenCommands();
+    }
+
     /// <summary>Lists the shortcuts: the search on its commands, each with its keys.</summary>
     [RelayCommand]
     public void ShowShortcuts()
@@ -728,6 +735,18 @@ internal sealed partial class MainViewModel : ObservableObject
             return new SearchItem(SearchScope.Commands, "command:" + key, _localizer[key], "", null, "", keys, run);
         }
 
+        yield return Command("CommandOpenPalette", _localizer["KeysCtrlShiftP"], ShowCommandPalette);
+        yield return Command("CommandShowCharacters", "", () => Layout.Reveal(SideView.Characters));
+        yield return Command("CommandGoToAssets", _localizer["KeysCtrlSpace"], GoToAssets);
+        yield return Command("CommandShowWorld", "", () => Layout.Reveal(SideView.World));
+        yield return Command("CommandShowHome", "", ShowHome);
+        yield return Command("CommandShowProblems", "", () => Bottom.Show(BottomTab.Problems));
+        yield return Command("CommandShowTrace", "", () => Bottom.Show(BottomTab.Trace));
+
+        // The protocol is an advanced tool: offered only with them, as its tab (D513).
+        if (Layout.AdvancedTools)
+            yield return Command("CommandShowProtocol", "", () => Bottom.Show(BottomTab.Protocol));
+
         yield return Command("CommandNewProfile", "Ctrl N", NewProfile);
         yield return Command("CommandSaveAll", "Ctrl S", SaveAll);
         yield return Command("CommandUndo", "Ctrl Z", Undo);
@@ -738,7 +757,6 @@ internal sealed partial class MainViewModel : ObservableObject
         yield return Command("CommandToggleSide", "Ctrl B", () => Layout.Toggle(StudioPanel.Side));
         yield return Command("CommandToggleDetails", "Ctrl Alt B", () => Layout.Toggle(StudioPanel.Details));
         yield return Command("CommandToggleAdvancedTools", "", Layout.ToggleAdvancedTools);
-        yield return Command("CommandGoToAssets", _localizer["KeysCtrlSpace"], GoToAssets);
         yield return Command("CommandDefaultLayout", "", Layout.Reset);
         yield return Command("CommandPlay", "F5", RunBlock.PlayOrPause);
         yield return Command("CommandPause", "F6", RunBlock.Pause);
@@ -747,6 +765,45 @@ internal sealed partial class MainViewModel : ObservableObject
         yield return Command("CommandCloseTabs", "", Editor.CloseAll);
         yield return Command("CommandProjectFolder", "", OpenProjectFolder);
         yield return Command("CommandCheckUpdate", "", () => Updates.CheckCommand.Execute(null));
+
+        foreach (var command in CharacterCommands())
+            yield return command;
+    }
+
+    // What a character's tab and the right click do, by its name: play, pause and stop what its state allows; forget an
+    // offline one's account, after a question (D540).
+    private IEnumerable<SearchItem> CharacterCommands()
+    {
+        // Each shows the character's portrait, as its own result does.
+        SearchItem Command(string key, CharacterKey character, (string Name, string Initials, Avalonia.Media.IImage? Head, Avalonia.Media.IBrush? Color) face, Action run)
+        {
+            return new SearchItem(SearchScope.Commands, $"command:{key}:{CharacterKeys.Text(character)}", _localizer.Format(key, face.Name), "", null, face.Initials, "", run) { Picture = face.Head, Color = face.Color };
+        }
+
+        foreach (var bot in Characters.Online)
+        {
+            var key = bot.Bot.Key;
+            var face = (bot.Name, bot.Initials, bot.Head, (Avalonia.Media.IBrush?)bot.PortraitColor);
+            var (state, canPlay, _) = RunBlockViewModel.Read(bot, _localizer);
+
+            if (canPlay)
+                yield return Command("CommandPlayCharacter", key, face, () => Drive(key, RunBlock.Play));
+
+            if (state is RunState.Playing)
+                yield return Command("CommandPauseCharacter", key, face, () => Drive(key, RunBlock.Pause));
+
+            if (state is RunState.Playing or RunState.Paused)
+                yield return Command("CommandStopCharacter", key, face, () => Drive(key, RunBlock.Stop));
+        }
+
+        foreach (var line in Characters.Offline)
+            yield return Command("CommandForgetCharacter", line.Key, (line.Name, line.Initials, line.Head, line.PortraitColor), () => _characterAccounts.AskForget(line.Key));
+    }
+
+    private void Drive(CharacterKey key, Action act)
+    {
+        RunBlock.Drive(key);
+        act();
     }
 
     private void ChooseAsset(string id)

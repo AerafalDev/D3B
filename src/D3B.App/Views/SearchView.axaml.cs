@@ -35,9 +35,15 @@ internal sealed partial class SearchView : UserControl
 
     private void OnSearchChanged(object? sender, PropertyChangedEventArgs e)
     {
-        // Opened, the field takes the keyboard once it shows.
+        // Opened, the field takes the keyboard once it shows, after what it holds: the palette's sign, typed by Ctrl Shift P (D540).
         if (e.PropertyName == nameof(SearchViewModel.IsOpen) && _search is { IsOpen: true })
-            Dispatcher.UIThread.Post(() => QueryBox.Focus(), DispatcherPriority.Input);
+            Dispatcher.UIThread.Post(
+                () =>
+                {
+                    QueryBox.Focus();
+                    QueryBox.CaretIndex = QueryBox.Text?.Length ?? 0;
+                },
+                DispatcherPriority.Input);
     }
 
     private void OnQueryKeyDown(object? sender, KeyEventArgs e)

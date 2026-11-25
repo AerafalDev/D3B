@@ -95,5 +95,11 @@
     <Color x:Key="VeilColor">#12FFFFFF</Color>
     <Color x:Key="SuccessTextColor">#8FE3A2</Color>
     <Color x:Key="GridDotColor">#24242A</Color>
+    <Color x:Key="PaletteColor">#222222</Color>
+    <Color x:Key="PaletteEdgeColor">#454545</Color>
+    <Color x:Key="PaletteActiveColor">#04395E</Color>
+    <Color x:Key="CommandCentreColor">#08FFFFFF</Color>
+    <Color x:Key="CommandCentreEdgeColor">#17FFFFFF</Color>
+    <Color x:Key="CommandCentreHoverEdgeColor">#33FFFFFF</Color>
     <Color x:Key="ScrimColor">#8C050507</Color>
 </ResourceDictionary>
