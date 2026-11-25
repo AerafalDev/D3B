@@ -342,7 +342,7 @@ internal sealed partial class CharacterPropertiesViewModel : ObservableObject
         var parts = new List<string>();
 
         if (known?.BreedId is { } breedId && _tables is not null && _texts is not null && _tables.Breeds.TryGetBreed(breedId, out var breed) && _texts.TryGet(_localizer.GameLanguage, breed.NameId, out var breedName))
-            parts.Add(known.IsFemale is { } female ? $"{breedName} {(female ? "♀" : "♂")}" : breedName);
+            parts.Add(breedName);
 
         if ((bot?.Bot.State.Level ?? known?.Level) is { } level)
             parts.Add(_localizer.Format("LevelLower", level));

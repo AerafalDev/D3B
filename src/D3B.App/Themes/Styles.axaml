@@ -531,6 +531,29 @@
         <Setter Property="Foreground" Value="{DynamicResource MutedColor}" />
         <Setter Property="TextWrapping" Value="Wrap" />
     </Style>
+    <!--  A field that opens a menu, a profile's in the Details and in a character's tab alike: one look for one control.  -->
+    <Style Selector="Button.Pick">
+        <Setter Property="Theme" Value="{DynamicResource StudioButton}" />
+        <Setter Property="Height" Value="28" />
+        <Setter Property="Padding" Value="6,0" />
+        <Setter Property="CornerRadius" Value="6" />
+        <Setter Property="Background" Value="{DynamicResource FieldColor}" />
+        <Setter Property="HorizontalAlignment" Value="Stretch" />
+        <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+        <Setter Property="VerticalContentAlignment" Value="Center" />
+        <Setter Property="FontWeight" Value="Normal" />
+    </Style>
+    <Style Selector="Button.Pick:pointerover">
+        <Setter Property="Background" Value="{DynamicResource HoverColor}" />
+    </Style>
+    <Style Selector="Button.Pick:disabled">
+        <Setter Property="Opacity" Value="0.5" />
+    </Style>
+    <Style Selector="Border.Kind">
+        <Setter Property="Width" Value="18" />
+        <Setter Property="Height" Value="18" />
+        <Setter Property="CornerRadius" Value="4" />
+    </Style>
     <Style Selector="Border.Key">
         <Setter Property="MinWidth" Value="18" />
         <Setter Property="Height" Value="18" />
