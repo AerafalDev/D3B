@@ -9,6 +9,7 @@
     xmlns:vm="clr-namespace:D3B.App.ViewModels.Statistics"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
     <UserControl.Styles>
+        <StyleInclude Source="avares://D3B.App/Themes/Panels.axaml" />
         <Style Selector="Border.Stat">
             <Setter Property="Background" Value="{DynamicResource CardBackgroundColor}" />
             <Setter Property="CornerRadius" Value="10" />

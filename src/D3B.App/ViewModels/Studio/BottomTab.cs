@@ -15,8 +15,6 @@ internal enum BottomTab
     /// <summary>A character's frames live or a capture replayed.</summary>
     Protocol,
 
-    /// <summary>The resources and runs by character and period.</summary>
-    Statistics,
 
     /// <summary>The selected route's steps set as clips on tracks, from 7r3.</summary>
     Sequencer,

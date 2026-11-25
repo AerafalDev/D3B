@@ -8,7 +8,6 @@ using D3B.App.Localization;
 using D3B.App.ViewModels;
 using D3B.App.ViewModels.Characters;
 using D3B.App.ViewModels.Settings;
-using D3B.App.ViewModels.Studio;
 using D3B.App.Views;
 using D3B.Bot.Activities;
 using D3B.Bot.Harvesting;
@@ -472,7 +471,8 @@ public sealed class HarvestViewsTests : IAsyncDisposable
 
             main.Refresh();
             window.Show();
-            main.Bottom.ShowCommand.Execute(BottomTab.Statistics);
+            main.ShowStatistics();
+            main.Refresh();
             Dispatcher.UIThread.RunJobs();
 
             var english = Texts(window);
@@ -570,7 +570,8 @@ public sealed class HarvestViewsTests : IAsyncDisposable
 
             main.Refresh();
             window.Show();
-            main.Bottom.ShowCommand.Execute(BottomTab.Statistics);
+            main.ShowStatistics();
+            main.Refresh();
             Dispatcher.UIThread.RunJobs();
 
             var english = Texts(window);

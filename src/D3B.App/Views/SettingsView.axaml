@@ -352,6 +352,23 @@
                 </TextBox>
                 <Button
                     Classes="Section"
+                    Classes.On="{Binding General.IsSelected}"
+                    Command="{Binding ChooseCommand}"
+                    CommandParameter="{x:Static s:SettingsSection.General}"
+                    IsVisible="{Binding General.IsShown}">
+                    <Grid ColumnDefinitions="Auto,*" ColumnSpacing="9">
+                        <c:Icon
+                            Drawing="{StaticResource Toolwindows.Palette}"
+                            Height="14"
+                            Width="14" />
+                        <TextBlock
+                            Grid.Column="1"
+                            Text="{Binding General.Title}"
+                            VerticalAlignment="Center" />
+                    </Grid>
+                </Button>
+                <Button
+                    Classes="Section"
                     Classes.On="{Binding Bots.IsSelected}"
                     Command="{Binding ChooseCommand}"
                     CommandParameter="{x:Static s:SettingsSection.Bots}"
@@ -374,45 +391,6 @@
                 </Button>
                 <Button
                     Classes="Section"
-                    Classes.On="{Binding Network.IsSelected}"
-                    Command="{Binding ChooseCommand}"
-                    CommandParameter="{x:Static s:SettingsSection.Network}"
-                    IsVisible="{Binding Network.IsShown}">
-                    <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="9">
-                        <c:Icon
-                            Drawing="{StaticResource Toolwindows.Web}"
-                            Height="14"
-                            Width="14" />
-                        <TextBlock
-                            Grid.Column="1"
-                            Text="{Binding Network.Title}"
-                            VerticalAlignment="Center" />
-                        <Ellipse
-                            Classes="Changed"
-                            Grid.Column="2"
-                            IsVisible="{Binding Network.HasChanges}"
-                            ToolTip.Tip="{l:Tr SettingsChanged}" />
-                    </Grid>
-                </Button>
-                <Button
-                    Classes="Section"
-                    Classes.On="{Binding Appearance.IsSelected}"
-                    Command="{Binding ChooseCommand}"
-                    CommandParameter="{x:Static s:SettingsSection.Appearance}"
-                    IsVisible="{Binding Appearance.IsShown}">
-                    <Grid ColumnDefinitions="Auto,*" ColumnSpacing="9">
-                        <c:Icon
-                            Drawing="{StaticResource Toolwindows.Palette}"
-                            Height="14"
-                            Width="14" />
-                        <TextBlock
-                            Grid.Column="1"
-                            Text="{Binding Appearance.Title}"
-                            VerticalAlignment="Center" />
-                    </Grid>
-                </Button>
-                <Button
-                    Classes="Section"
                     Classes.On="{Binding Files.IsSelected}"
                     Command="{Binding ChooseCommand}"
                     CommandParameter="{x:Static s:SettingsSection.Files}"
@@ -430,6 +408,28 @@
                             Classes="Changed"
                             Grid.Column="2"
                             IsVisible="{Binding Files.HasChanges}"
+                            ToolTip.Tip="{l:Tr SettingsChanged}" />
+                    </Grid>
+                </Button>
+                <Button
+                    Classes="Section"
+                    Classes.On="{Binding Advanced.IsSelected}"
+                    Command="{Binding ChooseCommand}"
+                    CommandParameter="{x:Static s:SettingsSection.Advanced}"
+                    IsVisible="{Binding Advanced.IsShown}">
+                    <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="9">
+                        <c:Icon
+                            Drawing="{StaticResource Toolwindows.Debug}"
+                            Height="14"
+                            Width="14" />
+                        <TextBlock
+                            Grid.Column="1"
+                            Text="{Binding Advanced.Title}"
+                            VerticalAlignment="Center" />
+                        <Ellipse
+                            Classes="Changed"
+                            Grid.Column="2"
+                            IsVisible="{Binding Advanced.HasChanges}"
                             ToolTip.Tip="{l:Tr SettingsChanged}" />
                     </Grid>
                 </Button>
@@ -627,8 +627,9 @@
                         </StackPanel>
                     </StackPanel>
 
-                    <!--  Network  -->
-                    <StackPanel Classes="Group" IsVisible="{Binding Network.IsSelected}">
+                    <!--  Advanced: the captures, then the advanced tools (D516)  -->
+                    <StackPanel IsVisible="{Binding Advanced.IsSelected}">
+                    <StackPanel Classes="Group" IsVisible="{Binding IsCapturesShown}">
                         <Grid Classes="GroupTitle">
                             <TextBlock Classes="GroupTitle" Text="{l:Tr GroupCaptures}" />
                         </Grid>
@@ -817,8 +818,34 @@
                         </StackPanel>
                     </StackPanel>
 
-                    <!--  Appearance  -->
-                    <StackPanel Classes="Group" IsVisible="{Binding Appearance.IsSelected}">
+                    <StackPanel Classes="Group" IsVisible="{Binding AdvancedToolsRow.IsShown}">
+                        <Grid Classes="GroupTitle">
+                            <TextBlock Classes="GroupTitle" Text="{l:Tr AdvancedTools}" />
+                        </Grid>
+                        <StackPanel Classes="SRows">
+                            <Border Classes="SRow" IsVisible="{Binding AdvancedToolsRow.IsShown}">
+                                <Panel>
+                                    <Border Classes="Rule" />
+                                    <Grid Classes="RowBody" ColumnDefinitions="*,Auto">
+                                        <StackPanel VerticalAlignment="Center">
+                                            <TextBlock Classes="RowTitle" Text="{Binding AdvancedToolsRow.Label}" />
+                                            <TextBlock Classes="RowLine" Text="{Binding AdvancedToolsRow.Detail}" />
+                                        </StackPanel>
+                                        <CheckBox
+                                            AutomationProperties.Name="{Binding AdvancedToolsRow.Label}"
+                                            Command="{Binding Studio.ToggleAdvancedToolsCommand}"
+                                            Grid.Column="1"
+                                            IsChecked="{Binding Studio.AdvancedTools, Mode=OneWay}"
+                                            VerticalAlignment="Center" />
+                                    </Grid>
+                                </Panel>
+                            </Border>
+                        </StackPanel>
+                    </StackPanel>
+                    </StackPanel>
+
+                    <!--  General  -->
+                    <StackPanel Classes="Group" IsVisible="{Binding General.IsSelected}">
                         <Grid Classes="GroupTitle">
                             <TextBlock Classes="GroupTitle" Text="{l:Tr GroupInterface}" />
                         </Grid>
@@ -858,23 +885,6 @@
                                             Command="{Binding ResetLayoutToDefaultCommand}"
                                             Content="{l:Tr ResetDefault}"
                                             Grid.Column="1"
-                                            VerticalAlignment="Center" />
-                                    </Grid>
-                                </Panel>
-                            </Border>
-                            <Border Classes="SRow" IsVisible="{Binding AdvancedToolsRow.IsShown}">
-                                <Panel>
-                                    <Border Classes="Rule" />
-                                    <Grid Classes="RowBody" ColumnDefinitions="*,Auto">
-                                        <StackPanel VerticalAlignment="Center">
-                                            <TextBlock Classes="RowTitle" Text="{Binding AdvancedToolsRow.Label}" />
-                                            <TextBlock Classes="RowLine" Text="{Binding AdvancedToolsRow.Detail}" />
-                                        </StackPanel>
-                                        <CheckBox
-                                            AutomationProperties.Name="{Binding AdvancedToolsRow.Label}"
-                                            Command="{Binding Studio.ToggleAdvancedToolsCommand}"
-                                            Grid.Column="1"
-                                            IsChecked="{Binding Studio.AdvancedTools, Mode=OneWay}"
                                             VerticalAlignment="Center" />
                                     </Grid>
                                 </Panel>

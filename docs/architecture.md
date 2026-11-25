@@ -719,8 +719,9 @@ bottom panel and the Details hidden until needed.
   `BreedColors`, D343).
 - **The activity bar and the side bar** (D513, as `next`'s shell): on the left of the window, a column of buttons (`Button.Activity`):
   Characters, Library and World at the top, each a view of the side bar (`SideView`), the one shown a rounded pill, chosen again
-  it hides the side bar; Journal, Statistics and Settings at its foot, the first two opening the bottom panel on their tab or
-  hiding it (`BottomPanelViewModel.ToggleTab`, `IsJournalOpen`, `IsStatisticsOpen`). The side bar shows one view, its header
+  it hides the side bar; Journal, Statistics and Settings at its foot: Journal opens the bottom panel on its tab or hides it
+  (`BottomPanelViewModel.ToggleTab`, `IsJournalOpen`), Statistics opens their tab (`MainViewModel.ShowStatistics`,
+  `IsStatisticsShown`, D516), Settings theirs. The side bar shows one view, its header
   naming it: the Characters view is the Outliner's characters, the World view its routes and zones (`OutlinerViewModel.Scope`,
   `OutlinerScope`, which follows `StudioLayout.View`), its header making a route or a zone (D515), the Library view the assets'
   tree with its tools.
@@ -728,7 +729,7 @@ bottom panel and the Details hidden until needed.
   panel in the centre, the Details panel on the right, rounded panels with a hairline edge, 5 pixels apart, the one last pressed
   outlined in the accent. The studio opens on the side bar and the editor; the bottom panel and the Details start hidden. The
   Details show when something is selected (a character, a route, a step, a zone) and stay as the hand left them while it stays
-  selected (`MainViewModel.OnSelectionChanged`); the bottom panel when its journal, statistics, trace or a route's Sequencer is
+  selected (`MainViewModel.OnSelectionChanged`); the bottom panel when its journal, trace or a route's Sequencer is
   asked. Every edge is dragged on its own (`DockSplitter`), within bounds; a part hides by its × and shows again from the View
   menu, which gives the default layout back; Ctrl B shows or hides the side bar, Ctrl J the bottom panel, Ctrl Alt B the Details,
   Ctrl Space shows the Library. A drag's end, a part shown or hidden, the side bar's view and the advanced tools are remembered
@@ -919,14 +920,15 @@ bottom panel and the Details hidden until needed.
   newest first, each decision with its state, its words and how it ended. The problems (`ProblemsViewModel`): the
   project's files that do not read, the characters without a profile, the host's failure and problems, each with its
   fix. The protocol (`InspectorViewModel`, D115): a bot's frames live or a capture replayed, by direction and name, those
-  not read marked, frozen on demand, a frame unfolded in place. The statistics (`StatisticsViewModel`, D146): what the
+  not read marked, frozen on demand, a frame unfolded in place. The statistics (`StatisticsViewModel`, D146) are a tab of the editor since D516, the toolbars' styles they share with the
+  panel in `Themes/Panels.axaml`: what the
   kept runs brought, by character and period, the resources with their rates, the fights won and lost, the deaths and the
   experience and kamas they gave by hour of the runs that fought (D505), and the runs.
 - **The settings** (D329, D354, `SettingsViewModel`, `D3B.App.ViewModels.AppSettings`, `SettingsView`): a tab of the
-  editor, the activity bar's gear, Ctrl , or a setting found. Sections on the left under a search: Bots, the client's display
+  editor, the activity bar's gear, Ctrl , or a setting found. Sections on the left under a search, in a player's order since D516 (General, Bots, Files, Advanced, About): Bots, the client's display
   time and every delay, the bots' at once (`Bots.Delays`), the relay's from the next start, the host's raised ones once
-  it runs; Network, the captures from the next start and their folder; Appearance, the language, the layout given
-  back and the advanced tools (D513); Files, the project, the database, the game's folder, chosen from the next start or the launcher's (D502), the client's data and `app.json`, copied or opened; About, the version, the
+  it runs; Advanced (Network before D516), the captures from the next start and their folder, and the advanced tools (D513); General
+  (Appearance before D516), the language and the layout given back; Files, the project, the database, the game's folder, chosen from the next start or the launcher's (D502), the client's data and `app.json`, copied or opened; About, the version, the
   client build, the update (D173) and the licences. A value changed shows a bar and an arrow giving its default back.
 - **The modules' pages** (D333): in the editor's tabs, opened from the View menu or the search. A module's page
   (`ModulePageViewModel`) is made the first time its tab shows and kept, refreshed every 250 ms while it shows through its
@@ -966,7 +968,7 @@ bottom panel and the Details hidden until needed.
   `%LOCALAPPDATA%\D3B\app.json`, read before the window shows (D101, D162); and the host's settings the settings' tab changed, by their configuration's keys and values,
   such as `Delays:Display` or `Network:Captures:Game`, one given back its default forgotten (D151). It also
   remembers that the notice of the recorded sessions was read (`CapturesNoticeSeen`, D409): the home page shows
-  `CapturesNoticeViewModel` until then, and the Network settings say the same always. The app reads the
+  `CapturesNoticeViewModel` until then, and the Advanced settings say the same always (Network before D516). The app reads the
   file before the host, which starts with them (`HostRunner`, `BotHost.CreateBuilder(args, settings)`), its own
   configuration and command line winning over them.
 

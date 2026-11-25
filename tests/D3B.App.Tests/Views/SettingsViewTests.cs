@@ -141,7 +141,8 @@ public sealed class SettingsViewTests : IAsyncDisposable
         Assert.Contains("Record my game sessions", english);
         Assert.Contains(@"Recording now, in C:\Users\Player\AppData\Local\D3B\captures\game", english);
         Assert.Contains(@"C:\Users\Player\AppData\Local\D3B\captures\game", english);
-        Assert.Contains("Appearance", english);
+        Assert.Contains("General", english);
+        Assert.Contains("Advanced", english);
         Assert.Contains("English", english);
         Assert.Contains("Database", english);
         Assert.Contains(@"C:\Users\Player\AppData\Local\D3B\d3b.db", english);

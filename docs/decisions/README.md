@@ -132,3 +132,4 @@ Each file holds the decisions of one group of [the index](../decisions-index.md)
 - [The studio made simpler, its navigation and shell (D513)](d513-studio-navigation.md): 1 decision, 5 KB.
 - [The studio made simpler, the character's card and the home page (D514)](d514-character-card-and-home.md): 1 decision, 3 KB.
 - [The studio made simpler, the Library by kind (D515)](d515-library-by-kind.md): 1 decision, 3 KB.
+- [The studio made simpler, the settings and the statistics (D516)](d516-settings-and-statistics.md): 1 decision, 3 KB.
