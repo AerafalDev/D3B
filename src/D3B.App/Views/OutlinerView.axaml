@@ -77,11 +77,50 @@
             <TextBlock
                 Classes="Dim"
                 HorizontalAlignment="Center"
-                IsVisible="{Binding IsEmpty}"
                 Margin="16,30"
                 Text="{Binding EmptyText}"
                 TextAlignment="Center"
-                TextWrapping="Wrap" />
+                TextWrapping="Wrap">
+                <TextBlock.IsVisible>
+                    <MultiBinding Converter="{x:Static BoolConverters.And}">
+                        <Binding Path="IsEmpty" />
+                        <Binding Path="!IsGuiding" />
+                    </MultiBinding>
+                </TextBlock.IsVisible>
+            </TextBlock>
+            <!--  Empty with nothing searched, the view guides (D543): how to connect a character, or a route and a zone to make.  -->
+            <StackPanel
+                Classes="EmptyState"
+                IsVisible="{Binding IsGuiding}"
+                Name="EmptyState"
+                VerticalAlignment="Top">
+                <TextBlock Classes="EmptyTitle" Text="{Binding EmptyTitle}" />
+                <TextBlock Text="{Binding EmptyText}" />
+                <ItemsControl ItemsSource="{Binding EmptySteps}" Margin="0,4,0,0">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate x:DataType="x:String">
+                            <TextBlock
+                                Classes="EmptyStep"
+                                Margin="0,2"
+                                Text="{Binding}" />
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+                <StackPanel
+                    HorizontalAlignment="Center"
+                    IsVisible="{Binding ShowsMakeButtons}"
+                    Orientation="Horizontal"
+                    Spacing="8">
+                    <Button
+                        Classes="Outline"
+                        Command="{Binding MakeRouteCommand}"
+                        Content="{l:Tr HomeNewRoute}" />
+                    <Button
+                        Classes="Outline"
+                        Command="{Binding MakeZoneCommand}"
+                        Content="{l:Tr HomeNewZone}" />
+                </StackPanel>
+            </StackPanel>
             <ScrollViewer>
                 <ItemsControl ItemsSource="{Binding Rows}" Name="Rows">
                     <ItemsControl.ItemTemplate>

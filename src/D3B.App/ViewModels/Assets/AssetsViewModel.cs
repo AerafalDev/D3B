@@ -371,6 +371,13 @@ internal sealed partial class AssetsViewModel : ObservableObject
         Choose?.Invoke(id);
     }
 
+    /// <summary>Starts a new profile, as the empty Library's button offers (D543).</summary>
+    [RelayCommand]
+    public void NewProfile()
+    {
+        _profiles.NewCommand.Execute(null);
+    }
+
     /// <summary>Shows the asset of the editor's tab in the tree.</summary>
     [RelayCommand]
     public void LocateOpen()

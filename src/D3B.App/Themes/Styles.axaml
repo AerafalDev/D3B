@@ -510,6 +510,27 @@
         <Setter Property="Foreground" Value="{DynamicResource ForegroundColor}" />
     </Style>
 
+    <!--  An empty view that guides (D543): a title, what fills it, its steps and its buttons, centred and narrow.  -->
+    <Style Selector="StackPanel.EmptyState">
+        <Setter Property="HorizontalAlignment" Value="Center" />
+        <Setter Property="VerticalAlignment" Value="Center" />
+        <Setter Property="MaxWidth" Value="300" />
+        <Setter Property="Margin" Value="16,24" />
+        <Setter Property="Spacing" Value="8" />
+    </Style>
+    <Style Selector="StackPanel.EmptyState > TextBlock">
+        <Setter Property="Foreground" Value="{DynamicResource DimColor}" />
+        <Setter Property="TextAlignment" Value="Center" />
+        <Setter Property="TextWrapping" Value="Wrap" />
+    </Style>
+    <Style Selector="StackPanel.EmptyState > TextBlock.EmptyTitle">
+        <Setter Property="Foreground" Value="{DynamicResource ForegroundColor}" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+    </Style>
+    <Style Selector="StackPanel.EmptyState TextBlock.EmptyStep">
+        <Setter Property="Foreground" Value="{DynamicResource MutedColor}" />
+        <Setter Property="TextWrapping" Value="Wrap" />
+    </Style>
     <Style Selector="Border.Key">
         <Setter Property="MinWidth" Value="18" />
         <Setter Property="Height" Value="18" />

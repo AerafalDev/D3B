@@ -56,14 +56,32 @@ internal sealed partial class OutlinerViewModel : ObservableObject
 
     /// <summary>Gets or sets what the rows list: the characters, the world, or both (D513).</summary>
     [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(SearchText), nameof(EmptyText))]
+    [NotifyPropertyChangedFor(nameof(SearchText), nameof(EmptyText), nameof(EmptyTitle), nameof(EmptySteps), nameof(ShowsMakeButtons))]
     public partial OutlinerScope Scope { get; set; }
 
     /// <summary>Gets what the search's field says while empty, by what the rows list.</summary>
     public string SearchText => _localizer[Scope is OutlinerScope.Characters ? "CharactersSearch" : "OutlinerSearch"];
 
     /// <summary>Gets what the list says while nothing is in it, by what the rows list.</summary>
-    public string EmptyText => _localizer[Scope switch { OutlinerScope.Characters => "CharactersEmpty", OutlinerScope.World => "WorldEmpty", _ => "OutlinerEmpty" }];
+    public string EmptyText => Filter.Trim() is { Length: > 0 } filter ? _localizer.Format("SearchNothingFor", filter) : _localizer[Scope switch { OutlinerScope.Characters => "CharactersEmpty", OutlinerScope.World => "WorldEmpty", _ => "OutlinerEmpty" }];
+
+    /// <summary>Gets whether the view is empty with nothing searched: it then guides, its title, its steps and its buttons (D543).</summary>
+    public bool IsGuiding => IsEmpty && Filter.Trim().Length == 0;
+
+    /// <summary>Gets the empty view's title.</summary>
+    public string EmptyTitle => _localizer[Scope is OutlinerScope.Characters ? "CharactersEmptyTitle" : "WorldEmptyTitle"];
+
+    /// <summary>Gets how to connect a character, while none is: start the client after D3B (D543).</summary>
+    public IReadOnlyList<string> EmptySteps => Scope is OutlinerScope.Characters ? [_localizer["CharactersEmptyStep1"], _localizer["CharactersEmptyStep2"], _localizer["CharactersEmptyStep3"]] : [];
+
+    /// <summary>Gets whether the empty view offers to make a route or a zone: the World's, with nothing searched.</summary>
+    public bool ShowsMakeButtons => IsGuiding && Scope is not OutlinerScope.Characters;
+
+    /// <summary>Gets or sets what makes a route, as the World's header does.</summary>
+    public Func<Task>? MakeRoute { get; set; }
+
+    /// <summary>Gets or sets what makes a zone, as the World's header does.</summary>
+    public Func<Task>? MakeZone { get; set; }
 
     /// <summary>Gets whether nothing is in the world: no character, no route, no zone, or nothing matches the filter.</summary>
     [ObservableProperty]
@@ -285,6 +303,8 @@ internal sealed partial class OutlinerViewModel : ObservableObject
     {
         OnPropertyChanged(nameof(SearchText));
         OnPropertyChanged(nameof(EmptyText));
+        OnPropertyChanged(nameof(EmptyTitle));
+        OnPropertyChanged(nameof(EmptySteps));
         _signature = null;
     }
 
@@ -294,8 +314,30 @@ internal sealed partial class OutlinerViewModel : ObservableObject
         Refresh();
     }
 
+    [RelayCommand]
+    private Task MakeRouteAsync()
+    {
+        return MakeRoute?.Invoke() ?? Task.CompletedTask;
+    }
+
+    [RelayCommand]
+    private Task MakeZoneAsync()
+    {
+        return MakeZone?.Invoke() ?? Task.CompletedTask;
+    }
+
+    partial void OnIsEmptyChanged(bool value)
+    {
+        OnPropertyChanged(nameof(IsGuiding));
+        OnPropertyChanged(nameof(ShowsMakeButtons));
+    }
+
     partial void OnFilterChanged(string value)
     {
+        OnPropertyChanged(nameof(IsGuiding));
+        OnPropertyChanged(nameof(ShowsMakeButtons));
+        OnPropertyChanged(nameof(EmptyText));
+
         _signature = null;
         Refresh();
     }

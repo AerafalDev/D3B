@@ -612,7 +612,7 @@
     <value>Le journal n’a pas pu être enregistré. {0}</value>
   </data>
   <data name="LogsEmpty" xml:space="preserve">
-    <value>Les actions des bots s'affichent ici.</value>
+    <value>Les actions de chaque personnage s'affichent ici dès qu'il joue.</value>
   </data>
   <data name="LinesKeptOne" xml:space="preserve">
     <value>{0:N0} ligne gardée</value>
@@ -1185,7 +1185,7 @@
     <value>En cours</value>
   </data>
   <data name="StatisticsEmpty" xml:space="preserve">
-    <value>Rien sur cette période.</value>
+    <value>Rien sur cette période : chaque session qu'un bot joue ajoute ici ses récoltes et ses combats.</value>
   </data>
   <data name="StatisticsUnavailable" xml:space="preserve">
     <value>La base de D3B ne s'est pas ouverte.</value>
@@ -1773,7 +1773,7 @@
     <value>{0} · {1}</value>
   </data>
   <data name="CharactersEmpty" xml:space="preserve">
-    <value>Lance le client depuis le lanceur d'Ankama : ses personnages s'affichent ici dès que D3B le relaie.</value>
+    <value>D3B relaie le jeu : un client lancé à travers lui montre ici ses personnages.</value>
   </data>
   <data name="CharactersOffline" xml:space="preserve">
     <value>Déconnectés</value>
@@ -2448,7 +2448,7 @@
     <value>Afficher le projet dans l’Explorateur</value>
   </data>
   <data name="AssetsEmptyProject" xml:space="preserve">
-    <value>Le projet est vide. Ajoute un profil, ou dépose ici des fichiers d’assets.</value>
+    <value>Aucun profil pour l'instant : un profil dit ce qu'un personnage joue et comment.</value>
   </data>
   <data name="RouteSaved" xml:space="preserve">
     <value>Route {0} enregistrée</value>
@@ -3534,7 +3534,7 @@
     <value>Rechercher un personnage</value>
   </data>
   <data name="WorldEmpty" xml:space="preserve">
-    <value>Aucun trajet ni zone pour l'instant. Ajoutez-en un depuis la Bibliothèque, ou tracez-le sur la carte du monde.</value>
+    <value>Une route, ce sont les cartes que parcourt un personnage ; une zone, celles où il travaille.</value>
   </data>
   <data name="MenuView" xml:space="preserve">
     <value>Affichage</value>
@@ -3712,5 +3712,23 @@
   </data>
   <data name="StatusRestartTo" xml:space="preserve">
     <value>Redémarrer pour passer à {0}</value>
+  </data>
+  <data name="CharactersEmptyTitle" xml:space="preserve">
+    <value>Aucun personnage connecté</value>
+  </data>
+  <data name="CharactersEmptyStep1" xml:space="preserve">
+    <value>1. Gardez D3B ouvert : sa barre d'état dit « Relais prêt ».</value>
+  </data>
+  <data name="CharactersEmptyStep2" xml:space="preserve">
+    <value>2. Lancez Dofus depuis le launcher d'Ankama.</value>
+  </data>
+  <data name="CharactersEmptyStep3" xml:space="preserve">
+    <value>3. Choisissez un personnage : il s'affiche ici.</value>
+  </data>
+  <data name="WorldEmptyTitle" xml:space="preserve">
+    <value>Aucune route ni zone</value>
+  </data>
+  <data name="StatisticsAllRuns" xml:space="preserve">
+    <value>Voir toutes les sessions</value>
   </data>
 </root>

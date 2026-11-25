@@ -299,7 +299,7 @@ internal sealed partial class MainViewModel : ObservableObject
         Followed = new FollowedRuns(() => Bots.Items.Where(bot => bot.Route is not null).Select(bot => new FollowedRun(bot.Route!, bot.Name, bot.Initials, bot.PortraitColor)));
         Routes.Followed = Followed;
         World = new WorldViewportViewModel(localizer, Routes, Zones, Selection, () => Bots.Items.Select(bot => new WorldCharacterSnapshot(bot.Bot.Key, bot.Name, bot.Initials, bot.PortraitColor, bot.Bot.State.MapId, bot.IsPlaying || bot.IsFighting)), () => RunBlock.IsPlaying ? RunBlock.Name : null, Followed);
-        Outliner = new OutlinerViewModel(localizer, Selection, World, Characters, Routes, Zones, Followed) { Show = ShowWorld, Scope = ScopeOf(Layout.View) };
+        Outliner = new OutlinerViewModel(localizer, Selection, World, Characters, Routes, Zones, Followed) { Show = ShowWorld, Scope = ScopeOf(Layout.View), MakeRoute = () => Routes.CreateAsync(""), MakeZone = () => Zones.CreateAsync("") };
         Home = new HomeViewModel(localizer, Characters, () => _host.Services?.GetService<AssetLibrary>(), OpenAsset)
         {
             ProfileRequested = NewProfile,
