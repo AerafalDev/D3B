@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="DoingStart" xml:space="preserve">
+    <value>Se prépare pour le donjon</value>
+  </data>
+  <data name="DoingTravel" xml:space="preserve">
+    <value>En route vers la porte du donjon</value>
+  </data>
+  <data name="DoingEnter" xml:space="preserve">
+    <value>Parle au gardien du donjon</value>
+  </data>
+  <data name="DoingRooms" xml:space="preserve">
+    <value>Dans le donjon</value>
+  </data>
+  <data name="CountEnteredOne" xml:space="preserve">
+    <value>{0} entrée</value>
+  </data>
+  <data name="CountEnteredMany" xml:space="preserve">
+    <value>{0} entrées</value>
+  </data>
+  <data name="FailUnknownDungeon" xml:space="preserve">
+    <value>Le donjon de ce profil n'est pas dans les données du client.</value>
+  </data>
+  <data name="FailTooLow" xml:space="preserve">
+    <value>Le perso est niveau {0}, et le donjon n'accepte qu'à partir du niveau {1}.</value>
+  </data>
+  <data name="FailNoKey" xml:space="preserve">
+    <value>Le perso n'a ni la clef du donjon ni un trousseau qui l'ouvre.</value>
+  </data>
+  <data name="FailNoPath" xml:space="preserve">
+    <value>Aucun chemin ne mène à la porte du donjon depuis là où est le perso.</value>
+  </data>
+  <data name="FailJourney" xml:space="preserve">
+    <value>Le trajet vers la porte du donjon a échoué trois fois de suite.</value>
+  </data>
+  <data name="FailNoKeeper" xml:space="preserve">
+    <value>Aucun PNJ à la porte du donjon n'a laissé entrer le perso.</value>
+  </data>
+  <data name="FailStuckMapUnknown" xml:space="preserve">
+    <value>La carte du perso est toujours inconnue après deux minutes.</value>
+  </data>
+  <data name="FailStuckUsing" xml:space="preserve">
+    <value>Toujours en train d'utiliser un élément après deux minutes, même remis en ordre.</value>
+  </data>
+  <data name="FailStuckInDialog" xml:space="preserve">
+    <value>Toujours dans un dialogue ou un échange après deux minutes, même remis en ordre.</value>
+  </data>
+  <data name="FailStuckWalking" xml:space="preserve">
+    <value>Toujours en train de marcher après deux minutes, même remis en ordre.</value>
+  </data>
+  <data name="FailNoDungeon" xml:space="preserve">
+    <value>Le profil ne liste aucun donjon.</value>
+  </data>
+  <data name="FailNoneEnterable" xml:space="preserve">
+    <value>Aucun donjon du profil ne peut être ouvert : il manque au perso le niveau ou la clef de chacun, ou aucun chemin n'y mène.</value>
+  </data>
+  <data name="DoingRegenerate" xml:space="preserve">
+    <value>Régénère sa vie avant le combat de la salle, {0} s</value>
+  </data>
+  <data name="CountRoomOne" xml:space="preserve">
+    <value>{0} salle gagnée</value>
+  </data>
+  <data name="CountRoomMany" xml:space="preserve">
+    <value>{0} salles gagnées</value>
+  </data>
+  <data name="CountLostOne" xml:space="preserve">
+    <value>{0} combat perdu</value>
+  </data>
+  <data name="CountLostMany" xml:space="preserve">
+    <value>{0} combats perdus</value>
+  </data>
+  <data name="FailLost" xml:space="preserve">
+    <value>Un combat a été perdu dans le donjon : il est laissé pour la session.</value>
+  </data>
+  <data name="FailNoRoom" xml:space="preserve">
+    <value>Aucune salle du donjon encore à gagner n'est accessible à pied.</value>
+  </data>
+</root>

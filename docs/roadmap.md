@@ -18,7 +18,7 @@ done when its code, the tests it needs and its docs are in, and every check is g
 | 9 | Fights | In progress, before the blueprints (D169): 9a to 9e3, 9f's states, 9f2's summons, 9f3's bombs, 9f4's marks, 9f5's marks weighed, 9g to 9g6 done, one AI for every character (D244), Incarnam left through its portal (D253); set aside after 9f5 for step 7's studio, every session of it first (D292, D306), but for the owner's reports from game, answered as they come: the hunt attacking every group (D387), its tour leaving interiors out (D388), the AI fleeing less (D390), the harvest and the hunt rotating through sub-areas and the harvest varying its professions (D391, D392), the AI after the players' reports (D407), the harvest and the zones of a map (D424: a resource in another zone is out of reach; D425: the tour goes there through the world graph, out and back, once per tour), the Eliotrope's portals, set and cast through by every character of the bot as the references model them (D468), measured on the captures and walked and pushed through (D492); then the Roublard measured in game against big enemies, the Féca's glyphs and 9f's other mechanisms (D291) |
 | 10 | Several accounts and groups | Begun on 2026-11-18, ahead of step 7's measure in game and 7e, the owner's choice (D429): designed in four sessions (D429 to D434); 10a, the party's protocol, done (D435); 10b next |
 | 11 | Marketplace and crafting | To do |
-| 12 | Treasure hunts and dungeons | To do |
+| 12 | Treasure hunts and dungeons | Dungeons begun on 2026-11-25 (D520 to D525): the pack's table and entering merged, the rooms made in code; the exit and the group next |
 | 13 | The owner's profession scripts | To do |
 
 ## 0. Foundation
@@ -228,6 +228,7 @@ Unreal's look made modern, all docked (D319 to D332). The breeds come back once 
 | 7s7 | Stage 7: next's icons (D532), the owner's ask. Done: Lucide 1.72.0, next's version, written by `scripts/icons.cs` under the app's keys, grey with next's stroke, its colours for a warning, an error and an update. | Done on 2026-11-25 in code and tests and in headless drawings |
 | 7s8 | The studio's shell after `next`, stage 1 of 4: the command palette (D540, the owner's « Oui, les 4 premières », the choices delegated). Done: Ctrl Shift P opens the search with `>` typed, as VS Code's; next's command centre in the title bar and next's palette (600 pixels, rows of 26); the studio's views and each character's play, pause, stop and forget as commands; the Library's word in the search. | Done on 2026-11-25 in code and tests and in headless drawings |
 | 7s9 | Stage 2: the status bar as VS Code's (D541). Done: the version and next's relay (« Relais prêt · N en jeu », red once stopped, its hover) on the left; the client and the data pack's format, the bots playing, the problems' counts, the saving and the update's restart on the right; each item opens what it names. | Done on 2026-11-25 in code and tests and in headless drawings |
+| 7s10 | Stage 3: the layout kept after a restart (D542). Done: the editor's tabs in their order, the one shown and the bottom panel's tab kept in `app.json` beside the sizes, parts and view D513 kept, back once the host runs; a tab whose subject is gone left out quietly. | Done on 2026-11-25 in code and tests |
 | 7e | The canvas of behaviors, D3B's own, as beautiful and practical as Unreal's (D311): its view, nodes, wires, selection, adding by search, undo and the stack of states (D305, D307). | To do |
 | 7e2 | The canvas finished (D311): arranging, comment boxes, collapsing into a behavior, the minimap, bookmarks, the live flow and the polish, checked with the owner. | To do |
 | 7f | The low-level nodes, conditions, events and the planning (D298). | To do |
@@ -345,6 +346,16 @@ follower) on the same map, the capture of every connection on; a capture's conte
 ## 12. Treasure hunts and dungeons
 
 - Clue solving, hint NPCs, dungeon routes.
+- **Dungeons** (D520 to D525), begun on 2026-11-25 at the owner's ask, ahead of steps 7e and 11: an activity of its own that
+  reads the client's dungeon table and follows the server from room to room, several dungeons of a profile in turn, a character alone first, every keyed dungeon by
+  its keepers' replies' French words, entered with the keyring or a key carried. Four pull requests, each test-first on the fake
+  game:
+  1. The pack's dungeon table, format 14 (`DungeonCatalog`), and entering: the level and the key checked, the door reached, the
+     keeper talked to, each reply chosen among those offered. Merged (#429).
+  2. The rooms' chain (D525): each room's group fought once the character regenerated, the server's move to the next room
+     followed, the rooms left on foot through the graph, a lost fight leaving the dungeon for the run. Made in code and tests.
+  3. The end: the final map's exit, the runs counted, the bank, the profile's form in the studio, the activity in the catalogue.
+  4. The group (D521): the follower entering behind its master with its own key.
 
 ## 13. The owner's profession scripts
 
@@ -439,6 +450,11 @@ follower) on the same map, the capture of every connection on; a capture's conte
   zones taking 478 minutes, and goes now to the nearest zone of the round not yet gone to; a journey passed by the resources
   grown back on maps its tour went through, about 1,800 for the farmer, and stops now for them, unless the tour left that
   element there. The walks and uses refused, D488's and D495's maps measured as holding. Left: seen in game.
+- **Wild mounts captured** (D533), the owner's ask of 2026-11-25 (mounts, then souls of archmonsters and dungeon bosses),
+  studied in `artifacts/studies/captures.md` (git-ignored) and the mounts' first part made in code and tests: a hunt profile's
+  « Capturer des montures » and its families, the main taming a wild mount with its worn net before any blow, the mount spared
+  until then. Left: a capture of a net's fight, then the net worn by the bot from the bag; the souls, the dungeons' bosses with
+  the dungeons' session (D520 to D529).
 - **The miner's door refused on the bank's journey** (D517), the owner's report of 2026-11-25, made in code and tests from the
   capture of the night: a walk the server refused after showing it was taken for arrived, the door used from 19 cells away, and
   the bank's journey's no path taken for no bank, the run failing still full. A walk so refused is refused, and the bank's journey

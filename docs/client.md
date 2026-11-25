@@ -460,6 +460,31 @@ challenge number, nothing of the account printed.
   Barbare, Intouchable, Mains propres, Les petits d'abord, Survivant, Imprévisible, Blitzkrieg, Deux pour le prix d'un, Partage,
   Duel, Chacun son monstre, Miroir, J'en ai fait un pin's, Conquérant, Doume, and the dungeons' Duo, Trio, Quatuor and Chrono.
 
+### Dungeons
+
+Measured on 3.7.14.18 on 2026-11-25 for the dungeons' first session (D520), with `scripts/inspect.cs -- dump` and a measuring
+tool never committed, and counted again by `scripts/extract.cs` as it writes the pack of format 14.
+
+- **The table.** `World.DungeonsDataRoot` holds 187 dungeons, each with a name, a least level (1 to 200) and an advised one
+  (10 to 200), a difficulty (0 to 5), its rooms (1 to 15, 763 maps in all, 5 on 75 dungeons), an entrance and an exit map, set
+  on all and equal on 152, whether the keyring opens it (107), the objects it requires, its bosses and achievements, and two
+  flags of the group search and the lobby. 126 require objects, 122 one and 4 two to four, each a key of type 84 "Clef", one of
+  each; 60 of the 61 with none are the "Expédition" copies, of one to three maps and no boss. The 141 bosses all carry the
+  monsters' boss flag.
+- **Where the door is.** The sub-areas' own entrances and exits are empty on all 569 sub-areas: the dungeon table is the only
+  place the data says it. The entrance is never a room, has a position on all, a vertex of the world graph on 125 of the 126
+  keyed dungeons and a "Donjons" hint on 90. 185 sub-areas name a dungeon (`dungeonId`), 184 dungeons in all, and hold 757 of
+  the rooms; only 109 rooms have a vertex in the world graph. The rooms' order is not the order they are walked in (the
+  captures, client-game.md).
+- **The keyring** is item 10207, "Trousseau de clefs", of type 24: 106 effects 814, each naming a key of a dungeon on it.
+  128 of the 129 keys' recipes are a Bricoleur's (job 65).
+- **The keepers' replies.** Each reply id has a text of its own, so that no id and no text id is shared from keeper to
+  keeper: "Donner la clef et entrer." is 91 reply ids on 65 NPCs, any "Donner … clef" 165 on 117, "Utiliser le trousseau de
+  clefs." 117 on 96, the "Oui." of the 102 NPCs asking whether to use a key 265; the exits' "Sortir." 40 and "Sortir du
+  donjon." 9. The extraction keeps them by their French words: 167 replies giving a key, 118 using the keyring, 301 keepers'
+  "Oui.", and 399 exits reading "Sortir" or "Quitter", with Château Ensablé's and the Bworks' own measured. No table places an
+  NPC on a map: the server shows them with it.
+
 ### Fights' tables
 
 Laid out on 2026-10-30 for session 9a with `scripts/inspect.cs -- layout <bundle> <root> --references`, measured for
@@ -572,6 +597,17 @@ names 79 of them by breed, `ForgettableSpellsDataRoot` none, and no pair names a
 name 9 spells and 2 walls it lacks. 8 walls, each a spell, 7 held.
 
 **Characteristics.** 123, ids -1 to 199; ten scaled by a formula; 121 named, one naming a text the client lacks.
+
+**Captures** (3.7.14.18, measured for D533 with a scratch probe of the tables). Mounts: a capture net is an item of type 99,
+ten of them, whose effect 722 adds a spell while it is worn; the universal net 32521 has no criterion and gives spell 32260,
+the species' reinforced and multiplying nets need job 79, Éleveur, above 99, 149 or 199 and give 32270 to 32278. Those
+spells cost 1 AP at a range of 1 to 7, wait 63 rounds between casts, need the caster in a state 7105 to 7107 or 7114 (the
+fight holds such a monster), and put the target in state 7109; none of their effects draws a random. The wild mounts are
+the 12 monsters of races 21, 155 and 183, levels 62 to 70. Souls: spell 413 costs 4 AP on its caster, waits 3 rounds and
+holds a global cooldown of 3, needs state 2768 (a soul stone worn), and gives state 2 for 2 turns, to every ally in 2768
+when an archmonster fights; the five crafted stones, items 9686 to 9690 of type 83, need spell 413 known and capture up to
+level 50, 100, 150, 190 or any. The filled souls are 97 items of type 327 for the dungeons' guardians and 306 of type 328,
+one for each monster flagged `IsMiniBoss`.
 
 ## Texts
 

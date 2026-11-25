@@ -973,6 +973,21 @@ or refines another says so in its own entry. Add a line here with every new deci
 - [D519](decisions/d518-d519-never-idle.md#d519-a-run-that-fails-or-makes-no-progress-for-ten-minutes-puts-the-character-back-in-order-and-restarts-its-activity-after-30-s-doubling-to-8-min-six-times-an-hour-at-most-a-failure-no-restart-would-change-or-a-stop-still-ends-it) A run that fails, or makes no progress for ten minutes, puts the character back in order and restarts its activity, after 30 s doubling to 8 min, six times an hour at most; a failure no restart would change, or a stop, still ends it (2026-11-25)
   - A profile's setting, on for the harvest and the hunt; a restart from the host, at once, uncapped, or map changes taken for no progress.
 
+## Dungeons, the first version's shape and the rooms (D520 to D525)
+
+- [D520](decisions/d520-d523-dungeons.md#d520-a-dungeon-is-an-activity-of-its-own-that-reads-the-clients-dungeon-table-and-follows-the-server-from-room-to-room) A dungeon is an activity of its own that reads the client's dungeon table and follows the server from room to room (2026-11-25)
+  - The owner's ask; the client's 187 dungeons and 12 captured connections in four dungeons; a route step and the table's order rejected.
+- [D521](decisions/d520-d523-dungeons.md#d521-the-dungeon-is-made-for-a-character-alone-first-the-group-following-once-it-works) The dungeon is made for a character alone first, the group following once it works (2026-11-25)
+  - The owner's choice; every captured run a party, each member talking to the keeper; a follower entering behind its master the fourth pull request.
+- [D522](decisions/d520-d523-dungeons.md#d522-every-keyed-dungeon-of-the-table-the-keepers-and-the-exits-replies-chosen-by-their-french-text) Every keyed dungeon of the table, the keepers' and the exits' replies chosen by their French text (2026-11-25)
+  - The owner's choice; no text id shared between keepers, the French text in the pack whatever the client's language; the four measured dungeons only rejected.
+- [D523](decisions/d520-d523-dungeons.md#d523-a-dungeon-is-entered-with-the-keyring-when-the-keeper-offers-it-else-with-a-key-carried-else-the-activity-ends) A dungeon is entered with the keyring when the keeper offers it, else with a key carried, else the activity ends (2026-11-25)
+  - The owner's choice; a key spent at each entry, the keyring none; keys from the bank next, bought or crafted with step 11.
+- [D524](decisions/d520-d523-dungeons.md#d524-a-profile-lists-several-dungeons-entered-in-turn-those-the-character-cannot-enter-left-out) A profile lists several dungeons, entered in turn, those the character cannot enter left out (2026-11-25)
+  - The owner's ask; the next of the list in turn after the one last entered, a keeper's refusal shutting a dungeon for the run alone.
+- [D525](decisions/d520-d523-dungeons.md#d525-in-a-room-the-character-regenerates-fights-its-groups-and-lets-the-server-move-it-a-won-room-it-was-not-moved-from-is-left-on-foot-and-a-fight-lost-leaves-the-dungeon-for-the-run) In a room the character regenerates, fights its groups and lets the server move it; a won room it was not moved from is left on foot, and a fight lost leaves the dungeon for the run (2026-11-25)
+  - The server's move measured 128 times; the rooms' order rejected, a loss answered as the hunt's rejected.
+
 ## The studio in next's dark islands, layout and icons (D530 to D532)
 
 - [D530](decisions/d530-next-dark-islands.md#d530-the-studio-takes-nexts-dark-style-vs-codes-dark-modern-as-discreet-islands-and-stays-dark-only) The studio takes next's dark style, VS Code's Dark Modern as discreet islands, and stays dark only (2026-11-25)
@@ -982,12 +997,19 @@ or refines another says so in its own entry. Add a line here with every new deci
 - [D532](decisions/d532-lucide-icons.md#d532-the-studio-draws-lucides-icons-as-next-does-under-the-keys-its-intellij-icons-had) The studio draws Lucide's icons, as next does, under the keys its IntelliJ icons had (2026-11-25)
   - The owner's ask; Lucide 1.72.0, next's version, written by `scripts/icons.cs` with its ISC license checked.
 
-## The studio's shell after next (D540, D541)
+## Hunting, wild mounts captured (D533)
+
+- [D533](decisions/d533-mount-capture.md#d533-a-hunt-profile-may-capture-wild-mounts-the-main-wears-a-carried-capture-net-casts-its-taming-spell-on-a-mount-at-its-first-chance-and-hunts-on-without-capturing-once-it-has-none) A hunt profile may capture wild mounts: the main wears a carried capture net, casts its taming spell on a mount at its first chance, and hunts on without capturing once it has none (2026-11-25)
+  - The owner's ask; nets and spells measured in the client, none in the captures; buying, crafting, every member capturing set aside.
+
+## The studio's shell after next (D540 to D542)
 
 - [D540](decisions/d540-command-palette.md#d540-the-search-is-also-nexts-command-palette-ctrl-shift-p-types-its-sign-the-title-bars-command-centre-names-the-app-the-views-and-each-characters-play-pause-stop-and-forget-are-commands) The search is also next's command palette: Ctrl Shift P types its sign, the title bar's command centre names the app, the views and each character's play, pause, stop and forget are commands (2026-11-25)
   - Stage 1 of 4 of the shell after `next`, under the owner's delegation; begun by the redesign session, finished here.
 - [D541](decisions/d541-status-bar.md#d541-the-status-bar-is-vs-codes-the-version-and-the-relay-on-the-left-the-client-and-its-data-the-bots-playing-the-problems-the-saving-and-the-update-on-the-right-each-item-opening-what-it-names) The status bar is VS Code's: the version and the relay on the left, the client and its data, the bots playing, the problems, the saving and the update on the right, each item opening what it names (2026-11-25)
   - Stage 2 of 4, under the owner's delegation; next's relay words and hover, the problems read at every refresh.
+- [D542](decisions/d542-layout-kept.md#d542-the-editors-tabs-the-one-shown-and-the-bottom-panels-tab-come-back-after-a-restart-once-the-host-runs-a-tab-whose-subject-is-gone-falls-back-quietly) The editor's tabs, the one shown and the bottom panel's tab come back after a restart, once the host runs; a tab whose subject is gone falls back quietly (2026-11-25)
+  - Stage 3 of 4, under the owner's delegation; next keeps nothing on disk, the studio already kept the sizes and parts (D513).
 
 ## Banking, the transfer between the bank and the guild's chest (D550 to D552)
 

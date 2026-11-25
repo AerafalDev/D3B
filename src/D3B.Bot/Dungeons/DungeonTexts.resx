@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="DoingStart" xml:space="preserve">
+    <value>Getting ready for the dungeon</value>
+  </data>
+  <data name="DoingTravel" xml:space="preserve">
+    <value>On the way to the dungeon's door</value>
+  </data>
+  <data name="DoingEnter" xml:space="preserve">
+    <value>Talking to the dungeon's keeper</value>
+  </data>
+  <data name="DoingRooms" xml:space="preserve">
+    <value>In the dungeon</value>
+  </data>
+  <data name="CountEnteredOne" xml:space="preserve">
+    <value>{0} entry</value>
+  </data>
+  <data name="CountEnteredMany" xml:space="preserve">
+    <value>{0} entries</value>
+  </data>
+  <data name="FailUnknownDungeon" xml:space="preserve">
+    <value>The dungeon this profile names is not in the client's data.</value>
+  </data>
+  <data name="FailTooLow" xml:space="preserve">
+    <value>The character is level {0}, and the dungeon lets in from level {1}.</value>
+  </data>
+  <data name="FailNoKey" xml:space="preserve">
+    <value>The character carries neither the dungeon's key nor a keyring that opens it.</value>
+  </data>
+  <data name="FailNoPath" xml:space="preserve">
+    <value>No way leads to the dungeon's door from where the character stands.</value>
+  </data>
+  <data name="FailJourney" xml:space="preserve">
+    <value>The journey to the dungeon's door failed three times in a row.</value>
+  </data>
+  <data name="FailNoKeeper" xml:space="preserve">
+    <value>No NPC at the dungeon's door let the character in.</value>
+  </data>
+  <data name="FailStuckMapUnknown" xml:space="preserve">
+    <value>The character's map is still unknown after two minutes.</value>
+  </data>
+  <data name="FailStuckUsing" xml:space="preserve">
+    <value>Still using an element after two minutes, even once put back in order.</value>
+  </data>
+  <data name="FailStuckInDialog" xml:space="preserve">
+    <value>Still in a dialog or an exchange after two minutes, even once put back in order.</value>
+  </data>
+  <data name="FailStuckWalking" xml:space="preserve">
+    <value>Still walking after two minutes, even once put back in order.</value>
+  </data>
+  <data name="FailNoDungeon" xml:space="preserve">
+    <value>The profile lists no dungeon.</value>
+  </data>
+  <data name="FailNoneEnterable" xml:space="preserve">
+    <value>No dungeon of the profile can be entered: the character lacks the level or the key of each, or no way leads to them.</value>
+  </data>
+  <data name="DoingRegenerate" xml:space="preserve">
+    <value>Regenerating its life before the room's fight, {0} s</value>
+  </data>
+  <data name="CountRoomOne" xml:space="preserve">
+    <value>{0} room won</value>
+  </data>
+  <data name="CountRoomMany" xml:space="preserve">
+    <value>{0} rooms won</value>
+  </data>
+  <data name="CountLostOne" xml:space="preserve">
+    <value>{0} fight lost</value>
+  </data>
+  <data name="CountLostMany" xml:space="preserve">
+    <value>{0} fights lost</value>
+  </data>
+  <data name="FailLost" xml:space="preserve">
+    <value>A fight was lost in the dungeon: it is left for the run.</value>
+  </data>
+  <data name="FailNoRoom" xml:space="preserve">
+    <value>No room of the dungeon left to win can be walked to.</value>
+  </data>
+</root>

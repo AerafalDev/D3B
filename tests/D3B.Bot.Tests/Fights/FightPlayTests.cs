@@ -66,7 +66,7 @@ public sealed class FightPlayTests : IAsyncDisposable
         };
     }
 
-    private static Actor MonsterActor(int cell)
+    private static Actor MonsterActor(int cell, int monsterId = 31)
     {
         // A monster the pack lacks: the AI knows none of its spells.
         return new Actor
@@ -77,7 +77,7 @@ public sealed class FightPlayTests : IAsyncDisposable
             {
                 Fighter = new FightFighter
                 {
-                    Ai = new AiFighter { Monster = new MonsterFighter { MonsterId = 31, Grade = 1, Level = 3 } },
+                    Ai = new AiFighter { Monster = new MonsterFighter { MonsterId = monsterId, Grade = 1, Level = 3 } },
                     Stats = new FightCharacteristics { Characteristics = { Value(1, 2), Value(23, 3), Value(0, 50) } },
                     Spawn = new FighterSpawn { Alive = true, Team = FightTeam.Defender },
                 },
@@ -114,8 +114,14 @@ public sealed class FightPlayTests : IAsyncDisposable
         return order;
     }
 
-    private static void Placement(TestConnection connection, int near, int monster)
+    private static void Placement(TestConnection connection, int near, int monster, int monsterId = 31, bool net = false)
     {
+        var spells = new FightSpellsContextEvent { FighterId = Self, Spells = { new SpellItem { SpellId = TestPlay.BlowSpellId, Grade = 1 } } };
+
+        // A capture net worn gives its taming spell (D533), listed here as the server lists the character's spells as a fight starts (D218).
+        if (net)
+            spells.Spells.Add(new SpellItem { SpellId = TestPlay.TamingSpellId, Grade = 1 });
+
         foreach (var message in new IMessage[]
         {
             new ContextDestroyEvent(),
@@ -124,9 +130,9 @@ public sealed class FightPlayTests : IAsyncDisposable
             new FightStartingEvent { AttackerId = Self, DefenderId = -20_004, Type = FightType.Monsters },
             new FightJoinEvent { PlacementTime = 440 },
             new FightFighterShowEvent { Fighter = Character(Far) },
-            new FightFighterShowEvent { Fighter = MonsterActor(monster) },
+            new FightFighterShowEvent { Fighter = MonsterActor(monster, monsterId) },
             new FightPlacementPossiblePositionsEvent { Cells = new PlacementCells { DefenderCells = { monster }, ChallengerCells = { Far, near } } },
-            new FightSpellsContextEvent { FighterId = Self, Spells = { new SpellItem { SpellId = TestPlay.BlowSpellId, Grade = 1 } } },
+            spells,
             Order(),
         })
         {
@@ -831,5 +837,80 @@ public sealed class FightPlayTests : IAsyncDisposable
 
         Assert.True(bot.IsPaused);
         Assert.Equal(sent + 1, connection.Sent.Count);
+    }
+
+    private async Task<(TestConnection Connection, int Sent, int Monster)> MountTurnAsync(IReadOnlyList<int> races, bool net)
+    {
+        // A hunt capturing the profile's mounts, the fight against a wild Muldo, the character's first turn begun.
+        var (connection, bot) = await _play.EnterAsync(Far);
+        var monster = Beside(Far, 8, 0);
+        var near = Beside(monster, -3, 0);
+
+        bot.StartActivity(new RewardActivity { Reward = ChallengeReward.Client, Races = races });
+        await bot.ProcessedAsync();
+
+        var sent = connection.Sent.Count;
+
+        Placement(connection, near, monster, TestPlay.MuldoId, net);
+        await SentAsync(connection, sent + 1);
+        connection.Server(new FightOptionUpdateEvent { Option = FightOption.Closed, Enabled = true });
+        await SentAsync(connection, sent + 2);
+        connection.Server(new FightOptionUpdateEvent { Option = FightOption.NoSpectators, Enabled = true });
+        await SentAsync(connection, sent + 3);
+        connection.Server(new EntitiesDispositionEvent { Dispositions = { new ActorDisposition { EntityId = Self, CellId = near } } });
+        await SentAsync(connection, sent + 4);
+        connection.Server(new FightHumanReadyStateEvent { CharacterId = Self, Ready = true });
+        connection.Server(new FightStartEvent());
+        connection.Server(new FightNewRoundEvent { Round = 1 });
+        connection.Server(new FightTurnEvent { FighterId = Self, Duration = 300, Round = 1 });
+        connection.Server(new FightTurnStartPlayingEvent());
+
+        return (connection, sent, monster);
+    }
+
+    [Fact]
+    public async Task AHuntCapturingMountsTamesTheWildMountBeforeAnyBlow()
+    {
+        // The owner's choice (D533): the taming first, at the first turn the mount is within reach, before the blows.
+        var (connection, sent, monster) = await MountTurnAsync([TestPlay.MuldoRace], net: true);
+
+        var first = Assert.IsType<GameActionFightCastRequest>(await SentAsync(connection, sent + 5));
+
+        Assert.Equal((TestPlay.TamingSpellId, monster), (first.SpellId, first.CellId));
+        await LoggedAsync($"Bot {Self}: tames the wild mount on cell {monster} for its capture");
+    }
+
+    [Fact]
+    public async Task AHuntCapturingMountsWithNoNetWornStrikesAndSaysSo()
+    {
+        var (connection, sent, monster) = await MountTurnAsync([TestPlay.MuldoRace], net: false);
+
+        var first = Assert.IsType<GameActionFightCastRequest>(await SentAsync(connection, sent + 5));
+
+        Assert.Equal((TestPlay.BlowSpellId, monster), (first.SpellId, first.CellId));
+        await LoggedAsync($"Bot {Self}: wears no capture net, so the fight's 1 wild mounts are not captured");
+    }
+
+    [Fact]
+    public async Task AHuntThatCapturesNoMountStrikesTheMountWithTheNetWorn()
+    {
+        var (connection, sent, monster) = await MountTurnAsync([], net: true);
+
+        var first = Assert.IsType<GameActionFightCastRequest>(await SentAsync(connection, sent + 5));
+
+        Assert.Equal((TestPlay.BlowSpellId, monster), (first.SpellId, first.CellId));
+    }
+
+    [Fact]
+    public async Task ATamingTheServerRefusesIsNotTriedAgainAndTheMountIsStruck()
+    {
+        var (connection, sent, monster) = await MountTurnAsync([TestPlay.MuldoRace], net: true);
+
+        Assert.Equal(TestPlay.TamingSpellId, Assert.IsType<GameActionFightCastRequest>(await SentAsync(connection, sent + 5)).SpellId);
+        connection.Server(new TextInformationEvent { TextId = 175, Type = TextInformationType.Error });
+
+        var next = Assert.IsType<GameActionFightCastRequest>(await SentAsync(connection, sent + 6));
+
+        Assert.Equal((TestPlay.BlowSpellId, monster), (next.SpellId, next.CellId));
     }
 }

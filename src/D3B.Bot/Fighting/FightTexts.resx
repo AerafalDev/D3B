@@ -146,6 +146,21 @@
   <data name="FarmAnomalyFragmentsHelp" xml:space="preserve">
     <value>Drink a Minor Uchronic Elixir if its effect is missing at startup or expires later, then continue hunting.</value>
   </data>
+  <data name="CaptureMounts" xml:space="preserve">
+    <value>Capture mounts</value>
+  </data>
+  <data name="CaptureMountsHelp" xml:space="preserve">
+    <value>Tames a wild mount each fight with the capture net worn in the fight consumable slot, before any blow, so that it is captured as the fight ends. With no net worn, the hunt goes on without capturing and the journal says so. In a group, only the main captures.</value>
+  </data>
+  <data name="CaptureDragodindes" xml:space="preserve">
+    <value>Dragodindes</value>
+  </data>
+  <data name="CaptureMuldos" xml:space="preserve">
+    <value>Muldos</value>
+  </data>
+  <data name="CaptureVolkornes" xml:space="preserve">
+    <value>Volkornes</value>
+  </data>
   <data name="FoodHelp" xml:space="preserve">
     <value>In order, until the life is whole; none chosen, what the inventory holds that only heals, the smallest heal first; else the life regenerates up to the share.</value>
   </data>

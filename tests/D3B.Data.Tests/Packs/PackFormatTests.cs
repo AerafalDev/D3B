@@ -4,6 +4,7 @@ using D3B.Data.Banks;
 using D3B.Data.Breeds;
 using D3B.Data.Challenges;
 using D3B.Data.Characteristics;
+using D3B.Data.Dungeons;
 using D3B.Data.Effects;
 using D3B.Data.Hints;
 using D3B.Data.Icons;
@@ -52,6 +53,7 @@ public sealed class PackFormatTests
         (11, "f8ee4c1ccc2600633445615dbc0147dd2a4c6862bf2b4c4101e7a34e4ee10b6a"),
         (12, "098d33e90f65d3bc6b3535c7b8f24466f19bfbe1008d6371f7e45f147dc18bc1"),
         (13, "b3826b61cd7dc808415644598331fec094805e7164faac38d2138ca2a2d04eaf"),
+        (14, "aa5ed0452402670d093d715b1c6a91715c09588cc0d5494cdea59e9474b0552d"),
     ];
 
     private static readonly string[] _criteria = ["c24"];
@@ -78,6 +80,13 @@ public sealed class PackFormatTests
     private static readonly int[] _formulaIds = [186];
     private static readonly string[] _formulas = ["f187"];
     private static readonly string[] _weaponZones = ["z203"];
+    private static readonly long[] _dungeonRooms = [271];
+    private static readonly int[] _dungeonBosses = [273];
+    private static readonly int[] _dungeonSubAreas = [274];
+    private static readonly int[] _keyReplies = [275];
+    private static readonly int[] _keyringReplies = [276];
+    private static readonly int[] _confirmations = [277];
+    private static readonly int[] _exitReplies = [278];
 
     [Fact]
     public void TheLastRecordedFormatIsTheCurrentOne()
@@ -245,6 +254,7 @@ public sealed class PackFormatTests
         Append(hash, new WorldMapCatalog(new WorldMap[] { new(217, 218, 219, 220, 221.5f, 222.5f, 0.2f, 1.5f, 0.6f, 223, 224, true, 0, 2) }, new WorldMapLevel[] { new(100, 225, 226), new(75, 227, 228) }));
         Append(hash, new HintCatalog(new Hint[] { new(241, 242, 243, 244, 245, 246, -247, -248, 249) }, new HintCategory[] { new(250, 251) }, new IconTable(2, _hintIcons, Pixels(252, 2))));
         Append(hash, new ChallengeCatalog(new Challenge[] { new(253, 254, 255, 256, 257, 258, 0, 1) }, _incompatibles, _completions, _activations));
+        Append(hash, new DungeonCatalog(new Dungeon[] { new(264, 265, 266, 267, 268, 269, true, 0, 1, 0, 1, 0, 1, 0, 1) }, _dungeonRooms, new DungeonObject[] { new(270, 272) }, _dungeonBosses, _dungeonSubAreas, _keyReplies, _keyringReplies, _confirmations, _exitReplies));
         Append(hash, new byte[] { 229, 230 });
 
         return Convert.ToHexStringLower(hash.GetHashAndReset());

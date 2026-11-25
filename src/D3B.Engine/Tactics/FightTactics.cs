@@ -573,6 +573,11 @@ public sealed class FightTactics
 
                     var walked = from is { } step ? Imagination.Walked(node.Fight, step.Cell, step.Left) : node.Fight;
                     var cast = Imagination.Cast(walked, level, cell);
+
+                    // The owner's choice (D533): a wild mount is never killed before it is tamed, lest its capture be lost.
+                    if (!knowledge.Spared.IsEmpty && KillsSpared(walked, cast, knowledge.Spared))
+                        continue;
+
                     ImmutableArray<TacticAction> actions = from is { } walk
                         ? [.. node.Actions, TacticAction.Walk(walk.Cell), TacticAction.Cast(level.SpellId, level.Id, cell)]
                         : [.. node.Actions, TacticAction.Cast(level.SpellId, level.Id, cell)];
@@ -796,6 +801,82 @@ public sealed class FightTactics
         ArgumentNullException.ThrowIfNull(fight);
 
         return Moves.Path(fight.Map, fight.Fighters, fight.Actor, cell, Glyphs.TrapCells(fight.Marks));
+    }
+
+    /// <summary>Finds how the fighter playing tames a wild mount for its capture this turn: the cast, from where it stands or once it walked within reach (D533).</summary>
+    /// <param name="fight">The fight as it stands.</param>
+    /// <param name="knowledge">What the AI knows of the fighters' spells and the cooldowns of the fighter playing.</param>
+    /// <param name="spellIds">The taming spells, those the capture nets give.</param>
+    /// <param name="targets">The mounts to tame, by fighter.</param>
+    /// <returns>The walk and the cast, the walk that keeps the most MP first; none when no mount may be tamed this turn, then pending while only the reach stands in the way.</returns>
+    public TamingPlan Taming(ImaginedFight fight, FightKnowledge knowledge, IReadOnlySet<int> spellIds, IReadOnlySet<long> targets)
+    {
+        ArgumentNullException.ThrowIfNull(fight);
+        ArgumentNullException.ThrowIfNull(knowledge);
+        ArgumentNullException.ThrowIfNull(spellIds);
+        ArgumentNullException.ThrowIfNull(targets);
+
+        var actor = fight.Actor;
+        var mounts = fight.Fighters.Where(fighter => targets.Contains(fighter.Id) && fighter.IsAlive && fighter.Cell is not Combatant.NoCell).ToList();
+
+        if (!actor.IsAlive || actor.Cell is Combatant.NoCell || mounts.Count is 0)
+            return TamingPlan.None;
+
+        var pending = false;
+        List<(int Cell, (int MovementPoints, int ActionPoints) Left)>? walks = null;
+
+        foreach (var level in knowledge.SpellsOf(actor.Id))
+        {
+            if (!spellIds.Contains(level.SpellId) || knowledge.Cooldowns.GetValueOrDefault(level.SpellId) > 0)
+                continue;
+
+            foreach (var mount in mounts)
+            {
+                var refusal = Rules.Check(fight.Map, fight.Fighters, fight.Marks, actor, level, mount.Cell, fight.History, fight.Round);
+
+                if (refusal is CastRefusal.None)
+                    return TamingPlan.Now([TacticAction.Cast(level.SpellId, level.Id, mount.Cell)]);
+
+                // Any other refusal, such as the interval of a spell cast once a fight, holds for the whole fight.
+                if (refusal is not (CastRefusal.OutOfRange or CastRefusal.NoLineOfSight or CastRefusal.NotEnoughActionPoints))
+                    continue;
+
+                pending = true;
+
+                if (refusal is CastRefusal.NotEnoughActionPoints)
+                    continue;
+
+                walks ??= actor.MovementPoints > 0
+                    ? [.. Moves.Reachable(fight.Map, fight.Fighters, actor, Glyphs.TrapCells(fight.Marks))
+                        .Where(pair => pair.Key != actor.Cell)
+                        .OrderByDescending(pair => pair.Value.MovementPoints)
+                        .ThenBy(pair => MapGeometry.Distance(pair.Key, mount.Cell))
+                        .Select(pair => (pair.Key, pair.Value))]
+                    : [];
+
+                foreach (var (from, left) in walks)
+                {
+                    var moved = actor with { Cell = from, MovementPoints = left.MovementPoints, ActionPoints = left.ActionPoints };
+                    var there = fight.With(moved);
+
+                    if (Rules.Check(there.Map, there.Fighters, there.Marks, moved, level, mount.Cell, there.History, there.Round) is CastRefusal.None)
+                        return TamingPlan.Now([TacticAction.Walk(from), TacticAction.Cast(level.SpellId, level.Id, mount.Cell)]);
+                }
+            }
+        }
+
+        return pending ? TamingPlan.Later : TamingPlan.None;
+    }
+
+    private static bool KillsSpared(ImaginedFight before, ImaginedFight after, ImmutableArray<long> spared)
+    {
+        foreach (var id in spared)
+        {
+            if (before.Fighters.Any(fighter => fighter.Id == id && fighter.IsAlive) && !after.Fighters.Any(fighter => fighter.Id == id && fighter.IsAlive))
+                return true;
+        }
+
+        return false;
     }
 
     private double Ends(Node node, FightJudge judge, FightKnowledge knowledge, bool keep, List<Finalist> finalists, int most, ref int weighed)
