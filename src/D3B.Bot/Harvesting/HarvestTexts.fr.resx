@@ -539,4 +539,10 @@
   <data name="FailStuckWalking" xml:space="preserve">
     <value>Toujours en train de marcher après deux minutes, même remis en ordre.</value>
   </data>
+  <data name="RestartAfterFailure" xml:space="preserve">
+    <value>Relancer après un échec</value>
+  </data>
+  <data name="RestartAfterFailureHelp" xml:space="preserve">
+    <value>Quand l'activité échoue pour une raison passagère, ou ne fait rien pendant dix minutes, le perso est remis en ordre et l'activité reprend, après 30 secondes, puis de plus en plus tard, six fois par heure au plus : le perso n'est pas laissé inactif jusqu'à ce que le jeu le déconnecte. Un profil impossible, ou votre propre arrêt, l'arrête toujours.</value>
+  </data>
 </root>

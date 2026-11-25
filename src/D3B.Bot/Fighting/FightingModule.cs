@@ -91,6 +91,7 @@ public sealed class FightingModule : IModule
         settings.Choice(s => s.AfterLostFight, FightTexts.Text("AfterLostFight"), after => FightTexts.Text($"AfterLostFight{after}"))
             .Help(FightTexts.Text("AfterLostFightHelp"))
             .Advanced();
+        settings.Flag(s => s.RestartAfterFailure, FightTexts.Text("RestartAfterFailure")).Help(FightTexts.Text("RestartAfterFailureHelp")).Advanced();
 
         settings.Rule(s => s.Mode is not FightMode.Chosen || ChosenMonsters.Any(s), FightTexts.Text("RuleMonsters"));
         settings.Rule(s => s.Place is not FightPlace.Chosen || s.Area is not null || s.SubAreas.Count > 0, FightTexts.Text("RuleWhere"));

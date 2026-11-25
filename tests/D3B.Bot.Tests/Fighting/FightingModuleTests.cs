@@ -30,7 +30,7 @@ public sealed class FightingModuleTests
         var settings = Fight().Settings.All;
 
         Assert.Equal(
-            ["AfterLostFight", "Excluded", "Food", "FullAt", "IsolatedMaps", "LeastMonsters", "MostMonsters", "OwnBanking", "Rotation", "UseZaaps", "ZaapSaving"],
+            ["AfterLostFight", "Excluded", "Food", "FullAt", "IsolatedMaps", "LeastMonsters", "MostMonsters", "OwnBanking", "RestartAfterFailure", "Rotation", "UseZaaps", "ZaapSaving"],
             [.. settings.Where(setting => setting.IsAdvanced).Select(setting => setting.Key).Order()]);
         Assert.Equal(
             ["Area", "ChallengeReward", "Challenges", "Deposit", "Families", "FarmAnomalyFragments", "Heal", "HealBelow", "Mode", "Monsters", "Place", "SubAreas", "Zone"],

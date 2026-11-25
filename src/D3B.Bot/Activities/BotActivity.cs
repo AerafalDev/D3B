@@ -65,6 +65,14 @@ public abstract class BotActivity
     /// <remarks>None by default: the AI plays as before.</remarks>
     public virtual ChallengePlay Challenges => ChallengePlay.None;
 
+    /// <summary>Gets whether the run restarts the activity once it failed or made no progress a while, rather than ending it (D519).</summary>
+    /// <remarks>No by default: an activity restarted begins anew (<see cref="Restart"/>), which it must allow. A failure that <see cref="ActivityException.IsFinal"/> still ends it.</remarks>
+    public virtual bool RestartsAfterFailure => false;
+
+    /// <summary>Gets until when the activity waits on purpose, such as for its resources to grow back, which the run does not take for no progress (D519).</summary>
+    /// <remarks>Read from another thread than the activity's while it runs. None by default.</remarks>
+    public virtual DateTimeOffset? WaitingUntil => null;
+
     /// <summary>Runs the next step, chosen from the character's state now.</summary>
     /// <param name="context">The step's behavior context.</param>
     /// <param name="cancellationToken">The step's token: an interruption or the activity's stop cancels it.</param>
@@ -140,6 +148,12 @@ public abstract class BotActivity
     /// <param name="bot">The bot.</param>
     /// <remarks>Called on the bot's loop, which every message of its character goes through: quick, never waiting. Nothing, by default.</remarks>
     public virtual void Watch(BotActor bot)
+    {
+    }
+
+    /// <summary>Begins the activity anew, once the run put the character back in order after a failure, as if it had just started but for what it counted (D519).</summary>
+    /// <remarks>Asked only of an activity that <see cref="RestartsAfterFailure"/>, between two of its steps. Nothing, by default.</remarks>
+    public virtual void Restart()
     {
     }
 

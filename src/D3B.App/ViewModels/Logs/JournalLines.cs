@@ -70,6 +70,7 @@ internal sealed class JournalLines
             ActivityInterruptedEntry interrupted => (Interrupted(interrupted), null, Tone.Warning),
             ActivityUnloadingEntry unloading => (Format("JournalUnloading", unloading.Activity, unloading.Weight, unloading.MaxWeight), null, Tone.Info),
             ActivityOverEntry over => Over(over),
+            ActivityRestartedEntry restarted => (Format("JournalActivityRestarted", restarted.Activity, restarted.Restart), restarted.Cause, Tone.Warning),
             ProfileNotStartedEntry profile => (Format("JournalProfileNotStarted", profile.Profile), NotStarted(profile), Tone.Warning),
             StateEnteredEntry state => (state.State is { } name ? Format("JournalStateEntered", state.Behavior, name) : Format("JournalNoState", state.Behavior), null, Tone.Info),
             NoteEntry note => (note.Text, note.Behavior, Tone.Info),
