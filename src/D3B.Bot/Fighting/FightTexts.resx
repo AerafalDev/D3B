@@ -150,7 +150,7 @@
     <value>Capture mounts</value>
   </data>
   <data name="CaptureMountsHelp" xml:space="preserve">
-    <value>Tames a wild mount each fight with the capture net worn in the fight consumable slot, before any blow, so that it is captured as the fight ends. With no net worn, the hunt goes on without capturing and the journal says so. In a group, only the main captures.</value>
+    <value>Captures a wild mount each fight: before attacking a group holding one, the character wears in the fight consumable slot the best capture net it carries for that species and its Éleveur level, then tames the mount before any blow so that it is captured as the fight ends. With no net that fits, the hunt goes on without capturing and the journal says so. In a group, only the main captures.</value>
   </data>
   <data name="CaptureDragodindes" xml:space="preserve">
     <value>Dragodindes</value>
@@ -160,6 +160,12 @@
   </data>
   <data name="CaptureVolkornes" xml:space="preserve">
     <value>Volkornes</value>
+  </data>
+  <data name="CaptureSouls" xml:space="preserve">
+    <value>Capture archmonsters’ souls</value>
+  </data>
+  <data name="CaptureSoulsHelp" xml:space="preserve">
+    <value>Before attacking a group holding an archmonster, the character wears in the fight consumable slot the smallest soul stone it carries that captures the group’s highest level, then casts Soul Capture whenever it can during the fight. With no stone big enough, the hunt goes on without capturing and the journal says so. In a group, only the main captures.</value>
   </data>
   <data name="FoodHelp" xml:space="preserve">
     <value>In order, until the life is whole; none chosen, what the inventory holds that only heals, the smallest heal first; else the life regenerates up to the share.</value>

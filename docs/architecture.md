@@ -457,7 +457,13 @@ The bots run in `D3B.Bot`: what each part does today, with the decisions that ma
   flag `CaptureMounts` on (D533), the families ticked of Dragodindes, Muldos and Volkornes (`BotActivity.MountRaces`, races
   21, 155 and 183), the main, never a follower nor a summon, tames a wild mount with the taming spell its worn capture net
   gives (`MountCapture.TamingSpells`) before any blow, its mounts spared meanwhile, and says once a fight that it wears no
-  net when it holds no such spell; a taming the server does not take ends the fight's capture. Its
+  net when it holds no such spell; a taming the server does not take ends the fight's capture, and a species' net tames
+  only its species (`MountCapture.RacesFor`). Before attacking a group (D565), the main wears in the fight consumable slot,
+  position 31, through `ObjectWear` and `ObjectSetPositionRequest`, the best carried net for the group's mounts that its
+  Éleveur level allows (`MountCapture.NetFor`, `Nets`), or, with its flag `CaptureSouls` on and an archmonster in the group,
+  the smallest carried soul stone that captures the group's highest level (`SoulCapture.StoneFor`, `Stones`), saying in the
+  journal when none fits; in the fight, against an archmonster, the main casts the soul capture, spell 413, on itself
+  whenever the rules allow it, before the blows (`BotActivity.CapturesSouls`), until the server refuses one. Its
   sub-areas are suggested by the
   monsters chosen (`GameReferences.SubAreasLiving`). `FightPreviews`, one per host, says in the profile editor what the
   settings lead to: the ground's mini-map, its maps, monsters and their levels, the nearest bank (`NearestBank`, shared
@@ -608,7 +614,7 @@ Built in session 3b (D35 to D38): the relay of the connection phase, in `D3B.Net
   in its `game` directory, with the messages the game's frames carry), pairs every readable message and enum with its
   counterpart (`ProtocolMatcher`: pins, anchors, fields, then structural scores; `google.protobuf.Any` is its own
   counterpart), audits the result (`ContractAudit`, which counts what partial messages leave out apart from its notes),
-  and writes it beside the pack, `mapping-25.binpb` (`MappingFile`, D342, D383), only when it holds. For what is left open it
+  and writes it beside the pack, `mapping-26.binpb` (`MappingFile`, D342, D383), only when it holds. For what is left open it
   lists the build's messages that fit, which the maintainer pins (D54). The mapping records the schema's SHA-256 and the
   readable protocol's digest (`ProtocolDigest`); `MappingFile.FormatVersion` changes with `mapping.proto` or that
   digest.

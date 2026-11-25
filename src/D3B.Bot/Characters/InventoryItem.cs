@@ -13,6 +13,9 @@ public sealed record InventoryItem(int Uid, int ItemId, int Quantity, int Positi
     /// <summary>The position of the weapon worn: of the 75 inventories captured, the 63 holding a worn weapon held it there, and nothing else (D218).</summary>
     public const int Weapon = 1;
 
+    /// <summary>The position of the fight consumable, where a capture net or a soul stone is worn, one stack at a time, as measured on the client 3.7.14.18 (D565).</summary>
+    public const int FightConsumable = 31;
+
     /// <summary>Gets whether the stack is worn: the inventory lists the worn objects first, one of each, at other positions.</summary>
     public bool IsWorn => Position != NotWorn;
 }

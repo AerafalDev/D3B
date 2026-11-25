@@ -1,3 +1,4 @@
+using System.Collections.Frozen;
 using System.Collections.Immutable;
 using D3B.Bot.Characters;
 using D3B.Bot.Movement;
@@ -50,6 +51,7 @@ public static class FightPlay
     // follower's options are its master's.
     private static readonly (FightOption Option, bool On)[] _closing = [(FightOption.Closed, true), (FightOption.NoSpectators, true)];
     private static readonly (FightOption Option, bool On)[] _leading = [(FightOption.Closed, false), (FightOption.NoSpectators, true)];
+    private static readonly FrozenSet<int> _soulSpells = new[] { SoulCapture.SpellId }.ToFrozenSet();
 
     private static readonly TimeSpan _placementWait = TimeSpan.FromSeconds(45);
 
@@ -425,14 +427,20 @@ public static class FightPlay
             if (tamed.Plan.IsPending)
                 imagined = (imagined.Fight, imagined.Knowledge with { Spared = tamed.Mounts });
 
+            // The owner's choice (D565): against an archmonster, the main casts the soul capture whenever it can, before the blows.
+            var souled = tamed.Plan.Actions.IsEmpty ? SoulOf(context, tactics, tables, imagined, self, taming) : TamingPlan.None;
+            var first = !tamed.Plan.Actions.IsEmpty ? tamed.Plan : souled;
+
             var asked = imagined;
             var keeping = challenge?.Challenge;
-            var plan = !tamed.Plan.Actions.IsEmpty
-                ? new TurnPlan(tamed.Plan.Actions, 0, 0, 0, TimeSpan.Zero) { KeepsChallenge = KeepsChallenge(tamed.Plan, asked.Fight, keeping) }
+            var plan = !first.Actions.IsEmpty
+                ? new TurnPlan(first.Actions, 0, 0, 0, TimeSpan.Zero) { KeepsChallenge = KeepsChallenge(first, asked.Fight, keeping) }
                 : await searches.RunAsync(() => tactics.Plan(asked.Fight, asked.Knowledge, weights, TurnSearchLimits.Default, refused, keeping), cancellationToken).ConfigureAwait(false);
 
             if (!tamed.Plan.Actions.IsEmpty)
                 FightLog.Taming(context.Log, self, tamed.Plan.Actions[^1].Cell);
+            else if (!souled.Actions.IsEmpty)
+                FightLog.SoulCapture(context.Log, self);
             else
                 FightLog.Planned(context.Log, self, plan.Actions.Length, plan.Score, plan.Standing, plan.Weighed, (long)plan.Elapsed.TotalMilliseconds);
 
@@ -475,6 +483,10 @@ public static class FightPlay
                 if (MountCapture.TamingSpells.Contains(action.SpellId))
                     taming.IsOver = true;
 
+                // Nor a soul capture: the global cooldown of a group's other caster, or a stone too weak, would refuse it again.
+                if (action.SpellId is SoulCapture.SpellId)
+                    taming.SoulsOver = true;
+
                 if (answer is CastAnswer.Unanswered && leftOut.Add(action.SpellId))
                     unanswered[action.SpellId] = unanswered.GetValueOrDefault(action.SpellId) + 1;
 
@@ -505,7 +517,9 @@ public static class FightPlay
         if (races.Count is 0 || taming.IsOver || !Tames(context.Actor.Team?.Role ?? FightRole.Alone, self, context.State.Key.CharacterId) || context.State.Fight is not { } fight)
             return (TamingPlan.None, []);
 
-        var mounts = MountCapture.Targets(fight, tables.Monsters, races);
+        // A species' net tames only its own species (D533): the other mounts are struck as any monster.
+        var worn = context.State.Inventory.Values.FirstOrDefault(stack => stack.Position is InventoryItem.FightConsumable)?.ItemId;
+        var mounts = MountCapture.Targets(fight, tables.Monsters, MountCapture.RacesFor(worn, races));
 
         if (mounts.IsEmpty)
             return (TamingPlan.None, []);
@@ -519,6 +533,21 @@ public static class FightPlay
         }
 
         return (plan, mounts);
+    }
+
+    private static TamingPlan SoulOf(BotContext context, FightTactics tactics, GameTables tables, (ImaginedFight Fight, FightKnowledge Knowledge) imagined, long self, Taming taming)
+    {
+        var souls = context.Actor.Activity is { IsOver: false, Activity: { FightsItsFights: true, CapturesSouls: true } };
+
+        if (!souls || taming.SoulsOver || !Tames(context.Actor.Team?.Role ?? FightRole.Alone, self, context.State.Key.CharacterId)
+            || context.State.Fight is not { } fight || !SoulCapture.HoldsArchmonster(fight, tables.Monsters))
+        {
+            return TamingPlan.None;
+        }
+
+        // The capture is cast on the caster itself, as a taming on its mount: the same rules, its cell the only target. With no
+        // stone worn, the state it needs is missing and the rules refuse it.
+        return tactics.Taming(imagined.Fight, imagined.Knowledge, _soulSpells, new HashSet<long> { self });
     }
 
     private static bool KeepsChallenge(TamingPlan taming, ImaginedFight fight, TurnChallenge? challenge)
@@ -609,5 +638,8 @@ public static class FightPlay
 
         // Whether the journal said the character wears no capture net, once a fight.
         public bool Said { get; set; }
+
+        // Whether a soul capture the server did not take ended the fight's.
+        public bool SoulsOver { get; set; }
     }
 }
