@@ -20,6 +20,9 @@ internal sealed class BankingActivity : BotActivity
     /// <summary>Gets the number of times the activity's own unloading was asked.</summary>
     public int OwnUnloads { get; private set; }
 
+    /// <summary>Gets the number of times the group's bank told it it banked.</summary>
+    public int GroupUnloads { get; private set; }
+
     public override ImmutableArray<ActivityWatch> Watches => [new ActivityWatch(WatchedGauge.Pods, FullAt, WatchAction.Bank)];
 
     public override bool DepositsAll => All;
@@ -32,6 +35,11 @@ internal sealed class BankingActivity : BotActivity
     public override bool Deposits(InventoryItem stack)
     {
         return All || Loot.Contains(stack.ItemId);
+    }
+
+    public override void OnGroupUnloaded()
+    {
+        GroupUnloads++;
     }
 
     public override Task<bool> UnloadAsync(BotContext context, CancellationToken cancellationToken)

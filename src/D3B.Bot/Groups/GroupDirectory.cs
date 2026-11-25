@@ -79,14 +79,15 @@ public sealed class GroupDirectory
     /// <param name="follower">The follower whose turn it is.</param>
     /// <param name="food">Whether the food that only heals is given too (D459).</param>
     /// <param name="left">The follower's stacks an exchange of that unloading left, given no more (D459).</param>
+    /// <param name="kept">What every member keeps, as the master's profile says, such as a dungeon's key (D529).</param>
     /// <returns>The round, which the master disposes once the exchange is over.</returns>
-    public IDisposable Collect(CharacterKey master, CharacterKey follower, bool food, IEnumerable<int> left)
+    public IDisposable Collect(CharacterKey master, CharacterKey follower, bool food, IEnumerable<int> left, Func<InventoryItem, bool>? kept = null)
     {
         ArgumentNullException.ThrowIfNull(left);
 
         lock (_lock)
         {
-            var collect = new GroupCollect(follower, ++_rounds, food, left.ToFrozenSet());
+            var collect = new GroupCollect(follower, ++_rounds, food, left.ToFrozenSet()) { Kept = kept };
 
             _collecting = _collecting.SetItem(master, collect);
             Raise();

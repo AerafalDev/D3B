@@ -80,6 +80,21 @@
   <data name="DoingStuck" xml:space="preserve">
     <value>Finds no way to {0}, tries again</value>
   </data>
+  <data name="DoingToDungeon" xml:space="preserve">
+    <value>Goes to the dungeon {0} is in</value>
+  </data>
+  <data name="DoingEntersDungeon" xml:space="preserve">
+    <value>Enters the dungeon behind {0}</value>
+  </data>
+  <data name="DoingNoDungeonKey" xml:space="preserve">
+    <value>Waits at the door: no key to enter the dungeon behind {0}</value>
+  </data>
+  <data name="DoingTurnedAway" xml:space="preserve">
+    <value>Waits at the door: the keeper turned it away from the dungeon behind {0}</value>
+  </data>
+  <data name="DoingLeavesDungeon" xml:space="preserve">
+    <value>Leaves the dungeon behind {0}</value>
+  </data>
   <data name="DoingParty" xml:space="preserve">
     <value>Joins {0}'s party</value>
   </data>

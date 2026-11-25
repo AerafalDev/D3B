@@ -3,9 +3,9 @@ using D3B.Bot.Banks;
 using D3B.Bot.Characters;
 using D3B.Bot.Fighting;
 using D3B.Bot.Fights;
+using D3B.Bot.Groups;
 using D3B.Bot.Localization;
 using D3B.Bot.Movement;
-using D3B.Bot.Npcs;
 using D3B.Bot.Runtime;
 using D3B.Data;
 using D3B.Data.Dungeons;
@@ -38,6 +38,11 @@ namespace D3B.Bot.Dungeons;
 /// the most a run of that dungeon brought, else the most any run did (D527); the activity is done once the profile's count
 /// of runs is, or goes on until no dungeon of the profile can be entered.
 /// </para>
+/// <para>
+/// A master's followers each enter and leave by themselves behind it, as measured in every captured party (D528): the
+/// activity says which dungeon the character is in (<see cref="DungeonInside"/>), leaves out of its turn a dungeon a follower
+/// cannot enter, and its group banks together outside the dungeons, every member keeping its keys and the keyring (D529).
+/// </para>
 /// </remarks>
 public sealed class DungeonActivity : BotActivity
 {
@@ -63,8 +68,12 @@ public sealed class DungeonActivity : BotActivity
     private readonly Dictionary<int, int> _gains = [];
     private readonly RecoveryLadder _bankings = new();
     private readonly BankingPreferences _banking;
+    private readonly Bots? _bots;
     private ActivityReport? _report;
     private int? _inside;
+
+    // The dungeon the character is in, as its followers read it from their own threads (D528): 0 for none, as no id of the table is.
+    private int _shownInside;
     private long? _fightingIn;
     private int _failedJourneys;
     private int _unanswered;
@@ -92,17 +101,35 @@ public sealed class DungeonActivity : BotActivity
     /// <inheritdoc/>
     public override bool FightsItsFights => true;
 
-    // No pods watch: a watch would have a group's bank take the activity's unloading, which deposits all but what is worn, the
-    // keys and the keyring with it, and banks inside a dungeon; the group's dungeons come with the follower (D521, D526).
+    /// <inheritdoc/>
+    public override int? DungeonInside => Volatile.Read(ref _shownInside) is > 0 and var id ? id : null;
+
+    /// <inheritdoc/>
+    /// <remarks>
+    /// No pods watch, whose group's bank would deposit all but what is worn and bank inside a dungeon: the group banks as the
+    /// activity says each member is full, out of every dungeon, each keeping its keys and the keyring (D529).
+    /// </remarks>
+    public override bool BanksTheGroup => true;
 
     /// <inheritdoc/>
     public override bool BanksByTeleport => _banking.UseZaapsOf(false, _settings.UseZaaps);
+
+    private int? Inside
+    {
+        get => _inside;
+        set
+        {
+            _inside = value;
+            Volatile.Write(ref _shownInside, value ?? 0);
+        }
+    }
 
     /// <summary>Initializes a new instance of the <see cref="DungeonActivity"/> class.</summary>
     /// <param name="settings">Which dungeon, and the journey there.</param>
     /// <param name="tables">The installed build's tables: the dungeons, and the bankers no keeper is.</param>
     /// <param name="banking">The general banking settings (D405); the defaults when none is given.</param>
-    public DungeonActivity(DungeonSettings settings, GameTables tables, BankingPreferences? banking = null)
+    /// <param name="bots">The host's bots, whose followers of the character must each be able to enter a dungeon too (D528); none for a character alone.</param>
+    public DungeonActivity(DungeonSettings settings, GameTables tables, BankingPreferences? banking = null, Bots? bots = null)
     {
         ArgumentNullException.ThrowIfNull(settings);
         ArgumentNullException.ThrowIfNull(tables);
@@ -110,6 +137,7 @@ public sealed class DungeonActivity : BotActivity
         _settings = settings;
         _tables = tables;
         _banking = banking ?? new BankingPreferences();
+        _bots = bots;
         _report = new ActivityReport { Doing = GameText.Of(DungeonTexts.Text("DoingStart")) };
     }
 
@@ -126,7 +154,11 @@ public sealed class DungeonActivity : BotActivity
         return (dungeon.IsOnKeyring && Carried(state, DungeonCatalog.KeyringItemId) > 0) || CarriesObjects(state, dungeons.ObjectsOf(dungeon));
     }
 
-    private static bool CarriesObjects(CharacterState state, ReadOnlySpan<DungeonObject> objects)
+    /// <summary>Tells whether a character carries every object a dungeon requires.</summary>
+    /// <param name="state">The character.</param>
+    /// <param name="objects">The objects, such as the dungeon's key.</param>
+    /// <returns>Whether it does.</returns>
+    internal static bool CarriesObjects(CharacterState state, ReadOnlySpan<DungeonObject> objects)
     {
         foreach (var required in objects)
         {
@@ -137,7 +169,11 @@ public sealed class DungeonActivity : BotActivity
         return true;
     }
 
-    private static int Carried(CharacterState state, int itemId)
+    /// <summary>Gets how many of an item a character carries.</summary>
+    /// <param name="state">The character.</param>
+    /// <param name="itemId">The item.</param>
+    /// <returns>The quantity, in all its stacks.</returns>
+    internal static int Carried(CharacterState state, int itemId)
     {
         return state.Inventory.Values.Where(stack => stack.ItemId == itemId).Sum(stack => stack.Quantity);
     }
@@ -174,17 +210,17 @@ public sealed class DungeonActivity : BotActivity
                 if (_inside != inside.Id)
                     _won.Clear();
 
-                _inside = inside.Id;
+                Inside = inside.Id;
 
                 return await RoomAsync(context, inside, mapId, cancellationToken).ConfigureAwait(false);
             }
 
             // The boss's win leads to a map of the dungeon's sub-area that is no room, where its exit stands (client-game.md).
-            if (_inside == inside.Id && IsFinalMap(state, inside))
+            if (_inside == inside.Id && DungeonDoors.IsFinal(state, dungeons, inside))
                 return await ExitAsync(context, inside, cancellationToken).ConfigureAwait(false);
         }
 
-        var (index, dungeon) = NextEnterable(state);
+        var (index, dungeon) = NextEnterable(context);
 
         if (mapId == dungeon.EntranceMapId)
         {
@@ -225,7 +261,7 @@ public sealed class DungeonActivity : BotActivity
             if (_inside is { } dungeon)
                 _beaten.Add(dungeon);
 
-            _inside = null;
+            Inside = null;
         }
         else if (ending is not null && _fightingIn is { } room)
         {
@@ -296,6 +332,15 @@ public sealed class DungeonActivity : BotActivity
     }
 
     /// <inheritdoc/>
+    /// <remarks>A dungeon's key and the keyring, which each member of a group enters by itself with (D528, D529).</remarks>
+    public override bool Keeps(InventoryItem stack)
+    {
+        ArgumentNullException.ThrowIfNull(stack);
+
+        return IsKey(stack.ItemId);
+    }
+
+    /// <inheritdoc/>
     public override async Task<bool> UnloadAsync(BotContext context, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(context);
@@ -319,6 +364,15 @@ public sealed class DungeonActivity : BotActivity
     }
 
     /// <inheritdoc/>
+    public override void OnGroupUnloaded()
+    {
+        // As its own unloading: what the bank or an exchange left waits for the next run's exit (D527, D529).
+        _banks++;
+        _estimateWaived = true;
+        Publish("DoingStart");
+    }
+
+    /// <inheritdoc/>
     public override void Restart()
     {
         // A dungeon shut by a journey or a keeper that did not answer may open once the character is put in order (D519).
@@ -329,7 +383,7 @@ public sealed class DungeonActivity : BotActivity
         _unanswered = 0;
     }
 
-    private (int Index, Dungeon Dungeon) NextEnterable(CharacterState state)
+    private (int Index, Dungeon Dungeon) NextEnterable(BotContext context)
     {
         var listed = _settings.Dungeons;
 
@@ -343,7 +397,7 @@ public sealed class DungeonActivity : BotActivity
         {
             var index = (_next + turn) % listed.Count;
 
-            if (Refusal(state, listed[index], out var dungeon) is not { } why)
+            if (Refusal(context, listed[index], out var dungeon) is not { } why)
                 return (index, dungeon);
 
             refused ??= why;
@@ -360,9 +414,10 @@ public sealed class DungeonActivity : BotActivity
         };
     }
 
-    private ActivityException? Refusal(CharacterState state, int id, out Dungeon dungeon)
+    private ActivityException? Refusal(BotContext context, int id, out Dungeon dungeon)
     {
         var dungeons = _tables.Dungeons;
+        var state = context.State;
 
         if (!dungeons.TryGetDungeon(id, out dungeon))
             return Impossible($"Dungeon {id} is not in the client's table.", GameText.Of(DungeonTexts.Text("FailUnknownDungeon")));
@@ -382,6 +437,42 @@ public sealed class DungeonActivity : BotActivity
 
         if (!CarriesKey(state, dungeons, dungeon))
             return Impossible($"The character carries neither the key of dungeon {dungeon.Id} nor a keyring that opens it.", GameText.Of(DungeonTexts.Text("FailNoKey")));
+
+        return FollowersRefusal(context, dungeon);
+    }
+
+    // The owner's choice (D528): a dungeon one of the character's followers cannot enter is left out of the group's turn. A follower
+    // not connected says nothing of what it carries, and one left behind (D490) is not waited for.
+    private ActivityException? FollowersRefusal(BotContext context, Dungeon dungeon)
+    {
+        if (_bots is null)
+            return null;
+
+        var gate = context.Actor.Gate as GroupGate;
+        var dungeons = _tables.Dungeons;
+
+        foreach (var follower in _bots.Groups.FollowersOf(context.Actor.Key))
+        {
+            if (!follower.IsConnected || gate?.IsBehind(follower.Key) == true)
+                continue;
+
+            var theirs = follower.State;
+            var name = GameTextValue.Of(theirs.Name);
+
+            if (theirs.Level is { } level && level < dungeon.MinLevel)
+            {
+                return Impossible(
+                    $"Follower {follower.Key.CharacterId} is level {level}; dungeon {dungeon.Id} lets in from level {dungeon.MinLevel}.",
+                    GameText.Of(DungeonTexts.Text("FailFollowerTooLow"), name, GameTextValue.Number(level), GameTextValue.Number(dungeon.MinLevel)));
+            }
+
+            if (!CarriesKey(theirs, dungeons, dungeon))
+                return Impossible($"Follower {follower.Key.CharacterId} carries neither the key of dungeon {dungeon.Id} nor a keyring that opens it.", GameText.Of(DungeonTexts.Text("FailFollowerNoKey"), name));
+
+            // A keeper turning a follower away, such as its keyring's charge spent, shuts the dungeon for the group's run (D524).
+            if (follower.Activity is { IsOver: false, Activity: FollowActivity follow } && follow.TurnedAwayFrom.Contains(dungeon.Id))
+                return Impossible($"The keeper of dungeon {dungeon.Id} turned follower {follower.Key.CharacterId} away.", GameText.Of(DungeonTexts.Text("FailFollowerTurnedAway"), name));
+        }
 
         return null;
     }
@@ -413,63 +504,31 @@ public sealed class DungeonActivity : BotActivity
     {
         Publish("DoingExit");
 
-        var dungeons = _tables.Dungeons;
-        var mapId = context.State.MapId;
+        var outcome = await DungeonDoors.ExitAsync(context, _tables, cancellationToken).ConfigureAwait(false);
 
-        int? Choose(NpcDialog dialog)
+        if (outcome is DoorOutcome.Through)
         {
-            var replies = dialog.Replies;
+            // Out of the dungeon: its run is counted, what it brought measured, and the next is the next dungeon's of the profile (D524, D527).
+            if (_weightAtEntry is { } before)
+                _gains[dungeon.Id] = Math.Max(_gains.GetValueOrDefault(dungeon.Id), Math.Max(0, context.State.Weight - before));
 
-            if (replies.FirstOrDefault(dungeons.IsExitReply) is > 0 and var exit)
-                return exit;
+            _weightAtEntry = null;
+            _estimateWaived = false;
+            _runs++;
+            Inside = null;
+            _won.Clear();
+            _unanswered = 0;
+            Publish("DoingStart");
 
-            return replies.FirstOrDefault(dungeons.IsConfirmation) is > 0 and var confirmed ? confirmed : null;
+            return _settings.Runs is 0 || _runs < _settings.Runs;
         }
 
-        var unanswered = false;
-
-        foreach (var npcId in context.State.Npcs.Values.Select(npc => npc.NpcId).Where(npc => !_tables.Banks.TryGetBanker(npc, out _)).Distinct().ToList())
-        {
-            var outcome = await context.TalkAsync(npcId, Choose, cancellationToken).ConfigureAwait(false);
-
-            if (context.State.MapId != mapId)
-            {
-                // Out of the dungeon: its run is counted, what it brought measured, and the next is the next dungeon's of the profile (D524, D527).
-                if (_weightAtEntry is { } before)
-                    _gains[dungeon.Id] = Math.Max(_gains.GetValueOrDefault(dungeon.Id), Math.Max(0, context.State.Weight - before));
-
-                _weightAtEntry = null;
-                _estimateWaived = false;
-                _runs++;
-                _inside = null;
-                _won.Clear();
-                _unanswered = 0;
-                Publish("DoingStart");
-
-                return _settings.Runs is 0 || _runs < _settings.Runs;
-            }
-
-            unanswered |= outcome is NpcTalkOutcome.NoAnswer or NpcTalkOutcome.Busy or NpcTalkOutcome.NotPlaced;
-        }
-
-        if (unanswered && ++_unanswered < MostUnanswered)
+        if (outcome is DoorOutcome.Unanswered && ++_unanswered < MostUnanswered)
             return true;
 
         _unanswered = 0;
 
         throw Failure($"No NPC of the last map of dungeon {dungeon.Id} let the character out.", "FailNoExit");
-    }
-
-    private bool IsFinalMap(CharacterState state, Dungeon dungeon)
-    {
-        var dungeons = _tables.Dungeons;
-
-        return state.MapId is { } map
-            && state.SubAreaId is { } subArea
-            && map != dungeon.EntranceMapId
-            && map != dungeon.ExitMapId
-            && dungeons.SubAreasOf(dungeon).Contains(subArea)
-            && !dungeons.RoomsOf(dungeon).Contains(map);
     }
 
     private async Task<bool> RoomAsync(BotContext context, Dungeon dungeon, long mapId, CancellationToken cancellationToken)
@@ -594,65 +653,34 @@ public sealed class DungeonActivity : BotActivity
     {
         Publish("DoingEnter");
 
-        var dungeons = _tables.Dungeons;
-        var keyring = dungeon.IsOnKeyring && Carried(context.State, DungeonCatalog.KeyringItemId) > 0;
-        var key = CarriesObjects(context.State, dungeons.ObjectsOf(dungeon));
-
-        // The keyring spends nothing, a key is spent (D523): the first is chosen whenever the keeper offers it.
-        int? Choose(NpcDialog dialog)
+        switch (await DungeonDoors.EnterAsync(context, _tables, dungeon, cancellationToken).ConfigureAwait(false))
         {
-            var replies = dialog.Replies;
-
-            if (keyring && replies.FirstOrDefault(dungeons.IsKeyringReply) is > 0 and var byKeyring)
-                return byKeyring;
-
-            if (key && replies.FirstOrDefault(dungeons.IsKeyReply) is > 0 and var byKey)
-                return byKey;
-
-            return replies.FirstOrDefault(dungeons.IsConfirmation) is > 0 and var confirmed ? confirmed : null;
-        }
-
-        var unanswered = false;
-
-        // The server places the NPCs with the map, and no table says which is the keeper: each is asked in turn.
-        foreach (var npcId in context.State.Npcs.Values.Select(npc => npc.NpcId).Where(npc => !_tables.Banks.TryGetBanker(npc, out _)).Distinct().ToList())
-        {
-            var outcome = await context.TalkAsync(npcId, Choose, cancellationToken).ConfigureAwait(false);
-
-            if (context.State.MapId != dungeon.EntranceMapId)
-            {
-                if (context.State.MapId is not { } arrived || !dungeons.RoomsOf(dungeon).Contains(arrived))
-                    return false;
-
+            case DoorOutcome.Through:
                 _entered++;
                 _unanswered = 0;
                 _weightAtEntry = context.State.Weight;
-                _inside = dungeon.Id;
+                Inside = dungeon.Id;
                 _won.Clear();
                 Publish("DoingRooms");
 
                 return true;
-            }
+            case DoorOutcome.Elsewhere:
+                return false;
+            case DoorOutcome.Unanswered:
+                // An NPC who did not answer may still be the keeper: the door is tried again a few times.
+                if (++_unanswered >= MostUnanswered)
+                {
+                    _unanswered = 0;
+                    _shut[dungeon.Id] = Failure($"No NPC at the door of dungeon {dungeon.Id} answered, {MostUnanswered} times in a row.", "FailNoKeeper");
+                }
 
-            // An NPC who did not answer may still be the keeper: the others are asked, and the door tried again a few times.
-            unanswered |= outcome is NpcTalkOutcome.NoAnswer or NpcTalkOutcome.Busy or NpcTalkOutcome.NotPlaced;
+                return false;
+            default:
+                // A keeper may turn away one dungeon of several, its keyring's charge spent: the others are still entered (D524).
+                _shut[dungeon.Id] = Impossible($"No NPC at the door of dungeon {dungeon.Id} let the character in.", GameText.Of(DungeonTexts.Text("FailNoKeeper")));
+
+                return false;
         }
-
-        if (unanswered)
-        {
-            if (++_unanswered >= MostUnanswered)
-            {
-                _unanswered = 0;
-                _shut[dungeon.Id] = Failure($"No NPC at the door of dungeon {dungeon.Id} answered, {MostUnanswered} times in a row.", "FailNoKeeper");
-            }
-
-            return false;
-        }
-
-        // A keeper may turn away one dungeon of several, its keyring's charge spent: the others are still entered (D524).
-        _shut[dungeon.Id] = Impossible($"No NPC at the door of dungeon {dungeon.Id} let the character in.", GameText.Of(DungeonTexts.Text("FailNoKeeper")));
-
-        return false;
     }
 
     private void Publish(string doing)

@@ -37,9 +37,9 @@ internal static class TestGroup
         return play.EnterAsync(cell, mapId, TestPlay.Account, MasterId, "Master");
     }
 
-    public static Task<(TestConnection Connection, BotActor Bot)> FollowerAsync(TestPlay play, int cell, long mapId = TestPlay.MapId, string name = "Follower")
+    public static Task<(TestConnection Connection, BotActor Bot)> FollowerAsync(TestPlay play, int cell, long mapId = TestPlay.MapId, string name = "Follower", int level = 200)
     {
-        return play.EnterAsync(cell, mapId, FollowerAccount, FollowerId, name);
+        return play.EnterAsync(cell, mapId, FollowerAccount, FollowerId, name, level);
     }
 
     /// <summary>A master and its follower, both accounts subscribed and both characters of level 200, in the master's party it leads: a group the game follows (D476).</summary>

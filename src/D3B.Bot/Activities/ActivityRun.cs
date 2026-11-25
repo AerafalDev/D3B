@@ -565,6 +565,9 @@ public sealed class ActivityRun
                 ? await Activity.UnloadAsync(context, cancellationToken).ConfigureAwait(false)
                 : await group.UnloadAsync(context, Activity, cancellationToken).ConfigureAwait(false);
 
+            if (unloaded && group is not null)
+                Activity.OnGroupUnloaded();
+
             return unloaded ? Next.Step : Next.NotUnloaded;
         }
 

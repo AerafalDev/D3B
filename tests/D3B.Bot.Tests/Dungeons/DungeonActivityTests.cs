@@ -149,9 +149,11 @@ public sealed class DungeonActivityTests : IAsyncDisposable
     public async Task AtTheDoorTheKeeperIsGivenTheKeyAndTheEntryConfirmedTheBankerLeftAlone()
     {
         var (connection, bot) = await CarryingAsync(TestPlay.InsideMapId, 300, Stack(12, TestPlay.DungeonKeyId, 1));
-        var run = bot.StartActivity(Activity());
+        var activity = Activity();
+        var run = bot.StartActivity(activity);
 
         Assert.Equal(new NpcActionRequest { Action = 3, MapId = TestPlay.InsideMapId, NpcActorId = TestPlay.WayActorId }, await TestWalks.SentAsync(_play, connection, 1));
+        Assert.Null(activity.DungeonInside);
         connection.Server(new NpcDialogCreationEvent { MapId = TestPlay.InsideMapId, NpcActorId = TestPlay.WayActorId });
         connection.Server(Question(KeeperQuestion, TestPlay.KeyReplyId, TestPlay.StayReplyId));
 
@@ -166,6 +168,9 @@ public sealed class DungeonActivityTests : IAsyncDisposable
         await bot.ProcessedAsync();
 
         Assert.Equal(TestPlay.OtherInsideMapId, bot.State.MapId);
+
+        // Its followers read which dungeon it is in, to enter it behind it by themselves (D528).
+        await Groups.TestGroup.UntilAsync(_play, () => activity.DungeonInside is TestPlay.DungeonId, "the dungeon shown");
         run.Stop();
         Assert.Equal(ActivityOutcome.Stopped, await run.Completion);
     }
@@ -497,6 +502,12 @@ public sealed class DungeonActivityTests : IAsyncDisposable
 
         Assert.True(activity.IsFull(outside with { Weight = 650 }));
         Assert.False(activity.IsFull(outside with { Weight = 550 }));
+
+        // Banked by its group, what the bank or an exchange left waits for the next exit, as its own banking does (D529).
+        activity.OnGroupUnloaded();
+
+        Assert.False(activity.IsFull(outside with { Weight = 650 }));
+        Assert.True(activity.IsFull(outside with { Weight = 950 }));
     }
 
     [Fact]

@@ -80,6 +80,21 @@
   <data name="DoingStuck" xml:space="preserve">
     <value>Ne trouve pas de chemin vers {0}, réessaie</value>
   </data>
+  <data name="DoingToDungeon" xml:space="preserve">
+    <value>Va au donjon où est {0}</value>
+  </data>
+  <data name="DoingEntersDungeon" xml:space="preserve">
+    <value>Entre dans le donjon derrière {0}</value>
+  </data>
+  <data name="DoingNoDungeonKey" xml:space="preserve">
+    <value>Attend à la porte : pas de clef pour entrer dans le donjon derrière {0}</value>
+  </data>
+  <data name="DoingTurnedAway" xml:space="preserve">
+    <value>Attend à la porte : le gardien a refusé de le laisser entrer derrière {0}</value>
+  </data>
+  <data name="DoingLeavesDungeon" xml:space="preserve">
+    <value>Sort du donjon derrière {0}</value>
+  </data>
   <data name="DoingParty" xml:space="preserve">
     <value>Rejoint le groupe de {0}</value>
   </data>

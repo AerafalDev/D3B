@@ -50,8 +50,10 @@ internal sealed class GroupBank : IGroupBank
     // step at a time, reads and writes them.
     private readonly HashSet<int> _refused = [];
 
-    // Whether the master's profile banks all but what is worn, its food too (D459), as the unloading begins.
+    // Whether the master's profile banks all but what is worn, its food too (D459), and what every member keeps (D529), as the
+    // unloading begins.
     private bool _food;
+    private Func<InventoryItem, bool>? _kept;
 
     public GroupBank(BotActor bot, GroupDirectory groups, GroupGate gate, GameTables tables)
     {
@@ -80,17 +82,24 @@ internal sealed class GroupBank : IGroupBank
     /// <inheritdoc/>
     public bool Takes(BotActivity activity)
     {
-        return _groups.FollowersOf(_bot.Key).Count > 0 && ShareOf(activity) is not null;
+        ArgumentNullException.ThrowIfNull(activity);
+
+        return _groups.FollowersOf(_bot.Key).Count > 0 && (ShareOf(activity) is not null || activity.BanksTheGroup);
     }
 
     /// <inheritdoc/>
     public bool IsFull(BotActivity activity)
     {
-        if (ShareOf(activity) is not { } share)
-            return false;
+        ArgumentNullException.ThrowIfNull(activity);
 
         // A follower left behind takes nothing to the bank, which would wait for it in vain (D490).
-        return _groups.FollowersOf(_bot.Key).Any(follower => !_gate.IsBehind(follower.Key) && follower.State is { MaxWeight: > 0 } state && state.Weight * 100L >= (long)share * state.MaxWeight);
+        var followers = _groups.FollowersOf(_bot.Key).Where(follower => !_gate.IsBehind(follower.Key));
+
+        if (ShareOf(activity) is { } share)
+            return followers.Any(follower => follower.State is { MaxWeight: > 0 } state && state.Weight * 100L >= (long)share * state.MaxWeight);
+
+        // An activity that watches no pods says it of each member as of the master, such as a dungeon's, never inside one (D529).
+        return activity.BanksTheGroup && followers.Any(follower => follower.State is { MaxWeight: > 0 } state && activity.IsFull(state));
     }
 
     /// <inheritdoc/>
@@ -102,6 +111,7 @@ internal sealed class GroupBank : IGroupBank
         GroupLog.Banking(context.Log, _bot.Key.CharacterId);
         _refused.Clear();
         _food = activity.DepositsAll;
+        _kept = activity.Keeps;
 
         if (!await ToBankerAsync(context, activity, cancellationToken).ConfigureAwait(false))
             return false;
@@ -124,10 +134,10 @@ internal sealed class GroupBank : IGroupBank
                 // The whole group with the master, as before any action (D437).
                 await _gate.GatherAsync(context, cancellationToken).ConfigureAwait(false);
 
-                if (!follower.IsConnected || follower.IsPaused || _gate.IsBehind(follower.Key) || !GroupGifts.Carries(follower.State, _tables.Items, _food, left))
+                if (!follower.IsConnected || follower.IsPaused || _gate.IsBehind(follower.Key) || !GroupGifts.Carries(follower.State, _tables.Items, _food, left, _kept))
                     break;
 
-                var offered = GroupGifts.Of(follower.State, context.State, _tables.Items, _food, left);
+                var offered = GroupGifts.Of(follower.State, context.State, _tables.Items, _food, left, _kept);
 
                 // Its pods holding none of the follower's next stack, or an exchange that did not conclude, such as more
                 // than its pods hold by the server's reckoning, the master deposits, once, then takes the rest.
@@ -157,11 +167,12 @@ internal sealed class GroupBank : IGroupBank
         return await DepositAsync(context, cancellationToken).ConfigureAwait(false) is BankOutcome.Done;
     }
 
-    // The owner's choice (D452): the master deposits all it does not wear, but the food it eats, whatever its profile banks,
-    // so that its pods go down whatever it carries, objects put in its bags by the player's hand too.
+    // The owner's choice (D452): the master deposits all it does not wear, but the food it eats and what its profile keeps, such
+    // as a dungeon's key (D529), whatever else its profile banks, so that its pods go down whatever it carries, objects put in
+    // its bags by the player's hand too.
     private bool Deposited(InventoryItem stack)
     {
-        return !stack.IsWorn && stack.Quantity > 0 && !_refused.Contains(stack.Uid) && (_food || !(_tables.Items.TryGetItem(stack.ItemId, out var item) && item.Heals));
+        return !stack.IsWorn && stack.Quantity > 0 && !_refused.Contains(stack.Uid) && _kept?.Invoke(stack) != true && (_food || !(_tables.Items.TryGetItem(stack.ItemId, out var item) && item.Heals));
     }
 
     private bool Carries(CharacterState state)
@@ -238,7 +249,7 @@ internal sealed class GroupBank : IGroupBank
         var id = follower.Key.CharacterId;
         var before = context.State.Inventory;
 
-        using var collecting = _groups.Collect(_bot.Key, follower.Key, _food, left);
+        using var collecting = _groups.Collect(_bot.Key, follower.Key, _food, left, _kept);
 
         if (!await context.WaitUntilAsync(state => state.Exchange is { IsOpen: false } asked && asked.SourceId == id, _exchangeWait, cancellationToken).ConfigureAwait(false))
             return null;
