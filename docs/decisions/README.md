@@ -156,3 +156,4 @@ Each file holds the decisions of one group of [the index](../decisions-index.md)
 - [The studio's glass, tiles and drawn colours one each (D560)](d560-glass-tiles-and-drawn-colours.md): 1 decision, 2 KB.
 - [The app's 1.0.0 and 1.0.1, the transfer taken up after a stop (D561 to D564)](d561-release-1-0-0.md): 4 decisions, 8 KB.
 - [Hunting, capture nets and soul stones worn (D565)](d565-capture-gear.md): 1 decision, 4 KB.
+- [The app's 1.1.0 (D566)](d566-release-1-1-0.md): 1 decision, 1 KB.
