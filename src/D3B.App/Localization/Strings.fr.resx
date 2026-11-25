@@ -1580,11 +1580,11 @@
   <data name="SectionBots" xml:space="preserve">
     <value>Bots</value>
   </data>
-  <data name="SectionNetwork" xml:space="preserve">
-    <value>Réseau</value>
+  <data name="SectionAdvanced" xml:space="preserve">
+    <value>Avancé</value>
   </data>
-  <data name="SectionAppearance" xml:space="preserve">
-    <value>Apparence</value>
+  <data name="SectionGeneral" xml:space="preserve">
+    <value>Général</value>
   </data>
   <data name="SectionFiles" xml:space="preserve">
     <value>Fichiers</value>
@@ -2078,11 +2078,11 @@
   <data name="SectionBotsLead" xml:space="preserve">
     <value>Ce que tous les bots de cette machine respectent, quel que soit leur profil.</value>
   </data>
-  <data name="SectionNetworkLead" xml:space="preserve">
-    <value>Comment D3B se place entre le client et les serveurs.</value>
+  <data name="SectionAdvancedLead" xml:space="preserve">
+    <value>Ce qu'un joueur change rarement : les sessions enregistrées et les outils pour qui étudie le jeu.</value>
   </data>
-  <data name="SectionAppearanceLead" xml:space="preserve">
-    <value>Ces réglages ne concernent que cette app.</value>
+  <data name="SectionGeneralLead" xml:space="preserve">
+    <value>L'app elle-même : sa langue et sa disposition.</value>
   </data>
   <data name="SectionFilesLead" xml:space="preserve">
     <value>Où D3B garde ce qu'il sait et ce que tu crées.</value>
@@ -3276,10 +3276,10 @@
     <value>Tes sessions de jeu sont maintenant enregistrées</value>
   </data>
   <data name="CapturesNoticeText" xml:space="preserve">
-    <value>Tes sessions de jeu sont enregistrées sur cet ordinateur, pour qu'un bug puisse être rejoué. Rien ne quitte cet ordinateur. {0}. Tu peux l'arrêter dans les paramètres Réseau.</value>
+    <value>Tes sessions de jeu sont enregistrées sur cet ordinateur, pour qu'un bug puisse être rejoué. Rien ne quitte cet ordinateur. {0}. Tu peux l'arrêter dans les paramètres Avancés.</value>
   </data>
   <data name="CapturesNoticeSettings" xml:space="preserve">
-    <value>Paramètres Réseau</value>
+    <value>Paramètres avancés</value>
   </data>
   <data name="CapturesNoticeUnderstood" xml:space="preserve">
     <value>C'est compris</value>
@@ -3399,7 +3399,7 @@
     <value>Le rapport n’a pas pu être écrit. {0}</value>
   </data>
   <data name="ReportNoCapture" xml:space="preserve">
-    <value>Ce personnage n’a pas de capture de sa session : elle a été supprimée, ou jamais enregistrée. Active l’enregistrement dans les paramètres Réseau et signale à nouveau après la prochaine session.</value>
+    <value>Ce personnage n’a pas de capture de sa session : elle a été supprimée, ou jamais enregistrée. Active l’enregistrement dans les paramètres Avancés et signale à nouveau après la prochaine session.</value>
   </data>
   <data name="ReportNoTranslation" xml:space="preserve">
     <value>Cette version du client n’a pas de protocole avec lequel nettoyer la capture.</value>

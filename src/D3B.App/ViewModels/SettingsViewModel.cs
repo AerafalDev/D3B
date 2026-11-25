@@ -18,7 +18,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace D3B.App.ViewModels;
 
-/// <summary>The settings' tab, in sections: Bots, Network, Appearance, Files and About (D151, D329).</summary>
+/// <summary>The settings' tab, in sections: General, Bots, Files, Advanced and About (D151, D329, D516).</summary>
 /// <remarks>
 /// <para>
 /// The settings are the machine's, not a profile's, kept in the app's own file (<see cref="AppPreferences"/>) as the
@@ -64,11 +64,11 @@ internal sealed partial class SettingsViewModel : ObservableObject
     /// <summary>Gets the section Bots.</summary>
     public SettingsSectionViewModel Bots => Sections[(int)SettingsSection.Bots];
 
-    /// <summary>Gets the section Network.</summary>
-    public SettingsSectionViewModel Network => Sections[(int)SettingsSection.Network];
+    /// <summary>Gets the section Advanced: the captures and the advanced tools (D516).</summary>
+    public SettingsSectionViewModel Advanced => Sections[(int)SettingsSection.Advanced];
 
-    /// <summary>Gets the section Appearance.</summary>
-    public SettingsSectionViewModel Appearance => Sections[(int)SettingsSection.Appearance];
+    /// <summary>Gets the section General: the language and the layout (D516).</summary>
+    public SettingsSectionViewModel General => Sections[(int)SettingsSection.General];
 
     /// <summary>Gets the section Files.</summary>
     public SettingsSectionViewModel Files => Sections[(int)SettingsSection.Files];
@@ -208,6 +208,9 @@ internal sealed partial class SettingsViewModel : ObservableObject
 
     /// <summary>Gets whether the search keeps a row of the banking group.</summary>
     public bool IsBankingShown => BankFullAtRow.IsShown || BankZaapsRow.IsShown;
+
+    /// <summary>Gets whether a row of the recorded sessions shows, so that their group's title does (D516).</summary>
+    public bool IsCapturesShown => Captures.IsShown || CaptureDaysRow.IsShown || CaptureMegabytesRow.IsShown || CapturesFolder.IsShown;
 
     /// <summary>Gets whether the bots are kept from taking a zaap to the bank.</summary>
     public bool IsBankZaapsOff => !BankUseZaaps;
@@ -510,9 +513,10 @@ internal sealed partial class SettingsViewModel : ObservableObject
             row.IsShown = row.Holds(filter);
 
         OnPropertyChanged(nameof(IsBankingShown));
+        OnPropertyChanged(nameof(IsCapturesShown));
         Bots.IsShown = Delays().Any(delay => delay.IsShown) || IsBankingShown;
-        Network.IsShown = Captures.IsShown || CaptureDaysRow.IsShown || CaptureMegabytesRow.IsShown || CapturesFolder.IsShown;
-        Appearance.IsShown = Language.IsShown || Layout.IsShown || AdvancedToolsRow.IsShown;
+        Advanced.IsShown = IsCapturesShown || AdvancedToolsRow.IsShown;
+        General.IsShown = Language.IsShown || Layout.IsShown;
         Files.IsShown = Project.IsShown || Database.IsShown || ClientFolder.IsShown || ClientData.IsShown || Preferences.IsShown;
         About.IsShown = Version.IsShown || Licences.IsShown;
         HasNoMatch = !Sections.Any(section => section.IsShown);
@@ -525,7 +529,7 @@ internal sealed partial class SettingsViewModel : ObservableObject
     private void MarkChanges()
     {
         Bots.HasChanges = Display.IsRaised || HasRaisedDelays || IsBankFullAtChanged || !BankUseZaaps;
-        Network.HasChanges = IsCapturesOff || IsCaptureDaysChanged || IsCaptureMegabytesChanged;
+        Advanced.HasChanges = IsCapturesOff || IsCaptureDaysChanged || IsCaptureMegabytesChanged;
         Files.HasChanges = IsClientFolderChosen;
     }
 

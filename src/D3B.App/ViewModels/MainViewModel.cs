@@ -35,9 +35,9 @@ namespace D3B.App.ViewModels;
 
 /// <summary>The studio's window: where the bots' host stands, its docks and editor, the run block, the search, its dialogs and toasts (D14, D91, D320 to D322, D328).</summary>
 /// <remarks>
-/// The characters' panel, the inspector and a character's tab are the studio's own since 7c3 (D323 to D325). Until 7c4
-/// draws them again, the journal, the protocol and the statistics hold the bottom panel, and the profiles, the settings and
-/// the modules' pages are tabs of the editor (D333).
+/// The characters' panel, the inspector and a character's tab are the studio's own since 7c3 (D323 to D325). The journal, the
+/// trace, the problems and the protocol hold the bottom panel; the profiles, the settings, the statistics and the modules'
+/// pages are tabs of the editor (D333, D516).
 /// </remarks>
 internal sealed partial class MainViewModel : ObservableObject
 {
@@ -47,6 +47,7 @@ internal sealed partial class MainViewModel : ObservableObject
     private const string SequenceTab = "sequence:";
     private const string SettingsTab = "settings";
     private const string CharacterTab = "character:";
+    private const string StatisticsTab = "statistics";
 
     private readonly HostRunner _host;
     private readonly Localizer _localizer;
@@ -119,6 +120,9 @@ internal sealed partial class MainViewModel : ObservableObject
 
     /// <summary>Gets the bottom panel (D327).</summary>
     public BottomPanelViewModel Bottom { get; }
+
+    /// <summary>Gets the statistics, a tab of the editor that the activity bar opens (D146, D516).</summary>
+    public StatisticsViewModel Statistics { get; }
 
     /// <summary>Gets the settings, a tab of the editor (D329).</summary>
     public SettingsViewModel Settings { get; }
@@ -197,6 +201,10 @@ internal sealed partial class MainViewModel : ObservableObject
     [ObservableProperty]
     public partial string OnlineText { get; private set; } = "";
 
+    /// <summary>Gets whether the statistics' tab shows, which the activity bar's entry says pressed (D516).</summary>
+    [ObservableProperty]
+    public partial bool IsStatisticsShown { get; private set; }
+
     /// <summary>Gets whether everything is saved: no profile's tab with changes not saved.</summary>
     [ObservableProperty]
     public partial bool IsSaved { get; private set; } = true;
@@ -261,7 +269,8 @@ internal sealed partial class MainViewModel : ObservableObject
             IsUnsaved = id => Profiles.Find(id)?.IsDirty == true || Routes.Find(id)?.IsDirty == true || Zones.Find(id)?.IsDirty == true || Sequences.Find(id)?.IsDirty == true,
         };
         Properties.Asset.Rename = Assets.RenameAssetAsync;
-        Bottom = new BottomPanelViewModel(Layout, () => _host.Services, new LogsViewModel(localizer, choice, Toasts), new InspectorViewModel(localizer, choice), new StatisticsViewModel(localizer));
+        Statistics = new StatisticsViewModel(localizer);
+        Bottom = new BottomPanelViewModel(Layout, () => _host.Services, new LogsViewModel(localizer, choice, Toasts), new InspectorViewModel(localizer, choice), localizer);
         Bottom.HostFailure = () => IsFailed ? HostFailure : null;
         Bottom.Problems.OpenFolder = folder => OpenFolder?.Invoke(folder);
         Bottom.Problems.ChooseCharacter = key => RunBlock!.Choose(key);
@@ -287,7 +296,7 @@ internal sealed partial class MainViewModel : ObservableObject
             ProfileRequested = NewProfile,
             RouteRequested = () => Routes.CreateAsync(""),
             ZoneRequested = () => Zones.CreateAsync(""),
-            Notice = new CapturesNoticeViewModel(localizer, Settings, preferences) { SettingsRequested = () => ShowSettings(SettingsSection.Network) },
+            Notice = new CapturesNoticeViewModel(localizer, Settings, preferences) { SettingsRequested = () => ShowSettings(SettingsSection.Advanced) },
         };
         Selection.Changed += OnSelectionChanged;
         Layout.PropertyChanged += (_, e) =>
@@ -310,8 +319,8 @@ internal sealed partial class MainViewModel : ObservableObject
     {
         yield return ("SettingDisplay", SettingsSection.Bots);
         yield return ("SettingDelays", SettingsSection.Bots);
-        yield return ("SettingCaptures", SettingsSection.Network);
-        yield return ("SettingLanguage", SettingsSection.Appearance);
+        yield return ("SettingCaptures", SettingsSection.Advanced);
+        yield return ("SettingLanguage", SettingsSection.General);
         yield return ("SettingFiles", SettingsSection.Files);
         yield return ("SettingUpdate", SettingsSection.About);
     }
@@ -382,6 +391,9 @@ internal sealed partial class MainViewModel : ObservableObject
 
         Bottom.Refresh(services);
 
+        if (Editor.IsShown(StatisticsTab))
+            Statistics.Refresh(services);
+
         // Always: the bots' delays the settings show are read once the host runs, whichever tab shows.
         Settings.Refresh(services);
         RefreshPages(services);
@@ -416,11 +428,12 @@ internal sealed partial class MainViewModel : ObservableObject
         Bottom.ToggleTab(BottomTab.Journal);
     }
 
-    /// <summary>Shows the statistics in the bottom panel, or hides the panel when it shows them: the activity bar's Statistics (D513).</summary>
+    /// <summary>Shows the statistics' tab: the activity bar's Statistics (D516).</summary>
     [RelayCommand]
-    public void ToggleStatistics()
+    public void ShowStatistics()
     {
-        Bottom.ToggleTab(BottomTab.Statistics);
+        Editor.Open(StatisticsTab, () => new EditorTab(StatisticsTab, () => _localizer["ActivityStatistics"], "Toolwindows.Profiler", Statistics, needsHost: true));
+        Statistics.Refresh(_host.Services);
     }
 
     /// <summary>Shows the library in the side bar, the keyboard in its search: Ctrl Space (D321, D513).</summary>
@@ -676,6 +689,9 @@ internal sealed partial class MainViewModel : ObservableObject
     // Edit's Undo and Redo follow the editor shown, and what it holds to take back or do again: in the world's tab, the route or the zone selected.
     private void FollowEditor(string? property)
     {
+        if (property is nameof(EditorTabs.Selected))
+            IsStatisticsShown = Editor.IsShown(StatisticsTab);
+
         if (property is nameof(WorldViewportViewModel.Route))
             Bottom.Follow(World.Route);
 
@@ -716,7 +732,7 @@ internal sealed partial class MainViewModel : ObservableObject
         yield return Command("CommandRedo", "Ctrl Y", Redo);
         yield return Command("CommandToggleJournal", "Ctrl J", ToggleBottom);
         yield return Command("CommandShowSequencer", "", ShowSequencer);
-        yield return Command("CommandShowStatistics", "", () => Bottom.Show(BottomTab.Statistics));
+        yield return Command("CommandShowStatistics", "", ShowStatistics);
         yield return Command("CommandToggleSide", "Ctrl B", () => Layout.Toggle(StudioPanel.Side));
         yield return Command("CommandToggleDetails", "Ctrl Alt B", () => Layout.Toggle(StudioPanel.Details));
         yield return Command("CommandToggleAdvancedTools", "", Layout.ToggleAdvancedTools);

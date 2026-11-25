@@ -9,7 +9,7 @@ namespace D3B.App.ViewModels.Home;
 /// <remarks>
 /// A bug report is only as good as the capture that comes with it, so the game connection is recorded by default. The
 /// player is told once, on the first start after the change, what is kept, where, for how long, that nothing leaves the
-/// machine unless they send a report, and how to turn it off: the Network settings say the same all the time.
+/// machine unless they send a report, and how to turn it off: the Advanced settings say the same all the time (D516).
 /// </remarks>
 internal sealed partial class CapturesNoticeViewModel : ObservableObject
 {
@@ -25,7 +25,7 @@ internal sealed partial class CapturesNoticeViewModel : ObservableObject
     [ObservableProperty]
     public partial string Text { get; private set; } = "";
 
-    /// <summary>Gets or sets what shows the Network settings.</summary>
+    /// <summary>Gets or sets what shows the Advanced settings, where the captures are (D516).</summary>
     public Action? SettingsRequested { get; set; }
 
     /// <summary>Initializes a new instance of the <see cref="CapturesNoticeViewModel"/> class.</summary>

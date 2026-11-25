@@ -1580,11 +1580,11 @@
   <data name="SectionBots" xml:space="preserve">
     <value>Bots</value>
   </data>
-  <data name="SectionNetwork" xml:space="preserve">
-    <value>Network</value>
+  <data name="SectionAdvanced" xml:space="preserve">
+    <value>Advanced</value>
   </data>
-  <data name="SectionAppearance" xml:space="preserve">
-    <value>Appearance</value>
+  <data name="SectionGeneral" xml:space="preserve">
+    <value>General</value>
   </data>
   <data name="SectionFiles" xml:space="preserve">
     <value>Files</value>
@@ -2078,11 +2078,11 @@
   <data name="SectionBotsLead" xml:space="preserve">
     <value>What every bot on this machine respects, whatever its profile.</value>
   </data>
-  <data name="SectionNetworkLead" xml:space="preserve">
-    <value>How D3B stands between the client and the servers.</value>
+  <data name="SectionAdvancedLead" xml:space="preserve">
+    <value>What a player rarely changes: the recorded sessions and the tools for those who study the game.</value>
   </data>
-  <data name="SectionAppearanceLead" xml:space="preserve">
-    <value>These settings concern this app alone.</value>
+  <data name="SectionGeneralLead" xml:space="preserve">
+    <value>The app itself: its language and its layout.</value>
   </data>
   <data name="SectionFilesLead" xml:space="preserve">
     <value>Where D3B keeps what it knows and what you make.</value>
@@ -3276,10 +3276,10 @@
     <value>Your game sessions are now recorded</value>
   </data>
   <data name="CapturesNoticeText" xml:space="preserve">
-    <value>Your game sessions are recorded on this machine, so that a bug can be replayed. Nothing leaves this machine. {0}. You can turn this off in the Network settings.</value>
+    <value>Your game sessions are recorded on this machine, so that a bug can be replayed. Nothing leaves this machine. {0}. You can turn this off in the Advanced settings.</value>
   </data>
   <data name="CapturesNoticeSettings" xml:space="preserve">
-    <value>Network settings</value>
+    <value>Advanced settings</value>
   </data>
   <data name="CapturesNoticeUnderstood" xml:space="preserve">
     <value>Got it</value>
@@ -3399,7 +3399,7 @@
     <value>The report could not be written. {0}</value>
   </data>
   <data name="ReportNoCapture" xml:space="preserve">
-    <value>This character has no capture of its session: it was swept, or never recorded. Turn on recording in the Network settings and report again after the next session.</value>
+    <value>This character has no capture of its session: it was swept, or never recorded. Turn on recording in the Advanced settings and report again after the next session.</value>
   </data>
   <data name="ReportNoTranslation" xml:space="preserve">
     <value>This client build has no protocol the capture can be cleaned with.</value>

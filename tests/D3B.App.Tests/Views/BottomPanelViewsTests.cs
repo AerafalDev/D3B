@@ -87,7 +87,7 @@ public sealed class BottomPanelViewsTests : IAsyncDisposable
         bot.Trace.Add(new TraceEntry(now.AddSeconds(2), now, "Récolte", "Récolter", TraceKind.Played, TraceOutcome.Played) { Node = LocalizedText.Invariant("Récolter le frêne") });
 
         var runner = await TestHosts.RunningAsync(_store.Host);
-        var tabs = await OnTheUIThreadAsync(() =>
+        var (tabs, statistics) = await OnTheUIThreadAsync(() =>
         {
             var localizer = Localizer.Instance;
 
@@ -112,10 +112,18 @@ public sealed class BottomPanelViewsTests : IAsyncDisposable
                 Drawings.DrawPart(dock, "part-bottom-" + tab.ToString().ToLowerInvariant());
             }
 
+            // The statistics are a tab of the editor (D516).
+            main.ShowStatistics();
+            main.Refresh();
+            Dispatcher.UIThread.RunJobs();
+
+            var statistics = Texts(window.GetVisualDescendants().OfType<StatisticsView>().Single(view => view.IsEffectivelyVisible));
+
+            Drawings.Draw(window, "statistics-tab-fr");
             localizer.Use(Localizer.English);
             window.Close();
 
-            return texts;
+            return (texts, statistics);
         });
 
         Assert.Contains("Avertissements", tabs[BottomTab.Journal]);
@@ -128,11 +136,11 @@ public sealed class BottomPanelViewsTests : IAsyncDisposable
         Assert.Contains("Choisir un profil", tabs[BottomTab.Problems]);
         Assert.Contains("En direct", tabs[BottomTab.Protocol]);
         Assert.Contains("Envoyés", tabs[BottomTab.Protocol]);
-        Assert.Contains("Ortie", tabs[BottomTab.Statistics]);
+        Assert.Contains("Ortie", statistics);
         Assert.All(tabs.Values.SelectMany(texts => texts), text => Assert.False(text.StartsWith('[') && text.EndsWith(']'), text));
 
         // A text a toolbar shows when nothing is chosen is the app's, never a binding the view could not read.
-        Assert.Contains("Tous les personnages", tabs[BottomTab.Statistics]);
+        Assert.Contains("Tous les personnages", statistics);
         Assert.All(tabs.Values.SelectMany(texts => texts), text => Assert.DoesNotContain("Avalonia.Data", text, StringComparison.Ordinal));
     }
 

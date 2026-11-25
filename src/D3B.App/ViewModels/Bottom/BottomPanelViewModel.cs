@@ -3,13 +3,13 @@ using CommunityToolkit.Mvvm.Input;
 using D3B.App.ViewModels.Inspector;
 using D3B.App.ViewModels.Logs;
 using D3B.App.ViewModels.Routes;
-using D3B.App.ViewModels.Statistics;
+using D3B.App.Localization;
 using D3B.App.ViewModels.Studio;
 using D3B.Bot.Characters;
 
 namespace D3B.App.ViewModels.Bottom;
 
-/// <summary>The bottom panel: the journal, the trace, the problems, the protocol and the statistics, a tab each (D327).</summary>
+/// <summary>The bottom panel: the journal, the trace, the problems and the protocol, a tab each; the statistics have a tab of the editor (D327, D516).</summary>
 /// <remarks>
 /// Only the tab shown reads the host, and only while the panel is open: the others read what came since once shown again.
 /// The problems are read whichever tab shows, since the tabs' row counts them.
@@ -31,12 +31,9 @@ internal sealed partial class BottomPanelViewModel : ObservableObject
     /// <summary>Gets the protocol.</summary>
     public InspectorViewModel Inspector { get; }
 
-    /// <summary>Gets the statistics.</summary>
-    public StatisticsViewModel Statistics { get; }
-
     /// <summary>Gets the tab shown.</summary>
     [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(IsSequencerShown), nameof(IsJournalShown), nameof(IsTraceShown), nameof(IsProblemsShown), nameof(IsProtocolShown), nameof(IsStatisticsShown), nameof(IsJournalOpen), nameof(IsStatisticsOpen))]
+    [NotifyPropertyChangedFor(nameof(IsSequencerShown), nameof(IsJournalShown), nameof(IsTraceShown), nameof(IsProblemsShown), nameof(IsProtocolShown), nameof(IsJournalOpen))]
     public partial BottomTab Tab { get; private set; }
 
     /// <summary>Gets or sets the character the run block chose, whose run the trace shows until another is chosen in it.</summary>
@@ -69,14 +66,8 @@ internal sealed partial class BottomPanelViewModel : ObservableObject
     /// <summary>Gets whether the protocol shows.</summary>
     public bool IsProtocolShown => Tab is BottomTab.Protocol;
 
-    /// <summary>Gets whether the statistics show.</summary>
-    public bool IsStatisticsShown => Tab is BottomTab.Statistics;
-
     /// <summary>Gets whether the panel shows the journal, which the activity bar's entry says pressed (D513).</summary>
     public bool IsJournalOpen => _layout.IsBottomOpen && IsJournalShown;
-
-    /// <summary>Gets whether the panel shows the statistics, which the activity bar's entry says pressed (D513).</summary>
-    public bool IsStatisticsOpen => _layout.IsBottomOpen && IsStatisticsShown;
 
     /// <summary>Gets whether the protocol's tab is there: only with the advanced tools (D513).</summary>
     public bool HasProtocol => _layout.AdvancedTools;
@@ -86,16 +77,15 @@ internal sealed partial class BottomPanelViewModel : ObservableObject
     /// <param name="services">Gets the host's services, once it runs.</param>
     /// <param name="logs">The journal.</param>
     /// <param name="inspector">The protocol.</param>
-    /// <param name="statistics">The statistics.</param>
-    public BottomPanelViewModel(StudioLayout layout, Func<IServiceProvider?> services, LogsViewModel logs, InspectorViewModel inspector, StatisticsViewModel statistics)
+    /// <param name="localizer">The app's texts.</param>
+    public BottomPanelViewModel(StudioLayout layout, Func<IServiceProvider?> services, LogsViewModel logs, InspectorViewModel inspector, Localizer localizer)
     {
         _layout = layout;
         _services = services;
         Logs = logs;
-        Trace = new TraceViewModel(statistics.Localizer);
-        Problems = new ProblemsViewModel(statistics.Localizer) { ShowHostJournal = ShowHostJournal };
+        Trace = new TraceViewModel(localizer);
+        Problems = new ProblemsViewModel(localizer) { ShowHostJournal = ShowHostJournal };
         Inspector = inspector;
-        Statistics = statistics;
         layout.PropertyChanged += (_, e) => FollowLayout(e.PropertyName);
     }
 
@@ -118,9 +108,6 @@ internal sealed partial class BottomPanelViewModel : ObservableObject
                 break;
             case BottomTab.Protocol:
                 Inspector.Refresh(services);
-                break;
-            case BottomTab.Statistics:
-                Statistics.Refresh(services);
                 break;
         }
     }
@@ -203,7 +190,6 @@ internal sealed partial class BottomPanelViewModel : ObservableObject
         {
             case nameof(StudioLayout.IsBottomOpen):
                 OnPropertyChanged(nameof(IsJournalOpen));
-                OnPropertyChanged(nameof(IsStatisticsOpen));
                 break;
             case nameof(StudioLayout.AdvancedTools):
                 OnPropertyChanged(nameof(HasProtocol));

@@ -19,6 +19,7 @@
     xmlns:zones="clr-namespace:D3B.App.ViewModels.Zones"
     xmlns:sequences="clr-namespace:D3B.App.ViewModels.Sequences"
     xmlns:shadui="clr-namespace:ShadUI;assembly=ShadUI"
+    xmlns:statistics="clr-namespace:D3B.App.ViewModels.Statistics"
     xmlns:studio="clr-namespace:D3B.App.ViewModels.Studio"
     xmlns:views="clr-namespace:D3B.App.Views"
     xmlns:vm="clr-namespace:D3B.App.ViewModels"
@@ -506,8 +507,8 @@
                         <Button
                             AutomationProperties.Name="{l:Tr ActivityStatistics}"
                             Classes="Activity"
-                            Classes.On="{Binding Bottom.IsStatisticsOpen}"
-                            Command="{Binding ToggleStatisticsCommand}"
+                            Classes.On="{Binding IsStatisticsShown}"
+                            Command="{Binding ShowStatisticsCommand}"
                             ToolTip.Tip="{l:Tr ActivityStatistics}">
                             <c:Icon Drawing="{StaticResource Toolwindows.Profiler}" />
                         </Button>
@@ -817,6 +818,9 @@
                                                     </DataTemplate>
                                                     <DataTemplate x:DataType="vm:SettingsViewModel">
                                                         <views:SettingsView />
+                                                    </DataTemplate>
+                                                    <DataTemplate x:DataType="statistics:StatisticsViewModel">
+                                                        <views:StatisticsView />
                                                     </DataTemplate>
                                                     <DataTemplate x:DataType="vm:ModulePageViewModel">
                                                         <ContentControl Content="{Binding Content}">

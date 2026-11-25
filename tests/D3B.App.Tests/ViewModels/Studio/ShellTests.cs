@@ -18,21 +18,22 @@ public sealed class ShellTests
     }
 
     [Fact]
-    public void TheJournalAndTheStatisticsOpenTheBottomPanelOnTheirTabAndChosenAgainHideIt()
+    public void TheJournalOpensTheBottomPanelOnItsTabAndChosenAgainHidesIt()
     {
         var main = Studio();
 
         main.ToggleJournal();
 
-        Assert.Equal((true, BottomTab.Journal, true, false), (main.Layout.IsBottomOpen, main.Bottom.Tab, main.Bottom.IsJournalOpen, main.Bottom.IsStatisticsOpen));
+        Assert.Equal((true, BottomTab.Journal, true), (main.Layout.IsBottomOpen, main.Bottom.Tab, main.Bottom.IsJournalOpen));
 
-        main.ToggleStatistics();
+        main.Bottom.Show(BottomTab.Trace);
 
-        Assert.Equal((true, BottomTab.Statistics, false, true), (main.Layout.IsBottomOpen, main.Bottom.Tab, main.Bottom.IsJournalOpen, main.Bottom.IsStatisticsOpen));
+        Assert.False(main.Bottom.IsJournalOpen);
 
-        main.ToggleStatistics();
+        main.ToggleJournal();
+        main.ToggleJournal();
 
-        Assert.Equal((false, false), (main.Layout.IsBottomOpen, main.Bottom.IsStatisticsOpen));
+        Assert.Equal((false, false), (main.Layout.IsBottomOpen, main.Bottom.IsJournalOpen));
     }
 
     [Fact]
@@ -128,7 +129,7 @@ public sealed class ShellTests
         Run("Show the statistics");
 
         Assert.Equal((false, true, true), (main.Layout.IsSideOpen, main.Layout.IsDetailsOpen, main.Layout.AdvancedTools));
-        Assert.Equal((true, BottomTab.Statistics), (main.Layout.IsBottomOpen, main.Bottom.Tab));
+        Assert.True(main.IsStatisticsShown);
     }
 
     [Fact]
@@ -142,7 +143,7 @@ public sealed class ShellTests
 
         main.Settings.Filter = "advanced";
 
-        Assert.Equal([SettingsSection.Appearance], main.Settings.Sections.Where(section => section.IsShown).Select(section => section.Section));
+        Assert.Equal([SettingsSection.Advanced], main.Settings.Sections.Where(section => section.IsShown).Select(section => section.Section));
         Assert.True(main.Settings.AdvancedToolsRow.IsShown);
         Assert.False(main.Settings.Language.IsShown);
     }

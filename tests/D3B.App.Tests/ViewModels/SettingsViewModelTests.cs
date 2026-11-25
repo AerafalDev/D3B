@@ -161,7 +161,7 @@ public sealed class SettingsViewModelTests : IAsyncDisposable
         var settings = (await RunningAsync(AppPreferences.Load(PreferencesPath))).Settings;
 
         Assert.True(settings.RecordsCaptures);
-        Assert.False(settings.Network.HasChanges);
+        Assert.False(settings.Advanced.HasChanges);
         Assert.Empty(AppPreferences.Load(PreferencesPath).Host);
 
         settings.RecordsCaptures = false;
@@ -203,7 +203,7 @@ public sealed class SettingsViewModelTests : IAsyncDisposable
         var host = AppPreferences.Load(PreferencesPath).Host;
 
         Assert.Equal(("3", "0"), (host[RelaySettings.CapturesRetentionDaysKey], host[RelaySettings.CapturesRetentionMegabytesKey]));
-        Assert.True(settings.Network.HasChanges);
+        Assert.True(settings.Advanced.HasChanges);
 
         var next = new SettingsViewModel(_localizer, AppPreferences.Load(PreferencesPath), _ => { }, new Toasts());
 
@@ -213,7 +213,7 @@ public sealed class SettingsViewModelTests : IAsyncDisposable
         settings.ResetCaptureMegabytesCommand.Execute(null);
 
         Assert.Empty(AppPreferences.Load(PreferencesPath).Host);
-        Assert.False(settings.Network.HasChanges);
+        Assert.False(settings.Advanced.HasChanges);
     }
 
     [Fact]
@@ -286,7 +286,7 @@ public sealed class SettingsViewModelTests : IAsyncDisposable
     {
         var settings = new SettingsViewModel(_localizer, null, _ => { }, new Toasts());
 
-        Assert.Equal(SettingsSection.Bots, settings.Selected.Section);
+        Assert.Equal(SettingsSection.General, settings.Selected.Section);
 
         settings.Filter = "database";
 
@@ -310,9 +310,9 @@ public sealed class SettingsViewModelTests : IAsyncDisposable
         Assert.Equal(("", SettingsSection.About, false), (settings.Filter, settings.Selected.Section, settings.HasNoMatch));
         Assert.Equal([false, false, false, false, true], settings.Sections.Select(section => section.IsSelected));
 
-        settings.ChooseCommand.Execute(SettingsSection.Network);
+        settings.ChooseCommand.Execute(SettingsSection.Advanced);
 
-        Assert.True(settings.Network.IsSelected);
+        Assert.True(settings.Advanced.IsSelected);
     }
 
     [Fact]
@@ -344,11 +344,11 @@ public sealed class SettingsViewModelTests : IAsyncDisposable
 
         settings.RecordsCaptures = false;
 
-        Assert.True(settings.Network.HasChanges);
+        Assert.True(settings.Advanced.HasChanges);
 
         settings.ResetCapturesCommand.Execute(null);
 
-        Assert.Equal((true, false), (settings.RecordsCaptures, settings.Network.HasChanges));
+        Assert.Equal((true, false), (settings.RecordsCaptures, settings.Advanced.HasChanges));
         Assert.Empty(AppPreferences.Load(PreferencesPath).Host);
     }
 
