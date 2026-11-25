@@ -145,7 +145,7 @@
                                         Classes.Drop="{Binding IsDropTarget}"
                                         Classes.Focused="{Binding IsFocused}"
                                         Classes.Given="{Binding IsGiven}"
-                                        Classes.Heading="{Binding IsGivenHeading}"
+                                        Classes.Heading="{Binding IsHeading}"
                                         Classes.Selected="{Binding IsSelected}"
                                         ContextRequested="OnRowContextRequested"
                                         PointerMoved="OnRowPointerMoved"

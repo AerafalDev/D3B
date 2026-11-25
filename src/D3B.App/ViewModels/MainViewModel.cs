@@ -57,6 +57,7 @@ internal sealed partial class MainViewModel : ObservableObject
     private bool _pagesRead;
     private IUndoable? _followed;
     private List<SearchItem> _maps = [];
+    private string? _detailed;
     private System.Globalization.CultureInfo? _mapsCulture;
 
     /// <summary>Gets the dialog the window shows over the studio.</summary>
@@ -244,8 +245,9 @@ internal sealed partial class MainViewModel : ObservableObject
             new CharacterPropertiesViewModel(localizer, _characterAccounts, BotOf, Characters.LineOf, OpenProfile, OpenCharacter),
             new AssetPropertiesViewModel(localizer) { RouteOf = Routes.Find, ZoneOf = Zones.Find });
         Profiles = new ProfilesViewModel(localizer, Dialogs, Toasts) { Opened = OpenProfileTab, Closed = CloseProfileTab, Sequences = Sequences, WorldServices = () => Routes.Services, EditZone = EditZoneInWorld };
-        Assets = new AssetsViewModel(localizer, Dialogs, Toasts, Profiles, preferences?.FoldedAssets)
+        Assets = new AssetsViewModel(localizer, Dialogs, Toasts, Profiles, preferences?.FoldedAssets, preferences?.LibraryByFolder ?? false)
         {
+            ByFolderChanged = byFolder => _preferences?.RememberLibraryByFolder(byFolder),
             Routes = Routes,
             Zones = Zones,
             Sequences = Sequences,
@@ -267,6 +269,7 @@ internal sealed partial class MainViewModel : ObservableObject
         Settings = new SettingsViewModel(localizer, preferences, UseLanguage, Toasts, Updates)
         {
             ResetLayout = Layout.Reset,
+            Studio = Layout,
             OpenFolder = path => OpenFolder?.Invoke(path),
             OpenFile = path => OpenFile?.Invoke(path),
         };
@@ -278,20 +281,29 @@ internal sealed partial class MainViewModel : ObservableObject
         Followed = new FollowedRuns(() => Bots.Items.Where(bot => bot.Route is not null).Select(bot => new FollowedRun(bot.Route!, bot.Name, bot.Initials, bot.PortraitColor)));
         Routes.Followed = Followed;
         World = new WorldViewportViewModel(localizer, Routes, Zones, Selection, () => Bots.Items.Select(bot => new WorldCharacterSnapshot(bot.Bot.Key, bot.Name, bot.Initials, bot.PortraitColor, bot.Bot.State.MapId, bot.IsPlaying || bot.IsFighting)), () => RunBlock.IsPlaying ? RunBlock.Name : null, Followed);
-        Outliner = new OutlinerViewModel(localizer, Selection, World, Characters, Routes, Zones, Followed) { Show = ShowWorld };
+        Outliner = new OutlinerViewModel(localizer, Selection, World, Characters, Routes, Zones, Followed) { Show = ShowWorld, Scope = ScopeOf(Layout.View) };
         Home = new HomeViewModel(localizer, Characters, () => _host.Services?.GetService<AssetLibrary>(), OpenAsset)
         {
             ProfileRequested = NewProfile,
             RouteRequested = () => Routes.CreateAsync(""),
             ZoneRequested = () => Zones.CreateAsync(""),
-            SettingsRequested = ShowSettings,
-            FolderRequested = OpenProjectFolder,
             Notice = new CapturesNoticeViewModel(localizer, Settings, preferences) { SettingsRequested = () => ShowSettings(SettingsSection.Network) },
         };
         Selection.Changed += OnSelectionChanged;
+        Layout.PropertyChanged += (_, e) =>
+        {
+            if (e.PropertyName is nameof(StudioLayout.View))
+                Outliner.Scope = ScopeOf(Layout.View);
+        };
         World.PropertyChanged += (_, e) => FollowEditor(e.PropertyName);
         Editor.PropertyChanged += (_, e) => FollowEditor(e.PropertyName);
         ShowHome();
+    }
+
+    // The Library's view keeps the Outliner as the World left it: it is not shown there.
+    private static OutlinerScope ScopeOf(SideView view)
+    {
+        return view is SideView.Characters ? OutlinerScope.Characters : OutlinerScope.World;
     }
 
     private static IEnumerable<(string Key, SettingsSection Section)> SettingsFound()
@@ -397,11 +409,25 @@ internal sealed partial class MainViewModel : ObservableObject
         Bottom.Toggle();
     }
 
-    /// <summary>Opens the assets, the keyboard in their search: Ctrl Space (D321).</summary>
+    /// <summary>Shows the journal in the bottom panel, or hides the panel when it shows it: the activity bar's Journal (D513).</summary>
+    [RelayCommand]
+    public void ToggleJournal()
+    {
+        Bottom.ToggleTab(BottomTab.Journal);
+    }
+
+    /// <summary>Shows the statistics in the bottom panel, or hides the panel when it shows them: the activity bar's Statistics (D513).</summary>
+    [RelayCommand]
+    public void ToggleStatistics()
+    {
+        Bottom.ToggleTab(BottomTab.Statistics);
+    }
+
+    /// <summary>Shows the library in the side bar, the keyboard in its search: Ctrl Space (D321, D513).</summary>
     [RelayCommand]
     public void GoToAssets()
     {
-        Layout.Show(StudioPanel.Assets, true);
+        Layout.Reveal(SideView.Library);
         FocusAssets?.Invoke();
     }
 
@@ -409,7 +435,7 @@ internal sealed partial class MainViewModel : ObservableObject
     [RelayCommand]
     public void ShowWorld()
     {
-        Editor.Open(WorldTab, () => new EditorTab(WorldTab, () => _localizer["TabWorld"], "General.Language", World, needsHost: true));
+        Editor.Open(WorldTab, () => new EditorTab(WorldTab, () => _localizer["TabWorld"], "Toolwindows.Web", World, needsHost: true));
     }
 
     /// <summary>Opens a zone for painting: the world's tab shows, the zone is selected and the Zone tool chosen, as the map beside a profile offers (D415).</summary>
@@ -486,7 +512,7 @@ internal sealed partial class MainViewModel : ObservableObject
             ChooseAsset(id);
     }
 
-    /// <summary>Shows the settings' tab: the title's gear, Ctrl , (D329).</summary>
+    /// <summary>Shows the settings' tab: the activity bar's gear, Ctrl , (D329, D513).</summary>
     [RelayCommand]
     public void ShowSettings()
     {
@@ -598,6 +624,7 @@ internal sealed partial class MainViewModel : ObservableObject
         Zones.Retell();
         Sequences.Retell();
         World.Relabel();
+        Outliner.Relabel();
         Editor.Refresh();
         OnPropertyChanged(nameof(VersionText));
     }
@@ -689,6 +716,10 @@ internal sealed partial class MainViewModel : ObservableObject
         yield return Command("CommandRedo", "Ctrl Y", Redo);
         yield return Command("CommandToggleJournal", "Ctrl J", ToggleBottom);
         yield return Command("CommandShowSequencer", "", ShowSequencer);
+        yield return Command("CommandShowStatistics", "", () => Bottom.Show(BottomTab.Statistics));
+        yield return Command("CommandToggleSide", "Ctrl B", () => Layout.Toggle(StudioPanel.Side));
+        yield return Command("CommandToggleDetails", "Ctrl Alt B", () => Layout.Toggle(StudioPanel.Details));
+        yield return Command("CommandToggleAdvancedTools", "", Layout.ToggleAdvancedTools);
         yield return Command("CommandGoToAssets", _localizer["KeysCtrlSpace"], GoToAssets);
         yield return Command("CommandDefaultLayout", "", Layout.Reset);
         yield return Command("CommandPlay", "F5", RunBlock.PlayOrPause);
@@ -750,6 +781,20 @@ internal sealed partial class MainViewModel : ObservableObject
 
     private void OnSelectionChanged()
     {
+        var selected = Selection.Kind switch
+        {
+            WorldSelectionKind.Character when Selection.Character is { } key => "character:" + CharacterKeys.Text(key),
+            WorldSelectionKind.Route or WorldSelectionKind.Zone => Selection.AssetId,
+            _ => null,
+        };
+
+        // The Details are what is selected: they show once something is, and stay as the hand left them while it stays selected (D513);
+        // a character chosen by a tab's or a card's play is not selected by the hand, and its header already says what they would (D514).
+        if (selected is not null && selected != _detailed && !RunBlock.IsDriving)
+            Layout.Show(StudioPanel.Details, true);
+
+        _detailed = selected;
+
         switch (Selection.Kind)
         {
             case WorldSelectionKind.Character when Selection.Character is { } key:
@@ -817,7 +862,11 @@ internal sealed partial class MainViewModel : ObservableObject
     private CharacterTabViewModel TabOf(CharacterKey key)
     {
         if (!_characterTabs.TryGetValue(key, out var tab))
-            _characterTabs[key] = tab = new CharacterTabViewModel(_localizer, key, Bots, OpenProfile, Bottom.ShowTrace);
+            _characterTabs[key] = tab = new CharacterTabViewModel(_localizer, key, Bots, OpenProfile, Bottom.ShowTrace)
+            {
+                Character = new CharacterPropertiesViewModel(_localizer, _characterAccounts, BotOf, Characters.LineOf, OpenProfile, OpenCharacter),
+                Run = RunBlock,
+            };
 
         return tab;
     }

@@ -1424,9 +1424,6 @@
   <data name="MenuEdit" xml:space="preserve">
     <value>Édition</value>
   </data>
-  <data name="MenuWindow" xml:space="preserve">
-    <value>Fenêtre</value>
-  </data>
   <data name="MenuHelp" xml:space="preserve">
     <value>Aide</value>
   </data>
@@ -1442,9 +1439,6 @@
   <data name="MenuPanels" xml:space="preserve">
     <value>Panneaux</value>
   </data>
-  <data name="MenuPages" xml:space="preserve">
-    <value>Pages</value>
-  </data>
   <data name="MenuModules" xml:space="preserve">
     <value>Modules</value>
   </data>
@@ -1453,15 +1447,6 @@
   </data>
   <data name="MenuAbout" xml:space="preserve">
     <value>À propos de D3B</value>
-  </data>
-  <data name="PanelOutliner" xml:space="preserve">
-    <value>Outliner</value>
-  </data>
-  <data name="PanelAssets" xml:space="preserve">
-    <value>Assets</value>
-  </data>
-  <data name="PanelJournal" xml:space="preserve">
-    <value>Journal</value>
   </data>
   <data name="PanelDetails" xml:space="preserve">
     <value>Détails</value>
@@ -1693,12 +1678,6 @@
   </data>
   <data name="HomeSearch" xml:space="preserve">
     <value>Chercher partout</value>
-  </data>
-  <data name="HomeAssets" xml:space="preserve">
-    <value>Assets</value>
-  </data>
-  <data name="HomeJournal" xml:space="preserve">
-    <value>Journal</value>
   </data>
   <data name="HomePlay" xml:space="preserve">
     <value>Jouer</value>
@@ -1971,10 +1950,10 @@
     <value>au démarrage</value>
   </data>
   <data name="ValuesChangedOne" xml:space="preserve">
-    <value>{0:N0} valeur changée</value>
+    <value>{0:N0} réglage modifié</value>
   </data>
   <data name="ValuesChangedOther" xml:space="preserve">
-    <value>{0:N0} valeurs changées</value>
+    <value>{0:N0} réglages modifiés</value>
   </data>
   <data name="VariableFlag" xml:space="preserve">
     <value>Drapeau</value>
@@ -2004,10 +1983,10 @@
     <value>{0} copié dans le projet</value>
   </data>
   <data name="NoValueChanged" xml:space="preserve">
-    <value>aucune valeur changée</value>
+    <value>aucun réglage modifié</value>
   </data>
   <data name="VariantOf" xml:space="preserve">
-    <value>Variante de</value>
+    <value>Basé sur</value>
   </data>
   <data name="ResetAll" xml:space="preserve">
     <value>Tout remettre</value>
@@ -3105,7 +3084,7 @@
     <value>Rechercher dans le monde</value>
   </data>
   <data name="OutlinerEmpty" xml:space="preserve">
-    <value>Rien dans le monde pour l'instant : connectez un personnage, ou ajoutez un trajet ou une zone depuis Contenu.</value>
+    <value>Rien dans le monde pour l'instant : connectez un personnage, ou ajoutez un trajet ou une zone depuis la Bibliothèque.</value>
   </data>
   <data name="OutlinerEye" xml:space="preserve">
     <value>Afficher sur la carte</value>
@@ -3128,9 +3107,6 @@
   <data name="ZoneContents" xml:space="preserve">
     <value>Contenu</value>
   </data>
-  <data name="HomeQuickActions" xml:space="preserve">
-    <value>Actions rapides</value>
-  </data>
   <data name="HomeNewProfile" xml:space="preserve">
     <value>Nouveau profil</value>
   </data>
@@ -3140,17 +3116,8 @@
   <data name="HomeNewZone" xml:space="preserve">
     <value>Nouvelle zone</value>
   </data>
-  <data name="HomeProjectFolder" xml:space="preserve">
-    <value>Dossier du projet</value>
-  </data>
-  <data name="HomeSettings" xml:space="preserve">
-    <value>Paramètres</value>
-  </data>
   <data name="HomeCharacters" xml:space="preserve">
     <value>Personnages</value>
-  </data>
-  <data name="HomeNoCharacters" xml:space="preserve">
-    <value>Aucun personnage pour l'instant. Connecte-toi au jeu avec le relais, et tes personnages apparaissent ici.</value>
   </data>
   <data name="HomeRecent" xml:space="preserve">
     <value>Récents</value>
@@ -3571,5 +3538,107 @@
   </data>
   <data name="StatisticsFightsSummary" xml:space="preserve">
     <value>gagnés {0:N0} · perdus {1:N0} · morts {2:N0}</value>
+  </data>
+  <data name="CharactersSearch" xml:space="preserve">
+    <value>Rechercher un personnage</value>
+  </data>
+  <data name="WorldEmpty" xml:space="preserve">
+    <value>Aucun trajet ni zone pour l'instant. Ajoutez-en un depuis la Bibliothèque, ou tracez-le sur la carte du monde.</value>
+  </data>
+  <data name="MenuView" xml:space="preserve">
+    <value>Affichage</value>
+  </data>
+  <data name="MenuViews" xml:space="preserve">
+    <value>Vues</value>
+  </data>
+  <data name="ViewCharacters" xml:space="preserve">
+    <value>Personnages</value>
+  </data>
+  <data name="ViewLibrary" xml:space="preserve">
+    <value>Bibliothèque</value>
+  </data>
+  <data name="ViewWorld" xml:space="preserve">
+    <value>Monde</value>
+  </data>
+  <data name="PanelSide" xml:space="preserve">
+    <value>Barre latérale</value>
+  </data>
+  <data name="PanelBottom" xml:space="preserve">
+    <value>Panneau du bas</value>
+  </data>
+  <data name="AdvancedTools" xml:space="preserve">
+    <value>Outils avancés</value>
+  </data>
+  <data name="ActivityJournal" xml:space="preserve">
+    <value>Journal</value>
+  </data>
+  <data name="ActivityStatistics" xml:space="preserve">
+    <value>Statistiques</value>
+  </data>
+  <data name="SettingAdvancedTools" xml:space="preserve">
+    <value>Outils avancés</value>
+  </data>
+  <data name="SettingAdvancedToolsDetail" xml:space="preserve">
+    <value>L'onglet Protocole du panneau du bas, pour qui étudie les messages du jeu</value>
+  </data>
+  <data name="CommandToggleSide" xml:space="preserve">
+    <value>Afficher ou masquer la barre latérale</value>
+  </data>
+  <data name="CommandToggleDetails" xml:space="preserve">
+    <value>Afficher ou masquer les Détails</value>
+  </data>
+  <data name="CommandToggleAdvancedTools" xml:space="preserve">
+    <value>Afficher ou masquer les outils avancés</value>
+  </data>
+  <data name="CommandShowStatistics" xml:space="preserve">
+    <value>Afficher les statistiques</value>
+  </data>
+  <data name="Hide" xml:space="preserve">
+    <value>Masquer</value>
+  </data>
+  <data name="HomeStartTitle" xml:space="preserve">
+    <value>Pour commencer</value>
+  </data>
+  <data name="HomeStartLaunch" xml:space="preserve">
+    <value>Garde D3B ouvert, puis lance Dofus depuis le lanceur d'Ankama.</value>
+  </data>
+  <data name="HomeStartChoose" xml:space="preserve">
+    <value>Choisis un personnage dans le jeu : sa carte s'affiche ici.</value>
+  </data>
+  <data name="HomeStartPlay" xml:space="preserve">
+    <value>Ouvre sa carte, choisis son profil et appuie sur Jouer.</value>
+  </data>
+  <data name="HomeOpenCharacter" xml:space="preserve">
+    <value>Ouvrir son onglet : son profil, sa carte et ce qu'il fait</value>
+  </data>
+  <data name="HomeMake" xml:space="preserve">
+    <value>Créer</value>
+  </data>
+  <data name="AssetGroupProfile" xml:space="preserve">
+    <value>Profils</value>
+  </data>
+  <data name="AssetGroupRoute" xml:space="preserve">
+    <value>Trajets</value>
+  </data>
+  <data name="AssetGroupZone" xml:space="preserve">
+    <value>Zones</value>
+  </data>
+  <data name="AssetGroupBehavior" xml:space="preserve">
+    <value>Comportements</value>
+  </data>
+  <data name="AssetGroupList" xml:space="preserve">
+    <value>Listes</value>
+  </data>
+  <data name="AssetGroupPlanning" xml:space="preserve">
+    <value>Plannings</value>
+  </data>
+  <data name="AssetGroupFightPreferences" xml:space="preserve">
+    <value>Préférences de combat</value>
+  </data>
+  <data name="AssetGroupProblems" xml:space="preserve">
+    <value>Fichiers illisibles</value>
+  </data>
+  <data name="LibraryByFolder" xml:space="preserve">
+    <value>Afficher les dossiers</value>
   </data>
 </root>

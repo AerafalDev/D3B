@@ -1,5 +1,7 @@
 using D3B.App.Localization;
 using D3B.App.ViewModels;
+using D3B.App.ViewModels.Characters;
+using D3B.App.ViewModels.Studio;
 using D3B.App.ViewModels.World;
 using D3B.Bot.Tests.Runtime;
 using D3B.Studio.Assets;
@@ -74,6 +76,8 @@ public sealed class HomeViewModelTests : IAsyncDisposable
     {
         var main = await StudioAsync();
 
+        // The routes and the zones are the World's view of the side bar (D513).
+        main.Layout.ShowView(SideView.World);
         main.Outliner.Select(main.Outliner.Rows.Single(row => row.Key == "route:north"));
 
         Assert.True(main.Editor.IsShown("world"));
@@ -116,6 +120,7 @@ public sealed class HomeViewModelTests : IAsyncDisposable
         Assert.True(main.Editor.IsShown("home"));
         Assert.Equal(["home"], main.Editor.Items.Select(tab => tab.Key));
 
+        main.Layout.ShowView(SideView.World);
         main.Outliner.Select(main.Outliner.Rows.Single(row => row.Key == "route:north"));
 
         Assert.True(main.Editor.IsShown("world"));
@@ -151,7 +156,7 @@ public sealed class HomeViewModelTests : IAsyncDisposable
     }
 
     [Fact]
-    public async Task TheHomePageListsTheCharactersAndChoosingOneKeepsTheHomePage()
+    public async Task TheHomePagesCardOfACharacterOpensItsTabAndPlaysNothingWhileItIsOffline()
     {
         await _store.OpenedAsync();
         await _store.SeeAsync(TestPlay.Account, (TestPlay.CharacterId, "Aerafa", 200));
@@ -162,13 +167,15 @@ public sealed class HomeViewModelTests : IAsyncDisposable
 
         var character = Assert.Single(main.Home.Characters);
 
-        Assert.Equal(("Aerafa", "Disconnected"), (character.Name, character.Detail));
+        Assert.Equal(("Aerafa", "Disconnected", false, false), (character.Name, character.Detail, character.IsOnline, character.CanPlay));
         Assert.True(main.Home.HasCharacters);
 
-        character.ChooseCommand.Execute(null);
+        character.OpenCommand.Execute(null);
 
-        Assert.Equal(TestPlay.Key, main.RunBlock.ChosenKey);
-        Assert.True(main.Editor.IsShown("home"));
+        var tab = Assert.IsType<CharacterTabViewModel>(main.Editor.Selected?.Content);
+
+        // Offline, its tab offers no play and says why.
+        Assert.Equal((TestPlay.Key, false, "Disconnected"), (tab.Key, tab.CanPlay, tab.PlayTip));
     }
 
     [Fact]
@@ -207,15 +214,5 @@ public sealed class HomeViewModelTests : IAsyncDisposable
 
         Assert.True(main.Dialogs.IsOpen);
         Assert.True(main.Editor.IsShown("home"));
-    }
-
-    [Fact]
-    public async Task TheSettingsQuickActionOpensTheSettings()
-    {
-        var main = await StudioAsync();
-
-        main.Home.SettingsCommand.Execute(null);
-
-        Assert.True(main.Editor.IsShown("settings"));
     }
 }

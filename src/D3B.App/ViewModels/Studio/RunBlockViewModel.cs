@@ -83,6 +83,9 @@ internal sealed partial class RunBlockViewModel : ObservableObject
     /// <summary>Gets or sets what else follows the character chosen: the panel's cards and the inspector.</summary>
     public Action<CharacterKey?>? Chose { get; set; }
 
+    /// <summary>Gets whether the block chooses a character for a tab's or a card's button, not for a selection: the Details then stay as they are (D514).</summary>
+    public bool IsDriving { get; private set; }
+
     /// <summary>Gets whether a character is chosen.</summary>
     public bool IsChosen => Chosen is not null;
 
@@ -146,9 +149,7 @@ internal sealed partial class RunBlockViewModel : ObservableObject
             return;
         }
 
-        State = !chosen.IsConnected || !chosen.IsActivityRunning ? RunState.Stopped
-            : chosen.IsPaused ? RunState.Paused
-            : RunState.Playing;
+        (State, CanPlay, PlayTip) = Read(chosen, _localizer);
         Name = chosen.Name;
         Initials = chosen.Initials;
         Head = chosen.Head;
@@ -162,11 +163,24 @@ internal sealed partial class RunBlockViewModel : ObservableObject
             _ when !chosen.IsConnected => _localizer["Disconnected"],
             _ => _localizer["RunStopped"],
         };
-        CanPlay = State is RunState.Paused || (State is RunState.Stopped && chosen.IsConnected && chosen.StartCommand.CanExecute(null));
-        PlayTip = State is RunState.Paused ? _localizer["RunResume"]
-            : !chosen.IsConnected ? _localizer["Disconnected"]
-            : CanPlay ? _localizer.Format("RunStart", chosen.SelectedActivity?.Name ?? "")
-            : _localizer["RunNoProfile"];
+    }
+
+    /// <summary>Reads where a character's run stands, whether play may start or resume it, and what play would do, as the block, a character's tab and its home card say it (D514).</summary>
+    /// <param name="bot">The character's bot.</param>
+    /// <param name="localizer">The app's texts.</param>
+    /// <returns>Its state, whether play is allowed, and play's tip.</returns>
+    internal static (RunState State, bool CanPlay, string PlayTip) Read(BotViewModel bot, Localizer localizer)
+    {
+        var state = !bot.IsConnected || !bot.IsActivityRunning ? RunState.Stopped
+            : bot.IsPaused ? RunState.Paused
+            : RunState.Playing;
+        var canPlay = state is RunState.Paused || (state is RunState.Stopped && bot.IsConnected && bot.StartCommand.CanExecute(null));
+        var tip = state is RunState.Paused ? localizer["RunResume"]
+            : !bot.IsConnected ? localizer["Disconnected"]
+            : canPlay ? localizer.Format("RunStart", bot.SelectedActivity?.Name ?? "")
+            : localizer["RunNoProfile"];
+
+        return (state, canPlay, tip);
     }
 
     /// <summary>Chooses the character the block drives, as the run block's menu does.</summary>
@@ -175,6 +189,25 @@ internal sealed partial class RunBlockViewModel : ObservableObject
     public void Choose(BotViewModel? bot)
     {
         Choose(bot?.Bot.Key);
+    }
+
+    /// <summary>Chooses the character a tab's header or a home card plays, pauses or stops, the Details left as they are (D514).</summary>
+    /// <param name="key">The character.</param>
+    public void Drive(CharacterKey key)
+    {
+        if (ChosenKey == key)
+            return;
+
+        IsDriving = true;
+
+        try
+        {
+            Choose(key);
+        }
+        finally
+        {
+            IsDriving = false;
+        }
     }
 
     /// <summary>Chooses the character the block drives, online or not.</summary>

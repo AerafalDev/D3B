@@ -4,9 +4,21 @@ using D3B.Studio.Assets;
 
 namespace D3B.App.ViewModels.Assets;
 
-/// <summary>Makes the rows of the assets' tree from the project and the state the panel keeps, without keeping any of its own (D326, D358).</summary>
+/// <summary>Makes the rows of the assets' tree from the project and the state the panel keeps, without keeping any of its own (D326, D358, D515).</summary>
 internal sealed class AssetTreeBuilder
 {
+    /// <summary>What the given assets' heading groups.</summary>
+    public const string GivenGroup = "given";
+
+    /// <summary>What the heading of the files that do not read groups.</summary>
+    public const string ProblemsGroup = "problems";
+
+    /// <summary>What a kind's heading groups, before the kind's name.</summary>
+    public const string KindGroup = "kind:";
+
+    // A player's order: what plays first, then where, then the rest.
+    private static readonly AssetKind[] _kindOrder = [AssetKind.Profile, AssetKind.Route, AssetKind.Zone, AssetKind.Behavior, AssetKind.List, AssetKind.Planning, AssetKind.FightPreferences];
+
     private readonly Localizer _localizer;
     private readonly AssetLibrary _assets;
     private readonly AccountBook? _book;
@@ -32,7 +44,7 @@ internal sealed class AssetTreeBuilder
         return at < 0 ? (name, "", "") : (name[..at], name.Substring(at, filter.Length), name[(at + filter.Length)..]);
     }
 
-    /// <summary>Makes the rows: the project's folders with what they hold, then the assets given with D3B under their heading.</summary>
+    /// <summary>Makes the rows: the project's assets by kind, or its folders with what they hold, then the assets given with D3B under their heading.</summary>
     /// <returns>The tree.</returns>
     public AssetTree Build()
     {
@@ -43,24 +55,62 @@ internal sealed class AssetTreeBuilder
         var own = _assets.Assets.Where(asset => !asset.IsGiven).ToList();
         var given = _assets.Assets.Where(asset => asset.IsGiven).ToList();
 
-        AddFolder("", 0, folders, own, _assets.Problems, filter, searching, rows);
+        if (_state.ByKind)
+            AddKinds(own, filter, searching, rows);
+        else
+            AddFolder("", 0, folders, own, _assets.Problems, filter, searching, rows);
 
-        var givenRows = given.Select(asset => AssetRow(asset, 1, "", filter)).OfType<AssetRowViewModel>().ToList();
-
-        if (givenRows.Count > 0)
-        {
-            var unfolded = !_state.GivenFolded || searching;
-
-            rows.Add(new AssetRowViewModel(AssetRowKind.Given, _localizer["GivenAssets"], 0) { Count = given.Count.ToString(_localizer.Culture), IsExpanded = unfolded });
-
-            if (unfolded)
-                rows.AddRange(givenRows);
-        }
+        AddHeading(GivenGroup, _localizer["GivenAssets"], given.Count, [.. given.Select(asset => AssetRow(asset, 1, "", filter)).OfType<AssetRowViewModel>()], searching, rows);
 
         return new AssetTree(
             rows,
             IsProjectEmpty: own.Count == 0 && folders.Count == 0 && _assets.Problems.Count == 0,
             FindsNothing: searching && rows.All(row => !row.IsAsset && !row.IsProblem));
+    }
+
+    // The project by kind, each under a heading that folds, in a player's order, then the files that do not read: the
+    // folders stay the assets' own, kept for a move or a new folder, and come back with the folders' view (D515).
+    private void AddKinds(List<Asset> own, string filter, bool searching, List<AssetRowViewModel> rows)
+    {
+        foreach (var kind in _kindOrder.Concat(AssetKinds.All.Except(_kindOrder)))
+        {
+            var ofKind = own.Where(asset => asset.Kind == kind).OrderBy(asset => asset.Title?.In(_localizer.Culture) ?? asset.Name, StringComparer.CurrentCultureIgnoreCase).ToList();
+
+            AddHeading(KindGroup + kind, _localizer["AssetGroup" + kind], ofKind.Count, [.. ofKind.Select(asset => AssetRow(asset, 1, AssetPaths.ParentOf(asset.Path ?? ""), filter)).OfType<AssetRowViewModel>()], searching, rows);
+        }
+
+        var problems = new List<AssetRowViewModel>();
+
+        foreach (var problem in _assets.Problems)
+        {
+            if (ProblemRow(problem, AssetPaths.ParentOf(problem.Path), 1, filter) is { } row)
+                problems.Add(row);
+        }
+
+        AddHeading(ProblemsGroup, _localizer["AssetGroupProblems"], _assets.Problems.Count, problems, searching, rows);
+    }
+
+    // A heading with what it groups, unless nothing of it shows; unfolded while searching.
+    private void AddHeading(string group, string name, int count, List<AssetRowViewModel> inner, bool searching, List<AssetRowViewModel> rows)
+    {
+        if (inner.Count == 0)
+            return;
+
+        var unfolded = searching || !_state.FoldedGroups.Contains(group);
+
+        var key = "group:" + group;
+
+        rows.Add(new AssetRowViewModel(AssetRowKind.Heading, name, 0)
+        {
+            Key = key,
+            Group = group,
+            Count = count.ToString(_localizer.Culture),
+            IsExpanded = unfolded,
+            IsFocused = string.Equals(_state.FocusKey, key, StringComparison.Ordinal),
+        });
+
+        if (unfolded)
+            rows.AddRange(inner);
     }
 
     // A folder's rows, its own folders first, then its assets and the files that do not read; with a search or kinds
@@ -114,30 +164,36 @@ internal sealed class AssetTreeBuilder
 
         foreach (var problem in problems.Where(problem => string.Equals(AssetPaths.ParentOf(problem.Path), folder, StringComparison.OrdinalIgnoreCase)))
         {
-            var name = Path.GetFileName(problem.Path);
-
-            if (filter.Length > 0 && !name.Contains(filter, StringComparison.CurrentCultureIgnoreCase))
-                continue;
-
-            var (before, found, after) = Split(name, filter);
-            var key = AssetPaths.ProblemKey + problem.Path;
-
-            rows.Add(new AssetRowViewModel(AssetRowKind.Problem, name, depth)
-            {
-                Key = key,
-                Folder = folder,
-                Problem = _localizer["AssetProblem" + problem.Kind],
-                Tip = _localizer["AssetProblem" + problem.Kind],
-                AssetKind = AssetFiles.TryKindOf(name, out var kind, out _) ? kind : null,
-                IsSelected = _state.Selected.Contains(key),
-                IsFocused = string.Equals(_state.FocusKey, key, StringComparison.OrdinalIgnoreCase),
-                Before = before,
-                Found = found,
-                After = after,
-            });
+            if (ProblemRow(problem, folder, depth, filter) is { } row)
+                rows.Add(row);
         }
 
         return count;
+    }
+
+    private AssetRowViewModel? ProblemRow(AssetProblem problem, string folder, int depth, string filter)
+    {
+        var name = Path.GetFileName(problem.Path);
+
+        if (filter.Length > 0 && !name.Contains(filter, StringComparison.CurrentCultureIgnoreCase))
+            return null;
+
+        var (before, found, after) = Split(name, filter);
+        var key = AssetPaths.ProblemKey + problem.Path;
+
+        return new AssetRowViewModel(AssetRowKind.Problem, name, depth)
+        {
+            Key = key,
+            Folder = folder,
+            Problem = _localizer["AssetProblem" + problem.Kind],
+            Tip = _localizer["AssetProblem" + problem.Kind],
+            AssetKind = AssetFiles.TryKindOf(name, out var kind, out _) ? kind : null,
+            IsSelected = _state.Selected.Contains(key),
+            IsFocused = string.Equals(_state.FocusKey, key, StringComparison.OrdinalIgnoreCase),
+            Before = before,
+            Found = found,
+            After = after,
+        };
     }
 
     private AssetRowViewModel? AssetRow(Asset asset, int depth, string folder, string filter)

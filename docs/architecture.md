@@ -697,7 +697,8 @@ Built in session 5a (D91 to D94), in `D3B.App`, on Avalonia 12, ShadUI and Commu
 5c, 5e and 5d (D96, D101, D111, D120); its settings page in 6c (D151); redesigned in 6d (D159 to D162); published and
 updating itself in 6f (D171 to D173); the studio's frame in 7c2 (D333 to D340); the characters, the inspector and a
 character's tab in 7c3 (D341 to D348); the assets, a profile's tab, the bottom panel and the settings in 7c4 (D349 to
-D356), the pages of D101 and D162 gone.
+D356), the pages of D101 and D162 gone; made simpler after `next`'s shell from D513: an activity bar, one side bar, the
+bottom panel and the Details hidden until needed.
 
 - **The bots run in the app's process** (D91): `HostRunner`, in `D3B.App.Hosting`, starts the host's composition with
   the app, off the UI's thread, the pack's download included, and stops it once the window is gone, which disconnects
@@ -711,6 +712,7 @@ D356), the pages of D101 and D162 gone.
   window's near black up, one blue accent, green, amber and red for states. The app's own icon is the owner's logo (D231):
   `Assets/d3b.ico` for the window, the taskbar, the executable and the installer, `Assets/d3b.png` in the title row and
   the home page.
+  The logo opens the home page; the gear moved to the activity bar (D513).
 - **Icons** (D305, D331, D337): the IntelliJ Platform's, `Themes/IntelliJIcons.axaml`, which `scripts/icons.cs` writes, each
   file's Apache 2.0 notice checked, keyed as `General.Search`; `Icon` draws one on its grid of 16 in IntelliJ's colours,
   repaints its neutral greys with a `Tint`, and greys it while its control is disabled; Lucide's are gone (D355), `Icon`
@@ -718,24 +720,39 @@ D356), the pages of D101 and D162 gone.
   glyphs from the pack, painted in the colour of the text around them by `GlyphIcon`, a neutral dot without the pack
   (D336, D343); a character's portrait is its class's head on its breed's colour, its initials without it (`Portrait`,
   `BreedColors`, D343).
-- **The docks** (D321, D397, `StudioLayout` in `D3B.App.ViewModels.Studio`): on the left the Outliner over the Content browser
-  (the assets' tree), in the centre the editor's tabs over the bottom panel, on the right the Details panel, rounded panels with
-  a hairline edge, 5 pixels apart, the one last pressed outlined in the accent. Every edge is dragged on its own
-  (`DockSplitter`), within the mockup's bounds, the line between Outliner and Content kept as a share; a panel closes by its ×
-  and opens again from the Window menu, which gives the default layout back; Ctrl J shows or hides the bottom panel, Ctrl Space
-  opens the assets. A drag's end, a panel closed or opened, are remembered in `app.json`, the default never written
-  (`StudioPanel.Outliner`, `Assets`, `Bottom`, `Details`; a file that closed the older `Characters` panel opens the Outliner).
-- **The editor's tabs** (`EditorTabs`, `EditorTab`): the home page first, shown at start (D406) and closed like any tab, the Window menu opening it again (D412;
+- **The activity bar and the side bar** (D513, as `next`'s shell): on the left of the window, a column of buttons (`Button.Activity`):
+  Characters, Library and World at the top, each a view of the side bar (`SideView`), the one shown a rounded pill, chosen again
+  it hides the side bar; Journal, Statistics and Settings at its foot, the first two opening the bottom panel on their tab or
+  hiding it (`BottomPanelViewModel.ToggleTab`, `IsJournalOpen`, `IsStatisticsOpen`). The side bar shows one view, its header
+  naming it: the Characters view is the Outliner's characters, the World view its routes and zones (`OutlinerViewModel.Scope`,
+  `OutlinerScope`, which follows `StudioLayout.View`), its header making a route or a zone (D515), the Library view the assets'
+  tree with its tools.
+- **The parts** (D321, D397, D513, `StudioLayout` in `D3B.App.ViewModels.Studio`): the side bar, the editor's tabs over the bottom
+  panel in the centre, the Details panel on the right, rounded panels with a hairline edge, 5 pixels apart, the one last pressed
+  outlined in the accent. The studio opens on the side bar and the editor; the bottom panel and the Details start hidden. The
+  Details show when something is selected (a character, a route, a step, a zone) and stay as the hand left them while it stays
+  selected (`MainViewModel.OnSelectionChanged`); the bottom panel when its journal, statistics, trace or a route's Sequencer is
+  asked. Every edge is dragged on its own (`DockSplitter`), within bounds; a part hides by its × and shows again from the View
+  menu, which gives the default layout back; Ctrl B shows or hides the side bar, Ctrl J the bottom panel, Ctrl Alt B the Details,
+  Ctrl Space shows the Library. A drag's end, a part shown or hidden, the side bar's view and the advanced tools are remembered
+  in `app.json` (`StudioLayoutState.Shown`, `View`, `AdvancedTools`), the default never written, the Details never kept (a
+  selection shows them, so the next start would open them on nothing); an older file's widths are
+  kept, its side bar hidden only if it closed both the Outliner and the assets, its other parts on the new defaults.
+- **Advanced tools** (D513, `StudioLayout.AdvancedTools`), off by default, checked in the View menu, the search and the settings'
+  Interface section: the Protocol tab of the bottom panel only with them (`BottomPanelViewModel.HasProtocol`); turned off
+  while it shows, the journal takes its place.
+- **The editor's tabs** (`EditorTabs`, `EditorTab`): the home page first, shown at start (D406) and closed like any tab, the View menu opening it again (D412;
   `EditorTab.IsPinned` is for a tab that must not close: no ×, `CloseAll` keeps it), then those that something opens: the world (`ShowWorld`, opened once a route, a step or a zone is
   selected, from the Outliner, the assets, the search or the home page, closed like any tab), a profile, a list of steps, a
   character, the settings, a module's page; each tab opened once, its view kept while it is open, closed by its ×, its
   neighbour then shown. A tab that reads the host shows where the host stands until it runs (`HostStateView`). Route and zone
   have no tab: they are selected in the world's (D397).
-- **The home page** (D406, `HomeViewModel` and `HomeView`, in `D3B.App.ViewModels.Home`; the view's context is `MainViewModel`,
+- **The home page** (D406, D514, `HomeViewModel` and `HomeView`, in `D3B.App.ViewModels.Home`; the view's context is `MainViewModel`,
   which holds the host's state it shows): the logo, the version, a pill of where the host stands and the banners of a host
-  starting, of a build the installed app does not ship and of a host that failed; quick actions (new profile, route, zone, the
-  project's folder, the settings, the first four disabled until the host runs); the characters (`HomeCharacterViewModel`, online
-  first, a click chooses one without leaving the page, a double click opens its tab); the six assets of the project changed last
+  starting, of a build the installed app does not ship and of a host that failed; the characters' cards (`HomeCharacterViewModel`,
+  online first: the portrait with a dot of its state, what it does, a click opening its tab, a button playing or pausing it through
+  the run block, `RunBlockViewModel.Read` saying what it allows), or three steps to start while none is known; "Make" (a profile,
+  a route, a zone, disabled until the host runs); the six assets of the project changed last
   (`HomeRecentViewModel`, the file's time, read again when `AssetLibrary.Version` moves, a click opens the asset where it is
   edited); the shortcuts. The lists are read with the window's 250 ms refresh and replaced only when they differ. Selecting a
   character in the Outliner does not show the world; a route, a step or a zone does.
@@ -843,12 +860,15 @@ D356), the pages of D101 and D162 gone.
   where it stands, its life and pods; Game, its profile as a field whose menu opens it or gives another, the start on connection
   with an arrow resetting it, the planning and fight preferences disabled until 7f and 7h; Variables, the character's own, each
   with a dot of its type and its editor (`VariableRowViewModel`), which sets what its behaviors read; Account, the account, its
-  subscription and forgetting it. An asset (`AssetPropertiesViewModel`), selected in the world, the Content browser or the
+  subscription and forgetting it. An asset (`AssetPropertiesViewModel`), selected in the world, the Library or the
   search: its name, kind, file and format, what it uses and what uses it, characters included; for a route its course, what it
   does with a map no path reaches, its steps with their count and gaps, and the actions of the step chosen, a clip's values
   and the actions several steps share (the Sequencer's, D413); for a zone its contents (`AssetPropertiesViewModel.Zone`: its size and sub-areas, each taken
   out by its ×).
-- **A character's tab** (D325, D346, `CharacterTabViewModel`, `CharacterView`): the character's map live
+- **A character's tab** (D325, D346, D514, `CharacterTabViewModel`, `CharacterView`): a header with its portrait, name and level,
+  its profile in a field whose menu opens it or gives another (`ProfileMenu`, shared with the Details; `CharacterTabViewModel.Character`
+  is a `CharacterPropertiesViewModel` of its own), its start on connection, and play, pause and stop as its state allows, which drive
+  the run block (`Run`), so that F5 and the title row follow; then the character's map live
   (`MapViewModel`, drawn for that character alone): its coordinates and place, the cell under the pointer and what stands
   there, its layers in a menu, its tour's mini-map, a map the search found in preview; and a column: what it does now,
   tinted by its state, with its progress, the time spent and when it should end, its failure and warnings; its behavior's
@@ -857,7 +877,11 @@ D356), the pages of D101 and D162 gone.
   its rate an hour, the experience and kamas its fights gave and their rate an hour once it fought, the profession raised,
   its fights, won and lost, deaths and deposits (D505); its latest decisions, from its journal, and a way
   to its whole trace in the bottom panel (D353).
-- **The assets' panel** (D326, D351, D358, `AssetsViewModel` in `D3B.App.ViewModels.Assets`, `AssetsView`): as an IDE's
+- **The assets' panel**, the Library (D326, D351, D358, D515, `AssetsViewModel` in `D3B.App.ViewModels.Assets`, `AssetsView`): by
+  default the project by kind, a heading a kind in a player's order (Profiles, Routes, Zones, Behaviors…), then the files that do
+  not read, then the given ones (`AssetTreeBuilder.AddKinds`, `AssetRowKind.Heading`, each heading's fold kept by its `Group`);
+  a button of its header shows the folders instead, remembered in `app.json` (`AppPreferences.LibraryByFolder`), and making a
+  folder shows them. In the folders' view, as an IDE's
   explorer, several rows chosen, the keyboard, drag and drop, cut and paste, IntelliJ's menus, the kinds shown, the open
   tab located, the folds kept in `app.json`; Add and a search over the project's tree, its folders first, then their assets and the files that do not read, then those given with
   D3B, read only; each kind its IntelliJ icon on its colour (`AssetKinds`), how many use it, a dot while its tab has
@@ -902,12 +926,12 @@ D356), the pages of D101 and D162 gone.
   kept runs brought, by character and period, the resources with their rates, the fights won and lost, the deaths and the
   experience and kamas they gave by hour of the runs that fought (D505), and the runs.
 - **The settings** (D329, D354, `SettingsViewModel`, `D3B.App.ViewModels.AppSettings`, `SettingsView`): a tab of the
-  editor, the title's gear, Ctrl , or a setting found. Sections on the left under a search: Bots, the client's display
+  editor, the activity bar's gear, Ctrl , or a setting found. Sections on the left under a search: Bots, the client's display
   time and every delay, the bots' at once (`Bots.Delays`), the relay's from the next start, the host's raised ones once
-  it runs; Network, the captures from the next start and their folder; Appearance, the language and the layout given
-  back; Files, the project, the database, the game's folder, chosen from the next start or the launcher's (D502), the client's data and `app.json`, copied or opened; About, the version, the
+  it runs; Network, the captures from the next start and their folder; Appearance, the language, the layout given
+  back and the advanced tools (D513); Files, the project, the database, the game's folder, chosen from the next start or the launcher's (D502), the client's data and `app.json`, copied or opened; About, the version, the
   client build, the update (D173) and the licences. A value changed shows a bar and an arrow giving its default back.
-- **The modules' pages** (D333): in the editor's tabs, opened from the Window menu or the search. A module's page
+- **The modules' pages** (D333): in the editor's tabs, opened from the View menu or the search. A module's page
   (`ModulePageViewModel`) is made the first time its tab shows and kept, refreshed every 250 ms while it shows through its
   context (`AppPageContext`, in `D3B.App.Pages`); one that throws, or is no control, shows what it threw instead
   (`PageFailureViewModel`), logged, and the bots and the other pages go on. What a page's own code throws on the UI's

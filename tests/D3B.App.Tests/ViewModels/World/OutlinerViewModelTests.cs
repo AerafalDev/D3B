@@ -58,6 +58,23 @@ public sealed class OutlinerViewModelTests : IAsyncDisposable
     }
 
     [Fact]
+    public async Task TheCharactersViewListsNoRouteNorZoneAndTheWorldViewNoCharacter()
+    {
+        var (outliner, _, _) = await OutlinerAsync();
+
+        outliner.Scope = OutlinerScope.Characters;
+
+        Assert.Empty(outliner.Rows);
+        Assert.True(outliner.IsEmpty);
+        Assert.Equal("Search the characters", outliner.SearchText);
+
+        outliner.Scope = OutlinerScope.World;
+
+        Assert.Equal(["heading:routes", "route:north", "route:south", "heading:zones", "zone:forest"], outliner.Rows.Select(row => row.Key));
+        Assert.Equal("Search the world", outliner.SearchText);
+    }
+
+    [Fact]
     public async Task ARouteUnfoldsIntoItsStepsAndSelectingAStepSelectsItInTheWorld()
     {
         var (outliner, selection, world) = await OutlinerAsync();

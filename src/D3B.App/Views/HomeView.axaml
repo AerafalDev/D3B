@@ -30,6 +30,38 @@
             <Setter Property="Padding" Value="8,6" />
             <Setter Property="Height" Value="44" />
         </Style>
+        <Style Selector="Border.Step">
+            <Setter Property="Width" Value="22" />
+            <Setter Property="Height" Value="22" />
+            <Setter Property="CornerRadius" Value="11" />
+            <Setter Property="Background" Value="{DynamicResource AccentSoftColor}" />
+        </Style>
+        <Style Selector="Border.Step > TextBlock">
+            <Setter Property="HorizontalAlignment" Value="Center" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+            <Setter Property="FontSize" Value="11" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Foreground" Value="{DynamicResource BrightColor}" />
+        </Style>
+        <Style Selector="Border.CharacterCard">
+            <Setter Property="Padding" Value="0" />
+        </Style>
+        <Style Selector="Button.CardFace">
+            <Setter Property="Theme" Value="{DynamicResource StudioButton}" />
+            <Setter Property="Height" Value="70" />
+            <Setter Property="MinHeight" Value="70" />
+            <Setter Property="HorizontalAlignment" Value="Stretch" />
+            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
+            <Setter Property="Padding" Value="12,0" />
+            <Setter Property="CornerRadius" Value="10" />
+            <Setter Property="Background" Value="{DynamicResource ClearColor}" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="FontWeight" Value="Normal" />
+        </Style>
+        <Style Selector="Button.CardFace:pointerover">
+            <Setter Property="Background" Value="{DynamicResource HoverColor}" />
+        </Style>
         <Style Selector="Border.KindSquare">
             <Setter Property="CornerRadius" Value="5" />
             <Setter Property="Height" Value="22" />
@@ -221,16 +253,154 @@
                     </StackPanel>
                 </Border>
 
-                <!--  Where to start.  -->
+                <!--  The characters first, a card each: a click opens its tab, its button plays or pauses it (D514).  -->
                 <StackPanel IsVisible="{Binding !IsFailed}" Spacing="24">
                     <StackPanel Spacing="8">
-                        <TextBlock Classes="CardTitle" Text="{l:Tr HomeQuickActions}" />
-                        <WrapPanel>
-                            <WrapPanel.Styles>
-                                <Style Selector="WrapPanel > Button">
-                                    <Setter Property="Margin" Value="0,0,8,8" />
-                                </Style>
-                            </WrapPanel.Styles>
+                        <TextBlock Classes="CardTitle" Text="{l:Tr HomeCharacters}" />
+                        <Border
+                            Classes="Card"
+                            IsVisible="{Binding Home.HasNoCharacters}"
+                            Padding="20">
+                            <StackPanel Spacing="12">
+                                <TextBlock
+                                    Classes="Bright"
+                                    FontWeight="SemiBold"
+                                    Text="{l:Tr HomeStartTitle}" />
+                                <StackPanel Spacing="8">
+                                    <StackPanel Orientation="Horizontal" Spacing="10">
+                                        <Border Classes="Step">
+                                            <TextBlock Text="1" />
+                                        </Border>
+                                        <TextBlock
+                                            Text="{l:Tr HomeStartLaunch}"
+                                            TextWrapping="Wrap"
+                                            VerticalAlignment="Center" />
+                                    </StackPanel>
+                                    <StackPanel Orientation="Horizontal" Spacing="10">
+                                        <Border Classes="Step">
+                                            <TextBlock Text="2" />
+                                        </Border>
+                                        <TextBlock
+                                            Text="{l:Tr HomeStartChoose}"
+                                            TextWrapping="Wrap"
+                                            VerticalAlignment="Center" />
+                                    </StackPanel>
+                                    <StackPanel Orientation="Horizontal" Spacing="10">
+                                        <Border Classes="Step">
+                                            <TextBlock Text="3" />
+                                        </Border>
+                                        <TextBlock
+                                            Text="{l:Tr HomeStartPlay}"
+                                            TextWrapping="Wrap"
+                                            VerticalAlignment="Center" />
+                                    </StackPanel>
+                                </StackPanel>
+                            </StackPanel>
+                        </Border>
+                        <ItemsControl ItemsSource="{Binding Home.Characters}">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <WrapPanel ItemSpacing="12" LineSpacing="12" />
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate x:DataType="home:HomeCharacterViewModel">
+                                    <Border
+                                        Classes="Card CharacterCard"
+                                        Classes.Dimmed="{Binding IsDimmed}"
+                                        Width="236">
+                                        <Grid ColumnDefinitions="*,Auto">
+                                            <Button
+                                                Classes="CardFace"
+                                                Command="{Binding OpenCommand}"
+                                                ToolTip.Tip="{l:Tr HomeOpenCharacter}">
+                                                <Grid ColumnDefinitions="Auto,*" RowDefinitions="Auto,Auto,Auto">
+                                                    <Panel
+                                                        Grid.RowSpan="3"
+                                                        Margin="0,0,10,0"
+                                                        VerticalAlignment="Center">
+                                                        <c:Portrait
+                                                            Color="{Binding PortraitColor}"
+                                                            Head="{Binding Head}"
+                                                            Height="36"
+                                                            Initials="{Binding Initials}"
+                                                            IsDimmed="{Binding IsDimmed}"
+                                                            Radius="10"
+                                                            Width="36" />
+                                                        <Ellipse
+                                                            Fill="{Binding StateBrush}"
+                                                            Height="10"
+                                                            HorizontalAlignment="Right"
+                                                            IsVisible="{Binding IsOnline}"
+                                                            Margin="0,0,-2,-2"
+                                                            Stroke="{DynamicResource CardBackgroundColor}"
+                                                            StrokeThickness="1.5"
+                                                            VerticalAlignment="Bottom"
+                                                            Width="10" />
+                                                    </Panel>
+                                                    <TextBlock
+                                                        Classes="Bright"
+                                                        FontSize="12.5"
+                                                        FontWeight="SemiBold"
+                                                        Grid.Column="1"
+                                                        Text="{Binding Name}"
+                                                        TextTrimming="CharacterEllipsis" />
+                                                    <TextBlock
+                                                        Classes="Dim"
+                                                        FontSize="11"
+                                                        Grid.Column="1"
+                                                        Grid.Row="1"
+                                                        Text="{Binding Detail}"
+                                                        TextTrimming="CharacterEllipsis"
+                                                        ToolTip.Tip="{Binding Detail}" />
+                                                    <StackPanel
+                                                        Grid.Column="1"
+                                                        Grid.Row="2"
+                                                        IsVisible="{Binding IsOnline}"
+                                                        Margin="0,2,0,0"
+                                                        Orientation="Horizontal"
+                                                        Spacing="5">
+                                                        <c:Icon
+                                                            Drawing="{StaticResource Nodes.Template}"
+                                                            Height="11"
+                                                            Tint="#C9A7F2"
+                                                            VerticalAlignment="Center"
+                                                            Width="11" />
+                                                        <TextBlock
+                                                            Classes="Muted"
+                                                            FontSize="11"
+                                                            Text="{Binding Profile}"
+                                                            TextTrimming="CharacterEllipsis" />
+                                                    </StackPanel>
+                                                </Grid>
+                                            </Button>
+                                            <Button
+                                                AutomationProperties.Name="{Binding PlayTip}"
+                                                Classes="Tool Run"
+                                                Command="{Binding PlayOrPauseCommand}"
+                                                Grid.Column="1"
+                                                IsEnabled="{Binding CanPlayOrPause}"
+                                                IsVisible="{Binding IsOnline}"
+                                                Margin="4,0,8,0"
+                                                ToolTip.ShowOnDisabled="True"
+                                                ToolTip.Tip="{Binding PlayTip}"
+                                                VerticalAlignment="Center">
+                                                <Panel>
+                                                    <c:Icon Drawing="{StaticResource Run.Run}" IsVisible="{Binding !IsPlaying}" />
+                                                    <c:Icon Drawing="{StaticResource Run.Pause}" IsVisible="{Binding IsPlaying}" />
+                                                </Panel>
+                                            </Button>
+                                        </Grid>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </StackPanel>
+
+                    <!--  What to make: a profile, a route, a zone. The settings and the project's folder are the activity bar's and File's.  -->
+                    <StackPanel Spacing="8">
+                        <TextBlock Classes="CardTitle" Text="{l:Tr HomeMake}" />
+                        <WrapPanel ItemSpacing="8" LineSpacing="8">
                             <Button
                                 Classes="Outline"
                                 Command="{Binding Home.NewProfileCommand}"
@@ -258,152 +428,69 @@
                                     <TextBlock Text="{l:Tr HomeNewZone}" />
                                 </StackPanel>
                             </Button>
-                            <Button
-                                Classes="Outline"
-                                Command="{Binding Home.ProjectFolderCommand}"
-                                IsEnabled="{Binding IsRunning}">
-                                <StackPanel Orientation="Horizontal" Spacing="8">
-                                    <c:Icon Drawing="{StaticResource Nodes.Folder}" />
-                                    <TextBlock Text="{l:Tr HomeProjectFolder}" />
-                                </StackPanel>
-                            </Button>
-                            <Button Classes="Outline" Command="{Binding Home.SettingsCommand}">
-                                <StackPanel Orientation="Horizontal" Spacing="8">
-                                    <c:Icon Drawing="{StaticResource General.Settings}" />
-                                    <TextBlock Text="{l:Tr HomeSettings}" />
-                                </StackPanel>
-                            </Button>
                         </WrapPanel>
                     </StackPanel>
 
-                    <Grid ColumnDefinitions="*,16,*">
-                        <Border Classes="Card" Padding="12">
-                            <StackPanel Spacing="8">
-                                <TextBlock
-                                    Classes="CardTitle"
-                                    Margin="8,4,0,0"
-                                    Text="{l:Tr HomeCharacters}" />
-                                <TextBlock
-                                    Classes="Muted"
-                                    IsVisible="{Binding Home.HasNoCharacters}"
-                                    Margin="8,0,8,8"
-                                    Text="{l:Tr HomeNoCharacters}"
-                                    TextWrapping="Wrap" />
-                                <ItemsControl ItemsSource="{Binding Home.Characters}">
-                                    <ItemsControl.ItemTemplate>
-                                        <DataTemplate x:DataType="home:HomeCharacterViewModel">
-                                            <Button
-                                                Classes="Ghost HomeRow"
-                                                Command="{Binding ChooseCommand}"
-                                                DoubleTapped="OnCharacterDoubleTapped">
-                                                <Grid ColumnDefinitions="Auto,*">
-                                                    <Panel Margin="0,0,10,0" VerticalAlignment="Center">
-                                                        <c:Portrait
-                                                            Color="{Binding PortraitColor}"
-                                                            Head="{Binding Head}"
-                                                            Height="28"
-                                                            Initials="{Binding Initials}"
-                                                            IsDimmed="{Binding IsDimmed}"
-                                                            Radius="14"
-                                                            Width="28" />
-                                                        <Ellipse
-                                                            Fill="{Binding StateBrush}"
-                                                            Height="9"
-                                                            HorizontalAlignment="Right"
-                                                            IsVisible="{Binding !IsDimmed}"
-                                                            Margin="0,0,-2,-2"
-                                                            Stroke="{DynamicResource CardBackgroundColor}"
-                                                            StrokeThickness="1.5"
-                                                            VerticalAlignment="Bottom"
-                                                            Width="9" />
-                                                    </Panel>
-                                                    <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                                                        <TextBlock
-                                                            Classes="Bright"
-                                                            FontSize="12.5"
-                                                            Text="{Binding Name}"
-                                                            TextTrimming="CharacterEllipsis" />
-                                                        <TextBlock
-                                                            Classes="Dim"
-                                                            FontSize="11"
-                                                            Text="{Binding Detail}"
-                                                            TextTrimming="CharacterEllipsis" />
-                                                    </StackPanel>
-                                                </Grid>
-                                            </Button>
-                                        </DataTemplate>
-                                    </ItemsControl.ItemTemplate>
-                                </ItemsControl>
-                            </StackPanel>
-                        </Border>
-
-                        <Border
-                            Classes="Card"
-                            Grid.Column="2"
-                            Padding="12">
-                            <StackPanel Spacing="8">
-                                <TextBlock
-                                    Classes="CardTitle"
-                                    Margin="8,4,0,0"
-                                    Text="{l:Tr HomeRecent}" />
-                                <TextBlock
-                                    Classes="Muted"
-                                    IsVisible="{Binding Home.HasNoRecents}"
-                                    Margin="8,0,8,8"
-                                    Text="{l:Tr HomeNoRecent}"
-                                    TextWrapping="Wrap" />
-                                <ItemsControl ItemsSource="{Binding Home.Recents}">
-                                    <ItemsControl.ItemTemplate>
-                                        <DataTemplate x:DataType="home:HomeRecentViewModel">
-                                            <Button
-                                                Classes="Ghost HomeRow"
-                                                Command="{Binding OpenCommand}">
-                                                <Grid ColumnDefinitions="Auto,*,Auto">
-                                                    <Border
-                                                        Background="{Binding KindTint}"
-                                                        Classes="KindSquare"
-                                                        Margin="0,0,10,0"
-                                                        VerticalAlignment="Center">
-                                                        <c:Icon
-                                                            Drawing="{Binding Icon, Converter={x:Static c:DrawingOf.Instance}}"
-                                                            Height="12"
-                                                            Tint="{Binding KindBrush}"
-                                                            Width="12" />
-                                                    </Border>
-                                                    <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                                                        <TextBlock
-                                                            Classes="Bright"
-                                                            FontSize="12.5"
-                                                            Text="{Binding Name}"
-                                                            TextTrimming="CharacterEllipsis" />
-                                                        <TextBlock
-                                                            Classes="Dim"
-                                                            FontSize="11"
-                                                            Text="{Binding Kind}" />
-                                                    </StackPanel>
+                    <Border Classes="Card" Padding="12">
+                        <StackPanel Spacing="8">
+                            <TextBlock
+                                Classes="CardTitle"
+                                Margin="8,4,0,0"
+                                Text="{l:Tr HomeRecent}" />
+                            <TextBlock
+                                Classes="Muted"
+                                IsVisible="{Binding Home.HasNoRecents}"
+                                Margin="8,0,8,8"
+                                Text="{l:Tr HomeNoRecent}"
+                                TextWrapping="Wrap" />
+                            <ItemsControl ItemsSource="{Binding Home.Recents}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate x:DataType="home:HomeRecentViewModel">
+                                        <Button
+                                            Classes="Ghost HomeRow"
+                                            Command="{Binding OpenCommand}">
+                                            <Grid ColumnDefinitions="Auto,*,Auto">
+                                                <Border
+                                                    Background="{Binding KindTint}"
+                                                    Classes="KindSquare"
+                                                    Margin="0,0,10,0"
+                                                    VerticalAlignment="Center">
+                                                    <c:Icon
+                                                        Drawing="{Binding Icon, Converter={x:Static c:DrawingOf.Instance}}"
+                                                        Height="12"
+                                                        Tint="{Binding KindBrush}"
+                                                        Width="12" />
+                                                </Border>
+                                                <StackPanel Grid.Column="1" VerticalAlignment="Center">
                                                     <TextBlock
-                                                        Classes="Dim Figures"
+                                                        Classes="Bright"
+                                                        FontSize="12.5"
+                                                        Text="{Binding Name}"
+                                                        TextTrimming="CharacterEllipsis" />
+                                                    <TextBlock
+                                                        Classes="Dim"
                                                         FontSize="11"
-                                                        Grid.Column="2"
-                                                        Margin="8,0,0,0"
-                                                        Text="{Binding When}"
-                                                        VerticalAlignment="Center" />
-                                                </Grid>
-                                            </Button>
-                                        </DataTemplate>
-                                    </ItemsControl.ItemTemplate>
-                                </ItemsControl>
-                            </StackPanel>
-                        </Border>
-                    </Grid>
+                                                        Text="{Binding Kind}" />
+                                                </StackPanel>
+                                                <TextBlock
+                                                    Classes="Dim Figures"
+                                                    FontSize="11"
+                                                    Grid.Column="2"
+                                                    Margin="8,0,0,0"
+                                                    Text="{Binding When}"
+                                                    VerticalAlignment="Center" />
+                                            </Grid>
+                                        </Button>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </StackPanel>
+                    </Border>
 
                     <StackPanel Spacing="8">
                         <TextBlock Classes="CardTitle" Text="{l:Tr HomeShortcuts}" />
-                        <WrapPanel>
-                            <StackPanel
-                                Margin="0,0,24,8"
-                                Orientation="Horizontal"
-                                Spacing="8">
+                        <WrapPanel ItemSpacing="24" LineSpacing="8">
+                            <StackPanel Orientation="Horizontal" Spacing="8">
                                 <TextBlock Classes="KeyName" Text="{l:Tr HomeSearch}" />
                                 <StackPanel Classes="Keys">
                                     <Border Classes="Key">
@@ -414,25 +501,19 @@
                                     </Border>
                                 </StackPanel>
                             </StackPanel>
-                            <StackPanel
-                                Margin="0,0,24,8"
-                                Orientation="Horizontal"
-                                Spacing="8">
-                                <TextBlock Classes="KeyName" Text="{l:Tr HomeAssets}" />
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <TextBlock Classes="KeyName" Text="{l:Tr PanelSide}" />
                                 <StackPanel Classes="Keys">
                                     <Border Classes="Key">
                                         <TextBlock Text="Ctrl" />
                                     </Border>
                                     <Border Classes="Key">
-                                        <TextBlock Text="{l:Tr KeySpace}" />
+                                        <TextBlock Text="B" />
                                     </Border>
                                 </StackPanel>
                             </StackPanel>
-                            <StackPanel
-                                Margin="0,0,24,8"
-                                Orientation="Horizontal"
-                                Spacing="8">
-                                <TextBlock Classes="KeyName" Text="{l:Tr HomeJournal}" />
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <TextBlock Classes="KeyName" Text="{l:Tr PanelBottom}" />
                                 <StackPanel Classes="Keys">
                                     <Border Classes="Key">
                                         <TextBlock Text="Ctrl" />
@@ -442,10 +523,7 @@
                                     </Border>
                                 </StackPanel>
                             </StackPanel>
-                            <StackPanel
-                                Margin="0,0,24,8"
-                                Orientation="Horizontal"
-                                Spacing="8">
+                            <StackPanel Orientation="Horizontal" Spacing="8">
                                 <TextBlock Classes="KeyName" Text="{l:Tr HomePlay}" />
                                 <StackPanel Classes="Keys">
                                     <Border Classes="Key">

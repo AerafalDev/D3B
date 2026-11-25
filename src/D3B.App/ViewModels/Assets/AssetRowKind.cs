@@ -12,6 +12,6 @@ internal enum AssetRowKind
     /// <summary>A file of the project that does not read, in red, the reason in its tooltip.</summary>
     Problem,
 
-    /// <summary>The heading of the assets given with D3B, read only.</summary>
-    Given,
+    /// <summary>A heading that folds what it groups: the assets given with D3B, read only, or the project's of one kind, or its files that do not read (D515).</summary>
+    Heading,
 }

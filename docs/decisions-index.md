@@ -950,6 +950,15 @@ or refines another says so in its own entry. Add a line here with every new deci
 - [D511](decisions/d509-d511-search-budget-and-refusals.md#d511-a-weapons-blow-is-not-struck-in-a-state-that-prevents-fighting) A weapon's blow is not struck in a state that prevents fighting (2026-11-24)
   - The owner's ask, the audit; 74 blows refused with text 372, each in state 1 or 42, which the pack flags preventsFight.
 
+## The studio made simpler (D513 to D515)
+
+- [D513](decisions/d513-studio-navigation.md#d513-the-studio-opens-on-an-activity-bar-and-one-side-bar-the-bottom-panel-and-the-details-hidden-until-needed-the-protocol-an-advanced-tool) The studio opens on an activity bar and one side bar, the bottom panel and the Details hidden until needed, the protocol an advanced tool (2026-11-24)
+  - Stage 1 of 4 of the redesign after `next`, taken by the lead under the owner's delegation; Characters, Library and World as views, Advanced tools.
+- [D514](decisions/d514-character-card-and-home.md#d514-a-characters-tab-chooses-its-profile-and-plays-it-and-the-home-page-is-the-characters-cards) A character's tab chooses its profile and plays it, and the home page is the characters' cards (2026-11-25)
+  - Stage 2 of 4 of the redesign, taken by the lead under the owner's delegation; the tab's header, the home page's cards.
+- [D515](decisions/d515-library-by-kind.md#d515-the-library-groups-the-project-by-kind-its-folders-on-demand-and-the-profiles-header-speaks-of-settings) The Library groups the project by kind, its folders on demand, and the profile's header speaks of settings (2026-11-25)
+  - Stage 3 of 4 of the redesign, taken by the lead under the owner's delegation; the World's view makes a route or a zone.
+
 ## Movement and banking, a walk refused with its confirmation (D517)
 
 - [D517](decisions/d517-miner-refused-door.md#d517-a-walk-refused-after-it-was-shown-has-not-arrived-and-a-banks-journey-whose-way-failed-is-not-travelled-not-without-a-bank) A walk refused after it was shown has not arrived, and a bank's journey whose way failed is not travelled, not without a bank (2026-11-25)

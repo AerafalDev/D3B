@@ -583,7 +583,7 @@ public sealed class ProfilesViewModelTests : IAsyncDisposable
         item.ResetAllCommand.Execute(null);
 
         Assert.False(item.HasChanges);
-        Assert.Equal("no value changed", item.ChangedText);
+        Assert.Equal("no setting changed", item.ChangedText);
     }
 
     [Fact]

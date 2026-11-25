@@ -253,7 +253,10 @@
                             </StackPanel>
                         </Button>
                     </Border>
-                    <Border Classes="TabHost" Classes.On="{Binding IsProtocolShown}">
+                    <Border
+                        Classes="TabHost"
+                        Classes.On="{Binding IsProtocolShown}"
+                        IsVisible="{Binding HasProtocol}">
                         <Button
                             Classes="TabFace Plain"
                             Command="{Binding ShowCommand}"

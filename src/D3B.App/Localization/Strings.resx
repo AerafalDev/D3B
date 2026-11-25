@@ -1424,9 +1424,6 @@
   <data name="MenuEdit" xml:space="preserve">
     <value>Edit</value>
   </data>
-  <data name="MenuWindow" xml:space="preserve">
-    <value>Window</value>
-  </data>
   <data name="MenuHelp" xml:space="preserve">
     <value>Help</value>
   </data>
@@ -1442,9 +1439,6 @@
   <data name="MenuPanels" xml:space="preserve">
     <value>Panels</value>
   </data>
-  <data name="MenuPages" xml:space="preserve">
-    <value>Pages</value>
-  </data>
   <data name="MenuModules" xml:space="preserve">
     <value>Modules</value>
   </data>
@@ -1453,15 +1447,6 @@
   </data>
   <data name="MenuAbout" xml:space="preserve">
     <value>About D3B</value>
-  </data>
-  <data name="PanelOutliner" xml:space="preserve">
-    <value>Outliner</value>
-  </data>
-  <data name="PanelAssets" xml:space="preserve">
-    <value>Assets</value>
-  </data>
-  <data name="PanelJournal" xml:space="preserve">
-    <value>Journal</value>
   </data>
   <data name="PanelDetails" xml:space="preserve">
     <value>Details</value>
@@ -1693,12 +1678,6 @@
   </data>
   <data name="HomeSearch" xml:space="preserve">
     <value>Search everywhere</value>
-  </data>
-  <data name="HomeAssets" xml:space="preserve">
-    <value>Assets</value>
-  </data>
-  <data name="HomeJournal" xml:space="preserve">
-    <value>Journal</value>
   </data>
   <data name="HomePlay" xml:space="preserve">
     <value>Play</value>
@@ -1971,10 +1950,10 @@
     <value>on connection</value>
   </data>
   <data name="ValuesChangedOne" xml:space="preserve">
-    <value>{0:N0} value changed</value>
+    <value>{0:N0} setting changed</value>
   </data>
   <data name="ValuesChangedOther" xml:space="preserve">
-    <value>{0:N0} values changed</value>
+    <value>{0:N0} settings changed</value>
   </data>
   <data name="VariableFlag" xml:space="preserve">
     <value>Flag</value>
@@ -2004,10 +1983,10 @@
     <value>{0} copied into the project</value>
   </data>
   <data name="NoValueChanged" xml:space="preserve">
-    <value>no value changed</value>
+    <value>no setting changed</value>
   </data>
   <data name="VariantOf" xml:space="preserve">
-    <value>Variant of</value>
+    <value>Based on</value>
   </data>
   <data name="ResetAll" xml:space="preserve">
     <value>Reset all</value>
@@ -3105,7 +3084,7 @@
     <value>Search the world</value>
   </data>
   <data name="OutlinerEmpty" xml:space="preserve">
-    <value>Nothing in the world yet: connect a character, or add a route or a zone from Content.</value>
+    <value>Nothing in the world yet: connect a character, or add a route or a zone from the Library.</value>
   </data>
   <data name="OutlinerEye" xml:space="preserve">
     <value>Show on the map</value>
@@ -3128,9 +3107,6 @@
   <data name="ZoneContents" xml:space="preserve">
     <value>Contents</value>
   </data>
-  <data name="HomeQuickActions" xml:space="preserve">
-    <value>Quick actions</value>
-  </data>
   <data name="HomeNewProfile" xml:space="preserve">
     <value>New profile</value>
   </data>
@@ -3140,17 +3116,8 @@
   <data name="HomeNewZone" xml:space="preserve">
     <value>New zone</value>
   </data>
-  <data name="HomeProjectFolder" xml:space="preserve">
-    <value>Project folder</value>
-  </data>
-  <data name="HomeSettings" xml:space="preserve">
-    <value>Settings</value>
-  </data>
   <data name="HomeCharacters" xml:space="preserve">
     <value>Characters</value>
-  </data>
-  <data name="HomeNoCharacters" xml:space="preserve">
-    <value>No character yet. Log in to the game with the relay on, and your characters appear here.</value>
   </data>
   <data name="HomeRecent" xml:space="preserve">
     <value>Recent</value>
@@ -3571,5 +3538,107 @@
   </data>
   <data name="StatisticsFightsSummary" xml:space="preserve">
     <value>won {0:N0} · lost {1:N0} · deaths {2:N0}</value>
+  </data>
+  <data name="CharactersSearch" xml:space="preserve">
+    <value>Search the characters</value>
+  </data>
+  <data name="WorldEmpty" xml:space="preserve">
+    <value>No route or zone yet. Add one from the Library, or trace one on the world's map.</value>
+  </data>
+  <data name="MenuView" xml:space="preserve">
+    <value>View</value>
+  </data>
+  <data name="MenuViews" xml:space="preserve">
+    <value>Views</value>
+  </data>
+  <data name="ViewCharacters" xml:space="preserve">
+    <value>Characters</value>
+  </data>
+  <data name="ViewLibrary" xml:space="preserve">
+    <value>Library</value>
+  </data>
+  <data name="ViewWorld" xml:space="preserve">
+    <value>World</value>
+  </data>
+  <data name="PanelSide" xml:space="preserve">
+    <value>Side bar</value>
+  </data>
+  <data name="PanelBottom" xml:space="preserve">
+    <value>Bottom panel</value>
+  </data>
+  <data name="AdvancedTools" xml:space="preserve">
+    <value>Advanced tools</value>
+  </data>
+  <data name="ActivityJournal" xml:space="preserve">
+    <value>Journal</value>
+  </data>
+  <data name="ActivityStatistics" xml:space="preserve">
+    <value>Statistics</value>
+  </data>
+  <data name="SettingAdvancedTools" xml:space="preserve">
+    <value>Advanced tools</value>
+  </data>
+  <data name="SettingAdvancedToolsDetail" xml:space="preserve">
+    <value>The protocol's tab in the bottom panel, for those who study the game's messages</value>
+  </data>
+  <data name="CommandToggleSide" xml:space="preserve">
+    <value>Show or hide the side bar</value>
+  </data>
+  <data name="CommandToggleDetails" xml:space="preserve">
+    <value>Show or hide the Details</value>
+  </data>
+  <data name="CommandToggleAdvancedTools" xml:space="preserve">
+    <value>Show or hide the advanced tools</value>
+  </data>
+  <data name="CommandShowStatistics" xml:space="preserve">
+    <value>Show the statistics</value>
+  </data>
+  <data name="Hide" xml:space="preserve">
+    <value>Hide</value>
+  </data>
+  <data name="HomeStartTitle" xml:space="preserve">
+    <value>To start</value>
+  </data>
+  <data name="HomeStartLaunch" xml:space="preserve">
+    <value>Keep D3B open, then start Dofus from Ankama's launcher.</value>
+  </data>
+  <data name="HomeStartChoose" xml:space="preserve">
+    <value>Choose a character in the game: its card shows here.</value>
+  </data>
+  <data name="HomeStartPlay" xml:space="preserve">
+    <value>Open its card, choose its profile and press Play.</value>
+  </data>
+  <data name="HomeOpenCharacter" xml:space="preserve">
+    <value>Open its tab: its profile, its map and what it does</value>
+  </data>
+  <data name="HomeMake" xml:space="preserve">
+    <value>Make</value>
+  </data>
+  <data name="AssetGroupProfile" xml:space="preserve">
+    <value>Profiles</value>
+  </data>
+  <data name="AssetGroupRoute" xml:space="preserve">
+    <value>Routes</value>
+  </data>
+  <data name="AssetGroupZone" xml:space="preserve">
+    <value>Zones</value>
+  </data>
+  <data name="AssetGroupBehavior" xml:space="preserve">
+    <value>Behaviors</value>
+  </data>
+  <data name="AssetGroupList" xml:space="preserve">
+    <value>Lists</value>
+  </data>
+  <data name="AssetGroupPlanning" xml:space="preserve">
+    <value>Plannings</value>
+  </data>
+  <data name="AssetGroupFightPreferences" xml:space="preserve">
+    <value>Fight preferences</value>
+  </data>
+  <data name="AssetGroupProblems" xml:space="preserve">
+    <value>Files that do not read</value>
+  </data>
+  <data name="LibraryByFolder" xml:space="preserve">
+    <value>Show the folders</value>
   </data>
 </root>

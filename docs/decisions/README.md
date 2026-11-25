@@ -129,4 +129,7 @@ Each file holds the decisions of one group of [the index](../decisions-index.md)
 - [The harvest's audit, the rotation's order and resources grown back on the way (D506, D507)](d506-harvest-audit.md): 2 decisions, 6 KB.
 - [Fights, the AI's searches off the thread pool (D508)](d508-fight-searches-off-the-pool.md): 1 decision, 3 KB.
 - [Fights, the search's budget a limit, an unanswered cast and the weapon in a state that prevents fighting (D509 to D511)](d509-d511-search-budget-and-refusals.md): 3 decisions, 6 KB.
+- [The studio made simpler, its navigation and shell (D513)](d513-studio-navigation.md): 1 decision, 5 KB.
+- [The studio made simpler, the character's card and the home page (D514)](d514-character-card-and-home.md): 1 decision, 3 KB.
+- [The studio made simpler, the Library by kind (D515)](d515-library-by-kind.md): 1 decision, 3 KB.
 - [Movement and banking, a walk refused with its confirmation (D517)](d517-miner-refused-door.md): 1 decision, 4 KB.

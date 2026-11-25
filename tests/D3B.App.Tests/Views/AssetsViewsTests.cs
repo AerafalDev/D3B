@@ -6,6 +6,7 @@ using Avalonia.Threading;
 using Avalonia.VisualTree;
 using D3B.App.Localization;
 using D3B.App.ViewModels;
+using D3B.App.ViewModels.Studio;
 using D3B.App.ViewModels.Assets;
 using D3B.App.Views;
 using D3B.Bot.Tests.Runtime;
@@ -54,12 +55,13 @@ public sealed class AssetsViewsTests
             var main = new MainViewModel(runner, localizer);
             var window = new MainWindow { DataContext = main, Width = 1440, Height = 900 };
 
+            main.Layout.ShowView(SideView.Library);
             main.Refresh();
             window.Show();
             main.Refresh();
             Dispatcher.UIThread.RunJobs();
 
-            var dock = window.GetVisualDescendants().OfType<Border>().Single(border => border.Name == "AssetsDock");
+            var dock = window.GetVisualDescendants().OfType<Border>().Single(border => border.Name == "SideDock");
             var english = Texts(dock);
             var panel = dock.GetVisualDescendants().OfType<AssetsView>().Single();
 
@@ -92,15 +94,19 @@ public sealed class AssetsViewsTests
             return (english, french, tab, add);
         });
 
-        Assert.Contains("Lumberjack", english);
+        // By kind, the Library's default: the folder Lumberjack shows with the folders' view (D515).
+        Assert.Contains("Profiles", english);
+        Assert.Contains("Files that do not read", english);
+        Assert.DoesNotContain("Lumberjack", english);
         Assert.Contains("Walker", english);
         Assert.Contains("Broken.profile.json", english);
         Assert.Contains("Given with D3B", english);
-        Assert.Contains("Variant of", english);
+        Assert.Contains("Based on", english);
         Assert.Contains("Preview", english);
         Assert.DoesNotContain(english, text => text.StartsWith('[') && text.EndsWith(']'));
         Assert.Contains("Donnés avec D3B", french);
-        Assert.Contains("Variante de", french);
+        Assert.Contains("Profils", french);
+        Assert.Contains("Basé sur", french);
         Assert.Contains("Tout remettre", french);
         Assert.DoesNotContain(french, text => text.StartsWith('[') && text.EndsWith(']'));
         Assert.Equal(("profile:" + walker.Id, "Walker", true), tab);
@@ -129,6 +135,7 @@ public sealed class AssetsViewsTests
             var main = new MainViewModel(runner, Localizer.Instance);
             var window = new MainWindow { DataContext = main, Width = 1440, Height = 900 };
 
+            main.Layout.ShowView(SideView.Library);
             main.Refresh();
             window.Show();
             main.Refresh();

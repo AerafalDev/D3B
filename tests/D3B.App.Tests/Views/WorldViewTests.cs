@@ -8,6 +8,7 @@ using Avalonia.VisualTree;
 using D3B.App.Controls.WorldMaps;
 using D3B.App.Localization;
 using D3B.App.ViewModels;
+using D3B.App.ViewModels.Studio;
 using D3B.App.ViewModels.Routes;
 using D3B.App.ViewModels.World;
 using D3B.App.ViewModels.Zones;
@@ -300,6 +301,10 @@ public sealed class WorldViewTests
             Dispatcher.UIThread.RunJobs();
             Drawings.Draw(window, "studio-engine-nothing");
 
+            // The routes and the zones are the World's view of the side bar (D513).
+            main.Layout.ShowView(SideView.World);
+            Dispatcher.UIThread.RunJobs();
+
             var outliner = window.GetVisualDescendants().OfType<OutlinerView>().Single();
             var north = main.Outliner.Rows.Single(row => row.Key == "route:north");
 
@@ -309,6 +314,10 @@ public sealed class WorldViewTests
             main.Refresh();
             Dispatcher.UIThread.RunJobs();
             Drawings.Draw(window, "studio-engine-step");
+
+            // The World's view makes a route or a zone from its header (D515).
+            Assert.True(window.GetVisualDescendants().OfType<Button>().Single(button => button.Name == "WorldNewRoute") is { IsEffectivelyVisible: true, IsEffectivelyEnabled: true });
+            Assert.True(window.GetVisualDescendants().OfType<Button>().Single(button => button.Name == "WorldNewZone").IsEffectivelyVisible);
 
             var texts = window.GetVisualDescendants().OfType<TextBlock>().Select(block => block.Text).OfType<string>().ToList();
             var route = (main.World.Route?.Id, main.Selection.Step, main.Properties.ShowsAsset, main.Properties.Asset.HasRoute);
@@ -333,7 +342,6 @@ public sealed class WorldViewTests
             return (texts, route, zone, character, rows, outliner.IsEffectivelyVisible);
         });
 
-        Assert.Contains("Outliner", result.texts);
         Assert.Contains("Details", result.texts);
         Assert.Contains("World", result.texts);
         Assert.Contains("Select", result.texts);
@@ -342,7 +350,7 @@ public sealed class WorldViewTests
         Assert.Equal(("forest", true), result.zone);
         Assert.Equal((WorldSelectionKind.Character, true, true, true), result.character);
         Assert.Contains("route:north", result.rows);
-        Assert.Contains(result.rows, key => key.StartsWith("character:", StringComparison.Ordinal));
+        Assert.DoesNotContain(result.rows, key => key.StartsWith("character:", StringComparison.Ordinal));
         Assert.True(result.Item6);
     }
 }

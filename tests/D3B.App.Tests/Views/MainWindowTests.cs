@@ -112,7 +112,7 @@ public sealed class MainWindowTests : IAsyncDisposable
             },
             TestContext.Current.CancellationToken);
 
-        Assert.Contains("Outliner", english);
+        Assert.DoesNotContain("Outliner", english);
         Assert.Contains("Characters", english);
         Assert.Contains("Home", english);
         Assert.Contains("Character", english);
@@ -294,12 +294,12 @@ public sealed class MainWindowTests : IAsyncDisposable
         Assert.Contains("Walker", english);
         Assert.Contains("Auto start", english);
         Assert.Contains("nickname#tag", english);
-        Assert.Contains("Variant of", english);
+        Assert.Contains("Based on", english);
         Assert.Contains("Preview", english);
         Assert.Contains("Save", english);
         Assert.DoesNotContain(english, text => text.StartsWith('[') && text.EndsWith(']'));
         Assert.Contains("Détails", french);
-        Assert.Contains("Variante de", french);
+        Assert.Contains("Basé sur", french);
         Assert.Contains("Aperçu", french);
         Assert.Contains("Enregistrer", french);
         Assert.Contains("Auto-démarrage", french);
@@ -346,6 +346,9 @@ public sealed class MainWindowTests : IAsyncDisposable
 
             texts.AddRange(Texts(window));
             Drawings.Draw(window, "logs-en");
+
+            // The protocol is an advanced tool (D513).
+            main.Layout.ToggleAdvancedTools();
             main.Bottom.ShowCommand.Execute(BottomTab.Protocol);
             Dispatcher.UIThread.RunJobs();
             texts.AddRange(Texts(window));
@@ -440,8 +443,12 @@ public sealed class MainWindowTests : IAsyncDisposable
         Assert.Contains("Sub-area 440, cell 300", english);
         Assert.Contains("Layers", english);
         Assert.Contains("Behavior", english);
+        // Its header chooses its profile and its start on connection, as the Details do (D514).
+        Assert.Contains("Profile", english);
+        Assert.Contains("Auto start", english);
         Assert.DoesNotContain(english, text => text.StartsWith('[') && text.EndsWith(']'));
         Assert.Contains("Comportement", french);
+        Assert.Contains("Auto-démarrage", french);
         Assert.Contains("Sous-zone 440, cellule 300", french);
         Assert.Contains("Calques", french);
         Assert.DoesNotContain(french, text => text.StartsWith('[') && text.EndsWith(']'));

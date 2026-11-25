@@ -6,12 +6,13 @@ using CommunityToolkit.Mvvm.Input;
 using D3B.App.Localization;
 using D3B.App.ViewModels.Assets;
 using D3B.App.ViewModels.Characters;
+using D3B.App.ViewModels.Studio;
 using D3B.App.ViewModels.World;
 using D3B.Studio.Assets;
 
 namespace D3B.App.ViewModels.Home;
 
-/// <summary>The home page, the studio's first tab: quick actions, the characters and the project's assets changed last (D406).</summary>
+/// <summary>The home page, the studio's first tab: the characters' cards, what makes a profile, a route or a zone, and the project's assets changed last (D406, D514).</summary>
 /// <remarks>
 /// <para>
 /// The world is not the first thing the studio shows: it appears once a route or a zone is selected (D406). What a person
@@ -53,12 +54,6 @@ internal sealed partial class HomeViewModel : ObservableObject
 
     /// <summary>Gets or sets what makes a zone and shows it on the world's map.</summary>
     public Func<Task>? ZoneRequested { get; set; }
-
-    /// <summary>Gets or sets what shows the settings.</summary>
-    public Action? SettingsRequested { get; set; }
-
-    /// <summary>Gets or sets what opens the project's folder.</summary>
-    public Action? FolderRequested { get; set; }
 
     /// <summary>Gets whether any character is listed.</summary>
     [ObservableProperty]
@@ -119,17 +114,6 @@ internal sealed partial class HomeViewModel : ObservableObject
             await request().ConfigureAwait(true);
     }
 
-    [RelayCommand]
-    private void Settings()
-    {
-        SettingsRequested?.Invoke();
-    }
-
-    [RelayCommand]
-    private void ProjectFolder()
-    {
-        FolderRequested?.Invoke();
-    }
 
     private void RefreshCharacters()
     {
@@ -137,8 +121,14 @@ internal sealed partial class HomeViewModel : ObservableObject
 
         foreach (var bot in _characters.Online)
         {
+            var (state, canPlay, tip) = RunBlockViewModel.Read(bot, _localizer);
+
             wanted.Add(new HomeCharacterViewModel(_characters, bot.Bot.Key)
             {
+                Profile = bot.SelectedActivity?.Name ?? _localizer["NoProfile"],
+                IsPlaying = state is RunState.Playing,
+                CanPlay = canPlay,
+                PlayTip = state is RunState.Playing ? _localizer["RunPause"] : tip,
                 Name = bot.Name,
                 Initials = bot.Initials,
                 Detail = bot.Step.Length > 0 ? bot.Step : bot.CardActivity,
@@ -161,7 +151,7 @@ internal sealed partial class HomeViewModel : ObservableObject
             });
         }
 
-        var signature = string.Join('\n', wanted.Select(row => string.Join('|', row.Key, row.Name, row.Detail, row.Head is not null, row.IsDimmed, (row.StateBrush as ISolidColorBrush)?.Color)));
+        var signature = string.Join('\n', wanted.Select(row => string.Join('|', row.Key, row.Name, row.Detail, row.Head is not null, row.IsDimmed, (row.StateBrush as ISolidColorBrush)?.Color, row.Profile, row.IsPlaying, row.CanPlay, row.PlayTip)));
 
         if (signature == _charactersSignature)
             return;

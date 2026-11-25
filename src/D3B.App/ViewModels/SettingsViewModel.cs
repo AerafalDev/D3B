@@ -115,6 +115,12 @@ internal sealed partial class SettingsViewModel : ObservableObject
     /// <summary>Gets the row of the docks' layout.</summary>
     public SettingsRowViewModel Layout { get; }
 
+    /// <summary>Gets the row of the advanced tools (D513).</summary>
+    public SettingsRowViewModel AdvancedToolsRow { get; }
+
+    /// <summary>Gets or sets the studio's parts, whose advanced tools the Interface section turns on and off (D513).</summary>
+    public Studio.StudioLayout? Studio { get; set; }
+
     /// <summary>Gets the row of the project's folder.</summary>
     public SettingsRowViewModel Project { get; }
 
@@ -327,6 +333,7 @@ internal sealed partial class SettingsViewModel : ObservableObject
         CaptureMegabytesRow = new SettingsRowViewModel(localizer, "SettingCaptureMegabytesRow");
         Language = new SettingsRowViewModel(localizer, "SettingLanguageRow", hasDetail: false);
         Layout = new SettingsRowViewModel(localizer, "SettingLayout");
+        AdvancedToolsRow = new SettingsRowViewModel(localizer, "SettingAdvancedTools");
         Project = new SettingsRowViewModel(localizer, "SettingProject");
         Database = new SettingsRowViewModel(localizer, "SettingDatabase");
         ClientFolder = new SettingsRowViewModel(localizer, "SettingClientFolder");
@@ -481,7 +488,7 @@ internal sealed partial class SettingsViewModel : ObservableObject
 
     private IEnumerable<SettingsRowViewModel> Rows()
     {
-        return [BankFullAtRow, BankZaapsRow, Captures, CaptureDaysRow, CaptureMegabytesRow, CapturesFolder, Language, Layout, Project, Database, ClientFolder, ClientData, Preferences, Version, Licences];
+        return [BankFullAtRow, BankZaapsRow, Captures, CaptureDaysRow, CaptureMegabytesRow, CapturesFolder, Language, Layout, AdvancedToolsRow, Project, Database, ClientFolder, ClientData, Preferences, Version, Licences];
     }
 
     private void Select(SettingsSectionViewModel section)
@@ -505,7 +512,7 @@ internal sealed partial class SettingsViewModel : ObservableObject
         OnPropertyChanged(nameof(IsBankingShown));
         Bots.IsShown = Delays().Any(delay => delay.IsShown) || IsBankingShown;
         Network.IsShown = Captures.IsShown || CaptureDaysRow.IsShown || CaptureMegabytesRow.IsShown || CapturesFolder.IsShown;
-        Appearance.IsShown = Language.IsShown || Layout.IsShown;
+        Appearance.IsShown = Language.IsShown || Layout.IsShown || AdvancedToolsRow.IsShown;
         Files.IsShown = Project.IsShown || Database.IsShown || ClientFolder.IsShown || ClientData.IsShown || Preferences.IsShown;
         About.IsShown = Version.IsShown || Licences.IsShown;
         HasNoMatch = !Sections.Any(section => section.IsShown);

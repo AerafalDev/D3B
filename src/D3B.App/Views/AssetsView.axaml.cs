@@ -184,7 +184,7 @@ internal sealed partial class AssetsView : UserControl
     /// <returns>The menu, or <see langword="null"/> for a row with none.</returns>
     internal ContextMenu? RowMenu(AssetRowViewModel row)
     {
-        if (Assets is not { } assets || row.IsGivenHeading || row.IsRenaming)
+        if (Assets is not { } assets || row.IsHeading || row.IsRenaming)
             return null;
 
         var texts = Localizer.Instance;
@@ -507,7 +507,7 @@ internal sealed partial class AssetsView : UserControl
         {
             null => "",
             { IsFolder: true, IsNewFolder: false } folder => folder.Folder,
-            { IsGiven: false, IsGivenHeading: false } row => row.Folder,
+            { IsGiven: false, IsHeading: false } row => row.Folder,
             _ => null,
         };
     }
@@ -521,8 +521,9 @@ internal sealed partial class AssetsView : UserControl
         var keys = e.DataTransfer.TryGetValue(_rows);
         var files = e.DataTransfer.Contains(DataFormat.File);
 
+        // By kind, the folders do not show: a move would change nothing seen, so rows move in the folders' view alone (D515).
         e.DragEffects = folder is null ? DragDropEffects.None
-            : keys is not null ? (assets.CanMove(keys, folder) ? DragDropEffects.Move : DragDropEffects.None)
+            : keys is not null ? (!assets.IsByKind && assets.CanMove(keys, folder) ? DragDropEffects.Move : DragDropEffects.None)
             : files ? DragDropEffects.Copy
             : DragDropEffects.None;
 
@@ -549,7 +550,10 @@ internal sealed partial class AssetsView : UserControl
             return;
 
         if (e.DataTransfer.TryGetValue(_rows) is { } keys)
-            await assets.MoveAsync(keys, folder);
+        {
+            if (!assets.IsByKind)
+                await assets.MoveAsync(keys, folder);
+        }
         else if (e.DataTransfer.TryGetFiles() is { Length: > 0 } items)
             await assets.ImportFilesAsync([.. items.Select(item => item.TryGetLocalPath()).OfType<string>()], folder);
     }
@@ -616,7 +620,7 @@ internal sealed partial class AssetsView : UserControl
 
         e.Handled = true;
 
-        if (!row.IsSelected && !row.IsGivenHeading)
+        if (!row.IsSelected && !row.IsHeading)
             assets.Click(row);
 
         // The row was made again as it was chosen: its menu is the one of the row now in its place.
