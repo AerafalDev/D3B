@@ -30,7 +30,7 @@ public sealed class TransfersModuleTests
             [
                 nameof(TransferSettings.Direction), nameof(TransferSettings.Everything), nameof(TransferSettings.Categories), nameof(TransferSettings.Types), nameof(TransferSettings.Items),
                 nameof(TransferSettings.ExcludedTypes), nameof(TransferSettings.ExcludedItems), nameof(TransferSettings.Quantity), nameof(TransferSettings.Amount),
-                nameof(TransferSettings.WhenRefused), nameof(TransferSettings.DryRun), nameof(TransferSettings.UseZaaps),
+                nameof(TransferSettings.WhenRefused), nameof(TransferSettings.EmptyBagsFirst), nameof(TransferSettings.DryRun), nameof(TransferSettings.UseZaaps),
             ],
             transfer.Settings.All.Select(setting => setting.Key));
         Assert.Equal(SettingKind.ItemType, transfer.Settings.All.Single(setting => setting.Key == nameof(TransferSettings.Types)).Kind);
@@ -46,6 +46,19 @@ public sealed class TransfersModuleTests
         Assert.Empty(settings.Check(new TransferSettings { Categories = [ItemCategory.Resource] }, game));
         Assert.Empty(settings.Check(new TransferSettings { Everything = true }, game));
         Assert.Contains(settings.Check(new TransferSettings { Types = [9_999] }, game), problem => problem.Kind is SettingProblemKind.Unknown);
+    }
+
+    [Fact]
+    public void TheHostKeepsOneTransferBagsForEveryRunOfTheTransfer()
+    {
+        var services = new ServiceCollection();
+
+        TransfersModule.Register(services);
+
+        using var provider = services.BuildServiceProvider();
+
+        Assert.Single(services, descriptor => descriptor.ServiceType == typeof(TransferBags));
+        Assert.Same(provider.GetRequiredService<TransferBags>(), provider.GetRequiredService<TransferBags>());
     }
 
     [Fact]

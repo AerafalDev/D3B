@@ -155,6 +155,12 @@
   <data name="WhenRefusedHelp" xml:space="preserve">
     <value>Un onglet du coffre peut refuser un type d’objet, le coffre peut être plein, un objet peut être lié au compte. L’objet refusé est remis à la source au passage suivant, ou gardé sur soi, et le transfert continue sans lui ; ou le transfert s’arrête.</value>
   </data>
+  <data name="EmptyBagsFirst" xml:space="preserve">
+    <value>Vider d’abord le sac à la banque</value>
+  </data>
+  <data name="EmptyBagsFirstHelp" xml:space="preserve">
+    <value>Du coffre de guilde vers la banque : dépose d’abord à la banque tout ce que le sac contient sauf l’équipement porté, vos propres objets aussi, pour que chaque tour prenne autant que les pods le permettent.</value>
+  </data>
   <data name="DryRun" xml:space="preserve">
     <value>Simulation</value>
   </data>
@@ -172,6 +178,9 @@
   </data>
   <data name="DoingTakeChest" xml:space="preserve">
     <value>Retire des objets du coffre de guilde</value>
+  </data>
+  <data name="DoingEmptyBags" xml:space="preserve">
+    <value>Vide d’abord le sac à la banque</value>
   </data>
   <data name="DoingPutBank" xml:space="preserve">
     <value>Dépose les objets à la banque</value>

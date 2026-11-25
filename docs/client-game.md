@@ -1717,3 +1717,9 @@ an object that cannot be exchanged.
 
 Not measured: a tab changed, a right missing, a type refused, a full chest, a full bank; what the server answers to each but the
 texts' ids, which the client's tables give.
+
+**The client's leaving after the bot's** (D563), measured on the owner's two game connections of 2026-11-25 15:08 and 15:09 UTC, the
+transfer's first run in game, read with `scripts/capture.cs --messages`: each time D3B left the bank or the chest, the client sent one
+or two `DialogLeaveRequest` of its own, 3 to 135 ms after the server's `ExchangeLeaveEvent`. Once, a resume opened the chest again
+31 ms after the bot's leaving: the server opened it, then answered the client's late leaving with an `ExchangeLeaveEvent` 9 ms
+later, which closed the chest before any take.

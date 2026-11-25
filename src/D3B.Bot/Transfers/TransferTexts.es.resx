@@ -155,6 +155,12 @@
   <data name="WhenRefusedHelp" xml:space="preserve">
     <value>Una pestaña del cofre puede rechazar un tipo de objeto, el cofre puede estar lleno, un objeto puede estar ligado a la cuenta. El objeto rechazado se devuelve al origen en la siguiente visita, o se lleva encima, y la transferencia continúa sin él; o la transferencia se detiene.</value>
   </data>
+  <data name="EmptyBagsFirst" xml:space="preserve">
+    <value>Vaciar primero la bolsa en el banco</value>
+  </data>
+  <data name="EmptyBagsFirstHelp" xml:space="preserve">
+    <value>Del cofre del gremio al banco: primero deposita en el banco todo lo que lleva la bolsa salvo lo equipado, también tus propios objetos, para que cada vuelta tome tanto como permitan los pods.</value>
+  </data>
   <data name="DryRun" xml:space="preserve">
     <value>Simulación</value>
   </data>
@@ -172,6 +178,9 @@
   </data>
   <data name="DoingTakeChest" xml:space="preserve">
     <value>Saca objetos del cofre de gremio</value>
+  </data>
+  <data name="DoingEmptyBags" xml:space="preserve">
+    <value>Vacía primero la bolsa en el banco</value>
   </data>
   <data name="DoingPutBank" xml:space="preserve">
     <value>Deposita los objetos en el banco</value>

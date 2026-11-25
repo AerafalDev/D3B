@@ -155,6 +155,12 @@
   <data name="WhenRefusedHelp" xml:space="preserve">
     <value>A tab of the chest may refuse a type of object, the chest may be full, an object may be bound to the account. The item refused is put back in the source at the next visit, or kept in the bags, and the transfer goes on without it; or the transfer stops.</value>
   </data>
+  <data name="EmptyBagsFirst" xml:space="preserve">
+    <value>Empty the bags into the bank first</value>
+  </data>
+  <data name="EmptyBagsFirstHelp" xml:space="preserve">
+    <value>From the guild's chest to the bank: first puts in the bank everything the bags hold but what is worn, the character's own objects too, so that the rounds take as much as the pods allow.</value>
+  </data>
   <data name="DryRun" xml:space="preserve">
     <value>Dry run</value>
   </data>
@@ -172,6 +178,9 @@
   </data>
   <data name="DoingTakeChest" xml:space="preserve">
     <value>Takes objects out of the guild's chest</value>
+  </data>
+  <data name="DoingEmptyBags" xml:space="preserve">
+    <value>Puts the bags in the bank first</value>
   </data>
   <data name="DoingPutBank" xml:space="preserve">
     <value>Puts the objects in the bank</value>

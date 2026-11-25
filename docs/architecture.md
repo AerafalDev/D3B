@@ -503,7 +503,7 @@ The bots run in `D3B.Bot`: what each part does today, with the decisions that ma
   (`TransferFilter`), the quantity of each item, what to do with a refusal (`TransferRefusal`), a dry run and the zaaps. A step
   with nothing carried goes to the source, puts back what the destination refused, takes out what the settings choose and the free
   pods hold, weighed with the pack's weights, and leaves; a step with something carried goes to the destination and puts in what it
-  took: before its takes a round notes each stack's own share, and a put takes only what a stack holds above it. Openings climb the recovery ladder (D518); a missing right, a place out of reach or a
+  took: before its takes a round notes each stack's own share, and a put takes only what a stack holds above it. `TransferBags`, one per host, keeps those shares and the items carried for each character with the game connection their ids are of, so that a run started on the same connection puts in first what the last one, stopped, carried (D563); a storage closed under the takes is opened again, three openings in all. From the chest to the bank, `EmptyBagsFirst` puts in the bank, at the run's first step, all the bags hold but what is worn (D564). Openings climb the recovery ladder (D518); a missing right, a place out of reach or a
   character too loaded ends it, final. Its report counts the objects moved and each item, and warns of each item given up.
 - **The maps' graphics** (D138), in `D3B.Bot.Interactives`: `GraphicSkills`, one per host, holds what the server said the
   elements of each graphic offer, every skill seen, none for an element that offers none; `GraphicLearner`, an observer of
