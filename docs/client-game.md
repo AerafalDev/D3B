@@ -692,7 +692,8 @@ taken out a new id in the inventory.
 | Leaving | The chest open | The exchange over, of the storage's dialog type, 28 ms later, as the bank's |
 
 Not measured: changing tabs and a tab's rights, the guild having one tab; a full chest; kamas; the bank's list of stacks
-(`ExchangeTransferFromInventoryRequest`) on the chest, and `ExchangeObjectMoveRequest` in the bank.
+(`ExchangeTransferFromInventoryRequest`) on the chest. `ExchangeObjectMoveRequest` in the bank was measured later ([The game,
+transferred](#the-game-transferred)).
 
 **Matching.** 129 messages paired, 61 by pin, 11 by the captures and 57 by fields, and 19 enums by fields. **Audit.** 129
 messages, 263 fields, 19 enums and 147 values checked: no failure and no note; 46 partial messages. **The mapping** is 8,926
@@ -1636,3 +1637,35 @@ writes, counting messages only.
   still list it at 0. None of the owner's connections holds a grant.
 - **An alteration ended.** Its end came with `TextInformationEvent` of the information kind, text 1665, whose field 4, the
   text's parameters, holds the alteration's id first.
+
+## The game, transferred
+
+Measured on 2026-11-25 for the transfer between the bank and the guild's chest (D550 to D552): the owner's 74 game connections of 20
+to 25 November, client 3.7.14.18, read with `scripts/capture.cs --messages` and `--frames` through mapping 25 and schema 1, and a
+measuring tool never committed that printed only the numbers of the bank's and the chest's exchanges, never an object or a string; the
+installed client's information messages and item types, read the same way. 551 openings of the bank and 4 of the chest; the player
+took objects out by hand in both, and D3B's harvest put stacks in.
+
+**Taking out.** By `ExchangeObjectMoveRequest`, the storage's stack named with a negative quantity, its varint ten bytes long: 101
+times in the bank, 5 in the chest. The server answers 28 ms later, every time, with the inventory's stack, new (`ObjectAddedEvent`)
+or joined (`ObjectQuantityEvent`), then the storage's stack as it now is (`StorageObjectUpdateEvent`) or removed whole
+(`StorageObjectRemovedEvent`), then the weight. A positive move puts in, in the bank as in the chest: the storage's stack first, then
+the inventory's, then the weight (5 times in the bank). The client also takes a list of stacks (a packed list of 1 to about 157 ids,
+44 times) and everything (an empty request, 26 times), and puts everything in (an empty request): requests the readable protocol lacks,
+answered by events it lacks listing the storage's stacks removed and the inventory's added.
+
+| Request | When | The server's answer |
+| --- | --- | --- |
+| A take, a stack | The character cannot carry it, 5,535 of 5,665 pods | Text 285 of the error kind, "Vous ne pouvez pas porter autant d'objets.", and an event the readable protocol lacks; nothing moved (once, in the chest) |
+| A take, a list or everything | The pods hold only part | What fits taken, a stack in part, and text 266 of the error kind, "Transfert incomplet" (26 times) |
+
+**The chest's opening** names three numbers in `ExchangeStartedWithTabbedStorageEvent`: the exchange's type, 21, then 1 and 100, four
+times out of four, and the guild had one tab. The client's guide (text 1164108) says a chest has 100 slots a tab, holds no kamas,
+unlocks more tabs with the guild's levels, and gives each rank the rights to see, put in and take out of each tab apart.
+
+**The client's information messages** of the error kind that name the chest: 654, 655 and 656 a rank without the right to see, put in or
+take out of the tab; 659 no guild; 661 a type the tab does not take; 666 a guild younger than 30 days; 711 no access to the chest; 356
+an object that cannot be exchanged.
+
+Not measured: a tab changed, a right missing, a type refused, a full chest, a full bank; what the server answers to each but the
+texts' ids, which the client's tables give.

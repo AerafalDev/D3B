@@ -66,6 +66,25 @@ public sealed class GuildChestTests
     }
 
     [Fact]
+    public async Task AChestTheServerAnswersWithARefusalIsRefusedAtOnce()
+    {
+        await using var play = new TestPlay();
+        var (connection, bot) = await play.EnterAsync(301, TestPlay.InsideMapId);
+
+        connection.Server(WithChest(301));
+        await bot.ProcessedAsync();
+
+        var opening = bot.RunAsync((context, token) => context.OpenGuildChestAsync(token), TestContext.Current.CancellationToken);
+
+        await TestWalks.SentAsync(play, connection, 1);
+        connection.Server(new InteractiveUsedEvent { ActorId = TestPlay.CharacterId, ElementId = TestPlay.ChestElementId, SkillId = GuildChest.SkillId });
+        connection.Server(new TextInformationEvent { TextId = StorageMoves.NoConsultRightTextId, Type = TextInformationType.Error });
+
+        Assert.Equal(BankOutcome.Refused, await opening);
+        Assert.Null(bot.State.Storage);
+    }
+
+    [Fact]
     public async Task NoChestOnTheMapsGivenIsNoBank()
     {
         await using var play = new TestPlay();

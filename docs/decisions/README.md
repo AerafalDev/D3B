@@ -140,3 +140,4 @@ Each file holds the decisions of one group of [the index](../decisions-index.md)
 - [The studio made simpler, next's icons (D532)](d532-lucide-icons.md): 1 decision, 3 KB.
 - [The studio's shell after next, the command palette (D540)](d540-command-palette.md): 1 decision, 3 KB.
 - [The studio's shell after next, the status bar (D541)](d541-status-bar.md): 1 decision, 3 KB.
+- [Banking, the transfer between the bank and the guild's chest (D550 to D552)](d550-d552-bank-chest-transfer.md): 3 decisions, 7 KB.

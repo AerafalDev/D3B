@@ -1,0 +1,251 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="Name" xml:space="preserve">
+    <value>Transfert banque ↔ coffre de guilde</value>
+  </data>
+  <data name="SectionWhat" xml:space="preserve">
+    <value>Quoi</value>
+  </data>
+  <data name="Direction" xml:space="preserve">
+    <value>Sens</value>
+  </data>
+  <data name="DirectionBankToGuildChest" xml:space="preserve">
+    <value>De la banque au coffre de guilde</value>
+  </data>
+  <data name="DirectionGuildChestToBank" xml:space="preserve">
+    <value>Du coffre de guilde à la banque</value>
+  </data>
+  <data name="DirectionHelp" xml:space="preserve">
+    <value>D’où les objets sont pris, et où ils vont. Le coffre de guilde ne prend pas de kamas, et le transfert travaille sur l’onglet sur lequel il s’ouvre.</value>
+  </data>
+  <data name="Everything" xml:space="preserve">
+    <value>Tout ce que la source contient</value>
+  </data>
+  <data name="EverythingHelp" xml:space="preserve">
+    <value>Tous les objets de la source sont transférés, sauf ceux exclus, en autant d’allers-retours que les pods le demandent.</value>
+  </data>
+  <data name="Categories" xml:space="preserve">
+    <value>Catégories</value>
+  </data>
+  <data name="CategoryEquipment" xml:space="preserve">
+    <value>Équipements</value>
+  </data>
+  <data name="CategoryConsumable" xml:space="preserve">
+    <value>Consommables</value>
+  </data>
+  <data name="CategoryResource" xml:space="preserve">
+    <value>Ressources</value>
+  </data>
+  <data name="CategoryQuest" xml:space="preserve">
+    <value>Objets de quête</value>
+  </data>
+  <data name="CategoryCosmetic" xml:space="preserve">
+    <value>Apparats</value>
+  </data>
+  <data name="CategoriesHelp" xml:space="preserve">
+    <value>Tous les objets des catégories choisies sont transférés, comme les onglets de l’inventaire les rangent.</value>
+  </data>
+  <data name="Types" xml:space="preserve">
+    <value>Types</value>
+  </data>
+  <data name="TypesHelp" xml:space="preserve">
+    <value>Tous les objets des types choisis sont transférés, par exemple les bois ou les minerais.</value>
+  </data>
+  <data name="Items" xml:space="preserve">
+    <value>Objets</value>
+  </data>
+  <data name="ItemsHelp" xml:space="preserve">
+    <value>Ces objets sont transférés, quels que soient leur catégorie ou leur type.</value>
+  </data>
+  <data name="ExcludedTypes" xml:space="preserve">
+    <value>Types exclus</value>
+  </data>
+  <data name="ExcludedTypesHelp" xml:space="preserve">
+    <value>Les objets de ces types ne sont jamais transférés, même quand une catégorie les choisit.</value>
+  </data>
+  <data name="ExcludedItems" xml:space="preserve">
+    <value>Objets exclus</value>
+  </data>
+  <data name="ExcludedItemsHelp" xml:space="preserve">
+    <value>Ces objets ne sont jamais transférés, même quand une catégorie ou un type les choisit.</value>
+  </data>
+  <data name="RuleSomething" xml:space="preserve">
+    <value>Choisis tout, ou au moins une catégorie, un type ou un objet à transférer.</value>
+  </data>
+  <data name="SectionHowMany" xml:space="preserve">
+    <value>Combien</value>
+  </data>
+  <data name="Quantity" xml:space="preserve">
+    <value>Quantité de chaque objet</value>
+  </data>
+  <data name="QuantityAll" xml:space="preserve">
+    <value>Tout</value>
+  </data>
+  <data name="QuantityAtMost" xml:space="preserve">
+    <value>Au plus</value>
+  </data>
+  <data name="QuantityKeepInSource" xml:space="preserve">
+    <value>En garder à la source</value>
+  </data>
+  <data name="QuantityHelp" xml:space="preserve">
+    <value>Tout ce que la source contient, au plus un nombre de chaque objet sur tout le transfert, ou tout sauf un nombre de chaque objet, qui restent à la source.</value>
+  </data>
+  <data name="Amount" xml:space="preserve">
+    <value>Nombre</value>
+  </data>
+  <data name="AmountUnit" xml:space="preserve">
+    <value>de chaque objet</value>
+  </data>
+  <data name="SectionOptions" xml:space="preserve">
+    <value>Options</value>
+  </data>
+  <data name="WhenRefused" xml:space="preserve">
+    <value>Quand la destination refuse un objet</value>
+  </data>
+  <data name="WhenRefusedGiveBack" xml:space="preserve">
+    <value>Le remettre à la source</value>
+  </data>
+  <data name="WhenRefusedKeepCarried" xml:space="preserve">
+    <value>Le garder sur soi</value>
+  </data>
+  <data name="WhenRefusedStop" xml:space="preserve">
+    <value>Arrêter</value>
+  </data>
+  <data name="WhenRefusedHelp" xml:space="preserve">
+    <value>Un onglet du coffre peut refuser un type d’objet, le coffre peut être plein, un objet peut être lié au compte. L’objet refusé est remis à la source au passage suivant, ou gardé sur soi, et le transfert continue sans lui ; ou le transfert s’arrête.</value>
+  </data>
+  <data name="DryRun" xml:space="preserve">
+    <value>Simulation</value>
+  </data>
+  <data name="DryRunHelp" xml:space="preserve">
+    <value>Ouvre seulement la source et dit ce qui serait transféré, sans rien déplacer.</value>
+  </data>
+  <data name="UseZaaps" xml:space="preserve">
+    <value>Prendre les zaaps</value>
+  </data>
+  <data name="UseZaapsHelp" xml:space="preserve">
+    <value>Les trajets vers la banque et le coffre peuvent passer par un zaap, comme les réglages généraux de banque le permettent.</value>
+  </data>
+  <data name="DoingTakeBank" xml:space="preserve">
+    <value>Retire des objets de la banque</value>
+  </data>
+  <data name="DoingTakeChest" xml:space="preserve">
+    <value>Retire des objets du coffre de guilde</value>
+  </data>
+  <data name="DoingPutBank" xml:space="preserve">
+    <value>Dépose les objets à la banque</value>
+  </data>
+  <data name="DoingPutChest" xml:space="preserve">
+    <value>Dépose les objets dans le coffre de guilde</value>
+  </data>
+  <data name="DoingOver" xml:space="preserve">
+    <value>Transfert terminé : {0} objets de {1} sortes transférés en {2} allers-retours</value>
+  </data>
+  <data name="DoingDryRun" xml:space="preserve">
+    <value>Simulation : {0} objets de {1} sortes seraient transférés</value>
+  </data>
+  <data name="Moved" xml:space="preserve">
+    <value>Objets transférés</value>
+  </data>
+  <data name="CountItem" xml:space="preserve">
+    <value>{0} {1}</value>
+  </data>
+  <data name="WarningNotExchangeable" xml:space="preserve">
+    <value>{0} est lié au compte : laissé de côté</value>
+  </data>
+  <data name="WarningTypeRefused" xml:space="preserve">
+    <value>{0} : l’onglet du coffre ne prend pas ce type</value>
+  </data>
+  <data name="WarningRefused" xml:space="preserve">
+    <value>{0} a été refusé</value>
+  </data>
+  <data name="WarningNoAnswer" xml:space="preserve">
+    <value>{0} : le serveur n’a pas répondu, la destination est peut-être pleine</value>
+  </data>
+  <data name="WarningTooHeavy" xml:space="preserve">
+    <value>{0} ne rentre pas</value>
+  </data>
+  <data name="WarningNoRight" xml:space="preserve">
+    <value>{0} : le rang de guilde n’a pas le droit</value>
+  </data>
+  <data name="FailNoBank" xml:space="preserve">
+    <value>Aucune banque n’est accessible.</value>
+  </data>
+  <data name="FailNoChest" xml:space="preserve">
+    <value>Aucun coffre de guilde n’est accessible.</value>
+  </data>
+  <data name="FailChestClosed" xml:space="preserve">
+    <value>Le serveur garde le coffre de guilde fermé : la guilde, le rang ou l’abonnement du personnage ne le permet pas.</value>
+  </data>
+  <data name="FailBankNotOpened" xml:space="preserve">
+    <value>La banque n’a pas pu être ouverte, même après de nouveaux essais.</value>
+  </data>
+  <data name="FailChestNotOpened" xml:space="preserve">
+    <value>Le coffre de guilde n’a pas pu être ouvert, même après de nouveaux essais.</value>
+  </data>
+  <data name="FailNoTakeRight" xml:space="preserve">
+    <value>Le rang de guilde n’a pas le droit de retirer des objets du coffre.</value>
+  </data>
+  <data name="FailNoPutRight" xml:space="preserve">
+    <value>Le rang de guilde n’a pas le droit de déposer des objets dans le coffre.</value>
+  </data>
+  <data name="FailNoPods" xml:space="preserve">
+    <value>Le personnage porte trop pour retirer quoi que ce soit : libère d’abord des pods.</value>
+  </data>
+  <data name="FailRefused" xml:space="preserve">
+    <value>La destination a refusé {0} : le transfert s’arrête, comme ses réglages le disent.</value>
+  </data>
+  <data name="FailStuckMapUnknown" xml:space="preserve">
+    <value>La carte du perso est toujours inconnue après deux minutes.</value>
+  </data>
+  <data name="FailStuckUsing" xml:space="preserve">
+    <value>Toujours en train d'utiliser un élément après deux minutes, même remis en ordre.</value>
+  </data>
+  <data name="FailStuckInDialog" xml:space="preserve">
+    <value>Toujours dans un dialogue ou un échange après deux minutes, même remis en ordre.</value>
+  </data>
+  <data name="FailStuckWalking" xml:space="preserve">
+    <value>Toujours en train de marcher après deux minutes, même remis en ordre.</value>
+  </data>
+</root>

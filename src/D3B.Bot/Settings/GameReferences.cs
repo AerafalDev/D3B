@@ -32,6 +32,7 @@ public sealed class GameReferences
     private readonly Lazy<IReadOnlyList<GameReference>> _resources;
     private readonly Lazy<IReadOnlyList<GameReference>> _items;
     private readonly Lazy<Dictionary<int, int>> _itemTypes;
+    private readonly Lazy<IReadOnlyList<GameReference>> _types;
     private readonly Lazy<ILookup<int, GameReference>> _resourcesByJob;
     private readonly Lazy<Dictionary<int, ResourceSource>> _sources;
     private readonly Lazy<FrozenDictionary<int, FrozenSet<int>>> _baseSkills;
@@ -93,6 +94,12 @@ public sealed class GameReferences
         _resourcesByJob = new Lazy<ILookup<int, GameReference>>(() => ResourcesByJob(jobs, items));
         _items = new Lazy<IReadOnlyList<GameReference>>(() => [.. items.Items.ToArray().Select(item => new GameReference(item.Id, item.NameId, item.Level))]);
         _itemTypes = new Lazy<Dictionary<int, int>>(() => items.Items.ToArray().ToDictionary(item => item.Id, item => (int)item.TypeId));
+        _types = new Lazy<IReadOnlyList<GameReference>>(() =>
+        {
+            var held = _itemTypes.Value.Values.ToHashSet();
+
+            return [.. items.Types.ToArray().Where(type => held.Contains(type.Id)).Select(type => new GameReference(type.Id, type.NameId, null))];
+        });
         _superRaces = new Lazy<IReadOnlyList<GameReference>>(() => monsters is null ? [] : [.. monsters.SuperRaces.ToArray().Select(race => new GameReference(race.Id, race.NameId, null))]);
         _superRaceOfMonster = new Lazy<Dictionary<int, int>>(() => SuperRacesOfMonsters(monsters, atlas));
         _monsters = new Lazy<IReadOnlyList<GameReference>>(() => monsters is null ? [] : [.. _superRaceOfMonster.Value.Keys.Order().Select(id => MonsterOf(monsters, id))]);
@@ -197,6 +204,7 @@ public sealed class GameReferences
             (SettingKind.Resource, null) => _resources.Value,
             (SettingKind.Resource, { } job) => [.. _resourcesByJob.Value[job]],
             (SettingKind.Item, _) => _items.Value,
+            (SettingKind.ItemType, _) => _types.Value,
             (SettingKind.MonsterFamily, _) => _families.Value,
             (SettingKind.Monster, null) => _monsters.Value,
             (SettingKind.Monster, { } superRace) => [.. _monsters.Value.Where(monster => _superRaceOfMonster.Value[monster.Id] == superRace)],
@@ -217,6 +225,7 @@ public sealed class GameReferences
             SettingKind.SubArea => _atlas.TryGetSubArea(id, out _),
             SettingKind.Resource => _resources.Value.Any(resource => resource.Id == id),
             SettingKind.Item => _itemTypes.Value.ContainsKey(id),
+            SettingKind.ItemType => _types.Value.Any(type => type.Id == id),
             SettingKind.Monster => _superRaceOfMonster.Value.ContainsKey(id),
             SettingKind.MonsterFamily => _families.Value.Any(family => family.Id == id),
             _ => false,

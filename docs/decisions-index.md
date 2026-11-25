@@ -988,3 +988,12 @@ or refines another says so in its own entry. Add a line here with every new deci
   - Stage 1 of 4 of the shell after `next`, under the owner's delegation; begun by the redesign session, finished here.
 - [D541](decisions/d541-status-bar.md#d541-the-status-bar-is-vs-codes-the-version-and-the-relay-on-the-left-the-client-and-its-data-the-bots-playing-the-problems-the-saving-and-the-update-on-the-right-each-item-opening-what-it-names) The status bar is VS Code's: the version and the relay on the left, the client and its data, the bots playing, the problems, the saving and the update on the right, each item opening what it names (2026-11-25)
   - Stage 2 of 4, under the owner's delegation; next's relay words and hover, the problems read at every refresh.
+
+## Banking, the transfer between the bank and the guild's chest (D550 to D552)
+
+- [D550](decisions/d550-d552-bank-chest-transfer.md#d550-a-transfer-activity-moves-objects-between-the-bank-and-the-guilds-chest-either-way-chosen-by-category-type-and-item-in-rounds-its-pods-allow-then-says-what-it-moved) A transfer activity moves objects between the bank and the guild's chest, either way, chosen by category, type and item, in rounds its pods allow, then says what it moved (2026-11-25)
+  - The owner's ask, everything or by category, type and item; no kamas (the chest holds none), the tab it opens on, a refusal put back in the source by default.
+- [D551](decisions/d550-d552-bank-chest-transfer.md#d551-taking-out-of-a-storage-is-measured-a-stack-at-a-time-by-a-negative-move-the-storages-stacks-kept-in-the-state-the-refusals-told-by-the-clients-information-texts) Taking out of a storage is measured: a stack at a time by a negative move, the storage's stacks kept in the state, the refusals told by the client's information texts (2026-11-25)
+  - Measured on 74 captures and the client's information texts; the list and all requests left, mapping format 26 unneeded.
+- [D552](decisions/d550-d552-bank-chest-transfer.md#d552-the-types-of-items-are-a-settings-kind-of-their-own-and-the-categories-are-named-by-d3b-after-the-inventorys-tabs) The types of items are a setting's kind of their own, and the categories are named by D3B after the inventory's tabs (2026-11-25)
+  - The inventory's tabs as categories, 229 named types picked from the pack.
