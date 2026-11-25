@@ -14,6 +14,8 @@ public sealed class DungeonActivityTests : IAsyncDisposable
 {
     private const int KeeperQuestion = 13_769;
     private const int ConfirmQuestion = 17_460;
+    private const long GroupId = -3;
+    private const int GroupCell = 412;
 
     private readonly TestPlay _play = new();
 
@@ -35,6 +37,46 @@ public sealed class DungeonActivityTests : IAsyncDisposable
             question.Replies.Add(new NpcReply { ReplyId = reply });
 
         return question;
+    }
+
+    private static Actor GroupActor(long actorId, int cell, int monsterId)
+    {
+        var group = new MonsterGroup { Main = new GroupMonster { MonsterId = monsterId, Grade = 1, Level = 20 } };
+
+        return new Actor
+        {
+            Id = actorId,
+            Disposition = new ActorDisposition { CellId = cell },
+            Information = new ActorInformation { Roleplay = new RoleplayActor { MonsterGroup = new MonsterGroupActor { Monsters = group } } },
+        };
+    }
+
+    private static FightEndEvent Ended(FightOutcome outcome)
+    {
+        return new FightEndEvent { Results = { new FightResult { Fighter = new FightResultFighter { FighterId = TestPlay.CharacterId }, Outcome = outcome } } };
+    }
+
+    // Measured (9g): the fight's context replaces the map's, and the map's comes back with the end.
+    private static void Fought(TestConnection connection, FightOutcome outcome)
+    {
+        connection.Server(new ContextDestroyEvent());
+        connection.Server(new ContextCreationEvent { Context = ContextCreationEvent.Types.GameContext.Fight });
+        connection.Server(Ended(outcome));
+        connection.Server(new ContextDestroyEvent());
+        connection.Server(new ContextCreationEvent { Context = ContextCreationEvent.Types.GameContext.Roleplay });
+    }
+
+    private async Task<(TestConnection Connection, BotActor Bot)> InARoomAsync(long mapId, bool group, params InventoryObject[] stacks)
+    {
+        var (connection, bot) = await CarryingAsync(mapId, 300, stacks);
+
+        if (group)
+        {
+            connection.Server(new MapActorShownEvent { Actors = { GroupActor(GroupId, GroupCell, TestPlay.LarvaId) } });
+            await bot.ProcessedAsync();
+        }
+
+        return (connection, bot);
     }
 
     private static string Said(ActivityRun run)
@@ -80,10 +122,11 @@ public sealed class DungeonActivityTests : IAsyncDisposable
         connection.Server(new DialogLeaveEvent { Type = DialogType.Npc });
         connection.Server(new ObjectDeletedEvent { Uid = 12 });
         TestWalks.Arrive(connection, TestPlay.OtherInsideMapId, 300);
+        await bot.ProcessedAsync();
 
-        Assert.Equal(ActivityOutcome.Done, await run.Completion);
         Assert.Equal(TestPlay.OtherInsideMapId, bot.State.MapId);
-        Assert.Equal(3, connection.Sent.Count);
+        run.Stop();
+        Assert.Equal(ActivityOutcome.Stopped, await run.Completion);
     }
 
     [Fact]
@@ -102,8 +145,11 @@ public sealed class DungeonActivityTests : IAsyncDisposable
         Assert.Equal(new NpcDialogReplyRequest { ReplyId = TestPlay.ConfirmReplyId }, await TestWalks.SentAsync(_play, connection, 3));
         connection.Server(new DialogLeaveEvent { Type = DialogType.Npc });
         TestWalks.Arrive(connection, TestPlay.OtherInsideMapId, 300);
+        await bot.ProcessedAsync();
 
-        Assert.Equal(ActivityOutcome.Done, await run.Completion);
+        Assert.Equal(TestPlay.OtherInsideMapId, bot.State.MapId);
+        run.Stop();
+        Assert.Equal(ActivityOutcome.Stopped, await run.Completion);
     }
 
     [Fact]
@@ -119,8 +165,11 @@ public sealed class DungeonActivityTests : IAsyncDisposable
         Assert.Equal(new NpcDialogReplyRequest { ReplyId = TestPlay.KeyringReplyId }, await TestWalks.SentAsync(_play, connection, 2));
         connection.Server(new DialogLeaveEvent { Type = DialogType.Npc });
         TestWalks.Arrive(connection, TestPlay.OtherInsideMapId, 300);
+        await bot.ProcessedAsync();
 
-        Assert.Equal(ActivityOutcome.Done, await run.Completion);
+        Assert.Equal(TestPlay.OtherInsideMapId, bot.State.MapId);
+        run.Stop();
+        Assert.Equal(ActivityOutcome.Stopped, await run.Completion);
     }
 
     [Fact]
@@ -263,9 +312,11 @@ public sealed class DungeonActivityTests : IAsyncDisposable
         Assert.Equal(new NpcDialogReplyRequest { ReplyId = TestPlay.KeyReplyId }, await TestWalks.SentAsync(_play, connection, 4));
         connection.Server(new DialogLeaveEvent { Type = DialogType.Npc });
         TestWalks.Arrive(connection, TestPlay.EastMapId, 300);
+        await bot.ProcessedAsync();
 
-        Assert.Equal(ActivityOutcome.Done, await run.Completion);
         Assert.Equal(TestPlay.EastMapId, bot.State.MapId);
+        run.Stop();
+        Assert.Equal(ActivityOutcome.Stopped, await run.Completion);
     }
 
     [Fact]
@@ -277,5 +328,162 @@ public sealed class DungeonActivityTests : IAsyncDisposable
         Assert.Equal(ActivityOutcome.Failed, await run.Completion);
         Assert.Equal("No dungeon of the profile can be entered: the character lacks the level or the key of each, or no way leads to them.", Said(run));
         Assert.Empty(connection.Sent);
+    }
+
+    [Fact]
+    public async Task ARoomsGroupIsFoughtAndTheServersMoveLeadsToTheNextRoomsFight()
+    {
+        var (connection, bot) = await InARoomAsync(TestPlay.OtherInsideMapId, true);
+        var run = bot.StartActivity(Activity());
+
+        Assert.Equal(GroupCell, await TestWalks.WalkedAsync(_play, connection, 1));
+        Assert.Equal(new AttackMonsterRequest { MonsterGroupId = GroupId }, await connection.SentAsync(2));
+        Fought(connection, FightOutcome.Won);
+
+        // Measured: the next room comes in the fight end's millisecond, unasked (client-game.md).
+        TestWalks.Arrive(connection, TestPlay.NorthMapId, 300);
+        connection.Server(new MapActorShownEvent { Actors = { GroupActor(-4, 300, TestPlay.LarvaId) } });
+
+        // The next room's group stands on the character's cell: it is attacked from there.
+        Assert.Equal(new AttackMonsterRequest { MonsterGroupId = -4 }, await TestWalks.SentAsync(_play, connection, 3));
+
+        run.Stop();
+        Assert.Equal(ActivityOutcome.Stopped, await run.Completion);
+        Assert.Contains("1 room won", CountsOf(run));
+    }
+
+    [Fact]
+    public async Task AWonRoomTheServerDidNotLeaveIsLeftOnFootForTheNextRoom()
+    {
+        var (connection, bot) = await InARoomAsync(TestPlay.OtherInsideMapId, false);
+        var run = bot.StartActivity(Activity());
+
+        // No group shows: the room is won, and the room north is walked to, out by the other inside's map action (D525).
+        Assert.Equal(TestPlay.OtherActionCell, await TestWalks.WalkedAsync(_play, connection, 1));
+
+        run.Stop();
+        Assert.Equal(ActivityOutcome.Stopped, await run.Completion);
+    }
+
+    [Fact]
+    public async Task OnceEveryRoomIsWonTheRunOfTheDungeonEnds()
+    {
+        var (connection, bot) = await InARoomAsync(TestPlay.EastMapId, false);
+        var run = bot.StartActivity(Activity(TestPlay.OtherDungeonId));
+
+        Assert.Equal(ActivityOutcome.Done, await TestWalks.AdvanceUntilDoneAsync(_play.Time, run.Completion));
+        Assert.Empty(connection.Sent);
+    }
+
+    [Fact]
+    public async Task TheMapTheBosssWinLeadsToEndsTheRunOfTheDungeon()
+    {
+        var (connection, bot) = await InARoomAsync(TestPlay.EastMapId, true);
+        var run = bot.StartActivity(Activity(TestPlay.OtherDungeonId));
+
+        await TestWalks.WalkedAsync(_play, connection, 1);
+        Assert.IsType<AttackMonsterRequest>(await connection.SentAsync(2));
+        Fought(connection, FightOutcome.Won);
+
+        // The first map is of the dungeon's sub-area and no room: the map its boss's win leads to.
+        TestWalks.Arrive(connection, TestPlay.MapId, 300);
+
+        Assert.Equal(ActivityOutcome.Done, await run.Completion);
+        Assert.Equal(2, connection.Sent.Count);
+    }
+
+    [Fact]
+    public async Task AFightLostLeavesTheDungeonForTheRun()
+    {
+        var (connection, bot) = await InARoomAsync(TestPlay.OtherInsideMapId, true, Stack(12, TestPlay.DungeonKeyId, 1));
+        var run = bot.StartActivity(Activity());
+
+        await TestWalks.WalkedAsync(_play, connection, 1);
+        Assert.IsType<AttackMonsterRequest>(await connection.SentAsync(2));
+        Fought(connection, FightOutcome.Lost);
+
+        // The character wakes outside, its key still carried: the dungeon is not entered again (D525).
+        TestWalks.Arrive(connection, TestPlay.MapId, 300);
+
+        Assert.Equal(ActivityOutcome.Failed, await run.Completion);
+        Assert.Equal("A fight was lost in the dungeon: it is left for the run.", Said(run));
+        Assert.Equal(2, connection.Sent.Count);
+    }
+
+    [Fact]
+    public async Task UnderItsShareOfLifeTheCharacterRegeneratesBeforeTheRoomsFight()
+    {
+        var (connection, bot) = await InARoomAsync(TestPlay.OtherInsideMapId, true);
+
+        connection.Server(new LifeRegenEndEvent { Life = 300, MaxLife = 1_000 });
+        await bot.ProcessedAsync();
+
+        var run = bot.StartActivity(Activity());
+
+        // Far under the 80 % of the profile: a minute and more of regeneration, and no attack meanwhile (D525).
+        await _play.AdvanceUntilAsync(() => Doing(run).StartsWith("Regenerating its life before the room's fight", StringComparison.Ordinal), TimeSpan.FromSeconds(1));
+        _play.Time.Advance(TimeSpan.FromSeconds(30));
+        await bot.ProcessedAsync();
+        Assert.Empty(connection.Sent);
+
+        connection.Server(new LifeRegenEndEvent { Life = 900, MaxLife = 1_000 });
+
+        Assert.Equal(GroupCell, await TestWalks.WalkedAsync(_play, connection, 1));
+
+        run.Stop();
+        Assert.Equal(ActivityOutcome.Stopped, await run.Completion);
+    }
+
+    [Fact]
+    public async Task ARoomWonByAFightIsNeverWalkedBackTo()
+    {
+        var (connection, bot) = await InARoomAsync(TestPlay.NorthMapId, true);
+        var run = bot.StartActivity(Activity());
+
+        await TestWalks.WalkedAsync(_play, connection, 1);
+        Assert.IsType<AttackMonsterRequest>(await connection.SentAsync(2));
+        Fought(connection, FightOutcome.Won);
+
+        // The server moves the character to the other room, which shows no group: with both rooms won, the run of the dungeon ends.
+        TestWalks.Arrive(connection, TestPlay.OtherInsideMapId, 300);
+
+        Assert.Equal(ActivityOutcome.Done, await TestWalks.AdvanceUntilDoneAsync(_play.Time, run.Completion));
+        Assert.Equal(2, connection.Sent.Count);
+        Assert.Contains("2 rooms won", CountsOf(run));
+    }
+
+    [Fact]
+    public async Task AfterAFightLostTheProfilesOtherDungeonIsStillEntered()
+    {
+        var (connection, bot) = await InARoomAsync(TestPlay.OtherInsideMapId, true, Stack(12, TestPlay.DungeonKeyId, 1));
+        var run = bot.StartActivity(Activity(TestPlay.DungeonId, TestPlay.OtherDungeonId));
+
+        await TestWalks.WalkedAsync(_play, connection, 1);
+        Assert.IsType<AttackMonsterRequest>(await connection.SentAsync(2));
+        Fought(connection, FightOutcome.Lost);
+
+        // The character wakes at the door of both dungeons: the one lost in is left, the other's keeper talked to (D524, D525).
+        TestWalks.Arrive(connection, TestPlay.InsideMapId, 300);
+
+        Assert.Equal(new NpcActionRequest { Action = 3, MapId = TestPlay.InsideMapId, NpcActorId = TestPlay.WayActorId }, await TestWalks.SentAsync(_play, connection, 3));
+
+        run.Stop();
+        Assert.Equal(ActivityOutcome.Stopped, await run.Completion);
+    }
+
+    private static string Doing(ActivityRun run)
+    {
+        var english = CultureInfo.GetCultureInfo("en");
+        var doing = run.Activity.Report!.Doing;
+
+        return string.Format(english, doing.Format.In(english), [.. doing.Values.Select(value => (object)value.Id)]);
+    }
+
+    private static string[] CountsOf(ActivityRun run)
+    {
+        var english = CultureInfo.GetCultureInfo("en");
+
+        // English counts 1 as singular alone, as the app does.
+        return [.. run.Activity.Report!.Counts.Select(count => string.Format(english, (count.Text.Count is 1 || count.Text.Many is null ? count.Text.Format : count.Text.Many).In(english), [.. count.Text.Values.Select(value => (object)value.Id)]))];
     }
 }

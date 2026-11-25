@@ -6,6 +6,9 @@ public sealed class DungeonSettings
     /// <summary>Gets or sets the dungeons, by their ids in the client's table, entered in turn in this order (D524).</summary>
     public IReadOnlyList<int> Dungeons { get; set; } = [];
 
+    /// <summary>Gets or sets the share of its life, in percent, the character regenerates to before each room's fight (D525).</summary>
+    public int LifeShare { get; set; } = 80;
+
     /// <summary>Gets or sets whether the journey to the dungeon's door may teleport to a zaap.</summary>
     public bool UseZaaps { get; set; } = true;
 
