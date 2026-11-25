@@ -1010,7 +1010,7 @@ or refines another says so in its own entry. Add a line here with every new deci
 - [D533](decisions/d533-mount-capture.md#d533-a-hunt-profile-may-capture-wild-mounts-the-main-wears-a-carried-capture-net-casts-its-taming-spell-on-a-mount-at-its-first-chance-and-hunts-on-without-capturing-once-it-has-none) A hunt profile may capture wild mounts: the main wears a carried capture net, casts its taming spell on a mount at its first chance, and hunts on without capturing once it has none (2026-11-25)
   - The owner's ask; nets and spells measured in the client, none in the captures; buying, crafting, every member capturing set aside.
 
-## The studio's shell after next (D540 to D549)
+## The studio's shell after next (D540 to D549, D560)
 
 - [D540](decisions/d540-command-palette.md#d540-the-search-is-also-nexts-command-palette-ctrl-shift-p-types-its-sign-the-title-bars-command-centre-names-the-app-the-views-and-each-characters-play-pause-stop-and-forget-are-commands) The search is also next's command palette: Ctrl Shift P types its sign, the title bar's command centre names the app, the views and each character's play, pause, stop and forget are commands (2026-11-25)
   - Stage 1 of 4 of the shell after `next`, under the owner's delegation; begun by the redesign session, finished here.
@@ -1032,6 +1032,8 @@ or refines another says so in its own entry. Add a line here with every new deci
   - The owner's asks; supersedes D544's guard; fields, pills and kind squares left for later.
 - [D549](decisions/d549-fields-squares-badges-tools.md#d549-a-values-field-a-search-a-kinds-square-a-badge-and-a-toolbars-button-each-have-one-style-shared-by-every-view) A value's field, a search, a kind's square, a badge and a toolbar's button each have one style, shared by every view (2026-11-25)
   - The suite D548 left; the pills over the maps and the colours drawn in C# left for later.
+- [D560](decisions/d560-glass-tiles-and-drawn-colours.md#d560-the-glass-over-a-map-a-tile-of-figures-and-the-colours-the-drawing-code-paints-with-each-have-one-source) The glass over a map, a tile of figures, and the colours the drawing code paints with each have one source (2026-11-25)
+  - What D549 left; `StudioColors` kept equal to the palette's keys by a test. D550 to D559 are the bank transfer's.
 
 ## Banking, the transfer between the bank and the guild's chest (D550 to D552)
 

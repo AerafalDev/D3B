@@ -9,7 +9,7 @@ using D3B.Data;
 
 namespace D3B.Bot.Transfers;
 
-/// <summary>Moves objects between the character's bank and its guild's chest, either way, in as many rounds as its pods need, then says what it moved (D550).</summary>
+/// <summary>Moves objects between the character's bank and its guild's chest, either way, in as many rounds as its pods need, then says what it moved (D560).</summary>
 /// <remarks>
 /// <para>
 /// A round goes to the source, the nearest banker or guild's chest, opens it, takes out what the settings choose and the pods hold,

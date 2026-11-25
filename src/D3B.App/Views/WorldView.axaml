@@ -12,8 +12,8 @@
     xmlns:z="clr-namespace:D3B.App.ViewModels.Zones">
     <UserControl.Styles>
         <Style Selector="Border.Hud">
-            <Setter Property="Background" Value="#C70E0E10" />
-            <Setter Property="BorderBrush" Value="#0DFFFFFF" />
+            <Setter Property="Background" Value="{DynamicResource GlassColor}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource GlassEdgeColor}" />
             <Setter Property="BorderThickness" Value="1" />
             <Setter Property="CornerRadius" Value="6" />
             <Setter Property="Padding" Value="10,5" />
@@ -486,7 +486,7 @@
             <StackPanel Orientation="Horizontal" Spacing="14">
                 <StackPanel Orientation="Horizontal" Spacing="7">
                     <Ellipse
-                        Fill="#5FD3C0"
+                        Fill="{DynamicResource RouteColor}"
                         Height="12"
                         VerticalAlignment="Center"
                         Width="12" />
@@ -494,7 +494,7 @@
                 </StackPanel>
                 <StackPanel Orientation="Horizontal" Spacing="7">
                     <Border
-                        Background="#5FD3C0"
+                        Background="{DynamicResource RouteColor}"
                         CornerRadius="2"
                         Height="3"
                         VerticalAlignment="Center"
@@ -532,7 +532,7 @@
                     Text="{Binding Summary}" />
                 <StackPanel Orientation="Horizontal" Spacing="7">
                     <Border
-                        Background="#A3D47B"
+                        Background="{DynamicResource ZoneColor}"
                         CornerRadius="2"
                         Height="12"
                         VerticalAlignment="Center"

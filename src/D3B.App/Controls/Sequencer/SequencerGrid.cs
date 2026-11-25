@@ -24,8 +24,8 @@ internal sealed class SequencerGrid : Control
     /// <summary>Identifies <see cref="SelectedClip"/>.</summary>
     public static readonly StyledProperty<int> SelectedClipProperty = AvaloniaProperty.Register<SequencerGrid, int>(nameof(SelectedClip), -1);
 
-    private static readonly IBrush _band = new SolidColorBrush(Color.Parse("#3B82F6"), 0.16);
-    private static readonly IBrush _bandRuler = new SolidColorBrush(Color.Parse("#3B82F6"), 0.28);
+    private static readonly IBrush _band = new SolidColorBrush(StudioColors.Accent, 0.16);
+    private static readonly IBrush _bandRuler = new SolidColorBrush(StudioColors.Accent, 0.28);
     private static readonly IBrush _zone = new SolidColorBrush(Colors.White, 0.05);
     private static readonly IBrush _bright = new SolidColorBrush(Color.Parse("#F4F4F6"));
     private static readonly IBrush _muted = new SolidColorBrush(Color.Parse("#8E9099"));
@@ -33,9 +33,9 @@ internal sealed class SequencerGrid : Control
     private static readonly IBrush _clipText = new SolidColorBrush(Color.Parse("#0A0E0B"));
     private static readonly IPen _line = new Pen(new SolidColorBrush(Colors.White, 0.07), 1);
     private static readonly IPen _faint = new Pen(new SolidColorBrush(Colors.White, 0.035), 1);
-    private static readonly IPen _selected = new Pen(new SolidColorBrush(Color.Parse("#3B82F6")), 2);
-    private static readonly IPen _focus = new Pen(new SolidColorBrush(Color.Parse("#3B82F6"), 0.7), 1);
-    private static readonly IPen _problem = new Pen(new SolidColorBrush(Color.Parse("#EA5D52")), 1.5);
+    private static readonly IPen _selected = new Pen(new SolidColorBrush(StudioColors.Accent), 2);
+    private static readonly IPen _focus = new Pen(new SolidColorBrush(StudioColors.Accent, 0.7), 1);
+    private static readonly IPen _problem = new Pen(new SolidColorBrush(StudioColors.Error), 1.5);
 
     private bool _held;
     private int _lastStep = -1;

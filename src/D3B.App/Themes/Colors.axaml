@@ -106,5 +106,13 @@
     <!--  The glass the pills over a map rest on, a character's and the world's alike (D547).  -->
     <Color x:Key="GlassColor">#E0161619</Color>
     <Color x:Key="GlassHoverColor">#F226262C</Color>
+    <Color x:Key="GlassEdgeColor">#17FFFFFF</Color>
+    <Color x:Key="GlassAccentColor">#E61E2A44</Color>
+    <!--  The kinds' own colours, which the drawing code reads from StudioColors, kept equal by a test (D560).  -->
+    <Color x:Key="RouteColor">#5FD3C0</Color>
+    <Color x:Key="RouteTintColor">#335FD3C0</Color>
+    <Color x:Key="ZoneColor">#A3D47B</Color>
+    <Color x:Key="BehaviorColor">#7FA7FF</Color>
+    <Color x:Key="BehaviorTintColor">#337FA7FF</Color>
     <Color x:Key="ScrimColor">#8C050507</Color>
 </ResourceDictionary>

@@ -7,8 +7,8 @@ namespace D3B.App.Controls.WorldMaps;
 /// <remarks>The green is the zones' own in the assets (D326), as the route's teal is the routes'.</remarks>
 internal static class WorldMapZoneLayer
 {
-    private static readonly Color _green = Color.Parse("#A3D47B");
-    private static readonly Color _red = Color.Parse("#EA5D52");
+    private static readonly Color _green = StudioColors.Zone;
+    private static readonly Color _red = StudioColors.Error;
     private static readonly IBrush _tint = new SolidColorBrush(_green, 0.22);
     private static readonly IBrush _edge = new SolidColorBrush(_green, 0.95);
     private static readonly IBrush _shade = new SolidColorBrush(Color.Parse("#05070A"), 0.22);

@@ -439,7 +439,7 @@
                                 Width="16" />
                         </Border>
                         <Border
-                            Background="#335FD3C0"
+                            Background="{DynamicResource RouteTintColor}"
                             CornerRadius="8"
                             Height="34"
                             IsVisible="{Binding Asset.HasRoute}"
@@ -447,7 +447,7 @@
                             <c:Icon
                                 Drawing="{StaticResource General.Vcs}"
                                 Height="16"
-                                Tint="#5FD3C0"
+                                Tint="{DynamicResource RouteColor}"
                                 Width="16" />
                         </Border>
                         <StackPanel
@@ -686,7 +686,7 @@
                                                         Opacity="0"
                                                         VerticalAlignment="Stretch" />
                                                     <Border
-                                                        Background="#5FD3C0"
+                                                        Background="{DynamicResource RouteColor}"
                                                         CornerRadius="10"
                                                         Height="20"
                                                         IsHitTestVisible="False"
@@ -902,13 +902,13 @@
                                         Margin="14,0,8,0"
                                         MinHeight="30">
                                         <Border
-                                            Background="#337FA7FF"
+                                            Background="{DynamicResource BehaviorTintColor}"
                                             Classes="Kind"
                                             VerticalAlignment="Center">
                                             <c:Icon
                                                 Drawing="{StaticResource Nodes.DataTables}"
                                                 Height="11"
-                                                Tint="#7FA7FF"
+                                                Tint="{DynamicResource BehaviorColor}"
                                                 Width="11" />
                                         </Border>
                                         <TextBlock

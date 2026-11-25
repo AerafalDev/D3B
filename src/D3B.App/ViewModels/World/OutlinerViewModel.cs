@@ -1,11 +1,12 @@
 using System.Collections.ObjectModel;
 using System.Globalization;
 using Avalonia.Input;
-using Avalonia.Media;
 using Avalonia.Media.Immutable;
+using Avalonia.Media;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using D3B.App.Controls.WorldMaps;
+using D3B.App.Controls;
 using D3B.App.Localization;
 using D3B.App.ViewModels.Assets;
 using D3B.App.ViewModels.Characters;
@@ -29,9 +30,9 @@ internal sealed partial class OutlinerViewModel : ObservableObject
     private const double StepIndent = 36;
     private const double ItemIndent = 14;
 
-    private static readonly IBrush _green = new ImmutableSolidColorBrush(Color.Parse("#4ADE80"));
-    private static readonly IBrush _red = new ImmutableSolidColorBrush(Color.Parse("#EA5D52"));
-    private static readonly IBrush _amber = new ImmutableSolidColorBrush(Color.Parse("#E9AD3C"));
+    private static readonly IBrush _green = new ImmutableSolidColorBrush(StudioColors.Playing);
+    private static readonly IBrush _red = new ImmutableSolidColorBrush(StudioColors.Error);
+    private static readonly IBrush _amber = new ImmutableSolidColorBrush(StudioColors.Warning);
     private static readonly IBrush _grey = new ImmutableSolidColorBrush(Color.Parse("#6B7280"));
 
     private readonly Localizer _localizer;
