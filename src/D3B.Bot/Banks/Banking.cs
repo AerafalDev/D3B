@@ -163,13 +163,23 @@ public static class Banking
                 case TravelOutcome.Arrived:
                     break;
                 case TravelOutcome.NoPath:
-                    return BankOutcome.NoBank;
+                    return HasWay(context, sought) ? BankOutcome.NotTravelled : BankOutcome.NoBank;
                 case TravelOutcome.Busy:
                     return journeys is 0 ? BankOutcome.Busy : BankOutcome.NotTravelled;
                 default:
                     return BankOutcome.NotTravelled;
             }
         }
+    }
+
+    // A journey that left out a way that failed on it, such as a mine's door the server refused once, finds no other and says no path;
+    // a way there from where the character stands says it was the journey's, not the world's, and the next try may take it (D517).
+    private static bool HasWay(BotContext context, IReadOnlySet<long> banks)
+    {
+        var state = context.State;
+
+        return state.MapId is { } mapId && state.Cell is { } cell && context.Maps.TryGet(mapId, out var map) && context.World.TryGetVertex(map, cell, out var vertex)
+            && context.World.TryFind(vertex, banks, WorldTravel.RulesOf(context), out _);
     }
 
     /// <summary>Opens the bank: talks to a banker of the character's map, then gives the reply of his that the question offers.</summary>

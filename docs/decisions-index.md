@@ -949,3 +949,8 @@ or refines another says so in its own entry. Add a line here with every new deci
   - F2; none of the 18,330 casts of 22 to 24 November went unanswered, a safeguard.
 - [D511](decisions/d509-d511-search-budget-and-refusals.md#d511-a-weapons-blow-is-not-struck-in-a-state-that-prevents-fighting) A weapon's blow is not struck in a state that prevents fighting (2026-11-24)
   - The owner's ask, the audit; 74 blows refused with text 372, each in state 1 or 42, which the pack flags preventsFight.
+
+## Movement and banking, a walk refused with its confirmation (D517)
+
+- [D517](decisions/d517-miner-refused-door.md#d517-a-walk-refused-after-it-was-shown-has-not-arrived-and-a-banks-journey-whose-way-failed-is-not-travelled-not-without-a-bank) A walk refused after it was shown has not arrived, and a bank's journey whose way failed is not travelled, not without a bank (2026-11-25)
+  - Every journey failed once a way failed on it, a refused walk's way tried again, ending no run on a failed unloading.

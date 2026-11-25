@@ -282,6 +282,29 @@ public sealed class BankingTests
     }
 
     [Fact]
+    public async Task AJourneyToABankerWhoseOnlyWayFailedIsNotTravelledNotWithoutABank()
+    {
+        // Measured on the owner's miner of 24 November (D517): the door out of a mine refused once, the journey left it out and found
+        // no other way; taken for no bank at all, the unloading gave up and the harvest failed, idle until the server closed it.
+        await using var play = new TestPlay();
+        var (connection, bot) = await play.EnterAsync(300, TestPlay.OtherInsideMapId);
+        var journey = bot.RunAsync((context, token) => context.GoToBankerAsync(token), TestContext.Current.CancellationToken);
+
+        // The server never shows the walk onto the map action, the inside's only way out.
+        Assert.Equal(BankOutcome.NotTravelled, await TestWalks.AdvanceUntilDoneAsync(play.Time, journey));
+        Assert.Single(connection.Sent);
+    }
+
+    [Fact]
+    public async Task AMapNoWayLeadsFromToABankHasNoBank()
+    {
+        await using var play = new TestPlay();
+        var (_, bot) = await play.EnterAsync(300, TestPlay.HavenBagMapId);
+
+        Assert.Equal(BankOutcome.NoBank, await bot.RunAsync((context, token) => context.GoToBankerAsync(token), TestContext.Current.CancellationToken));
+    }
+
+    [Fact]
     public async Task TheJourneyToABankerLeavesOutAnInsideWhereNoneStands()
     {
         // From the inside holding no banker: out by its map action, then through the door into the bank's inside.
