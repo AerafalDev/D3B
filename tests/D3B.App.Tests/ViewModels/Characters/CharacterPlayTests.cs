@@ -1,6 +1,7 @@
 using D3B.App.Localization;
 using D3B.App.ViewModels;
 using D3B.App.ViewModels.Characters;
+using D3B.App.ViewModels.Studio;
 using D3B.Bot.Activities;
 using D3B.Bot.Tests.Activities;
 using D3B.Bot.Tests.Runtime;
@@ -111,5 +112,54 @@ public sealed class CharacterPlayTests : IAsyncDisposable
         main.Refresh();
 
         Assert.False(Assert.Single(main.Home.Characters).IsPlaying);
+    }
+
+    [Fact]
+    public async Task TheDetailsPlayPauseAndStopTheCharacterSelectedAsItsTabDoes()
+    {
+        var activity = new TestActivity();
+
+        using var host = TestHosts.Of(_play, new ActivityDefinition("patrol", "Patrol", _ => activity));
+        var (_, bot) = await _play.EnterAsync(300);
+        var main = new MainViewModel(await TestHosts.RunningAsync(host), _localizer);
+
+        main.Refresh();
+        main.Selection.SelectCharacter(bot.Key);
+        main.Refresh();
+
+        var details = main.Properties.Character;
+
+        Assert.Equal((true, true, false, false), (details.ShowsPlay, details.CanPlay, details.ShowsPause, details.ShowsStop));
+
+        details.PlayCommand.Execute(null);
+        await activity.SteppingAsync(bot);
+        main.Refresh();
+
+        Assert.Equal((false, true, true), (details.ShowsPlay, details.ShowsPause, details.ShowsStop));
+
+        details.StopCommand.Execute(null);
+        Assert.Equal(ActivityOutcome.Stopped, await bot.Activity!.Completion);
+    }
+
+    [Fact]
+    public async Task PlayAllStartsEveryCharacterConnectedThatCanPlay()
+    {
+        var activity = new TestActivity();
+
+        using var host = TestHosts.Of(_play, new ActivityDefinition("patrol", "Patrol", _ => activity));
+        var (_, bot) = await _play.EnterAsync(300);
+        var main = new MainViewModel(await TestHosts.RunningAsync(host), _localizer);
+
+        main.Refresh();
+
+        // No character chosen: play all needs none.
+        Assert.Null(main.RunBlock.ChosenKey);
+
+        main.RunBlock.PlayAllCommand.Execute(null);
+        await activity.SteppingAsync(bot);
+        main.Refresh();
+
+        Assert.True(bot.Activity is not null);
+        Assert.Equal(1, main.Bots.Items.Count(item => RunBlockViewModel.Read(item, _localizer).State is RunState.Playing));
     }
 }

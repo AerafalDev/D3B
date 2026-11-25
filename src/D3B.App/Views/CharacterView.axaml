@@ -40,21 +40,6 @@
             <Setter Property="BorderThickness" Value="1" />
             <Setter Property="FontWeight" Value="Normal" />
         </Style>
-        <!--  The header's profile field rests on the theme's surfaces, where the pills over the map stay dark as the map (D530).  -->
-        <Style Selector="Button.HeadPick">
-            <Setter Property="Theme" Value="{DynamicResource StudioButton}" />
-            <Setter Property="Height" Value="28" />
-            <Setter Property="MinHeight" Value="28" />
-            <Setter Property="Padding" Value="11,0" />
-            <Setter Property="CornerRadius" Value="14" />
-            <Setter Property="Background" Value="{DynamicResource FieldColor}" />
-            <Setter Property="BorderBrush" Value="{DynamicResource OutlineColor}" />
-            <Setter Property="BorderThickness" Value="1" />
-            <Setter Property="FontWeight" Value="Normal" />
-        </Style>
-        <Style Selector="Button.HeadPick:pointerover">
-            <Setter Property="Background" Value="{DynamicResource HoverColor}" />
-        </Style>
         <Style Selector="Button.Pill:pointerover">
             <Setter Property="Background" Value="#F226262C" />
         </Style>
@@ -515,21 +500,21 @@
                                 Text="{l:Tr PropertyProfile}" />
                             <Button
                                 AutomationProperties.Name="{l:Tr PropertyProfile}"
-                                Classes="HeadPick"
+                                Classes="Pick"
                                 Click="OnProfileClick"
-                                HorizontalAlignment="Stretch"
-                                HorizontalContentAlignment="Stretch"
                                 Name="ProfileField">
-                                <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="6">
-                                    <c:Icon
-                                        Drawing="{StaticResource Nodes.Template}"
-                                        Height="12"
-                                        Tint="{DynamicResource ProfileTintColor}"
-                                        VerticalAlignment="Center"
-                                        Width="12" />
+                                <Grid ColumnDefinitions="Auto,*,Auto">
+                                    <Border Background="{DynamicResource ProfileSquareColor}" Classes="Kind">
+                                        <c:Icon
+                                            Drawing="{StaticResource Nodes.Template}"
+                                            Height="11"
+                                            Tint="{DynamicResource ProfileTintColor}"
+                                            Width="11" />
+                                    </Border>
                                     <TextBlock
                                         Classes.Dim="{Binding !Character.HasProfile}"
                                         Grid.Column="1"
+                                        Margin="7,0"
                                         Text="{Binding Character.Profile.Name}"
                                         TextTrimming="CharacterEllipsis"
                                         ToolTip.Tip="{Binding Character.Profile.Detail}"
@@ -539,7 +524,6 @@
                                         Grid.Column="2"
                                         Height="10"
                                         Opacity="0.5"
-                                        VerticalAlignment="Center"
                                         Width="10" />
                                 </Grid>
                             </Button>

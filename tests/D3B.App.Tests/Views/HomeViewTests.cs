@@ -35,7 +35,7 @@ public sealed class HomeViewTests : IAsyncDisposable
     {
         await _store.OpenedAsync();
         await _store.Assets.SaveAsync(new RouteAsset { Id = "north", Name = "North", Anchors = [new RouteAnchor { MapId = 1 }, new RouteAnchor { MapId = 2 }] }, TestContext.Current.CancellationToken);
-        await _store.SeeAsync(TestPlay.Account, (TestPlay.CharacterId, "Aerafa", 200));
+        await _store.PlayedAsync(TestPlay.Account, (TestPlay.CharacterId, "Aerafa", 200));
 
         var runner = await TestHosts.RunningAsync(_store.Host);
         var result = await OnTheUIThreadAsync(() =>

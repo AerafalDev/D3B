@@ -256,12 +256,18 @@
                                 </DataTemplate>
                             </ItemsControl.ItemTemplate>
                         </ItemsControl>
-                        <TextBlock
-                            Classes="Dim"
+                        <!--  With no profile, the Library offers to make one (D543).  -->
+                        <StackPanel
+                            Classes="EmptyState"
                             IsVisible="{Binding IsProjectEmpty}"
-                            Margin="10,12,10,0"
-                            Text="{l:Tr AssetsEmptyProject}"
-                            TextWrapping="Wrap" />
+                            Name="EmptyState">
+                            <TextBlock Text="{l:Tr AssetsEmptyProject}" />
+                            <Button
+                                Classes="Outline"
+                                Command="{Binding NewProfileCommand}"
+                                Content="{l:Tr HomeNewProfile}"
+                                HorizontalAlignment="Center" />
+                        </StackPanel>
                     </StackPanel>
                 </ScrollViewer>
             </Panel>

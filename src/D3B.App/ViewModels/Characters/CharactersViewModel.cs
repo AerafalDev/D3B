@@ -224,7 +224,8 @@ internal sealed partial class CharactersViewModel : ObservableObject
     {
         var now = _time.GetUtcNow();
         var bots = _bots.Items.ToDictionary(bot => bot.Bot.Key);
-        var keys = (_book?.Characters.Select(character => character.Key) ?? [])
+        // Those played through D3B, not every character the server listed for an account (D544).
+        var keys = (_book?.Characters.Where(character => character.LastPlayed is not null).Select(character => character.Key) ?? [])
             .Concat(bots.Keys)
             .Distinct()
             .Where(key => !bots.TryGetValue(key, out var bot) || !bot.IsConnected)

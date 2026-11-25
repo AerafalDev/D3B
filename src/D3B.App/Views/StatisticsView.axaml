@@ -137,16 +137,22 @@
                 Classes="Empty"
                 IsVisible="{Binding !IsAvailable}"
                 Text="{l:Tr StatisticsUnavailable}" />
-            <TextBlock
-                Classes="Empty"
-                Text="{l:Tr StatisticsEmpty}">
-                <TextBlock.IsVisible>
+            <!--  An empty period offers every session (D543).  -->
+            <StackPanel Classes="EmptyState">
+                <StackPanel.IsVisible>
                     <MultiBinding Converter="{x:Static BoolConverters.And}">
                         <Binding Path="IsAvailable" />
                         <Binding Path="IsEmpty" />
                     </MultiBinding>
-                </TextBlock.IsVisible>
-            </TextBlock>
+                </StackPanel.IsVisible>
+                <TextBlock Text="{l:Tr StatisticsEmpty}" />
+                <Button
+                    Classes="Outline"
+                    Command="{Binding ShowAllCommand}"
+                    Content="{l:Tr StatisticsAllRuns}"
+                    HorizontalAlignment="Center"
+                    IsVisible="{Binding ShowsAllRuns}" />
+            </StackPanel>
             <ScrollViewer>
                 <ScrollViewer.IsVisible>
                     <MultiBinding Converter="{x:Static BoolConverters.And}">

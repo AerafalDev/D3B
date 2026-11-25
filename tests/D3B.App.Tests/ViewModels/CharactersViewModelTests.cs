@@ -50,11 +50,11 @@ public sealed class CharactersViewModelTests : IAsyncDisposable
         time.Advance(TimeSpan.FromHours(2));
         Refresh();
 
+        // Only the characters played through D3B, not every one the server listed for the account (D544).
         Assert.Empty(_panel.Online);
-        Assert.Equal(["Minette", "Character"], _panel.Offline.Select(line => line.Name));
+        Assert.Equal(["Minette"], _panel.Offline.Select(line => line.Name));
         Assert.Equal(("Level 54", "2 h ago"), (_panel.Offline[0].Level, _panel.Offline[0].LastPlayed));
-        Assert.Equal("Disconnected", _panel.Offline[1].LastPlayed);
-        Assert.Equal(2, _panel.OfflineCount);
+        Assert.Equal(1, _panel.OfflineCount);
         Assert.False(_panel.IsOfflineOpen);
         Assert.False(_panel.IsEmpty);
 
