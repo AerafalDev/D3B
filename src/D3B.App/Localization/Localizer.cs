@@ -5,7 +5,7 @@ using D3B.Data.Texts;
 
 namespace D3B.App.Localization;
 
-/// <summary>The app's texts, in French, English or Spanish, which every view follows when the language changes (D14, D504).</summary>
+/// <summary>The app's texts, in French, English or Spanish, which every view follows when the language changes (D14, D554).</summary>
 /// <remarks>
 /// The texts are the resources of <c>Strings.resx</c>, in English, <c>Strings.fr.resx</c> and <c>Strings.es.resx</c>. The
 /// language starts as the system's, French or Spanish when it is one of them, else English. Views bind to the indexer through <see cref="TrExtension"/>, which

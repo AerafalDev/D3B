@@ -117,7 +117,7 @@ public sealed class ModulePagesTests : IAsyncDisposable
 
         await _play.EnterAsync(300);
 
-        var (english, french) = await OnTheUIThreadAsync(() =>
+        var (english, french, spanish) = await OnTheUIThreadAsync(() =>
         {
             main.Refresh();
 
@@ -130,11 +130,16 @@ public sealed class ModulePagesTests : IAsyncDisposable
 
             main.Settings.UseFrenchCommand.Execute(null);
 
-            return (english, (page.Title, control.Greeting, control.Count));
+            var french = (page.Title, control.Greeting, control.Count);
+
+            main.Settings.UseSpanishCommand.Execute(null);
+
+            return (english, french, (page.Title, control.Greeting, control.Count));
         });
 
         Assert.Equal(("Greetings", "Hello from a module", "1 bot in the host"), english);
         Assert.Equal(("Salutations", "Bonjour d'un module", "1 bot dans l'hôte"), french);
+        Assert.Equal(("Saludos", "Hola desde un módulo", "1 bot en el host"), spanish);
     }
 
     [Fact]

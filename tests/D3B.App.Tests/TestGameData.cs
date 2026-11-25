@@ -16,7 +16,7 @@ using D3B.Data.Texts;
 
 namespace D3B.App.Tests;
 
-/// <summary>The game's values of a small world, named in French and English by a pack's texts, as the app's pickers read them.</summary>
+/// <summary>The game's values of a small world, named in French, English and Spanish by a pack's texts, as the app's pickers read them.</summary>
 /// <remarks>
 /// Its tables name what the map of <see cref="TestPlay"/> holds, as the map page names it: the tree and the door its
 /// server describes, the tree's skill, which gathers, the door's, the banker, and a monster its fights meet.
@@ -29,37 +29,37 @@ internal sealed class TestGameData : IDisposable
     /// <summary>An NPC the pack names, with the texts of its portal's dialog.</summary>
     public const int NpcId = 1_088;
 
-    private static readonly (int Id, string French, string English)[] _names =
+    private static readonly (int Id, string French, string English, string Spanish)[] _names =
     [
-        (101, "Amakna", "Amakna"),
-        (102, "Astrub", "Astrub"),
-        (110, "Forêt d'Amakna", "Amakna Forest"),
-        (111, "Collines d'Amakna", "Amakna Hills"),
-        (120, "Cité d'Astrub", "Astrub City"),
-        (202, "Bûcheron", "Lumberjack"),
-        (224, "Mineur", "Miner"),
-        (403, "Frêne", "Ash"),
-        (404, "Châtaignier", "Chestnut"),
-        (412, "Fer", "Iron"),
-        (501, "Frêne", "Ash tree"),
-        (502, "Porte", "Door"),
-        (503, "Couper", "Cut"),
-        (504, "Entrer", "Enter"),
-        (505, "Banquier", "Banker"),
-        (506, "Bouftou", "Gobball"),
-        (510, "Maître Anemo", "Master Anemo"),
-        (511, "Je souhaite partir pour Astrub", "I want to leave for Astrub"),
-        (512, "Oui, partons", "Yes, let's go"),
-        (513, "Non, je reste", "No, I stay"),
-        (514, "Bienvenue ! Souhaites-tu quitter Incarnam ?", "Welcome! Do you want to leave Incarnam?"),
-        (515, "Es-tu sûr de vouloir partir ?", "Are you sure you want to leave?"),
-        (601, "Ateliers", "Workshops"),
-        (602, "Donjons", "Dungeons"),
-        (603, "Transports", "Transports"),
-        (611, "Zaap", "Zaap"),
-        (612, "Garde-manger du Rat Blanc", "White Rat Larder"),
-        (613, "Atelier des paysans", "Farmers' Workshop"),
-        (614, "Bateau vers Amakna", "Boat to Amakna"),
+        (101, "Amakna", "Amakna", "Amakna"),
+        (102, "Astrub", "Astrub", "Astrub"),
+        (110, "Forêt d'Amakna", "Amakna Forest", "Bosque de Amakna"),
+        (111, "Collines d'Amakna", "Amakna Hills", "Colinas de Amakna"),
+        (120, "Cité d'Astrub", "Astrub City", "Ciudad de Astrub"),
+        (202, "Bûcheron", "Lumberjack", "Leñador"),
+        (224, "Mineur", "Miner", "Minero"),
+        (403, "Frêne", "Ash", "Fresno"),
+        (404, "Châtaignier", "Chestnut", "Castaño"),
+        (412, "Fer", "Iron", "Hierro"),
+        (501, "Frêne", "Ash tree", "Fresno"),
+        (502, "Porte", "Door", "Puerta"),
+        (503, "Couper", "Cut", "Talar"),
+        (504, "Entrer", "Enter", "Entrar"),
+        (505, "Banquier", "Banker", "Banquero"),
+        (506, "Bouftou", "Gobball", "Jalató"),
+        (510, "Maître Anemo", "Master Anemo", "Maestro Anemo"),
+        (511, "Je souhaite partir pour Astrub", "I want to leave for Astrub", "Deseo partir hacia Astrub"),
+        (512, "Oui, partons", "Yes, let's go", "Sí, vamos"),
+        (513, "Non, je reste", "No, I stay", "No, me quedo"),
+        (514, "Bienvenue ! Souhaites-tu quitter Incarnam ?", "Welcome! Do you want to leave Incarnam?", "¡Bienvenido! ¿Quieres dejar Incarnam?"),
+        (515, "Es-tu sûr de vouloir partir ?", "Are you sure you want to leave?", "¿Seguro que quieres partir?"),
+        (601, "Ateliers", "Workshops", "Talleres"),
+        (602, "Donjons", "Dungeons", "Mazmorras"),
+        (603, "Transports", "Transports", "Transportes"),
+        (611, "Zaap", "Zaap", "Zaap"),
+        (612, "Garde-manger du Rat Blanc", "White Rat Larder", "Despensa de la Rata Blanca"),
+        (613, "Atelier des paysans", "Farmers' Workshop", "Taller de los campesinos"),
+        (614, "Bateau vers Amakna", "Boat to Amakna", "Barco hacia Amakna"),
     ];
 
     private static readonly int[] _hintPictures = [311, 410, 422];
@@ -83,6 +83,7 @@ internal sealed class TestGameData : IDisposable
         {
             writer.Add(TextTable.EntryName(TextLanguages.French), new TextTable(TextLanguages.French, [.. _names.Select(name => name.Id)], [.. _names.Select(name => name.French)]));
             writer.Add(TextTable.EntryName(TextLanguages.English), new TextTable(TextLanguages.English, [.. _names.Select(name => name.Id)], [.. _names.Select(name => name.English)]));
+            writer.Add(TextTable.EntryName(TextLanguages.Spanish), new TextTable(TextLanguages.Spanish, [.. _names.Select(name => name.Id)], [.. _names.Select(name => name.Spanish)]));
             writer.Add(InteractiveCatalog.EntryName, new InteractiveCatalog(new[] { new Interactive(34, 501), new Interactive(316, 502) }));
             writer.Add(JobCatalog.EntryName, new JobCatalog(
                 new[] { new Job(Job.Base, 200, Job.NoIcon), new Job(TestReferences.Lumberjack, 202, 1) },

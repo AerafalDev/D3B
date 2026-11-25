@@ -15,7 +15,10 @@ namespace D3B.Data.Packs;
 public sealed class GamePack : IDisposable
 {
     /// <summary>The format this version of D3B writes and reads. A pack of any other format is rejected.</summary>
-    /// <remarks>It changes whenever a pack written before would be misread: a new layout, or a changed entry type.</remarks>
+    /// <remarks>
+    /// It changes whenever a pack written before would be misread or lack what this version reads: a new layout, a changed
+    /// entry type, or an entry every pack must now hold, such as the texts of a new language (D554).
+    /// </remarks>
     public const int FormatVersion = 15;
 
     private readonly SafeFileHandle _file;

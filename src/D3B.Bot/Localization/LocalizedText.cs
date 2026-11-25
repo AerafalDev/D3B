@@ -3,7 +3,7 @@ using System.Resources;
 
 namespace D3B.Bot.Localization;
 
-/// <summary>A text the app shows in its language, French, English or Spanish (D14, D504): the same in both, or one of a module's resources (D96).</summary>
+/// <summary>A text the app shows in its language, French, English or Spanish (D14, D554): the same in each, or one of a module's resources (D96).</summary>
 /// <remarks>
 /// A module's resources are its own <c>.resx</c> files, the neutral one in English, a <c>.fr.resx</c> in French and a
 /// <c>.es.resx</c> in Spanish, read through a <see cref="ResourceManager"/> of its assembly.
