@@ -566,6 +566,32 @@ public sealed class CharacterEventsTests
     }
 
     [Fact]
+    public void TheOpenStorageKeepsItsStacksAsTheServerTellsThemPutInAndTakenOut()
+    {
+        static InventoryObject Stored(int uid, int itemId, int quantity)
+        {
+            return new InventoryObject { Item = new ObjectItem { Uid = uid, ItemId = itemId, Quantity = quantity }, Position = InventoryItem.NotWorn };
+        }
+
+        var open = Apply(
+            _chosen,
+            Server(new ExchangeStartedWithTabbedStorageEvent { Type = ExchangeType.GuildChest }),
+            Server(new StorageContentEvent { Objects = { Stored(500, TestPlay.Ash, 120), Stored(501, TestPlay.Bread, 4) } }));
+
+        Assert.Equal([new StorageItem(500, TestPlay.Ash, 120), new StorageItem(501, TestPlay.Bread, 4)], open.Storage!.Stacks.Values);
+
+        // Measured (client-game.md): a stack taken out in part is the storage's stack as it now is; whole, it is removed.
+        var taken = Apply(open, Server(new StorageObjectUpdateEvent { Object = Stored(500, TestPlay.Ash, 20) }), Server(new StorageObjectRemovedEvent { Uid = 501 }));
+
+        Assert.Equal([new StorageItem(500, TestPlay.Ash, 20)], taken.Storage!.Stacks.Values);
+
+        var added = Apply(taken, Server(new StorageObjectsUpdateEvent { Objects = { Stored(500, TestPlay.Ash, 60), Stored(502, TestPlay.Chestnut, 7) } }));
+
+        Assert.Equal([new StorageItem(500, TestPlay.Ash, 60), new StorageItem(502, TestPlay.Chestnut, 7)], added.Storage!.Stacks.Values);
+        Assert.Null(Apply(added, Server(new ExchangeLeaveEvent { Type = DialogType.Storage })).Storage);
+    }
+
+    [Fact]
     public void AnotherExchangeOrAnotherMapsDialogIsNotTheBanks()
     {
         var inside = Apply(_chosen, Server(new MapCurrentEvent { MapId = TestPlay.InsideMapId }), Server(TestPlay.Information(396, TestPlay.InsideMapId)));

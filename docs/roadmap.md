@@ -465,6 +465,11 @@ follower) on the same map, the capture of every connection on; a capture's conte
   D488, the miner's door of D517), made in code and tests: a journey or a banking that fails climbs a bounded recovery ladder
   before it fails, and a run that fails, or makes no progress for 10 minutes, is put in order and restarted, with a growing
   wait and six restarts an hour at most, as the harvest's and the hunt's profiles say. Left: seen in game.
+- **The transfer between the bank and the guild's chest** (D550 to D552), the owner's ask of 2026-11-25, made on 2026-11-25 in code
+  and tests: an activity, either way, everything or by category, type and item with exclusions, all, at most or all but N of
+  each, in as many rounds as the pods need, a refusal put back, kept or stopping it, a dry run; then it says what it moved.
+  Taking out of a storage measured on the owner's captures (D551); the item types a setting's kind (D552). Left: seen in game;
+  the chest's tabs and its refusals (Q18).
 - **The zaaps' discovery** (D499), the owner's ask of 2026-11-22, made on 2026-11-22 in code and tests: an activity with no
   setting, « Découvrir les zaaps », walks to every activated zaap within reach the character does not know, the nearest first
   with the zaaps learnt so far, and ends once none is left, giving up for the run one it cannot reach or that the server does

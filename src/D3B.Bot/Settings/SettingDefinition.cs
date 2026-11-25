@@ -523,7 +523,7 @@ public sealed class SettingDefinition
             (SettingKind.Text or SettingKind.Route or SettingKind.Zone or SettingKind.Sequence or SettingKind.Character, null) => "",
             (SettingKind.Text or SettingKind.Route or SettingKind.Zone or SettingKind.Sequence or SettingKind.Character, string) => value,
             (SettingKind.Choice, not null) when _enum!.IsInstanceOfType(value) => value,
-            (SettingKind.Job or SettingKind.Area or SettingKind.SubArea or SettingKind.Resource or SettingKind.Item or SettingKind.Monster or SettingKind.MonsterFamily or SettingKind.Dungeon or SettingKind.Cell or SettingKind.Npc, null or int) => value,
+            (SettingKind.Job or SettingKind.Area or SettingKind.SubArea or SettingKind.Resource or SettingKind.Item or SettingKind.ItemType or SettingKind.Monster or SettingKind.MonsterFamily or SettingKind.Dungeon or SettingKind.Cell or SettingKind.Npc, null or int) => value,
             _ => throw new ArgumentException($"The setting {Key} does not hold {value ?? "nothing"}.", nameof(value)),
         };
     }
@@ -549,10 +549,10 @@ public sealed class SettingDefinition
             case SettingKind.Choice when ChoiceOf(node) is { } choice:
                 return (new(choice), true);
 
-            case SettingKind.Job or SettingKind.Area or SettingKind.SubArea or SettingKind.Resource or SettingKind.Item or SettingKind.Monster or SettingKind.MonsterFamily or SettingKind.Dungeon or SettingKind.Cell or SettingKind.Npc when node is null:
+            case SettingKind.Job or SettingKind.Area or SettingKind.SubArea or SettingKind.Resource or SettingKind.Item or SettingKind.ItemType or SettingKind.Monster or SettingKind.MonsterFamily or SettingKind.Dungeon or SettingKind.Cell or SettingKind.Npc when node is null:
                 return (new(null), true);
 
-            case SettingKind.Job or SettingKind.Area or SettingKind.SubArea or SettingKind.Resource or SettingKind.Item or SettingKind.Monster or SettingKind.MonsterFamily or SettingKind.Dungeon or SettingKind.Cell or SettingKind.Npc when node is JsonValue id && id.TryGetValue<int>(out var game):
+            case SettingKind.Job or SettingKind.Area or SettingKind.SubArea or SettingKind.Resource or SettingKind.Item or SettingKind.ItemType or SettingKind.Monster or SettingKind.MonsterFamily or SettingKind.Dungeon or SettingKind.Cell or SettingKind.Npc when node is JsonValue id && id.TryGetValue<int>(out var game):
                 return (new(game), true);
 
             default:

@@ -60,6 +60,9 @@ public enum SettingKind
     /// <summary>A character of the accounts page, by its account's id and its own (<see cref="Characters.CharacterKey.ToId"/>), picked among the characters D3B knows and never typed, such as a follower's master (D437); an empty text when none is picked.</summary>
     Character,
 
+    /// <summary>A type of item of the game, such as a wood or an amulet, by its id: one that holds an item (D552).</summary>
+    ItemType,
+
     /// <summary>A dungeon of the game, by its id in the client's table, its level the least it lets in from (D520).</summary>
     Dungeon,
 }

@@ -12,6 +12,7 @@ using D3B.Bot.Groups;
 using D3B.Bot.Harvesting;
 using D3B.Bot.Runtime;
 using D3B.Bot.Settings;
+using D3B.Bot.Transfers;
 using D3B.Bot.Zaaps;
 using D3B.Data;
 using D3B.Data.Icons;
@@ -481,6 +482,7 @@ internal sealed partial class BotViewModel : ObservableObject
             HarvestingModule.ActivityId => GameGlyph.Harvest,
             FightingModule.ActivityId => GameGlyph.Fight,
             ZaapsModule.ActivityId => GameGlyph.Zaap,
+            TransfersModule.ActivityId => GameGlyph.Bank,
             _ => GameGlyph.Success,
         };
     }

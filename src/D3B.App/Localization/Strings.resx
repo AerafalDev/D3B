@@ -1196,6 +1196,9 @@
   <data name="StatisticsLevelsOne" xml:space="preserve">
     <value>+{0} level</value>
   </data>
+  <data name="ItemTypeNamed" xml:space="preserve">
+    <value>Item type {0}</value>
+  </data>
   <data name="ItemNamed" xml:space="preserve">
     <value>Item {0}</value>
   </data>

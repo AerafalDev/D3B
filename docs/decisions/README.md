@@ -145,3 +145,4 @@ Each file holds the decisions of one group of [the index](../decisions-index.md)
 - [The studio's shell after next, the layout kept (D542)](d542-layout-kept.md): 1 decision, 2 KB.
 - [The studio's shell after next, empty states that guide (D543)](d543-empty-states.md): 1 decision, 3 KB.
 - [The studio's Details tidied, a character played from them (D544)](d544-details-tidied.md): 1 decision, 3 KB.
+- [Banking, the transfer between the bank and the guild's chest (D550 to D552)](d550-d552-bank-chest-transfer.md): 3 decisions, 8 KB.
