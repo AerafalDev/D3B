@@ -15,7 +15,10 @@ namespace D3B.Bot.Transfers;
 /// A round goes to the source, the nearest banker or guild's chest, opens it, takes out what the settings choose and the pods hold,
 /// a stack at a time, and leaves; then goes to the destination, puts in what it took, and leaves (D551). The chest stands in banks'
 /// insides (D153), so a round's journeys are short, often none. Only what the transfer took moves: what the character carried before
-/// stays in its bags. The guild's chest holds no kamas and opens on one tab, the one the transfer works on.
+/// stays in its bags. Before its takes, a round notes how much of each stack in the bags is the character's own, so that a put never
+/// takes from it, whether the inventory joined the stack taken to the character's or gave it a stack of its own, as it does an object
+/// with its own effects; after a reconnection, whose stacks have new ids, what the transfer carried stays in the bags, and it says so.
+/// The guild's chest holds no kamas and opens on one tab, the one the transfer works on.
 /// </para>
 /// <para>
 /// Each round weighs the takes with the pack's weights, so that the character never carries more than its pods; a take the server
@@ -37,13 +40,16 @@ public sealed class TransferActivity : BotActivity
     private readonly RecoveryLadder _openings = new();
     private readonly BusyWait _busy = new();
     private readonly Dictionary<int, long> _taken = [];
-    private readonly Dictionary<int, int> _carried = [];
-    private readonly Dictionary<int, int> _givingBack = [];
+    private readonly Dictionary<int, int> _own = [];
+    private readonly SortedSet<int> _carrying = [];
+    private readonly SortedSet<int> _givingBack = [];
     private readonly SortedDictionary<int, long> _moved = [];
     private readonly SortedDictionary<int, StorageMoveOutcome> _givenUp = [];
     private readonly string _source;
     private readonly string _destination;
     private int _rounds;
+    private bool _disconnected;
+    private bool _leftInBags;
     private volatile ActivityReport? _report;
 
     /// <inheritdoc/>
@@ -107,6 +113,10 @@ public sealed class TransferActivity : BotActivity
         // The recovery after an interruption puts the character back in order: the bounded wait counts anew (D484).
         _busy.Reset();
 
+        // A new game connection gives the stacks new ids (client-game.md, "The game, banked"): which are the character's own is lost.
+        if (reason is Interruption.Disconnected)
+            _disconnected = true;
+
         return base.OnInterrupted(reason);
     }
 
@@ -118,7 +128,12 @@ public sealed class TransferActivity : BotActivity
         if (await _busy.WaitAsync(context, Failure, cancellationToken).ConfigureAwait(false))
             return true;
 
-        return _carried.Count > 0
+        if (_disconnected)
+            Forget(context);
+
+        _carrying.RemoveWhere(itemId => Carried(context.State, itemId) <= 0);
+
+        return _carrying.Count > 0
             ? await PutAsync(context, cancellationToken).ConfigureAwait(false)
             : await TakeAsync(context, cancellationToken).ConfigureAwait(false);
     }
@@ -128,12 +143,14 @@ public sealed class TransferActivity : BotActivity
         Publish(context.State, FromBank ? "DoingTakeBank" : "DoingTakeChest");
         await OpenAsync(context, FromBank, cancellationToken).ConfigureAwait(false);
         await GiveBackAsync(context, cancellationToken).ConfigureAwait(false);
+        Remember(context.State);
 
         if (_settings.DryRun)
             return await SayWhatWouldMoveAsync(context, cancellationToken).ConfigureAwait(false);
 
         var took = false;
         var tooHeavy = false;
+        var refusedForPods = false;
         var moves = 0;
         var character = context.State.Key.CharacterId;
 
@@ -141,7 +158,7 @@ public sealed class TransferActivity : BotActivity
         {
             var state = context.State;
 
-            if (state.Storage is null)
+            if (state.Storage is null || refusedForPods)
                 break;
 
             var quantity = Math.Min(Allowance(state, stack.ItemId), Fitting(state, stack.ItemId));
@@ -158,16 +175,20 @@ public sealed class TransferActivity : BotActivity
 
             var quantityTaken = Math.Min(quantity, stack.Quantity);
 
+            // Counted as carried before the request: a step cut before the answer still finds in the bags what the server moved.
+            _carrying.Add(stack.ItemId);
+
             switch (await context.TakeFromStorageAsync(stack.Uid, quantityTaken, cancellationToken).ConfigureAwait(false))
             {
                 case StorageMoveOutcome.Moved:
                     took = true;
                     _taken[stack.ItemId] = _taken.GetValueOrDefault(stack.ItemId) + quantityTaken;
-                    _carried[stack.ItemId] = _carried.GetValueOrDefault(stack.ItemId) + quantityTaken;
                     TransferLog.Took(context.Log, character, stack.ItemId, quantityTaken, _source);
                     break;
                 case StorageMoveOutcome.TooHeavy:
+                    // The weights said it fit: the state's weight is behind the server's, and the next takes would be refused too.
                     tooHeavy = true;
+                    refusedForPods = true;
                     break;
                 case StorageMoveOutcome.NoRight:
                     await LeaveAsync(context, cancellationToken).ConfigureAwait(false);
@@ -202,35 +223,31 @@ public sealed class TransferActivity : BotActivity
         var character = context.State.Key.CharacterId;
         var moves = 0;
 
-        foreach (var itemId in _carried.Keys.Order().ToList())
+        foreach (var itemId in _carrying.ToList())
         {
-            var left = _carried[itemId];
             var refusal = StorageMoveOutcome.Moved;
 
-            foreach (var stack in context.State.Inventory.Values.Where(stack => stack.ItemId == itemId && !stack.IsWorn).ToList())
+            foreach (var (stack, quantity) in Takens(context.State, itemId))
             {
-                if (left <= 0 || refusal is not StorageMoveOutcome.Moved)
-                    break;
-
                 if (moves++ > 0)
                     await Task.Delay(context.Delays.Display, context.Time, cancellationToken).ConfigureAwait(false);
 
-                var quantity = Math.Min(left, stack.Quantity);
-
                 refusal = await context.PutInStorageAsync(stack.Uid, quantity, cancellationToken).ConfigureAwait(false);
 
-                if (refusal is StorageMoveOutcome.Moved)
-                {
-                    left -= quantity;
-                    _moved[itemId] = _moved.GetValueOrDefault(itemId) + quantity;
-                    TransferLog.Put(context.Log, character, itemId, quantity, _destination);
-                }
+                if (refusal is not StorageMoveOutcome.Moved)
+                    break;
+
+                _moved[itemId] = _moved.GetValueOrDefault(itemId) + quantity;
+                TransferLog.Put(context.Log, character, itemId, quantity, _destination);
             }
 
-            _carried.Remove(itemId);
+            // The storage closed under it, such as by the player: what is left goes in at the next round.
+            if (refusal is StorageMoveOutcome.Busy)
+                break;
 
-            // A stack the character no longer carries, such as one the player moved, is not looked for.
-            if (left <= 0 || refusal is StorageMoveOutcome.Moved or StorageMoveOutcome.Busy)
+            _carrying.Remove(itemId);
+
+            if (refusal is StorageMoveOutcome.Moved || Carried(context.State, itemId) <= 0)
                 continue;
 
             if (refusal is StorageMoveOutcome.NoRight)
@@ -244,7 +261,7 @@ public sealed class TransferActivity : BotActivity
             switch (_settings.WhenRefused)
             {
                 case TransferRefusal.GiveBack:
-                    _givingBack[itemId] = _givingBack.GetValueOrDefault(itemId) + left;
+                    _givingBack.Add(itemId);
                     break;
                 case TransferRefusal.Stop:
                     await LeaveAsync(context, cancellationToken).ConfigureAwait(false);
@@ -264,22 +281,14 @@ public sealed class TransferActivity : BotActivity
 
     private async Task GiveBackAsync(BotContext context, CancellationToken cancellationToken)
     {
-        foreach (var (itemId, quantity) in _givingBack.OrderBy(entry => entry.Key).ToList())
+        foreach (var itemId in _givingBack.ToList())
         {
-            var left = quantity;
-
-            foreach (var stack in context.State.Inventory.Values.Where(stack => stack.ItemId == itemId && !stack.IsWorn).ToList())
+            foreach (var (stack, quantity) in Takens(context.State, itemId))
             {
-                if (left <= 0)
-                    break;
-
-                var put = Math.Min(left, stack.Quantity);
-
                 // What the source refuses back stays in the bags: it took it out a moment ago, so this is not expected.
-                if (await context.PutInStorageAsync(stack.Uid, put, cancellationToken).ConfigureAwait(false) is not StorageMoveOutcome.Moved)
+                if (await context.PutInStorageAsync(stack.Uid, quantity, cancellationToken).ConfigureAwait(false) is not StorageMoveOutcome.Moved)
                     break;
 
-                left -= put;
                 await Task.Delay(context.Delays.Display, context.Time, cancellationToken).ConfigureAwait(false);
             }
 
@@ -350,6 +359,46 @@ public sealed class TransferActivity : BotActivity
         }
     }
 
+    private void Forget(BotContext context)
+    {
+        _disconnected = false;
+
+        if (_carrying.Count + _givingBack.Count is 0)
+        {
+            _own.Clear();
+            return;
+        }
+
+        foreach (var itemId in _carrying.Concat(_givingBack).Distinct())
+            TransferLog.LeftInBags(context.Log, context.State.Key.CharacterId, itemId);
+
+        _own.Clear();
+        _carrying.Clear();
+        _givingBack.Clear();
+        _leftInBags = true;
+    }
+
+    // Each stack of the bags not noted yet is the character's own, whole: called before a round's takes, once what was refused went back.
+    private void Remember(CharacterState state)
+    {
+        foreach (var stack in state.Inventory.Values.Where(stack => !stack.IsWorn && !_own.ContainsKey(stack.Uid)))
+            _own[stack.Uid] = stack.Quantity;
+    }
+
+    private int Carried(CharacterState state, int itemId)
+    {
+        return Takens(state, itemId).Sum(taken => taken.Quantity);
+    }
+
+    // The transfer's share of each stack of an item in the bags: what the stack holds above the character's own.
+    private List<(InventoryItem Stack, int Quantity)> Takens(CharacterState state, int itemId)
+    {
+        return [.. state.Inventory.Values
+            .Where(stack => stack.ItemId == itemId && !stack.IsWorn)
+            .Select(stack => (Stack: stack, Quantity: stack.Quantity - _own.GetValueOrDefault(stack.Uid)))
+            .Where(taken => taken.Quantity > 0)];
+    }
+
     private List<StorageItem> Stored(CharacterState state)
     {
         return [.. (state.Storage?.Stacks.Values ?? []).Where(stack => !_givenUp.ContainsKey(stack.ItemId) && _filter.Moves(stack.ItemId)).OrderBy(stack => stack.ItemId).ThenBy(stack => stack.Uid)];
@@ -400,7 +449,7 @@ public sealed class TransferActivity : BotActivity
     private void Publish(CharacterState state, string doing)
     {
         var moved = _moved.Values.Sum();
-        var total = moved + _carried.Values.Sum() + Stored(state).Sum(stack => (long)Math.Min(stack.Quantity, Allowance(state, stack.ItemId)));
+        var total = moved + _carrying.Sum(itemId => (long)Carried(state, itemId)) + Stored(state).Sum(stack => (long)Math.Min(stack.Quantity, Allowance(state, stack.ItemId)));
 
         _report = new ActivityReport
         {
@@ -413,6 +462,8 @@ public sealed class TransferActivity : BotActivity
 
     private ImmutableArray<GameText> Warnings()
     {
-        return [.. _givenUp.Select(entry => GameText.Of(TransferTexts.Text($"Warning{entry.Value}"), GameTextValue.Item(entry.Key)))];
+        var givenUp = _givenUp.Select(entry => GameText.Of(TransferTexts.Text($"Warning{entry.Value}"), GameTextValue.Item(entry.Key)));
+
+        return [.. givenUp, .. _leftInBags ? [GameText.Of(TransferTexts.Text("WarningLeftInBags"))] : Array.Empty<GameText>()];
     }
 }

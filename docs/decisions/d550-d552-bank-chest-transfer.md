@@ -22,8 +22,12 @@ D405, D436 and D518.*
   id is chosen; in both, neither its type nor itself left out. A profile choosing nothing is refused by a rule, so that no empty
   choice is read as everything. **How many**: everything, at most a
   number of each item over the transfer, or all but a number of each item, which stay in the source.
-- **Only what the transfer took moves.** What the character carried before stays in its bags, even an item the transfer moves: the
-  inventory joins the stacks of one item, so each item counts what it took and puts that many back in.
+- **Only what the transfer took moves.** What the character carried before stays in its bags, even an item the transfer moves.
+  Before its takes, a round notes how much of each stack in the bags is the character's own; a put takes only what a stack holds
+  above it, whether the inventory joined the take to the character's stack or gave it one of its own, as it does an object with its
+  own effects (the review's finding: putting any stack of the item could give the guild the player's own ring). A step cut between
+  a move and its answer finds the truth in the bags. After a reconnection, whose stacks have new ids, what the transfer carried
+  stays in the bags, and the card says so.
 - **A refusal of the destination** (a tab's type, a bound object, a full chest, the bank's silence) gives the item up for the run,
   then, as the profile says: put back in the source at the next visit, the default, so that the bags do not fill up round after round;
   kept in the bags; or the transfer stops, saying which item. A rank without the right to take out or put in, a source or destination

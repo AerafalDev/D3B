@@ -209,6 +209,9 @@
   <data name="WarningNoRight" xml:space="preserve">
     <value>{0}: the guild's rank lacks the right</value>
   </data>
+  <data name="WarningLeftInBags" xml:space="preserve">
+    <value>A connection closed during the transfer: what it carried then stays in the bags.</value>
+  </data>
   <data name="FailNoBank" xml:space="preserve">
     <value>No bank can be reached.</value>
   </data>

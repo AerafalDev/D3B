@@ -25,7 +25,7 @@ public sealed class TransferActivityTests
     }
 
     /// <summary>The bank's inside, its banker and the guild's chest on one map, as in Astrub's bank (D153).</summary>
-    private static async Task<(TestConnection Connection, BotActor Bot)> InTheBankAsync(TestPlay play, int weight = 400)
+    private static async Task<(TestConnection Connection, BotActor Bot)> InTheBankAsync(TestPlay play, int weight = 400, params InventoryObject[] carried)
     {
         var (connection, bot) = await play.EnterAsync(301, TestPlay.InsideMapId);
         var information = TestPlay.Information(301, TestPlay.InsideMapId);
@@ -38,7 +38,7 @@ public sealed class TransferActivityTests
             EnabledSkills = { new InteractiveSkill { SkillId = GuildChest.SkillId, InstanceId = ChestInstanceId } },
         });
         connection.Server(information);
-        connection.Server(new InventoryContentEvent { Kamas = 1_000 });
+        connection.Server(new InventoryContentEvent { Kamas = 1_000, Objects = { carried } });
         connection.Server(new InventoryWeightEvent { Weight = weight, MaxWeight = 1_000 });
         await bot.ProcessedAsync();
 
@@ -245,5 +245,116 @@ public sealed class TransferActivityTests
         run.Stop();
         await TestWalks.AdvanceUntilDoneAsync(play.Time, run.Completion);
         Assert.DoesNotContain(connection.Sent, request => request is ExchangeObjectMoveRequest { Uid: BankBread });
+    }
+
+    [Fact]
+    public async Task AStackOfTheCharactersOwnIsNeverPutInWhetherTheInventoryGaveTheTakeAStackOfItsOwnOrJoinedIt()
+    {
+        // Its own ashes, a stack apart as an object of its own effects would be, and its own chestnuts, which the take joins.
+        await using var play = new TestPlay();
+        var (connection, bot) = await InTheBankAsync(play, 400, Stack(12, TestPlay.Ash, 5), Stack(13, TestPlay.Chestnut, 50));
+        var run = bot.StartActivity(Transfer(play, new TransferSettings { Items = [TestPlay.Ash, TestPlay.Chestnut] }));
+
+        await OpenBankAsync(play, connection, 1, Stack(BankAsh, TestPlay.Ash, 10), Stack(502, TestPlay.Chestnut, 20));
+        Assert.Equal(new ExchangeObjectMoveRequest { Uid = BankAsh, Quantity = -10 }, await TestWalks.SentAsync(play, connection, 3));
+        connection.Server(new ObjectAddedEvent { Object = Stack(41, TestPlay.Ash, 10) });
+        connection.Server(new StorageObjectRemovedEvent { Uid = BankAsh });
+        connection.Server(new InventoryWeightEvent { Weight = 450, MaxWeight = 1_000 });
+        Assert.Equal(new ExchangeObjectMoveRequest { Uid = 502, Quantity = -20 }, await TestWalks.SentAsync(play, connection, 4));
+        connection.Server(new ObjectQuantityEvent { Object = new ObjectQuantity { Uid = 13, Quantity = 70 } });
+        connection.Server(new StorageObjectRemovedEvent { Uid = 502 });
+        connection.Server(new InventoryWeightEvent { Weight = 550, MaxWeight = 1_000 });
+        await LeftAsync(play, connection, 5);
+
+        await OpenChestAsync(play, connection, 6);
+        Assert.Equal(new ExchangeObjectMoveRequest { Uid = 41, Quantity = 10 }, await TestWalks.SentAsync(play, connection, 7));
+        connection.Server(new StorageObjectUpdateEvent { Object = Stack(900, TestPlay.Ash, 10) });
+        connection.Server(new ObjectDeletedEvent { Uid = 41 });
+        connection.Server(new InventoryWeightEvent { Weight = 500, MaxWeight = 1_000 });
+        Assert.Equal(new ExchangeObjectMoveRequest { Uid = 13, Quantity = 20 }, await TestWalks.SentAsync(play, connection, 8));
+        connection.Server(new StorageObjectUpdateEvent { Object = Stack(901, TestPlay.Chestnut, 20) });
+        connection.Server(new ObjectQuantityEvent { Object = new ObjectQuantity { Uid = 13, Quantity = 50 } });
+        connection.Server(new InventoryWeightEvent { Weight = 400, MaxWeight = 1_000 });
+        await LeftAsync(play, connection, 9);
+
+        await OpenBankAsync(play, connection, 10);
+        await LeftAsync(play, connection, 12);
+
+        Assert.Equal(ActivityOutcome.Done, await TestWalks.AdvanceUntilDoneAsync(play.Time, run.Completion));
+        Assert.Equal([(12, 5), (13, 50)], bot.State.Inventory.Values.Select(stack => (stack.Uid, stack.Quantity)));
+    }
+
+    [Fact]
+    public async Task AnItemRefusedIsKeptInTheBagsOrStopsTheTransferAsTheProfileSays()
+    {
+        await using var play = new TestPlay();
+        var (connection, bot) = await InTheBankAsync(play);
+        var transfer = Transfer(play, new TransferSettings { Items = [TestPlay.Ash], WhenRefused = TransferRefusal.KeepCarried });
+        var run = bot.StartActivity(transfer);
+
+        await OpenBankAsync(play, connection, 1, Stack(BankAsh, TestPlay.Ash, 10));
+        await TestWalks.SentAsync(play, connection, 3);
+        connection.Server(new ObjectAddedEvent { Object = Stack(40, TestPlay.Ash, 10) });
+        connection.Server(new StorageObjectRemovedEvent { Uid = BankAsh });
+        connection.Server(new InventoryWeightEvent { Weight = 450, MaxWeight = 1_000 });
+        await LeftAsync(play, connection, 4);
+        await OpenChestAsync(play, connection, 5);
+        await TestWalks.SentAsync(play, connection, 6);
+        connection.Server(new TextInformationEvent { TextId = GuildChest.RefusedTextId, Type = TextInformationType.Error });
+        await LeftAsync(play, connection, 7);
+
+        // Kept: the next round puts nothing back, and the bank holds nothing more to move.
+        await OpenBankAsync(play, connection, 8);
+        await LeftAsync(play, connection, 10);
+
+        Assert.Equal(ActivityOutcome.Done, await TestWalks.AdvanceUntilDoneAsync(play.Time, run.Completion));
+        Assert.Equal([40], bot.State.Inventory.Keys);
+        Assert.Equal(["{0} is bound to the account: left out"], Texts(transfer.Report!.Warnings));
+
+        await using var stopping = new TestPlay();
+        var (stoppingConnection, stoppingBot) = await InTheBankAsync(stopping);
+        var stopped = stoppingBot.StartActivity(Transfer(stopping, new TransferSettings { Items = [TestPlay.Ash], WhenRefused = TransferRefusal.Stop }));
+
+        await OpenBankAsync(stopping, stoppingConnection, 1, Stack(BankAsh, TestPlay.Ash, 10));
+        await TestWalks.SentAsync(stopping, stoppingConnection, 3);
+        stoppingConnection.Server(new ObjectAddedEvent { Object = Stack(40, TestPlay.Ash, 10) });
+        stoppingConnection.Server(new StorageObjectRemovedEvent { Uid = BankAsh });
+        stoppingConnection.Server(new InventoryWeightEvent { Weight = 450, MaxWeight = 1_000 });
+        await LeftAsync(stopping, stoppingConnection, 4);
+        await OpenChestAsync(stopping, stoppingConnection, 5);
+        await TestWalks.SentAsync(stopping, stoppingConnection, 6);
+        stoppingConnection.Server(new TextInformationEvent { TextId = StorageMoves.TypeRefusedTextId, Type = TextInformationType.Error });
+        await LeftAsync(stopping, stoppingConnection, 7);
+
+        Assert.Equal(ActivityOutcome.Failed, await TestWalks.AdvanceUntilDoneAsync(stopping.Time, stopped.Completion));
+        Assert.Equal("The destination refused {0}: the transfer stops, as its settings say.", Assert.IsType<ActivityException>(stopped.Failure).Reason!.Format.In(CultureInfo.InvariantCulture));
+    }
+
+    [Fact]
+    public async Task AtMostCountsWhatWasTakenOverEveryRound()
+    {
+        // 80 pods free: 16 ashes a round, at most 20 in all.
+        await using var play = new TestPlay();
+        var (connection, bot) = await InTheBankAsync(play, weight: 920);
+        var run = bot.StartActivity(Transfer(play, new TransferSettings { Items = [TestPlay.Ash], Quantity = TransferQuantity.AtMost, Amount = 20 }));
+
+        await OpenBankAsync(play, connection, 1, Stack(BankAsh, TestPlay.Ash, 100));
+        Assert.Equal(new ExchangeObjectMoveRequest { Uid = BankAsh, Quantity = -16 }, await TestWalks.SentAsync(play, connection, 3));
+        connection.Server(new ObjectAddedEvent { Object = Stack(40, TestPlay.Ash, 16) });
+        connection.Server(new StorageObjectUpdateEvent { Object = Stack(BankAsh, TestPlay.Ash, 84) });
+        connection.Server(new InventoryWeightEvent { Weight = 1_000, MaxWeight = 1_000 });
+        await LeftAsync(play, connection, 4);
+        await OpenChestAsync(play, connection, 5);
+        await TestWalks.SentAsync(play, connection, 6);
+        connection.Server(new StorageObjectUpdateEvent { Object = Stack(900, TestPlay.Ash, 16) });
+        connection.Server(new ObjectDeletedEvent { Uid = 40 });
+        connection.Server(new InventoryWeightEvent { Weight = 920, MaxWeight = 1_000 });
+        await LeftAsync(play, connection, 7);
+
+        await OpenBankAsync(play, connection, 8, Stack(BankAsh, TestPlay.Ash, 84));
+        Assert.Equal(new ExchangeObjectMoveRequest { Uid = BankAsh, Quantity = -4 }, await TestWalks.SentAsync(play, connection, 10));
+
+        run.Stop();
+        await TestWalks.AdvanceUntilDoneAsync(play.Time, run.Completion);
     }
 }

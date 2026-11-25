@@ -9,7 +9,7 @@ public enum StorageMoveOutcome
     /// <summary>No storage is open, or the stack named is not where it is taken from: nothing was sent.</summary>
     Busy,
 
-    /// <summary>The character cannot carry it, or the destination cannot take it all: texts 285 and 266, nothing moved.</summary>
+    /// <summary>The character cannot carry it, nothing moved (text 285); or the destination cannot take it all, what fits moved (text 266), which the inventory then says.</summary>
     TooHeavy,
 
     /// <summary>An object bound to the account, which no storage of another takes: text 356 (D153).</summary>

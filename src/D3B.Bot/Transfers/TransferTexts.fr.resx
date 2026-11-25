@@ -209,6 +209,9 @@
   <data name="WarningNoRight" xml:space="preserve">
     <value>{0} : le rang de guilde n’a pas le droit</value>
   </data>
+  <data name="WarningLeftInBags" xml:space="preserve">
+    <value>Une connexion s’est fermée pendant le transfert : ce qu’il portait alors reste dans l’inventaire.</value>
+  </data>
   <data name="FailNoBank" xml:space="preserve">
     <value>Aucune banque n’est accessible.</value>
   </data>

@@ -14,6 +14,9 @@ internal static partial class TransferLog
     [LoggerMessage(Level = LogLevel.Warning, Message = "Bot {Character}: gives up item {Item} for the transfer, {Outcome}")]
     public static partial void GivenUp(ILogger logger, long character, int item, string outcome);
 
+    [LoggerMessage(Level = LogLevel.Warning, Message = "Bot {Character}: leaves in the bags what it carried of item {Item}, the connection having changed its stacks' ids")]
+    public static partial void LeftInBags(ILogger logger, long character, int item);
+
     [LoggerMessage(Level = LogLevel.Information, Message = "Bot {Character}: would move {Quantity} of item {Item} out of the {Place}")]
     public static partial void Would(ILogger logger, long character, int item, long quantity, string place);
 
