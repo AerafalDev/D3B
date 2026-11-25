@@ -164,6 +164,7 @@ public sealed class SequencerViewTests
             main.Refresh();
             main.Routes.Use(TestRouteWorld.Services(store.Assets));
             main.RunBlock.Choose(bot.Key);
+            main.Layout.ShowView(SideView.World);
 
             var window = new MainWindow { DataContext = main, Width = 1440, Height = 900 };
 

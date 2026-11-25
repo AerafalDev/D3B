@@ -26,6 +26,14 @@
     <shadui:Window.KeyBindings>
         <KeyBinding Command="{Binding Search.OpenCommand}" Gesture="Ctrl+K" />
         <KeyBinding Command="{Binding ToggleBottomCommand}" Gesture="Ctrl+J" />
+        <KeyBinding
+            Command="{Binding Layout.ToggleCommand}"
+            CommandParameter="{x:Static studio:StudioPanel.Side}"
+            Gesture="Ctrl+B" />
+        <KeyBinding
+            Command="{Binding Layout.ToggleCommand}"
+            CommandParameter="{x:Static studio:StudioPanel.Details}"
+            Gesture="Ctrl+Alt+B" />
         <KeyBinding Command="{Binding GoToAssetsCommand}" Gesture="Ctrl+Space" />
         <KeyBinding Command="{Binding ShowSettingsCommand}" Gesture="Ctrl+OemComma" />
         <KeyBinding Command="{Binding NewProfileCommand}" Gesture="Ctrl+N" />
@@ -171,14 +179,20 @@
 
     <shadui:Window.LogoContent>
         <StackPanel Margin="10,0,0,0" Orientation="Horizontal">
-            <Image
-                Height="22"
-                IsHitTestVisible="False"
-                Margin="0,0,6,0"
-                RenderOptions.BitmapInterpolationMode="HighQuality"
-                Source="/Assets/d3b.png"
-                VerticalAlignment="Center"
-                Width="22" />
+            <Button
+                AutomationProperties.Name="{l:Tr Home}"
+                Classes="Tool"
+                Command="{Binding ShowHomeCommand}"
+                Margin="0,0,2,0"
+                Padding="3"
+                ToolTip.Tip="{l:Tr Home}"
+                VerticalAlignment="Center">
+                <Image
+                    Height="22"
+                    RenderOptions.BitmapInterpolationMode="HighQuality"
+                    Source="/Assets/d3b.png"
+                    Width="22" />
+            </Button>
             <Menu Theme="{StaticResource TitleMenu}" VerticalAlignment="Center">
                 <MenuItem Header="{l:Tr MenuFile}">
                     <MenuItem
@@ -209,34 +223,51 @@
                         Header="{l:Tr Settings}"
                         Tag="Ctrl ," />
                 </MenuItem>
-                <MenuItem Header="{l:Tr MenuWindow}">
+                <MenuItem Header="{l:Tr MenuView}">
                     <MenuItem Command="{Binding ShowHomeCommand}" Header="{l:Tr Home}" />
+                    <Separator />
+                    <MenuItem Classes="Heading" Header="{l:Tr MenuViews}" />
+                    <MenuItem
+                        Command="{Binding Layout.ShowViewCommand}"
+                        CommandParameter="{x:Static studio:SideView.Characters}"
+                        Header="{l:Tr ViewCharacters}"
+                        IsChecked="{Binding Layout.IsCharactersShown, Mode=OneWay}" />
+                    <MenuItem
+                        Command="{Binding Layout.ShowViewCommand}"
+                        CommandParameter="{x:Static studio:SideView.Library}"
+                        Header="{l:Tr ViewLibrary}"
+                        IsChecked="{Binding Layout.IsLibraryShown, Mode=OneWay}"
+                        Tag="{l:Tr KeysCtrlSpace}" />
+                    <MenuItem
+                        Command="{Binding Layout.ShowViewCommand}"
+                        CommandParameter="{x:Static studio:SideView.World}"
+                        Header="{l:Tr ViewWorld}"
+                        IsChecked="{Binding Layout.IsWorldShown, Mode=OneWay}" />
                     <Separator />
                     <MenuItem Classes="Heading" Header="{l:Tr MenuPanels}" />
                     <MenuItem
                         Command="{Binding Layout.ToggleCommand}"
-                        CommandParameter="{x:Static studio:StudioPanel.Outliner}"
-                        Header="{l:Tr PanelOutliner}"
-                        IsChecked="{Binding Layout.IsOutlinerOpen, Mode=OneWay}" />
-                    <MenuItem
-                        Command="{Binding Layout.ToggleCommand}"
-                        CommandParameter="{x:Static studio:StudioPanel.Assets}"
-                        Header="{l:Tr PanelAssets}"
-                        IsChecked="{Binding Layout.IsAssetsOpen, Mode=OneWay}"
-                        Tag="{l:Tr KeysCtrlSpace}" />
+                        CommandParameter="{x:Static studio:StudioPanel.Side}"
+                        Header="{l:Tr PanelSide}"
+                        IsChecked="{Binding Layout.IsSideOpen, Mode=OneWay}"
+                        Tag="Ctrl B" />
                     <MenuItem
                         Command="{Binding Layout.ToggleCommand}"
                         CommandParameter="{x:Static studio:StudioPanel.Bottom}"
-                        Header="{l:Tr PanelJournal}"
+                        Header="{l:Tr PanelBottom}"
                         IsChecked="{Binding Layout.IsBottomOpen, Mode=OneWay}"
                         Tag="Ctrl J" />
                     <MenuItem
                         Command="{Binding Layout.ToggleCommand}"
                         CommandParameter="{x:Static studio:StudioPanel.Details}"
                         Header="{l:Tr PanelDetails}"
-                        IsChecked="{Binding Layout.IsDetailsOpen, Mode=OneWay}" />
+                        IsChecked="{Binding Layout.IsDetailsOpen, Mode=OneWay}"
+                        Tag="Ctrl Alt B" />
                     <Separator />
-                    <MenuItem Classes="Heading" Header="{l:Tr MenuPages}" />
+                    <MenuItem
+                        Command="{Binding Layout.ToggleAdvancedToolsCommand}"
+                        Header="{l:Tr AdvancedTools}"
+                        IsChecked="{Binding Layout.AdvancedTools, Mode=OneWay}" />
                     <MenuItem
                         Header="{l:Tr MenuModules}"
                         IsVisible="{Binding HasPages}"
@@ -447,22 +478,6 @@
                     </Button>
                 </StackPanel>
             </Border>
-            <Border
-                Background="{DynamicResource BorderColor}"
-                Height="20"
-                Margin="4,0"
-                VerticalAlignment="Center"
-                Width="1" />
-            <Button
-                Classes="Tool"
-                Command="{Binding ShowSettingsCommand}"
-                VerticalAlignment="Center"
-                Width="30">
-                <ToolTip.Tip>
-                    <c:KeyTip Keys="Ctrl ," Text="{l:Tr Settings}" />
-                </ToolTip.Tip>
-                <c:Icon Drawing="{StaticResource General.Settings}" />
-            </Button>
         </StackPanel>
     </shadui:Window.RightWindowTitleBarContent>
 
@@ -473,8 +488,75 @@
 
     <Panel>
         <Grid RowDefinitions="*,34">
+            <Grid ColumnDefinitions="Auto,*">
+                <!--  The activity bar (D513): the side bar's views at the top, the places that open elsewhere at its foot, as next's.  -->
+                <DockPanel
+                    Margin="4,0,5,0"
+                    Name="ActivityBar"
+                    Width="36">
+                    <StackPanel DockPanel.Dock="Bottom" Spacing="4">
+                        <Button
+                            AutomationProperties.Name="{l:Tr ActivityJournal}"
+                            Classes="Activity"
+                            Classes.On="{Binding Bottom.IsJournalOpen}"
+                            Command="{Binding ToggleJournalCommand}"
+                            ToolTip.Tip="{l:Tr ActivityJournal}">
+                            <c:Icon Drawing="{StaticResource Toolwindows.Messages}" />
+                        </Button>
+                        <Button
+                            AutomationProperties.Name="{l:Tr ActivityStatistics}"
+                            Classes="Activity"
+                            Classes.On="{Binding Bottom.IsStatisticsOpen}"
+                            Command="{Binding ToggleStatisticsCommand}"
+                            ToolTip.Tip="{l:Tr ActivityStatistics}">
+                            <c:Icon Drawing="{StaticResource Toolwindows.Profiler}" />
+                        </Button>
+                        <Button
+                            AutomationProperties.Name="{l:Tr Settings}"
+                            Classes="Activity"
+                            Command="{Binding ShowSettingsCommand}"
+                            Margin="0,0,0,4">
+                            <ToolTip.Tip>
+                                <c:KeyTip Keys="Ctrl ," Text="{l:Tr Settings}" />
+                            </ToolTip.Tip>
+                            <c:Icon Drawing="{StaticResource General.Settings}" />
+                        </Button>
+                    </StackPanel>
+                    <StackPanel Spacing="4">
+                        <Button
+                            AutomationProperties.Name="{l:Tr ViewCharacters}"
+                            Classes="Activity"
+                            Classes.On="{Binding Layout.IsCharactersShown}"
+                            Command="{Binding Layout.ShowViewCommand}"
+                            CommandParameter="{x:Static studio:SideView.Characters}"
+                            ToolTip.Tip="{l:Tr ViewCharacters}">
+                            <c:Icon Drawing="{StaticResource General.User}" />
+                        </Button>
+                        <Button
+                            AutomationProperties.Name="{l:Tr ViewLibrary}"
+                            Classes="Activity"
+                            Classes.On="{Binding Layout.IsLibraryShown}"
+                            Command="{Binding Layout.ShowViewCommand}"
+                            CommandParameter="{x:Static studio:SideView.Library}">
+                            <ToolTip.Tip>
+                                <c:KeyTip Keys="{l:Tr KeysCtrlSpace}" Text="{l:Tr ViewLibrary}" />
+                            </ToolTip.Tip>
+                            <c:Icon Drawing="{StaticResource Toolwindows.Project}" />
+                        </Button>
+                        <Button
+                            AutomationProperties.Name="{l:Tr ViewWorld}"
+                            Classes="Activity"
+                            Classes.On="{Binding Layout.IsWorldShown}"
+                            Command="{Binding Layout.ShowViewCommand}"
+                            CommandParameter="{x:Static studio:SideView.World}"
+                            ToolTip.Tip="{l:Tr ViewWorld}">
+                            <c:Icon Drawing="{StaticResource Toolwindows.Web}" />
+                        </Button>
+                    </StackPanel>
+                </DockPanel>
             <Grid
-                Margin="5,0"
+                Grid.Column="1"
+                Margin="0,0,5,0"
                 Name="Docks">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="300" />
@@ -484,145 +566,110 @@
                     <ColumnDefinition Width="340" />
                 </Grid.ColumnDefinitions>
 
-                <Grid Name="LeftColumn">
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="6*" />
-                        <RowDefinition Height="5" />
-                        <RowDefinition Height="4*" />
-                    </Grid.RowDefinitions>
-                    <Border
-                        Classes="Dock Compact"
-                        IsVisible="{Binding Layout.IsOutlinerOpen}"
-                        Name="OutlinerDock">
-                        <DockPanel>
-                            <Border Classes="Strip" DockPanel.Dock="Top">
-                                <Grid ColumnDefinitions="Auto,*">
-                                    <Border Classes="TabHost On">
-                                        <StackPanel Orientation="Horizontal">
-                                            <StackPanel
-                                                Margin="9,0,7,0"
-                                                Orientation="Horizontal"
-                                                Spacing="7">
-                                                <c:Icon
-                                                    Drawing="{StaticResource Toolwindows.Structure}"
-                                                    Height="14"
-                                                    VerticalAlignment="Center"
-                                                    Width="14" />
-                                                <TextBlock Classes="TabTitle" Text="{l:Tr PanelOutliner}" />
-                                            </StackPanel>
-                                            <Button
-                                                Classes="TabClose"
-                                                Command="{Binding Layout.CloseCommand}"
-                                                CommandParameter="{x:Static studio:StudioPanel.Outliner}"
-                                                ToolTip.Tip="{l:Tr Close}">
-                                                <c:Icon
-                                                    Drawing="{StaticResource General.Close}"
-                                                    Height="12"
-                                                    Width="12" />
-                                            </Button>
-                                        </StackPanel>
-                                    </Border>
-                                    <TextBlock
-                                        Classes="Dim Figures"
-                                        FontSize="11.5"
-                                        Grid.Column="1"
-                                        HorizontalAlignment="Right"
-                                        IsVisible="{Binding !RunBlock.IsNobodyOnline}"
-                                        Margin="0,0,6,0"
-                                        Text="{Binding OnlineText}"
-                                        VerticalAlignment="Center" />
-                                </Grid>
-                            </Border>
-                            <Panel>
+                <!--  The side bar (D513): one view at a time, the one the activity bar chose, its header naming it.  -->
+                <Border
+                    Classes="Dock Compact"
+                    IsVisible="{Binding Layout.IsSideOpen}"
+                    Name="SideDock">
+                    <DockPanel>
+                        <Border Classes="Strip" DockPanel.Dock="Top">
+                            <DockPanel LastChildFill="False">
+                                <Border Classes="TabHost On">
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock
+                                            Classes="TabTitle"
+                                            IsVisible="{Binding Layout.IsCharactersShown}"
+                                            Margin="9,0,7,0"
+                                            Text="{l:Tr ViewCharacters}" />
+                                        <TextBlock
+                                            Classes="TabTitle"
+                                            IsVisible="{Binding Layout.IsLibraryShown}"
+                                            Margin="9,0,7,0"
+                                            Text="{l:Tr ViewLibrary}" />
+                                        <TextBlock
+                                            Classes="TabTitle"
+                                            IsVisible="{Binding Layout.IsWorldShown}"
+                                            Margin="9,0,7,0"
+                                            Text="{l:Tr ViewWorld}" />
+                                        <Button
+                                            Classes="TabClose"
+                                            Command="{Binding Layout.CloseCommand}"
+                                            CommandParameter="{x:Static studio:StudioPanel.Side}">
+                                            <ToolTip.Tip>
+                                                <c:KeyTip Keys="Ctrl B" Text="{l:Tr Hide}" />
+                                            </ToolTip.Tip>
+                                            <c:Icon
+                                                Drawing="{StaticResource General.Close}"
+                                                Height="12"
+                                                Width="12" />
+                                        </Button>
+                                    </StackPanel>
+                                </Border>
+                                <TextBlock
+                                    Classes="Dim Figures"
+                                    DockPanel.Dock="Right"
+                                    FontSize="11.5"
+                                    Margin="0,0,6,0"
+                                    Text="{Binding OnlineText}"
+                                    VerticalAlignment="Center">
+                                    <TextBlock.IsVisible>
+                                        <MultiBinding Converter="{x:Static BoolConverters.And}">
+                                            <Binding Path="Layout.IsCharactersShown" />
+                                            <Binding Path="!RunBlock.IsNobodyOnline" />
+                                        </MultiBinding>
+                                    </TextBlock.IsVisible>
+                                </TextBlock>
+                                <StackPanel
+                                    DockPanel.Dock="Right"
+                                    IsVisible="{Binding Layout.IsLibraryShown}"
+                                    Margin="0,0,6,0"
+                                    Orientation="Horizontal"
+                                    Spacing="2"
+                                    VerticalAlignment="Center">
+                                    <Button
+                                        AutomationProperties.Name="{l:Tr KindsShown}"
+                                        Classes="Tool Small"
+                                        Classes.Lit="{Binding Assets.IsFiltered}"
+                                        Click="OnAssetsFilterClick"
+                                        IsEnabled="{Binding Assets.IsAvailable}"
+                                        ToolTip.Tip="{l:Tr KindsShown}">
+                                        <c:Icon Drawing="{StaticResource General.Filter}" />
+                                    </Button>
+                                    <Button
+                                        AutomationProperties.Name="{l:Tr LocateTab}"
+                                        Classes="Tool Small"
+                                        Command="{Binding Assets.LocateOpenCommand}"
+                                        IsEnabled="{Binding Assets.IsAvailable}"
+                                        ToolTip.Tip="{l:Tr LocateTab}">
+                                        <c:Icon Drawing="{StaticResource General.Locate}" />
+                                    </Button>
+                                    <Button
+                                        AutomationProperties.Name="{l:Tr CollapseAll}"
+                                        Classes="Tool Small"
+                                        Command="{Binding Assets.CollapseAllCommand}"
+                                        IsEnabled="{Binding Assets.IsAvailable}"
+                                        ToolTip.Tip="{l:Tr CollapseAll}">
+                                        <c:Icon Drawing="{StaticResource General.CollapseAll}" />
+                                    </Button>
+                                </StackPanel>
+                            </DockPanel>
+                        </Border>
+                        <Panel>
+                            <Panel IsVisible="{Binding !Layout.IsLibraryShown}">
                                 <views:OutlinerView DataContext="{Binding Outliner}" IsVisible="{Binding $parent[Window].((vm:MainViewModel)DataContext).IsRunning}" />
                                 <views:HostStateView IsVisible="{Binding IsNotRunning}" />
                             </Panel>
-                        </DockPanel>
-                    </Border>
-                    <c:DockSplitter
-                        Grid.Row="1"
-                        Height="8"
-                        IsVisible="{Binding Layout.AreBothLeftOpen}"
-                        LineBrush="{DynamicResource AccentColor}"
-                        Margin="0,-1.5"
-                        Name="ShareSplitter"
-                        Orientation="Horizontal"
-                        VerticalAlignment="Center" />
-                    <Border
-                        Classes="Dock"
-                        Grid.Row="2"
-                        IsVisible="{Binding Layout.IsAssetsOpen}"
-                        Name="AssetsDock">
-                        <DockPanel>
-                            <Border Classes="Strip" DockPanel.Dock="Top">
-                                <DockPanel LastChildFill="False">
-                                    <Border Classes="TabHost On">
-                                        <StackPanel Orientation="Horizontal">
-                                            <StackPanel
-                                                Margin="9,0,7,0"
-                                                Orientation="Horizontal"
-                                                Spacing="7">
-                                                <c:Icon
-                                                    Drawing="{StaticResource Nodes.Folder}"
-                                                    Height="14"
-                                                    VerticalAlignment="Center"
-                                                    Width="14" />
-                                                <TextBlock Classes="TabTitle" Text="{l:Tr PanelAssets}" />
-                                            </StackPanel>
-                                            <Button
-                                                Classes="TabClose"
-                                                Command="{Binding Layout.CloseCommand}"
-                                                CommandParameter="{x:Static studio:StudioPanel.Assets}"
-                                                ToolTip.Tip="{l:Tr Close}">
-                                                <c:Icon
-                                                    Drawing="{StaticResource General.Close}"
-                                                    Height="12"
-                                                    Width="12" />
-                                            </Button>
-                                        </StackPanel>
-                                    </Border>
-                                    <StackPanel
-                                        DockPanel.Dock="Right"
-                                        Margin="0,0,6,0"
-                                        Orientation="Horizontal"
-                                        Spacing="2"
-                                        VerticalAlignment="Center">
-                                        <Button
-                                            AutomationProperties.Name="{l:Tr KindsShown}"
-                                            Classes="Tool Small"
-                                            Classes.Lit="{Binding Assets.IsFiltered}"
-                                            Click="OnAssetsFilterClick"
-                                            IsEnabled="{Binding Assets.IsAvailable}"
-                                            ToolTip.Tip="{l:Tr KindsShown}">
-                                            <c:Icon Drawing="{StaticResource General.Filter}" />
-                                        </Button>
-                                        <Button
-                                            AutomationProperties.Name="{l:Tr LocateTab}"
-                                            Classes="Tool Small"
-                                            Command="{Binding Assets.LocateOpenCommand}"
-                                            IsEnabled="{Binding Assets.IsAvailable}"
-                                            ToolTip.Tip="{l:Tr LocateTab}">
-                                            <c:Icon Drawing="{StaticResource General.Locate}" />
-                                        </Button>
-                                        <Button
-                                            AutomationProperties.Name="{l:Tr CollapseAll}"
-                                            Classes="Tool Small"
-                                            Command="{Binding Assets.CollapseAllCommand}"
-                                            IsEnabled="{Binding Assets.IsAvailable}"
-                                            ToolTip.Tip="{l:Tr CollapseAll}">
-                                            <c:Icon Drawing="{StaticResource General.CollapseAll}" />
-                                        </Button>
-                                    </StackPanel>
-                                </DockPanel>
-                            </Border>
-                            <views:AssetsView DataContext="{Binding Assets}" Name="AssetsPanel" />
-                        </DockPanel>
-                    </Border>
-                </Grid>
+                            <views:AssetsView
+                                DataContext="{Binding Assets}"
+                                IsVisible="{Binding $parent[Window].((vm:MainViewModel)DataContext).Layout.IsLibraryShown}"
+                                Name="AssetsPanel" />
+                        </Panel>
+                    </DockPanel>
+                </Border>
                 <c:DockSplitter
                     Grid.Column="1"
                     HorizontalAlignment="Center"
-                    IsVisible="{Binding Layout.IsLeftOpen}"
+                    IsVisible="{Binding Layout.IsSideOpen}"
                     LineBrush="{DynamicResource AccentColor}"
                     Margin="-1.5,0"
                     Name="LeftSplitter"
@@ -867,6 +914,7 @@
                         <views:PropertiesView DataContext="{Binding Properties}" />
                     </DockPanel>
                 </Border>
+            </Grid>
             </Grid>
 
             <Grid

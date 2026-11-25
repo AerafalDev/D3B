@@ -58,12 +58,12 @@
     </UserControl.Styles>
     <DockPanel>
         <TextBox
-            AutomationProperties.Name="{l:Tr OutlinerSearch}"
+            AutomationProperties.Name="{Binding SearchText}"
             Classes="PropertySearch"
             DockPanel.Dock="Top"
             Margin="8,8,8,6"
             Name="Search"
-            PlaceholderText="{l:Tr OutlinerSearch}"
+            PlaceholderText="{Binding SearchText}"
             Text="{Binding Filter}">
             <TextBox.InnerLeftContent>
                 <c:Icon
@@ -79,7 +79,7 @@
                 HorizontalAlignment="Center"
                 IsVisible="{Binding IsEmpty}"
                 Margin="16,30"
-                Text="{l:Tr OutlinerEmpty}"
+                Text="{Binding EmptyText}"
                 TextAlignment="Center"
                 TextWrapping="Wrap" />
             <ScrollViewer>

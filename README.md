@@ -36,11 +36,12 @@ D3B updates itself. After an update of the game, wait for the D3B version that s
 
 ## Getting started
 
-1. Start D3B, **then** start Dofus and choose a character. Its card shows in D3B.
-2. Select the card, choose a profile, and press Play (F5).
+1. Start D3B, **then** start Dofus and choose a character. It shows in D3B's **Characters**, the first entry of the bar
+   on the left.
+2. Select it, choose its profile in the **Details** that open on the right (or by a right click), and press Play (F5).
 3. To take the character back, just play it: the bot pauses until you press Play again.
 
-For a group, make a **Follow** profile for the followers (*Add* in the assets' panel) and name their leader in it. The
+For a group, make a **Follow** profile for the followers (*Add* in the **Library**, the bar's second entry) and name their leader in it. The
 leader plays any profile. When every account is subscribed and the followers are level 10 or more, they follow, join
 the fights and get ready through the game's own party options, and D3B still watches that none is left behind.
 

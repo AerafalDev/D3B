@@ -36,7 +36,7 @@ internal sealed partial class BottomPanelViewModel : ObservableObject
 
     /// <summary>Gets the tab shown.</summary>
     [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(IsSequencerShown), nameof(IsJournalShown), nameof(IsTraceShown), nameof(IsProblemsShown), nameof(IsProtocolShown), nameof(IsStatisticsShown))]
+    [NotifyPropertyChangedFor(nameof(IsSequencerShown), nameof(IsJournalShown), nameof(IsTraceShown), nameof(IsProblemsShown), nameof(IsProtocolShown), nameof(IsStatisticsShown), nameof(IsJournalOpen), nameof(IsStatisticsOpen))]
     public partial BottomTab Tab { get; private set; }
 
     /// <summary>Gets or sets the character the run block chose, whose run the trace shows until another is chosen in it.</summary>
@@ -72,6 +72,15 @@ internal sealed partial class BottomPanelViewModel : ObservableObject
     /// <summary>Gets whether the statistics show.</summary>
     public bool IsStatisticsShown => Tab is BottomTab.Statistics;
 
+    /// <summary>Gets whether the panel shows the journal, which the activity bar's entry says pressed (D513).</summary>
+    public bool IsJournalOpen => _layout.IsBottomOpen && IsJournalShown;
+
+    /// <summary>Gets whether the panel shows the statistics, which the activity bar's entry says pressed (D513).</summary>
+    public bool IsStatisticsOpen => _layout.IsBottomOpen && IsStatisticsShown;
+
+    /// <summary>Gets whether the protocol's tab is there: only with the advanced tools (D513).</summary>
+    public bool HasProtocol => _layout.AdvancedTools;
+
     /// <summary>Initializes a new instance of the <see cref="BottomPanelViewModel"/> class.</summary>
     /// <param name="layout">The docks, which open and close the panel.</param>
     /// <param name="services">Gets the host's services, once it runs.</param>
@@ -87,6 +96,7 @@ internal sealed partial class BottomPanelViewModel : ObservableObject
         Problems = new ProblemsViewModel(statistics.Localizer) { ShowHostJournal = ShowHostJournal };
         Inspector = inspector;
         Statistics = statistics;
+        layout.PropertyChanged += (_, e) => FollowLayout(e.PropertyName);
     }
 
     /// <summary>Reads the tab shown again, and the problems, if the panel is open.</summary>
@@ -161,6 +171,17 @@ internal sealed partial class BottomPanelViewModel : ObservableObject
         Refresh(_services());
     }
 
+    /// <summary>Shows a tab, or hides the panel when it shows that tab already, as the activity bar's entries do (D513).</summary>
+    /// <param name="tab">The tab.</param>
+    [RelayCommand]
+    public void ToggleTab(BottomTab tab)
+    {
+        if (_layout.IsBottomOpen && Tab == tab)
+            Close();
+        else
+            Show(tab);
+    }
+
     /// <summary>Shows the panel, or closes it: Ctrl J.</summary>
     [RelayCommand]
     public void Toggle()
@@ -174,6 +195,28 @@ internal sealed partial class BottomPanelViewModel : ObservableObject
     public void Close()
     {
         _layout.Close(StudioPanel.Bottom);
+    }
+
+    private void FollowLayout(string? property)
+    {
+        switch (property)
+        {
+            case nameof(StudioLayout.IsBottomOpen):
+                OnPropertyChanged(nameof(IsJournalOpen));
+                OnPropertyChanged(nameof(IsStatisticsOpen));
+                break;
+            case nameof(StudioLayout.AdvancedTools):
+                OnPropertyChanged(nameof(HasProtocol));
+
+                // The protocol hidden while it shows leaves the journal in its place.
+                if (!HasProtocol && Tab is BottomTab.Protocol)
+                {
+                    Tab = BottomTab.Journal;
+                    Refresh(_services());
+                }
+
+                break;
+        }
     }
 
     private void ShowHostJournal()

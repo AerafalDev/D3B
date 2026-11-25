@@ -112,7 +112,7 @@ public sealed class MainWindowTests : IAsyncDisposable
             },
             TestContext.Current.CancellationToken);
 
-        Assert.Contains("Outliner", english);
+        Assert.DoesNotContain("Outliner", english);
         Assert.Contains("Characters", english);
         Assert.Contains("Home", english);
         Assert.Contains("Character", english);
@@ -346,6 +346,9 @@ public sealed class MainWindowTests : IAsyncDisposable
 
             texts.AddRange(Texts(window));
             Drawings.Draw(window, "logs-en");
+
+            // The protocol is an advanced tool (D513).
+            main.Layout.ToggleAdvancedTools();
             main.Bottom.ShowCommand.Execute(BottomTab.Protocol);
             Dispatcher.UIThread.RunJobs();
             texts.AddRange(Texts(window));

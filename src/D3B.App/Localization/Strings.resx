@@ -1424,9 +1424,6 @@
   <data name="MenuEdit" xml:space="preserve">
     <value>Edit</value>
   </data>
-  <data name="MenuWindow" xml:space="preserve">
-    <value>Window</value>
-  </data>
   <data name="MenuHelp" xml:space="preserve">
     <value>Help</value>
   </data>
@@ -1442,9 +1439,6 @@
   <data name="MenuPanels" xml:space="preserve">
     <value>Panels</value>
   </data>
-  <data name="MenuPages" xml:space="preserve">
-    <value>Pages</value>
-  </data>
   <data name="MenuModules" xml:space="preserve">
     <value>Modules</value>
   </data>
@@ -1453,15 +1447,6 @@
   </data>
   <data name="MenuAbout" xml:space="preserve">
     <value>About D3B</value>
-  </data>
-  <data name="PanelOutliner" xml:space="preserve">
-    <value>Outliner</value>
-  </data>
-  <data name="PanelAssets" xml:space="preserve">
-    <value>Assets</value>
-  </data>
-  <data name="PanelJournal" xml:space="preserve">
-    <value>Journal</value>
   </data>
   <data name="PanelDetails" xml:space="preserve">
     <value>Details</value>
@@ -1695,7 +1680,7 @@
     <value>Search everywhere</value>
   </data>
   <data name="HomeAssets" xml:space="preserve">
-    <value>Assets</value>
+    <value>Library</value>
   </data>
   <data name="HomeJournal" xml:space="preserve">
     <value>Journal</value>
@@ -3105,7 +3090,7 @@
     <value>Search the world</value>
   </data>
   <data name="OutlinerEmpty" xml:space="preserve">
-    <value>Nothing in the world yet: connect a character, or add a route or a zone from Content.</value>
+    <value>Nothing in the world yet: connect a character, or add a route or a zone from the Library.</value>
   </data>
   <data name="OutlinerEye" xml:space="preserve">
     <value>Show on the map</value>
@@ -3571,5 +3556,62 @@
   </data>
   <data name="StatisticsFightsSummary" xml:space="preserve">
     <value>won {0:N0} · lost {1:N0} · deaths {2:N0}</value>
+  </data>
+  <data name="CharactersSearch" xml:space="preserve">
+    <value>Search the characters</value>
+  </data>
+  <data name="WorldEmpty" xml:space="preserve">
+    <value>No route or zone yet. Add one from the Library, or trace one on the world's map.</value>
+  </data>
+  <data name="MenuView" xml:space="preserve">
+    <value>View</value>
+  </data>
+  <data name="MenuViews" xml:space="preserve">
+    <value>Views</value>
+  </data>
+  <data name="ViewCharacters" xml:space="preserve">
+    <value>Characters</value>
+  </data>
+  <data name="ViewLibrary" xml:space="preserve">
+    <value>Library</value>
+  </data>
+  <data name="ViewWorld" xml:space="preserve">
+    <value>World</value>
+  </data>
+  <data name="PanelSide" xml:space="preserve">
+    <value>Side bar</value>
+  </data>
+  <data name="PanelBottom" xml:space="preserve">
+    <value>Bottom panel</value>
+  </data>
+  <data name="AdvancedTools" xml:space="preserve">
+    <value>Advanced tools</value>
+  </data>
+  <data name="ActivityJournal" xml:space="preserve">
+    <value>Journal</value>
+  </data>
+  <data name="ActivityStatistics" xml:space="preserve">
+    <value>Statistics</value>
+  </data>
+  <data name="SettingAdvancedTools" xml:space="preserve">
+    <value>Advanced tools</value>
+  </data>
+  <data name="SettingAdvancedToolsDetail" xml:space="preserve">
+    <value>The protocol's tab in the bottom panel, for those who study the game's messages</value>
+  </data>
+  <data name="CommandToggleSide" xml:space="preserve">
+    <value>Show or hide the side bar</value>
+  </data>
+  <data name="CommandToggleDetails" xml:space="preserve">
+    <value>Show or hide the Details</value>
+  </data>
+  <data name="CommandToggleAdvancedTools" xml:space="preserve">
+    <value>Show or hide the advanced tools</value>
+  </data>
+  <data name="CommandShowStatistics" xml:space="preserve">
+    <value>Show the statistics</value>
+  </data>
+  <data name="Hide" xml:space="preserve">
+    <value>Hide</value>
   </data>
 </root>

@@ -1424,9 +1424,6 @@
   <data name="MenuEdit" xml:space="preserve">
     <value>Édition</value>
   </data>
-  <data name="MenuWindow" xml:space="preserve">
-    <value>Fenêtre</value>
-  </data>
   <data name="MenuHelp" xml:space="preserve">
     <value>Aide</value>
   </data>
@@ -1442,9 +1439,6 @@
   <data name="MenuPanels" xml:space="preserve">
     <value>Panneaux</value>
   </data>
-  <data name="MenuPages" xml:space="preserve">
-    <value>Pages</value>
-  </data>
   <data name="MenuModules" xml:space="preserve">
     <value>Modules</value>
   </data>
@@ -1453,15 +1447,6 @@
   </data>
   <data name="MenuAbout" xml:space="preserve">
     <value>À propos de D3B</value>
-  </data>
-  <data name="PanelOutliner" xml:space="preserve">
-    <value>Outliner</value>
-  </data>
-  <data name="PanelAssets" xml:space="preserve">
-    <value>Assets</value>
-  </data>
-  <data name="PanelJournal" xml:space="preserve">
-    <value>Journal</value>
   </data>
   <data name="PanelDetails" xml:space="preserve">
     <value>Détails</value>
@@ -1695,7 +1680,7 @@
     <value>Chercher partout</value>
   </data>
   <data name="HomeAssets" xml:space="preserve">
-    <value>Assets</value>
+    <value>Bibliothèque</value>
   </data>
   <data name="HomeJournal" xml:space="preserve">
     <value>Journal</value>
@@ -3105,7 +3090,7 @@
     <value>Rechercher dans le monde</value>
   </data>
   <data name="OutlinerEmpty" xml:space="preserve">
-    <value>Rien dans le monde pour l'instant : connectez un personnage, ou ajoutez un trajet ou une zone depuis Contenu.</value>
+    <value>Rien dans le monde pour l'instant : connectez un personnage, ou ajoutez un trajet ou une zone depuis la Bibliothèque.</value>
   </data>
   <data name="OutlinerEye" xml:space="preserve">
     <value>Afficher sur la carte</value>
@@ -3571,5 +3556,62 @@
   </data>
   <data name="StatisticsFightsSummary" xml:space="preserve">
     <value>gagnés {0:N0} · perdus {1:N0} · morts {2:N0}</value>
+  </data>
+  <data name="CharactersSearch" xml:space="preserve">
+    <value>Rechercher un personnage</value>
+  </data>
+  <data name="WorldEmpty" xml:space="preserve">
+    <value>Aucun trajet ni zone pour l'instant. Ajoutez-en un depuis la Bibliothèque, ou tracez-le sur la carte du monde.</value>
+  </data>
+  <data name="MenuView" xml:space="preserve">
+    <value>Affichage</value>
+  </data>
+  <data name="MenuViews" xml:space="preserve">
+    <value>Vues</value>
+  </data>
+  <data name="ViewCharacters" xml:space="preserve">
+    <value>Personnages</value>
+  </data>
+  <data name="ViewLibrary" xml:space="preserve">
+    <value>Bibliothèque</value>
+  </data>
+  <data name="ViewWorld" xml:space="preserve">
+    <value>Monde</value>
+  </data>
+  <data name="PanelSide" xml:space="preserve">
+    <value>Barre latérale</value>
+  </data>
+  <data name="PanelBottom" xml:space="preserve">
+    <value>Panneau du bas</value>
+  </data>
+  <data name="AdvancedTools" xml:space="preserve">
+    <value>Outils avancés</value>
+  </data>
+  <data name="ActivityJournal" xml:space="preserve">
+    <value>Journal</value>
+  </data>
+  <data name="ActivityStatistics" xml:space="preserve">
+    <value>Statistiques</value>
+  </data>
+  <data name="SettingAdvancedTools" xml:space="preserve">
+    <value>Outils avancés</value>
+  </data>
+  <data name="SettingAdvancedToolsDetail" xml:space="preserve">
+    <value>L'onglet Protocole du panneau du bas, pour qui étudie les messages du jeu</value>
+  </data>
+  <data name="CommandToggleSide" xml:space="preserve">
+    <value>Afficher ou masquer la barre latérale</value>
+  </data>
+  <data name="CommandToggleDetails" xml:space="preserve">
+    <value>Afficher ou masquer les Détails</value>
+  </data>
+  <data name="CommandToggleAdvancedTools" xml:space="preserve">
+    <value>Afficher ou masquer les outils avancés</value>
+  </data>
+  <data name="CommandShowStatistics" xml:space="preserve">
+    <value>Afficher les statistiques</value>
+  </data>
+  <data name="Hide" xml:space="preserve">
+    <value>Masquer</value>
   </data>
 </root>
