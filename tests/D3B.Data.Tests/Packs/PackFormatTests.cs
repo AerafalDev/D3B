@@ -54,6 +54,9 @@ public sealed class PackFormatTests
         (12, "098d33e90f65d3bc6b3535c7b8f24466f19bfbe1008d6371f7e45f147dc18bc1"),
         (13, "b3826b61cd7dc808415644598331fec094805e7164faac38d2138ca2a2d04eaf"),
         (14, "aa5ed0452402670d093d715b1c6a91715c09588cc0d5494cdea59e9474b0552d"),
+
+        // The layout of 14: 15 adds an entry, texts/es, of a type 14 holds, which a pack of 14 lacks and a host in Spanish reads (D554).
+        (15, "aa5ed0452402670d093d715b1c6a91715c09588cc0d5494cdea59e9474b0552d"),
     ];
 
     private static readonly string[] _criteria = ["c24"];

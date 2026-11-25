@@ -1,0 +1,254 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="Name" xml:space="preserve">
+    <value>Transferencia entre banco y cofre de gremio</value>
+  </data>
+  <data name="SectionWhat" xml:space="preserve">
+    <value>Qué</value>
+  </data>
+  <data name="Direction" xml:space="preserve">
+    <value>Sentido</value>
+  </data>
+  <data name="DirectionBankToGuildChest" xml:space="preserve">
+    <value>Del banco al cofre de gremio</value>
+  </data>
+  <data name="DirectionGuildChestToBank" xml:space="preserve">
+    <value>Del cofre de gremio al banco</value>
+  </data>
+  <data name="DirectionHelp" xml:space="preserve">
+    <value>De dónde se toman los objetos y adónde van. El cofre de gremio no admite kamas, y la transferencia trabaja en la pestaña en la que se abre.</value>
+  </data>
+  <data name="Everything" xml:space="preserve">
+    <value>Todo lo que contiene el origen</value>
+  </data>
+  <data name="EverythingHelp" xml:space="preserve">
+    <value>Se mueven todos los objetos del origen, salvo los excluidos, en tantos viajes como requieran los pods.</value>
+  </data>
+  <data name="Categories" xml:space="preserve">
+    <value>Categorías</value>
+  </data>
+  <data name="CategoryEquipment" xml:space="preserve">
+    <value>Equipamiento</value>
+  </data>
+  <data name="CategoryConsumable" xml:space="preserve">
+    <value>Consumibles</value>
+  </data>
+  <data name="CategoryResource" xml:space="preserve">
+    <value>Recursos</value>
+  </data>
+  <data name="CategoryQuest" xml:space="preserve">
+    <value>Objetos de misión</value>
+  </data>
+  <data name="CategoryCosmetic" xml:space="preserve">
+    <value>Cosméticos</value>
+  </data>
+  <data name="CategoriesHelp" xml:space="preserve">
+    <value>Se mueven todos los objetos de las categorías elegidas, tal como los ordenan las pestañas del inventario.</value>
+  </data>
+  <data name="Types" xml:space="preserve">
+    <value>Tipos</value>
+  </data>
+  <data name="TypesHelp" xml:space="preserve">
+    <value>Se mueven todos los objetos de los tipos elegidos, como maderas o minerales.</value>
+  </data>
+  <data name="Items" xml:space="preserve">
+    <value>Objetos</value>
+  </data>
+  <data name="ItemsHelp" xml:space="preserve">
+    <value>Estos objetos se mueven, sea cual sea su categoría o su tipo.</value>
+  </data>
+  <data name="ExcludedTypes" xml:space="preserve">
+    <value>Tipos excluidos</value>
+  </data>
+  <data name="ExcludedTypesHelp" xml:space="preserve">
+    <value>Los objetos de estos tipos nunca se mueven, aunque una categoría los haya elegido.</value>
+  </data>
+  <data name="ExcludedItems" xml:space="preserve">
+    <value>Objetos excluidos</value>
+  </data>
+  <data name="ExcludedItemsHelp" xml:space="preserve">
+    <value>Estos objetos nunca se mueven, aunque una categoría o un tipo los haya elegido.</value>
+  </data>
+  <data name="RuleSomething" xml:space="preserve">
+    <value>Elige todo, o al menos una categoría, un tipo o un objeto que mover.</value>
+  </data>
+  <data name="SectionHowMany" xml:space="preserve">
+    <value>Cuántos</value>
+  </data>
+  <data name="Quantity" xml:space="preserve">
+    <value>Cantidad de cada objeto</value>
+  </data>
+  <data name="QuantityAll" xml:space="preserve">
+    <value>Todo</value>
+  </data>
+  <data name="QuantityAtMost" xml:space="preserve">
+    <value>Como máximo</value>
+  </data>
+  <data name="QuantityKeepInSource" xml:space="preserve">
+    <value>Dejar algunos en el origen</value>
+  </data>
+  <data name="QuantityHelp" xml:space="preserve">
+    <value>Todo lo que contiene el origen, como máximo un número de cada objeto en toda la transferencia, o todo salvo un número de cada objeto, que se quedan en el origen.</value>
+  </data>
+  <data name="Amount" xml:space="preserve">
+    <value>Número</value>
+  </data>
+  <data name="AmountUnit" xml:space="preserve">
+    <value>de cada objeto</value>
+  </data>
+  <data name="SectionOptions" xml:space="preserve">
+    <value>Opciones</value>
+  </data>
+  <data name="WhenRefused" xml:space="preserve">
+    <value>Cuando el destino rechaza un objeto</value>
+  </data>
+  <data name="WhenRefusedGiveBack" xml:space="preserve">
+    <value>Devolverlo al origen</value>
+  </data>
+  <data name="WhenRefusedKeepCarried" xml:space="preserve">
+    <value>Llevarlo encima</value>
+  </data>
+  <data name="WhenRefusedStop" xml:space="preserve">
+    <value>Detener</value>
+  </data>
+  <data name="WhenRefusedHelp" xml:space="preserve">
+    <value>Una pestaña del cofre puede rechazar un tipo de objeto, el cofre puede estar lleno, un objeto puede estar ligado a la cuenta. El objeto rechazado se devuelve al origen en la siguiente visita, o se lleva encima, y la transferencia continúa sin él; o la transferencia se detiene.</value>
+  </data>
+  <data name="DryRun" xml:space="preserve">
+    <value>Simulación</value>
+  </data>
+  <data name="DryRunHelp" xml:space="preserve">
+    <value>Solo abre el origen y dice lo que se movería, sin mover nada.</value>
+  </data>
+  <data name="UseZaaps" xml:space="preserve">
+    <value>Usar zaaps</value>
+  </data>
+  <data name="UseZaapsHelp" xml:space="preserve">
+    <value>Los trayectos al banco y al cofre pueden pasar por un zaap, según lo permitan los ajustes generales del banco.</value>
+  </data>
+  <data name="DoingTakeBank" xml:space="preserve">
+    <value>Saca objetos del banco</value>
+  </data>
+  <data name="DoingTakeChest" xml:space="preserve">
+    <value>Saca objetos del cofre de gremio</value>
+  </data>
+  <data name="DoingPutBank" xml:space="preserve">
+    <value>Deposita los objetos en el banco</value>
+  </data>
+  <data name="DoingPutChest" xml:space="preserve">
+    <value>Deposita los objetos en el cofre de gremio</value>
+  </data>
+  <data name="DoingOver" xml:space="preserve">
+    <value>Transferencia terminada: {0} unidades de {1} objetos movidas en {2} viajes</value>
+  </data>
+  <data name="DoingDryRun" xml:space="preserve">
+    <value>Simulación: se moverían {0} unidades de {1} objetos</value>
+  </data>
+  <data name="Moved" xml:space="preserve">
+    <value>Objetos movidos</value>
+  </data>
+  <data name="CountItem" xml:space="preserve">
+    <value>{0} {1}</value>
+  </data>
+  <data name="WarningNotExchangeable" xml:space="preserve">
+    <value>{0} está ligado a la cuenta: se deja de lado</value>
+  </data>
+  <data name="WarningTypeRefused" xml:space="preserve">
+    <value>{0}: la pestaña del cofre no admite este tipo</value>
+  </data>
+  <data name="WarningRefused" xml:space="preserve">
+    <value>{0} fue rechazado</value>
+  </data>
+  <data name="WarningNoAnswer" xml:space="preserve">
+    <value>{0}: el servidor no respondió, puede que el destino esté lleno</value>
+  </data>
+  <data name="WarningTooHeavy" xml:space="preserve">
+    <value>{0} no cabe</value>
+  </data>
+  <data name="WarningNoRight" xml:space="preserve">
+    <value>{0}: el rango de gremio no tiene el permiso</value>
+  </data>
+  <data name="WarningLeftInBags" xml:space="preserve">
+    <value>Una conexión se cerró durante la transferencia: lo que llevaba entonces se queda en el inventario.</value>
+  </data>
+  <data name="FailNoBank" xml:space="preserve">
+    <value>No se puede llegar a ningún banco.</value>
+  </data>
+  <data name="FailNoChest" xml:space="preserve">
+    <value>No se puede llegar a ningún cofre de gremio.</value>
+  </data>
+  <data name="FailChestClosed" xml:space="preserve">
+    <value>El servidor mantiene cerrado el cofre de gremio: el gremio del personaje, su rango o su suscripción no lo permiten.</value>
+  </data>
+  <data name="FailBankNotOpened" xml:space="preserve">
+    <value>No se pudo abrir el banco, ni siquiera tras volver a intentarlo.</value>
+  </data>
+  <data name="FailChestNotOpened" xml:space="preserve">
+    <value>No se pudo abrir el cofre de gremio, ni siquiera tras volver a intentarlo.</value>
+  </data>
+  <data name="FailNoTakeRight" xml:space="preserve">
+    <value>El rango de gremio no tiene permiso para sacar objetos del cofre.</value>
+  </data>
+  <data name="FailNoPutRight" xml:space="preserve">
+    <value>El rango de gremio no tiene permiso para depositar objetos en el cofre.</value>
+  </data>
+  <data name="FailNoPods" xml:space="preserve">
+    <value>El personaje lleva demasiado peso para sacar nada: libera primero algunos pods.</value>
+  </data>
+  <data name="FailRefused" xml:space="preserve">
+    <value>El destino rechazó {0}: la transferencia se detiene, como indican sus ajustes.</value>
+  </data>
+  <data name="FailStuckMapUnknown" xml:space="preserve">
+    <value>El mapa del personaje sigue siendo desconocido tras dos minutos.</value>
+  </data>
+  <data name="FailStuckUsing" xml:space="preserve">
+    <value>Sigue usando un elemento tras dos minutos, incluso tras volver a ponerlo en orden.</value>
+  </data>
+  <data name="FailStuckInDialog" xml:space="preserve">
+    <value>Sigue en un diálogo o un intercambio tras dos minutos, incluso tras volver a ponerlo en orden.</value>
+  </data>
+  <data name="FailStuckWalking" xml:space="preserve">
+    <value>Sigue caminando tras dos minutos, incluso tras volver a ponerlo en orden.</value>
+  </data>
+</root>

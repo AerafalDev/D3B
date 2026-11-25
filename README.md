@@ -23,7 +23,7 @@ and fights, alone or in a group, and a desktop app shows what each bot does.
 - **Groups**: one character leads, the others follow it, fight beside it and bank with it.
 - **Bank and guild chest**: moves items between your bank and your guild's chest, either way: everything, or by category,
   type or item, with exclusions and quantities, in as many trips as your pods need. A dry run says what would move first.
-- **Studio**: your characters live, profile and route editors, a journal per bot, kept on disk for a week and saved in one click. In French and English.
+- **Studio**: your characters live, profile and route editors, a journal per bot, kept on disk for a week and saved in one click. In French, English and Spanish.
 
 D3B injects nothing into the game and never sees your password.
 

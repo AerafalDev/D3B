@@ -385,6 +385,22 @@ public sealed class ProfilesViewModelTests : IAsyncDisposable
     }
 
     [Fact]
+    public async Task TheGamesNamesAreThePacksInTheAppsLanguage()
+    {
+        await _store.OpenedAsync();
+        _localizer.Use(Localizer.Spanish);
+
+        var page = new ProfilesViewModel(_localizer, new Dialogs(), new Toasts());
+
+        page.Refresh(_store.Host.Services);
+
+        var item = NewProfile(page, "Amakna", TestStore.HarvestId);
+        var subAreas = Field<GamesFieldViewModel>(item, "Sub-areas");
+
+        Assert.Equal(["Bosque de Amakna", "Ciudad de Astrub", "Colinas de Amakna"], subAreas.Available.Select(option => option.Name));
+    }
+
+    [Fact]
     public async Task ChangingTheActivityStartsItsSettingsFromTheirDefaults()
     {
         await _store.OpenedAsync();

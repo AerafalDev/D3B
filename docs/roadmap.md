@@ -467,6 +467,10 @@ follower) on the same map, the capture of every connection on; a capture's conte
   D488, the miner's door of D517), made in code and tests: a journey or a banking that fails climbs a bounded recovery ladder
   before it fails, and a run that fails, or makes no progress for 10 minutes, is put in order and restarted, with a growing
   wait and six restarts an hour at most, as the harvest's and the hunt's profiles say. Left: seen in game.
+- **Spanish** (D554), the owner's ask of 2026-11-25, made on 2026-11-25 in code and tests: the studio's and the modules'
+  texts in Spanish beside French and English, chosen in the settings or taken from a Spanish system, and the game's names
+  from the client's Spanish texts, pack format 15. Left: the texts read by a Spanish speaker; the pack of format 15
+  published on `client-3.7.14.18` before an app that reads it.
 - **The transfer between the bank and the guild's chest** (D550 to D552), the owner's ask of 2026-11-25, made on 2026-11-25 in code
   and tests: an activity, either way, everything or by category, type and item with exclusions, all, at most or all but N of
   each, in as many rounds as the pods need, a refusal put back, kept or stopping it, a dry run; then it says what it moved.

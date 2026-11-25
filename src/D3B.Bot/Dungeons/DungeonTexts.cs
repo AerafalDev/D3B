@@ -3,7 +3,7 @@ using D3B.Bot.Localization;
 
 namespace D3B.Bot.Dungeons;
 
-/// <summary>The dungeon activity's texts, in English and French (<c>DungeonTexts.resx</c>, <c>DungeonTexts.fr.resx</c>), which the app shows in its language (D96).</summary>
+/// <summary>The dungeon activity's texts, in English, French and Spanish (<c>DungeonTexts.resx</c>, <c>DungeonTexts.fr.resx</c>, <c>DungeonTexts.es.resx</c>), which the app shows in its language (D96).</summary>
 internal static class DungeonTexts
 {
     /// <summary>Gets the activity's resources.</summary>

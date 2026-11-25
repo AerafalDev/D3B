@@ -3,7 +3,7 @@ using D3B.Bot.Localization;
 
 namespace D3B.Bot.Zaaps;
 
-/// <summary>The zaaps module's texts, in English and French (<c>ZaapTexts.resx</c>, <c>ZaapTexts.fr.resx</c>), which the app shows in its language (D96).</summary>
+/// <summary>The zaaps module's texts, in English, French and Spanish (<c>ZaapTexts.resx</c>, <c>ZaapTexts.fr.resx</c>, <c>ZaapTexts.es.resx</c>), which the app shows in its language (D96).</summary>
 public static class ZaapTexts
 {
     /// <summary>Gets the module's resources.</summary>

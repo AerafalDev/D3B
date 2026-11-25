@@ -77,7 +77,7 @@ replaced them (D116, D119). Mods come as blueprints at step 7, after step 6 (Mod
   of the UI's framework, and a host without the app never makes a page. The page gets a `PageContext`: the host's
   services, the app's language and the module's texts in it (`PageTexts`), and the window's refresh.
 - Texts the app shows for a module, a page's title or an activity's name, are `LocalizedText`s (`D3B.Bot.Localization`):
-  the same in every language, or the module's own resources, in English and French (D96).
+  the same in every language, or the module's own resources, in English, French and Spanish (D96, D554).
 - An activity's settings (D98), in `D3B.Bot.Settings`: a class whose initial values are the defaults, which the module
   describes in code as it registers the activity, `AddActivity<TActivity, TSettings>(id, name, settings => ...)`, each
   property a setting of a kind, a flag, a number, a text, a choice or the game's professions, areas, sub-areas and
@@ -695,7 +695,7 @@ Built at step 2 (D24 to D33):
   `PackWriter` writes it, compressing several entries at once in a deterministic order (D28). `GamePack` opens it by
   reading the index, then reads each entry when asked, from any thread. `PackCache` keeps the entries last read within
   a budget. A test fails when the serialized layout changes without a new `GamePack.FormatVersion`.
-- A pack of format 14 holds (D27, D29, D139, D182, D219, D237, D238, D257, D265, D343, D369, D385, D414, D466, D520):
+- A pack of format 15 holds (D27, D29, D139, D182, D219, D237, D238, D257, D265, D343, D369, D385, D414, D466, D520, D554):
   - every map as its own entry, its neighbours, cells and interactive elements with their graphics (`MapData`), read
     through a `PackCache` by `GameMaps`;
   - the client's world graph, a vertex per zone of a map and transitions between them (`WorldGraph`), and the atlas
@@ -735,7 +735,8 @@ Built at step 2 (D24 to D33):
     keyring opens them, their rooms, the objects they require, their bosses and the sub-areas that name them, and the replies of
     their keepers and exits the extraction finds by their French words, a key's, the keyring's, a keeper's "Oui." and the exits'
     (`DungeonCatalog`, `GameTables.Dungeons`);
-  - in French and English, the texts these name (`GameTexts`).
+  - in French, English and Spanish, from format 15 (D554), the texts these name (`GameTexts`), the app's language taking
+    its own and any other English (`TextLanguages.Of`).
 - Which interactive an element of a map is, and which skills it offers, the client's data does not say: the server
   does, when a character enters the map. The data links a profession's skill to its resource, and the resource to the
   sub-areas listing it.
@@ -1067,9 +1068,9 @@ bottom panel and the Details hidden until needed.
   it. Run from its code, the app does not check.
 - **View models** (`D3B.App.ViewModels`) read the bots' snapshots every 250 ms, on the UI's thread (D9), the page shown
   alone: the bots' loops never wait for the app. Views are thin, and bind compiled.
-- **Translation**: `Localizer`, in `D3B.App.Localization`, reads `Strings.resx` in English and `Strings.fr.resx` in
-  French; the language starts as the system's, or the one the app was left in, and changes live, the views binding
-  through `{l:Tr Key}`.
+- **Translation**: `Localizer`, in `D3B.App.Localization`, reads `Strings.resx` in English, `Strings.fr.resx` in French
+  and `Strings.es.resx` in Spanish (D554); the language starts as the one the app was left in, else the system's when the
+  app has it, else English, and changes live, the views binding through `{l:Tr Key}`.
 - **Preferences** (`AppPreferences`): the language, the studio's layout (`StudioLayoutState`) and its tabs (`StudioTabsState`, D542), remembered in
   `%LOCALAPPDATA%\D3B\app.json`, read before the window shows (D101, D162); and the host's settings the settings' tab changed, by their configuration's keys and values,
   such as `Delays:Display` or `Network:Captures:Game`, one given back its default forgotten (D151). It also

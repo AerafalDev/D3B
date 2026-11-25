@@ -275,6 +275,14 @@ public sealed class SettingsViewModelTests : IAsyncDisposable
         Assert.Equal("Accueil", main.Editor.Selected?.Title);
         Assert.Equal("fr", AppPreferences.Load(PreferencesPath).Language);
 
+        settings.UseSpanishCommand.Execute(null);
+
+        Assert.True(settings.IsSpanish);
+        Assert.False(settings.IsFrench);
+        Assert.Equal("Tiempo de visualización", settings.Display.Label);
+        Assert.Equal("Inicio", main.Editor.Selected?.Title);
+        Assert.Equal("es", AppPreferences.Load(PreferencesPath).Language);
+
         settings.UseEnglishCommand.Execute(null);
 
         Assert.True(settings.IsEnglish);

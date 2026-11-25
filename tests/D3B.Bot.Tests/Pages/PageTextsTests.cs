@@ -34,6 +34,11 @@ public sealed class PageTextsTests
         Assert.Equal("Bonjour", texts["Greeting"]);
         Assert.Equal("Arrivé à 1 234,5", texts.Format("Arrived", 1234.5));
         Assert.Equal("[Missing]", texts["Missing"]);
+
+        context.Use(CultureInfo.GetCultureInfo("es"));
+
+        Assert.Equal("Hola", texts["Greeting"]);
+        Assert.Equal("Llegó a 1.234,5", texts.Format("Arrived", 1234.5));
     }
 
     [Fact]
@@ -59,6 +64,9 @@ public sealed class PageTextsTests
     [InlineData("fr", 0, "0 marche")]
     [InlineData("fr", 1, "1 marche")]
     [InlineData("fr", 2, "2 marches")]
+    [InlineData("es", 0, "0 paseos")]
+    [InlineData("es", 1, "1 paseo")]
+    [InlineData("es", 2, "2 paseos")]
     public void ATextThatCountsTakesTheNumberOfItsLanguage(string language, long count, string expected)
     {
         var texts = new TestPageContext(_services, CultureInfo.GetCultureInfo(language)).Texts(TestTexts.Resources);
@@ -71,6 +79,7 @@ public sealed class PageTextsTests
     {
         Assert.Equal(TextLanguages.French, new TestPageContext(_services, CultureInfo.GetCultureInfo("fr-BE")).GameLanguage);
         Assert.Equal(TextLanguages.English, new TestPageContext(_services, _english).GameLanguage);
+        Assert.Equal(TextLanguages.Spanish, new TestPageContext(_services, CultureInfo.GetCultureInfo("es-AR")).GameLanguage);
         Assert.Equal(TextLanguages.English, new TestPageContext(_services, CultureInfo.GetCultureInfo("de")).GameLanguage);
     }
 

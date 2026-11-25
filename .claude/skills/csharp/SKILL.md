@@ -44,7 +44,7 @@ the rule and do not copy the code.
 ## The studio (`D3B.App`)
 
 - View models use CommunityToolkit.Mvvm: `[ObservableProperty]` and `[RelayCommand]` on `partial` classes (463 and 192 uses).
-  Views are `.axaml` with a thin code-behind; texts go through the `.resx` files, in French and English (D14).
+  Views are `.axaml` with a thin code-behind; texts go through the `.resx` files, in French, English and Spanish (D14, D554).
 
 ## Generated code
 

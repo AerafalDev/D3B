@@ -26,6 +26,7 @@ public sealed class LocalizedTextTests
         Assert.Equal("Hello", text.In(_english));
         Assert.Equal("Bonjour", text.In(_french));
         Assert.Equal("Bonjour", text.In(CultureInfo.GetCultureInfo("fr-CA")));
+        Assert.Equal("Hola", text.In(CultureInfo.GetCultureInfo("es-MX")));
         Assert.Equal("Hello", text.In(CultureInfo.GetCultureInfo("de")));
     }
 

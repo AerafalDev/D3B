@@ -152,4 +152,5 @@ Each file holds the decisions of one group of [the index](../decisions-index.md)
 - [The studio's fields, kind squares, badges and toolbar buttons one style each (D549)](d549-fields-squares-badges-tools.md): 1 decision, 2 KB.
 - [Banking, the transfer between the bank and the guild's chest (D550 to D552)](d550-d552-bank-chest-transfer.md): 3 decisions, 8 KB.
 - [The studio's character map, zoomed (D553)](d553-map-zoom.md): 1 decision, 3 KB.
+- [Spanish beside French and English (D554)](d554-spanish.md): 1 decision, 3 KB.
 - [The studio's glass, tiles and drawn colours one each (D560)](d560-glass-tiles-and-drawn-colours.md): 1 decision, 2 KB.

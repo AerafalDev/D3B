@@ -37,7 +37,7 @@ internal sealed class GameTextFormatter
 
         var culture = _localizer.Culture;
 
-        // French counts 0 as singular, English as plural, as the app's own texts do.
+        // French counts 0 as singular, English and Spanish as plural, as the app's own texts do.
         var one = culture.Equals(Localizer.French) ? text.Count is 0 or 1 : text.Count is 1;
         var format = text.Many is { } many && !one ? many : text.Format;
 
