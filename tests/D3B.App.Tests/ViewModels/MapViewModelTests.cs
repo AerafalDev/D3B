@@ -350,6 +350,53 @@ public sealed class MapViewModelTests : IAsyncDisposable
     }
 
     [Fact]
+    public void TheMapZoomsByStepsBetweenTheFitAndFourTimesItAndFitsAgain()
+    {
+        var page = new MapViewModel(_french, TestPlay.Key);
+
+        Assert.Equal((1, "100 %"), (page.Zoom, page.ZoomText));
+        Assert.False(page.ZoomOutCommand.CanExecute(null));
+        Assert.False(page.FitCommand.CanExecute(null));
+
+        page.ZoomInCommand.Execute(null);
+        Assert.Equal((1.25, "125 %"), (page.Zoom, page.ZoomText));
+        Assert.True(page.ZoomOutCommand.CanExecute(null));
+        Assert.True(page.FitCommand.CanExecute(null));
+
+        while (page.ZoomInCommand.CanExecute(null))
+            page.ZoomInCommand.Execute(null);
+
+        Assert.Equal((4, "400 %"), (page.Zoom, page.ZoomText));
+
+        page.ZoomOutCommand.Execute(null);
+        Assert.Equal((3.2, "320 %"), (page.Zoom, page.ZoomText));
+
+        page.FitCommand.Execute(null);
+        Assert.Equal((1, "100 %"), (page.Zoom, page.ZoomText));
+        Assert.False(page.ZoomOutCommand.CanExecute(null));
+    }
+
+    [Fact]
+    public void AZoomTheWheelGaveIsSaidAndTheStepsGoOnFromIt()
+    {
+        var page = new MapViewModel(_english, TestPlay.Key);
+
+        page.Zoom = 2.37;
+
+        Assert.Equal("237 %", page.ZoomText);
+        Assert.True(page.ZoomInCommand.CanExecute(null));
+
+        page.ZoomOutCommand.Execute(null);
+        Assert.Equal(2.37 / 1.25, page.Zoom, 9);
+
+        // A zoom out the arithmetic leaves a hair above the fit is the fit.
+        page.Zoom = 1 + 1e-12;
+
+        Assert.False(page.ZoomOutCommand.CanExecute(null));
+        Assert.Equal("100 %", page.ZoomText);
+    }
+
+    [Fact]
     public void WithoutItsBotTheMapDrawsNothing()
     {
         var page = Page(_french);

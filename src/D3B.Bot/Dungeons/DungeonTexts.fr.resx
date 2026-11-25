@@ -116,4 +116,67 @@
   <data name="FailNoRoom" xml:space="preserve">
     <value>Aucune salle du donjon encore à gagner n'est accessible à pied.</value>
   </data>
+  <data name="DoingExit" xml:space="preserve">
+    <value>Sort du donjon</value>
+  </data>
+  <data name="DoingBank" xml:space="preserve">
+    <value>Met le butin des donjons en banque</value>
+  </data>
+  <data name="CountRunOne" xml:space="preserve">
+    <value>{0} donjon fait</value>
+  </data>
+  <data name="CountRunMany" xml:space="preserve">
+    <value>{0} donjons faits</value>
+  </data>
+  <data name="CountLoot" xml:space="preserve">
+    <value>{0} {1}</value>
+  </data>
+  <data name="FailNoExit" xml:space="preserve">
+    <value>Aucun PNJ de la dernière carte du donjon n'a laissé sortir le perso.</value>
+  </data>
+  <data name="Name" xml:space="preserve">
+    <value>Donjons</value>
+  </data>
+  <data name="SectionWhat" xml:space="preserve">
+    <value>Donjons</value>
+  </data>
+  <data name="Dungeons" xml:space="preserve">
+    <value>Donjons</value>
+  </data>
+  <data name="DungeonsHelp" xml:space="preserve">
+    <value>Faits à tour de rôle dans cet ordre, avec le trousseau ou une clef portée ; un donjon que le perso ne peut pas ouvrir passe son tour.</value>
+  </data>
+  <data name="Runs" xml:space="preserve">
+    <value>Passages</value>
+  </data>
+  <data name="RunsUnit" xml:space="preserve">
+    <value>donjons</value>
+  </data>
+  <data name="RunsHelp" xml:space="preserve">
+    <value>Combien de donjons finir avant que l'activité s'arrête ; 0 continue tant qu'un donjon de la liste peut être ouvert.</value>
+  </data>
+  <data name="SectionCare" xml:space="preserve">
+    <value>Soins</value>
+  </data>
+  <data name="LifeShare" xml:space="preserve">
+    <value>Vie avant le combat d'une salle</value>
+  </data>
+  <data name="LifeShareHelp" xml:space="preserve">
+    <value>Le perso régénère jusqu'à cette part de sa vie avant d'attaquer le groupe d'une salle.</value>
+  </data>
+  <data name="UseZaaps" xml:space="preserve">
+    <value>Prendre les zaaps</value>
+  </data>
+  <data name="UseZaapsHelp" xml:space="preserve">
+    <value>Le trajet vers la porte d'un donjon, et vers la banque, peut passer par un zaap que le perso connaît.</value>
+  </data>
+  <data name="RestartAfterFailure" xml:space="preserve">
+    <value>Relancer après un échec</value>
+  </data>
+  <data name="RestartAfterFailureHelp" xml:space="preserve">
+    <value>Une session qui échoue ou n'avance plus est remise en ordre et relancée, plutôt qu'arrêtée.</value>
+  </data>
+  <data name="RuleDungeons" xml:space="preserve">
+    <value>Choisis au moins un donjon.</value>
+  </data>
 </root>

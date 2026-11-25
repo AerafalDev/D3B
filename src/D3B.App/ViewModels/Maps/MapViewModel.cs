@@ -34,6 +34,12 @@ internal sealed partial class MapViewModel : ObservableObject
     private const string NoValue = "—";
     private const string Separator = " · ";
 
+    /// <summary>How much a button zooms in or out, as the world's viewport does.</summary>
+    private const double ZoomStep = 1.25;
+
+    /// <summary>How near a bound a zoom is still at it: the wheel's powers and the steps' divisions leave hairs.</summary>
+    private const double ZoomHair = 1e-3;
+
     private readonly Localizer _localizer;
     private readonly CharacterKey _key;
     private GameMaps? _maps;
@@ -170,6 +176,15 @@ internal sealed partial class MapViewModel : ObservableObject
     [ObservableProperty]
     public partial IReadOnlyList<string> HoverItems { get; private set; } = [];
 
+    /// <summary>Gets or sets how many times the map is enlarged from its fit, which the map's wheel sets too (D553).</summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(ZoomText))]
+    [NotifyCanExecuteChangedFor(nameof(ZoomInCommand), nameof(ZoomOutCommand), nameof(FitCommand))]
+    public partial double Zoom { get; set; } = MapZoom.MinScale;
+
+    /// <summary>Gets the zoom, as a percentage of the fitted map.</summary>
+    public string ZoomText => Math.Round(Zoom * 100).ToString("N0", _localizer.Culture) + " %";
+
     /// <summary>Gets whether the host made the character's bot.</summary>
     public bool HasBot => Bot is not null;
 
@@ -249,6 +264,37 @@ internal sealed partial class MapViewModel : ObservableObject
     {
         PreviewMapId = null;
         Read();
+    }
+
+    /// <summary>Enlarges the map a step, around its middle.</summary>
+    [RelayCommand(CanExecute = nameof(CanZoomIn))]
+    public void ZoomIn()
+    {
+        Zoom = Math.Min(Zoom * ZoomStep, MapZoom.MaxScale);
+    }
+
+    /// <summary>Shrinks the map a step, around its middle, down to its fit.</summary>
+    [RelayCommand(CanExecute = nameof(CanZoomOut))]
+    public void ZoomOut()
+    {
+        Zoom = Math.Max(Zoom / ZoomStep, MapZoom.MinScale);
+    }
+
+    /// <summary>Shows the whole map again.</summary>
+    [RelayCommand(CanExecute = nameof(CanZoomOut))]
+    public void Fit()
+    {
+        Zoom = MapZoom.MinScale;
+    }
+
+    private bool CanZoomIn()
+    {
+        return Zoom < MapZoom.MaxScale - ZoomHair;
+    }
+
+    private bool CanZoomOut()
+    {
+        return Zoom > MapZoom.MinScale + ZoomHair;
     }
 
     partial void OnShowsCellsChanged(bool value)

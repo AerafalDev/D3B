@@ -419,6 +419,9 @@
   <data name="AreaNamed" xml:space="preserve">
     <value>Area {0}</value>
   </data>
+  <data name="DungeonNamed" xml:space="preserve">
+    <value>Dungeon {0}</value>
+  </data>
   <data name="MonsterFamilyNamed" xml:space="preserve">
     <value>Family {0}</value>
   </data>
@@ -1813,6 +1816,18 @@
   </data>
   <data name="MapHoverHint" xml:space="preserve">
     <value>Hover a cell</value>
+  </data>
+  <data name="MapZoomIn" xml:space="preserve">
+    <value>Zoom in</value>
+  </data>
+  <data name="MapZoomOut" xml:space="preserve">
+    <value>Zoom out</value>
+  </data>
+  <data name="MapFit" xml:space="preserve">
+    <value>See the whole map</value>
+  </data>
+  <data name="MapZoomTip" xml:space="preserve">
+    <value>The wheel zooms around the pointer; once zoomed, a drag moves the map</value>
   </data>
   <data name="MapPreview" xml:space="preserve">
     <value>Preview of {0} · Back to {1}</value>
