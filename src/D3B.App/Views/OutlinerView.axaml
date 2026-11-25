@@ -59,7 +59,7 @@
     <DockPanel>
         <TextBox
             AutomationProperties.Name="{Binding SearchText}"
-            Classes="PropertySearch"
+            Classes="Search"
             DockPanel.Dock="Top"
             Margin="8,8,8,6"
             Name="Search"

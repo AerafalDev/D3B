@@ -24,28 +24,6 @@
         <Style Selector="Ellipse.TraceDot.Cut">
             <Setter Property="Fill" Value="{DynamicResource ErrorColor}" />
         </Style>
-        <Style Selector="Border.Pill">
-            <Setter Property="CornerRadius" Value="6" />
-            <Setter Property="Padding" Value="7,1" />
-            <Setter Property="VerticalAlignment" Value="Center" />
-            <Setter Property="Background" Value="{DynamicResource VeilColor}" />
-        </Style>
-        <Style Selector="Border.Pill > TextBlock">
-            <Setter Property="FontSize" Value="11" />
-            <Setter Property="Foreground" Value="{DynamicResource MutedColor}" />
-        </Style>
-        <Style Selector="Border.Pill.Good">
-            <Setter Property="Background" Value="{DynamicResource SuccessColor10}" />
-        </Style>
-        <Style Selector="Border.Pill.Good > TextBlock">
-            <Setter Property="Foreground" Value="{DynamicResource SuccessTextColor}" />
-        </Style>
-        <Style Selector="Border.Pill.Bad">
-            <Setter Property="Background" Value="{DynamicResource ErrorColor20}" />
-        </Style>
-        <Style Selector="Border.Pill.Bad > TextBlock">
-            <Setter Property="Foreground" Value="{DynamicResource ErrorTextColor}" />
-        </Style>
     </UserControl.Styles>
     <DockPanel>
         <Border Classes="Toolbar" DockPanel.Dock="Top">
@@ -192,7 +170,7 @@
                                         TextTrimming="CharacterEllipsis"
                                         VerticalAlignment="Center" />
                                     <Border
-                                        Classes="Pill"
+                                        Classes="Badge"
                                         Classes.Bad="{Binding IsBad}"
                                         Classes.Good="{Binding IsGood}"
                                         Grid.Column="3"

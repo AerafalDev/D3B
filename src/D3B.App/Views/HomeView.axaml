@@ -57,11 +57,6 @@
         <Style Selector="Button.CardFace:pointerover">
             <Setter Property="Background" Value="{DynamicResource HoverColor}" />
         </Style>
-        <Style Selector="Border.KindSquare">
-            <Setter Property="CornerRadius" Value="6" />
-            <Setter Property="Height" Value="22" />
-            <Setter Property="Width" Value="22" />
-        </Style>
     </UserControl.Styles>
     <Panel ClipToBounds="True">
         <!--  The mockup's dotted ground, faded towards the edges, and a faint green glow behind the logo.  -->
@@ -447,7 +442,7 @@
                                             <Grid ColumnDefinitions="Auto,*,Auto">
                                                 <Border
                                                     Background="{Binding KindTint}"
-                                                    Classes="KindSquare"
+                                                    Classes="Kind Large"
                                                     Margin="0,0,10,0"
                                                     VerticalAlignment="Center">
                                                     <c:Icon

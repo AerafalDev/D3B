@@ -56,16 +56,6 @@
             <Setter Property="Background" Value="{DynamicResource RaisedColor}" />
             <Setter Property="Foreground" Value="{DynamicResource BrightColor}" />
         </Style>
-        <Style Selector="TextBox.PropertySearch">
-            <Setter Property="Height" Value="28" />
-            <Setter Property="MinHeight" Value="28" />
-            <Setter Property="CornerRadius" Value="6" />
-            <Setter Property="Background" Value="{DynamicResource InputColor}" />
-            <Setter Property="BorderThickness" Value="1" />
-            <Setter Property="BorderBrush" Value="{DynamicResource BorderColor}" />
-            <Setter Property="FontSize" Value="12.5" />
-            <Setter Property="VerticalContentAlignment" Value="Center" />
-        </Style>
         <Style Selector="FlyoutPresenter.Bare">
             <Setter Property="Background" Value="{DynamicResource ClearColor}" />
             <Setter Property="BorderThickness" Value="0" />
@@ -813,7 +803,7 @@
                             IsVisible="{Binding !Properties.IsEmpty}"
                             Padding="6,6,6,2">
                             <TextBox
-                                Classes="PropertySearch"
+                                Classes="Search"
                                 Text="{Binding Properties.Filter}"
                                 PlaceholderText="{l:Tr InspectorSearch}">
                                 <TextBox.InnerLeftContent>

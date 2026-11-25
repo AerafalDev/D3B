@@ -59,31 +59,6 @@
         <Setter Property="Background" Value="{DynamicResource RaisedColor}" />
         <Setter Property="Foreground" Value="{DynamicResource BrightColor}" />
     </Style>
-    <Style Selector="Button.Ib">
-        <Setter Property="Theme" Value="{DynamicResource StudioButton}" />
-        <Setter Property="Width" Value="26" />
-        <Setter Property="Height" Value="26" />
-        <Setter Property="MinHeight" Value="26" />
-        <Setter Property="Padding" Value="0" />
-        <Setter Property="CornerRadius" Value="6" />
-        <Setter Property="HorizontalContentAlignment" Value="Center" />
-        <Setter Property="Foreground" Value="{DynamicResource MutedColor}" />
-    </Style>
-    <Style Selector="Button.Ib:pointerover">
-        <Setter Property="Background" Value="{DynamicResource HoverColor}" />
-        <Setter Property="Foreground" Value="{DynamicResource BrightColor}" />
-    </Style>
-    <Style Selector="Button.Ib.On">
-        <Setter Property="Background" Value="{DynamicResource AccentSoftColor}" />
-        <Setter Property="Foreground" Value="{DynamicResource AccentTextColor}" />
-    </Style>
-    <Style Selector="Button.Ib:disabled">
-        <Setter Property="Opacity" Value="0.4" />
-    </Style>
-    <Style Selector="Button.Ib c|Icon">
-        <Setter Property="Width" Value="14" />
-        <Setter Property="Height" Value="14" />
-    </Style>
     <Style Selector="TextBox.Find">
         <Setter Property="Height" Value="26" />
         <Setter Property="MinHeight" Value="26" />
@@ -160,6 +135,10 @@
         <Setter Property="FontSize" Value="11" />
         <Setter Property="FontFeatures" Value="+tnum" />
         <Setter Property="VerticalAlignment" Value="Center" />
+    </Style>
+    <Style Selector="Button.Tool.Small c|Icon">
+        <Setter Property="Width" Value="14" />
+        <Setter Property="Height" Value="14" />
     </Style>
     <Style Selector="TextBlock.Empty">
         <Setter Property="Foreground" Value="{DynamicResource DimColor}" />

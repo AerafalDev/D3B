@@ -106,7 +106,7 @@
                 <StackPanel Grid.Column="3">
                     <Button
                         AutomationProperties.Name="{l:Tr Follow}"
-                        Classes="Ib"
+                        Classes="Tool Small"
                         Classes.On="{Binding Follow}"
                         Command="{Binding ToggleFollowCommand}"
                         ToolTip.Tip="{l:Tr FollowHint}">
@@ -114,14 +114,14 @@
                     </Button>
                     <Button
                         AutomationProperties.Name="{l:Tr Copy}"
-                        Classes="Ib"
+                        Classes="Tool Small"
                         Click="OnCopyClick"
                         ToolTip.Tip="{l:Tr CopyLinesHint}">
                         <c:Icon Drawing="{StaticResource General.Copy}" />
                     </Button>
                     <Button
                         AutomationProperties.Name="{l:Tr SaveJournal}"
-                        Classes="Ib"
+                        Classes="Tool Small"
                         Click="OnSaveClick"
                         ToolTip.Tip="{l:Tr SaveJournalHint}">
                         <c:Icon Drawing="{StaticResource General.Save}" />
