@@ -134,13 +134,16 @@ session's within D520. Builds D405, D518, D520, D524, D525.*
   the dungeon is counted, and the activity is done when the profile's count of runs is (`Runs`, 0 for no end), else it goes on
   to the next dungeon of the list. No NPC letting it out fails the run, which a restart may try again. The loot of its fights is
   banked outside a dungeon, never in one, a dungeon's key and the keyring kept for the next runs; banking failures climb the
-  ladder (D518). The activity is in the catalogue as `dungeon`, "Donjons", its form the dungeons (`SettingKind.Dungeon`, offered
+  ladder (D518). The activity watches no pods, so that a group's bank, which deposits all but what is worn and keeps no dungeon
+  in mind, never takes its unloading: a group's dungeons come with the follower (D521). The activity is in the catalogue as `dungeon`, "Donjons", its form the dungeons (`SettingKind.Dungeon`, offered
   with the least level each lets in from), the runs, the share of life before a room's fight, the zaaps and the restart.
 - **Rejected.**
   - Leaving by the client's own "leave the dungeon" request, which a reference names: no capture holds it, so its message
     cannot be named in the obfuscated schema.
   - Banking inside a dungeon: leaving would lose the run; the bank waits for the exit.
   - Depositing everything but what is worn, as a hunt may: the keys would go to the bank with the loot.
+  - The final map known after the host restarts, from the dungeon's sub-area alone: a sub-area also holds the fight maps, and a
+    character on one between two hosts' runs is rare; the run left there is a known debt.
 
 ## D527: Out of a dungeon the character banks once its weight and the pods the next run is likely to bring reach the banking share
 

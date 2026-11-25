@@ -452,8 +452,7 @@ As of 2026-11-25, after D526 and D527 (the dungeons' end, the owner's go and ask
 0. **Dungeons, step 12's other half** (D520 to D527, the owner's ask of 2026-11-25), four pull requests: (1) the pack's dungeon
    table, format 14, and entering, merged (#429); (2) the rooms' chain, each room's group fought and the server's move followed,
    the rooms left on foot, a lost fight, merged (#432); (3) the exit, the runs, the bank and the form, the activity in the
-   catalogue, made in code and tests (D526, D527); (3) the exit on the final map, the runs counted, the bank, the profile's form
-   in the studio and the activity in the catalogue; (4) the follower entering behind its master (D521). The study is in the
+   catalogue, made in code and tests (D526, D527); (4) the follower entering behind its master (D521). The study is in the
    session's `artifacts/studies/dungeons.md` (git-ignored). The pack of format 14 is to publish on `client-3.7.14.18`.
 0. **The AI playing the challenges** (D461, the owner's ask of 2026-11-19), three sessions: the challenges read, done in
    code and tests, mapping format 22; the challenges' table in the pack and the AI playing for the easy ones, done in code and
@@ -490,6 +489,10 @@ Q16 (casts and walks the server refuses that the rules allow), Q17 (a build that
 [the open questions](decisions/open-questions.md#open-questions).
 
 ## Known debt
+
+- Dungeons (D526, D527): what the activity knows of a run is its own memory, so that a host restarted with the character on the
+  map the boss's win leads to, before its exit, neither leaves by it nor counts it as inside the dungeon; and only the loot of
+  the fights the activity saw is banked, a character already full of earlier loot ending the run still full, as the hunt's.
 
 - `D3B.Bot` is about 17,900 lines in 224 files and `D3B.Studio` about 6,300 in 141 (D393). The border is the compiler's, one way:
   `D3B.Studio` references `D3B.Bot`, which knows nothing of it. Left over: `D3B.Studio.Routes` reaches the harvest and the fight

@@ -6,7 +6,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace D3B.Bot.Dungeons;
 
-/// <summary>Dungeons: the activity that runs the dungeons a profile lists, in turn, from their door to their exit (D520 to D526).</summary>
+/// <summary>Dungeons: the activity that runs the dungeons a profile lists, in turn, from their door to their exit (D520 to D527).</summary>
 /// <remarks>Registers <see cref="DungeonActivity"/> as <c>dungeon</c>. Requires the bots module.</remarks>
 public sealed class DungeonsModule : IModule
 {

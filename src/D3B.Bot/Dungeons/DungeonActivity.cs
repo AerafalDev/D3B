@@ -1,4 +1,3 @@
-using System.Collections.Immutable;
 using D3B.Bot.Activities;
 using D3B.Bot.Banks;
 using D3B.Bot.Characters;
@@ -93,11 +92,11 @@ public sealed class DungeonActivity : BotActivity
     /// <inheritdoc/>
     public override bool FightsItsFights => true;
 
-    /// <inheritdoc/>
-    public override bool BanksByTeleport => _banking.UseZaapsOf(false, _settings.UseZaaps);
+    // No pods watch: a watch would have a group's bank take the activity's unloading, which deposits all but what is worn, the
+    // keys and the keyring with it, and banks inside a dungeon; the group's dungeons come with the follower (D521, D526).
 
     /// <inheritdoc/>
-    public override ImmutableArray<ActivityWatch> Watches => [new ActivityWatch(WatchedGauge.Pods, _banking.FullAt, WatchAction.Bank)];
+    public override bool BanksByTeleport => _banking.UseZaapsOf(false, _settings.UseZaaps);
 
     /// <summary>Initializes a new instance of the <see cref="DungeonActivity"/> class.</summary>
     /// <param name="settings">Which dungeon, and the journey there.</param>

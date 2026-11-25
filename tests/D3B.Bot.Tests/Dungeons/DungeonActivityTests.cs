@@ -117,11 +117,20 @@ public sealed class DungeonActivityTests : IAsyncDisposable
         connection.Server(information);
     }
 
-    // Measured at Champs: question 13770, reply 15920 "Sortir.", the dialog's end, then the exit map (client-game.md).
-    private static void Exited(TestConnection connection)
+    // Measured at Champs: question 13770, reply 15920 "Sortir." among others, the dialog's end, then the exit map (client-game.md).
+    private async Task ExitedAsync(TestConnection connection, long mapId, int sent, bool confirmed = false)
     {
-        connection.Server(new NpcDialogCreationEvent { NpcActorId = ExitActorId });
-        connection.Server(Question(13_770, TestPlay.DungeonExitReplyId));
+        connection.Server(new NpcDialogCreationEvent { MapId = mapId, NpcActorId = ExitActorId });
+        connection.Server(Question(13_770, TestPlay.StayReplyId, TestPlay.DungeonExitReplyId));
+        Assert.Equal(new NpcDialogReplyRequest { ReplyId = TestPlay.DungeonExitReplyId }, await TestWalks.SentAsync(_play, connection, sent));
+
+        // An exit that asks again is confirmed by a keeper's "Oui." (D526).
+        if (confirmed)
+        {
+            connection.Server(Question(17_461, TestPlay.StayReplyId, TestPlay.ConfirmReplyId));
+            Assert.Equal(new NpcDialogReplyRequest { ReplyId = TestPlay.ConfirmReplyId }, await TestWalks.SentAsync(_play, connection, sent + 1));
+        }
+
         connection.Server(new DialogLeaveEvent { Type = DialogType.Npc });
         TestWalks.Arrive(connection, TestPlay.InsideMapId, 300);
     }
@@ -409,7 +418,7 @@ public sealed class DungeonActivityTests : IAsyncDisposable
         var run = bot.StartActivity(Runs(1, TestPlay.OtherDungeonId));
 
         Assert.Equal(new NpcActionRequest { Action = 3, MapId = TestPlay.EastMapId, NpcActorId = ExitActorId }, await TestWalks.SentAsync(_play, connection, 1));
-        Exited(connection);
+        await ExitedAsync(connection, TestPlay.EastMapId, 2, confirmed: true);
 
         Assert.Equal(ActivityOutcome.Done, await run.Completion);
         Assert.Contains("1 dungeon done", CountsOf(run));
@@ -430,7 +439,7 @@ public sealed class DungeonActivityTests : IAsyncDisposable
         ShowExitNpc(connection, TestPlay.MapId);
 
         Assert.Equal(new NpcActionRequest { Action = 3, MapId = TestPlay.MapId, NpcActorId = ExitActorId }, await TestWalks.SentAsync(_play, connection, 3));
-        Exited(connection);
+        await ExitedAsync(connection, TestPlay.MapId, 4);
 
         Assert.Equal(ActivityOutcome.Done, await run.Completion);
         Assert.Equal(TestPlay.InsideMapId, bot.State.MapId);
@@ -448,7 +457,7 @@ public sealed class DungeonActivityTests : IAsyncDisposable
         var run = bot.StartActivity(Activity(TestPlay.OtherDungeonId, TestPlay.DungeonId));
 
         Assert.IsType<NpcActionRequest>(await TestWalks.SentAsync(_play, connection, 1));
-        Exited(connection);
+        await ExitedAsync(connection, TestPlay.EastMapId, 2);
 
         Assert.Equal(new NpcActionRequest { Action = 3, MapId = TestPlay.InsideMapId, NpcActorId = TestPlay.WayActorId }, await TestWalks.SentAsync(_play, connection, 3));
 
@@ -478,7 +487,7 @@ public sealed class DungeonActivityTests : IAsyncDisposable
         // The room shows no group and holds the exit: the run brought 300 pods, measured as the character leaves (D527).
         Assert.IsType<NpcActionRequest>(await TestWalks.SentAsync(_play, connection, 3));
         connection.Server(new InventoryWeightEvent { Weight = 400, MaxWeight = 1_000 });
-        Exited(connection);
+        await ExitedAsync(connection, TestPlay.EastMapId, 4);
 
         Assert.Equal(ActivityOutcome.Done, await run.Completion);
         Assert.Equal(300, activity.ExpectedGain());
@@ -488,6 +497,88 @@ public sealed class DungeonActivityTests : IAsyncDisposable
 
         Assert.True(activity.IsFull(outside with { Weight = 650 }));
         Assert.False(activity.IsFull(outside with { Weight = 550 }));
+    }
+
+    [Fact]
+    public async Task OnceBankedForTheNextRunTheCharacterEntersItEvenWithWhatTheBankLeft()
+    {
+        var (connection, bot) = await CarryingAsync(TestPlay.InsideMapId, 396, Stack(12, TestPlay.DungeonKeyId, 1));
+
+        connection.Server(new InventoryWeightEvent { Weight = 100, MaxWeight = 1_000 });
+        await bot.ProcessedAsync();
+
+        var run = bot.StartActivity(Activity(TestPlay.OtherDungeonId));
+
+        Assert.IsType<NpcActionRequest>(await TestWalks.SentAsync(_play, connection, 1));
+        connection.Server(new NpcDialogCreationEvent { MapId = TestPlay.InsideMapId, NpcActorId = TestPlay.WayActorId });
+        connection.Server(Question(KeeperQuestion, TestPlay.KeyReplyId));
+        Assert.IsType<NpcDialogReplyRequest>(await TestWalks.SentAsync(_play, connection, 2));
+        connection.Server(new DialogLeaveEvent { Type = DialogType.Npc });
+        TestWalks.Arrive(connection, TestPlay.EastMapId, 300);
+        ShowExitNpc(connection, TestPlay.EastMapId);
+
+        // The run brings 550 pods: at 650, the next would pass the 90 % share, so the character banks first (D527).
+        Assert.IsType<NpcActionRequest>(await TestWalks.SentAsync(_play, connection, 3));
+        connection.Server(new InventoryWeightEvent { Weight = 650, MaxWeight = 1_000 });
+        await ExitedAsync(connection, TestPlay.EastMapId, 4);
+
+        Assert.Equal(new NpcActionRequest { Action = 3, MapId = TestPlay.InsideMapId, NpcActorId = TestPlay.BankerActorId }, await TestWalks.SentAsync(_play, connection, 5));
+        connection.Server(new NpcDialogCreationEvent { MapId = TestPlay.InsideMapId, NpcActorId = TestPlay.BankerActorId });
+        connection.Server(new NpcDialogQuestionEvent { MessageId = 48_366, Replies = { new NpcReply { ReplyId = TestPlay.ChestReplyId } } });
+        Assert.IsType<NpcDialogReplyRequest>(await TestWalks.SentAsync(_play, connection, 6));
+        connection.Server(new DialogLeaveEvent { Type = DialogType.Npc });
+        connection.Server(new ExchangeStartedWithStorageEvent { Type = ExchangeType.Storage, MaxSlots = int.MaxValue });
+        connection.Server(new StorageContentEvent());
+
+        // No loot to put in: the 650 pods stay, and the next run is entered rather than the activity ended still full.
+        Assert.Equal(new DialogLeaveRequest(), await TestWalks.SentAsync(_play, connection, 7));
+        connection.Server(new ExchangeLeaveEvent { Type = DialogType.Storage });
+
+        Assert.Equal(new NpcActionRequest { Action = 3, MapId = TestPlay.InsideMapId, NpcActorId = TestPlay.WayActorId }, await TestWalks.SentAsync(_play, connection, 8));
+        Assert.False(run.IsOver);
+
+        run.Stop();
+        Assert.Equal(ActivityOutcome.Stopped, await run.Completion);
+    }
+
+    [Fact]
+    public async Task FullAtTheBanksShareTheCharacterBanksItsLootKeepingTheKeyThenEnters()
+    {
+        var (connection, bot) = await CarryingAsync(TestPlay.InsideMapId, 396, Stack(12, TestPlay.Ash, 40), Stack(13, TestPlay.DungeonKeyId, 1));
+
+        connection.Server(new InventoryWeightEvent { Weight = 950, MaxWeight = 1_000 });
+        await bot.ProcessedAsync();
+
+        // The ash a fight dropped is the activity's loot; the key it carries never is (D526).
+        var activity = Activity(TestPlay.OtherDungeonId);
+
+        activity.OnFightOver(new FightEnd(FightOutcome.Won, 0, 0, ImmutableSortedDictionary<int, int>.Empty.Add(TestPlay.Ash, 40)), InterruptionResponse.Resume);
+
+        var run = bot.StartActivity(activity);
+
+        // The door is the bank's inside: the banker is talked to first, as the bank's tests measure.
+        Assert.Equal(new NpcActionRequest { Action = 3, MapId = TestPlay.InsideMapId, NpcActorId = TestPlay.BankerActorId }, await TestWalks.SentAsync(_play, connection, 1));
+        connection.Server(new NpcDialogCreationEvent { MapId = TestPlay.InsideMapId, NpcActorId = TestPlay.BankerActorId });
+        connection.Server(new NpcDialogQuestionEvent { MessageId = 48_366, Replies = { new NpcReply { ReplyId = TestPlay.ChestReplyId } } });
+        Assert.Equal(new NpcDialogReplyRequest { ReplyId = TestPlay.ChestReplyId }, await TestWalks.SentAsync(_play, connection, 2));
+        connection.Server(new DialogLeaveEvent { Type = DialogType.Npc });
+        connection.Server(new ExchangeStartedWithStorageEvent { Type = ExchangeType.Storage, MaxSlots = int.MaxValue });
+        connection.Server(new StorageContentEvent());
+
+        Assert.Equal(new ExchangeTransferFromInventoryRequest { Uids = { 12 } }, await TestWalks.SentAsync(_play, connection, 3));
+        connection.Server(new ObjectsDeletedEvent { Uids = { 12 } });
+        connection.Server(new StorageObjectsUpdateEvent());
+        connection.Server(new InventoryWeightEvent { Weight = 300, MaxWeight = 1_000 });
+
+        Assert.Equal(new DialogLeaveRequest(), await TestWalks.SentAsync(_play, connection, 4));
+        connection.Server(new ExchangeLeaveEvent { Type = DialogType.Storage });
+
+        // The bank left, the keeper beside it is talked to, the key still carried.
+        await _play.AdvanceUntilAsync(() => connection.Sent.OfType<NpcActionRequest>().Any(request => request.NpcActorId == TestPlay.WayActorId), TimeSpan.FromSeconds(1));
+        Assert.True(CarriesKey(bot));
+
+        run.Stop();
+        Assert.Equal(ActivityOutcome.Stopped, await run.Completion);
     }
 
     [Fact]
@@ -587,6 +678,11 @@ public sealed class DungeonActivityTests : IAsyncDisposable
 
         run.Stop();
         Assert.Equal(ActivityOutcome.Stopped, await run.Completion);
+    }
+
+    private bool CarriesKey(BotActor bot)
+    {
+        return DungeonActivity.CarriesKey(bot.State, _play.Tables.Dungeons, _play.Tables.Dungeons.Dungeons.Span[2]);
     }
 
     private static string Doing(ActivityRun run)
