@@ -12,7 +12,7 @@ using D3B.Core.Modules;
 
 namespace D3B.Bot;
 
-/// <summary>The standard modules of a bot: network, protocol, data, world, movement, harvesting and bank, fighting, groups, the zaaps' discovery, and the transfer between the bank and the guild's chest.</summary>
+/// <summary>The standard modules of a bot: network, protocol, data, world, movement, harvesting and bank, fighting, groups, the zaaps' discovery, the transfer between the bank and the guild's chest, and the dungeons.</summary>
 /// <remarks>
 /// D3B's own features are modules like any other, so whoever adds the group may disable one. Each roadmap step lists here
 /// the modules it writes.
