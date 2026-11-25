@@ -1006,7 +1006,7 @@ or refines another says so in its own entry. Add a line here with every new deci
 - [D533](decisions/d533-mount-capture.md#d533-a-hunt-profile-may-capture-wild-mounts-the-main-wears-a-carried-capture-net-casts-its-taming-spell-on-a-mount-at-its-first-chance-and-hunts-on-without-capturing-once-it-has-none) A hunt profile may capture wild mounts: the main wears a carried capture net, casts its taming spell on a mount at its first chance, and hunts on without capturing once it has none (2026-11-25)
   - The owner's ask; nets and spells measured in the client, none in the captures; buying, crafting, every member capturing set aside.
 
-## The studio's shell after next (D540 to D546)
+## The studio's shell after next (D540 to D547)
 
 - [D540](decisions/d540-command-palette.md#d540-the-search-is-also-nexts-command-palette-ctrl-shift-p-types-its-sign-the-title-bars-command-centre-names-the-app-the-views-and-each-characters-play-pause-stop-and-forget-are-commands) The search is also next's command palette: Ctrl Shift P types its sign, the title bar's command centre names the app, the views and each character's play, pause, stop and forget are commands (2026-11-25)
   - Stage 1 of 4 of the shell after `next`, under the owner's delegation; begun by the redesign session, finished here.
@@ -1022,6 +1022,8 @@ or refines another says so in its own entry. Add a line here with every new deci
   - The owner's asks; a drag follows the pointer, Windows 10 keeps its corners.
 - [D546](decisions/d546-status-icons-and-held-docks.md#d546-the-relay-and-the-version-join-the-status-bars-icons-on-the-right-and-a-parts-content-keeps-its-size-while-it-slides) The relay and the version join the status bar's icons on the right, and a part's content keeps its size while it slides (2026-11-25)
   - The owner's asks in the running app.
+- [D547](decisions/d547-one-scale-and-wide-panel.md#d547-the-studios-radii-small-text-and-colours-follow-one-scale-and-the-bottom-panel-spans-to-the-windows-right-edge) The studio's radii, small text and colours follow one scale, and the bottom panel spans to the window's right edge (2026-11-25)
+  - The owner's asks; radii 4, 6, 8, small text 11, the palette's keys; the same control styled twice left for later.
 
 ## Banking, the transfer between the bank and the guild's chest (D550 to D552)
 

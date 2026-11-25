@@ -16,7 +16,7 @@
             Margin="20,18,20,0">
             <Border
                 Background="#337FA7FF"
-                CornerRadius="10"
+                CornerRadius="8"
                 Height="38"
                 VerticalAlignment="Top"
                 Width="38">

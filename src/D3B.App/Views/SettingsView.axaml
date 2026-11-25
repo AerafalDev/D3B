@@ -17,7 +17,7 @@
         <Style Selector="TextBox.Find">
             <Setter Property="Height" Value="30" />
             <Setter Property="MinHeight" Value="30" />
-            <Setter Property="CornerRadius" Value="7" />
+            <Setter Property="CornerRadius" Value="6" />
             <Setter Property="Background" Value="{DynamicResource InputColor}" />
             <Setter Property="BorderThickness" Value="1" />
             <Setter Property="BorderBrush" Value="{DynamicResource BorderColor}" />
@@ -29,7 +29,7 @@
             <Setter Property="Theme" Value="{DynamicResource StudioButton}" />
             <Setter Property="Height" Value="30" />
             <Setter Property="Padding" Value="10,0" />
-            <Setter Property="CornerRadius" Value="7" />
+            <Setter Property="CornerRadius" Value="6" />
             <Setter Property="Foreground" Value="{DynamicResource MutedColor}" />
             <Setter Property="FontWeight" Value="Normal" />
             <Setter Property="HorizontalAlignment" Value="Stretch" />
@@ -50,7 +50,7 @@
             <Setter Property="VerticalAlignment" Value="Center" />
         </Style>
         <Style Selector="TextBlock.SectionHeading">
-            <Setter Property="FontSize" Value="18" />
+            <Setter Property="FontSize" Value="16" />
             <Setter Property="FontWeight" Value="SemiBold" />
             <Setter Property="Foreground" Value="{DynamicResource BrightColor}" />
             <Setter Property="LetterSpacing" Value="-0.18" />
@@ -92,7 +92,7 @@
             <Setter Property="Background" Value="{DynamicResource ClearColor}" />
         </Style>
         <Style Selector="Border.SRow:pointerover">
-            <Setter Property="Background" Value="#05FFFFFF" />
+            <Setter Property="Background" Value="{DynamicResource SoftLineColor}" />
         </Style>
         <Style Selector="Border.Rule">
             <Setter Property="Height" Value="1" />
@@ -128,18 +128,18 @@
             <Setter Property="Height" Value="20" />
             <Setter Property="Padding" Value="8,0" />
             <Setter Property="CornerRadius" Value="10" />
-            <Setter Property="Background" Value="#1FE9AD3C" />
+            <Setter Property="Background" Value="{DynamicResource WarningColor10}" />
             <Setter Property="VerticalAlignment" Value="Center" />
             <Setter Property="Margin" Value="8,0,0,0" />
         </Style>
         <Style Selector="Border.Badge > TextBlock">
             <Setter Property="FontSize" Value="11" />
-            <Setter Property="Foreground" Value="#F0C674" />
+            <Setter Property="Foreground" Value="{DynamicResource WarningTextColor}" />
             <Setter Property="VerticalAlignment" Value="Center" />
         </Style>
         <Style Selector="Border.Number">
             <Setter Property="Height" Value="28" />
-            <Setter Property="CornerRadius" Value="7" />
+            <Setter Property="CornerRadius" Value="6" />
             <Setter Property="Background" Value="{DynamicResource FieldColor}" />
             <Setter Property="ClipToBounds" Value="True" />
         </Style>
@@ -200,19 +200,19 @@
             <Setter Property="IsHitTestVisible" Value="True" />
         </Style>
         <Style Selector="Button.Reset.Shown:pointerover">
-            <Setter Property="Background" Value="#24E9AD3C" />
+            <Setter Property="Background" Value="{DynamicResource WarningColor20}" />
         </Style>
         <Style Selector="Border.Path">
             <Setter Property="Height" Value="28" />
             <Setter Property="MaxWidth" Value="360" />
             <Setter Property="HorizontalAlignment" Value="Right" />
-            <Setter Property="CornerRadius" Value="7" />
+            <Setter Property="CornerRadius" Value="6" />
             <Setter Property="Padding" Value="10,0,3,0" />
             <Setter Property="Background" Value="{DynamicResource FieldColor}" />
         </Style>
         <Style Selector="Border.Path TextBlock">
             <Setter Property="FontFamily" Value="Cascadia Mono, Consolas, Courier New" />
-            <Setter Property="FontSize" Value="11.5" />
+            <Setter Property="FontSize" Value="11" />
             <Setter Property="Foreground" Value="{DynamicResource MutedColor}" />
             <Setter Property="TextTrimming" Value="PrefixCharacterEllipsis" />
             <Setter Property="VerticalAlignment" Value="Center" />
@@ -228,7 +228,7 @@
         <Style Selector="Button.Tiny.Wide">
             <Setter Property="Width" Value="26" />
             <Setter Property="Height" Value="26" />
-            <Setter Property="CornerRadius" Value="7" />
+            <Setter Property="CornerRadius" Value="6" />
         </Style>
         <Style Selector="Button.Tiny:pointerover">
             <Setter Property="Background" Value="{DynamicResource HoverColor}" />
@@ -264,7 +264,7 @@
         </Style>
         <Style Selector="Border.About">
             <Setter Property="Padding" Value="16" />
-            <Setter Property="CornerRadius" Value="12" />
+            <Setter Property="CornerRadius" Value="8" />
             <Setter Property="Background" Value="{DynamicResource CardBackgroundColor}" />
         </Style>
         <Style Selector="Border.About Button.Ghost">
@@ -325,7 +325,7 @@
                                 <c:Icon
                                     Drawing="{StaticResource General.Reset}"
                                     Height="13"
-                                    Tint="#E9AD3C"
+                                    Tint="{DynamicResource WarningColor}"
                                     Width="13" />
                             </Button>
                         </StackPanel>
@@ -513,7 +513,7 @@
                                                 <c:Icon
                                                     Drawing="{StaticResource General.Reset}"
                                                     Height="13"
-                                                    Tint="#E9AD3C"
+                                                    Tint="{DynamicResource WarningColor}"
                                                     Width="13" />
                                             </Button>
                                         </StackPanel>
@@ -561,7 +561,7 @@
                                                     <c:Icon
                                                         Drawing="{StaticResource General.Reset}"
                                                         Height="13"
-                                                        Tint="#E9AD3C"
+                                                        Tint="{DynamicResource WarningColor}"
                                                         Width="13" />
                                                 </Button>
                                             </StackPanel>
@@ -592,7 +592,7 @@
                                                     <c:Icon
                                                         Drawing="{StaticResource General.Reset}"
                                                         Height="13"
-                                                        Tint="#E9AD3C"
+                                                        Tint="{DynamicResource WarningColor}"
                                                         Width="13" />
                                                 </Button>
                                             </StackPanel>
@@ -670,7 +670,7 @@
                                                 <c:Icon
                                                     Drawing="{StaticResource General.Reset}"
                                                     Height="13"
-                                                    Tint="#E9AD3C"
+                                                    Tint="{DynamicResource WarningColor}"
                                                     Width="13" />
                                             </Button>
                                         </StackPanel>
@@ -717,7 +717,7 @@
                                                 <c:Icon
                                                     Drawing="{StaticResource General.Reset}"
                                                     Height="13"
-                                                    Tint="#E9AD3C"
+                                                    Tint="{DynamicResource WarningColor}"
                                                     Width="13" />
                                             </Button>
                                         </StackPanel>
@@ -764,7 +764,7 @@
                                                 <c:Icon
                                                     Drawing="{StaticResource General.Reset}"
                                                     Height="13"
-                                                    Tint="#E9AD3C"
+                                                    Tint="{DynamicResource WarningColor}"
                                                     Width="13" />
                                             </Button>
                                         </StackPanel>
@@ -1059,7 +1059,7 @@
                                                 <c:Icon
                                                     Drawing="{StaticResource General.Reset}"
                                                     Height="13"
-                                                    Tint="#E9AD3C"
+                                                    Tint="{DynamicResource WarningColor}"
                                                     Width="13" />
                                             </Button>
                                         </StackPanel>
@@ -1176,7 +1176,7 @@
                                     Width="56" />
                                 <StackPanel Grid.Column="1" VerticalAlignment="Center">
                                     <TextBlock
-                                        FontSize="15"
+                                        FontSize="16"
                                         FontWeight="SemiBold"
                                         Foreground="{DynamicResource BrightColor}"
                                         Text="{Binding Updates.Version, StringFormat='D3B {0}'}" />
@@ -1194,7 +1194,7 @@
                                         TextWrapping="Wrap">
                                         <TextBlock.Styles>
                                             <Style Selector="TextBlock.Ready">
-                                                <Setter Property="Foreground" Value="#8FE3A2" />
+                                                <Setter Property="Foreground" Value="{DynamicResource SuccessTextColor}" />
                                             </Style>
                                         </TextBlock.Styles>
                                     </TextBlock>

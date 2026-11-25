@@ -35,7 +35,7 @@
                                 <TextBlock Text="{Binding Label}" />
                                 <TextBlock
                                     Classes="Dim"
-                                    FontSize="11.5"
+                                    FontSize="11"
                                     Text="{Binding Detail}" />
                             </StackPanel>
                         </DataTemplate>
@@ -65,7 +65,7 @@
                                     <TextBlock Text="{Binding Name}" />
                                     <TextBlock
                                         Classes="Dim"
-                                        FontSize="11.5"
+                                        FontSize="11"
                                         Text="{Binding Detail}" />
                                 </StackPanel>
                             </StackPanel>
@@ -95,7 +95,7 @@
                     TextWrapping="Wrap" />
                 <TextBlock
                     Classes="Dim"
-                    FontSize="11.5"
+                    FontSize="11"
                     Text="{l:Tr ReportMessageWarning}"
                     TextWrapping="Wrap" />
             </StackPanel>
@@ -159,7 +159,7 @@
                                 </Grid>
                                 <TextBlock
                                     Classes="Dim"
-                                    FontSize="11.5"
+                                    FontSize="11"
                                     Margin="28,0,0,0"
                                     Text="{Binding Detail}"
                                     TextWrapping="Wrap" />
@@ -181,19 +181,19 @@
             </ScrollViewer>
             <TextBlock
                 Classes="Dim"
-                FontSize="11.5"
+                FontSize="11"
                 IsVisible="{Binding HasMessagePart}"
                 Text="{l:Tr ReportMessageWarning}"
                 TextWrapping="Wrap" />
             <TextBlock
                 Classes="Dim"
-                FontSize="11.5"
+                FontSize="11"
                 IsVisible="{Binding NeedsCharacter}"
                 Text="{l:Tr ReportCaptureNote}"
                 TextWrapping="Wrap" />
             <TextBlock
                 Classes="Dim"
-                FontSize="11.5"
+                FontSize="11"
                 IsVisible="{Binding NeedsCharacter}"
                 Text="{l:Tr ReportStillHolds}"
                 TextWrapping="Wrap" />

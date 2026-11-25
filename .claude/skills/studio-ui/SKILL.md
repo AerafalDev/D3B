@@ -16,7 +16,8 @@ decisions behind them are D159 to D163, D320 to D356 and D395 to D397 in the ind
 - **One scale** (D159, D163, D335), held by `Themes/Styles.axaml`: spacings 4, 8, 12, 16, 24 and 32; the studio's text 12.5
   and its small text 11; the pages' fonts 12, 14, 16, 22 and 28 (`Caption`, text, `Title`, `PageTitle`, `Figure`); the
   studio's controls 24 to 30 high (`StudioButton` with `Tool`, `TabFace`, `TitleSearch`, `Status`), the pages' 32 and 36;
-  radii 6, 7, 10 and 12; icons 12, 14, 16 and 20.
+  radii 4 for rows and chips, 6 for fields, buttons and parts, 8 for menus and cards (D547); icons 12, 14, 16 and 20. A colour
+  of a tone is its key (`WarningColor20`, `ErrorColor10`…), the glass over a map `GlassColor`.
 - **Reuse a style before writing one**: `Dim`, `Muted`, `Bright`, `Outline`, `Tool Small`, `Key`, `Section`, `MenuPopup` are
   the classes the views use most. A new style goes in `Themes/Styles.axaml`, not in a view.
 - **A surface lit on hover rests on `ClearColor`**, the hover's grey with no alpha, never on `Transparent`, which a brush

@@ -19,7 +19,7 @@
             Background="{DynamicResource RecessColor}"
             BorderBrush="{DynamicResource BorderColor}"
             BorderThickness="1"
-            CornerRadius="10"
+            CornerRadius="8"
             Height="420"
             Width="720">
             <c:CellPicker

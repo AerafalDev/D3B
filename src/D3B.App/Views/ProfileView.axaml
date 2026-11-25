@@ -14,7 +14,7 @@
         <Style Selector="TextBox.NameEdit">
             <Setter Property="Background" Value="{DynamicResource ClearColor}" />
             <Setter Property="BorderThickness" Value="0" />
-            <Setter Property="FontSize" Value="17" />
+            <Setter Property="FontSize" Value="16" />
             <Setter Property="FontWeight" Value="SemiBold" />
             <Setter Property="Foreground" Value="{DynamicResource BrightColor}" />
             <Setter Property="MinHeight" Value="28" />
@@ -62,7 +62,7 @@
             <Setter Property="Background" Value="{DynamicResource RecessColor}" />
             <Setter Property="BorderBrush" Value="{DynamicResource BorderColor}" />
             <Setter Property="BorderThickness" Value="1" />
-            <Setter Property="CornerRadius" Value="12" />
+            <Setter Property="CornerRadius" Value="8" />
             <Setter Property="ClipToBounds" Value="True" />
         </Style>
         <Style Selector="Border.Figure">
@@ -80,7 +80,7 @@
                 <Grid ColumnDefinitions="Auto,*,Auto" RowDefinitions="Auto,Auto">
                     <Border
                         Background="{DynamicResource ProfileSquareColor}"
-                        CornerRadius="10"
+                        CornerRadius="8"
                         Height="38"
                         VerticalAlignment="Top"
                         Width="38">
@@ -238,7 +238,7 @@
                         Background="{DynamicResource CardBackgroundColor}"
                         BorderBrush="{DynamicResource BorderColor}"
                         BorderThickness="1"
-                        CornerRadius="10"
+                        CornerRadius="8"
                         IsVisible="{Binding IsBehaviorProfile}"
                         Margin="12,18,0,0"
                         Padding="16,14">
@@ -284,7 +284,7 @@
                     <TextBlock Classes="SideTitle" Text="{l:Tr ProfileMapTitle}" />
                     <TextBlock
                         Classes="Dim"
-                        FontSize="11.5"
+                        FontSize="11"
                         Grid.Column="1"
                         MaxWidth="200"
                         Text="{Binding Map.Hovered}"
@@ -394,7 +394,7 @@
                     </WrapPanel>
                     <Border
                         Background="{DynamicResource CardBackgroundColor}"
-                        CornerRadius="10"
+                        CornerRadius="8"
                         IsVisible="{Binding Editor.HasFigures, FallbackValue=False}"
                         Margin="0,0,0,10">
                         <ItemsControl ItemsSource="{Binding Editor.Figures, FallbackValue={x:Null}}">
@@ -438,7 +438,7 @@
                                             <TextBlock Text="{Binding Name}" TextTrimming="CharacterEllipsis" />
                                             <TextBlock
                                                 Classes="Dim"
-                                                FontSize="11.5"
+                                                FontSize="11"
                                                 IsVisible="{Binding HasNote}"
                                                 Text="{Binding Note}"
                                                 TextWrapping="Wrap" />
