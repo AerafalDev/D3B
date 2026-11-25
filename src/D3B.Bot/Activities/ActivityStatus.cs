@@ -15,6 +15,9 @@ public enum ActivityStatus
     /// <summary>Puts the character back in order after an interruption.</summary>
     Recovering,
 
+    /// <summary>Puts the character back in order after a failure, then waits before the activity begins anew (D519).</summary>
+    Restarting,
+
     /// <summary>Is over: <see cref="ActivityRun.Completion"/> says how.</summary>
     Over,
 }

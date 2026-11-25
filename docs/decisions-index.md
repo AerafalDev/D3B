@@ -966,6 +966,13 @@ or refines another says so in its own entry. Add a line here with every new deci
 - [D517](decisions/d517-miner-refused-door.md#d517-a-walk-refused-after-it-was-shown-has-not-arrived-and-a-banks-journey-whose-way-failed-is-not-travelled-not-without-a-bank) A walk refused after it was shown has not arrived, and a bank's journey whose way failed is not travelled, not without a bank (2026-11-25)
   - Every journey failed once a way failed on it, a refused walk's way tried again, ending no run on a failed unloading.
 
+## Activities, never idle until the server's kick (D518, D519)
+
+- [D518](decisions/d518-d519-never-idle.md#d518-a-journey-or-a-banking-that-fails-climbs-a-bounded-recovery-ladder-before-it-ends-the-activity-tried-again-twice-the-character-put-in-order-a-step-aside-out-of-its-map-by-the-nearest-exit) A journey or a banking that fails climbs a bounded recovery ladder before it ends the activity: tried again twice, the character put in order, a step aside, out of its map by the nearest exit (2026-11-25)
+  - The owner's ask after four kicks in a week (D481, D484, D488, the miner's door); a ladder per case, the map's information asked again (D60).
+- [D519](decisions/d518-d519-never-idle.md#d519-a-run-that-fails-or-makes-no-progress-for-ten-minutes-puts-the-character-back-in-order-and-restarts-its-activity-after-30-s-doubling-to-8-min-six-times-an-hour-at-most-a-failure-no-restart-would-change-or-a-stop-still-ends-it) A run that fails, or makes no progress for ten minutes, puts the character back in order and restarts its activity, after 30 s doubling to 8 min, six times an hour at most; a failure no restart would change, or a stop, still ends it (2026-11-25)
+  - A profile's setting, on for the harvest and the hunt; a restart from the host, at once, uncapped, or map changes taken for no progress.
+
 ## The studio in next's dark islands and layout (D530, D531)
 
 - [D530](decisions/d530-next-dark-islands.md#d530-the-studio-takes-nexts-dark-style-vs-codes-dark-modern-as-discreet-islands-and-stays-dark-only) The studio takes next's dark style, VS Code's Dark Modern as discreet islands, and stays dark only (2026-11-25)

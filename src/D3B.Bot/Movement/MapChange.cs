@@ -1,3 +1,4 @@
+using System.Collections.Frozen;
 using D3B.Bot.Characters;
 using D3B.Bot.Interactives;
 using D3B.Bot.Journal;
@@ -127,6 +128,73 @@ public static class MapChange
         context.Record(action, (at, took) => new MapChangeEntry(at, depth, from, null, context.State.MapId, MapChangeKind.HavenBag, outcome, took));
 
         return outcome;
+    }
+
+    /// <summary>Leaves the character's map for a neighbour, by the scroll, door or map action whose cell is the nearest walk away, within a behavior.</summary>
+    /// <param name="context">The behavior's context.</param>
+    /// <param name="cancellationToken">The behavior's token.</param>
+    /// <returns>How the change ended: <see cref="MapChangeOutcome.NoPath"/> when no neighbour is reached in one change by a way the character may walk to.</returns>
+    /// <remarks>
+    /// The recovery's last rung before an action fails for good (D518): a new map, whose information the client asks for itself, puts
+    /// right whatever the state and the server no longer agreed on for the map left. No zaap and no NPC is taken: neither leaves by a cell.
+    /// </remarks>
+    public static async Task<MapChangeOutcome> LeaveByNearestExitAsync(this BotContext context, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(context);
+
+        var state = context.State;
+
+        if (state.MapId is not { } mapId || state.Cell is null || state.IsBusy)
+            return MapChangeOutcome.Busy;
+
+        var rules = WorldTravel.RulesOf(context) with { KnownZaaps = FrozenSet<long>.Empty };
+        var outcome = NearestExit(context, rules) is { } step ? await context.ChangeMapAsync(step, rules, cancellationToken).ConfigureAwait(false) : MapChangeOutcome.NoPath;
+
+        BotLog.LeftByNearestExit(context.Log, state.Key.CharacterId, mapId, outcome);
+
+        return outcome;
+    }
+
+    // The neighbour's step whose cell the character reaches in the fewest steps of a walk, each neighbour by the way the pathfinder
+    // chooses, which weighs the criteria as a journey does.
+    private static WorldStep? NearestExit(BotContext context, WorldPathRules rules)
+    {
+        var state = context.State;
+
+        if (state.MapId is not { } mapId || state.Cell is not { } cell || !context.Maps.TryGet(mapId, out var map) || !context.World.TryGetVertex(map, cell, out var vertex))
+            return null;
+
+        var graph = context.World.Graph;
+        var vertices = graph.Vertices.Span;
+        var neighbours = new HashSet<long>();
+
+        foreach (var edge in graph.EdgesFrom(vertex))
+        {
+            if (vertices[edge.To].MapId != mapId)
+                neighbours.Add(vertices[edge.To].MapId);
+        }
+
+        WorldStep? nearest = null;
+        var fewest = int.MaxValue;
+
+        foreach (var neighbour in neighbours)
+        {
+            if (!context.World.TryFind(vertex, new HashSet<long> { neighbour }, rules, out var path) || path.Steps is not [{ IsTeleport: false, IsNpcWay: false } step])
+                continue;
+
+            var exits = context.World.ExitCells(map, step, rules);
+            var steps = exits.Contains(cell) ? 0
+                : exits.Count > 0 && RoleplayPaths.TryFindNearest(context, map, cell, [.. exits], out var walk) ? walk.Steps
+                : int.MaxValue;
+
+            if (steps < fewest)
+            {
+                fewest = steps;
+                nearest = step;
+            }
+        }
+
+        return nearest;
     }
 
     private static async Task<MapChangeOutcome> ChangeAsync(BotContext context, WorldStep step, WorldPathRules rules, long destination, Func<CharacterState, bool>? stay, CancellationToken cancellationToken)

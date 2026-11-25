@@ -173,6 +173,18 @@
   <data name="ActivityRecovering" xml:space="preserve">
     <value>Reprise</value>
   </data>
+  <data name="ActivityRestarting" xml:space="preserve">
+    <value>Relance</value>
+  </data>
+  <data name="ActivityRestarted" xml:space="preserve">
+    <value>Relancée après un échec, {0} dans l'heure : {1}</value>
+  </data>
+  <data name="ActivityGaveUp" xml:space="preserve">
+    <value>Relancée {0} fois en une heure, puis arrêtée : {1}</value>
+  </data>
+  <data name="JournalActivityRestarted" xml:space="preserve">
+    <value>« {0} » est relancée après un échec, {1} dans l'heure</value>
+  </data>
   <data name="ActivityEnding" xml:space="preserve">
     <value>Se termine</value>
   </data>

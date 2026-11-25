@@ -857,8 +857,9 @@ public sealed class HarvestActivityTests : IAsyncDisposable
         connection.Server(new InteractiveUsedEvent { ActorId = TestPlay.CharacterId, ElementId = TestPlay.TreeElementId, SkillId = TestPlay.TreeSkillId, Duration = 30 });
         await bot.ProcessedAsync();
 
+        // The activity's own failure, which its run would restart otherwise (D519).
         var started = _play.Time.GetUtcNow();
-        var run = bot.StartActivity(Activity(new HarvestSettings { Resources = [TestPlay.Ash], SubAreas = [TestPlay.SubAreaId] }));
+        var run = bot.StartActivity(Activity(new HarvestSettings { Resources = [TestPlay.Ash], SubAreas = [TestPlay.SubAreaId], RestartAfterFailure = false }));
         var deadline = started + TimeSpan.FromMinutes(5);
 
         while (!run.IsOver)

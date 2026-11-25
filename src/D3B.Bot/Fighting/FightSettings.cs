@@ -78,4 +78,7 @@ public sealed class FightSettings
 
     /// <summary>Gets or sets what the activity does once a fight is lost.</summary>
     public FightAfterLoss AfterLostFight { get; set; } = FightAfterLoss.Resume;
+
+    /// <summary>Gets or sets whether the run restarts the activity, once the character is put back in order, after a failure that may pass or ten minutes with nothing done; on unless the profile says otherwise (D519).</summary>
+    public bool RestartAfterFailure { get; set; } = true;
 }

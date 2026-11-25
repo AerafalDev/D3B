@@ -440,6 +440,10 @@ follower) on the same map, the capture of every connection on; a capture's conte
   capture of the night: a walk the server refused after showing it was taken for arrived, the door used from 19 cells away, and
   the bank's journey's no path taken for no bank, the run failing still full. A walk so refused is refused, and the bank's journey
   tries again. Left: seen in game.
+- **Never idle until the server's kick** (D518, D519), the owner's ask of 2026-11-25 after four kicks in a week (D481, D484,
+  D488, the miner's door of D517), made in code and tests: a journey or a banking that fails climbs a bounded recovery ladder
+  before it fails, and a run that fails, or makes no progress for 10 minutes, is put in order and restarted, with a growing
+  wait and six restarts an hour at most, as the harvest's and the hunt's profiles say. Left: seen in game.
 - **The zaaps' discovery** (D499), the owner's ask of 2026-11-22, made on 2026-11-22 in code and tests: an activity with no
   setting, « Découvrir les zaaps », walks to every activated zaap within reach the character does not know, the nearest first
   with the zaaps learnt so far, and ends once none is left, giving up for the run one it cannot reach or that the server does
