@@ -5,6 +5,7 @@ using D3B.Bot.Fights;
 using D3B.Bot.Hosting;
 using D3B.Bot.Inspection;
 using D3B.Bot.Interactives;
+using D3B.Bot.Journal;
 using D3B.Bot.Localization;
 using D3B.Bot.Network;
 using D3B.Bot.Npcs;
@@ -30,7 +31,9 @@ namespace D3B.Bot.Runtime;
 /// <see cref="PageCatalog"/> of the pages they register with <see cref="PageServiceCollectionExtensions.AddPage"/>, which
 /// the app shows, the <see cref="GameReferences"/> the activities' settings name, and the <see cref="GraphicSkills"/> every map
 /// a bot enters teaches. The bots wait the <see cref="BotDelays"/> the configuration names, in seconds under
-/// <c>Delays</c>. Requires the data module, whose maps behaviors walk, and the network module.
+/// <c>Delays</c>. Each bot's journal and the host's problems are written to <c>Journal:Directory</c>
+/// (<c>%LOCALAPPDATA%\D3B\journals</c> by default) by the <see cref="JournalRecorder"/>, kept for the days and megabytes of
+/// <c>Journal:Retention</c> (D504). Requires the data module, whose maps behaviors walk, and the network module.
 /// </remarks>
 public sealed class BotsModule : IModule
 {
@@ -82,6 +85,20 @@ public sealed class BotsModule : IModule
         // Beside the host's other logs: the app's logs page reads what the host says of itself (D114).
         bot.Services.AddSingleton(services => new HostProblems(services.GetRequiredService<TimeProvider>()));
         bot.Services.AddSingleton<ILoggerProvider>(services => services.GetRequiredService<HostProblems>());
+
+        // Both kept on disk too, for days: after a night the cause of a stop has scrolled out of memory (D504).
+        var journals = bot.Configuration[JournalFiles.DirectoryKey] is { Length: > 0 } directory ? Path.GetFullPath(directory) : JournalFiles.DefaultDirectory;
+        var retention = JournalRetention.Read(bot.Configuration);
+
+        bot.Services.AddSingleton(new JournalFiles(journals));
+        bot.Services.AddSingleton(services => new JournalRecorder(
+            services.GetRequiredService<JournalFiles>(),
+            retention,
+            services.GetRequiredService<Bots>(),
+            services.GetRequiredService<HostProblems>(),
+            services.GetRequiredService<TimeProvider>(),
+            services.GetRequiredService<ILogger<JournalRecorder>>()));
+        bot.Services.AddHostedService(services => services.GetRequiredService<JournalRecorder>());
         bot.Services.AddSingleton(services => new ActivityCatalog(services.GetServices<ActivityDefinition>()));
         bot.Services.AddSingleton(services => new PageCatalog(services.GetServices<PageDefinition>()));
 

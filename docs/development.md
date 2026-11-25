@@ -59,6 +59,8 @@ The app and the host read the same configuration keys, given on the command line
 | `--Banking:FullAt 98` | The share of pods, from 50 to 100, at which the bots bank; `--Banking:UseZaaps false` has them walk to the bank. A profile with its own banking rules ignores both. |
 | `--Network:Captures:Game false` | Stops recording the game connection, recorded by default in `%LOCALAPPDATA%\D3B\captures\game` so that a bug can be replayed and reported. |
 | `--Network:Captures:Retention:Days 7`, `--Network:Captures:Retention:Megabytes 1024` | How long and how much of those captures are kept, pruned at each start of the host; `0` lifts a limit. |
+| `--Journal:Directory <folder>` | Where each bot's journal and the host's problems are written, `%LOCALAPPDATA%\D3B\journals` by default (D504). |
+| `--Journal:Retention:Days 7`, `--Journal:Retention:Megabytes 250` | How long and how much of those journals are kept, pruned as the host starts and at each new day; `0` lifts a limit. |
 | `--Network:Captures:Enabled true` | Also records the connection phase, which only the mapping tool reads and which holds the account's login token. |
 | `--Updates:Source <folder>` | Takes the installed app's updates from a local folder of packed releases. |
 | `D3B_REPORT_WEBHOOK` (environment variable) | The Discord webhook bug reports are posted to instead of the one the release `report-channel` names, for a fork or a test. Never commit one. |

@@ -178,6 +178,31 @@ public sealed class FightTacticsTests
     }
 
     [Fact]
+    public void ASearchOutOfTimeStillStrikesTheEnemyInReach()
+    {
+        // F1 (D509): a search the machine starved of time passed the turn, its first cast never weighed.
+        var (fight, knowledge) = Fight(Caster() with { MovementPoints = 0 }, Biter(-1, Off(2, 0)));
+
+        var plan = _tactics.Plan(fight, knowledge, TacticWeights.Default, TurnSearchLimits.Default with { Budget = TimeSpan.Zero });
+
+        Assert.Contains(TacticAction.Cast(Blow, 1100, Off(2, 0)), plan.Actions);
+    }
+
+    [Fact]
+    public void ASearchPastItsBudgetWeighsOnlyEndingNowAndTheBestAgainstTheReply()
+    {
+        // F1 (D509): the finalists were each weighed against the reply whatever the time the search had taken already.
+        var (fight, knowledge) = Fight(Caster(), Biter(-1, Off(2, 0)), Biter(-2, Off(-2, 0)), Biter(-3, Off(0, 3)));
+        var ample = Plan(fight, knowledge);
+
+        var late = _tactics.Plan(fight, knowledge, TacticWeights.Default, TurnSearchLimits.Default with { Clock = new TickingClock(TimeSpan.FromSeconds(1)) });
+
+        Assert.True(ample.Replied > 2);
+        Assert.Equal(2, late.Replied);
+        Assert.False(late.IsEmpty);
+    }
+
+    [Fact]
     public void ACastTheServerRefusedIsNotWeighedAgainThatTurn()
     {
         var (fight, knowledge) = Fight(Caster() with { MovementPoints = 0 }, Biter(-1, Off(2, 0)));

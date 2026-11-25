@@ -919,10 +919,36 @@ or refines another says so in its own entry. Add a line here with every new deci
 - [D503](decisions/d503-chaferfu-and-saoul.md#d503-a-summon-every-character-has-is-a-last-resort-whatever-the-breed-saouls-share-is-dispelled-with-it-and-the-states-a-turn-began-with-stay-held-through-the-turn) A summon every character has is a last resort whatever the breed, Saoul's share is dispelled with it, and the states a turn began with stay held through the turn (2026-11-24)
   - The owner's report; the Forgelance's Chaferfu and the Pandawa's Bombance measured on the 24 November captures, a probe planning again after each action as the bot does.
 
+## The journal kept on disk (D504)
+
+- [D504](decisions/d504-journal-on-disk.md#d504-each-bots-journal-and-the-hosts-problems-are-written-to-disk-for-seven-days-and-250-mb-saved-from-the-studio-and-joined-to-a-report-for-their-last-24-hours) Each bot's journal and the host's problems are written to disk for seven days and 250 MB, saved from the studio and joined to a report for their last 24 hours (2026-11-24)
+  - A recorder reading the rings every second, a file a source and a UTC day, the owner's retention and report span, `%USERPROFILE%` hidden.
+
 ## A fighting profile's numbers (D505)
 
 - [D505](decisions/d505-run-fight-figures.md#d505-a-run-counts-its-characters-fights-won-and-lost-its-deaths-and-the-experience-and-kamas-they-gave) A run counts its character's fights won and lost, its deaths, and the experience and kamas they gave (2026-11-24)
   - U3 of the next release; kept in the run's record, on the card and in the Statistics by hour of the runs that fought.
+
+## The harvest's audit, the rotation's order and resources grown back on the way (D506, D507)
+
+- [D506](decisions/d506-harvest-audit.md#d506-the-harvests-rotation-goes-to-the-nearest-zone-of-the-round-not-yet-gone-to-the-zone-just-left-last) The harvest's rotation goes to the nearest zone of the round not yet gone to, the zone just left last (2026-11-24)
+  - The nearest ready zone alone, a loop computed once, a draw weighed by the distance.
+- [D507](decisions/d506-harvest-audit.md#d507-a-journey-stops-on-a-map-the-tour-went-through-already-where-a-resource-grew-back-unless-the-tour-left-that-element-there) A journey stops on a map the tour went through already where a resource grew back, unless the tour left that element there (2026-11-24)
+  - Stopping for any element offered, only for elements grown back since the visit.
+
+## Fights, the AI's searches off the thread pool (D508)
+
+- [D508](decisions/d508-fight-searches-off-the-pool.md#d508-the-fight-ai-searches-on-threads-of-its-own-half-the-cores-and-below-the-normal-priority-never-on-the-thread-pool) The fight AI searches on threads of its own, half the cores and below the normal priority, never on the thread pool (2026-11-24)
+  - A player's report of Kestrel's heartbeat late; measured with N bots planning at once on 4 cores, the pool's wait 10 s at most on the pool, 79 ms on the threads.
+
+## Fights, the search's budget a limit, an unanswered cast and the weapon in a state that prevents fighting (D509 to D511)
+
+- [D509](decisions/d509-d511-search-budget-and-refusals.md#d509-the-searchs-budget-bounds-the-whole-search-its-passes-and-its-reply-the-first-cast-and-two-ends-always-weighed) The search's budget bounds the whole search, its passes and its reply, the first cast and two ends always weighed (2026-11-24)
+  - F1; replayed on the 24 November captures, the searches 1,083 ms at most instead of 2,253, the sum judged 0.07% lower.
+- [D510](decisions/d509-d511-search-budget-and-refusals.md#d510-a-cast-the-server-leaves-unanswered-is-left-out-for-the-turn-and-for-the-fight-once-a-second-turn-left-it-unanswered) A cast the server leaves unanswered is left out for the turn, and for the fight once a second turn left it unanswered (2026-11-24)
+  - F2; none of the 18,330 casts of 22 to 24 November went unanswered, a safeguard.
+- [D511](decisions/d509-d511-search-budget-and-refusals.md#d511-a-weapons-blow-is-not-struck-in-a-state-that-prevents-fighting) A weapon's blow is not struck in a state that prevents fighting (2026-11-24)
+  - The owner's ask, the audit; 74 blows refused with text 372, each in state 1 or 42, which the pack flags preventsFight.
 
 ## The studio made simpler (D513 to D514)
 

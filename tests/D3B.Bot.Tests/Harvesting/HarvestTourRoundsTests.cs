@@ -75,6 +75,22 @@ public sealed class HarvestTourRoundsTests : IAsyncDisposable
     }
 
     [Fact]
+    public void AHarvestOnTheWayIsSomethingDoneThoughTheZoneStaysSweptForNothing()
+    {
+        // A journey may stop again on a map out of the zone the tour crossed already, for a resource grown back (D507): the map
+        // crossed again adds nothing, the harvest does.
+        var tour = Tour();
+
+        for (var journey = 0; journey < HarvestTour.MostRounds + 2; journey++)
+        {
+            tour.HarvestedOnTheWay();
+            Assert.False(tour.Arrived());
+        }
+
+        Assert.False(tour.HasHarvested);
+    }
+
+    [Fact]
     public void EveryHarvestIsSomethingDoneNotTheFirstAlone()
     {
         var tour = Tour();

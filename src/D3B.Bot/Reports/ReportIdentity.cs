@@ -1,6 +1,6 @@
 namespace D3B.Bot.Reports;
 
-/// <summary>Who a report's texts must not name: the character reported is told by its number, the account's other characters by nothing (D410).</summary>
+/// <summary>Who a report's texts must not name: the character reported is told by its number, the account's other characters by nothing, the player's Windows folder by its variable (D410, D504).</summary>
 public sealed class ReportIdentity
 {
     // A one-letter name would hide words of the text, and a text that mentions it by chance is not worth that.
@@ -12,7 +12,8 @@ public sealed class ReportIdentity
     /// <param name="characterId">The id of the character reported.</param>
     /// <param name="name">Its name.</param>
     /// <param name="otherNames">The names of the account's other characters.</param>
-    public ReportIdentity(long characterId, string name, IEnumerable<string> otherNames)
+    /// <param name="userFolder">The player's own folder, such as <c>C:\Users\Jeanne</c>, which paths in the host's problems hold, or null.</param>
+    public ReportIdentity(long characterId, string name, IEnumerable<string> otherNames, string? userFolder = null)
     {
         ArgumentNullException.ThrowIfNull(name);
         ArgumentNullException.ThrowIfNull(otherNames);
@@ -22,6 +23,7 @@ public sealed class ReportIdentity
         [
             .. otherNames.Select(other => (Name: other, Label: "another character of the account"))
                 .Append((Name: name, Label: $"character {characterId}"))
+                .Concat(string.IsNullOrEmpty(userFolder) ? [] : [(Name: userFolder.TrimEnd('\\', '/'), Label: "%USERPROFILE%")])
                 .Where(pair => pair.Name.Length >= LeastNameLength)
                 .OrderByDescending(pair => pair.Name.Length),
         ];

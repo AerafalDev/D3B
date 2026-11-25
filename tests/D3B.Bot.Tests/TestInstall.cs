@@ -47,6 +47,9 @@ internal sealed class TestInstall : IDisposable
     /// <summary>Gets where a test's host keeps its captures, so that none reads or sweeps the user's.</summary>
     public string CapturesDirectory => Path.Combine(Root, "captures");
 
+    /// <summary>Gets where a test's host writes its journals, so that none writes or sweeps the user's (D504).</summary>
+    public string JournalsDirectory => Path.Combine(Root, "journals");
+
     /// <summary>Gets the project's folder of a test's host, so that none reads the user's own (D296).</summary>
     public string StudioDirectory => Path.Combine(Root, "studio");
 
@@ -60,7 +63,7 @@ internal sealed class TestInstall : IDisposable
     /// The relay listens on a port of its own, so that tests never take 5555 or 443 from a host running beside them, and its
     /// captures go to the test's folder: a host sweeps <c>captures\game</c> when it starts (D409), and the user's must never be one a test sweeps.
     /// </remarks>
-    public string[] Arguments => ["--Client:Directory", ClientDirectory, "--Data:Directory", PacksDirectory, "--Network:Ports:0", "0", "--Network:Game:Ports:0", "0", "--Network:Redirect:Directory", RedirectDirectory, "--Network:Captures:Directory", CapturesDirectory, "--Studio:Path", StudioDirectory];
+    public string[] Arguments => ["--Client:Directory", ClientDirectory, "--Data:Directory", PacksDirectory, "--Network:Ports:0", "0", "--Network:Game:Ports:0", "0", "--Network:Redirect:Directory", RedirectDirectory, "--Network:Captures:Directory", CapturesDirectory, "--Studio:Path", StudioDirectory, "--Journal:Directory", JournalsDirectory];
 
     public TestInstall()
     {
