@@ -127,3 +127,5 @@ Each file holds the decisions of one group of [the index](../decisions-index.md)
 - [The journal kept on disk (D504)](d504-journal-on-disk.md): 1 decision, 5 KB.
 - [A fighting profile's numbers (D505)](d505-run-fight-figures.md): 1 decision, 3 KB.
 - [The harvest's audit, the rotation's order and resources grown back on the way (D506, D507)](d506-harvest-audit.md): 2 decisions, 6 KB.
+- [Fights, the AI's searches off the thread pool (D508)](d508-fight-searches-off-the-pool.md): 1 decision, 3 KB.
+- [Fights, the search's budget a limit, an unanswered cast and the weapon in a state that prevents fighting (D509 to D511)](d509-d511-search-budget-and-refusals.md): 3 decisions, 6 KB.

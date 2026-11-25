@@ -529,12 +529,12 @@ public sealed class FightTactics
 
         // The best plan is watched for the challenge, never held to it: a challenge of the blows (D497) is broken by a cast on
         // the way, not only where the turn ends.
-        var free = Search(fight, knowledge, weights, limits, refused, challenge, keep: false) ?? throw new UnreachableException("A search that keeps no challenge always ends the turn now among its finalists.");
+        var free = Search(fight, knowledge, weights, limits, new SearchClock(limits), refused, challenge, keep: false) ?? throw new UnreachableException("A search that keeps no challenge always ends the turn now among its finalists.");
 
         if (challenge is null || free.Plan.KeepsChallenge)
             return free.Plan;
 
-        if (Search(fight, knowledge, weights, limits, refused, challenge, keep: true) is not { } kept)
+        if (Search(fight, knowledge, weights, limits, new SearchClock(limits), refused, challenge, keep: true) is not { } kept)
             return free.Plan;
 
         var loss = free.Plan.Score - kept.Plan.Score;
@@ -543,14 +543,13 @@ public sealed class FightTactics
         return loss <= challenge.MostLoss * gain ? kept.Plan : free.Plan;
     }
 
-    private (TurnPlan Plan, ImaginedFight End)? Search(ImaginedFight fight, FightKnowledge knowledge, TacticWeights weights, TurnSearchLimits limits, IReadOnlySet<(int SpellId, int Cell)>? refused, TurnChallenge? challenge, bool keep)
+    private (TurnPlan Plan, ImaginedFight End)? Search(ImaginedFight fight, FightKnowledge knowledge, TacticWeights weights, TurnSearchLimits limits, SearchClock clock, IReadOnlySet<(int SpellId, int Cell)>? refused, TurnChallenge? challenge, bool keep)
     {
         // The owner's ask, for a fast farm (D408): but for the breeds of _summonsFirstBreeds, a summon is a last resort, brought when the
-        // turn has nothing else worth doing; they slow a fight and rarely win it.
-        if (SummonsAreLastResort(fight, knowledge) && Search(fight, knowledge.With(fight.Actor.Id, knowledge.SpellsOf(fight.Actor.Id).RemoveAll(level => IsLastResort(fight.Actor, level))), weights, limits, refused, challenge, keep) is { Plan.IsEmpty: false } plain)
+        // turn has nothing else worth doing; they slow a fight and rarely win it. Both passes share the search's budget (D509).
+        if (SummonsAreLastResort(fight, knowledge) && Search(fight, knowledge.With(fight.Actor.Id, knowledge.SpellsOf(fight.Actor.Id).RemoveAll(level => IsLastResort(fight.Actor, level))), weights, limits, clock, refused, challenge, keep) is { Plan.IsEmpty: false } plain)
             return plain;
 
-        var clock = Stopwatch.StartNew();
         var judge = JudgeOf(fight, knowledge, weights);
         var weighed = 1;
         var root = new Node(fight, [], judge.Judge(fight), challenge);
@@ -560,7 +559,8 @@ public sealed class FightTactics
         // Ending the turn now, and the best walks: ended so, the turn is weighed against the enemies' reply too.
         Ends(root, judge, knowledge, keep, finalists, RootEnds, ref weighed);
 
-        for (var depth = 0; depth < limits.Depth && frontier.Count > 0 && clock.Elapsed < limits.Budget; depth++)
+        // F1 (D509): the first cast is weighed whatever the time, lest a search the machine starved of time pass the turn.
+        for (var depth = 0; depth < limits.Depth && frontier.Count > 0 && (depth is 0 || !clock.CastsAreOver); depth++)
         {
             var children = new List<Node>();
 
@@ -568,7 +568,7 @@ public sealed class FightTactics
             {
                 foreach (var (from, level, cell) in Casts(node.Fight, knowledge, limits, refused, keep ? node.Challenge : null))
                 {
-                    if (clock.Elapsed >= limits.Budget)
+                    if (depth > 0 && clock.CastsAreOver)
                         break;
 
                     var walked = from is { } step ? Imagination.Walked(node.Fight, step.Cell, step.Left) : node.Fight;
@@ -614,17 +614,26 @@ public sealed class FightTactics
         var bestScore = double.NegativeInfinity;
         var standingScore = 0.0;
         var scored = new List<(Finalist Finalist, double Score)>();
+        var replied = 0;
         var later = knowledge with { Cooldowns = knowledge.Cooldowns.Where(pair => pair.Value > 1).ToImmutableDictionary(pair => pair.Key, pair => pair.Value - 1) };
 
         // Ending the turn still carrying is the last resort of a turn that began so (D474).
         var lastResort = Carrying.Carries(standing.End.Fighters, standing.End.ActorId) && finalists.Count > 1;
 
+        var acting = 0;
+
         foreach (var finalist in finalists.OrderByDescending(finalist => finalist.Score).Take(Finalists).Append(standing).Distinct())
         {
-            var replied = Replies(finalist.End, knowledge, judge);
-            var score = judge.JudgeReplied(replied, NextTurn(replied, later, judge, limits).Gain);
+            // Past the budget (D509), ending the turn now and the best end that acts are still weighed: a turn is never passed for
+            // want of time.
+            if (finalist != standing && acting++ > 0 && clock.IsOver)
+                continue;
+
+            var reply = Replies(finalist.End, knowledge, judge);
+            var score = judge.JudgeReplied(reply, NextTurn(reply, later, judge, limits).Gain);
 
             weighed++;
+            replied++;
 
             if (finalist == standing)
                 standingScore = score;
@@ -688,7 +697,7 @@ public sealed class FightTactics
             }
         }
 
-        return (new TurnPlan(chosen.Actions, chosenScore, standingScore, weighed, clock.Elapsed) { KeepsChallenge = challenge is not null && chosen.Keeps }, chosen.End);
+        return (new TurnPlan(chosen.Actions, chosenScore, standingScore, weighed, clock.Elapsed) { KeepsChallenge = challenge is not null && chosen.Keeps, Replied = replied }, chosen.End);
     }
 
     /// <summary>Gets the fight once the fighter playing's summons, then the enemies, played their next turns after its, as greedily as the search imagines them.</summary>

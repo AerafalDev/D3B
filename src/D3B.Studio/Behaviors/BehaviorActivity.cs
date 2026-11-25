@@ -434,7 +434,8 @@ internal sealed class BehaviorActivity : BotActivity, IDisposable, IBehaviorCont
                         step = set.Next;
                         break;
                     case CompiledStep.Action action:
-                        action.Node.RunAsync(context, action.Values.Resolve(evaluation)!, CancellationToken.None).GetAwaiter().GetResult();
+                        // Applied, not awaited: the bot's loop never blocks on a task (D508).
+                        ((IInstantNode)action.Node).Apply(context, action.Values.Resolve(evaluation)!);
                         step = action.Next;
                         break;
                     default:

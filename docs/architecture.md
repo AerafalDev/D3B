@@ -343,13 +343,16 @@ The bots run in `D3B.Bot`: what each part does today, with the decisions that ma
   it (`ImaginedFights`, `CharacterSpells`), its sword's blow among its casts (D220), sends the plan's first walk or cast,
   waits for the server's answer and the client's acknowledgement, plans again, the states it began the turn with held by
   every plan of the turn (`FightKnowledge.TurnStates`, D503), and ends its turn as soon as the plan is
-  empty. A summon of the character's the client controls plays its turns the same, the fight imagined from its view, its
+  empty. The odds, the placement and every plan are searched on `FightSearches`, the host's threads for the AI, half its
+  cores (two at least) and below the normal priority, made by `Bots` at the first fight: the thread pool, which the relay's reads and
+  writes run on, is never held by a search (D508).
+  A summon of the character's the client controls plays its turns the same, the fight imagined from its view, its
   spells its grade's (`FightState.IsOwnTurn`, D271), and so does a companion of the character's, such as the Astrub Knight
   (`Fighter.MasterId`), its spells those the server lists for it (`FightState.ListedSpells`, D443), protecting its master
   as a summon protects its summoner (`Combatant.MasterId`). Every request but the turn's end waits `BotDelays.FightAction` first, the owner's
   0.3 s (D479), and every wait ends with the fight. A cast the server refuses with an error text is not weighed again that turn
   on that cell, and the next turn weighs it anew, since what the server refuses depends on what it sees (D407); one it
-  leaves unanswered is not cast again that fight. The player's placement, readiness, casts, walks and turn's ends pause the bot
+  leaves unanswered is not cast again that turn, and not that fight once a second turn left it unanswered (D510). The player's placement, readiness, casts, walks and turn's ends pause the bot
   (`PlayerActions`), not a turn's end the client marks as its own (D252): in its inactive state, whose first in a fight
   the journal says (`BotEvent.ClientInactive`, D366), and which the game session withholds from the server while the AI
   plays, so that the AI's turn goes on (`IRequestWithholder`, D367). An activity that fights its own has the fight
@@ -1181,7 +1184,7 @@ Pure logic with no I/O, in `D3B.Engine`, which references `D3B.Data` for the cel
     in the order the checks run, from its `CastHistory`, the level as the caster's spell modifiers change it
     (`SpellModifier`, `CastRules.Modified`); the cells it may cast on; the fighters each effect reaches. The level's
     criterion on states is a `Criterion` answering `HS` on `CriterionFacts.States`; a state preventing casts lets through
-    the levels asking for it (D191). `StatesAllow` says whether the states let a fighter cast a level at all, which the
+    the levels asking for it (D191), and one preventing fighting keeps a weapon's blow from striking (D511). `StatesAllow` says whether the states let a fighter cast a level at all, which the
     judge reads (D228). Given the fight's marks, a cast on an open portal is checked from the caster to the portal, then
     on the cell it lands on from its exit, and a level needing a cell with no portal is refused on one (`Passage`, D468).
     A level that throws, cast by a carrier, lands on a free cell, its range raised by the level's own modifiers of its
@@ -1298,7 +1301,10 @@ Pure logic with no I/O, in `D3B.Engine`, which references `D3B.Data` for the cel
     keeping it when the best breaks it, its casts, walks and ends those the challenge allows, chosen while its loss stays
     within `TurnChallenge.MostLoss` of the best's gain (`TurnPlan.KeepsChallenge`); each cast judged by `TurnChallenge.Cast`
     against the fight before and after it, which gives the challenge as it then stands (`ChallengeKills`, `ChallengeStrikes`,
-    the element bound, the enemy struck, the next target), the best plan watched for it on the way (D497); `Place`; `Odds`; `OddsOverTheFight`, the enemies dying one after another (D249); `PathTo`.
+    the element bound, the enemy struck, the next target), the best plan watched for it on the way (D497); its time read on
+    `TurnSearchLimits.Clock` by a `SearchClock` its passes share, the casts within three quarters of the budget and the ends weighed
+    against the reply within the whole, the first depth, ending the turn now and the best end that acts weighed whatever
+    the time (`TurnPlan.Replied`, D509); `Place`; `Odds`; `OddsOverTheFight`, the enemies dying one after another (D249); `PathTo`.
     `TacticWeights`, measured on 69 fights (D212), next turn's weight refused at 1 or more, which would leave a kill now for later (D460), `TurnSearchLimits`, `TurnPlan`, `TacticAction`.
   - Measured on the 166 turns of the characters captured: a search in 9 ms halfway, 158 ms at most (9e); on 204 searches
     of 61 captures, 56 ms halfway, 422 ms at most, and 86 ms halfway on the AI's own fights (9e2); benchmarked, a turn
