@@ -52,7 +52,7 @@
                                 TextWrapping="Wrap" />
                             <TextBlock
                                 Classes="Dim"
-                                FontSize="11.5"
+                                FontSize="11"
                                 Text="{Binding Outcome}"
                                 TextWrapping="Wrap" />
                         </StackPanel>

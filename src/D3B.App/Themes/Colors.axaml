@@ -101,5 +101,8 @@
     <Color x:Key="CommandCentreColor">#08FFFFFF</Color>
     <Color x:Key="CommandCentreEdgeColor">#17FFFFFF</Color>
     <Color x:Key="CommandCentreHoverEdgeColor">#33FFFFFF</Color>
+    <!--  The glass the pills over a map rest on, a character's and the world's alike (D547).  -->
+    <Color x:Key="GlassColor">#E0161619</Color>
+    <Color x:Key="GlassHoverColor">#F226262C</Color>
     <Color x:Key="ScrimColor">#8C050507</Color>
 </ResourceDictionary>

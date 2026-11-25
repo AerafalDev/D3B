@@ -49,7 +49,7 @@
                             <TextBlock Text="{Binding Name}" TextTrimming="CharacterEllipsis" />
                             <TextBlock
                                 Classes="Dim"
-                                FontSize="11.5"
+                                FontSize="11"
                                 Text="{Binding Detail}"
                                 TextTrimming="CharacterEllipsis" />
                         </StackPanel>

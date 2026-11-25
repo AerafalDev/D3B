@@ -42,7 +42,7 @@
         </Style>
         <Style Selector="Border.AssetRow.Heading TextBlock.AssetName">
             <Setter Property="Foreground" Value="{DynamicResource DimColor}" />
-            <Setter Property="FontSize" Value="11.5" />
+            <Setter Property="FontSize" Value="11" />
             <Setter Property="FontWeight" Value="SemiBold" />
         </Style>
         <Style Selector="Border.AssetRow.Given TextBlock.AssetName">
@@ -52,7 +52,7 @@
             <Setter Property="Foreground" Value="{DynamicResource ErrorTextColor}" />
         </Style>
         <Style Selector="Border.KindSquare">
-            <Setter Property="CornerRadius" Value="5" />
+            <Setter Property="CornerRadius" Value="6" />
             <Setter Property="Height" Value="18" />
             <Setter Property="Width" Value="18" />
         </Style>
@@ -66,7 +66,7 @@
         <Style Selector="Button.Add">
             <Setter Property="Height" Value="28" />
             <Setter Property="Padding" Value="9,0,11,0" />
-            <Setter Property="CornerRadius" Value="7" />
+            <Setter Property="CornerRadius" Value="6" />
         </Style>
     </UserControl.Styles>
     <DockPanel>

@@ -19,7 +19,7 @@
         <Setter Property="Height" Value="26" />
         <Setter Property="MinHeight" Value="26" />
         <Setter Property="Padding" Value="8,0" />
-        <Setter Property="CornerRadius" Value="7" />
+        <Setter Property="CornerRadius" Value="6" />
         <Setter Property="Background" Value="{DynamicResource FieldColor}" />
         <Setter Property="Foreground" Value="{DynamicResource ForegroundColor}" />
         <Setter Property="FontSize" Value="12" />
@@ -65,7 +65,7 @@
         <Setter Property="Height" Value="26" />
         <Setter Property="MinHeight" Value="26" />
         <Setter Property="Padding" Value="0" />
-        <Setter Property="CornerRadius" Value="7" />
+        <Setter Property="CornerRadius" Value="6" />
         <Setter Property="HorizontalContentAlignment" Value="Center" />
         <Setter Property="Foreground" Value="{DynamicResource MutedColor}" />
     </Style>
@@ -91,7 +91,7 @@
         <Setter Property="MaxWidth" Value="240" />
         <Setter Property="HorizontalAlignment" Value="Stretch" />
         <Setter Property="Padding" Value="4,0,8,0" />
-        <Setter Property="CornerRadius" Value="7" />
+        <Setter Property="CornerRadius" Value="6" />
         <Setter Property="Background" Value="{DynamicResource FieldColor}" />
         <Setter Property="BorderThickness" Value="0" />
         <Setter Property="FontSize" Value="12" />
@@ -116,7 +116,7 @@
         <Setter Property="Background" Value="{DynamicResource ClearColor}" />
         <Setter Property="BorderThickness" Value="0" />
         <Setter Property="Padding" Value="0" />
-        <Setter Property="CornerRadius" Value="10" />
+        <Setter Property="CornerRadius" Value="8" />
         <Setter Property="MinWidth" Value="0" />
         <Setter Property="MaxWidth" Value="400" />
     </Style>
@@ -128,19 +128,19 @@
         <Setter Property="VerticalAlignment" Value="Center" />
     </Style>
     <Style Selector="Border.Count > TextBlock">
-        <Setter Property="FontSize" Value="10.5" />
+        <Setter Property="FontSize" Value="11" />
         <Setter Property="FontWeight" Value="SemiBold" />
         <Setter Property="HorizontalAlignment" Value="Center" />
         <Setter Property="VerticalAlignment" Value="Center" />
     </Style>
     <Style Selector="Border.Count.Error">
-        <Setter Property="Background" Value="#2EEA5D52" />
+        <Setter Property="Background" Value="{DynamicResource ErrorColor20}" />
     </Style>
     <Style Selector="Border.Count.Error > TextBlock">
         <Setter Property="Foreground" Value="{DynamicResource ErrorTextColor}" />
     </Style>
     <Style Selector="Border.Count.Warning">
-        <Setter Property="Background" Value="#29E9AD3C" />
+        <Setter Property="Background" Value="{DynamicResource WarningColor20}" />
     </Style>
     <Style Selector="Border.Count.Warning > TextBlock">
         <Setter Property="Foreground" Value="{DynamicResource WarningTextColor}" />
@@ -157,7 +157,7 @@
     </Style>
     <Style Selector="TextBlock.Time">
         <Setter Property="Foreground" Value="{DynamicResource DimColor}" />
-        <Setter Property="FontSize" Value="11.5" />
+        <Setter Property="FontSize" Value="11" />
         <Setter Property="FontFeatures" Value="+tnum" />
         <Setter Property="VerticalAlignment" Value="Center" />
     </Style>

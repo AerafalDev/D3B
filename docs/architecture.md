@@ -785,8 +785,8 @@ bottom panel and the Details hidden until needed.
   that hides it after: the Characters view is the Outliner's characters, the World view its routes and zones (`OutlinerViewModel.Scope`,
   `OutlinerScope`, which follows `StudioLayout.View`), its header making a route or a zone (D515), the Library view the assets'
   tree with its tools.
-- **The parts** (D321, D397, D513, `StudioLayout` in `D3B.App.ViewModels.Studio`): the side bar, the editor's tabs over the bottom
-  panel in the centre, the Details panel on the right, rounded panels with a hairline edge, 5 pixels apart, none outlined (D531).
+- **The parts** (D321, D397, D513, `StudioLayout` in `D3B.App.ViewModels.Studio`): the side bar, the editor's tabs in the centre,
+  the Details panel on the right, the bottom panel under both to the window's right edge (D547), rounded panels with a hairline edge, 5 pixels apart, none outlined (D531).
   The studio opens on the side bar and the editor; the bottom panel and the Details start hidden. The
   Details show when something is selected (a character, a route, a step, a zone) and stay as the hand left them while it stays
   selected (`MainViewModel.OnSelectionChanged`); the bottom panel when its journal, trace or a route's Sequencer is
@@ -915,7 +915,8 @@ bottom panel and the Details hidden until needed.
 - **One scale** (D159, D163, D335), held by `Themes/Styles.axaml` and the views: spacings 4, 8, 12, 16, 24 and 32; the
   studio's text 12.5, its small text 11, the pages' fonts 12, 14, 16, 22 and 28 (`Caption`, text, `Title`, `PageTitle`,
   `Figure`); the studio's controls 24 to 30 high (`StudioButton` and its classes: `Tool`, `TabFace`, `TitleSearch`,
-  `Status`), the pages' 32 and 36; radii 4, 5, 6 and 8, ShadUI's included, the islands 6 (D530); icons 12, 14, 16 and 20. Keycaps (`Border.Key`)
+  `Status`), the pages' 32 and 36; radii 4 for rows and chips, 6 for fields, buttons and parts, 8 for menus and cards (D547), the
+  islands 6 (D530); icons 12, 14, 16 and 20; colours by the palette's keys only, the glass over a map `GlassColor` (D547). Keycaps (`Border.Key`)
   say a shortcut, and a tooltip's shortcut is a `KeyTip`. A module's page is an `AppPage` (`D3B.App.Controls`): its title
   or a header of its own, its actions on the right, the same margins; docked, its title is the tab's and its margins
   narrower. A setting's help is a tooltip on a mark beside its name.

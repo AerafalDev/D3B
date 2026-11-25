@@ -59,7 +59,7 @@
         <Style Selector="TextBox.PropertySearch">
             <Setter Property="Height" Value="28" />
             <Setter Property="MinHeight" Value="28" />
-            <Setter Property="CornerRadius" Value="7" />
+            <Setter Property="CornerRadius" Value="6" />
             <Setter Property="Background" Value="{DynamicResource InputColor}" />
             <Setter Property="BorderThickness" Value="1" />
             <Setter Property="BorderBrush" Value="{DynamicResource BorderColor}" />
@@ -70,7 +70,7 @@
             <Setter Property="Background" Value="{DynamicResource ClearColor}" />
             <Setter Property="BorderThickness" Value="0" />
             <Setter Property="Padding" Value="0" />
-            <Setter Property="CornerRadius" Value="10" />
+            <Setter Property="CornerRadius" Value="8" />
             <Setter Property="MinWidth" Value="0" />
             <Setter Property="MaxWidth" Value="400" />
         </Style>
@@ -443,7 +443,7 @@
                                 <TextBlock
                                     Classes="Dim Figures"
                                     DockPanel.Dock="Right"
-                                    FontSize="11.5"
+                                    FontSize="11"
                                     Margin="0,0,6,0"
                                     Text="{Binding OnlineText}"
                                     VerticalAlignment="Center">

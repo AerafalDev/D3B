@@ -10,7 +10,7 @@
     <UserControl.Styles>
         <Style Selector="Border.OutlinerRow">
             <Setter Property="Background" Value="{DynamicResource ClearColor}" />
-            <Setter Property="CornerRadius" Value="7" />
+            <Setter Property="CornerRadius" Value="6" />
             <Setter Property="Focusable" Value="True" />
             <Setter Property="Height" Value="30" />
             <Setter Property="Margin" Value="6,0" />

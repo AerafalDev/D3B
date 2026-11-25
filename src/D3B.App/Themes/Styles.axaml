@@ -5,7 +5,8 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
     <!--  Every size here and in the views is one of one scale, so that the pages agree (D159, D335): spacings 4, 8, 12, 16,
          24, 32; fonts 11, 12, 12.5 the studio's text, 14 the pages', 16, 22, 28; the studio's controls 24 to 30 high, the
-         pages' 32 and 36; radii 6, 7, 10, 12, round; icons 12, 14, 16, 20. The studio's frame follows the mockup,
+         pages' 32 and 36; radii 4 for rows and chips, 6 for fields, buttons and parts, 8 for menus and cards, round (D547); icons
+         12, 14, 16, 20. The studio's frame follows the mockup,
          docs/mockups/studio-7c.html; the pages it keeps until 7c3 and 7c4 keep their own.  -->
     <!--  A field of one line never scrolls up and down: the studio's fields, lower than ShadUI's, would show a bar beside the text.  -->
     <Style Selector="TextBox[AcceptsReturn=False]">
@@ -68,7 +69,7 @@
         <Setter Property="Background" Value="{DynamicResource CardBackgroundColor}" />
         <Setter Property="BorderBrush" Value="{DynamicResource BorderColor}" />
         <Setter Property="BorderThickness" Value="1" />
-        <Setter Property="CornerRadius" Value="12" />
+        <Setter Property="CornerRadius" Value="8" />
     </Style>
     <Style Selector="Border.Card">
         <Setter Property="Padding" Value="16" />
@@ -83,7 +84,7 @@
         <Setter Property="Background" Value="{DynamicResource PlateFooterColor}" />
         <Setter Property="BorderBrush" Value="{DynamicResource BorderColor}" />
         <Setter Property="BorderThickness" Value="0,1,0,0" />
-        <Setter Property="CornerRadius" Value="0,0,11,11" />
+        <Setter Property="CornerRadius" Value="0,0,8,8" />
         <Setter Property="Padding" Value="16,12" />
     </Style>
     <Style Selector="Border.PlateFooter.Warned">
@@ -106,7 +107,7 @@
     </Style>
     <Style Selector="Border.Banner">
         <Setter Property="BorderThickness" Value="1" />
-        <Setter Property="CornerRadius" Value="12" />
+        <Setter Property="CornerRadius" Value="8" />
         <Setter Property="Padding" Value="24" />
     </Style>
     <Style Selector="Border.Banner.Danger">
@@ -416,7 +417,7 @@
         <Setter Property="MinHeight" Value="28" />
         <Setter Property="MinWidth" Value="28" />
         <Setter Property="Padding" Value="6,0" />
-        <Setter Property="CornerRadius" Value="7" />
+        <Setter Property="CornerRadius" Value="6" />
         <Setter Property="Background" Value="{DynamicResource ClearColor}" />
         <Setter Property="BorderThickness" Value="0" />
         <Setter Property="Foreground" Value="{DynamicResource MutedColor}" />
@@ -446,7 +447,7 @@
         <Setter Property="MinHeight" Value="30" />
         <Setter Property="MinWidth" Value="30" />
         <Setter Property="Padding" Value="0" />
-        <Setter Property="CornerRadius" Value="9" />
+        <Setter Property="CornerRadius" Value="6" />
         <Setter Property="Foreground" Value="{DynamicResource ForegroundColor}" />
     </Style>
 
@@ -458,7 +459,7 @@
         <Setter Property="MinHeight" Value="36" />
         <Setter Property="MinWidth" Value="36" />
         <Setter Property="Padding" Value="0" />
-        <Setter Property="CornerRadius" Value="7" />
+        <Setter Property="CornerRadius" Value="6" />
         <Setter Property="Background" Value="{DynamicResource ClearColor}" />
         <Setter Property="BorderThickness" Value="0" />
         <Setter Property="Foreground" Value="{DynamicResource MutedColor}" />
@@ -563,7 +564,7 @@
         <Setter Property="BoxShadow" Value="inset 0 -1 0 0 #66000000" />
     </Style>
     <Style Selector="Border.Key > TextBlock">
-        <Setter Property="FontSize" Value="10.5" />
+        <Setter Property="FontSize" Value="11" />
         <Setter Property="FontWeight" Value="Medium" />
         <Setter Property="Foreground" Value="{DynamicResource MutedColor}" />
         <Setter Property="HorizontalAlignment" Value="Center" />
@@ -590,7 +591,7 @@
         <Setter Property="Background" Value="{DynamicResource PopupColor}" />
         <Setter Property="BorderBrush" Value="{DynamicResource BorderColor}" />
         <Setter Property="BorderThickness" Value="1" />
-        <Setter Property="CornerRadius" Value="10" />
+        <Setter Property="CornerRadius" Value="8" />
         <Setter Property="Padding" Value="5" />
         <Setter Property="MinWidth" Value="240" />
     </Style>
@@ -645,10 +646,10 @@
 
     <!--  A bar of tools floating over a map, the world's viewport's and the character's map's zoom (D553): dark glass with a shadow.  -->
     <Style Selector="Border.Glass">
-        <Setter Property="Background" Value="#DB161619" />
-        <Setter Property="BorderBrush" Value="#17FFFFFF" />
+        <Setter Property="Background" Value="{DynamicResource GlassColor}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource CommandCentreEdgeColor}" />
         <Setter Property="BorderThickness" Value="1" />
-        <Setter Property="CornerRadius" Value="11" />
+        <Setter Property="CornerRadius" Value="8" />
         <Setter Property="Padding" Value="3" />
         <Setter Property="BoxShadow" Value="0 8 24 0 #66000000" />
     </Style>
@@ -744,7 +745,7 @@
         <Setter Property="Background" Value="{DynamicResource TipColor}" />
         <Setter Property="BorderBrush" Value="{DynamicResource BorderColor}" />
         <Setter Property="BorderThickness" Value="1" />
-        <Setter Property="CornerRadius" Value="5" />
+        <Setter Property="CornerRadius" Value="6" />
         <Setter Property="Foreground" Value="{DynamicResource BrightColor}" />
         <Setter Property="Height" Value="22" />
         <Setter Property="Margin" Value="1,1" />
