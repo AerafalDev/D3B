@@ -11,7 +11,7 @@ using D3B.Data.Maps;
 
 namespace D3B.App.Controls;
 
-/// <summary>A map of the pack drawn flat, cell by cell, with what stands on it in layers, and the cell under the pointer (D120 to D122).</summary>
+/// <summary>A map of the pack drawn flat, cell by cell, with what stands on it in layers, and the cell under the pointer (D120 to D122), zoomed by the wheel and panned by a drag (D553).</summary>
 /// <remarks>
 /// <para>
 /// The cells' shapes are built once per map and size, so that a refresh of the bot's state, four times a second (D94),
@@ -21,11 +21,18 @@ namespace D3B.App.Controls;
 /// Floors are not drawn: on a map with stairs, cells drawn at their height would cover one another. The zones' layer
 /// tints a stair's cells instead, and the page says a cell's floor under the pointer.
 /// </para>
+/// <para>
+/// The zoom (<see cref="MapZoom"/>) scales the shapes, so that the lines keep their width; a pan only moves them, drawn
+/// again without being built again.
+/// </para>
 /// </remarks>
 internal sealed class MapCanvas : Control
 {
     private const double LabelSize = 11;
     private const double LabelGap = 6;
+
+    /// <summary>How much a notch of the wheel zooms, as the world's viewport does.</summary>
+    private const double WheelStep = 1.22;
 
     /// <summary>Defines the <see cref="Scene"/> property.</summary>
     public static readonly StyledProperty<MapScene?> SceneProperty = AvaloniaProperty.Register<MapCanvas, MapScene?>(nameof(Scene));
@@ -39,6 +46,10 @@ internal sealed class MapCanvas : Control
     /// <summary>Defines the <see cref="HoveredCell"/> property, bound both ways by default.</summary>
     public static readonly StyledProperty<int?> HoveredCellProperty = AvaloniaProperty.Register<MapCanvas, int?>(nameof(HoveredCell), defaultBindingMode: BindingMode.TwoWay);
 
+    /// <summary>Defines the <see cref="Zoom"/> property, bound both ways by default.</summary>
+    public static readonly StyledProperty<double> ZoomProperty = AvaloniaProperty.Register<MapCanvas, double>(nameof(Zoom), MapZoom.MinScale, defaultBindingMode: BindingMode.TwoWay);
+
+    private readonly MapZoom _view = new();
     private MapData? _shapedMap;
     private IReadOnlyList<MapExit>? _shapedExits;
     private MapLayout _shapedLayout;
@@ -47,6 +58,8 @@ internal sealed class MapCanvas : Control
     private StreamGeometry? _stairs;
     private StreamGeometry? _exits;
     private List<(int Zone, StreamGeometry Cells)> _zones = [];
+    private bool _panning;
+    private Point _panFrom;
 
     /// <summary>Gets or sets what is drawn.</summary>
     public MapScene? Scene
@@ -76,9 +89,16 @@ internal sealed class MapCanvas : Control
         set => SetValue(HoveredCellProperty, value);
     }
 
+    /// <summary>Gets or sets how many times the map is enlarged from its fit: set from outside, it zooms around the middle.</summary>
+    public double Zoom
+    {
+        get => GetValue(ZoomProperty);
+        set => SetValue(ZoomProperty, value);
+    }
+
     static MapCanvas()
     {
-        AffectsRender<MapCanvas>(SceneProperty, LayersProperty, PaletteProperty, HoveredCellProperty);
+        AffectsRender<MapCanvas>(SceneProperty, LayersProperty, PaletteProperty, HoveredCellProperty, ZoomProperty);
         ClipToBoundsProperty.OverrideDefaultValue<MapCanvas>(true);
     }
 
@@ -169,13 +189,120 @@ internal sealed class MapCanvas : Control
         if (Scene is not { } scene || Palette is not { } palette)
             return;
 
-        var layout = MapLayout.Fit(Bounds.Size);
+        var fitted = MapLayout.Fit(Bounds.Size);
 
-        if (layout.CellWidth <= 0)
+        if (fitted.CellWidth <= 0)
             return;
+
+        var layout = _view.Scaled(fitted);
 
         Shape(scene, layout);
 
+        using (context.PushTransform(Matrix.CreateTranslation(_view.OffsetX, _view.OffsetY)))
+            DrawScene(context, palette, scene, layout);
+    }
+
+    /// <inheritdoc/>
+    protected override void OnPropertyChanged(AvaloniaPropertyChangedEventArgs change)
+    {
+        base.OnPropertyChanged(change);
+
+        if (change.Property == BoundsProperty)
+        {
+            _view.Resize(Bounds.Width, Bounds.Height);
+
+            // A zoom bound before the first layout was made around a middle of no size: made again around the real one.
+            if (change.GetOldValue<Rect>().Size is { Width: <= 0 } or { Height: <= 0 })
+            {
+                _view.Fit();
+                _view.ZoomAt(Bounds.Width / 2, Bounds.Height / 2, Zoom);
+            }
+        }
+        else if (change.Property == ZoomProperty)
+        {
+            // The wheel sets the zoom it already made, so that zooming to it again around the middle changes nothing.
+            _view.ZoomAt(Bounds.Width / 2, Bounds.Height / 2, Zoom);
+        }
+    }
+
+    /// <inheritdoc/>
+    protected override void OnPointerWheelChanged(PointerWheelEventArgs e)
+    {
+        base.OnPointerWheelChanged(e);
+
+        if (Scene is null)
+            return;
+
+        var at = e.GetPosition(this);
+
+        _view.ZoomAt(at.X, at.Y, _view.Scale * Math.Pow(WheelStep, e.Delta.Y));
+        SetCurrentValue(ZoomProperty, _view.Scale);
+        Hover(at);
+        InvalidateVisual();
+        e.Handled = true;
+    }
+
+    /// <inheritdoc/>
+    protected override void OnPointerPressed(PointerPressedEventArgs e)
+    {
+        base.OnPointerPressed(e);
+
+        if (_view.Scale <= MapZoom.MinScale)
+            return;
+
+        _panning = true;
+        _panFrom = e.GetPosition(this);
+        Cursor = new Cursor(StandardCursorType.SizeAll);
+        e.Pointer.Capture(this);
+        e.Handled = true;
+    }
+
+    /// <inheritdoc/>
+    protected override void OnPointerReleased(PointerReleasedEventArgs e)
+    {
+        base.OnPointerReleased(e);
+
+        if (!_panning)
+            return;
+
+        StopPanning();
+        e.Pointer.Capture(null);
+        e.Handled = true;
+    }
+
+    /// <inheritdoc/>
+    protected override void OnPointerCaptureLost(PointerCaptureLostEventArgs e)
+    {
+        base.OnPointerCaptureLost(e);
+        StopPanning();
+    }
+
+    /// <inheritdoc/>
+    protected override void OnPointerMoved(PointerEventArgs e)
+    {
+        base.OnPointerMoved(e);
+
+        var at = e.GetPosition(this);
+
+        if (_panning)
+        {
+            _view.Pan(at.X - _panFrom.X, at.Y - _panFrom.Y);
+            _panFrom = at;
+            InvalidateVisual();
+        }
+
+        Hover(at);
+    }
+
+    /// <inheritdoc/>
+    protected override void OnPointerExited(PointerEventArgs e)
+    {
+        base.OnPointerExited(e);
+        SetCurrentValue(HoveredCellProperty, null);
+    }
+
+    private void DrawScene(DrawingContext context, MapPalette palette, MapScene scene, MapLayout layout)
+    {
         var layers = Layers;
         var height = layout.CellHeight;
 
@@ -252,21 +379,17 @@ internal sealed class MapCanvas : Control
             context.DrawGeometry(null, new Pen(palette.Hover, 1.5), MapMarks.Diamond(layout.Center(hovered), layout.CellWidth / 2, height / 2));
     }
 
-    /// <inheritdoc/>
-    protected override void OnPointerMoved(PointerEventArgs e)
+    private void Hover(Point at)
     {
-        base.OnPointerMoved(e);
-
-        var cell = Scene is null ? -1 : MapLayout.Fit(Bounds.Size).CellAt(e.GetPosition(this));
+        var cell = Scene is null ? -1 : _view.Apply(MapLayout.Fit(Bounds.Size)).CellAt(at);
 
         SetCurrentValue(HoveredCellProperty, cell < 0 ? null : cell);
     }
 
-    /// <inheritdoc/>
-    protected override void OnPointerExited(PointerEventArgs e)
+    private void StopPanning()
     {
-        base.OnPointerExited(e);
-        SetCurrentValue(HoveredCellProperty, null);
+        _panning = false;
+        Cursor = null;
     }
 
     private void Shape(MapScene scene, MapLayout layout)

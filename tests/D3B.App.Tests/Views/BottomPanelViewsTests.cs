@@ -105,6 +105,7 @@ public sealed class BottomPanelViewsTests : IAsyncDisposable
                 main.Bottom.ShowCommand.Execute(tab);
                 main.Refresh();
                 Dispatcher.UIThread.RunJobs();
+                Slides.Finish();
 
                 var dock = window.GetVisualDescendants().OfType<Border>().Single(border => border.Name == "BottomDock");
 
