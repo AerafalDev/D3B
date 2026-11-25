@@ -47,21 +47,14 @@ internal static class AssetKinds
         };
     }
 
-    /// <summary>Gets a kind's dark tint, its icon's square.</summary>
+    /// <summary>Gets a kind's tint, its icon's square: its colour, faint, so that it reads on the dark and the light theme alike (D530).</summary>
     /// <param name="kind">The kind.</param>
     /// <returns>The colour.</returns>
     public static Color TintOf(AssetKind kind)
     {
-        return kind switch
-        {
-            AssetKind.Behavior => Color.Parse("#1F2A3D"),
-            AssetKind.Profile => Color.Parse("#2A2238"),
-            AssetKind.Route => Color.Parse("#172B29"),
-            AssetKind.Zone => Color.Parse("#1F2A1B"),
-            AssetKind.List => Color.Parse("#2D2516"),
-            AssetKind.Planning => Color.Parse("#1F2A38"),
-            _ => Color.Parse("#382422"),
-        };
+        var color = ColorOf(kind);
+
+        return Color.FromArgb(0x33, color.R, color.G, color.B);
     }
 
     /// <summary>Gets the session that makes a kind's editor, for the kinds D3B cannot make yet.</summary>

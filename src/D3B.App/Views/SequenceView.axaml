@@ -15,7 +15,7 @@
             DockPanel.Dock="Top"
             Margin="20,18,20,0">
             <Border
-                Background="#1F2A3D"
+                Background="#337FA7FF"
                 CornerRadius="10"
                 Height="38"
                 VerticalAlignment="Top"

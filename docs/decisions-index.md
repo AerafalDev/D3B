@@ -965,3 +965,8 @@ or refines another says so in its own entry. Add a line here with every new deci
 
 - [D517](decisions/d517-miner-refused-door.md#d517-a-walk-refused-after-it-was-shown-has-not-arrived-and-a-banks-journey-whose-way-failed-is-not-travelled-not-without-a-bank) A walk refused after it was shown has not arrived, and a bank's journey whose way failed is not travelled, not without a bank (2026-11-25)
   - Every journey failed once a way failed on it, a refused walk's way tried again, ending no run on a failed unloading.
+
+## The studio in next's dark islands (D530)
+
+- [D530](decisions/d530-next-dark-islands.md#d530-the-studio-takes-nexts-dark-style-vs-codes-dark-modern-as-discreet-islands-and-stays-dark-only) The studio takes next's dark style, VS Code's Dark Modern as discreet islands, and stays dark only (2026-11-25)
+  - The owner's ask; a light theme made then removed at the owner's word; seen in the running app and in the headless drawings.

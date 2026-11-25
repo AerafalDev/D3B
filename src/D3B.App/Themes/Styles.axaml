@@ -275,13 +275,13 @@
     </Style>
 
 
-    <!--  The studio's frame (D320 to D322): panels as rounded blocks with a hairline edge on the window's near black, the
-         focused one outlined in the accent; tabs as lit buttons; thin dark scrollbars seen on hover.  -->
+    <!--  The studio's frame (D320 to D322, D530): next's islands, parts as cards of 6 pixels' corners with a faint edge on the
+         window's darker frame, the focused one outlined in the accent; tabs as lit buttons; thin dark scrollbars seen on hover.  -->
     <Style Selector="Border.Dock">
         <Setter Property="Background" Value="{DynamicResource PanelColor}" />
         <Setter Property="BorderBrush" Value="{DynamicResource BorderColor60}" />
         <Setter Property="BorderThickness" Value="1" />
-        <Setter Property="CornerRadius" Value="10" />
+        <Setter Property="CornerRadius" Value="6" />
         <Setter Property="ClipToBounds" Value="True" />
     </Style>
     <Style Selector="Border.Dock.Recess">
@@ -507,7 +507,7 @@
         <Setter Property="Foreground" Value="{DynamicResource DimColor}" />
     </Style>
     <Style Selector="Border.Key.Tip">
-        <Setter Property="Background" Value="#36363C" />
+        <Setter Property="Background" Value="{DynamicResource SecondaryColor}" />
     </Style>
     <Style Selector="Border.Key.Tip > TextBlock">
         <Setter Property="Foreground" Value="{DynamicResource ForegroundColor}" />

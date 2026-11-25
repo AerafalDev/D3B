@@ -31,7 +31,7 @@
             <Setter Property="Height" Value="22" />
             <Setter Property="CornerRadius" Value="5" />
             <Setter Property="Background" Value="{DynamicResource RaisedColor}" />
-            <Setter Property="BorderBrush" Value="#14FFFFFF" />
+            <Setter Property="BorderBrush" Value="{DynamicResource VeilColor}" />
             <Setter Property="BorderThickness" Value="1" />
         </Style>
         <Style Selector="TextBlock.Count">
@@ -53,7 +53,7 @@
             <Setter Property="Background" Value="Transparent" />
         </Style>
         <Style Selector="Border.RunRow:pointerover">
-            <Setter Property="Background" Value="#08FFFFFF" />
+            <Setter Property="Background" Value="{DynamicResource SoftLineColor}" />
         </Style>
         <Style Selector="TextBlock.RunEnd">
             <Setter Property="Foreground" Value="{DynamicResource MutedColor}" />
@@ -62,10 +62,10 @@
             <Setter Property="VerticalAlignment" Value="Center" />
         </Style>
         <Style Selector="TextBlock.RunEnd.Live">
-            <Setter Property="Foreground" Value="#8FE3A2" />
+            <Setter Property="Foreground" Value="{DynamicResource SuccessTextColor}" />
         </Style>
         <Style Selector="TextBlock.RunEnd.Failed">
-            <Setter Property="Foreground" Value="#F3A19A" />
+            <Setter Property="Foreground" Value="{DynamicResource ErrorTextColor}" />
         </Style>
     </UserControl.Styles>
     <DockPanel>
@@ -195,7 +195,7 @@
                                                     Fill="#7FA7FF"
                                                     Grid.Column="2"
                                                     Height="5"
-                                                    Track="#12FFFFFF"
+                                                    Track="{DynamicResource VeilColor}"
                                                     Value="{Binding Share}"
                                                     VerticalAlignment="Center" />
                                                 <TextBlock

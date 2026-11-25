@@ -56,7 +56,7 @@
         </Style>
     </UserControl.Styles>
     <Border
-        Background="#1A1A1E"
+        Background="{DynamicResource PopupColor}"
         BorderBrush="{DynamicResource BorderColor}"
         BorderThickness="1"
         BoxShadow="0 30 80 0 #99000000"

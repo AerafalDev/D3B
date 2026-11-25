@@ -28,7 +28,7 @@
             <Setter Property="CornerRadius" Value="9" />
             <Setter Property="Padding" Value="7,1" />
             <Setter Property="VerticalAlignment" Value="Center" />
-            <Setter Property="Background" Value="#0FFFFFFF" />
+            <Setter Property="Background" Value="{DynamicResource VeilColor}" />
         </Style>
         <Style Selector="Border.Pill > TextBlock">
             <Setter Property="FontSize" Value="11.5" />
@@ -38,13 +38,13 @@
             <Setter Property="Background" Value="#1F3ECF5C" />
         </Style>
         <Style Selector="Border.Pill.Good > TextBlock">
-            <Setter Property="Foreground" Value="#8FE3A2" />
+            <Setter Property="Foreground" Value="{DynamicResource SuccessTextColor}" />
         </Style>
         <Style Selector="Border.Pill.Bad">
             <Setter Property="Background" Value="#24EA5D52" />
         </Style>
         <Style Selector="Border.Pill.Bad > TextBlock">
-            <Setter Property="Foreground" Value="#F3A19A" />
+            <Setter Property="Foreground" Value="{DynamicResource ErrorTextColor}" />
         </Style>
     </UserControl.Styles>
     <DockPanel>

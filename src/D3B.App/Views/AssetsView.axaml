@@ -49,7 +49,7 @@
             <Setter Property="Foreground" Value="{DynamicResource MutedColor}" />
         </Style>
         <Style Selector="Border.AssetRow.Bad TextBlock.AssetName">
-            <Setter Property="Foreground" Value="#F3A19A" />
+            <Setter Property="Foreground" Value="{DynamicResource ErrorTextColor}" />
         </Style>
         <Style Selector="Border.KindSquare">
             <Setter Property="CornerRadius" Value="5" />

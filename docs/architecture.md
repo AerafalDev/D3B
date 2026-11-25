@@ -708,8 +708,9 @@ bottom panel and the Details hidden until needed.
   given D3B's own template (`Themes/Window.axaml`), one title row 44 pixels high, the logo and the menus File, Edit,
   Window and Help on the left (`Themes/Menus.axaml`), the search in the middle of the window while it does not touch a side
   (`TitleBarPanel`), then the run block, the settings' gear and the window's buttons; under it the docks, then the status
-  bar. Dark only (D320): `Themes/Colors.axaml` gives ShadUI's keys D3B's values and holds the studio's surfaces, from the
-  window's near black up, one blue accent, green, amber and red for states. The app's own icon is the owner's logo (D231):
+  bar. Dark only (D320, D530): `Themes/Colors.axaml` gives ShadUI's keys D3B's values, `next`'s Dark Modern as discreet
+  islands (the frame `#111111`, the parts `#181818`, the editor `#1f1f1f`, their edge `#232323`), and holds the studio's
+  surfaces, one blue accent kept rare, green, amber and red for states. The app's own icon is the owner's logo (D231):
   `Assets/d3b.ico` for the window, the taskbar, the executable and the installer, `Assets/d3b.png` in the title row and
   the home page.
   The logo opens the home page; the gear moved to the activity bar (D513).
@@ -837,7 +838,7 @@ bottom panel and the Details hidden until needed.
 - **One scale** (D159, D163, D335), held by `Themes/Styles.axaml` and the views: spacings 4, 8, 12, 16, 24 and 32; the
   studio's text 12.5, its small text 11, the pages' fonts 12, 14, 16, 22 and 28 (`Caption`, text, `Title`, `PageTitle`,
   `Figure`); the studio's controls 24 to 30 high (`StudioButton` and its classes: `Tool`, `TabFace`, `TitleSearch`,
-  `Status`), the pages' 32 and 36; radii 6, 7, 10 and 12, ShadUI's included; icons 12, 14, 16 and 20. Keycaps (`Border.Key`)
+  `Status`), the pages' 32 and 36; radii 4, 5, 6 and 8, ShadUI's included, the islands 6 (D530); icons 12, 14, 16 and 20. Keycaps (`Border.Key`)
   say a shortcut, and a tooltip's shortcut is a `KeyTip`. A module's page is an `AppPage` (`D3B.App.Controls`): its title
   or a header of its own, its actions on the right, the same margins; docked, its title is the tab's and its margins
   narrower. A setting's help is a tooltip on a mark beside its name.

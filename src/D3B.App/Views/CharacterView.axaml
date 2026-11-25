@@ -16,8 +16,8 @@
             <GradientStop Color="#5B7FF0" Offset="0" />
             <GradientStop Color="#8FB1FF" Offset="1" />
         </LinearGradientBrush>
-        <SolidColorBrush Color="#14FFFFFF" x:Key="BarTrack" />
-        <SolidColorBrush Color="#A4A8B2" x:Key="RuleFill" />
+        <SolidColorBrush Color="{DynamicResource VeilColor}" x:Key="BarTrack" />
+        <SolidColorBrush Color="{DynamicResource MutedColor}" x:Key="RuleFill" />
         <SolidColorBrush Color="#E0605A" x:Key="LifeRuleFill" />
     </UserControl.Resources>
     <UserControl.Styles>
@@ -39,6 +39,21 @@
             <Setter Property="BorderBrush" Value="{DynamicResource OutlineColor}" />
             <Setter Property="BorderThickness" Value="1" />
             <Setter Property="FontWeight" Value="Normal" />
+        </Style>
+        <!--  The header's profile field rests on the theme's surfaces, where the pills over the map stay dark as the map (D530).  -->
+        <Style Selector="Button.HeadPick">
+            <Setter Property="Theme" Value="{DynamicResource StudioButton}" />
+            <Setter Property="Height" Value="28" />
+            <Setter Property="MinHeight" Value="28" />
+            <Setter Property="Padding" Value="11,0" />
+            <Setter Property="CornerRadius" Value="14" />
+            <Setter Property="Background" Value="{DynamicResource FieldColor}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource OutlineColor}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="FontWeight" Value="Normal" />
+        </Style>
+        <Style Selector="Button.HeadPick:pointerover">
+            <Setter Property="Background" Value="{DynamicResource HoverColor}" />
         </Style>
         <Style Selector="Button.Pill:pointerover">
             <Setter Property="Background" Value="#F226262C" />
@@ -112,19 +127,19 @@
             <Setter Property="Foreground" Value="{DynamicResource MutedColor}" />
         </Style>
         <Style Selector="Border.Now.Playing Border.NowIcon c|GlyphIcon">
-            <Setter Property="Foreground" Value="#8FE3A2" />
+            <Setter Property="Foreground" Value="{DynamicResource SuccessTextColor}" />
         </Style>
         <Style Selector="Border.Now.Paused Border.NowIcon c|GlyphIcon">
-            <Setter Property="Foreground" Value="#F0C674" />
+            <Setter Property="Foreground" Value="{DynamicResource WarningTextColor}" />
         </Style>
         <Style Selector="Border.Now.Fighting Border.NowIcon c|GlyphIcon">
-            <Setter Property="Foreground" Value="#F3A19A" />
+            <Setter Property="Foreground" Value="{DynamicResource ErrorTextColor}" />
         </Style>
         <Style Selector="TextBlock.NowDetail">
             <Setter Property="Foreground" Value="{DynamicResource MutedColor}" />
         </Style>
         <Style Selector="Border.Now.Playing TextBlock.NowDetail">
-            <Setter Property="Foreground" Value="#A9D9B5" />
+            <Setter Property="Foreground" Value="{DynamicResource SuccessTextColor}" />
         </Style>
         <Style Selector="TextBlock.Heading">
             <Setter Property="FontSize" Value="12" />
@@ -157,7 +172,7 @@
             <Setter Property="MaxWidth" Value="180" />
         </Style>
         <Style Selector="Button.Profile:pointerover">
-            <Setter Property="Background" Value="#232328" />
+            <Setter Property="Background" Value="{DynamicResource HoverColor}" />
         </Style>
         <Style Selector="Border.Dot">
             <Setter Property="Width" Value="11" />
@@ -165,7 +180,7 @@
             <Setter Property="CornerRadius" Value="6" />
             <Setter Property="Background" Value="{DynamicResource PanelColor}" />
             <Setter Property="BorderThickness" Value="2" />
-            <Setter Property="BorderBrush" Value="#3A3B42" />
+            <Setter Property="BorderBrush" Value="{DynamicResource OutlineColor}" />
             <Setter Property="VerticalAlignment" Value="Center" />
             <Setter Property="Transitions">
                 <Transitions>
@@ -182,14 +197,14 @@
         </Style>
         <Style Selector="Border.Dot.Layer">
             <Setter Property="CornerRadius" Value="3" />
-            <Setter Property="BorderBrush" Value="#5A5B64" />
+            <Setter Property="BorderBrush" Value="{DynamicResource DimColor}" />
         </Style>
         <Style Selector="Border.Dot.Rule">
             <Setter Property="Width" Value="7" />
             <Setter Property="Height" Value="7" />
             <Setter Property="Margin" Value="2,0" />
             <Setter Property="BorderThickness" Value="0" />
-            <Setter Property="Background" Value="#3A3B42" />
+            <Setter Property="Background" Value="{DynamicResource OutlineColor}" />
         </Style>
         <Style Selector="Border.Dot.Active">
             <Setter Property="Background" Value="{DynamicResource PlayingColor}" />
@@ -230,7 +245,7 @@
             <Setter Property="CornerRadius" Value="6" />
             <Setter Property="Background" Value="{DynamicResource PanelColor}" />
             <Setter Property="BorderThickness" Value="2" />
-            <Setter Property="BorderBrush" Value="#4B4C55" />
+            <Setter Property="BorderBrush" Value="{DynamicResource OutlineColor}" />
             <Setter Property="VerticalAlignment" Value="Top" />
             <Setter Property="Margin" Value="0,3,0,0" />
         </Style>
@@ -288,7 +303,7 @@
                         VerticalAlignment="Center" />
                     <Button
                         AutomationProperties.Name="{l:Tr PropertyProfile}"
-                        Classes="Pill"
+                        Classes="HeadPick"
                         Click="OnProfileClick"
                         MaxWidth="260"
                         Name="ProfileField">
@@ -296,7 +311,7 @@
                             <c:Icon
                                 Drawing="{StaticResource Nodes.Template}"
                                 Height="12"
-                                Tint="#C9A7F2"
+                                Tint="{DynamicResource ProfileTintColor}"
                                 VerticalAlignment="Center"
                                 Width="12" />
                             <TextBlock
@@ -364,8 +379,8 @@
             <Panel ClipToBounds="True" Name="Surface">
                 <Panel.Background>
                     <RadialGradientBrush Center="50%,45%" GradientOrigin="50%,45%" RadiusX="75%" RadiusY="75%">
-                        <GradientStop Color="#141418" Offset="0" />
-                        <GradientStop Color="#0D0D10" Offset="1" />
+                        <GradientStop Color="#1A1A1A" Offset="0" />
+                        <GradientStop Color="#121212" Offset="1" />
                     </RadialGradientBrush>
                 </Panel.Background>
                 <c:MapCanvas
@@ -607,7 +622,7 @@
                                 </Grid>
                                 <TextBlock
                                     FontSize="12"
-                                    Foreground="#F3A19A"
+                                    Foreground="{DynamicResource ErrorTextColor}"
                                     IsVisible="{Binding HasProblem}"
                                     Margin="0,10,0,0"
                                     Text="{Binding Problem}"
@@ -620,7 +635,7 @@
                                         <DataTemplate x:DataType="x:String">
                                             <TextBlock
                                                 FontSize="12"
-                                                Foreground="#F0C674"
+                                                Foreground="{DynamicResource WarningTextColor}"
                                                 Margin="0,2"
                                                 Text="{Binding}"
                                                 TextWrapping="Wrap" />
@@ -639,14 +654,14 @@
                                     ToolTip.Tip="{l:Tr OpenProfile}">
                                     <StackPanel Orientation="Horizontal" Spacing="6">
                                         <Border
-                                            Background="#2A2238"
+                                            Background="{DynamicResource ProfileSquareColor}"
                                             CornerRadius="4"
                                             Height="16"
                                             Width="16">
                                             <c:Icon
                                                 Drawing="{StaticResource Nodes.Template}"
                                                 Height="10"
-                                                Tint="#C9A7F2"
+                                                Tint="{DynamicResource ProfileTintColor}"
                                                 Width="10" />
                                         </Border>
                                         <TextBlock
@@ -664,7 +679,7 @@
                                 Text="{l:Tr RailEmpty}" />
                             <Panel IsVisible="{Binding HasRail}">
                                 <Border
-                                    Background="#2A2B31"
+                                    Background="{DynamicResource BorderColor}"
                                     HorizontalAlignment="Left"
                                     Margin="9,12"
                                     Width="1.5" />
@@ -713,7 +728,7 @@
                                                     Width="64" />
                                                 <TextBlock
                                                     FontSize="11"
-                                                    Foreground="#8FE3A2"
+                                                    Foreground="{DynamicResource SuccessTextColor}"
                                                     Grid.Column="2"
                                                     IsVisible="{Binding IsActive}"
                                                     Text="{Binding ActiveText}"
@@ -878,7 +893,7 @@
                             </Grid>
                             <Panel>
                                 <Border
-                                    Background="#26272D"
+                                    Background="{DynamicResource BorderColor}"
                                     HorizontalAlignment="Left"
                                     Margin="5,10"
                                     Width="1.5" />

@@ -134,3 +134,4 @@ Each file holds the decisions of one group of [the index](../decisions-index.md)
 - [The studio made simpler, the Library by kind (D515)](d515-library-by-kind.md): 1 decision, 3 KB.
 - [The studio made simpler, the settings and the statistics (D516)](d516-settings-and-statistics.md): 1 decision, 3 KB.
 - [Movement and banking, a walk refused with its confirmation (D517)](d517-miner-refused-door.md): 1 decision, 4 KB.
+- [The studio made simpler, next's dark islands (D530)](d530-next-dark-islands.md): 1 decision, 3 KB.

@@ -12,10 +12,10 @@
             <Setter Property="Foreground" Value="{DynamicResource ForegroundColor}" />
         </Style>
         <Style Selector="TextBlock.Message.Warning">
-            <Setter Property="Foreground" Value="#F0C674" />
+            <Setter Property="Foreground" Value="{DynamicResource WarningTextColor}" />
         </Style>
         <Style Selector="TextBlock.Message.Error">
-            <Setter Property="Foreground" Value="#F3A19A" />
+            <Setter Property="Foreground" Value="{DynamicResource ErrorTextColor}" />
         </Style>
     </UserControl.Styles>
     <DockPanel>

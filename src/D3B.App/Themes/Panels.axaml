@@ -137,23 +137,23 @@
         <Setter Property="Background" Value="#2EEA5D52" />
     </Style>
     <Style Selector="Border.Count.Error > TextBlock">
-        <Setter Property="Foreground" Value="#F3A19A" />
+        <Setter Property="Foreground" Value="{DynamicResource ErrorTextColor}" />
     </Style>
     <Style Selector="Border.Count.Warning">
         <Setter Property="Background" Value="#29E9AD3C" />
     </Style>
     <Style Selector="Border.Count.Warning > TextBlock">
-        <Setter Property="Foreground" Value="#F0C674" />
+        <Setter Property="Foreground" Value="{DynamicResource WarningTextColor}" />
     </Style>
     <Style Selector="Border.Line">
         <Setter Property="MinHeight" Value="26" />
         <Setter Property="Padding" Value="10,0" />
-        <Setter Property="BorderBrush" Value="#06FFFFFF" />
+        <Setter Property="BorderBrush" Value="{DynamicResource SoftLineColor}" />
         <Setter Property="BorderThickness" Value="0,0,0,1" />
         <Setter Property="Background" Value="Transparent" />
     </Style>
     <Style Selector="Border.Line:pointerover">
-        <Setter Property="Background" Value="#06FFFFFF" />
+        <Setter Property="Background" Value="{DynamicResource SoftLineColor}" />
     </Style>
     <Style Selector="TextBlock.Time">
         <Setter Property="Foreground" Value="{DynamicResource DimColor}" />
