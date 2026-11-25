@@ -1,5 +1,6 @@
 using System.Collections.Concurrent;
 using System.Diagnostics.CodeAnalysis;
+using D3B.Bot.Activities;
 using D3B.Bot.Banks;
 using D3B.Bot.Characters;
 using D3B.Bot.Fights;
@@ -48,6 +49,7 @@ public sealed class Bots : IGameObserver, IAsyncDisposable
     private readonly ConcurrentDictionary<CharacterKey, FightPilot> _pilots = new();
     private readonly MapMates _mates;
     private volatile BotDelays _delays = BotDelays.Measured;
+    private volatile ActivityRestarts _restarts = ActivityRestarts.Default;
     private volatile bool _fightsAlone;
 
     /// <summary>Gets every bot, those whose game connection closed included.</summary>
@@ -61,6 +63,13 @@ public sealed class Bots : IGameObserver, IAsyncDisposable
     {
         get => _delays;
         set => _delays = value ?? throw new ArgumentNullException(nameof(value));
+    }
+
+    /// <summary>Gets or sets how every bot's runs restart an activity whose profile asks it: set, the next restart of each reads it (D519).</summary>
+    public ActivityRestarts Restarts
+    {
+        get => _restarts;
+        set => _restarts = value ?? throw new ArgumentNullException(nameof(value));
     }
 
     /// <summary>Gets or sets whether the AI plays every fight of the bots made from now on, whatever their activity says: the host's <c>Fights:Alone</c> (D198, D235, D244).</summary>
@@ -182,7 +191,7 @@ public sealed class Bots : IGameObserver, IAsyncDisposable
         {
             if (!_bots.TryGetValue(key, out bot))
             {
-                bot = new BotActor(state, _maps, _world, _banks, () => _delays, _time, _logs.CreateLogger<BotActor>()) { FightsAlone = _fightsAlone };
+                bot = new BotActor(state, _maps, _world, _banks, () => _delays, _time, _logs.CreateLogger<BotActor>()) { FightsAlone = _fightsAlone, RestartsOf = () => _restarts };
 
                 // Every bot may lead: its gate holds nothing while nobody follows it (D437).
                 var gate = new GroupGate(bot, Groups);

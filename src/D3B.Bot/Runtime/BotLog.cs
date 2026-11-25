@@ -136,6 +136,18 @@ internal static partial class BotLog
     [LoggerMessage(Level = LogLevel.Error, Message = "Bot {Character}: activity {Activity} failed")]
     public static partial void ActivityFailed(ILogger logger, long character, string activity, Exception exception);
 
+    [LoggerMessage(Level = LogLevel.Warning, Message = "Bot {Character}: {Action} failed; before the next try, rung {Climbed} of {Height} of the recovery, {Rung}")]
+    public static partial void Recovering(ILogger logger, long character, string action, RecoveryRung rung, int climbed, int height);
+
+    [LoggerMessage(Level = LogLevel.Warning, Message = "Bot {Character}: activity {Activity} failed; the character is put back in order, and restart {Restart} of the last hour comes in {Delay}")]
+    public static partial void ActivityRestarting(ILogger logger, long character, string activity, int restart, TimeSpan delay, Exception exception);
+
+    [LoggerMessage(Level = LogLevel.Warning, Message = "Bot {Character}: activity {Activity} made no progress for {Delay}: no map changed, no fight, no pod gained or banked")]
+    public static partial void ActivityStalled(ILogger logger, long character, string activity, TimeSpan delay);
+
+    [LoggerMessage(Level = LogLevel.Information, Message = "Bot {Character}: map {Map} left by its nearest exit, {Outcome}")]
+    public static partial void LeftByNearestExit(ILogger logger, long character, long map, MapChangeOutcome outcome);
+
     [LoggerMessage(Level = LogLevel.Information, Message = "Bot {Character}: activity {Activity} over after {Steps} steps, {Outcome}")]
     public static partial void ActivityOver(ILogger logger, long character, string activity, int steps, ActivityOutcome outcome);
 }

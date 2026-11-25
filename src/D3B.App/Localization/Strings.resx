@@ -173,6 +173,18 @@
   <data name="ActivityRecovering" xml:space="preserve">
     <value>Recovering</value>
   </data>
+  <data name="ActivityRestarting" xml:space="preserve">
+    <value>Restarting</value>
+  </data>
+  <data name="ActivityRestarted" xml:space="preserve">
+    <value>Restarted after a failure, {0} this hour: {1}</value>
+  </data>
+  <data name="ActivityGaveUp" xml:space="preserve">
+    <value>Restarted {0} times in an hour, then stopped: {1}</value>
+  </data>
+  <data name="JournalActivityRestarted" xml:space="preserve">
+    <value>« {0} » restarts after a failure, {1} this hour</value>
+  </data>
   <data name="ActivityEnding" xml:space="preserve">
     <value>Ending</value>
   </data>

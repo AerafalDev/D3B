@@ -86,4 +86,7 @@ public sealed class HarvestSettings
 
     /// <summary>Gets or sets the food to eat, by item, the first carried eaten first; none chosen, what the inventory holds that only heals, the smallest heal first; with none left the life regenerates by itself up to the share.</summary>
     public IReadOnlyList<int> Food { get; set; } = [];
+
+    /// <summary>Gets or sets whether the run restarts the activity, once the character is put back in order, after a failure that may pass or ten minutes with nothing done; on unless the profile says otherwise (D519).</summary>
+    public bool RestartAfterFailure { get; set; } = true;
 }
