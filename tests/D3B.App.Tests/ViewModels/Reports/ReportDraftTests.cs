@@ -187,6 +187,52 @@ public sealed class ReportDraftTests : IDisposable
     }
 
     [Fact]
+    public async Task TheJournalReadFromDiskIsTheReportsJournalNamingNobodyAndSaysItsDay()
+    {
+        var sources = Sources(Capture()) with { JournalOnDisk = () => $"2026-11-09T22:00:00.000Z NoteEntry {{ Text = {Name} reached the bank }}\n2026-11-10T09:59:00.000Z BotEventEntry {{ Event = Disconnected }}\n" };
+        var draft = await PrepareAsync(sources);
+        var journal = draft.Parts.Single(part => part.Files.Any(file => file.Name == ReportFiles.Journal));
+        var text = Encoding.UTF8.GetString(journal.Files.Single().Data);
+
+        Assert.Equal("2026-11-09T22:00:00.000Z NoteEntry { Text = character 11 reached the bank }\n2026-11-10T09:59:00.000Z BotEventEntry { Event = Disconnected }\n", text);
+        Assert.Equal("2 lines of the last 24 hours, from the journal on disk; the character is told by its number.", journal.Detail);
+    }
+
+    [Fact]
+    public async Task TheHostsProblemsArePartOfTheReportWithThePlayersFolderHiddenAndCanBeUnchecked()
+    {
+        var sources = Sources(Capture()) with
+        {
+            HostJournal = () => @"2026-11-10T03:12:00.000Z Warning D3B.Studio: The file C:\Users\Jeanne\AppData\Local\D3B\studio\p1.json was not read" + "\n",
+            UserFolder = @"C:\Users\Jeanne",
+        };
+        var draft = await PrepareAsync(sources);
+        var host = draft.Parts.Single(part => part.Files.Any(file => file.Name == ReportFiles.Host));
+
+        Assert.Equal(@"2026-11-10T03:12:00.000Z Warning D3B.Studio: The file %USERPROFILE%\AppData\Local\D3B\studio\p1.json was not read" + "\n", host.Preview);
+        Assert.True(host.CanChange);
+
+        host.IsIncluded = false;
+
+        Assert.DoesNotContain(ReportFiles.Host, ReportReader.Read(new MemoryStream(File.ReadAllBytes(draft.Write().Path))).Files.Keys);
+        Assert.DoesNotContain(ReportFiles.Host, (await PrepareAsync(Sources(Capture()))).Parts.SelectMany(part => part.Files).Select(file => file.Name));
+    }
+
+    [Fact]
+    public async Task ALongJournalShowsItsLastLinesAndSaysHowManyAreOnlyInTheFile()
+    {
+        var lines = string.Concat(Enumerable.Range(0, 2_500).Select(index => $"2026-11-10T09:00:00.000Z line {index}\n"));
+        var draft = await PrepareAsync(Sources(Capture()) with { JournalOnDisk = () => lines });
+        var journal = draft.Parts.Single(part => part.Files.Any(file => file.Name == ReportFiles.Journal));
+        var shown = journal.Preview!.Split('\n', StringSplitOptions.RemoveEmptyEntries);
+
+        Assert.Equal(lines, Encoding.UTF8.GetString(journal.Files.Single().Data));
+        Assert.Equal("500 earlier lines are in the file and not shown here.", shown[0]);
+        Assert.Equal("2026-11-10T09:00:00.000Z line 500", shown[1]);
+        Assert.Equal("2026-11-10T09:00:00.000Z line 2499", shown[^1]);
+    }
+
+    [Fact]
     public async Task TheCaptureOfASessionStillBeingRecordedIsCleanedWhileTheRelayHoldsItOpen()
     {
         var path = _directory.Combine("captures", "game", "20261110-090000-0HNQ1OPEN.d3bcap");

@@ -19,7 +19,7 @@ and fights, alone or in a group, and a desktop app shows what each bot does.
   can keep a Minor Uchronic Elixir going.
 - **Fight AI**: plays every class, and the fight's easy challenges.
 - **Groups**: one character leads, the others follow it, fight beside it and bank with it.
-- **Studio**: your characters live, profile and route editors, a journal per bot. In French and English.
+- **Studio**: your characters live, profile and route editors, a journal per bot, kept on disk for a week and saved in one click. In French and English.
 
 D3B injects nothing into the game and never sees your password.
 

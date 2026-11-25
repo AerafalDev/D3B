@@ -587,6 +587,18 @@
   <data name="CopyLinesHint" xml:space="preserve">
     <value>Copy the lines shown</value>
   </data>
+  <data name="SaveJournal" xml:space="preserve">
+    <value>Save the journal</value>
+  </data>
+  <data name="SaveJournalHint" xml:space="preserve">
+    <value>Save the journal kept on disk, every day of it, as it is: unlike a report, it names your characters</value>
+  </data>
+  <data name="JournalSaved" xml:space="preserve">
+    <value>Journal saved: {0}</value>
+  </data>
+  <data name="JournalNotSaved" xml:space="preserve">
+    <value>The journal could not be saved. {0}</value>
+  </data>
   <data name="LogsEmpty" xml:space="preserve">
     <value>The bots' actions show here.</value>
   </data>
@@ -3427,6 +3439,18 @@
   </data>
   <data name="ReportPartJournalDetail" xml:space="preserve">
     <value>{0} entries, as text; the character is told by its number.</value>
+  </data>
+  <data name="ReportPartJournalDiskDetail" xml:space="preserve">
+    <value>{0} lines of the last 24 hours, from the journal on disk; the character is told by its number.</value>
+  </data>
+  <data name="ReportPartHost" xml:space="preserve">
+    <value>Problems of the host</value>
+  </data>
+  <data name="ReportPartHostDetail" xml:space="preserve">
+    <value>{0} warnings and errors of the last 24 hours that name no character, as text; your Windows folder is told as %USERPROFILE%.</value>
+  </data>
+  <data name="ReportPreviewCut" xml:space="preserve">
+    <value>{0} earlier lines are in the file and not shown here.</value>
   </data>
   <data name="ReportPartTrace" xml:space="preserve">
     <value>Decisions</value>

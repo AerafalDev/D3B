@@ -3,7 +3,7 @@ namespace D3B.Studio.Behaviors;
 /// <summary>An action played at once, never waiting, such as a note or a pause: it may play in a rule as in a state (D297).</summary>
 /// <typeparam name="TValues">Its values, a class the module describes as an activity's settings (D98).</typeparam>
 /// <remarks>Played in a rule, it runs on the bot's loop: it must be quick, and must not throw.</remarks>
-public abstract class InstantAction<TValues> : ActionNode<TValues>
+public abstract class InstantAction<TValues> : ActionNode<TValues>, IInstantNode
     where TValues : class, new()
 {
     /// <inheritdoc/>
@@ -20,5 +20,10 @@ public abstract class InstantAction<TValues> : ActionNode<TValues>
         Apply(context, values);
 
         return Task.CompletedTask;
+    }
+
+    void IInstantNode.Apply(ActionContext context, object values)
+    {
+        Apply(context, (TValues)values);
     }
 }

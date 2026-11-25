@@ -587,6 +587,18 @@
   <data name="CopyLinesHint" xml:space="preserve">
     <value>Copier les lignes affichées</value>
   </data>
+  <data name="SaveJournal" xml:space="preserve">
+    <value>Enregistrer le journal</value>
+  </data>
+  <data name="SaveJournalHint" xml:space="preserve">
+    <value>Enregistrer le journal gardé sur le disque, tous ses jours, tel quel : contrairement à un rapport, il nomme vos personnages</value>
+  </data>
+  <data name="JournalSaved" xml:space="preserve">
+    <value>Journal enregistré : {0}</value>
+  </data>
+  <data name="JournalNotSaved" xml:space="preserve">
+    <value>Le journal n’a pas pu être enregistré. {0}</value>
+  </data>
   <data name="LogsEmpty" xml:space="preserve">
     <value>Les actions des bots s'affichent ici.</value>
   </data>
@@ -3427,6 +3439,18 @@
   </data>
   <data name="ReportPartJournalDetail" xml:space="preserve">
     <value>{0} entrées, en texte ; le personnage est désigné par son numéro.</value>
+  </data>
+  <data name="ReportPartJournalDiskDetail" xml:space="preserve">
+    <value>{0} lignes des dernières 24 heures, du journal sur le disque ; le personnage est désigné par son numéro.</value>
+  </data>
+  <data name="ReportPartHost" xml:space="preserve">
+    <value>Problèmes de l’hôte</value>
+  </data>
+  <data name="ReportPartHostDetail" xml:space="preserve">
+    <value>{0} avertissements et erreurs des dernières 24 heures qui ne nomment aucun personnage, en texte ; votre dossier Windows est écrit %USERPROFILE%.</value>
+  </data>
+  <data name="ReportPreviewCut" xml:space="preserve">
+    <value>{0} lignes plus anciennes sont dans le fichier et ne sont pas affichées ici.</value>
   </data>
   <data name="ReportPartTrace" xml:space="preserve">
     <value>Décisions</value>

@@ -32,7 +32,8 @@ internal abstract class CompiledStep
 
         public required BoundValues Values { get; init; }
 
-        public bool IsInstant => Node.IsInstant;
+        // What a rule applies (D508): a node that only says it is instant is not let into a rule it would fail in.
+        public bool IsInstant => Node is IInstantNode;
 
         /// <summary>Gets how many passes the action is played (D421).</summary>
         public StepRepeat Repeat { get; init; } = StepRepeat.Once;

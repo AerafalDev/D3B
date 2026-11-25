@@ -15,15 +15,17 @@ internal sealed class FightPilot
 {
     private readonly BotActor _bot;
     private readonly Lazy<FightTactics> _tactics;
+    private readonly Lazy<FightSearches> _searches;
     private readonly GameTables _tables;
 
     /// <summary>Gets the pilot's run, over once the bot stops.</summary>
     public Task Run { get; }
 
-    public FightPilot(BotActor bot, Lazy<FightTactics> tactics, GameTables tables)
+    public FightPilot(BotActor bot, Lazy<FightTactics> tactics, Lazy<FightSearches> searches, GameTables tables)
     {
         _bot = bot;
         _tactics = tactics;
+        _searches = searches;
         _tables = tables;
         Run = Task.Run(RunAsync);
     }
@@ -40,7 +42,7 @@ internal sealed class FightPilot
             try
             {
                 await _bot.WaitUntilAsync(Playable).ConfigureAwait(false);
-                await _bot.RunInFightAsync((context, token) => FightPlay.PlayAsync(context, _tactics.Value, _tables, token), CancellationToken.None).ConfigureAwait(false);
+                await _bot.RunInFightAsync((context, token) => FightPlay.PlayAsync(context, _tactics.Value, _searches.Value, _tables, token), CancellationToken.None).ConfigureAwait(false);
             }
             catch (ObjectDisposedException)
             {

@@ -156,6 +156,16 @@ public sealed class FightPlayTests : IAsyncDisposable
         connection.Client(new GameActionAcknowledgementRequest { ActionId = actionId, Valid = true });
     }
 
+    private static void NextTurn(TestConnection connection, int round)
+    {
+        connection.Server(new FightTurnEndEvent { FighterId = Self });
+        connection.Server(new FightTurnEvent { FighterId = Monster, Duration = 300, Round = round - 1 });
+        connection.Server(new FightTurnEndEvent { FighterId = Monster });
+        connection.Server(new FightNewRoundEvent { Round = round });
+        connection.Server(new FightTurnEvent { FighterId = Self, Duration = 300, Round = round });
+        connection.Server(new FightTurnStartPlayingEvent());
+    }
+
     private async Task<IMessage> SentAsync(TestConnection connection, int count)
     {
         // The AI waits the client's display and the fight's pace before each request: the clock moves until it sent.
@@ -545,23 +555,25 @@ public sealed class FightPlayTests : IAsyncDisposable
     }
 
     [Fact]
-    public async Task ASpellTheServerLeavesUnansweredIsNotCastAgainThatFight()
+    public async Task ASpellTheServerLeavesUnansweredIsTriedOnceMoreTheNextTurnThenNotThatFight()
     {
-        // Measured live (D203): a transformed character's own spells go unanswered, on every cell.
+        // Measured live (D203): a transformed character's own spells go unanswered, on every cell. F2 (D510): one answer lost
+        // left a key spell out of the whole fight, so that a spell is left out for the fight only once two turns went unanswered.
         var (connection, bot) = await _play.EnterAsync(Far);
         var monster = Beside(Far, 8, 0);
         var sent = await StartTurnAsync(connection, bot, monster);
 
         Assert.IsType<GameActionFightCastRequest>(await SentAsync(connection, sent + 5));
         Assert.IsType<FightTurnFinishRequest>(await SentAsync(connection, sent + 6));
-        connection.Server(new FightTurnEndEvent { FighterId = Self });
-        connection.Server(new FightTurnEvent { FighterId = Monster, Duration = 300, Round = 1 });
-        connection.Server(new FightTurnEndEvent { FighterId = Monster });
-        connection.Server(new FightNewRoundEvent { Round = 2 });
-        connection.Server(new FightTurnEvent { FighterId = Self, Duration = 300, Round = 2 });
-        connection.Server(new FightTurnStartPlayingEvent());
+        NextTurn(connection, 2);
 
-        Assert.IsType<FightTurnFinishRequest>(await SentAsync(connection, sent + 7));
+        var again = Assert.IsType<GameActionFightCastRequest>(await SentAsync(connection, sent + 7));
+
+        Assert.Equal((TestPlay.BlowSpellId, monster), (again.SpellId, again.CellId));
+        Assert.IsType<FightTurnFinishRequest>(await SentAsync(connection, sent + 8));
+        NextTurn(connection, 3);
+
+        Assert.IsType<FightTurnFinishRequest>(await SentAsync(connection, sent + 9));
     }
 
     [Fact]

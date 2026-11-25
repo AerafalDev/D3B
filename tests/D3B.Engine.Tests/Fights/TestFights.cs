@@ -120,7 +120,7 @@ internal static class TestFights
             Array.Empty<SpellVariant>(), Array.Empty<SpellBomb>(), Array.Empty<SpellBombWall>());
     }
 
-    /// <summary>State 9 prevents casting, 11 tackling, 12 being tackled.</summary>
+    /// <summary>State 9 prevents casting, 11 tackling, 12 being tackled, 13 fighting with a weapon.</summary>
     public static SpellStateCatalog States()
     {
         return new SpellStateCatalog(
@@ -129,6 +129,7 @@ internal static class TestFights
                 new(9, 1, SpellStateProperties.PreventsSpellCast, 0, 0, 0),
                 new(11, 2, SpellStateProperties.CantTackle, 0, 0, 0),
                 new(12, 3, SpellStateProperties.CantBeTackled, 0, 0, 0),
+                new(13, 4, SpellStateProperties.PreventsFight, 0, 0, 0),
             },
             ReadOnlyMemory<int>.Empty);
     }

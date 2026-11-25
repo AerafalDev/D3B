@@ -24,14 +24,16 @@ namespace D3B.Bot.Harvesting;
 /// wanted resource's skill on, at the character's level, the resource asked for first, then the nearest; an element taken
 /// by another, refused or out of reach is left for the rest of the visit. A map with nothing left is gone through, and the
 /// step travels to the nearest map of the tour still to go through (<see cref="HarvestTour"/>), the probable ones first,
-/// stopping on the first such map of the way. The journey also stops on a map it crosses, not yet gone through in the tour, where the
-/// server offers a wanted element, even when the tour holds the map back as growing (D392), and even out of the zone, where the step
-/// takes what the server offers once a tour without counting the map in it (D439). Off the zone, after banking or a fight, it travels
+/// stopping on the first such map of the way. The journey also stops on a map it crosses where the server offers a wanted element,
+/// even when the tour holds the map back as growing (D392), even out of the zone, where the step takes what the server offers
+/// without counting the map in the tour (D439), and even on a map gone through, unless the tour left that element there (D507).
+/// Off the zone, after banking or a fight, it travels
 /// back the same way; the journey to the bank stops nowhere.
 /// </para>
 /// <para>
 /// When the activity chooses the place, it goes through several sub-areas in turn (<see cref="PlaceRotation"/>, D391): a tour done, it
-/// goes on to the sub-area of the rotation left longest ago that has maps to go through, each keeping its own tour, and waits only when
+/// goes on to the nearest sub-area of the rotation not yet gone to since the draw, else the one left longest ago, that has maps to go
+/// through (D506), each keeping its own tour, and waits only when
 /// every one still grows back or was swept for nothing. With <see cref="HarvestOrder.Balanced"/> the zones are shared between the
 /// professions and the one harvested least lately comes first on a map (<see cref="HarvestBalance"/>).
 /// </para>
@@ -208,6 +210,15 @@ public sealed class HarvestActivity : BotActivity
     private static int? VertexOf(BotContext context, CharacterState state)
     {
         return state.MapId is { } mapId && state.Cell is { } cell && context.Maps.TryGet(mapId, out var map) && context.World.TryGetVertex(map, cell, out var vertex) ? vertex : null;
+    }
+
+    // The map changes from where the character stands to the nearest map a zone of the rotation still has to go through (D506), a
+    // teleport counting as the changes the pathfinder weighs it at.
+    private static int? ChangesTo(BotContext context, IReadOnlySet<long> remaining)
+    {
+        return VertexOf(context, context.State) is { } vertex && context.World.TryFind(vertex, remaining, WorldTravel.RulesOf(context), out var path)
+            ? path.Steps.Sum(step => step.IsTeleport ? Math.Max(1, context.TeleportChanges) : 1)
+            : null;
     }
 
     /// <inheritdoc/>
@@ -600,10 +611,18 @@ public sealed class HarvestActivity : BotActivity
             // Only the zone's own harvests keep it from being swept for nothing: what the way gave says nothing of it (D128).
             if (inZone)
                 _current?.Tour.Harvested();
+            else
+                _current?.Tour.HarvestedOnTheWay();
         }
         else if (outcome is not UseOutcome.Busy)
         {
             _skipped.Add(elementId);
+
+            // A use that failed, no journey of the tour stops for again on that map: it would call the character back to it at every
+            // crossing (D392, D507). What is out of reach is not: that is the cell's and the zone's the character came by, which
+            // the next crossing weighs again.
+            if (state.MapId is { } failedOn)
+                _current?.Tour.LeaveElement(failedOn, elementId);
         }
 
         // Moved to another map on the way, the server's doing as on a map action's cell, the character left the map it was going
@@ -672,14 +691,21 @@ public sealed class HarvestActivity : BotActivity
 
         Publish(state, GameText.Of(HarvestTexts.Text(inZone ? "DoingTravel" : "DoingReturn")), next: next);
 
-        // A map the journey crosses, not yet gone through in this tour, is harvested if the server offers a wanted element on it,
-        // whether the tour holds it back as growing or not, the reckoned time being only a guess (D392), and whether it is of the
-        // zone or not, the profile's resources being wanted anywhere (D439). The journey asks it of the map's own information, with a
-        // list of its own, so that nothing is left skipped for the map the character stands on.
+        // A map the journey crosses is harvested if the server offers a wanted element on it, whether the tour holds it back as
+        // growing or not, the reckoned time being only a guess (D392), whether it is of the zone or not, the profile's resources
+        // being wanted anywhere (D439), and whether the tour went through it already, the element grown back since (D507). An
+        // element whose use failed on that map in the tour is no reason to stop. The journey asks it of the map's own
+        // information, with a list of its own, so that nothing is left skipped for the map the character stands on.
         bool Harvestable(CharacterState crossed)
         {
-            return crossed.MapId is { } crossedId && !tour.IsVisited(crossedId) && !tour.IsCrossed(crossedId)
-                && MapHarvest.Candidates(context, TargetsOf(zone), crossed, []).Count > 0;
+            if (crossed.MapId is not { } crossedId || MapHarvest.Candidates(context, TargetsOf(zone), crossed, [.. tour.ElementsLeftOn(crossedId)]).Count is 0)
+                return false;
+
+            // Out of the zone, a map crossed already in this tour is harvested again only where the journey stopped for it.
+            if (tour.IsCrossed(crossedId))
+                _regrownOn = crossedId;
+
+            return true;
         }
 
         // The map the journey is about to leave holds a wanted element that grew back since the character came: it stays for it (D495).
@@ -718,7 +744,7 @@ public sealed class HarvestActivity : BotActivity
                 if (_rotation.Count > 1 && _settings.Place is HarvestPlace.Automatic)
                 {
                     _rotation.Remove(current);
-                    _current = _rotation[0];
+                    _current = NextOf(context, null) ?? _rotation[0];
                     _failedJourneys = 0;
 
                     break;
@@ -769,7 +795,7 @@ public sealed class HarvestActivity : BotActivity
                 if (_rotation.Count is 0)
                     throw Failure("No map of the zone holds a resource to harvest.", "FailNothing");
 
-                _current = _rotation[0];
+                _current = NextOf(context, null) ?? _rotation[0];
 
                 return;
             }
@@ -786,7 +812,7 @@ public sealed class HarvestActivity : BotActivity
         if (_settings.Place is HarvestPlace.Automatic && _rotation.TrueForAll(member => member.Done))
             Draw(context);
 
-        if (HarvestRotation.Next(_rotation, now) is { } next)
+        if (NextOf(context, current) is { } next)
         {
             _current = next;
 
@@ -803,6 +829,12 @@ public sealed class HarvestActivity : BotActivity
 
         Publish(context.State, GameText.Of(HarvestTexts.Text("DoingWaitGrow")));
         await context.WaitUntilAsync(state => HasWanted(zone, state), _regrowthDelay, cancellationToken).ConfigureAwait(false);
+    }
+
+    // The zone of the rotation to go through next, the nearest of the round not yet gone to, the zone just left last (D506).
+    private HarvestRotationZone? NextOf(BotContext context, HarvestRotationZone? left)
+    {
+        return HarvestRotation.Next(_rotation, context.Time.GetUtcNow(), left, (_, remaining) => ChangesTo(context, remaining));
     }
 
     // A tour going round gets nowhere, whatever keeps it from going through the map it comes back to: its other maps are left for

@@ -135,4 +135,39 @@ public sealed class BottomPanelViewsTests : IAsyncDisposable
         Assert.Contains("Tous les personnages", tabs[BottomTab.Statistics]);
         Assert.All(tabs.Values.SelectMany(texts => texts), text => Assert.DoesNotContain("Avalonia.Data", text, StringComparison.Ordinal));
     }
+
+    [Fact]
+    public async Task TheJournalsToolbarOffersToSaveTheJournalBesideCopyingIt()
+    {
+        await _store.OpenedAsync();
+        await _store.Play.EnterAsync(300);
+
+        var runner = await TestHosts.RunningAsync(_store.Host);
+        var buttons = await OnTheUIThreadAsync(() =>
+        {
+            var localizer = Localizer.Instance;
+
+            localizer.Use(Localizer.French);
+
+            var main = new MainViewModel(runner, localizer);
+            var window = new MainWindow { DataContext = main, Width = 1440, Height = 900 };
+
+            main.Refresh();
+            window.Show();
+            main.Bottom.ShowCommand.Execute(BottomTab.Journal);
+            main.Refresh();
+            Dispatcher.UIThread.RunJobs();
+
+            var dock = window.GetVisualDescendants().OfType<Border>().Single(border => border.Name == "BottomDock");
+            var names = dock.GetVisualDescendants().OfType<Button>().Where(button => button.IsEffectivelyVisible).Select(Avalonia.Automation.AutomationProperties.GetName).OfType<string>().ToList();
+
+            localizer.Use(Localizer.English);
+            window.Close();
+
+            return names;
+        });
+
+        Assert.Contains("Copier", buttons);
+        Assert.Contains("Enregistrer le journal", buttons);
+    }
 }

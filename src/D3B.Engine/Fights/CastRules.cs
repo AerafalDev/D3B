@@ -359,7 +359,7 @@ public sealed class CastRules
         var spellId = level.SpellId;
         var criterion = CriterionOf(level);
 
-        if (Prevented(caster, criterion))
+        if (Prevented(caster, level.SpellId, criterion))
             return CastRefusal.CasterCannotCast;
 
         if (caster.ActionPoints < cast.ApCost)
@@ -444,7 +444,7 @@ public sealed class CastRules
 
         var criterion = CriterionOf(level);
 
-        return !Prevented(caster, criterion) && Holds(criterion, caster);
+        return !Prevented(caster, level.SpellId, criterion) && Holds(criterion, caster);
     }
 
     /// <summary>Gets the cells a fighter may cast a level on.</summary>
@@ -555,12 +555,14 @@ public sealed class CastRules
         return criterion is null || criterion.Evaluate(new CriterionFacts { States = caster.States }) is CriterionAnswer.True;
     }
 
-    private bool Prevented(Combatant caster, Criterion? criterion)
+    private bool Prevented(Combatant caster, int spellId, Criterion? criterion)
     {
-        // A state that prevents casting lets through the levels that ask for it, as a carrier throws what it carries.
+        // A state that prevents casting lets through the levels that ask for it, as a carrier throws what it carries. One that
+        // prevents fighting keeps the weapon from striking (D511): measured, the server refused with text 372 each of the AI's
+        // 74 blows struck in state 1 or 42 on the captures of 22 to 24 November, and let none through.
         foreach (var state in caster.States)
         {
-            if (Has(state, SpellStateProperties.PreventsSpellCast) && !Asks(criterion, state))
+            if ((Has(state, SpellStateProperties.PreventsSpellCast) || (spellId is WeaponBlows.SpellId && Has(state, SpellStateProperties.PreventsFight))) && !Asks(criterion, state))
                 return true;
         }
 
