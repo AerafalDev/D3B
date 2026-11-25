@@ -1,5 +1,6 @@
 using D3B.Bot.Activities;
 using D3B.Bot.Characters;
+using D3B.Bot.Dungeons;
 using D3B.Bot.Groups;
 using D3B.Bot.Runtime;
 using D3B.Bot.Tests.Runtime;
@@ -127,6 +128,34 @@ public sealed class GroupBankTests
         Assert.DoesNotContain(connection.Sent, request => request is ExchangeTransferFromInventoryRequest transfer && transfer.Uids.Contains(41));
         Assert.DoesNotContain(connection.Sent, request => request is ExchangeObjectMoveRequest);
         Assert.Equal(0, activity.OwnUnloads);
+        leading.Stop();
+        run.Stop();
+    }
+
+    [Fact]
+    public async Task AGroupInDungeonsBanksTogetherEachMemberKeepingItsKeysAndTheKeyring()
+    {
+        // D529: the dungeon activity watches no pods, yet a follower full out of a dungeon takes the group to the bank, and
+        // neither the master deposits its key nor the follower gives its keyring, which each enters by itself with (D528).
+        await using var play = new TestPlay();
+        var (masterConnection, master, connection, follower, run) = await InTheBankAsync(play, 100);
+
+        masterConnection.Server(new ObjectAddedEvent { Object = Stack(15, TestPlay.DungeonKeyId, 2) });
+        connection.Server(new ObjectAddedEvent { Object = Stack(45, TestPlay.KeyringId, 1) });
+        await master.ProcessedAsync();
+        await follower.ProcessedAsync();
+
+        var activity = new DungeonActivity(new DungeonSettings { Dungeons = [TestPlay.DungeonId], RestartAfterFailure = false }, play.Tables, bots: play.Bots);
+        var leading = master.StartActivity(activity);
+
+        await DepositedAsync(play, masterConnection, 0, 12, 14);
+        await ExchangedAsync(play, masterConnection, connection, 4, 2, 10);
+        await DepositedAsync(play, masterConnection, 6, GivenUid);
+
+        // Banked, the master goes on to the dungeon's door, its keeper on the bank's map, with the whole group.
+        Assert.Equal(new NpcActionRequest { Action = 3, MapId = TestPlay.InsideMapId, NpcActorId = TestPlay.WayActorId }, await TestGroup.SentAsync(play, masterConnection, 11));
+        Assert.Contains(TestPlay.DungeonKeyId, master.State.Inventory.Values.Select(stack => stack.ItemId));
+        Assert.Contains(TestPlay.KeyringId, follower.State.Inventory.Values.Select(stack => stack.ItemId));
         leading.Stop();
         run.Stop();
     }

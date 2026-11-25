@@ -973,7 +973,7 @@ or refines another says so in its own entry. Add a line here with every new deci
 - [D519](decisions/d518-d519-never-idle.md#d519-a-run-that-fails-or-makes-no-progress-for-ten-minutes-puts-the-character-back-in-order-and-restarts-its-activity-after-30-s-doubling-to-8-min-six-times-an-hour-at-most-a-failure-no-restart-would-change-or-a-stop-still-ends-it) A run that fails, or makes no progress for ten minutes, puts the character back in order and restarts its activity, after 30 s doubling to 8 min, six times an hour at most; a failure no restart would change, or a stop, still ends it (2026-11-25)
   - A profile's setting, on for the harvest and the hunt; a restart from the host, at once, uncapped, or map changes taken for no progress.
 
-## Dungeons, the first version (D520 to D527)
+## Dungeons, the first version (D520 to D529)
 
 - [D520](decisions/d520-d523-dungeons.md#d520-a-dungeon-is-an-activity-of-its-own-that-reads-the-clients-dungeon-table-and-follows-the-server-from-room-to-room) A dungeon is an activity of its own that reads the client's dungeon table and follows the server from room to room (2026-11-25)
   - The owner's ask; the client's 187 dungeons and 12 captured connections in four dungeons; a route step and the table's order rejected.
@@ -991,6 +991,10 @@ or refines another says so in its own entry. Add a line here with every new deci
   - The exit measured 28 times; the activity in the catalogue with its form; banking inside and depositing the keys rejected.
 - [D527](decisions/d520-d523-dungeons.md#d527-out-of-a-dungeon-the-character-banks-once-its-weight-and-the-pods-the-next-run-is-likely-to-bring-reach-the-banking-share) Out of a dungeon the character banks once its weight and the pods the next run is likely to bring reach the banking share (2026-11-25)
   - The owner's ask; the most a run brought, per dungeon; an estimate from the drops and the average rejected.
+- [D528](decisions/d520-d523-dungeons.md#d528-in-a-group-each-follower-enters-and-leaves-a-dungeon-by-itself-and-the-group-leaves-out-a-dungeon-a-follower-cannot-enter) In a group each follower enters and leaves a dungeon by itself, and the group leaves out a dungeon a follower cannot enter (2026-11-25)
+  - As measured, each character at the keeper and the exit; the owner's choice, the dungeon left out of the group's turn; the group teleport rejected.
+- [D529](decisions/d520-d523-dungeons.md#d529-a-group-in-dungeons-banks-together-outside-them-each-member-keeping-its-keys-and-the-keyring) A group in dungeons banks together outside them, each member keeping its keys and the keyring (2026-11-25)
+  - The owner's choice, in this pull request; the group's bank by D527's estimate, the keys kept by every member.
 
 ## The studio in next's dark islands, layout and icons (D530 to D532)
 

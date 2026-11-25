@@ -7,4 +7,8 @@ namespace D3B.Bot.Groups;
 /// <param name="Round">The round's number, so that a follower asks once a round.</param>
 /// <param name="Food">Whether the food that only heals is given too, as the master's profile banks all but what is worn.</param>
 /// <param name="Left">The follower's stacks an exchange of that unloading left, given no more.</param>
-public sealed record GroupCollect(CharacterKey Follower, int Round, bool Food, IReadOnlySet<int> Left);
+public sealed record GroupCollect(CharacterKey Follower, int Round, bool Food, IReadOnlySet<int> Left)
+{
+    /// <summary>Gets what every member keeps, as the master's profile says, such as a dungeon's key (D529); none when not set.</summary>
+    public Func<InventoryItem, bool>? Kept { get; init; }
+}

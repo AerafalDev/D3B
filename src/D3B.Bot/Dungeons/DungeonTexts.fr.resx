@@ -68,6 +68,12 @@
   <data name="FailNoKey" xml:space="preserve">
     <value>Le perso n'a ni la clef du donjon ni un trousseau qui l'ouvre.</value>
   </data>
+  <data name="FailFollowerTooLow" xml:space="preserve">
+    <value>{0}, qui suit le perso, est niveau {1}, et le donjon n'accepte qu'à partir du niveau {2}.</value>
+  </data>
+  <data name="FailFollowerNoKey" xml:space="preserve">
+    <value>{0}, qui suit le perso, n'a ni la clef du donjon ni un trousseau qui l'ouvre.</value>
+  </data>
   <data name="FailNoPath" xml:space="preserve">
     <value>Aucun chemin ne mène à la porte du donjon depuis là où est le perso.</value>
   </data>

@@ -54,6 +54,19 @@ public sealed class GroupGiftsTests
     }
 
     [Fact]
+    public async Task AFollowerKeepsWhatItsMastersProfileKeepsSuchAsADungeonsKey()
+    {
+        // D529: each member enters a dungeon with its own key or keyring (D528), so neither is given at the group's bank.
+        await using var play = new TestPlay();
+        var follower = State(0, new InventoryItem(1, TestPlay.Ash, 4, InventoryItem.NotWorn), new InventoryItem(2, TestPlay.DungeonKeyId, 1, InventoryItem.NotWorn));
+        var key = State(0, new InventoryItem(2, TestPlay.DungeonKeyId, 1, InventoryItem.NotWorn));
+
+        Assert.Equal([(1, 4)], GroupGifts.Of(follower, State(0), play.Tables.Items, false, new HashSet<int>(), stack => stack.ItemId == TestPlay.DungeonKeyId));
+        Assert.False(GroupGifts.Carries(key, play.Tables.Items, false, new HashSet<int>(), stack => stack.ItemId == TestPlay.DungeonKeyId));
+        Assert.True(GroupGifts.Carries(key, play.Tables.Items, false, new HashSet<int>()));
+    }
+
+    [Fact]
     public async Task AnItemThePackLacksIsGivenWhole()
     {
         await using var play = new TestPlay();

@@ -2,12 +2,14 @@ using System.Collections.Frozen;
 using System.Collections.Immutable;
 using D3B.Bot.Activities;
 using D3B.Bot.Characters;
+using D3B.Bot.Dungeons;
 using D3B.Bot.Fights;
 using D3B.Bot.Inventory;
 using D3B.Bot.Localization;
 using D3B.Bot.Movement;
 using D3B.Bot.Runtime;
 using D3B.Data;
+using D3B.Data.Dungeons;
 using D3B.Data.Maps;
 using D3B.Engine.Maps;
 using D3B.Protocol.Game;
@@ -48,6 +50,11 @@ namespace D3B.Bot.Groups;
 /// watches: a follower that no longer follows, once on its master's map, asks again; one the game did not bring to its
 /// master's map within a while goes there by its own paths; one the server did not join to its master's fight joins it by
 /// request and turns its options on again.
+/// </para>
+/// <para>
+/// A master in a dungeon (<see cref="BotActivity.DungeonInside"/>) is followed in by the follower itself, as measured in every
+/// captured party (D528): it goes to that dungeon's door and talks to its keeper with its own key or keyring, then follows
+/// its master from room to room as anywhere; inside a dungeon its master left, it talks to the exit's NPC of its map.
 /// </para>
 /// </remarks>
 public sealed class FollowActivity : BotActivity, IDisposable
@@ -100,6 +107,10 @@ public sealed class FollowActivity : BotActivity, IDisposable
     private (long Map, int MastersEnd, int Cell)? _copiedTo;
     private int _failedChanges;
     private bool _healing;
+
+    // The dungeon the follower is in behind its master, and one whose keeper turned it away while its master is in it (D528).
+    private int? _dungeon;
+    private int? _turnedAway;
 
     private volatile IDisposable? _membership;
     private volatile ActivityReport _report = new() { Doing = GameText.Of(GroupTexts.Text("DoingStart")) };
@@ -227,6 +238,14 @@ public sealed class FollowActivity : BotActivity, IDisposable
         if (_mastersMap?.Map != theirs.MapId)
             _mastersMap = (theirs.MapId, now);
 
+        var dungeon = DungeonOf(seen);
+
+        if (dungeon is { } inside && DungeonDoors.IsInside(state, _tables.Dungeons, inside))
+            _dungeon = inside.Id;
+
+        if (dungeon?.Id != _turnedAway)
+            _turnedAway = null;
+
         if (GroupChain.Together(theirs, state))
         {
             // Its master taking its objects at the bank (D433, D442).
@@ -297,6 +316,10 @@ public sealed class FollowActivity : BotActivity, IDisposable
             return true;
         }
 
+        // Neither the game's following nor the world's paths go through a keeper or an exit's NPC (D528).
+        if (await DungeonAsync(context, dungeon, changed, mine, seen, name, cancellationToken).ConfigureAwait(false))
+            return true;
+
         // Following by the game, its client takes it after its master: the bot waits a while before it goes by its own paths.
         if (game && state.Party?.FollowsLeader == true && _mastersMap is { } since && now - since.At < _gameWay)
         {
@@ -319,6 +342,81 @@ public sealed class FollowActivity : BotActivity, IDisposable
     {
         _membership?.Dispose();
         _membership = null;
+    }
+
+    // The dungeon its master is in, by its activity's word, which a room's map alone would not say: a map is a room only of a
+    // dungeon entered (D520).
+    private Dungeon? DungeonOf(BotSeen master)
+    {
+        return master.Bot.Activity is { IsOver: false, Activity: { DungeonInside: { } id } } && _tables.Dungeons.TryGetDungeon(id, out var dungeon) ? dungeon : null;
+    }
+
+    // Whether it acted for a dungeon this step (D528): inside one its master left, it talks to the exit's NPC of its map; its master
+    // in one it is not in, it goes to its door, then talks to its keeper with its own key or keyring. Measured (client-game.md):
+    // each character of a party talked to the keeper and to the exit's NPC itself.
+    private async Task<bool> DungeonAsync(BotContext context, Dungeon? masters, Task changed, BotSeen mine, BotSeen master, GameTextValue name, CancellationToken cancellationToken)
+    {
+        var dungeons = _tables.Dungeons;
+        var state = context.State;
+
+        if (_dungeon is { } id && id != masters?.Id)
+        {
+            if (!dungeons.TryGetDungeon(id, out var left) || !DungeonDoors.IsInside(state, dungeons, left))
+            {
+                _dungeon = null;
+            }
+            else
+            {
+                Publish(GameText.Of(GroupTexts.Text("DoingLeavesDungeon"), name));
+
+                if (await DungeonDoors.ExitAsync(context, _tables, cancellationToken).ConfigureAwait(false) is DoorOutcome.Through)
+                    _dungeon = null;
+                else
+                    await StuckAsync(context, master, name, cancellationToken).ConfigureAwait(false);
+
+                return true;
+            }
+        }
+
+        if (masters is not { } dungeon || DungeonDoors.IsInside(state, dungeons, dungeon) || !DungeonDoors.IsInside(master.State, dungeons, dungeon))
+            return false;
+
+        if (state.MapId != dungeon.EntranceMapId)
+        {
+            Publish(GameText.Of(GroupTexts.Text("DoingToDungeon"), name));
+
+            if (await context.TravelAsync(FrozenSet.Create(dungeon.EntranceMapId), cancellationToken).ConfigureAwait(false) is not TravelOutcome.Arrived)
+                await StuckAsync(context, master, name, cancellationToken).ConfigureAwait(false);
+
+            return true;
+        }
+
+        // The master leaves out a dungeon a follower cannot enter (D528): one that still cannot waits at the door, and its master
+        // goes on without it after a while (D490).
+        if (_turnedAway == dungeon.Id || !DungeonDoors.MayEnter(state, dungeons, dungeon))
+        {
+            Publish(GameText.Of(GroupTexts.Text(_turnedAway == dungeon.Id ? "DoingTurnedAway" : "DoingNoDungeonKey"), name));
+            await WaitAsync(context, changed, mine, master, cancellationToken).ConfigureAwait(false);
+
+            return true;
+        }
+
+        Publish(GameText.Of(GroupTexts.Text("DoingEntersDungeon"), name));
+
+        switch (await DungeonDoors.EnterAsync(context, _tables, dungeon, cancellationToken).ConfigureAwait(false))
+        {
+            case DoorOutcome.Through:
+                _dungeon = dungeon.Id;
+                break;
+            case DoorOutcome.Refused:
+                _turnedAway = dungeon.Id;
+                break;
+            case DoorOutcome.Unanswered:
+                await StuckAsync(context, master, name, cancellationToken).ConfigureAwait(false);
+                break;
+        }
+
+        return true;
     }
 
     // Whether its master's group follows by the game's options (D476), as its master is now.
@@ -680,7 +778,7 @@ public sealed class FollowActivity : BotActivity, IDisposable
 
         // What its master reckons it gives: its food too as the master's profile banks all but what is worn, and not the
         // stacks an exchange of that unloading left (D459).
-        var gifts = GroupGifts.Of(state, master.Bot.State, _tables.Items, collect.Food, collect.Left);
+        var gifts = GroupGifts.Of(state, master.Bot.State, _tables.Items, collect.Food, collect.Left, collect.Kept);
 
         // Measured on the owner's captures of 2026-11-21 (D482): the client moves whole stacks in one request, which the
         // server answers with one change; one by one, 86 stacks took 54 s (D458). A part of a stack, as the master's pods

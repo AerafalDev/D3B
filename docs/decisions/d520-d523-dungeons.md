@@ -1,4 +1,4 @@
-# Dungeons, the first version (D520 to D527)
+# Dungeons, the first version (D520 to D529)
 
 A part of [the decisions](README.md); each decision has one line in [the index](../decisions-index.md). The activities' model
 is [D87](d064-d090-step-4.md); the NPCs' dialogs, [D253](d253-d292-step-9.md) and [D385](d369-d389-step-7.md); the groups,
@@ -159,3 +159,41 @@ de route et si oui aller se vider"), the estimate the session's within the ask. 
   - An estimate from the dungeon's monsters and their drops: the drops are chances, the pods of each drop the items' table's,
     and a run measured says it better.
   - The average of the runs: a run that drops more than the average would still fill the character in the middle.
+
+## D528: In a group each follower enters and leaves a dungeon by itself, and the group leaves out a dungeon a follower cannot enter
+
+*2026-11-25, roadmap step 12, the fourth pull request of D520, the group D521 left for after; the group left out the owner's
+choice among three the session put, the rest the session's within D521. Builds D432, D490, D521, D522, D523, D524, D526.*
+
+- **Measured** (client-game.md, "The game, in a dungeon"): in every captured run the characters were a party; each talked to
+  the keeper itself with its own key or keyring, the leader attacked each room's group and the others joined as anywhere, the
+  server moved each fighter to the next room at the win, and each left by the exit's NPC itself (28 exits for 32 character
+  runs). "Téléporter les membres du groupe." was answered once, its effect not measured.
+- **Made**: a follower whose master is in a room of a dungeon it is not in travels to that dungeon's entrance and talks to its
+  keeper as the master does (D522, D523), the keyring's reply first, then the key's, then the confirmation; one inside a dungeon
+  its master is no longer in talks to the exit's NPC of its map (D526), then follows its master as anywhere. The master's gate
+  already holds the keeper's talk until every follower is at the door, and the room's attack until every one is in the room
+  (D432): no wait is added.
+- **Made**, the owner's choice: before its journey, the master leaves out of its turn (D524) a dungeon one of its followers
+  cannot enter, its level too low or neither the key nor a keyring that opens it carried, saying which follower; a follower left
+  behind (D490) counts not. A follower that still cannot enter, such as a keeper turning it away, waits at the door, and its
+  master goes on without it after five minutes (D490).
+- **Rejected.**
+  - The keeper's "Téléporter les membres du groupe.": its effect is not measured.
+  - The master entering without the follower that cannot: five minutes lost at each run, and a fighter less in every room.
+  - The master's activity ending: one key missing would stop a group whose other dungeons still open.
+
+## D529: A group in dungeons banks together outside them, each member keeping its keys and the keyring
+
+*2026-11-25, roadmap step 12, the fourth pull request of D520, the owner's choice between this pull request and a later one;
+the shape the session's within D442 and D527. Refines D526. Builds D442, D459, D527, D528.*
+
+- **Read in the code**: the dungeon activity watches no pods, so the group's bank (`GroupBank`) never took its unloading
+  (D526): the master banked alone, and its followers, never banking, would be overloaded after a few runs and walk no more.
+- **Made**: the master's dungeon activity takes the group's bank. Out of every dungeon, never in one, a member is full as the
+  master is, its weight and the pods the next run is likely to bring reaching the banking share (D527); then the whole group
+  goes to the master's bank as D442 says, each follower giving the master all it does not wear but its dungeons' keys and the
+  keyring, which it keeps to enter by itself (D528), and the master depositing what it was given and its own loot, its keys kept.
+- **Rejected.**
+  - A later pull request: until it, the followers fill up and the group stops.
+  - Each follower banking alone: the group would part at every bank, its gate waiting for each one in turn.
