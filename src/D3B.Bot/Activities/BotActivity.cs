@@ -69,6 +69,10 @@ public abstract class BotActivity
     /// <remarks>None by default: the AI tames none.</remarks>
     public virtual IReadOnlyList<int> MountRaces => [];
 
+    /// <summary>Gets whether the character captures the archmonsters' souls in the fights the AI plays, casting the capture whenever it can (D565).</summary>
+    /// <remarks>No by default: the AI casts no capture.</remarks>
+    public virtual bool CapturesSouls => false;
+
     /// <summary>Gets whether the run restarts the activity once it failed or made no progress a while, rather than ending it (D519).</summary>
     /// <remarks>No by default: an activity restarted begins anew (<see cref="Restart"/>), which it must allow. A failure that <see cref="ActivityException.IsFinal"/> still ends it.</remarks>
     public virtual bool RestartsAfterFailure => false;

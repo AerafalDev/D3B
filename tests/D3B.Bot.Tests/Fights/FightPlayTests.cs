@@ -114,9 +114,13 @@ public sealed class FightPlayTests : IAsyncDisposable
         return order;
     }
 
-    private static void Placement(TestConnection connection, int near, int monster, int monsterId = 31, bool net = false)
+    private static void Placement(TestConnection connection, int near, int monster, int monsterId = 31, bool net = false, bool soul = false)
     {
         var spells = new FightSpellsContextEvent { FighterId = Self, Spells = { new SpellItem { SpellId = TestPlay.BlowSpellId, Grade = 1 } } };
+
+        // The soul capture, which the character knows whether or not it wears a stone (D533).
+        if (soul)
+            spells.Spells.Add(new SpellItem { SpellId = SoulCapture.SpellId, Grade = 1 });
 
         // A capture net worn gives its taming spell (D533), listed here as the server lists the character's spells as a fight starts (D218).
         if (net)
@@ -839,10 +843,57 @@ public sealed class FightPlayTests : IAsyncDisposable
         Assert.Equal(sent + 1, connection.Sent.Count);
     }
 
-    private async Task<(TestConnection Connection, int Sent, int Monster)> MountTurnAsync(IReadOnlyList<int> races, bool net)
+    private async Task<(TestConnection Connection, int Sent, int Monster, int Near)> SoulTurnAsync(bool souls, bool stone, int monsterId = TestPlay.ArchmonsterId)
+    {
+        // A hunt capturing souls, the fight against an archmonster, the character's first turn begun; a stone worn gives the
+        // character state 2768 as the fight starts (D533).
+        var (connection, bot) = await _play.EnterAsync(Far);
+        var monster = Beside(Far, 8, 0);
+        var near = Beside(monster, -3, 0);
+
+        bot.StartActivity(new RewardActivity { Reward = ChallengeReward.Client, Souls = souls });
+        await bot.ProcessedAsync();
+
+        var sent = connection.Sent.Count;
+
+        Placement(connection, near, monster, monsterId, soul: true);
+        await SentAsync(connection, sent + 1);
+        connection.Server(new FightOptionUpdateEvent { Option = FightOption.Closed, Enabled = true });
+        await SentAsync(connection, sent + 2);
+        connection.Server(new FightOptionUpdateEvent { Option = FightOption.NoSpectators, Enabled = true });
+        await SentAsync(connection, sent + 3);
+        connection.Server(new EntitiesDispositionEvent { Dispositions = { new ActorDisposition { EntityId = Self, CellId = near } } });
+        await SentAsync(connection, sent + 4);
+        connection.Server(new FightHumanReadyStateEvent { CharacterId = Self, Ready = true });
+        connection.Server(new FightStartEvent());
+
+        if (stone)
+        {
+            connection.Server(new FightEffectsEvent
+            {
+                Given = new FightBuffGiven
+                {
+                    ActionId = 950,
+                    SourceId = Self,
+                    Buff = new global::D3B.Protocol.Game.FightBuff { Uid = 1, TargetId = Self, Kind = FightBuffKind.State, Parameter = TestPlay.SoulStoneState, SpellId = 21_714, End = new FightMoment { Round = -1 } },
+                },
+            });
+        }
+
+        connection.Server(new FightNewRoundEvent { Round = 1 });
+        connection.Server(new FightTurnEvent { FighterId = Self, Duration = 300, Round = 1 });
+        connection.Server(new FightTurnStartPlayingEvent());
+
+        return (connection, sent, monster, near);
+    }
+
+    private async Task<(TestConnection Connection, int Sent, int Monster)> MountTurnAsync(IReadOnlyList<int> races, bool net, int? worn = null)
     {
         // A hunt capturing the profile's mounts, the fight against a wild Muldo, the character's first turn begun.
         var (connection, bot) = await _play.EnterAsync(Far);
+
+        if (worn is { } item)
+            connection.Server(new InventoryContentEvent { Objects = { new InventoryObject { Item = new ObjectItem { Uid = 70, ItemId = item, Quantity = 1 }, Position = 31 } } });
         var monster = Beside(Far, 8, 0);
         var near = Beside(monster, -3, 0);
 
@@ -901,12 +952,64 @@ public sealed class FightPlayTests : IAsyncDisposable
         Assert.Equal((TestPlay.BlowSpellId, monster), (first.SpellId, first.CellId));
     }
 
+    [Theory]
+    [InlineData(32_522, false)]
+    [InlineData(32_524, true)]
+    [InlineData(32_521, true)]
+    public async Task ANetWornTamesOnlyTheMountsOfItsSpecies(int net, bool tames)
+    {
+        // Measured in the client (D533): a Dragodinde's net gives a spell cast only against Dragodindes; the Muldo is struck.
+        var (connection, sent, monster) = await MountTurnAsync([TestPlay.MuldoRace], net: true, worn: net);
+
+        var first = Assert.IsType<GameActionFightCastRequest>(await SentAsync(connection, sent + 5));
+
+        Assert.Equal((tames ? TestPlay.TamingSpellId : TestPlay.BlowSpellId, monster), (first.SpellId, first.CellId));
+    }
+
     [Fact]
     public async Task ATamingTheServerRefusesIsNotTriedAgainAndTheMountIsStruck()
     {
         var (connection, sent, monster) = await MountTurnAsync([TestPlay.MuldoRace], net: true);
 
         Assert.Equal(TestPlay.TamingSpellId, Assert.IsType<GameActionFightCastRequest>(await SentAsync(connection, sent + 5)).SpellId);
+        connection.Server(new TextInformationEvent { TextId = 175, Type = TextInformationType.Error });
+
+        var next = Assert.IsType<GameActionFightCastRequest>(await SentAsync(connection, sent + 6));
+
+        Assert.Equal((TestPlay.BlowSpellId, monster), (next.SpellId, next.CellId));
+    }
+
+    [Fact]
+    public async Task AHuntCapturingSoulsCastsTheCaptureOnItselfBeforeAnyBlowWithAStoneWorn()
+    {
+        // The owner's choice (D565): the capture cast whenever it can, against an archmonster, before the blows.
+        var (connection, sent, _, near) = await SoulTurnAsync(souls: true, stone: true);
+
+        var first = Assert.IsType<GameActionFightCastRequest>(await SentAsync(connection, sent + 5));
+
+        Assert.Equal((SoulCapture.SpellId, near), (first.SpellId, first.CellId));
+        await LoggedAsync($"Bot {Self}: casts the soul capture against the fight's archmonster");
+    }
+
+    [Theory]
+    [InlineData(true, false, TestPlay.ArchmonsterId)]
+    [InlineData(false, true, TestPlay.ArchmonsterId)]
+    [InlineData(true, true, 31)]
+    public async Task NoCaptureIsCastWithNoStoneWornNoOptionOrNoArchmonster(bool souls, bool stone, int monsterId)
+    {
+        var (connection, sent, monster, _) = await SoulTurnAsync(souls, stone, monsterId);
+
+        var first = Assert.IsType<GameActionFightCastRequest>(await SentAsync(connection, sent + 5));
+
+        Assert.Equal((TestPlay.BlowSpellId, monster), (first.SpellId, first.CellId));
+    }
+
+    [Fact]
+    public async Task ASoulCaptureTheServerRefusesIsNotTriedAgainThisFight()
+    {
+        var (connection, sent, monster, _) = await SoulTurnAsync(souls: true, stone: true);
+
+        Assert.Equal(SoulCapture.SpellId, Assert.IsType<GameActionFightCastRequest>(await SentAsync(connection, sent + 5)).SpellId);
         connection.Server(new TextInformationEvent { TextId = 175, Type = TextInformationType.Error });
 
         var next = Assert.IsType<GameActionFightCastRequest>(await SentAsync(connection, sent + 6));

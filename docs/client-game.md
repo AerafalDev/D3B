@@ -1637,6 +1637,28 @@ writes, counting messages only.
 - **An alteration ended.** Its end came with `TextInformationEvent` of the information kind, text 1665, whose field 4, the
   text's parameters, holds the alteration's id first.
 
+## The game, a capture net and a soul stone worn
+
+Measured for D565. On 2026-11-25, by the lead: the owner's game connection of 17:31, client 3.7.14.18, where the owner wore
+and took off by hand a universal capture net (item 32521) and two soul stones (9686, 9687), and the owner's 82 earlier
+game connections; read with `scripts/capture.cs --messages --mapping` and a scratch probe printing item ids, positions and
+quantities only, never committed.
+
+- **The request.** The client's `ito`, which mapping 25 left unnamed, wears a stack: its field 1 a quantity, its field 2 the
+  stack's uid, its field 3 the position, left out for 0. On the 82 earlier connections, 233 of them, 216 with a position:
+  equipment worn at 0 to 7 and 15, and taken off to 63. Readable as `ObjectSetPositionRequest` from mapping format 26.
+- **The fight consumable.** Position 31 takes the net and the stones alike, one stack at a time. Worn whole (the stack's
+  quantity named, 3 nets), the stack moves there, `ObjectMovementEvent`; worn in part (1 of 3), the server adds a new stack
+  there, `ObjectAddedEvent` at 31, and lessens the one carried; one more of the same stone worn adds to the stack there and
+  lessens the one carried, deleted once empty. Another item worn sends the one there back to 63 first, in the same answer.
+  Taken off in part, the worn stack is deleted and the carried one grows by as much. Each answer came 28 to 30 ms after its
+  request, closed by the weight and the characteristics.
+- **The spells.** The net worn, `SpellsEvent` lists the character's 26 spells with 32260, the universal net's taming, in
+  them; taken off or replaced by a stone, 25, without it. Spell 413, the soul capture, is in every list, worn stone or not.
+
+Not measured: a fight with a net or a stone worn, the casts of 32260 and 413, the stack lessened by a capture, a species'
+net, and what the server answers a stack worn that its criterion refuses.
+
 ## The game, in a dungeon
 
 Measured on 2026-11-25 for the dungeons' first session (D520) on the owner's 74 game captures, with `scripts/capture.cs` and a

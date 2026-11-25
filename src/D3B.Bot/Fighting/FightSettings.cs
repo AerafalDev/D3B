@@ -88,6 +88,9 @@ public sealed class FightSettings
     /// <summary>Gets or sets whether the wild Volkornes are captured, when <see cref="CaptureMounts"/> is on.</summary>
     public bool CaptureVolkornes { get; set; } = true;
 
+    /// <summary>Gets or sets whether the character captures the souls of the archmonsters of the groups it attacks, wearing the smallest soul stone that suffices and casting the capture in the fight (D565).</summary>
+    public bool CaptureSouls { get; set; }
+
     /// <summary>Gets or sets what the activity does once a fight is lost.</summary>
     public FightAfterLoss AfterLostFight { get; set; } = FightAfterLoss.Resume;
 

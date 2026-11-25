@@ -1,3 +1,4 @@
+using D3B.Bot.Inventory;
 using D3B.Bot.Runtime;
 using D3B.Engine.Tactics;
 using D3B.Protocol.Game;
@@ -34,6 +35,21 @@ internal static partial class FightLog
 
     [LoggerMessage(Level = LogLevel.Warning, Message = "Bot {Character}: wears no capture net, so the fight's {Mounts} wild mounts are not captured")]
     public static partial void NoCaptureNet(ILogger logger, long character, int mounts);
+
+    [LoggerMessage(Level = LogLevel.Information, Message = "Bot {Character}: wears item {Item} in the fight consumable slot for the group's capture")]
+    public static partial void WoreForCapture(ILogger logger, long character, int item);
+
+    [LoggerMessage(Level = LogLevel.Warning, Message = "Bot {Character}: could not wear item {Item} in the fight consumable slot, {Outcome}, so the group is fought without it")]
+    public static partial void NotWornForCapture(ILogger logger, long character, int item, ObjectWearOutcome outcome);
+
+    [LoggerMessage(Level = LogLevel.Warning, Message = "Bot {Character}: carries no capture net that fits the group's wild mounts at Éleveur level {Breeder}, so none is captured")]
+    public static partial void NoNetToWear(ILogger logger, long character, int breeder);
+
+    [LoggerMessage(Level = LogLevel.Warning, Message = "Bot {Character}: carries no soul stone that captures level {Level}, so the group's archmonster's soul is not captured")]
+    public static partial void NoStoneToWear(ILogger logger, long character, int level);
+
+    [LoggerMessage(Level = LogLevel.Information, Message = "Bot {Character}: casts the soul capture against the fight's archmonster")]
+    public static partial void SoulCapture(ILogger logger, long character);
 
     [LoggerMessage(Level = LogLevel.Information, Message = "Bot {Character}: casts spell {Spell} on cell {Cell}, {Outcome}")]
     public static partial void Cast(ILogger logger, long character, int spell, int cell, string outcome);

@@ -52,6 +52,11 @@ public sealed class FightActivityTests : IAsyncDisposable
         };
     }
 
+    private static InventoryObject Carried(int uid, int itemId, int quantity, int position = InventoryItem.NotWorn)
+    {
+        return new InventoryObject { Item = new ObjectItem { Uid = uid, ItemId = itemId, Quantity = quantity }, Position = position };
+    }
+
     private static void Drunk(TestConnection connection, int uid, int left)
     {
         // The server's answer to a use (D148), with the grant of the minor elixir's 15 fights (D501).
@@ -814,6 +819,114 @@ public sealed class FightActivityTests : IAsyncDisposable
         run.Stop();
 
         Assert.Equal(ActivityOutcome.Stopped, await run.Completion);
+    }
+
+    [Fact]
+    public async Task BeforeAttackingAGroupWithAWildMountTheCharacterWearsTheBestNetItCarries()
+    {
+        // D565: the owner's ask, every net weighed; a species' multiplying net needs Éleveur above 99, which the character lacks.
+        var (connection, bot) = await _play.EnterAsync(433);
+        connection.Server(new InventoryContentEvent { Objects = { Carried(60, 32_521, 3), Carried(61, 32_527, 1), Carried(62, 9_686, 1) } });
+        connection.Server(new MapActorShownEvent { Actors = { GroupActor(GroupId, GroupCell, (TestPlay.MuldoId, 62)) } });
+        await bot.ProcessedAsync();
+        var run = bot.StartActivity(Activity(new FightSettings { CaptureMounts = true, CaptureSouls = true, Place = FightPlace.Chosen, SubAreas = [TestPlay.SubAreaId], Heal = false }));
+
+        Assert.Equal(new ObjectSetPositionRequest { Quantity = 3, Uid = 60, Position = InventoryItem.FightConsumable }, await TestWalks.SentAsync(_play, connection, 1));
+        connection.Server(new ObjectMovementEvent { Uid = 60, Position = InventoryItem.FightConsumable });
+
+        Assert.Equal(GroupCell, await TestWalks.WalkedAsync(_play, connection, 2));
+        Assert.IsType<AttackMonsterRequest>(await TestWalks.SentAsync(_play, connection, 3));
+        run.Stop();
+        Assert.Equal(ActivityOutcome.Stopped, await run.Completion);
+    }
+
+    [Fact]
+    public async Task BeforeAttackingAGroupWithAnArchmonsterTheCharacterWearsTheSmallestStoneThatCapturesItsHighestLevel()
+    {
+        // D565: the owner's choice, the smallest stone that suffices; a capture net worn goes back to the bag as the stone comes.
+        var (connection, bot) = await _play.EnterAsync(433);
+        connection.Server(new InventoryContentEvent
+        {
+            Objects = { Carried(60, 32_521, 3, InventoryItem.FightConsumable), Carried(61, 9_686, 4), Carried(62, 9_688, 2), Carried(63, 9_690, 1) },
+        });
+        connection.Server(new MapActorShownEvent { Actors = { GroupActor(GroupId, GroupCell, (Larva, 140), (TestPlay.ArchmonsterId, 120)) } });
+        await bot.ProcessedAsync();
+        var run = bot.StartActivity(Activity(new FightSettings { CaptureMounts = true, CaptureSouls = true, Place = FightPlace.Chosen, SubAreas = [TestPlay.SubAreaId], Heal = false }));
+
+        Assert.Equal(new ObjectSetPositionRequest { Quantity = 2, Uid = 62, Position = InventoryItem.FightConsumable }, await TestWalks.SentAsync(_play, connection, 1));
+        connection.Server(new ObjectMovementEvent { Uid = 60, Position = InventoryItem.NotWorn });
+        connection.Server(new ObjectMovementEvent { Uid = 62, Position = InventoryItem.FightConsumable });
+
+        Assert.Equal(GroupCell, await TestWalks.WalkedAsync(_play, connection, 2));
+        Assert.IsType<AttackMonsterRequest>(await TestWalks.SentAsync(_play, connection, 3));
+        run.Stop();
+        Assert.Equal(ActivityOutcome.Stopped, await run.Completion);
+    }
+
+    [Fact]
+    public async Task AGroupWithAWildMountAndAnArchmonsterGetsTheStoneWhenNoNetFits()
+    {
+        // Reviewed (D565): a mount's net comes first, and the stone when none fits, rather than nothing.
+        var (connection, bot) = await _play.EnterAsync(433);
+        connection.Server(new InventoryContentEvent { Objects = { Carried(60, 32_524, 3), Carried(61, 9_690, 1) } });
+        connection.Server(new MapActorShownEvent { Actors = { GroupActor(GroupId, GroupCell, (TestPlay.MuldoId, 62), (TestPlay.ArchmonsterId, 60)) } });
+        await bot.ProcessedAsync();
+        var run = bot.StartActivity(Activity(new FightSettings { CaptureMounts = true, CaptureSouls = true, Place = FightPlace.Chosen, SubAreas = [TestPlay.SubAreaId], Heal = false }));
+
+        Assert.Equal(new ObjectSetPositionRequest { Quantity = 1, Uid = 61, Position = InventoryItem.FightConsumable }, await TestWalks.SentAsync(_play, connection, 1));
+        connection.Server(new ObjectMovementEvent { Uid = 61, Position = InventoryItem.FightConsumable });
+
+        Assert.Equal(GroupCell, await TestWalks.WalkedAsync(_play, connection, 2));
+        Assert.Contains(_play.Log.GetSnapshot(), record => record.Message.Contains("carries no capture net that fits", StringComparison.Ordinal));
+        run.Stop();
+        Assert.Equal(ActivityOutcome.Stopped, await run.Completion);
+    }
+
+    [Theory]
+    [InlineData(true, false, "carries no capture net that fits")]
+    [InlineData(false, true, "carries no soul stone that captures level 140")]
+    public async Task WithNothingThatFitsTheHuntAttacksWithoutCapturingAndSaysSo(bool mount, bool soul, string said)
+    {
+        var (connection, bot) = await _play.EnterAsync(433);
+        connection.Server(new InventoryContentEvent { Objects = { Carried(60, 32_524, 3), Carried(61, 9_687, 1) } });
+        connection.Server(new MapActorShownEvent
+        {
+            Actors = { mount ? GroupActor(GroupId, GroupCell, (TestPlay.MuldoId, 62)) : GroupActor(GroupId, GroupCell, (Larva, 140), (TestPlay.ArchmonsterId, 120)) },
+        });
+        await bot.ProcessedAsync();
+        var run = bot.StartActivity(Activity(new FightSettings { CaptureMounts = mount, CaptureSouls = soul, Place = FightPlace.Chosen, SubAreas = [TestPlay.SubAreaId], Heal = false }));
+
+        Assert.Equal(GroupCell, await TestWalks.WalkedAsync(_play, connection, 1));
+        Assert.IsType<AttackMonsterRequest>(await TestWalks.SentAsync(_play, connection, 2));
+        Assert.DoesNotContain(connection.Sent, message => message is ObjectSetPositionRequest);
+        Assert.Contains(_play.Log.GetSnapshot(), record => record.Message.Contains(said, StringComparison.Ordinal));
+        run.Stop();
+        Assert.Equal(ActivityOutcome.Stopped, await run.Completion);
+    }
+
+    [Theory]
+    [InlineData(false, false)]
+    [InlineData(true, true)]
+    public async Task NothingIsWornWithoutTheOptionOrWhenTheBestIsWornAlready(bool options, bool worn)
+    {
+        var (connection, bot) = await _play.EnterAsync(433);
+        connection.Server(new InventoryContentEvent { Objects = { Carried(60, 32_521, 3, worn ? InventoryItem.FightConsumable : InventoryItem.NotWorn) } });
+        connection.Server(new MapActorShownEvent { Actors = { GroupActor(GroupId, GroupCell, (TestPlay.MuldoId, 62)) } });
+        await bot.ProcessedAsync();
+        var run = bot.StartActivity(Activity(new FightSettings { CaptureMounts = options, CaptureSouls = options, Place = FightPlace.Chosen, SubAreas = [TestPlay.SubAreaId], Heal = false }));
+
+        Assert.Equal(GroupCell, await TestWalks.WalkedAsync(_play, connection, 1));
+        Assert.IsType<AttackMonsterRequest>(await TestWalks.SentAsync(_play, connection, 2));
+        Assert.DoesNotContain(connection.Sent, message => message is ObjectSetPositionRequest);
+        run.Stop();
+        Assert.Equal(ActivityOutcome.Stopped, await run.Completion);
+    }
+
+    [Fact]
+    public void AProfileCapturingSoulsSaysSo()
+    {
+        Assert.True(Activity(new FightSettings { CaptureSouls = true }).CapturesSouls);
+        Assert.False(Activity(new FightSettings()).CapturesSouls);
     }
 
     [Fact]

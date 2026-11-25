@@ -120,6 +120,9 @@ public sealed class FightActivity : BotActivity
     public override IReadOnlyList<int> MountRaces => !_settings.CaptureMounts ? [] :
         [.. new[] { (_settings.CaptureDragodindes, MountCapture.Dragodindes), (_settings.CaptureMuldos, MountCapture.Muldos), (_settings.CaptureVolkornes, MountCapture.Volkornes) }.Where(pair => pair.Item1).Select(pair => pair.Item2)];
 
+    /// <inheritdoc/>
+    public override bool CapturesSouls => _settings.CaptureSouls;
+
     /// <summary>Initializes a new instance of the <see cref="FightActivity"/> class.</summary>
     /// <param name="settings">Which groups to attack, where, the upkeep and the bank.</param>
     /// <param name="world">The installed build's world: the zone's maps.</param>
@@ -449,6 +452,8 @@ public sealed class FightActivity : BotActivity
         // A master's group with it before the walk to the group of monsters, which leaves its cell meanwhile (D447).
         await context.GatherAsync(cancellationToken).ConfigureAwait(false);
 
+        await WearForCaptureAsync(context, group, cancellationToken).ConfigureAwait(false);
+
         for (var walk = 0; walk < MostWalksToAGroup; walk++)
         {
             // Measured (9g): a group walks 1 to 4 cells at a time; the server answered nothing to an attack from 3 cells away.
@@ -475,6 +480,44 @@ public sealed class FightActivity : BotActivity
         }
 
         _skipped.Add(group.ActorId);
+    }
+
+    // The owner's ask (D565): before a group holding a wild mount or an archmonster, the main wears the best net or the
+    // smallest stone that suffices of all it carries, both in the one fight consumable slot, a mount's net first, a stone
+    // when no net fits. A follower runs its follow activity, never this attack, and keeps its own.
+    private async Task WearForCaptureAsync(BotContext context, MapMonsterGroup group, CancellationToken cancellationToken)
+    {
+        var state = context.State;
+        var self = state.Key.CharacterId;
+        InventoryItem? gear = null;
+
+        if (MountRaces is { Count: > 0 } captured && MountCapture.RacesIn(group, _tables.Monsters, captured) is { Count: > 0 } races)
+        {
+            var breeder = state.Jobs.TryGetValue(MountCapture.Breeder, out var job) ? job.Level : 0;
+
+            gear = MountCapture.NetFor(state.Inventory.Values, breeder, races);
+
+            if (gear is null)
+                FightLog.NoNetToWear(context.Log, self, breeder);
+        }
+
+        if (gear is null && _settings.CaptureSouls && SoulCapture.LevelToCapture(group, _tables.Monsters) is { } level)
+        {
+            gear = SoulCapture.StoneFor(state.Inventory.Values, level);
+
+            if (gear is null)
+                FightLog.NoStoneToWear(context.Log, self, level);
+        }
+
+        if (gear is null || gear.Position is InventoryItem.FightConsumable)
+            return;
+
+        var outcome = await context.WearObjectAsync(gear.Uid, InventoryItem.FightConsumable, cancellationToken).ConfigureAwait(false);
+
+        if (outcome is ObjectWearOutcome.Worn)
+            FightLog.WoreForCapture(context.Log, self, gear.ItemId);
+        else
+            FightLog.NotWornForCapture(context.Log, self, gear.ItemId, outcome);
     }
 
     private async Task GoOnAsync(BotContext context, FightRotationZone current, CancellationToken cancellationToken)

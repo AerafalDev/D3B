@@ -124,6 +124,14 @@ internal sealed class TestPlay : IAsyncDisposable
     public const int TamingLevelId = 84_805;
     public const int MuldoId = 4_434;
     public const short MuldoRace = 155;
+
+    // The soul capture and its level, as the client 3.7.14.18 holds them (D533): 4 AP on the caster itself, every 3 rounds,
+    // only in state 2768, which a soul stone worn gives as the fight starts.
+    public const int SoulLevelId = 1_413;
+    public const int SoulStoneState = 2_768;
+
+    // An archmonster, flagged a mini-boss as the client's are (D565), its grade at level 12.
+    public const int ArchmonsterId = 4_500;
     public const int SwordItemId = 6_751;
 
     // The one monster of the world, living in its sub-area, its grades from level 10 to 14.
@@ -417,8 +425,8 @@ internal sealed class TestPlay : IAsyncDisposable
                 new(108, 0, 0, '\0', 2, 2, 0, 0, 0, 0, EffectProperties.UseInFight),
             }));
             writer.Add(MonsterCatalog.EntryName, new MonsterCatalog(
-                new[] { new Monster { Id = LarvaId, FirstGrade = 0, GradeCount = 2 }, new Monster { Id = MuldoId, Race = MuldoRace, FirstGrade = 2, GradeCount = 1 } },
-                new[] { new MonsterGrade { Grade = 1, Level = 10 }, new MonsterGrade { Grade = 2, Level = 14 }, new MonsterGrade { Grade = 1, Level = 62 } },
+                new[] { new Monster { Id = LarvaId, FirstGrade = 0, GradeCount = 2 }, new Monster { Id = MuldoId, Race = MuldoRace, FirstGrade = 2, GradeCount = 1 }, new Monster { Id = ArchmonsterId, Properties = MonsterProperties.IsMiniBoss, FirstGrade = 3, GradeCount = 1 } },
+                new[] { new MonsterGrade { Grade = 1, Level = 10 }, new MonsterGrade { Grade = 2, Level = 14 }, new MonsterGrade { Grade = 1, Level = 62 }, new MonsterGrade { Grade = 1, Level = 12 } },
                 Array.Empty<MonsterSpell>(),
                 Array.Empty<byte>(),
                 Array.Empty<MonsterRatio>(),
@@ -440,6 +448,7 @@ internal sealed class TestPlay : IAsyncDisposable
         SpellLevel[] levels =
         [
             new SpellLevel { Id = BlowLevelId, SpellId = BlowSpellId, Grade = 1, ApCost = 3, MinRange = 1, Range = 4, StatesCriterion = SpellLevel.NoCriterion, FirstEffect = 0, EffectCount = 1 },
+            new SpellLevel { Id = SoulLevelId, SpellId = D3B.Bot.Fights.SoulCapture.SpellId, Grade = 1, ApCost = 4, MinRange = 0, Range = 0, MinCastInterval = 3, StatesCriterion = 4, FirstEffect = 1, EffectCount = 0 },
             new SpellLevel { Id = 10_461, SpellId = 0, Grade = 1, ApCost = 3, MinRange = 1, Range = 1, StatesCriterion = SpellLevel.NoCriterion, FirstEffect = 1, EffectCount = 1 },
             new SpellLevel { Id = TamingLevelId, SpellId = TamingSpellId, Grade = 1, ApCost = 1, MinRange = 1, Range = 7, MinCastInterval = 63, StatesCriterion = SpellLevel.NoCriterion, FirstEffect = 2, EffectCount = 0 },
         ];
@@ -448,9 +457,9 @@ internal sealed class TestPlay : IAsyncDisposable
             new SpellEffect { Uid = 1, EffectId = 97, TargetMask = 0, Triggers = 1, DiceNum = 10, DiceSide = 12, Zone = point },
             new SpellEffect { Uid = 2, EffectId = 97, TargetMask = 3, Triggers = 1, DiceNum = 6, DiceSide = 7, Zone = point },
         ];
-        Spell[] spells = [new Spell { Id = 0, NameId = 1, FirstLevel = 0, LevelCount = 1 }, new Spell { Id = BlowSpellId, NameId = BlowSpellId, FirstLevel = 1, LevelCount = 1 }, new Spell { Id = TamingSpellId, NameId = 2, FirstLevel = 2, LevelCount = 1 }];
-        int[] levelIds = [10_461, BlowLevelId, TamingLevelId];
-        string[] strings = ["A", "I", "a", "a,A"];
+        Spell[] spells = [new Spell { Id = 0, NameId = 1, FirstLevel = 0, LevelCount = 1 }, new Spell { Id = BlowSpellId, NameId = BlowSpellId, FirstLevel = 1, LevelCount = 1 }, new Spell { Id = D3B.Bot.Fights.SoulCapture.SpellId, NameId = 3, FirstLevel = 2, LevelCount = 1 }, new Spell { Id = TamingSpellId, NameId = 2, FirstLevel = 3, LevelCount = 1 }];
+        int[] levelIds = [10_461, BlowLevelId, SoulLevelId, TamingLevelId];
+        string[] strings = ["A", "I", "a", "a,A", $"HS={SoulStoneState}"];
 
         return new SpellCatalog(spells, levels, levelIds, effects, Array.Empty<SpellPreviewZone>(), Array.Empty<int>(), strings, Array.Empty<SpellVariant>(), Array.Empty<SpellBomb>(), Array.Empty<SpellBombWall>());
     }

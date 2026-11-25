@@ -19,6 +19,9 @@ internal sealed class RewardActivity : BotActivity
     /// <summary>Gets or sets the families of the wild mounts the profile captures (D533).</summary>
     public IReadOnlyList<int> Races { get; init; } = [];
 
+    /// <summary>Gets or sets whether the profile captures the archmonsters' souls (D565).</summary>
+    public bool Souls { get; init; }
+
     public override bool FightsItsFights => Fights;
 
     public override ChallengeReward ChallengeReward => Reward;
@@ -26,6 +29,8 @@ internal sealed class RewardActivity : BotActivity
     public override ChallengePlay Challenges => Play;
 
     public override IReadOnlyList<int> MountRaces => Races;
+
+    public override bool CapturesSouls => Souls;
 
     public override async Task<bool> StepAsync(BotContext context, CancellationToken cancellationToken)
     {
