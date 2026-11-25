@@ -28,6 +28,11 @@ aussi pour les archis/donjons »); each choice below the owner's. Builds D218, D
   turn with a target in reach and sight, before any attack, walking to it if needed, and no blow is planned to kill a
   target before it is marked. The groups attacked stay the profile's.
 - **In a group, the main alone captures.** One mount a fight, several with a reinforced net; the followers spend no net.
+  Only the main's own turns spare the mount: a follower's or a summon's casts may still kill it before the main's first
+  chance, which a follower told the main's mounts would prevent, left for a later step.
+- **What was made.** The hunt's flags, the main's taming before any blow (`FightTactics.Taming`), the mounts spared by the
+  main's search (`FightKnowledge.Spared`), the journal's warning with no net worn, and a taming the server does not take
+  ending the fight's capture, its mounts no longer spared. The net worn from the bag waits for the capture above.
 - **Rejected.** Buying or crafting a missing net: D3B has neither until step 11, which will bring it. Stopping the
   activity once the nets run out: the hunt is worth going on with. A net worn by hand only: the slot may empty after each
   net used, which would ask the player to refill it fight after fight. Casting on the last enemy alive: the target might

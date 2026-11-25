@@ -900,4 +900,17 @@ public sealed class FightPlayTests : IAsyncDisposable
 
         Assert.Equal((TestPlay.BlowSpellId, monster), (first.SpellId, first.CellId));
     }
+
+    [Fact]
+    public async Task ATamingTheServerRefusesIsNotTriedAgainAndTheMountIsStruck()
+    {
+        var (connection, sent, monster) = await MountTurnAsync([TestPlay.MuldoRace], net: true);
+
+        Assert.Equal(TestPlay.TamingSpellId, Assert.IsType<GameActionFightCastRequest>(await SentAsync(connection, sent + 5)).SpellId);
+        connection.Server(new TextInformationEvent { TextId = 175, Type = TextInformationType.Error });
+
+        var next = Assert.IsType<GameActionFightCastRequest>(await SentAsync(connection, sent + 6));
+
+        Assert.Equal((TestPlay.BlowSpellId, monster), (next.SpellId, next.CellId));
+    }
 }

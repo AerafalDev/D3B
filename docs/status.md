@@ -58,7 +58,8 @@ As of 2026-11-25, after D540 (stage 1 of 4 of the studio's shell after next, und
 - Wild mounts captured (D533): measured in the client 3.7.14.18 only, none of the owner's 74 captures holding a net or its
   spell; tested on the fake game. To capture in game: a hunt in the Bassin des Muldos with a universal net worn by hand, the
   taming cast and the fight won, so that the server's answers, the fight's end, the mount's item and the slot's request are
-  measured, and the net's wearing built from them. Souls (archmonsters, bosses) are studied, not built.
+  measured, and the net's wearing built from them. In a group, a follower's or a summon's casts do not spare the mount.
+  Souls (archmonsters, bosses) are studied, not built.
 
 - The miner's door refused on the bank's journey (D517): measured on the owner's capture of 24 November 20:58 UTC; tested on
   the fake game only. To look at in game: an automatic miner banking from a mine's inside, a door's walk refused, the journey

@@ -835,7 +835,7 @@ public sealed class FightTactics
                 var refusal = Rules.Check(fight.Map, fight.Fighters, fight.Marks, actor, level, mount.Cell, fight.History, fight.Round);
 
                 if (refusal is CastRefusal.None)
-                    return new TamingPlan { Actions = [TacticAction.Cast(level.SpellId, level.Id, mount.Cell)], IsPending = true };
+                    return TamingPlan.Now([TacticAction.Cast(level.SpellId, level.Id, mount.Cell)]);
 
                 // Any other refusal, such as the interval of a spell cast once a fight, holds for the whole fight.
                 if (refusal is not (CastRefusal.OutOfRange or CastRefusal.NoLineOfSight or CastRefusal.NotEnoughActionPoints))
@@ -860,12 +860,12 @@ public sealed class FightTactics
                     var there = fight.With(moved);
 
                     if (Rules.Check(there.Map, there.Fighters, there.Marks, moved, level, mount.Cell, there.History, there.Round) is CastRefusal.None)
-                        return new TamingPlan { Actions = [TacticAction.Walk(from), TacticAction.Cast(level.SpellId, level.Id, mount.Cell)], IsPending = true };
+                        return TamingPlan.Now([TacticAction.Walk(from), TacticAction.Cast(level.SpellId, level.Id, mount.Cell)]);
                 }
             }
         }
 
-        return pending ? new TamingPlan { IsPending = true } : TamingPlan.None;
+        return pending ? TamingPlan.Later : TamingPlan.None;
     }
 
     private static bool KillsSpared(ImaginedFight before, ImaginedFight after, ImmutableArray<long> spared)

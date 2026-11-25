@@ -217,6 +217,16 @@ public static class FightPlay
             : played;
     }
 
+    /// <summary>Gets whether the fighter playing tames the wild mounts: the main alone, on its own turns (D533).</summary>
+    /// <param name="role">The character's role in its group's fight.</param>
+    /// <param name="playing">The fighter whose turn it is.</param>
+    /// <param name="character">The character.</param>
+    /// <returns>Whether it tames: never a follower, which keeps its nets, nor a summon, which has none.</returns>
+    internal static bool Tames(FightRole role, long playing, long character)
+    {
+        return role is not FightRole.Follows && playing == character;
+    }
+
     private static ChallengePlay PlayOf(BotContext context)
     {
         // As the bonus (D438): only a fight its activity has the AI play, so none with the host's Fights:Alone.
@@ -418,7 +428,7 @@ public static class FightPlay
             var asked = imagined;
             var keeping = challenge?.Challenge;
             var plan = !tamed.Plan.Actions.IsEmpty
-                ? new TurnPlan(tamed.Plan.Actions, 0, 0, 0, TimeSpan.Zero) { KeepsChallenge = true }
+                ? new TurnPlan(tamed.Plan.Actions, 0, 0, 0, TimeSpan.Zero) { KeepsChallenge = KeepsChallenge(tamed.Plan, asked.Fight, keeping) }
                 : await searches.RunAsync(() => tactics.Plan(asked.Fight, asked.Knowledge, weights, TurnSearchLimits.Default, refused, keeping), cancellationToken).ConfigureAwait(false);
 
             if (!tamed.Plan.Actions.IsEmpty)
@@ -490,10 +500,9 @@ public static class FightPlay
 
     private static (TamingPlan Plan, ImmutableArray<long> Mounts) TamingOf(BotContext context, FightTactics tactics, GameTables tables, (ImaginedFight Fight, FightKnowledge Knowledge) imagined, long self, Taming taming)
     {
-        // The main alone captures (D533): a follower keeps its nets, and a summon has none.
         var races = context.Actor.Activity is { IsOver: false, Activity: { FightsItsFights: true } activity } ? activity.MountRaces : [];
 
-        if (races.Count is 0 || taming.IsOver || self != context.State.Key.CharacterId || context.Actor.Team?.Role is FightRole.Follows || context.State.Fight is not { } fight)
+        if (races.Count is 0 || taming.IsOver || !Tames(context.Actor.Team?.Role ?? FightRole.Alone, self, context.State.Key.CharacterId) || context.State.Fight is not { } fight)
             return (TamingPlan.None, []);
 
         var mounts = MountCapture.Targets(fight, tables.Monsters, races);
@@ -510,6 +519,13 @@ public static class FightPlay
         }
 
         return (plan, mounts);
+    }
+
+    private static bool KeepsChallenge(TamingPlan taming, ImaginedFight fight, TurnChallenge? challenge)
+    {
+        // A lone cast the challenge allows keeps it; a walk is not weighed against it, so the challenge is left rather than
+        // taken for kept and paid for the rest of the turn.
+        return challenge is null || (taming.Actions is [{ Kind: TacticActionKind.Cast } cast] && challenge.AllowsCast(fight, cast.SpellId));
     }
 
     private static async Task<bool> WalkAsync(BotContext context, FightTactics tactics, ImaginedFight fight, int cell, CancellationToken cancellationToken)
