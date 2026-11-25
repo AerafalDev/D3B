@@ -3734,4 +3734,22 @@
   <data name="CommandPlayAll" xml:space="preserve">
     <value>Jouer tous les personnages connectés</value>
   </data>
+  <data name="CommandPauseAll" xml:space="preserve">
+    <value>Mettre en pause tous les personnages qui jouent</value>
+  </data>
+  <data name="CommandStopAll" xml:space="preserve">
+    <value>Arrêter tous les personnages</value>
+  </data>
+  <data name="StatusClientTip" xml:space="preserve">
+    <value>Client Dofus {0}</value>
+  </data>
+  <data name="StatusClientDataTip" xml:space="preserve">
+    <value>Client Dofus {0} · données de jeu v{1}, extraites par D3B.Data {2}</value>
+  </data>
+  <data name="StatusPlayingTip" xml:space="preserve">
+    <value>{0} sur {1} connectés</value>
+  </data>
+  <data name="StatusUnsavedTip" xml:space="preserve">
+    <value>Modifications non enregistrées : cliquer pour tout enregistrer</value>
+  </data>
 </root>

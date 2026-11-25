@@ -1,4 +1,5 @@
 using Avalonia.Controls;
+using D3B.App.Controls;
 using D3B.App.Localization;
 using D3B.App.ViewModels.Characters;
 using D3B.App.ViewModels.Properties;
@@ -15,6 +16,10 @@ internal static class ProfileMenu
     {
         ArgumentNullException.ThrowIfNull(character);
         ArgumentNullException.ThrowIfNull(field);
+
+        // The click whose press just closed the menu closes it, as a select does, and does not open it again.
+        if (!MenuReopenGuard.Instance.MayOpen(field))
+            return;
 
         // Made as it opens, as the cards' menu: the profiles may have changed since.
         var texts = Localizer.Instance;
@@ -43,7 +48,11 @@ internal static class ProfileMenu
         menu.Items.Add(new Separator());
         menu.Items.Add(Item(texts["NoProfile"], () => character.AssignCommand.Execute(null)));
         field.ContextMenu = menu;
-        menu.Closed += (_, _) => field.ContextMenu = null;
+        menu.Closed += (_, _) =>
+        {
+            field.ContextMenu = null;
+            MenuReopenGuard.Instance.Closed(field, field.IsPointerOver);
+        };
         menu.Open(field);
     }
 

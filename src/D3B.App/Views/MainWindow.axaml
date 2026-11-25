@@ -384,7 +384,39 @@
                                         Height="12"
                                         Width="12" />
                                 </Button>
-                                <!--  Every character connected played at once (D544).  -->
+                                <!--  Every character connected played, paused or stopped at once (D544), right to left in the dock.  -->
+                                <Button
+                                    AutomationProperties.Name="{l:Tr CommandStopAll}"
+                                    Classes="Tool Small"
+                                    Command="{Binding RunBlock.StopAllCommand}"
+                                    DockPanel.Dock="Right"
+                                    Name="StopAll"
+                                    ToolTip.Tip="{l:Tr CommandStopAll}"
+                                    VerticalAlignment="Center">
+                                    <Button.IsVisible>
+                                        <MultiBinding Converter="{x:Static BoolConverters.And}">
+                                            <Binding Path="Layout.IsCharactersShown" />
+                                            <Binding Path="!RunBlock.IsNobodyOnline" />
+                                        </MultiBinding>
+                                    </Button.IsVisible>
+                                    <c:Icon Drawing="{StaticResource Run.Stop}" />
+                                </Button>
+                                <Button
+                                    AutomationProperties.Name="{l:Tr CommandPauseAll}"
+                                    Classes="Tool Small"
+                                    Command="{Binding RunBlock.PauseAllCommand}"
+                                    DockPanel.Dock="Right"
+                                    Name="PauseAll"
+                                    ToolTip.Tip="{l:Tr CommandPauseAll}"
+                                    VerticalAlignment="Center">
+                                    <Button.IsVisible>
+                                        <MultiBinding Converter="{x:Static BoolConverters.And}">
+                                            <Binding Path="Layout.IsCharactersShown" />
+                                            <Binding Path="!RunBlock.IsNobodyOnline" />
+                                        </MultiBinding>
+                                    </Button.IsVisible>
+                                    <c:Icon Drawing="{StaticResource Run.Pause}" />
+                                </Button>
                                 <Button
                                     AutomationProperties.Name="{l:Tr CommandPlayAll}"
                                     Classes="Tool Small"
@@ -862,7 +894,8 @@
                         Classes="Status"
                         Command="{Binding StatusBar.ShowCharactersViewCommand}"
                         IsVisible="{Binding StatusBar.ShowsPlaying}"
-                        Name="PlayingItem">
+                        Name="PlayingItem"
+                        ToolTip.Tip="{Binding StatusBar.PlayingTip}">
                         <StackPanel Orientation="Horizontal" Spacing="6">
                             <c:Icon
                                 Drawing="{StaticResource Run.Run}"
@@ -890,8 +923,14 @@
                             <TextBlock Text="{Binding StatusBar.WarningsText}" VerticalAlignment="Center" />
                         </StackPanel>
                     </Button>
-                    <Button Classes="Status" Command="{Binding StatusBar.SaveEverythingCommand}">
-                        <StackPanel Orientation="Horizontal" Spacing="6">
+                    <!--  An icon alone, its words in the tooltip (the owner's ask, D544).  -->
+                    <Button
+                        AutomationProperties.Name="{Binding StatusBar.SavedTip}"
+                        Classes="Status"
+                        Command="{Binding StatusBar.SaveEverythingCommand}"
+                        Name="SavedItem"
+                        ToolTip.Tip="{Binding StatusBar.SavedTip}">
+                        <Panel>
                             <c:Icon
                                 Drawing="{StaticResource Status.Success}"
                                 Height="12"
@@ -902,9 +941,7 @@
                                 Height="12"
                                 IsVisible="{Binding !StatusBar.IsSaved}"
                                 Width="12" />
-                            <TextBlock IsVisible="{Binding StatusBar.IsSaved}" Text="{l:Tr StatusSaved}" />
-                            <TextBlock IsVisible="{Binding !StatusBar.IsSaved}" Text="{l:Tr StatusUnsaved}" />
-                        </StackPanel>
+                        </Panel>
                     </Button>
                     <Button
                         Classes="Status Accent"

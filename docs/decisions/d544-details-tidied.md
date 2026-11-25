@@ -15,6 +15,13 @@ connectés », and « que les persos qu'on a déjà joué ». Refines D324, D345
   while it is connected.
 - **Play every character connected**: a button in the Characters view's header and a command of the palette
   (`RunBlockViewModel.PlayAll`), each character started or resumed as its own play would, those that cannot play left alone.
+- **Pause and stop every character too**, beside play all in the Characters view's header and in the palette
+  (`RunBlockViewModel.PauseAll`, `StopAll`), the owner's « mettre en pause/stop tous les personnages d'un coup ».
+- **The status bar's right side in icons**, the owner's « c'est pas ouf comme texte […] juste mettre des icons avec un tooltip »:
+  the client's build beside its icon, the bots playing as a figure beside play, the saving as its icon alone, their words in the
+  tooltips (`ClientTip`, `PlayingTip`, `SavedTip`).
+- **The profile's field clicked again closes its menu**, as a select: the press that dismissed the menu no longer opens it
+  again on its click (`MenuReopenGuard`).
 - **The Characters view lists the characters played through D3B** (`KnownCharacter.LastPlayed`, set when the relay sees a
   character chosen), not every character the server listed for an account. A connected character shows whatever it is.
 - **What is not in the app leaves the Details**: Planning and Combat (7f and 7h) go; Variables show only once a behavior declared
