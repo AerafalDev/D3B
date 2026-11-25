@@ -315,6 +315,10 @@ public sealed class WorldViewTests
             Dispatcher.UIThread.RunJobs();
             Drawings.Draw(window, "studio-engine-step");
 
+            // The World's view makes a route or a zone from its header (D515).
+            Assert.True(window.GetVisualDescendants().OfType<Button>().Single(button => button.Name == "WorldNewRoute") is { IsEffectivelyVisible: true, IsEffectivelyEnabled: true });
+            Assert.True(window.GetVisualDescendants().OfType<Button>().Single(button => button.Name == "WorldNewZone").IsEffectivelyVisible);
+
             var texts = window.GetVisualDescendants().OfType<TextBlock>().Select(block => block.Text).OfType<string>().ToList();
             var route = (main.World.Route?.Id, main.Selection.Step, main.Properties.ShowsAsset, main.Properties.Asset.HasRoute);
 

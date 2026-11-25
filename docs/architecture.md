@@ -708,7 +708,8 @@ bottom panel and the Details hidden until needed.
   it hides the side bar; Journal, Statistics and Settings at its foot, the first two opening the bottom panel on their tab or
   hiding it (`BottomPanelViewModel.ToggleTab`, `IsJournalOpen`, `IsStatisticsOpen`). The side bar shows one view, its header
   naming it: the Characters view is the Outliner's characters, the World view its routes and zones (`OutlinerViewModel.Scope`,
-  `OutlinerScope`, which follows `StudioLayout.View`), the Library view the assets' tree with its tools.
+  `OutlinerScope`, which follows `StudioLayout.View`), its header making a route or a zone (D515), the Library view the assets'
+  tree with its tools.
 - **The parts** (D321, D397, D513, `StudioLayout` in `D3B.App.ViewModels.Studio`): the side bar, the editor's tabs over the bottom
   panel in the centre, the Details panel on the right, rounded panels with a hairline edge, 5 pixels apart, the one last pressed
   outlined in the accent. The studio opens on the side bar and the editor; the bottom panel and the Details start hidden. The
@@ -859,7 +860,11 @@ bottom panel and the Details hidden until needed.
   its rate an hour, the experience and kamas its fights gave and their rate an hour once it fought, the profession raised,
   its fights, won and lost, deaths and deposits (D505); its latest decisions, from its journal, and a way
   to its whole trace in the bottom panel (D353).
-- **The assets' panel** (D326, D351, D358, `AssetsViewModel` in `D3B.App.ViewModels.Assets`, `AssetsView`): as an IDE's
+- **The assets' panel**, the Library (D326, D351, D358, D515, `AssetsViewModel` in `D3B.App.ViewModels.Assets`, `AssetsView`): by
+  default the project by kind, a heading a kind in a player's order (Profiles, Routes, Zones, Behaviors…), then the files that do
+  not read, then the given ones (`AssetTreeBuilder.AddKinds`, `AssetRowKind.Heading`, each heading's fold kept by its `Group`);
+  a button of its header shows the folders instead, remembered in `app.json` (`AppPreferences.LibraryByFolder`), and making a
+  folder shows them. In the folders' view, as an IDE's
   explorer, several rows chosen, the keyboard, drag and drop, cut and paste, IntelliJ's menus, the kinds shown, the open
   tab located, the folds kept in `app.json`; Add and a search over the project's tree, its folders first, then their assets and the files that do not read, then those given with
   D3B, read only; each kind its IntelliJ icon on its colour (`AssetKinds`), how many use it, a dot while its tab has

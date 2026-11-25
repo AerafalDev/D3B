@@ -42,6 +42,9 @@ internal sealed partial class AssetRowViewModel : ObservableObject
     /// <summary>Gets the folder, relative to the project's, for a folder's row; the folder an asset or a problem is in, for theirs.</summary>
     public string Folder { get; init; } = "";
 
+    /// <summary>Gets what a heading groups, which its fold is kept by: <c>given</c>, <c>problems</c> or <c>kind:</c> and a kind (D515).</summary>
+    public string Group { get; init; } = "";
+
     /// <summary>Gets whether the asset was given with D3B, read only.</summary>
     public bool IsGiven { get; init; }
 
@@ -73,7 +76,7 @@ internal sealed partial class AssetRowViewModel : ObservableObject
     public bool IsNewFolder { get; init; }
 
     /// <summary>Gets whether the row may be chosen: an asset, a folder or a file that does not read.</summary>
-    public bool IsSelectable => Kind is not AssetRowKind.Given && !IsNewFolder;
+    public bool IsSelectable => Kind is not AssetRowKind.Heading && !IsNewFolder;
 
     /// <summary>Gets whether the row may be moved, renamed or deleted: the project's own asset or folder.</summary>
     public bool IsMovable => Kind is AssetRowKind.Asset or AssetRowKind.Folder && !IsGiven && !IsNewFolder;
@@ -87,11 +90,14 @@ internal sealed partial class AssetRowViewModel : ObservableObject
     /// <summary>Gets whether the row is a file that does not read.</summary>
     public bool IsProblem => Kind is AssetRowKind.Problem;
 
-    /// <summary>Gets whether the row is the given assets' heading.</summary>
-    public bool IsGivenHeading => Kind is AssetRowKind.Given;
+    /// <summary>Gets whether the row is a heading: the given assets', a kind's or the files that do not read (D515).</summary>
+    public bool IsHeading => Kind is AssetRowKind.Heading;
 
-    /// <summary>Gets whether the row folds, a folder or the given heading.</summary>
-    public bool Folds => Kind is AssetRowKind.Folder or AssetRowKind.Given;
+    /// <summary>Gets whether the row is the heading of the assets given with D3B, read only, which a lock says.</summary>
+    public bool IsGivenHeading => IsHeading && Group == AssetTreeBuilder.GivenGroup;
+
+    /// <summary>Gets whether the row folds, a folder or a heading.</summary>
+    public bool Folds => Kind is AssetRowKind.Folder or AssetRowKind.Heading;
 
     /// <summary>Gets whether the asset's kind shows its icon.</summary>
     public bool HasKind => AssetKind is not null;

@@ -245,8 +245,9 @@ internal sealed partial class MainViewModel : ObservableObject
             new CharacterPropertiesViewModel(localizer, _characterAccounts, BotOf, Characters.LineOf, OpenProfile, OpenCharacter),
             new AssetPropertiesViewModel(localizer) { RouteOf = Routes.Find, ZoneOf = Zones.Find });
         Profiles = new ProfilesViewModel(localizer, Dialogs, Toasts) { Opened = OpenProfileTab, Closed = CloseProfileTab, Sequences = Sequences, WorldServices = () => Routes.Services, EditZone = EditZoneInWorld };
-        Assets = new AssetsViewModel(localizer, Dialogs, Toasts, Profiles, preferences?.FoldedAssets)
+        Assets = new AssetsViewModel(localizer, Dialogs, Toasts, Profiles, preferences?.FoldedAssets, preferences?.LibraryByFolder ?? false)
         {
+            ByFolderChanged = byFolder => _preferences?.RememberLibraryByFolder(byFolder),
             Routes = Routes,
             Zones = Zones,
             Sequences = Sequences,
