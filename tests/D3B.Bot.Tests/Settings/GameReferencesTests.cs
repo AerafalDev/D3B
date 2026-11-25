@@ -143,4 +143,12 @@ public sealed class GameReferencesTests
         Assert.True(_game.IsItemOf(TestReferences.Iron, iron));
         Assert.False(_game.IsItemOf(TestReferences.Ash, iron));
     }
+
+    [Fact]
+    public void TheItemTypesOfferedAreThoseThatHoldAnItem()
+    {
+        Assert.Equal([new GameReference(38, 1_038, null), new GameReference(39, 1_039, null)], _game.Options(SettingKind.ItemType));
+        Assert.True(_game.Exists(SettingKind.ItemType, 39));
+        Assert.False(_game.Exists(SettingKind.ItemType, 12));
+    }
 }

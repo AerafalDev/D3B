@@ -52,7 +52,10 @@ internal static class TestReferences
     {
         Item[] items = [new(Ash, 403, 38, 1, 5, 38_017), new(Chestnut, 404, 38, 10, 5, 38_086), new(Iron, 412, 39, 1, 5, 39_005)];
 
-        return new ItemCatalog(items, Array.Empty<ItemType>());
+        // Wood and ore are resources, category 2; the potion's type holds no item.
+        ItemType[] types = [new(12, 1_012, 6, 1), new(38, 1_038, 9, 2), new(39, 1_039, 9, 2)];
+
+        return new ItemCatalog(items, types);
     }
 
     public static GameReferences Game()

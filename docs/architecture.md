@@ -195,6 +195,11 @@ The bots run in `D3B.Bot`: what each part does today, with the decisions that ma
   `FullAt` in `HarvestSettings` and `FightSettings`); a profile that takes no zaap takes none to the bank either
   (`BankingPreferences.UseZaapsOf`, D436); a journey makes the changes it may again from the path on
   foot once a teleport failed (`JourneyBudget`).
+  The open storage keeps its stacks (`OpenStorage.Stacks`, `StorageItem`), from its content as it opens and each stack the
+  server says changed or removed (D551). `StorageMoves` moves one stack, or part of it, into or out of the open storage, the
+  bank's or the guild chest's, by `ExchangeObjectMoveRequest` (negative to take out), and says how it ended
+  (`StorageMoveOutcome`), a refusal told by the client's information text; `GuildChest.GoToGuildChestAsync` and
+  `OpenGuildChestAsync` go to and open the nearest chest, the zaap rule given.
 - **Activities** (D87), in `D3B.Bot.Activities`: a `BotActivity`, written by a module, chooses each step
   from the state, a behavior's worth of work; its other hooks have defaults: when the character is full and how it is
   unloaded, what each interruption leads to, how the character is recovered. `BotActor.StartActivity` runs one at a
@@ -473,6 +478,14 @@ The bots run in `D3B.Bot`: what each part does today, with the decisions that ma
   the character enters an unknown zaap's map. A zaap no path leads to, whose journey fails, or that the list does not name
   is given up for the run; the activity is done once none is left, and fails in a haven bag it cannot leave. Its report
   counts the zaaps discovered of those sought, warns of each given up, out of reach or not taught, and draws them as a zone.
+- **The transfer** (D550 to D552), in `D3B.Bot.Transfers`, registered by `TransfersModule` after the zaaps':
+  `TransferActivity`, "Transfer between bank and guild chest", with `TransferSettings`: the direction, everything or the items
+  chosen by category (`ItemCategory`, the inventory's tabs), type (`SettingKind.ItemType`) and item, the types and items left out
+  (`TransferFilter`), the quantity of each item, what to do with a refusal (`TransferRefusal`), a dry run and the zaaps. A step
+  with nothing carried goes to the source, puts back what the destination refused, takes out what the settings choose and the free
+  pods hold, weighed with the pack's weights, and leaves; a step with something carried goes to the destination and puts in what it
+  took: before its takes a round notes each stack's own share, and a put takes only what a stack holds above it. Openings climb the recovery ladder (D518); a missing right, a place out of reach or a
+  character too loaded ends it, final. Its report counts the objects moved and each item, and warns of each item given up.
 - **The maps' graphics** (D138), in `D3B.Bot.Interactives`: `GraphicSkills`, one per host, holds what the server said the
   elements of each graphic offer, every skill seen, none for an element that offers none; `GraphicLearner`, an observer of
   the game connections registered by the bots module, teaches it from every map's information any bot receives, by the
@@ -1182,7 +1195,7 @@ The target:
   - **A list of steps** (D386), in `D3B.Studio.Behaviors`: `BehaviorSequences` reads a behavior as a list when it is one state of actions
     chained by their way on, and writes a list into one (`BehaviorSequence`: the steps as `NodeCall`s and whether it repeats); the
     behavior's file is the same the canvas of 7e opens. `BehaviorSequences.Offered` are the nodes a step may be: `route.follow`,
-    `route.harvest`, `route.fight`, `route.bag`, `wait`, `note`, `pause`, `stop`. `SettingKind.Zone`, a zone's id picked as a route's is (D415, `ZoneFieldViewModel`, which says in words what the zone does and how many maps it holds, and blocks the profile when the zone holds none or is gone). `SettingKind.Character`, a character of the accounts page picked in the same dialog among those `AccountBook` holds (D437, `CharacterFieldViewModel`, which blocks the profile when D3B no longer knows the character). `SettingKind.Route`, a route's id picked in
+    `route.harvest`, `route.fight`, `route.bag`, `wait`, `note`, `pause`, `stop`. `SettingKind.ItemType`, a type of items the pack names and that holds an item, picked as items are (D552, `GamesFieldViewModel`). `SettingKind.Zone`, a zone's id picked as a route's is (D415, `ZoneFieldViewModel`, which says in words what the zone does and how many maps it holds, and blocks the profile when the zone holds none or is gone). `SettingKind.Character`, a character of the accounts page picked in the same dialog among those `AccountBook` holds (D437, `CharacterFieldViewModel`, which blocks the profile when D3B no longer knows the character). `SettingKind.Route`, a route's id picked in
     `RoutePickerViewModel` through `RouteFieldViewModel` (an `IPickingField`), is the value of `route.follow`; `BehaviorAsset.Uses`
     lists the routes a behavior follows. `SequencesViewModel` holds the editors open, `SequenceEditorViewModel` and `SequenceView` are a
     list's tab, its steps `RouteActionViewModel`s drawn by `ActionCardView`; the new-profile dialog (`NewProfileViewModel`) and the

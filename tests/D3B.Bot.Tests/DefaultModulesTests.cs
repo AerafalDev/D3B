@@ -5,6 +5,7 @@ using D3B.Bot.Harvesting;
 using D3B.Bot.Network;
 using D3B.Bot.Protocol;
 using D3B.Bot.Runtime;
+using D3B.Bot.Transfers;
 using D3B.Bot.Zaaps;
 using D3B.Core.Modules;
 using Microsoft.Extensions.Hosting;
@@ -78,10 +79,18 @@ public sealed class DefaultModulesTests
     }
 
     [Fact]
+    public void TheTransfersModuleBuildsAfterTheZaapsModule()
+    {
+        var bot = new BotBuilder(new HostApplicationBuilderSettings { DisableDefaults = true }).AddModules(new DefaultModules());
+
+        Assert.IsType<TransfersModule>(bot.Modules[8]);
+    }
+
+    [Fact]
     public void TheDataModuleCanBeDisabledWithTheModulesRequiringIt()
     {
         var bot = new BotBuilder(new HostApplicationBuilderSettings { DisableDefaults = true })
-            .AddModules(new DefaultModules(), group => group.Disable<ZaapsModule>().Disable<GroupsModule>().Disable<FightingModule>().Disable<HarvestingModule>().Disable<BotsModule>().Disable<NetworkModule>().Disable<ProtocolModule>().Disable<DataModule>());
+            .AddModules(new DefaultModules(), group => group.Disable<TransfersModule>().Disable<ZaapsModule>().Disable<GroupsModule>().Disable<FightingModule>().Disable<HarvestingModule>().Disable<BotsModule>().Disable<NetworkModule>().Disable<ProtocolModule>().Disable<DataModule>());
 
         Assert.False(bot.HasModule<DataModule>());
     }
