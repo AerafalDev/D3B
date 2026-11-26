@@ -473,6 +473,11 @@ follower) on the same map, the capture of every connection on; a capture's conte
   D488, the miner's door of D517), made in code and tests: a journey or a banking that fails climbs a bounded recovery ladder
   before it fails, and a run that fails, or makes no progress for 10 minutes, is put in order and restarted, with a growing
   wait and six restarts an hour at most, as the harvest's and the hunt's profiles say. Left: seen in game.
+- **The maps no way leads to** (D571), the owner's report of 2026-11-26 of the farmer standing still on a map until attacked,
+  made in code and tests from its journals and captures of 25 and 26 November: a tour left with only maps behind a door's
+  criterion sought them again every second, its zone dropped from the rotation and drawn back with a new tour; such maps now
+  stay out of the zone's next tours until a level, the subscription or the zaaps known change. Left: seen in game; the automatic
+  place weighing a sub-area by the maps the character reaches (status.md).
 - **Profiles never idle until the server's kick** (D567, D568), the owner's report of 2026-11-26 after four kicks the night
   before, made in code and tests from the four captures: a studio profile's behavior passes on every member of its activity, the
   restart after a failure included, which no profile had, and the run watches its progress from the start; the deposits leave
