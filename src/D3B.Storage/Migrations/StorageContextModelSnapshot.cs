@@ -138,6 +138,9 @@ namespace D3B.Storage.Migrations
                     b.Property<int>("SkillId")
                         .HasColumnType("INTEGER");
 
+                    b.Property<long?>("AtLeastMilliseconds")
+                        .HasColumnType("INTEGER");
+
                     b.Property<long?>("AtMostMilliseconds")
                         .HasColumnType("INTEGER");
 
@@ -150,6 +153,23 @@ namespace D3B.Storage.Migrations
                     b.HasKey("SkillId");
 
                     b.ToTable("Regrowths", (string)null);
+                });
+
+            modelBuilder.Entity("D3B.Storage.Harvests.LearnedSighting", b =>
+                {
+                    b.Property<long>("MapId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Elements")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTimeOffset>("SeenAt")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("MapId");
+
+                    b.ToTable("Sightings", (string)null);
                 });
 
             modelBuilder.Entity("D3B.Storage.Npcs.LearnedMapNpc", b =>

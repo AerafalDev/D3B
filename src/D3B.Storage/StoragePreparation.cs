@@ -30,19 +30,21 @@ internal sealed class StoragePreparation : IHostPreparation
     private readonly AccountBook _accounts;
     private readonly GraphicRecorder _graphics;
     private readonly RegrowthRecorder _regrowths;
+    private readonly SightingRecorder _sightings;
     private readonly PlacementRecorder _placements;
     private readonly NpcRecorder _npcs;
     private readonly RunBook _runs;
     private readonly VariableRecorder _variables;
     private readonly ILogger<StoragePreparation> _log;
 
-    public StoragePreparation(StorageSettings settings, IDbContextFactory<StorageContext> contexts, AccountBook accounts, GraphicRecorder graphics, RegrowthRecorder regrowths, PlacementRecorder placements, NpcRecorder npcs, RunBook runs, VariableRecorder variables, ILogger<StoragePreparation> log)
+    public StoragePreparation(StorageSettings settings, IDbContextFactory<StorageContext> contexts, AccountBook accounts, GraphicRecorder graphics, RegrowthRecorder regrowths, SightingRecorder sightings, PlacementRecorder placements, NpcRecorder npcs, RunBook runs, VariableRecorder variables, ILogger<StoragePreparation> log)
     {
         _settings = settings;
         _contexts = contexts;
         _accounts = accounts;
         _graphics = graphics;
         _regrowths = regrowths;
+        _sightings = sightings;
         _placements = placements;
         _npcs = npcs;
         _runs = runs;
@@ -72,13 +74,14 @@ internal sealed class StoragePreparation : IHostPreparation
 
             var graphics = await _graphics.LoadAsync(cancellationToken).ConfigureAwait(false);
             var regrowths = await _regrowths.LoadAsync(cancellationToken).ConfigureAwait(false);
+            var sightings = await _sightings.LoadAsync(cancellationToken).ConfigureAwait(false);
             var placements = await _placements.LoadAsync(cancellationToken).ConfigureAwait(false);
             var (npcs, questions, outcomes) = await _npcs.LoadAsync(cancellationToken).ConfigureAwait(false);
 
             var variables = await _variables.LoadAsync(cancellationToken).ConfigureAwait(false);
 
             await _runs.LoadAsync(cancellationToken).ConfigureAwait(false);
-            StorageLog.Opened(_log, _settings.Path, _accounts.Accounts.Count, _accounts.Characters.Count, graphics, regrowths, placements, npcs, questions, outcomes, _runs.Runs.Count, variables);
+            StorageLog.Opened(_log, _settings.Path, _accounts.Accounts.Count, _accounts.Characters.Count, graphics, regrowths, sightings, placements, npcs, questions, outcomes, _runs.Runs.Count, variables);
 
             return null;
         }

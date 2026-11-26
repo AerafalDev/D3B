@@ -478,6 +478,10 @@ follower) on the same map, the capture of every connection on; a capture's conte
   criterion sought them again every second, its zone dropped from the rotation and drawn back with a new tour; such maps now
   stay out of the zone's next tours until a level, the subscription or the zaaps known change. Left: seen in game; the automatic
   place weighing a sub-area by the maps the character reaches (status.md).
+- **The harvest's journeys for nothing** (D583, D584), the lead's study of the four harvesters' journals of 26 November, made in
+  code and tests: a resource found still growing after a bot's harvest teaches a bound from below, capped at twice the shortest
+  time known, and holds its map back half the reckoning more; what each map holds is kept in `d3b.db` across the host's restarts.
+  Left: seen in game.
 - **Profiles never idle until the server's kick** (D567, D568), the owner's report of 2026-11-26 after four kicks the night
   before, made in code and tests from the four captures: a studio profile's behavior passes on every member of its activity, the
   restart after a failure included, which no profile had, and the run watches its progress from the start; the deposits leave

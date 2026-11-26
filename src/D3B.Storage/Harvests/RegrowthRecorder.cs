@@ -49,7 +49,7 @@ internal sealed class RegrowthRecorder : BackgroundService
             var regrowths = await context.Regrowths.AsNoTracking().ToListAsync(cancellationToken).ConfigureAwait(false);
 
             foreach (var regrowth in regrowths)
-                _regrowths.Remember(regrowth.SkillId, new Regrowth(Of(regrowth.LongestMilliseconds), regrowth.Seen, Of(regrowth.AtMostMilliseconds)));
+                _regrowths.Remember(regrowth.SkillId, new Regrowth(Of(regrowth.LongestMilliseconds), regrowth.Seen, Of(regrowth.AtMostMilliseconds), Of(regrowth.AtLeastMilliseconds)));
 
             return regrowths.Count;
         }
@@ -130,6 +130,7 @@ internal sealed class RegrowthRecorder : BackgroundService
                 learned.LongestMilliseconds = Of(regrowth.Longest);
                 learned.Seen = regrowth.Seen;
                 learned.AtMostMilliseconds = Of(regrowth.AtMost);
+                learned.AtLeastMilliseconds = Of(regrowth.AtLeast);
             }
 
             await context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);

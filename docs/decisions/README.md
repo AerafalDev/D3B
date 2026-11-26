@@ -162,3 +162,4 @@ Each file holds the decisions of one group of [the index](../decisions-index.md)
 - [Harvest, the maps no way leads to kept out of the next tours (D571)](d571-harvest-no-way.md): 1 decision, 4 KB.
 - [The transfer's lasting refusals, and a run begun in a storage left open (D572, D573)](d572-d573-transfer-refusals-and-open-storage.md): 2 decisions, 4 KB.
 - [The app's 1.1.2 (D574)](d574-release-1-1-2.md): 1 decision, 2 KB.
+- [Harvest, a resource found still growing, and what each map holds kept (D583, D584)](d583-d584-harvest-regrowth-and-sightings.md): 2 decisions, 6 KB.

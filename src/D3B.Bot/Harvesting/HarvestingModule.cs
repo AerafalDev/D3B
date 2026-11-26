@@ -39,7 +39,7 @@ public sealed class HarvestingModule : IModule
         // The bots module teaches it; a test's host without one gets it empty.
         services.TryAddSingleton<GraphicSkills>();
         services.TryAddSingleton(services => new GraphicPlaces(services.GetRequiredService<GamePack>(), services.GetRequiredService<GameWorld>()));
-        services.AddSingleton<HarvestSightings>();
+        services.TryAddSingleton<HarvestSightings>();
 
         // Whatever the bots do, every map they are on teaches how long its resources take to grow back (D145).
         services.TryAddSingleton<Regrowths>();

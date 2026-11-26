@@ -28,6 +28,8 @@ public sealed class RegrowthRecorderTests : IDisposable
             regrowths.GrownBack(1, 10, 68, start.AddSeconds(400.5), watchedSince: start);
             regrowths.Harvested(1, 11, 125, start);
             regrowths.GrownBack(1, 11, 125, start.AddSeconds(564), watchedSince: start.AddSeconds(564));
+            regrowths.Harvested(1, 11, 125, start.AddSeconds(600));
+            regrowths.StillGrowing(1, 11, 125, start.AddSeconds(1_500));
             await first.Services.GetRequiredService<RegrowthRecorder>().WrittenAsync();
         }
 
@@ -36,7 +38,7 @@ public sealed class RegrowthRecorderTests : IDisposable
 
         Assert.Equal(2, known.Count);
         Assert.Equal(new Regrowth(TimeSpan.FromMilliseconds(400_500), 1, null), known.TryGet(68, out var nettle) ? nettle : default);
-        Assert.Equal(new Regrowth(null, 0, TimeSpan.FromSeconds(564)), known.TryGet(125, out var trout) ? trout : default);
+        Assert.Equal(new Regrowth(null, 0, TimeSpan.FromSeconds(564), TimeSpan.FromSeconds(900)), known.TryGet(125, out var trout) ? trout : default);
         Assert.Contains(next.Log.GetSnapshot(), record => record.Message.Contains(", 2 resources' growing back,", StringComparison.Ordinal));
     }
 }

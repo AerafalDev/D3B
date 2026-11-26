@@ -1114,3 +1114,10 @@ or refines another says so in its own entry. Add a line here with every new deci
 
 - [D574](decisions/d574-release-1-1-2.md#d574-the-apps-release-after-111-is-112-holding-the-harvest-that-no-longer-seeks-the-maps-no-way-leads-to-and-the-transfers-lasting-refusals) The app's release after 1.1.1 is 1.1.2, holding the harvest that no longer seeks the maps no way leads to and the transfer's lasting refusals (2026-11-26)
   - The owner's choice of 1.1.2 over 1.2.0, both fixes in it, tagged before either is seen in game; nothing published first.
+
+## Harvest, a resource found still growing, and what each map holds kept (D583, D584)
+
+- [D583](decisions/d583-d584-harvest-regrowth-and-sightings.md#d583-an-element-a-bot-harvested-found-still-growing-on-a-later-visit-teaches-a-bound-from-below-never-over-twice-the-shortest-time-known-and-holds-its-map-back-half-the-reckoning-more) An element a bot harvested, found still growing on a later visit, teaches a bound from below, never over twice the shortest time known, and holds its map back half the reckoning more (2026-11-26)
+  - Measured on the miner's journals of 26 November; the ceiling the owner's choice over none, or the map held back alone.
+- [D584](decisions/d583-d584-harvest-regrowth-and-sightings.md#d584-what-each-map-holds-its-elements-that-gather-a-resource-is-kept-in-d3bs-database-and-taken-back-at-the-hosts-start-not-whether-they-offered-their-skills) What each map holds, its elements that gather a resource, is kept in D3B's database and taken back at the host's start, not whether they offered their skills (2026-11-26)
+  - Measured on the four harvesters' journals of 26 November; keeping each element's state rejected.
