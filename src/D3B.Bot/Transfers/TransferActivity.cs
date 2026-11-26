@@ -13,7 +13,7 @@ namespace D3B.Bot.Transfers;
 /// <remarks>
 /// <para>
 /// A round goes to the source, the nearest banker or guild's chest, opens it, takes out what the settings choose and the pods hold,
-/// a stack at a time, and leaves; then goes to the destination, puts in what it took, and leaves (D551). The chest stands in banks'
+/// the bank's by one list for the stacks it takes whole (D580) and the chest's a stack at a time, and leaves; then goes to the destination, puts in what it took, and leaves (D551). The chest stands in banks'
 /// insides (D153), so a round's journeys are short, often none. Only what the transfer took moves: what the character carried before
 /// stays in its bags. Before its takes, a round notes how much of each stack in the bags is the character's own, so that a put never
 /// takes from it, whether the inventory joined the stack taken to the character's or gave it a stack of its own, as it does an object
@@ -168,10 +168,20 @@ public sealed class TransferActivity : BotActivity
             return await SayWhatWouldMoveAsync(context, cancellationToken).ConfigureAwait(false);
 
         var took = false;
-        var tooHeavy = false;
         var refusedForPods = false;
         var moves = 0;
         var character = context.State.Key.CharacterId;
+
+        if (FromBank)
+        {
+            var listed = await TakeWholeAsync(context, cancellationToken).ConfigureAwait(false);
+
+            took = listed is { Sent: true, Took: true };
+            refusedForPods = listed.CutShort;
+            moves = listed.Sent ? 1 : 0;
+        }
+
+        var tooHeavy = refusedForPods;
 
         // Measured on the owner's run of 2026-11-25 (D563): the client leaves the storage by itself just after the bot's
         // leaving, and closed a chest the bot opened again 31 ms later. A storage closed is no storage holding nothing.
@@ -249,6 +259,57 @@ public sealed class TransferActivity : BotActivity
         End(context);
 
         return false;
+    }
+
+    // Measured on the owner's captures of 20 to 26 November (D580): the client takes a list of stacks out of the bank by one
+    // request, the server taking them whole while the pods hold them, then of one more what fits. Only the stacks the round takes
+    // whole go in it, weighed so that the pods hold them all: a stack the settings or the pods take in part goes alone after, and
+    // a list the bank refuses leaves its stacks to go a stack at a time.
+    private async Task<(bool Sent, bool Took, bool CutShort)> TakeWholeAsync(BotContext context, CancellationToken cancellationToken)
+    {
+        var state = context.State;
+        var weight = (long)state.Weight;
+        var planned = new Dictionary<int, long>();
+        var whole = new List<StorageItem>();
+
+        foreach (var stack in Stored(state))
+        {
+            var itemWeight = _filter.WeightOf(stack.ItemId);
+            var fitting = itemWeight <= 0 ? long.MaxValue : state.MaxWeight > 0 ? Math.Max(0, state.MaxWeight - weight) / itemWeight : 0;
+
+            if (stack.Quantity > Allowance(state, stack.ItemId) - planned.GetValueOrDefault(stack.ItemId) || stack.Quantity > fitting)
+                continue;
+
+            whole.Add(stack);
+            planned[stack.ItemId] = planned.GetValueOrDefault(stack.ItemId) + stack.Quantity;
+            weight += (long)stack.Quantity * Math.Max(itemWeight, 0);
+        }
+
+        if (whole.Count is 0)
+            return (false, false, false);
+
+        // Counted as carried before the request: a step cut before the answer still finds in the bags what the server moved.
+        foreach (var stack in whole)
+            _carry.Carrying.Add(stack.ItemId);
+
+        var outcome = await context.TakeFromBankAsync([.. whole.Select(stack => stack.Uid)], cancellationToken).ConfigureAwait(false);
+        var left = context.State.Storage?.Stacks;
+        var took = false;
+
+        foreach (var taken in whole.GroupBy(stack => stack.ItemId))
+        {
+            var quantity = taken.Sum(stack => stack.Quantity - (left is not null && left.TryGetValue(stack.Uid, out var stays) ? stays.Quantity : 0));
+
+            // A bank closed under the request says nothing of what it moved: what the bags hold is put in all the same.
+            if (quantity <= 0 || left is null)
+                continue;
+
+            took = true;
+            _taken[taken.Key] = _taken.GetValueOrDefault(taken.Key) + quantity;
+            TransferLog.Took(context.Log, state.Key.CharacterId, taken.Key, quantity, _source);
+        }
+
+        return (true, took, outcome is StorageMoveOutcome.TooHeavy);
     }
 
     private async Task<bool> PutAsync(BotContext context, CancellationToken cancellationToken)
