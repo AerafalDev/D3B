@@ -294,14 +294,17 @@ public sealed class TransferActivity : BotActivity
 
         var outcome = await context.TakeFromBankAsync([.. whole.Select(stack => stack.Uid)], cancellationToken).ConfigureAwait(false);
         var left = context.State.Storage?.Stacks;
+        var bags = context.State.Inventory;
         var took = false;
 
         foreach (var taken in whole.GroupBy(stack => stack.ItemId))
         {
-            var quantity = taken.Sum(stack => stack.Quantity - (left is not null && left.TryGetValue(stack.Uid, out var stays) ? stays.Quantity : 0));
+            // A stack taken whole keeps its id in the bags (D580): a bank closed under the request is read from them.
+            var quantity = taken.Sum(stack => left is not null
+                ? stack.Quantity - (left.TryGetValue(stack.Uid, out var stays) ? stays.Quantity : 0)
+                : bags.TryGetValue(stack.Uid, out var came) ? Math.Min(came.Quantity, stack.Quantity) : 0);
 
-            // A bank closed under the request says nothing of what it moved: what the bags hold is put in all the same.
-            if (quantity <= 0 || left is null)
+            if (quantity <= 0)
                 continue;
 
             took = true;

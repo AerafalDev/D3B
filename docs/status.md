@@ -72,7 +72,8 @@ As of 2026-11-26, after D580 (the bank's takes by list, the owner's choice of D5
   state lasts 2 turns and the spell comes back every 3, so a fight ending on the third turn after a cast may capture
   nothing. In a group, a follower's or a summon's casts do not spare the mount, and only the main wears and casts. The
   dungeons' bosses are studied, not built. The mapping of format 26 (18,438 bytes, written on the owner's machine from the
-  branch and its captures, the audit with no failure) is published on the release `client-3.7.14.18`.
+  branch and its captures, the audit with no failure) is published on the release `client-3.7.14.18`, and so is the mapping of
+  format 27 (18,728 bytes, D580) that `main` reads from the bank's takes by list on.
 
 - Dungeons (D520 to D529): measured on the owner's captures of 21 and 24 November, played by hand in a party; tested on the fake
   game only. To look at in game: a character alone in Champs or Château Ensablé from door to exit, a keeper and an exit other

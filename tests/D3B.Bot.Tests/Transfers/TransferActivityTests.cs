@@ -660,16 +660,63 @@ public sealed class TransferActivityTests
         connection.Server(new StorageObjectsRemovedEvent { Uids = { BankBread } });
         connection.Server(new StorageObjectUpdateEvent { Object = Stack(502, TestPlay.Chestnut, 7) });
         connection.Server(new ObjectsAddedEvent { Objects = { Stack(BankBread, TestPlay.Bread, 4), Stack(41, TestPlay.Chestnut, 3) } });
-        connection.Server(new InventoryWeightEvent { Weight = 1_000, MaxWeight = 1_000 });
+        connection.Server(new InventoryWeightEvent { Weight = 900, MaxWeight = 1_000 });
         connection.Server(new TextInformationEvent { TextId = StorageMoves.IncompleteTextId, Type = TextInformationType.Error });
 
-        // No take alone after it: the bank is left, and the chest gets the 3 chestnuts that came in.
+        // No take alone after it, though the weight told leaves room for 20 chestnuts: the bank is left, and the chest gets the
+        // 3 chestnuts that came in.
         await LeftAsync(play, connection, 4);
         await OpenChestAsync(play, connection, 5);
 
         run.Stop();
         await TestWalks.AdvanceUntilDoneAsync(play.Time, run.Completion);
         Assert.Contains(play.Log.GetSnapshot(), record => record.Message.Contains($"took 3 of item {TestPlay.Chestnut}", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public async Task AtMostKeepsTheListToTheAmountOverSeveralStacksOfAnItem()
+    {
+        // At most 10 ashes, the bank holding two stacks of 6: one goes in the list, 4 of the other alone after it.
+        await using var play = new TestPlay();
+        var (connection, bot) = await InTheBankAsync(play);
+        var run = bot.StartActivity(Transfer(play, new TransferSettings { Items = [TestPlay.Ash], Quantity = TransferQuantity.AtMost, Amount = 10 }));
+
+        await OpenBankAsync(play, connection, 1, Stack(BankAsh, TestPlay.Ash, 6), Stack(BankAsh + 1, TestPlay.Ash, 6));
+        await TookListAsync(play, connection, 3, 430, Stack(BankAsh, TestPlay.Ash, 6));
+        Assert.Equal(new ExchangeObjectMoveRequest { Uid = BankAsh + 1, Quantity = -4 }, await TestWalks.SentAsync(play, connection, 4));
+
+        run.Stop();
+        await TestWalks.AdvanceUntilDoneAsync(play.Time, run.Completion);
+    }
+
+    [Fact]
+    public async Task AListTheBankClosedUnderCountsWhatCameInTheBags()
+    {
+        // At most 20 ashes, all of them in one stack the list takes: the bank closes before the round reads it, and the 20 that
+        // came in still count, so the next round takes none.
+        await using var play = new TestPlay();
+        var (connection, bot) = await InTheBankAsync(play);
+        var run = bot.StartActivity(Transfer(play, new TransferSettings { Items = [TestPlay.Ash], Quantity = TransferQuantity.AtMost, Amount = 20 }));
+
+        await OpenBankAsync(play, connection, 1, Stack(BankAsh, TestPlay.Ash, 20), Stack(BankAsh + 1, TestPlay.Ash, 30));
+        Assert.Equal(new ExchangeTransferToInventoryRequest { Uids = { BankAsh } }, await TestWalks.SentAsync(play, connection, 3));
+        connection.Server(new StorageObjectsRemovedEvent { Uids = { BankAsh } });
+        connection.Server(new ObjectsAddedEvent { Objects = { Stack(BankAsh, TestPlay.Ash, 20) } });
+        connection.Server(new ExchangeLeaveEvent { Type = DialogType.Storage });
+        connection.Server(new InventoryWeightEvent { Weight = 500, MaxWeight = 1_000 });
+
+        await OpenChestAsync(play, connection, 4);
+        Assert.Equal(new ExchangeObjectMoveRequest { Uid = BankAsh, Quantity = 20 }, await TestWalks.SentAsync(play, connection, 5));
+        connection.Server(new StorageObjectUpdateEvent { Object = Stack(900, TestPlay.Ash, 20) });
+        connection.Server(new ObjectDeletedEvent { Uid = BankAsh });
+        connection.Server(new InventoryWeightEvent { Weight = 400, MaxWeight = 1_000 });
+        await LeftAsync(play, connection, 6);
+
+        await OpenBankAsync(play, connection, 7, Stack(BankAsh + 1, TestPlay.Ash, 30));
+        await LeftAsync(play, connection, 9);
+
+        Assert.Equal(ActivityOutcome.Done, await TestWalks.AdvanceUntilDoneAsync(play.Time, run.Completion));
+        Assert.Contains(play.Log.GetSnapshot(), record => record.Message.Contains($"took 20 of item {TestPlay.Ash}", StringComparison.Ordinal));
     }
 
     [Fact]

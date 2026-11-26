@@ -19,7 +19,8 @@ after the owner's report of 26 November (D575 to D579).
 - **Made.** `ExchangeTransferToInventoryRequest`, `ExchangeTransferAllToInventoryRequest`, `StorageObjectsRemovedEvent` and
   `ObjectsAddedEvent` in the readable protocol, pinned on 3.7.14.18, `MappingFile.FormatVersion` 27; the state removes and adds
   the stacks they name; `StorageMoves.TakeFromBankAsync` sends a list of the open bank's stacks and says whether the pods cut it
-  short. `mapping-27.binpb` goes to the release `client-3.7.14.18` before any app that reads it (D24).
+  short. `mapping-27.binpb` and its `.sha256` are published on the release `client-3.7.14.18` (`release.cs --publish`, the owner's
+  « Oui, publie » of 2026-11-26) before any app that reads it (D24).
 - **The transfer.** From the bank, a round takes by one list the stacks it moves whole, weighed so that the pods hold them, then a
   stack at a time what it takes in part; a list the bank refuses goes a stack at a time. In the guild's chest every move stays a
   stack at a time, as the client's.
