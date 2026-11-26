@@ -82,7 +82,7 @@ public static class FightEvents
             }),
             SequenceStartEvent started => fight with { Sequences = fight.Sequences.Add(new FightSequence(started.Type, started.AuthorId, HasCast: false)) },
             SequenceEndEvent => fight.Sequences.IsEmpty ? fight : fight with { Sequences = fight.Sequences.RemoveAt(fight.Sequences.Length - 1) },
-            FightEndEvent end => fight with { Phase = FightPhase.Ended, PlayingId = null, IsOwnTurn = false, End = Ended(end, self) },
+            FightEndEvent end => fight with { Phase = FightPhase.Ended, PlayingId = null, IsOwnTurn = false, End = Ended(end, self, fight) },
             // Measured (9f4): a summon the client controls comes with its own list, sent to the character, the summon named
             // apart; taken as the character's, it left a Roublard with its Roublabot's spells for the rest of its fight.
             FightSpellsContextEvent context when context.FighterId == self && context.Spells.Count > 0 => fight with
@@ -459,7 +459,7 @@ public static class FightEvents
         return cell is >= 0 and < MapData.CellCount;
     }
 
-    private static FightEnd? Ended(FightEndEvent end, long self)
+    private static FightEnd? Ended(FightEndEvent end, long self, FightState fight)
     {
         var result = end.Results.FirstOrDefault(result => result.Fighter?.FighterId == self);
 
@@ -471,6 +471,8 @@ public static class FightEvents
             .GroupBy(item => item.ItemId)
             .ToImmutableSortedDictionary(group => group.Key, group => group.Sum(item => item.Quantity));
 
-        return new FightEnd(result.Outcome, experience, result.Loot?.Kamas ?? 0, items);
+        var highest = fight.Fighters.Values.Where(fighter => fighter.Team != fight.Team && fighter.MonsterId is not null).Select(fighter => fighter.Level ?? 0).DefaultIfEmpty().Max();
+
+        return new FightEnd(result.Outcome, experience, result.Loot?.Kamas ?? 0, items) { FromMapId = fight.FromMapId, HighestMonsterLevel = highest };
     }
 }

@@ -860,6 +860,56 @@ public sealed class HarvestActivityTests : IAsyncDisposable
     }
 
     [Fact]
+    public async Task TheMapAFightWasLostOnIsLeftForTheZonesOtherMaps()
+    {
+        // The owner's farmer lost 31 fights of 25 and 26 November on two maps of its zone, coming back to them after each (D582).
+        var (connection, bot) = await _play.EnterAsync(433);
+        var activity = Activity(new HarvestSettings { Resources = [TestPlay.Ash], SubAreas = [TestPlay.SubAreaId] });
+        var run = bot.StartActivity(activity);
+
+        await TestWalks.WalkedAsync(_play, connection, 1);
+        Assert.IsType<InteractiveUseRequest>(await connection.SentAsync(2));
+
+        connection.Server(new ContextDestroyEvent());
+        connection.Server(new ContextCreationEvent { Context = ContextCreationEvent.Types.GameContext.Fight });
+        connection.Server(Ended(FightOutcome.Lost));
+        connection.Server(new ContextDestroyEvent());
+        connection.Server(new ContextCreationEvent { Context = ContextCreationEvent.Types.GameContext.Roleplay });
+
+        Assert.IsNotType<InteractiveUseRequest>(await TestWalks.SentAsync(_play, connection, 3));
+
+        run.Stop();
+
+        Assert.Equal(ActivityOutcome.Stopped, await run.Completion);
+    }
+
+    [Fact]
+    public async Task AProtectorThatBeatTheCharacterLeavesItsMapInTheTours()
+    {
+        // The owner's ask (D582): a protector comes of the resource harvested, wherever it grows, so it shuts no map.
+        var (connection, bot) = await _play.EnterAsync(433);
+        var activity = Activity(new HarvestSettings { Resources = [TestPlay.Ash], SubAreas = [TestPlay.SubAreaId] });
+        var run = bot.StartActivity(activity);
+
+        await TestWalks.WalkedAsync(_play, connection, 1);
+        await connection.SentAsync(2);
+
+        connection.Server(new InteractiveUsedEvent { ActorId = TestPlay.CharacterId, ElementId = TestPlay.TreeElementId, SkillId = TestPlay.TreeSkillId, Duration = 30 });
+        connection.Server(new InteractiveUseEndedEvent { ElementId = TestPlay.TreeElementId, SkillId = TestPlay.TreeSkillId });
+        connection.Server(new ContextDestroyEvent());
+        connection.Server(new ContextCreationEvent { Context = ContextCreationEvent.Types.GameContext.Fight });
+        connection.Server(Ended(FightOutcome.Lost));
+        connection.Server(new ContextDestroyEvent());
+        connection.Server(new ContextCreationEvent { Context = ContextCreationEvent.Types.GameContext.Roleplay });
+        Assert.IsType<InteractiveUseRequest>(await TestWalks.SentAsync(_play, connection, 3));
+        Assert.StartsWith("a protector", Say(bot.Journal.All().OfType<ActivityInterruptedEntry>().Single().Note!), StringComparison.Ordinal);
+
+        run.Stop();
+
+        Assert.Equal(ActivityOutcome.Stopped, await run.Completion);
+    }
+
+    [Fact]
     public async Task AfterALostFightTheCharacterWaitsForItsWholeLifeBeforeItGoesOn()
     {
         var (connection, bot) = await _play.EnterAsync(433);

@@ -159,7 +159,7 @@
     <value>Empty the bags into the bank first</value>
   </data>
   <data name="EmptyBagsFirstHelp" xml:space="preserve">
-    <value>From the guild's chest to the bank: first puts in the bank everything the bags hold but what is worn, the character's own objects too, so that the rounds take as much as the pods allow.</value>
+    <value>First puts in the bank everything the bags hold but what is worn, the character's own objects too: from the guild's chest, so that the rounds take as much as the pods allow; from the bank, so that the bags' objects go to the chest with the rest, what the settings do not move or the chest refuses staying in the bank.</value>
   </data>
   <data name="DryRun" xml:space="preserve">
     <value>Dry run</value>

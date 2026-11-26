@@ -31,7 +31,6 @@ internal sealed class HarvestTour
     private readonly HashSet<long> _visited = [];
     private readonly HashSet<long> _crossed = [];
     private readonly HashSet<long> _unreachable = [];
-    private readonly HashSet<long> _noWay = [];
     private readonly HashSet<int> _wanted = [];
     private readonly HashSet<int> _entered = [];
     private readonly HashSet<long> _levelsTried = [];
@@ -40,9 +39,10 @@ internal sealed class HarvestTour
     private readonly GraphicSkills _graphics;
     private readonly Regrowths? _regrowths;
     private readonly TimeProvider _time;
+    private readonly HarvestShutMaps _shut;
     private Func<int, int>? _levelOf;
-    private (int? Level, bool Subscribed, int JobLevels, int Zaaps)? _noWayFor;
     private int _harvests;
+    private int _noWays;
     private int _doneAtArrival = -1;
 
     /// <summary>Gets the tour's number, from 1.</summary>
@@ -68,12 +68,14 @@ internal sealed class HarvestTour
     /// <param name="graphics">What the host learned of the maps' graphics.</param>
     /// <param name="regrowths">What the host learned of the resources' growing back, if it learns.</param>
     /// <param name="time">The bots' clock.</param>
-    public HarvestTour(HarvestSightings sightings, GraphicSkills graphics, Regrowths? regrowths = null, TimeProvider? time = null)
+    /// <param name="shut">The maps the activity's tours leave out for what the character is, kept beyond this tour (D581); none, this tour's own.</param>
+    public HarvestTour(HarvestSightings sightings, GraphicSkills graphics, Regrowths? regrowths = null, TimeProvider? time = null, HarvestShutMaps? shut = null)
     {
         _sightings = sightings;
         _graphics = graphics;
         _regrowths = regrowths;
         _time = time ?? TimeProvider.System;
+        _shut = shut ?? new HarvestShutMaps();
     }
 
     /// <summary>Takes the character's levels, which the tour weighs: a resource above the level of its profession makes no map probable, and no interior worth entering (D417).</summary>
@@ -88,13 +90,7 @@ internal sealed class HarvestTour
         ArgumentNullException.ThrowIfNull(state);
 
         _levelOf = state.Jobs.Count is 0 ? null : job => MapHarvest.LevelOf(state, job);
-
-        var facts = (state.Level, state.IsSubscribedAt(_time.GetUtcNow()), state.Jobs.Values.Sum(job => job.Level), state.KnownZaaps.Count);
-
-        if (_noWayFor is { } known && known != facts)
-            _noWay.Clear();
-
-        _noWayFor = facts;
+        _shut.Know(state, _time.GetUtcNow());
     }
 
     /// <summary>Gets how many maps a tour goes through: those not left out, nor out of every way.</summary>
@@ -104,17 +100,17 @@ internal sealed class HarvestTour
     {
         var toFind = ToFind(zone);
 
-        return zone.Maps.Keys.Count(map => !_noWay.Contains(map) && !IsLeftOut(map, zone, toFind));
+        return zone.Maps.Keys.Count(map => !_shut.Contains(map) && !IsLeftOut(map, zone, toFind));
     }
 
-    /// <summary>Gets how many maps of the zone no way leads to that a tour would go through otherwise: those not left out for what they hold.</summary>
+    /// <summary>Gets how many maps of the zone the tours leave out for what the character is, no way leading to them or a group having beaten it there (D582), that a tour would go through otherwise: those not left out for what they hold.</summary>
     /// <param name="zone">The zone.</param>
     /// <returns>How many.</returns>
     public int Shut(HarvestZone zone)
     {
         var toFind = ToFind(zone);
 
-        return zone.Maps.Keys.Count(map => _noWay.Contains(map) && !IsLeftOut(map, zone, toFind));
+        return zone.Maps.Keys.Count(map => _shut.Contains(map) && !IsLeftOut(map, zone, toFind));
     }
 
     /// <summary>Gets how many maps of the zone are probable.</summary>
@@ -137,7 +133,7 @@ internal sealed class HarvestTour
     {
         var now = _time.GetUtcNow();
         var toFind = ToFind(zone);
-        HashSet<long> remaining = [.. zone.Maps.Keys.Where(map => !_visited.Contains(map) && !_unreachable.Contains(map) && !_noWay.Contains(map) && !IsLeftOut(map, zone, toFind) && !(ReadyAt(map, zone) > now))];
+        HashSet<long> remaining = [.. zone.Maps.Keys.Where(map => !_visited.Contains(map) && !_unreachable.Contains(map) && !_shut.Contains(map) && !IsLeftOut(map, zone, toFind) && !(ReadyAt(map, zone) > now))];
 
         // The isolated maps a tour goes through come last, whatever they hold: the way there is long (D149).
         HashSet<long> near = [.. remaining.Where(map => !zone.Isolated.Contains(map))];
@@ -175,7 +171,7 @@ internal sealed class HarvestTour
 
         foreach (var map in zone.Maps.Keys)
         {
-            if (_visited.Contains(map) || _unreachable.Contains(map) || _noWay.Contains(map) || IsLeftOut(map, zone, toFind) || ReadyAt(map, zone) is not { } ready || ready <= now)
+            if (_visited.Contains(map) || _unreachable.Contains(map) || _shut.Contains(map) || IsLeftOut(map, zone, toFind) || ReadyAt(map, zone) is not { } ready || ready <= now)
                 continue;
 
             if (first is null || ready < first)
@@ -260,7 +256,8 @@ internal sealed class HarvestTour
     /// </remarks>
     public void NoWay(long mapId)
     {
-        _noWay.Add(mapId);
+        if (_shut.NoWay(mapId))
+            _noWays++;
     }
 
     /// <summary>Gets whether the character stood in a zone, or gave it up, in this tour.</summary>
@@ -343,7 +340,7 @@ internal sealed class HarvestTour
     /// </remarks>
     public bool Arrived()
     {
-        var done = _visited.Count + _crossed.Count + _unreachable.Count + _noWay.Count + _entered.Count + _harvests;
+        var done = _visited.Count + _crossed.Count + _unreachable.Count + _noWays + _entered.Count + _harvests;
 
         IdleArrivals = done == _doneAtArrival ? IdleArrivals + 1 : 0;
         _doneAtArrival = done;
@@ -416,7 +413,7 @@ internal sealed class HarvestTour
         if (IsLeftOut(mapId, zone, toFind))
             return ZoneMapState.Empty;
 
-        if (_unreachable.Contains(mapId) || _noWay.Contains(mapId))
+        if (_unreachable.Contains(mapId) || _shut.Contains(mapId))
             return ZoneMapState.Unreachable;
 
         return IsProbable(mapId, zone) ? ZoneMapState.Probable : ZoneMapState.ToVisit;

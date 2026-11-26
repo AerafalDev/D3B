@@ -30,14 +30,14 @@ public sealed class HarvestActivityNoWayTests : IAsyncDisposable
     }
 
     // Every map of the zone but the shut one seen holding nothing wanted: the shut map is all the tour has to go to.
-    private HarvestActivity Activity()
+    private HarvestActivity Activity(bool restarts = false)
     {
         var sightings = new HarvestSightings();
 
         foreach (var map in new[] { TestPlay.NorthMapId, TestPlay.MapId, TestPlay.EastMapId, TestPlay.InsideMapId, TestPlay.OtherInsideMapId })
             sightings.SeenElements(map, [], _play.Time.GetUtcNow());
 
-        var settings = new HarvestSettings { Resources = [TestPlay.Ash], SubAreas = [TestPlay.SubAreaId], RestartAfterFailure = false };
+        var settings = new HarvestSettings { Resources = [TestPlay.Ash], SubAreas = [TestPlay.SubAreaId], RestartAfterFailure = restarts };
 
         return new HarvestActivity(settings, _play.World, _play.Tables, _play.Maps, sightings, new GraphicSkills(), _play.Places, new Regrowths(), _play.Time);
     }
@@ -55,5 +55,18 @@ public sealed class HarvestActivityNoWayTests : IAsyncDisposable
         Assert.False(Assert.IsType<ActivityException>(run.Failure).IsFinal);
         Assert.Single(bot.Journal.All(), entry => entry is TravelEntry { Outcome: TravelOutcome.NoPath });
         Assert.DoesNotContain(_play.Log.GetSnapshot(), record => record.Message.Contains("before the next try", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public async Task AMapNoWayLeadsToIsNotSoughtAgainByTheRunsRestarts()
+    {
+        // The study of the owner's farmer of 26 November (D581): each restart after a failure began new tours, which sought the
+        // maps no way leads to again, one journey with no way a restart.
+        var (_, bot) = await _play.EnterAsync(300, TestPlay.EastMapId);
+        bot.StartActivity(Activity(restarts: true));
+
+        await _play.AdvanceUntilAsync(() => bot.Journal.All().Count(entry => entry is ActivityRestartedEntry) >= 2, TimeSpan.FromSeconds(5));
+
+        Assert.Single(bot.Journal.All(), entry => entry is TravelEntry { Outcome: TravelOutcome.NoPath });
     }
 }

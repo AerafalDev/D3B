@@ -3,6 +3,7 @@ using D3B.Bot.Journal;
 using D3B.Bot.Runtime;
 using D3B.Bot.Tests.Runtime;
 using D3B.Data.Tests;
+using D3B.Engine.Maps;
 using D3B.Protocol.Game;
 
 namespace D3B.Bot.Tests.Activities;
@@ -252,6 +253,28 @@ public sealed class ActivityRunTests : IAsyncDisposable
         Assert.Equal(1, await activity.SteppingAsync(bot));
         Assert.False(bot.State.IsInDialog);
         Assert.Equal(ActivityStatus.Stepping, run.Status);
+    }
+
+    [Fact]
+    public async Task ARunBegunOnAWalkAStoppedRunLeftUnconfirmedSettlesItBeforeItsFirstStep()
+    {
+        // Measured on the owner's Sacrieur of 2026-11-26 16:56 UTC: its harvest stopped 0.7 s after a walk the server showed and
+        // the client never confirmed, and the profile's next run sent nothing for 23 s, its busy wait waiting on the walk (D576).
+        var (connection, bot) = await _play.EnterAsync(433);
+        Assert.True(CellPathfinder.TryFind(_play.Maps.Get(TestPlay.MapId).Cells.Span, 433, 388, out var path));
+        connection.Server(new MapMovementEvent { ActorId = TestPlay.CharacterId, Cells = { path.Cells.ToArray() } });
+        await bot.ProcessedAsync();
+
+        var activity = new TestActivity();
+        var startedAt = _play.Time.GetUtcNow();
+        bot.StartActivity(activity);
+
+        bot.Resume();
+        await _play.AdvanceUntilAsync(() => connection.Sent.Count > 0, TimeSpan.FromMilliseconds(250));
+
+        Assert.IsType<MapMovementRequest>(connection.Sent[0]);
+        Assert.Equal(0, activity.Started);
+        Assert.True(_play.Time.GetUtcNow() - startedAt < BusyWait.Bound / 2);
     }
 
     [Fact]

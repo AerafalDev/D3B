@@ -143,7 +143,7 @@ public sealed class TransferActivity : BotActivity
         if (_disconnected || (!_settings.DryRun && _carry.ConnectionId != context.Actor.ConnectionId))
             Forget(context);
 
-        if (!_emptied && _settings.EmptyBagsFirst && !FromBank && !_settings.DryRun)
+        if (!_emptied && _settings.EmptyBagsFirst && !_settings.DryRun)
             return await EmptyBagsAsync(context, cancellationToken).ConfigureAwait(false);
 
         _carry.Carrying.RemoveWhere(itemId => Carried(context.State, itemId) <= 0);
@@ -156,7 +156,11 @@ public sealed class TransferActivity : BotActivity
     private async Task<bool> TakeAsync(BotContext context, CancellationToken cancellationToken)
     {
         Publish(context.State, FromBank ? "DoingTakeBank" : "DoingTakeChest");
-        await OpenAsync(context, FromBank, cancellationToken).ConfigureAwait(false);
+
+        // The bank the bags were just emptied in is the source: its takes follow in the same opening (D575).
+        if (!(FromBank && _emptied && context.State.Storage is { IsGuildChest: false }))
+            await OpenAsync(context, FromBank, cancellationToken).ConfigureAwait(false);
+
         await GiveBackAsync(context, cancellationToken).ConfigureAwait(false);
         Remember(context.State);
 
@@ -253,7 +257,7 @@ public sealed class TransferActivity : BotActivity
         await OpenAsync(context, !FromBank, cancellationToken).ConfigureAwait(false);
 
         var character = context.State.Key.CharacterId;
-        var moves = 0;
+        var moves = !FromBank && await DepositWholeAsync(context, cancellationToken).ConfigureAwait(false) ? 1 : 0;
 
         foreach (var itemId in _carry.Carrying.ToList())
         {
@@ -316,7 +320,9 @@ public sealed class TransferActivity : BotActivity
     }
 
     // The owner's ask after a take left in the bags by a reconnection, which no run can tell from the character's own (D564): the
-    // bank is the destination, so everything the bags hold goes where the transfer takes the chest's objects anyway.
+    // bank is the destination, so everything the bags hold goes where the transfer takes the chest's objects anyway. From the
+    // bank, the owner's ask after its mules' harvest stayed in their bags (D575): what the bags held goes to the chest with the
+    // bank's objects, what the transfer carried back where it came from, which moves nothing.
     private async Task<bool> EmptyBagsAsync(BotContext context, CancellationToken cancellationToken)
     {
         Publish(context.State, "DoingEmptyBags");
@@ -327,8 +333,12 @@ public sealed class TransferActivity : BotActivity
         var uids = state.Inventory.Values.Where(stack => !stack.IsWorn).Select(stack => stack.Uid).ToList();
         var outcome = uids.Count > 0 ? await context.DepositAsync(uids, 0, cancellationToken).ConfigureAwait(false) : BankOutcome.Done;
 
+        // The bags' stacks the bank took are no longer the character's own: one taken out again for the chest is the transfer's.
+        foreach (var uid in _carry.Own.Keys.Where(uid => !context.State.Inventory.ContainsKey(uid)).ToList())
+            _carry.Own.Remove(uid);
+
         // What the transfer carried and the bank took counts as moved; the stacks it left, such as a quest's objects, stay.
-        foreach (var (itemId, quantity) in carried)
+        foreach (var (itemId, quantity) in FromBank ? [] : carried)
         {
             var put = quantity - Carried(context.State, itemId);
 
@@ -339,6 +349,18 @@ public sealed class TransferActivity : BotActivity
             TransferLog.Put(context.Log, state.Key.CharacterId, itemId, put, _destination);
         }
 
+        // The bank is the source: its takes follow in this step, as a bank still open at the next would be the busy wait's (D575).
+        if (FromBank && context.State.Storage is { IsGuildChest: false })
+        {
+            _closings = 0;
+            _emptied = true;
+
+            // Measured (D577): the server refuses a bank action asked less than about 0.55 s after the last, with text 268.
+            await Task.Delay(context.Delays.Display, context.Time, cancellationToken).ConfigureAwait(false);
+
+            return await TakeAsync(context, cancellationToken).ConfigureAwait(false);
+        }
+
         await LeaveAsync(context, cancellationToken).ConfigureAwait(false);
 
         // A bank closed under the deposit is opened again, as one closed under the takes is.
@@ -347,6 +369,36 @@ public sealed class TransferActivity : BotActivity
 
         _closings = 0;
         _emptied = true;
+
+        return true;
+    }
+
+    // Measured on the owner's captures of 20 to 26 November (D577): the client puts a list of stacks in the bank by one request,
+    // which the bank's deposits already send (D80). Only a stack the transfer carries whole goes in it: one the take joined to the
+    // character's own holds objects to leave, which a stack at a time puts in by their number.
+    private async Task<bool> DepositWholeAsync(BotContext context, CancellationToken cancellationToken)
+    {
+        var state = context.State;
+        var whole = _carry.Carrying.SelectMany(itemId => Takens(state, itemId)).Where(taken => taken.Quantity == taken.Stack.Quantity).Select(taken => taken.Stack.Uid).ToList();
+
+        if (whole.Count is 0)
+            return false;
+
+        var carried = _carry.Carrying.ToDictionary(itemId => itemId, itemId => Carried(state, itemId));
+
+        await context.DepositAsync(whole, 0, cancellationToken).ConfigureAwait(false);
+
+        // What the bank left, which it answers with nothing, goes in a stack at a time after, as before the list (D80).
+        foreach (var (itemId, quantity) in carried)
+        {
+            var put = quantity - Carried(context.State, itemId);
+
+            if (put <= 0)
+                continue;
+
+            _moved[itemId] = _moved.GetValueOrDefault(itemId) + put;
+            TransferLog.Put(context.Log, state.Key.CharacterId, itemId, put, _destination);
+        }
 
         return true;
     }

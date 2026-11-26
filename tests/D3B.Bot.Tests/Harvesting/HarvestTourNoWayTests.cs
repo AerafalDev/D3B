@@ -61,6 +61,54 @@ public sealed class HarvestTourNoWayTests : IAsyncDisposable
     }
 
     [Fact]
+    public void AMapNoWayLeadsToStaysOutOfANewTourOfTheSameActivity()
+    {
+        // The study of the owner's farmer of 26 November (D581): a restart after a failure, or a sub-area drawn again, began a new
+        // tour, which sought the maps no way leads to again.
+        var zone = Zone();
+        var shut = new HarvestShutMaps();
+        var first = new HarvestTour(new HarvestSightings(), new GraphicSkills(), time: _time, shut: shut);
+
+        first.Know(Character(83));
+        first.NoWay(TestPlay.NorthMapId);
+
+        var next = new HarvestTour(new HarvestSightings(), new GraphicSkills(), time: _time, shut: shut);
+        next.Know(Character(83));
+
+        Assert.DoesNotContain(TestPlay.NorthMapId, next.Remaining(zone));
+        Assert.Equal(1, next.Shut(zone));
+    }
+
+    [Fact]
+    public void AMapAGroupBeatTheCharacterOnStaysOutOfTheToursUntilItHasTheLevelAsked()
+    {
+        // The owner's farmer lost 31 fights of 25 and 26 November on two maps of its zone, coming back to them after each (D582).
+        var zone = Zone();
+        var shut = new HarvestShutMaps();
+        var tour = new HarvestTour(new HarvestSightings(), new GraphicSkills(), time: _time, shut: shut);
+
+        tour.Know(Character(83));
+        shut.Lost(TestPlay.NorthMapId, 85);
+        tour.Next(zone);
+        tour.Know(Character(84, lumberjack: 31));
+
+        Assert.DoesNotContain(TestPlay.NorthMapId, tour.Remaining(zone));
+
+        tour.Know(Character(85, lumberjack: 31));
+
+        Assert.Contains(TestPlay.NorthMapId, tour.Remaining(zone));
+    }
+
+    [Fact]
+    public void AMapComesBackWithin20LevelsOfItsHighestMonsterOrAtTheNextLevel()
+    {
+        // The owner's figure (D582): the farmer of level 83 beaten by monsters of level 150 to 158.
+        Assert.Equal(138, HarvestShutMaps.LevelAsked(158, 83));
+        Assert.Equal(84, HarvestShutMaps.LevelAsked(0, 83));
+        Assert.Equal(84, HarvestShutMaps.LevelAsked(90, 83));
+    }
+
+    [Fact]
     public void AMapWhoseJourneyFailedComesBackInTheNextTour()
     {
         var zone = Zone();

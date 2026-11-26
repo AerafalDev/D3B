@@ -72,6 +72,7 @@ public sealed class HarvestActivity : BotActivity
     private readonly GraphicSkills _graphics;
     private readonly Regrowths _regrowths;
     private readonly TimeProvider _time;
+    private readonly HarvestShutMaps _shut = new();
     private readonly Random _random;
     private readonly BankingPreferences _banking;
     private readonly IPlaceZones? _zones;
@@ -272,7 +273,15 @@ public sealed class HarvestActivity : BotActivity
         if (await _upkeep.UpkeepAsync(context, cancellationToken).ConfigureAwait(false))
             return true;
 
-        if (zone.Maps.ContainsKey(mapId))
+        // The map a group beat the character on is not harvested before the level asked, even stood on, in the zone or out (D582).
+        if (_shut.IsLost(mapId))
+        {
+            if (zone.Maps.ContainsKey(mapId))
+                current.Tour.Visit(mapId);
+            else
+                current.Tour.Cross(mapId);
+        }
+        else if (zone.Maps.ContainsKey(mapId))
         {
             See(state, mapId, zone, context.Time.GetUtcNow());
 
@@ -409,6 +418,13 @@ public sealed class HarvestActivity : BotActivity
 
         _regaining = true;
 
+        // The owner's ask after its farmer lost 31 fights of 25 and 26 November on two maps of its zone, coming back to them
+        // after each (D582): the map a group attacked and beat it on, the one the fight began from rather than the fight's own,
+        // stays out of the tours until the character is within 20 levels of the highest monster it fought. A protector comes of
+        // the resource harvested, wherever it grows: it shuts no map.
+        if (_fight is FightKind.Aggression && ending.FromMapId is { } lostOn)
+            _shut.Lost(lostOn, HarvestShutMaps.LevelAsked(ending.HighestMonsterLevel, _context?.State.Level));
+
         return _settings.AfterLostFight switch
         {
             HarvestAfterFight.Pause => InterruptionResponse.Pause,
@@ -431,7 +447,7 @@ public sealed class HarvestActivity : BotActivity
     }
 
     /// <inheritdoc/>
-    /// <remarks>The rotation is drawn again and every tour begins anew; what the activity counted and the balance of its professions stay (D519).</remarks>
+    /// <remarks>The rotation is drawn again and every tour begins anew; what the activity counted, the balance of its professions and the maps its tours leave out for what the character is stay (D519, D581).</remarks>
     public override void Restart()
     {
         _busy.Reset();
@@ -535,7 +551,7 @@ public sealed class HarvestActivity : BotActivity
 
     private HarvestTour NewTour()
     {
-        return new HarvestTour(_sightings, _graphics, _regrowths, _time);
+        return new HarvestTour(_sightings, _graphics, _regrowths, _time, _shut);
     }
 
     // Draws the sub-areas the activity goes through in turn, the ones it already went through keeping their tour (D391).
@@ -763,7 +779,7 @@ public sealed class HarvestActivity : BotActivity
         // information, with a list of its own, so that nothing is left skipped for the map the character stands on.
         bool Harvestable(CharacterState crossed)
         {
-            if (crossed.MapId is not { } crossedId || MapHarvest.Candidates(context, TargetsOf(zone), crossed, [.. tour.ElementsLeftOn(crossedId)]).Count is 0)
+            if (crossed.MapId is not { } crossedId || _shut.IsLost(crossedId) || MapHarvest.Candidates(context, TargetsOf(zone), crossed, [.. tour.ElementsLeftOn(crossedId)]).Count is 0)
                 return false;
 
             // Out of the zone, a map crossed already in this tour is harvested again only where the journey stopped for it.

@@ -1707,6 +1707,13 @@ answered by events it lacks listing the storage's stacks removed and the invento
 | A take, a stack | The character cannot carry it, 5,535 of 5,665 pods | Text 285 of the error kind, "Vous ne pouvez pas porter autant d'objets.", and an event the readable protocol lacks; nothing moved (once, in the chest) |
 | A take, a list or everything | The pods hold only part | What fits taken, a stack in part, and text 266 of the error kind, "Transfert incomplet" (26 times) |
 
+**A list at once, bank and chest** (D577), measured on 2026-11-26 on the owner's 103 game connections of 20 to 26 November, read the
+same way: in the bank the client puts a list of stacks in by `ExchangeTransferFromInventoryRequest`, the request the harvest's deposit
+already sends (D80), and takes a list out by the packed list of ids above (70 times, 5 of them on 26 November), the server answering
+with the storage's stacks removed, the inventory's added and the weight, text 266 when the pods cut it short. In the guild's chest the
+client moves only a stack at a time (239 moves). The server refuses a bank action asked less than about 0.55 s after the last with
+text 268 (37 of the player's own requests of 26 November 12:52 UTC); D3B's moves, 0.5 s apart or more, never were.
+
 **The chest's opening** names three numbers in `ExchangeStartedWithTabbedStorageEvent`: the exchange's type, 21, then 1 and 100, four
 times out of four, and the guild had one tab. The client's guide (text 1164108) says a chest has 100 slots a tab, holds no kamas,
 unlocks more tabs with the guild's levels, and gives each rank the rights to see, put in and take out of each tab apart.

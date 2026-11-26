@@ -441,6 +441,10 @@ public sealed class FightEventsTests
         Assert.Equal((FightOutcome.Won, 77, 7), (ended.Fight.End!.Outcome, ended.Fight.End.Experience, ended.Fight.End.Kamas));
         Assert.Equal([KeyValuePair.Create(1_984, 2), KeyValuePair.Create(16_518, 2)], ended.Fight.End.Items.ToArray());
 
+        // The map the fight began from, not the fight's own, and its monsters' highest level: what a harvest beaten keeps (D582).
+        Assert.Equal((_chosen.MapId, 3), (ended.Fight.End.FromMapId, ended.Fight.End.HighestMonsterLevel));
+        Assert.NotEqual(FightMapId, ended.Fight.End.FromMapId);
+
         var over = Apply(ended, new ContextDestroyEvent(), new ContextCreationEvent { Context = ContextCreationEvent.Types.GameContext.Roleplay });
 
         Assert.Null(over.Fight);
