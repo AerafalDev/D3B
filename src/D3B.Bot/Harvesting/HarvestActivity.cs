@@ -766,8 +766,22 @@ public sealed class HarvestActivity : BotActivity
 
                 break;
             case TravelOutcome.NoPath:
+                // The journey also ends so once every way it tried failed and was left out for it: only the graph and the character's
+                // rules, asked again with none left out, tell a map no way leads to, and only from a zone of a map the graph leaves, a
+                // bank's inside or a mine's pocket saying nothing of the maps beyond; the ladder's last rung leaves those. That fact the
+                // next tours keep: sought again at each, the farmer's journey found no way every second and the character stood still
+                // until it was attacked. The zone is then left as any other whose maps are done, and ends the activity when nothing of it
+                // can be reached (D571).
+                var shut = VertexOf(context, context.State) is { } here && !_graph.EdgesFrom(here).IsEmpty
+                    && !context.World.TryFind(here, remaining, WorldTravel.RulesOf(context), out _);
+
                 foreach (var map in remaining)
-                    tour.Unreach(map);
+                {
+                    if (shut)
+                        tour.NoWay(map);
+                    else
+                        tour.Unreach(map);
+                }
 
                 foreach (var vertex in zones)
                     tour.GiveUp(vertex);
@@ -775,6 +789,14 @@ public sealed class HarvestActivity : BotActivity
                 // Only zones of maps already gone through were wanted: nothing of the tour is lost, the next step goes on without them.
                 if (remaining.Count is 0)
                     break;
+
+                // Not dropped from the rotation, which would draw it again with a tour that knows nothing of those maps (D571).
+                if (shut)
+                {
+                    _journeys.Reset();
+
+                    break;
+                }
 
                 // A zone of the rotation the character cannot reach is left for the others; the activity ends when none is left (D391).
                 if (_rotation.Count > 1 && _settings.Place is HarvestPlace.Automatic)
@@ -828,8 +850,9 @@ public sealed class HarvestActivity : BotActivity
             {
                 _rotation.Remove(current);
 
+                // Maps no way leads to may grow reachable with a level or a subscription: a failure the run restarts from, not a final one.
                 if (_rotation.Count is 0)
-                    throw Impossible("No map of the zone holds a resource to harvest.", "FailNothing");
+                    throw tour.HasNoWay ? Failure("No map of the zone can be reached.", "FailUnreachable") : Impossible("No map of the zone holds a resource to harvest.", "FailNothing");
 
                 _current = NextOf(context, null) ?? _rotation[0];
 

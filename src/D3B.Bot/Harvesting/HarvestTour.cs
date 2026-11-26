@@ -31,6 +31,7 @@ internal sealed class HarvestTour
     private readonly HashSet<long> _visited = [];
     private readonly HashSet<long> _crossed = [];
     private readonly HashSet<long> _unreachable = [];
+    private readonly HashSet<long> _noWay = [];
     private readonly HashSet<int> _wanted = [];
     private readonly HashSet<int> _entered = [];
     private readonly HashSet<long> _levelsTried = [];
@@ -40,6 +41,7 @@ internal sealed class HarvestTour
     private readonly Regrowths? _regrowths;
     private readonly TimeProvider _time;
     private Func<int, int>? _levelOf;
+    private (int? Level, bool Subscribed)? _noWayFor;
     private int _harvests;
     private int _doneAtArrival = -1;
 
@@ -57,6 +59,9 @@ internal sealed class HarvestTour
 
     /// <summary>Gets the part of a map gone through that the tour comes onto from a neighbouring map, for wanted resources its own part could not reach (D495).</summary>
     public MapLevel? OtherLevel { get; private set; }
+
+    /// <summary>Gets whether a journey found no way to some map of the zone, which every tour leaves out until the character's level or subscription changes.</summary>
+    public bool HasNoWay => _noWay.Count > 0;
 
     /// <summary>Gets how many maps this tour went through.</summary>
     public int Visited => _visited.Count;
@@ -76,21 +81,29 @@ internal sealed class HarvestTour
 
     /// <summary>Takes the character's levels, which the tour weighs: a resource above the level of its profession makes no map probable, and no interior worth entering (D417).</summary>
     /// <param name="state">The character's state; one whose professions the server has not described yet leaves the levels unweighed.</param>
+    /// <remarks>A level gained or a subscription taken may open a way the graph's criteria shut: the maps no way led to are sought again.</remarks>
     public void Know(CharacterState state)
     {
         ArgumentNullException.ThrowIfNull(state);
 
         _levelOf = state.Jobs.Count is 0 ? null : job => MapHarvest.LevelOf(state, job);
+
+        var facts = (state.Level, state.IsSubscribedAt(_time.GetUtcNow()));
+
+        if (_noWayFor is { } known && known != facts)
+            _noWay.Clear();
+
+        _noWayFor = facts;
     }
 
-    /// <summary>Gets how many maps a tour goes through: those not left out.</summary>
+    /// <summary>Gets how many maps a tour goes through: those not left out, nor out of every way.</summary>
     /// <param name="zone">The zone.</param>
     /// <returns>How many.</returns>
     public int Total(HarvestZone zone)
     {
         var toFind = ToFind(zone);
 
-        return zone.Maps.Keys.Count(map => !IsLeftOut(map, zone, toFind));
+        return zone.Maps.Keys.Count(map => !_noWay.Contains(map) && !IsLeftOut(map, zone, toFind));
     }
 
     /// <summary>Gets how many maps of the zone are probable.</summary>
@@ -113,7 +126,7 @@ internal sealed class HarvestTour
     {
         var now = _time.GetUtcNow();
         var toFind = ToFind(zone);
-        HashSet<long> remaining = [.. zone.Maps.Keys.Where(map => !_visited.Contains(map) && !_unreachable.Contains(map) && !IsLeftOut(map, zone, toFind) && !(ReadyAt(map, zone) > now))];
+        HashSet<long> remaining = [.. zone.Maps.Keys.Where(map => !_visited.Contains(map) && !_unreachable.Contains(map) && !_noWay.Contains(map) && !IsLeftOut(map, zone, toFind) && !(ReadyAt(map, zone) > now))];
 
         // The isolated maps a tour goes through come last, whatever they hold: the way there is long (D149).
         HashSet<long> near = [.. remaining.Where(map => !zone.Isolated.Contains(map))];
@@ -151,7 +164,7 @@ internal sealed class HarvestTour
 
         foreach (var map in zone.Maps.Keys)
         {
-            if (_visited.Contains(map) || _unreachable.Contains(map) || IsLeftOut(map, zone, toFind) || ReadyAt(map, zone) is not { } ready || ready <= now)
+            if (_visited.Contains(map) || _unreachable.Contains(map) || _noWay.Contains(map) || IsLeftOut(map, zone, toFind) || ReadyAt(map, zone) is not { } ready || ready <= now)
                 continue;
 
             if (first is null || ready < first)
@@ -225,6 +238,18 @@ internal sealed class HarvestTour
     public void Unreach(long mapId)
     {
         _unreachable.Add(mapId);
+    }
+
+    /// <summary>Marks a map no way of the world graph leads to from where the character stands, by its rules: left out of this tour and the next ones, until the character's level or subscription changes (<see cref="Know"/>).</summary>
+    /// <param name="mapId">The map.</param>
+    /// <remarks>
+    /// Measured on the owner's farmer of 25 and 26 November: a sub-area of 34 maps, one the character could reach, the others behind a
+    /// door's criterion. A new tour sought them again, the journey found no way, and so on every second until a group of the map
+    /// attacked the character, which stood still all the while. A journey that failed is no such fact: <see cref="Unreach"/>.
+    /// </remarks>
+    public void NoWay(long mapId)
+    {
+        _noWay.Add(mapId);
     }
 
     /// <summary>Gets whether the character stood in a zone, or gave it up, in this tour.</summary>
@@ -307,7 +332,7 @@ internal sealed class HarvestTour
     /// </remarks>
     public bool Arrived()
     {
-        var done = _visited.Count + _crossed.Count + _unreachable.Count + _entered.Count + _harvests;
+        var done = _visited.Count + _crossed.Count + _unreachable.Count + _noWay.Count + _entered.Count + _harvests;
 
         IdleArrivals = done == _doneAtArrival ? IdleArrivals + 1 : 0;
         _doneAtArrival = done;
@@ -380,7 +405,7 @@ internal sealed class HarvestTour
         if (IsLeftOut(mapId, zone, toFind))
             return ZoneMapState.Empty;
 
-        if (_unreachable.Contains(mapId))
+        if (_unreachable.Contains(mapId) || _noWay.Contains(mapId))
             return ZoneMapState.Unreachable;
 
         return IsProbable(mapId, zone) ? ZoneMapState.Probable : ZoneMapState.ToVisit;

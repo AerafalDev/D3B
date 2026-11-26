@@ -159,3 +159,4 @@ Each file holds the decisions of one group of [the index](../decisions-index.md)
 - [The app's 1.1.0 (D566)](d566-release-1-1-0.md): 1 decision, 1 KB.
 - [Profiles, never idle until the server's kick (D567, D568)](d567-d568-profiles-never-idle.md): 2 decisions, 6 KB.
 - [Dungeons, the master's spare keys given to its followers, and the app's 1.1.1 (D569, D570)](d569-group-keys.md): 2 decisions, 5 KB.
+- [Harvest, the maps no way leads to kept out of the next tours (D571)](d571-harvest-no-way.md): 1 decision, 4 KB.

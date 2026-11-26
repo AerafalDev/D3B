@@ -62,6 +62,7 @@ internal sealed class TestPlay : IAsyncDisposable
     public const long OtherInsideMapId = 192_677_890;
     public const long HavenBagMapId = 162_791_424;
     public const long AwayZaapMapId = 88_212_481;
+    public const long ShutMapId = 191_103_490;
     public const int EastZaapId = 1;
     public const int NorthZaapId = 2;
     public const int InsideZaapId = 3;
@@ -210,11 +211,11 @@ internal sealed class TestPlay : IAsyncDisposable
     {
     }
 
-    private TestPlay(IReadOnlyList<IGameObserver> observers, IReadOnlyList<NpcWay> npcWays, int[] blocked, int[]? otherZone = null, bool otherZoneIsEntered = true, int[]? ledge = null)
+    private TestPlay(IReadOnlyList<IGameObserver> observers, IReadOnlyList<NpcWay> npcWays, int[] blocked, int[]? otherZone = null, bool otherZoneIsEntered = true, int[]? ledge = null, bool shutMap = false)
     {
         var path = _directory.Combine("data-3.pack");
 
-        File.WriteAllBytes(path, Pack(blocked, otherZone ?? [], otherZoneIsEntered, ledge ?? []));
+        File.WriteAllBytes(path, Pack(blocked, otherZone ?? [], otherZoneIsEntered, ledge ?? [], shutMap));
         _pack = GamePack.Open(path);
         Maps = new GameMaps(_pack);
         World = new GameWorld(_pack);
@@ -252,6 +253,12 @@ internal sealed class TestPlay : IAsyncDisposable
     public static TestPlay WithASecondZoneNoWayLeadsTo(params int[] otherZone)
     {
         return new TestPlay([], [], [], otherZone, false);
+    }
+
+    /// <summary>A play whose sub-area holds one more map, <see cref="ShutMapId"/>, an ash tree on it, that no way leads to: the graph holds its vertex, and nothing enters it, as the maps behind a door's criterion the owner's farmer sought (D571).</summary>
+    public static TestPlay WithAMapNoWayLeadsTo()
+    {
+        return new TestPlay([], [], [], null, true, null, true);
     }
 
     /// <summary>The character as the server's confirmation of the choice describes it.</summary>
@@ -387,7 +394,7 @@ internal sealed class TestPlay : IAsyncDisposable
             new[] { DungeonExitReplyId });
     }
 
-    private static byte[] Pack(int[] blocked, int[] otherZone, bool otherZoneIsEntered, int[] ledge)
+    private static byte[] Pack(int[] blocked, int[] otherZone, bool otherZoneIsEntered, int[] ledge, bool shutMap)
     {
         var cells = Enumerable.Range(0, MapData.CellCount).Select(cell => blocked.Contains(cell) ? Wall() : Walkable(cell, otherZone.Contains(cell) ? 2 : 1, ledge.Contains(cell) ? LedgeFloor : 0, ledge.Length > 0 && cell == StairCell ? 1 : 0)).ToArray();
         var open = Enumerable.Range(0, MapData.CellCount).Select(cell => Walkable(cell)).ToArray();
@@ -402,8 +409,12 @@ internal sealed class TestPlay : IAsyncDisposable
             writer.Add(MapData.EntryName(EastMapId), new MapData(EastMapId, 0, 0, MapId, 0, open, new[] { new MapInteractive(BushElementId, 300, BushGfxId) }));
             writer.Add(MapData.EntryName(InsideMapId), new MapData(InsideMapId, 0, 0, 0, 0, open, new[] { new MapInteractive(ChestElementId, 300, ChestGfxId) }));
             writer.Add(MapData.EntryName(OtherInsideMapId), new MapData(OtherInsideMapId, 0, 0, 0, 0, open, Array.Empty<MapInteractive>()));
-            writer.Add(WorldGraph.EntryName, Graph(otherZone, otherZoneIsEntered));
-            writer.Add(WorldAtlas.EntryName, Atlas());
+
+            if (shutMap)
+                writer.Add(MapData.EntryName(ShutMapId), new MapData(ShutMapId, 0, 0, 0, 0, open, new[] { new MapInteractive(NeighboursElementId + 1, TreeCell, TreeGfxId) }));
+
+            writer.Add(WorldGraph.EntryName, Graph(otherZone, otherZoneIsEntered, shutMap));
+            writer.Add(WorldAtlas.EntryName, Atlas(shutMap));
             writer.Add(BankCatalog.EntryName, new BankCatalog(new[] { new Bank(2_756, MapId) }, new[] { new Banker(BankerNpcId, 0, 0, 2) }, new[] { 64_360, ChestReplyId }));
             writer.Add(ItemCatalog.EntryName, new ItemCatalog(new[] { new Item(Ash, 403, 38, 1, 5, AshIconId), new Item(Bread, 468, 33, 1, 1, 0, 12, 12), new Item(Chestnut, 404, 38, 20, 5, ChestnutIconId), new Item(Loaf, 1_737, 33, 110, 1, 0, 30, 40), new Item(WheatBag, 7_941, 100, 1, 1, 0), new Item(Weightless, 11_267, 12, 1, 0, 0), new Item(QuestObject, 13_352, QuestType, 1, 0, 0), new Item(ClassPotion, 16_147, 12, 1, 1, 0) }, new[] { new ItemType(12, 1_012, 6, 1), new ItemType(33, 1_033, 6, 1), new ItemType(WoodType, 1_038, 9, 2), new ItemType(100, 1_100, 6, 1), new ItemType(QuestType, 1_148, 14, (int)ItemCategory.Quest) }));
             writer.Add(IconCatalog.EntryName, new IconCatalog(
@@ -479,7 +490,7 @@ internal sealed class TestPlay : IAsyncDisposable
         return new MapCell(MapCellProperties.None, 0, 0, 0, 0, 0, 0);
     }
 
-    private static WorldGraph Graph(int[] otherZone, bool otherZoneIsEntered)
+    private static WorldGraph Graph(int[] otherZone, bool otherZoneIsEntered, bool shutMap)
     {
         // Vertices in ascending order of map and zone: north, the first and its second zone if it has one, east, inside, the other inside.
         List<(long Map, int Zone)> vertices = [(NorthMapId, 1), (MapId, 1), (EastMapId, 1), (InsideMapId, 1), (OtherInsideMapId, 1)];
@@ -505,6 +516,13 @@ internal sealed class TestPlay : IAsyncDisposable
                 moves.Add(((EastMapId, 1), (MapId, 2), Transition(WorldTransitionType.MapAction, WorldTransition.NoDirection, EastOtherZoneActionCell, MapId)));
         }
 
+        // Left by a scroll to the first map, entered by none.
+        if (shutMap)
+        {
+            vertices.Add((ShutMapId, 1));
+            moves.Add(((ShutMapId, 1), (MapId, 1), Transition(WorldTransitionType.Scroll, 2, 539, MapId)));
+        }
+
         vertices.Sort();
 
         var edges = new List<WorldEdge>();
@@ -524,10 +542,11 @@ internal sealed class TestPlay : IAsyncDisposable
         return new WorldTransition(type, direction, cell, WorldTransition.None, mapId, WorldTransition.None, WorldTransition.None);
     }
 
-    private static WorldAtlas Atlas()
+    private static WorldAtlas Atlas(bool shutMap)
     {
         MapPosition[] positions =
         [
+            .. shutMap ? [new MapPosition(ShutMapId, 4, -20, SubAreaId, 1, 0, 0)] : Array.Empty<MapPosition>(),
             new(NorthMapId, 4, -19, SubAreaId, 1, 0, TeleportFlag),
             new(MapId, 4, -18, SubAreaId, 1, 0, TeleportFlag),
             new(EastMapId, 5, -18, SubAreaId, 1, 0, TeleportFlag),

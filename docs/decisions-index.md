@@ -1097,3 +1097,8 @@ or refines another says so in its own entry. Add a line here with every new deci
 
 - [D570](decisions/d569-group-keys.md#d570-the-apps-release-after-110-is-111-holding-the-profiles-that-restart-and-the-masters-spare-keys-given) The app's release after 1.1.0 is 1.1.1, holding the profiles that restart and the master's spare keys given (2026-11-26)
   - The owner's choice of 1.1.1 over 1.2.0, both branches in it; nothing published first, the tag once both pull requests are on `main`.
+
+## Harvest, the maps no way leads to (D571)
+
+- [D571](decisions/d571-harvest-no-way.md#d571-a-map-of-the-zone-no-way-leads-to-by-the-world-graph-and-the-characters-rules-stays-out-of-the-zones-next-tours-until-the-characters-level-or-subscription-changes-and-the-zone-is-not-dropped-from-the-rotation-for-it) A map of the zone no way leads to, by the world graph and the character's rules, stays out of the zone's next tours until the character's level or subscription changes, and the zone is not dropped from the rotation for it (2026-11-26)
+  - Measured on the farmer's journals and captures of 25 and 26 November; every journey with no way taken as the fact, and filtering each drawn sub-area, rejected.
