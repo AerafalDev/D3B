@@ -94,10 +94,10 @@ internal sealed class GroupFight : IFightTeam
     }
 
     /// <inheritdoc/>
-    /// <remarks>Any bot of the host, of the group or not: the AI asks it only of its own team's fighters.</remarks>
+    /// <remarks>Any bot of the host, of the group or not: the AI asks it only of its own team's fighters. A mule whose AI does not fight is none, as its own play says (<see cref="FightPlay"/>).</remarks>
     public bool FightsAsMule(long characterId)
     {
-        return _bots.All.Any(bot => bot.Key.CharacterId == characterId && bot.Activity is { IsOver: false, Activity.FightsAsMule: true });
+        return _bots.All.Any(bot => bot.Key.CharacterId == characterId && bot.Activity is { IsOver: false, Activity: { FightsItsFights: true, FightsAsMule: true } });
     }
 
     /// <inheritdoc/>

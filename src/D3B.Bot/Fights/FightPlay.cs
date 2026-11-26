@@ -114,10 +114,13 @@ public static class FightPlay
 
                 if (!judged && ImaginedFights.Of(state, map, tables, tactics.Blows, null) is { } start)
                 {
-                    var odds = await searches.RunAsync(() => tactics.Odds(start.Fight, start.Knowledge), cancellationToken).ConfigureAwait(false);
+                    // The owner's choice (D579): a mule stands as far from the threat as it can, and the others' AI fights as
+                    // without it, its blows left out of the odds too, which would judge safe a fight it does not fight.
+                    Func<long, bool> mules = ally => context.Actor.Team?.FightsAsMule(ally) == true;
+                    var judging = start.Fight.Without(mules);
+                    var odds = await searches.RunAsync(() => tactics.Odds(judging, start.Knowledge), cancellationToken).ConfigureAwait(false);
 
-                    // The owner's choice (D579): a mule stands as far from the threat as it can, and the others' AI fights as without it.
-                    weights = mule ? TacticWeights.Mule : WeightsOf(state.Fight ?? fight, self, odds.IsRisky, ally => context.Actor.Team?.FightsAsMule(ally) == true);
+                    weights = mule ? TacticWeights.Mule : WeightsOf(state.Fight ?? fight, self, odds.IsRisky, mules);
                     risky = odds.IsRisky;
                     judged = true;
                     FightLog.Judged(context.Log, self, odds.TurnsToWin, odds.TurnsToLose, odds.IsRisky);

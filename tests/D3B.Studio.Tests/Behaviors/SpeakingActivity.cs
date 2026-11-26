@@ -16,6 +16,8 @@ internal sealed class SpeakingActivity : BotActivity
 
     public override bool CapturesSouls => true;
 
+    public override bool FightsAsMule => true;
+
     public override bool RestartsAfterFailure => true;
 
     public override DateTimeOffset? WaitingUntil => Until;

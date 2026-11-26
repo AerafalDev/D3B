@@ -82,6 +82,7 @@ public sealed class HarvestActivity : BotActivity
     private readonly RecoveryLadder _journeys = new();
     private readonly RecoveryLadder _bankings = new();
     private readonly HashSet<int> _skipped = [];
+    private readonly FullRefusals _fullRefusals = new();
     private List<HarvestRotationZone> _rotation = [];
     private HarvestRotationZone? _current;
     private FrozenSet<int>? _deposited;
@@ -652,6 +653,8 @@ public sealed class HarvestActivity : BotActivity
 
         if (outcome is UseOutcome.Used)
         {
+            _fullRefusals.Reset();
+
             // The objects come within milliseconds of the harvest's end, in no set order (D75).
             await context.WaitUntilAsync(after => Carried(after, target.ItemId) != before, _objectsDelay, cancellationToken).ConfigureAwait(false);
 
@@ -666,10 +669,17 @@ public sealed class HarvestActivity : BotActivity
         }
         else if (outcome is not UseOutcome.Busy)
         {
-            // Going on full (D578), a harvest refused over the pods is the pods' doing, not the element's: every element of the
-            // zone would be refused in turn, the tours going round it for nothing. The harvest ends, saying why.
+            // Going on full (D578), harvests refused in a row over the pods are the pods' doing, not the elements': every element
+            // of the zone would be refused in turn, the tours going round it for nothing. The harvest ends, saying why.
             if (outcome is UseOutcome.Refused && _settings.DepositTo is HarvestDepositPlace.GoOnFull && FullPods.Holds(context.State))
-                throw RefusedFull(context.State);
+            {
+                if (_fullRefusals.Refused())
+                    throw RefusedFull(context.State);
+            }
+            else if (outcome is UseOutcome.Refused)
+            {
+                _fullRefusals.Reset();
+            }
 
             _skipped.Add(elementId);
 

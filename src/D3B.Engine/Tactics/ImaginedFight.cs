@@ -70,6 +70,16 @@ public sealed record ImaginedFight
         return this;
     }
 
+    /// <summary>Gets the fight without some fighters, the one playing always kept.</summary>
+    /// <param name="left">Tells whether a fighter is left out, by its id.</param>
+    /// <returns>The fight without them, such as the allies that pass their turns, whose blows would weigh in the odds (D579).</returns>
+    public ImaginedFight Without(Func<long, bool> left)
+    {
+        ArgumentNullException.ThrowIfNull(left);
+
+        return this with { Fighters = [.. Fighters.Where(fighter => fighter.Id == ActorId || !left(fighter.Id))] };
+    }
+
     /// <summary>Gets the living fighter on a cell.</summary>
     /// <param name="cell">The cell.</param>
     /// <returns>The fighter, or null.</returns>

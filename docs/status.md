@@ -101,12 +101,12 @@ As of 2026-11-26, after D574 (the app's 1.1.2, the owner's choice over 1.2.0, ho
   in sub-areas 809 and 519 harvests the maps it reaches and moves on, with no stand of a journey a second.
 - Going on full (D578): the harvest's « Nulle part : continuer plein » beside the two chests, the hunt's and the dungeon's
   « Continuer plein, sans banque », tested on the fake game only. Not measured: what the server does over the pods, a walk
-  slower as the owner says or refused, a fight's drops kept, a harvest refused or given; the harvest ends, saying so, at the
-  first harvest the server refuses while the character carries its pods or more, so that it does not go round its zone for
-  nothing, which the owner may prefer otherwise once seen.
+  slower as the owner says or refused, a fight's drops kept, a harvest refused or given; the harvest ends, saying so, once the
+  server refused three harvests in a row while the character carries its pods or more, so that it does not go round its zone
+  for nothing, which the owner may prefer otherwise once seen.
 - Mules in fights (D579): « Mule en combat » in the follow's, the hunt's, the harvest's and the dungeon's profiles, tested on
   the fake game only. To see in game: a mule placed away from the monsters, ready, passing each turn at once; its master
-  fighting as alone beside it. Not made: the others' AI still plays for a challenge that asks something of every ally, which a
+  fighting as alone beside it, the mule's blows left out of its odds. Not made: the others' AI still plays for a challenge that asks something of every ally, which a
   mule passing its turns may lose.
 - The fight AI off the thread pool and its budget a limit (D508, D509): measured with a harness of N bots planning at once
   on 4 cores and on the replayed captures, not in game; Kestrel's heartbeat not seen late again yet, and the plans of a

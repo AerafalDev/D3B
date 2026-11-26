@@ -232,13 +232,18 @@ public sealed class GroupFightTests
         await using var play = new TestPlay();
         var (_, master) = await TestGroup.MasterAsync(play, Far);
         var (_, follower) = await TestGroup.FollowerAsync(play, 301);
+        var (_, second) = await TestGroup.SecondAsync(play, 302);
 
         follower.StartActivity(new RewardActivity { Mule = true });
         master.StartActivity(new RewardActivity());
-        await TestGroup.SettleAsync(master, follower);
+
+        // A mule whose AI does not fight is played by the player, or the host's AI as any other: no mule.
+        second.StartActivity(new RewardActivity { Mule = true, Fights = false });
+        await TestGroup.SettleAsync(master, follower, second);
 
         Assert.True(master.Team!.FightsAsMule(TestGroup.FollowerId));
         Assert.False(follower.Team!.FightsAsMule(TestGroup.MasterId));
+        Assert.False(master.Team.FightsAsMule(TestGroup.SecondId));
         Assert.False(master.Team.FightsAsMule(TestGroup.StrangerId));
     }
 

@@ -702,18 +702,28 @@ public sealed class HarvestActivityTests : IAsyncDisposable
     }
 
     [Fact]
-    public async Task AHarvestTheServerRefusesOverThePodsEndsTheActivitySayingSoRatherThanGoRoundTheZone()
+    public async Task AHarvestTheServerRefusesOnceOverThePodsIsLeftAndTheTourGoesOn()
     {
+        // Another player may have taken the tree an instant before: one refusal says nothing of the pods (D578, FullRefusals).
         var (connection, _, run) = await HarvestingOverItsPodsAsync();
 
         connection.Server(new InteractiveUseErrorEvent { ElementId = TestPlay.TreeElementId });
 
-        Assert.Equal(ActivityOutcome.Failed, await run.Completion.WaitAsync(TimeSpan.FromSeconds(10), TestContext.Current.CancellationToken));
+        // The tree left, the tour walks on to its next map.
+        await TestWalks.WalkedAsync(_play, connection, 3);
+        Assert.False(run.IsOver);
 
-        var failure = Assert.IsType<ActivityException>(run.Failure);
+        run.Stop();
 
-        Assert.True(failure.IsFinal);
-        Assert.StartsWith("Full, 7600 of 7590 pods: the server refuses the harvests.", Say(failure.Reason!), StringComparison.Ordinal);
+        Assert.Equal(ActivityOutcome.Stopped, await run.Completion);
+    }
+
+    [Fact]
+    public void TheHarvestEndedOverThePodsSaysWhyAndWhatToChange()
+    {
+        var reason = GameText.Of(HarvestTexts.Text("FailRefusedFull"), GameTextValue.Number(7_600), GameTextValue.Number(7_590));
+
+        Assert.Equal("Full, 7600 of 7590 pods: the server refuses the harvests. Choose a chest to bank in, in the profile.", Say(reason));
     }
 
     [Fact]

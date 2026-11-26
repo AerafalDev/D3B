@@ -271,6 +271,15 @@ public sealed class FightTacticsTests
     }
 
     [Fact]
+    public void AFightWithoutSomeFightersKeepsTheOnePlaying()
+    {
+        // The owner's choice (D579): the odds are judged without the allies that pass their turns.
+        var (fight, _) = Fight(Caster(), Biter(-1, Off(4, 0)), Biter(-2, Off(5, 0)));
+
+        Assert.Equal([fight.ActorId, -1], fight.Without(id => id == -2 || id == fight.ActorId).Fighters.Select(fighter => fighter.Id));
+    }
+
+    [Fact]
     public void EnemiesThatHitHarderThanTheCharacterMakeTheFightRisky()
     {
         var (weak, weakKnowledge) = Fight(Caster(), Biter(-1, Off(4, 0), life: 20));
