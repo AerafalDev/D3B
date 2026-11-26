@@ -246,7 +246,7 @@ The bots run in `D3B.Bot`: what each part does today, with the decisions that ma
   `HarvestSettings` and their zone `HarvestZone`, the skills to use, the sub-areas and their maps, the insides apart. Each
   step harvests the wanted resource the server offers at the character's level, the first asked for then the nearest, or
   travels to the nearest map of the tour still to go through (`HarvestTour`): the probable maps first, then those of the
-  world map, then the insides. `HarvestSightings`, one per host, remembers what each map holds; a map never seen is
+  world map, then the insides. `HarvestSightings`, one per host, remembers what each map holds, kept in the database (D584); a map never seen is
   foretold by its elements' graphics (`HarvestZone.Foresee`, D138), and a tour leaves out the maps seen empty, those
   whose graphics all offer none of its skills, and those without elements; an interior of a sub-area that also holds maps on a
   world map (`SubAreaInteriors`, `HarvestZone.Interiors`, the houses of a town, shared with `HuntingGround`) is gone through only
@@ -274,9 +274,11 @@ The bots run in `D3B.Bot`: what each part does today, with the decisions that ma
   then resumes, pauses the bot (`InterruptionResponse.Pause`, `BotActor.Pause`) or stops, as its settings say, and the
   journal names the kind (`BotActivity.Describe`, D144). `Regrowths`, one per host, learns how long each resource takes to
   grow back from every map a bot is on (`RegrowthLearner`): whole when a bot stayed on the map, else a bound from above on
-  a later visit; a tour holds back the maps whose wanted elements all still grow back, by `HarvestSightings`' elements,
+  a later visit, and a bound from below when a visit finds an element a bot harvested still growing, at most twice the
+  shortest time known (D583); a tour holds back the maps whose wanted elements all still grow back, by `HarvestSightings`' elements,
   and waits for the first rather than D128's minute (D145), an element another harvested reckoned from when a bot first
-  saw it so (`SightedElement.DisabledSince`, D262). Before a step, the activity opens a resource bag and, under its
+  saw it so (`SightedElement.DisabledSince`, D262), and a map seen still growing once it should have grown back waits half
+  the reckoning more (D583). Before a step, the activity opens a resource bag and, under its
   share of life, eats the profile's food in one request (`ObjectUse.UseObjectsAsync`, the life reckoned by `BotActor.LifeAt`,
   D148, D153, D156), or with none chosen the stack that heals the least of those whose use only heals, by the pack
   (`Food.StackToEat`, D257), until its life is whole; with nothing to eat, it regenerates back to its share alone, looking
@@ -1124,8 +1126,12 @@ cells in session 9f3 (D275); the NPCs and their dialogs in session 7d3b (D383).
 - **The maps' graphics** (`GraphicRecorder`, D138): what the bots learn of each graphic, its skills as JSON, read into
   `GraphicSkills` once the database opens and written as the bots learn, queued off the relays' loops, whatever the
   client's build.
-- **The resources' growing back** (`RegrowthRecorder`, D145): `Regrowths` by skill, the longest seen whole, how many and the
-  least bound, read back before the host starts and written as the bots learn, as the graphics are.
+- **The resources' growing back** (`RegrowthRecorder`, D145): `Regrowths` by skill, the longest seen whole, how many, the
+  least bound from above and the bound from below (migration `RegrowthFloorAndSightings`, D583), read back before the host
+  starts and written as the bots learn, as the graphics are.
+- **What each map holds** (`SightingRecorder`, D584): `HarvestSightings` by map, its elements that gather a resource as JSON
+  (element, skill, resource), none for a map that holds none, written when they change, not at each harvest, and read back
+  before the host starts as offering their skills (table `Sightings`, migration `RegrowthFloorAndSightings`).
 - **The fights' placement cells** (`PlacementRecorder`, D275): `FightPlacements`, taught by `FightPlacementLearner` from
   every fight any bot begins, one row a map left, map fought on and set of cells: the map left, its area, sub-area and
   coordinates, the map fought on, the challengers' cells (red) and the defenders' (blue), how many fights began so and

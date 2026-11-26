@@ -424,7 +424,7 @@ internal sealed class HarvestTour
 
     // A map whose wanted elements were all seen harvested is held back until the first should have grown back. Measured:
     // the server never says when; one harvested before it was seen grew back no later than the first sighting of it so
-    // reckons, which later sightings must not put off (9g5).
+    // reckons, which later sightings must not put off (9g5), unless they find it still growing after.
     private DateTimeOffset? ReadyAt(long mapId, HarvestZone zone)
     {
         if (_regrowths is null || !_sightings.TryGet(mapId, out var sighting) || sighting.Elements.IsDefaultOrEmpty)
@@ -442,6 +442,12 @@ internal sealed class HarvestTour
 
             var harvested = _regrowths.TryGetHarvest(mapId, element.ElementId, out var at) ? at : element.DisabledSince ?? sighting.At;
             var ready = harvested + takes;
+
+            // Seen still growing once it should have grown back, the reckoning was short for this one: kept as it was, the map was ready
+            // again at every tour until it grew back, the owner's miner going back 18 to 30 min after its harvests (D583). The visit's
+            // own bound from below makes the reckoning end at that very sighting: it holds the map back too.
+            if (sighting.At >= ready)
+                ready = sighting.At + takes / 2;
 
             if (first is null || ready < first)
                 first = ready;
