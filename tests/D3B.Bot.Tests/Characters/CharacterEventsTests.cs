@@ -592,6 +592,33 @@ public sealed class CharacterEventsTests
     }
 
     [Fact]
+    public void AListTakenOutOfTheBankLeavesItsStorageAndComesInAsStacksOfTheirOwn()
+    {
+        static InventoryObject Stack(int uid, int itemId, int quantity)
+        {
+            return new InventoryObject { Item = new ObjectItem { Uid = uid, ItemId = itemId, Quantity = quantity }, Position = InventoryItem.NotWorn };
+        }
+
+        var open = Apply(
+            _chosen,
+            Server(new InventoryContentEvent { Objects = { Stack(12, TestPlay.Ash, 40) } }),
+            Server(new ExchangeStartedWithStorageEvent { Type = ExchangeType.Storage }),
+            Server(new StorageContentEvent { Objects = { Stack(500, TestPlay.Ash, 120), Stack(501, TestPlay.Bread, 4), Stack(502, TestPlay.Chestnut, 9) } }));
+
+        // Measured (D580): the stacks taken whole keep their ids, never joined to the bags' own; one taken in part comes in new.
+        var taken = Apply(
+            open,
+            Server(new StorageObjectsRemovedEvent { Uids = { 500, 501 } }),
+            Server(new StorageObjectUpdateEvent { Object = Stack(502, TestPlay.Chestnut, 5) }),
+            Server(new ObjectsAddedEvent { Objects = { Stack(500, TestPlay.Ash, 120), Stack(501, TestPlay.Bread, 4), Stack(900, TestPlay.Chestnut, 4) } }));
+
+        Assert.Equal([new StorageItem(502, TestPlay.Chestnut, 5)], taken.Storage!.Stacks.Values);
+        Assert.Equal(
+            [new InventoryItem(12, TestPlay.Ash, 40, 63), new InventoryItem(500, TestPlay.Ash, 120, 63), new InventoryItem(501, TestPlay.Bread, 4, 63), new InventoryItem(900, TestPlay.Chestnut, 4, 63)],
+            taken.Inventory.Values);
+    }
+
+    [Fact]
     public void AnotherExchangeOrAnotherMapsDialogIsNotTheBanks()
     {
         var inside = Apply(_chosen, Server(new MapCurrentEvent { MapId = TestPlay.InsideMapId }), Server(TestPlay.Information(396, TestPlay.InsideMapId)));

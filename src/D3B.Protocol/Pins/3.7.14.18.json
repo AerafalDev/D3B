@@ -144,7 +144,11 @@
     { "readable": "d3b.game.ChallengeResultEvent", "obfuscated": "ktk" },
     { "readable": "d3b.game.ChallengeProposalRequest", "obfuscated": "ktr" },
     { "readable": "d3b.game.ChallengeProposalEvent", "obfuscated": "kue" },
-    { "readable": "d3b.game.ChallengeSelectionRequest", "obfuscated": "ktt" }
+    { "readable": "d3b.game.ChallengeSelectionRequest", "obfuscated": "ktt" },
+    { "readable": "d3b.game.ExchangeTransferToInventoryRequest", "obfuscated": "kbp" },
+    { "readable": "d3b.game.ExchangeTransferAllToInventoryRequest", "obfuscated": "kaw" },
+    { "readable": "d3b.game.StorageObjectsRemovedEvent", "obfuscated": "isl" },
+    { "readable": "d3b.game.ObjectsAddedEvent", "obfuscated": "isg" }
   ],
   "enums": []
 }

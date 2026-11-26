@@ -47,6 +47,11 @@ message ObjectAddedEvent {
   InventoryObject object = 2;
 }
 
+// New stacks in the inventory, as a list take out of the bank gives them.
+message ObjectsAddedEvent {
+  repeated InventoryObject objects = 1;
+}
+
 // A stack of the inventory has a new quantity, as a harvest adding to it gives.
 message ObjectQuantityEvent {
   option (d3b.readable.partial) = true;

@@ -19,8 +19,8 @@ namespace D3B.Bot.Banks;
 /// name. The bank answers nothing to a stack it does not take (D80).
 /// </para>
 /// <para>
-/// The client also takes a list of stacks, or all, at once, which the server cuts short to what the pods hold with text 266:
-/// those requests are not in the readable protocol, so a stack goes at a time. It puts a list in the bank by the request the
+/// The client also takes a list of stacks out of the bank, or all, at once, which the server cuts short to what the pods hold
+/// with text 266 (D580): <see cref="TakeFromBankAsync"/> sends the list. It puts a list in the bank by the request the
 /// bank's deposits send (<see cref="Banking.DepositAsync"/>), which the transfer uses too (D577); in the chest, a stack at a time.
 /// </para>
 /// </remarks>
@@ -31,6 +31,9 @@ public static class StorageMoves
 
     /// <summary>The text a transfer the destination cannot hold whole is cut short with.</summary>
     public const int IncompleteTextId = 266;
+
+    /// <summary>The text a list take out of the bank is refused with when the inventory can take none of it.</summary>
+    public const int FullTextId = 267;
 
     /// <summary>The text of a rank without the right to open the chest's tab.</summary>
     public const int NoConsultRightTextId = 654;
@@ -44,7 +47,7 @@ public static class StorageMoves
     /// <summary>The text of a chest's tab that does not take a type of object.</summary>
     public const int TypeRefusedTextId = 661;
 
-    /// <summary>The text of a bank action asked less than about 0.55 s after the last, « veuillez attendre {0} seconde(s) » (D577).</summary>
+    /// <summary>The text of a bank action asked too soon after the last, less than a quarter of a second measured, « veuillez attendre {0} seconde(s) » (D577, D580).</summary>
     public const int TooSoonTextId = 268;
 
     // No guild (659), a guild younger than 30 days (666), no access to the chest (711): the client's information messages.
@@ -73,6 +76,38 @@ public static class StorageMoves
             TextInformationEvent { Type: TextInformationType.Error } => true,
             _ => false,
         }, cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <summary>Takes stacks of the open bank into the inventory, whole, by one request.</summary>
+    /// <param name="context">The behavior's context.</param>
+    /// <param name="uids">The bank's stacks, by their own id there: those it lacks are left out.</param>
+    /// <param name="cancellationToken">The behavior's token.</param>
+    /// <returns>
+    /// <see cref="StorageMoveOutcome.Moved"/> once every stack came in; <see cref="StorageMoveOutcome.TooHeavy"/> when the pods cut
+    /// the list short, what fit, a stack in part, being in the bags as the state shows; <see cref="StorageMoveOutcome.Busy"/> when
+    /// the bank is not open, as when the guild's chest is, or holds none of the stacks, nothing sent.
+    /// </returns>
+    public static async Task<StorageMoveOutcome> TakeFromBankAsync(this BotContext context, IReadOnlyCollection<int> uids, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(context);
+        ArgumentNullException.ThrowIfNull(uids);
+
+        if (context.State.Storage is not { IsGuildChest: false } bank)
+            return StorageMoveOutcome.Busy;
+
+        var stacks = uids.Distinct().Where(bank.Stacks.ContainsKey).ToList();
+
+        if (stacks.Count is 0)
+            return StorageMoveOutcome.Busy;
+
+        var request = new ExchangeTransferToInventoryRequest { Uids = { stacks } };
+        var outcome = await MoveAsync(context, request, (side, message, _) => side is RelayDirection.FromServer
+            && message is ObjectsAddedEvent or TextInformationEvent { Type: TextInformationType.Error }, cancellationToken).ConfigureAwait(false);
+
+        // Text 266 follows the weight in its millisecond: a stack the bank still holds says the pods cut the list short as well.
+        return outcome is StorageMoveOutcome.Moved && context.State.Storage is { } left && stacks.Any(left.Stacks.ContainsKey)
+            ? StorageMoveOutcome.TooHeavy
+            : outcome;
     }
 
     /// <summary>Puts objects of a stack of the inventory into the open storage.</summary>
@@ -104,7 +139,7 @@ public static class StorageMoves
     {
         return textId switch
         {
-            TooHeavyTextId or IncompleteTextId => StorageMoveOutcome.TooHeavy,
+            TooHeavyTextId or IncompleteTextId or FullTextId => StorageMoveOutcome.TooHeavy,
             GuildChest.RefusedTextId => StorageMoveOutcome.NotExchangeable,
             TypeRefusedTextId => StorageMoveOutcome.TypeRefused,
             _ when _noRight.Contains(textId) => StorageMoveOutcome.NoRight,
@@ -114,7 +149,7 @@ public static class StorageMoves
 
     // Measured on the owner's connections of 26 November (D577): the server refuses a bank action asked too soon after the last,
     // with text 268, and takes it asked again a moment later; a refusal so answered is not the item's.
-    private static async Task<StorageMoveOutcome> MoveAsync(BotContext context, ExchangeObjectMoveRequest request, Func<RelayDirection, IMessage, CharacterState, bool> answers, CancellationToken cancellationToken)
+    private static async Task<StorageMoveOutcome> MoveAsync(BotContext context, IMessage request, Func<RelayDirection, IMessage, CharacterState, bool> answers, CancellationToken cancellationToken)
     {
         for (var attempt = 0; ; attempt++)
         {
