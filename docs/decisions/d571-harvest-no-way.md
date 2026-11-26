@@ -4,7 +4,7 @@ A part of [the decisions](README.md); each decision has one line in [the index](
 [D128](d126-d175-step-6.md) and [D145](d126-d175-step-6.md); the rotation, [D391](d390-d392-step-9.md#d391-the-automatic-profiles-go-through-several-sub-areas-in-turn-and-the-harvest-varies-its-professions);
 the recovery ladder, [D518](d518-d519-never-idle.md).
 
-## D571: A map of the zone no way leads to, by the world graph and the character's rules, stays out of the zone's next tours until the character's level or subscription changes, and the zone is not dropped from the rotation for it
+## D571: A map of the zone no way leads to, by the world graph and the character's rules, stays out of the zone's next tours until a level, the subscription or the zaaps known change, and the zone is not dropped from the rotation for it
 
 *2026-11-26, a session of its own, the owner's report (« Le panda a attendu sur une map je sais pas pourquoi et il se fait
 agresser par les monstres de la map par ce qu'il attend, ça fait plusieurs fois que ça arrive »); the diagnosis and the fix the
@@ -23,16 +23,19 @@ lead's. Refines D128, D145 and D391. Builds D518, D519.*
   would loop as well, a tour's `Next` forgetting its unreached maps.
 - **What was made.** A journey to the zone's maps that ends with no way, from a zone of a map the graph leaves, is asked again of
   the graph with the character's rules and no way left out. When it still finds none, that is a fact: `HarvestTour.NoWay`
-  marks each map, which this tour and the next ones leave out of what they go to, count and wait for. The marks go once the
-  character's level or subscription changes (`Know`), either of which may open a criterion. The zone is not dropped then; it is
-  left as any whose maps are done. With no map of it to go through, the activity ends unreachable, a failure the run restarts
-  from (D519), not a final one.
+  marks each map, which this tour and the next ones leave out of what they go to, count and wait for. The marks go once a level
+  of the character or of a profession, the subscription or the zaaps known change (`Know`), any of which may open a criterion or
+  a teleport. The objects and kamas carried, which criteria read too, are not watched: each harvest changes them, and the maps
+  would be sought at every one. The zone is not dropped then; it is left as any whose maps are done. With no map of it to go
+  through, the activity ends unreachable, a failure the run restarts from (D519), when a shut map may hold a resource
+  (`HarvestTour.Shut`); otherwise it ends with nothing to harvest, final as before.
 - **Kept.** A journey whose every way was tried and failed ends with no way too, the ways it tried being left out for it
   (`WorldTravel`); and from a bank's inside or a mine's pocket, which the graph does not leave, no way says nothing of the maps
   beyond. Both keep the old way: unreached for the tour, the zone dropped from an automatic rotation, else the ladder (D518), whose
   last rung leaves the map. The fake game's never-idle tests caught both when the first draft marked every map with no way.
 - **Not measured, tested on the fake game only**: a tour that keeps the marks in game. To see: the farmer in sub-area 809 or 519
-  harvests the maps it reaches and leaves the others, with no stand of a journey a second.
+  harvests the maps it reaches and leaves the others, with no stand of a journey a second. The fake game's world holds one
+  sub-area, so the automatic rotation's own way, the zone kept rather than dropped and drawn back, is played by no test.
 - **Not changed, noted.** The automatic place still weighs a sub-area by all its maps (D166), so 809 ranks for 34 maps when one
   is reached. A sub-area whose maps are all left out, or out of every way, can still be drawn again with a new tour once per round
   of the rotation: one journey with no way each time, not one a second.

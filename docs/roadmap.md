@@ -476,7 +476,7 @@ follower) on the same map, the capture of every connection on; a capture's conte
 - **The maps no way leads to** (D571), the owner's report of 2026-11-26 of the farmer standing still on a map until attacked,
   made in code and tests from its journals and captures of 25 and 26 November: a tour left with only maps behind a door's
   criterion sought them again every second, its zone dropped from the rotation and drawn back with a new tour; such maps now
-  stay out of the zone's next tours until the character's level or subscription changes. Left: seen in game; the automatic
+  stay out of the zone's next tours until a level, the subscription or the zaaps known change. Left: seen in game; the automatic
   place weighing a sub-area by the maps the character reaches (status.md).
 - **Profiles never idle until the server's kick** (D567, D568), the owner's report of 2026-11-26 after four kicks the night
   before, made in code and tests from the four captures: a studio profile's behavior passes on every member of its activity, the

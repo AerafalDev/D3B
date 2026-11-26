@@ -1,3 +1,4 @@
+using System.Collections.Immutable;
 using D3B.Bot.Characters;
 using D3B.Bot.Harvesting;
 using D3B.Bot.Interactives;
@@ -31,9 +32,17 @@ public sealed class HarvestTourNoWayTests : IAsyncDisposable
         return HarvestZone.Of(new HarvestSettings { Resources = [TestPlay.Ash], SubAreas = [TestPlay.SubAreaId] }, _play.World.Atlas, _play.World.Graph, _play.Tables.Jobs, _play.Maps);
     }
 
-    private static CharacterState Character(int level, DateTimeOffset? subscriptionEnd = null)
+    private static CharacterState Character(int level, DateTimeOffset? subscriptionEnd = null, int lumberjack = 30, params long[] zaaps)
     {
-        return new CharacterState { Key = TestPlay.Key, Name = "Character", Level = level, SubscriptionEnd = subscriptionEnd };
+        return new CharacterState
+        {
+            Key = TestPlay.Key,
+            Name = "Character",
+            Level = level,
+            SubscriptionEnd = subscriptionEnd,
+            Jobs = ImmutableSortedDictionary<int, CharacterJob>.Empty.Add(TestPlay.Lumberjack, new CharacterJob(TestPlay.Lumberjack, lumberjack, 0, 0, 0, [])),
+            KnownZaaps = [.. zaaps],
+        };
     }
 
     [Fact]
@@ -95,17 +104,59 @@ public sealed class HarvestTourNoWayTests : IAsyncDisposable
     }
 
     [Fact]
-    public void AZoneNoWayLeadsToAnyMapOfHasNoTourLeft()
+    public void AMapNoWayLeadsToComesBackOnceAProfessionGainsALevel()
+    {
+        // A door's criterion may ask a profession's level (PJ), which the harvest itself raises.
+        var zone = Zone();
+        var tour = Tour();
+
+        tour.Know(Character(83, lumberjack: 30));
+        tour.NoWay(TestPlay.NorthMapId);
+        tour.Know(Character(83, lumberjack: 31));
+
+        Assert.Contains(TestPlay.NorthMapId, tour.Remaining(zone));
+    }
+
+    [Fact]
+    public void AMapNoWayLeadsToComesBackOnceAZaapIsLearned()
     {
         var zone = Zone();
         var tour = Tour();
+
+        tour.Know(Character(83));
+        tour.NoWay(TestPlay.NorthMapId);
+        tour.Know(Character(83, zaaps: TestPlay.EastMapId));
+
+        Assert.Contains(TestPlay.NorthMapId, tour.Remaining(zone));
+    }
+
+    [Fact]
+    public void AZoneNoWayLeadsToAnyMapOfHasNoTourLeftAndSaysHowManyItShut()
+    {
+        var zone = Zone();
+        var tour = Tour();
+        var total = tour.Total(zone);
 
         foreach (var map in zone.Maps.Keys)
             tour.NoWay(map);
 
         Assert.Empty(tour.Remaining(zone));
         Assert.Equal(0, tour.Total(zone));
+        Assert.Equal(total, tour.Shut(zone));
         Assert.False(tour.Next(zone));
-        Assert.True(tour.HasNoWay);
+    }
+
+    [Fact]
+    public void AMapNoWayLeadsToThatHoldsNothingWantedIsNoneShut()
+    {
+        // Seen holding nothing wanted, the map is left out for that: a zone with nothing else ends with nothing to harvest, not unreachable.
+        var sightings = new HarvestSightings();
+        var zone = Zone();
+        var tour = new HarvestTour(sightings, new GraphicSkills(), time: _time);
+
+        sightings.SeenElements(TestPlay.NorthMapId, [], _time.GetUtcNow());
+        tour.NoWay(TestPlay.NorthMapId);
+
+        Assert.Equal(0, tour.Shut(zone));
     }
 }

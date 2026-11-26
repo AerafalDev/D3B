@@ -1100,5 +1100,5 @@ or refines another says so in its own entry. Add a line here with every new deci
 
 ## Harvest, the maps no way leads to (D571)
 
-- [D571](decisions/d571-harvest-no-way.md#d571-a-map-of-the-zone-no-way-leads-to-by-the-world-graph-and-the-characters-rules-stays-out-of-the-zones-next-tours-until-the-characters-level-or-subscription-changes-and-the-zone-is-not-dropped-from-the-rotation-for-it) A map of the zone no way leads to, by the world graph and the character's rules, stays out of the zone's next tours until the character's level or subscription changes, and the zone is not dropped from the rotation for it (2026-11-26)
+- [D571](decisions/d571-harvest-no-way.md#d571-a-map-of-the-zone-no-way-leads-to-by-the-world-graph-and-the-characters-rules-stays-out-of-the-zones-next-tours-until-a-level-the-subscription-or-the-zaaps-known-change-and-the-zone-is-not-dropped-from-the-rotation-for-it) A map of the zone no way leads to, by the world graph and the character's rules, stays out of the zone's next tours until a level, the subscription or the zaaps known change, and the zone is not dropped from the rotation for it (2026-11-26)
   - Measured on the farmer's journals and captures of 25 and 26 November; every journey with no way taken as the fact, and filtering each drawn sub-area, rejected.

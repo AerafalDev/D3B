@@ -850,9 +850,9 @@ public sealed class HarvestActivity : BotActivity
             {
                 _rotation.Remove(current);
 
-                // Maps no way leads to may grow reachable with a level or a subscription: a failure the run restarts from, not a final one.
+                // Maps no way leads to that may hold a resource may grow reachable with a level: a failure the run restarts from, not a final one.
                 if (_rotation.Count is 0)
-                    throw tour.HasNoWay ? Failure("No map of the zone can be reached.", "FailUnreachable") : Impossible("No map of the zone holds a resource to harvest.", "FailNothing");
+                    throw tour.Shut(zone) > 0 ? Failure("No map of the zone can be reached.", "FailUnreachable") : Impossible("No map of the zone holds a resource to harvest.", "FailNothing");
 
                 _current = NextOf(context, null) ?? _rotation[0];
 
