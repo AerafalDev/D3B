@@ -1138,3 +1138,8 @@ or refines another says so in its own entry. Add a line here with every new deci
   - Measured on the miner's journals of 26 November; the ceiling the owner's choice over none, or the map held back alone.
 - [D584](decisions/d583-d584-harvest-regrowth-and-sightings.md#d584-what-each-map-holds-its-elements-that-gather-a-resource-is-kept-in-d3bs-database-and-taken-back-at-the-hosts-start-not-whether-they-offered-their-skills) What each map holds, its elements that gather a resource, is kept in D3B's database and taken back at the host's start, not whether they offered their skills (2026-11-26)
   - Measured on the four harvesters' journals of 26 November; keeping each element's state rejected.
+
+## The bank's takes by list (D580)
+
+- [D580](decisions/d580-bank-list-takes.md#d580-the-banks-list-take-its-take-of-everything-and-their-answers-are-read-mapping-format-27-published-first-and-the-transfer-takes-out-of-the-bank-by-a-list) The bank's list take, its take of everything and their answers are read, mapping format 27 published first, and the transfer takes out of the bank by a list (2026-11-26)
+  - Measured on the owner's 103 connections of 20 to 26 November; the take of everything for a transfer rejected.

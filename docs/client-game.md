@@ -1699,8 +1699,8 @@ times in the bank, 5 in the chest. The server answers 28 ms later, every time, w
 or joined (`ObjectQuantityEvent`), then the storage's stack as it now is (`StorageObjectUpdateEvent`) or removed whole
 (`StorageObjectRemovedEvent`), then the weight. A positive move puts in, in the bank as in the chest: the storage's stack first, then
 the inventory's, then the weight (5 times in the bank). The client also takes a list of stacks (a packed list of 1 to about 157 ids,
-44 times) and everything (an empty request, 26 times), and puts everything in (an empty request): requests the readable protocol lacks,
-answered by events it lacks listing the storage's stacks removed and the inventory's added.
+44 times) and everything (an empty request, 26 times), and puts everything in (an empty request), answered by events listing the
+storage's stacks removed and the inventory's added: the list take and the take of everything are read since D580, below.
 
 | Request | When | The server's answer |
 | --- | --- | --- |
@@ -1730,3 +1730,18 @@ transfer's first run in game, read with `scripts/capture.cs --messages`: each ti
 or two `DialogLeaveRequest` of its own, 3 to 135 ms after the server's `ExchangeLeaveEvent`. Once, a resume opened the chest again
 31 ms after the bot's leaving: the server opened it, then answered the client's late leaving with an `ExchangeLeaveEvent` 9 ms
 later, which closed the chest before any take.
+
+**The bank's list take, read** (D580), measured on 2026-11-26 on the owner's 103 game connections of 20 to 26 November through
+mapping 26 and schema 1, by a probe never committed that printed only ids, item ids, quantities, text ids and weights. The list take
+(`ExchangeTransferToInventoryRequest`, a packed list of the storage's ids) came 70 times with 1 to 169 ids, the take of everything
+(`ExchangeTransferAllToInventoryRequest`, its one field an enum of seven values no capture sets) 27 times, both in the bank only.
+The server answers 28 ms later, in one millisecond: the storage's stacks taken whole (`StorageObjectsRemovedEvent`, its second
+field; the first is never set), the stack taken in part as it now is (`StorageObjectUpdateEvent`), the inventory's new stacks
+(`ObjectsAddedEvent`), then the weight, then text 266 when the pods cut it short.
+
+| What | Measured |
+| --- | --- |
+| A stack taken whole | It keeps its id in the bags, every time; never joined to a stack of the same item the bags held (9 times) |
+| The pods hold only part | Stacks taken whole, the asked order's first ones in 43 lists of 52, then of one more stack what fits, a new stack in the bags; text 266 last |
+| The inventory can take none | Text 267 of the error kind, saying the transfer is impossible, nothing moved (4 times) |
+| A bank request 0.18 to 0.25 s after the last | Text 268 of the error kind, asking to wait a number of seconds, its one parameter, nothing moved (39 times); none refused at 0.25 s or more after the last, 568 sent 0.55 s or more after it |

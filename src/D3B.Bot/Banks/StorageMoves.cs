@@ -78,7 +78,12 @@ public static class StorageMoves
         }, cancellationToken).ConfigureAwait(false);
     }
 
-    /// <summary>Takes stacks of the open bank into the inventory, whole, by one request.</summary>
+    /// <summary>Takes stacks of the open bank into the inventory, whole, by one request (D580).</summary>
+    /// <remarks>
+    /// Measured on the owner's captures of 20 to 26 November, client 3.7.14.18 (client-game.md, "The game, transferred"): the
+    /// stacks come in with their ids, never joined to the bags' own; the server takes them whole while the pods hold them, then
+    /// of one more stack what they hold, and says so with text 266. The client sends it in the bank only.
+    /// </remarks>
     /// <param name="context">The behavior's context.</param>
     /// <param name="uids">The bank's stacks, by their own id there: those it lacks are left out.</param>
     /// <param name="cancellationToken">The behavior's token.</param>
