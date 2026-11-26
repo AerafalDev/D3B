@@ -197,9 +197,10 @@ The bots run in `D3B.Bot`: what each part does today, with the decisions that ma
   (`BankingPreferences.UseZaapsOf`, D436); a journey makes the changes it may again from the path on
   foot once a teleport failed (`JourneyBudget`).
   The open storage keeps its stacks (`OpenStorage.Stacks`, `StorageItem`), from its content as it opens and each stack the
-  server says changed or removed (D551). `StorageMoves` moves one stack, or part of it, into or out of the open storage, the
-  bank's or the guild chest's, by `ExchangeObjectMoveRequest` (negative to take out), and says how it ended
-  (`StorageMoveOutcome`), a refusal told by the client's information text; `GuildChest.GoToGuildChestAsync` and
+  server says changed or removed (D551), and the inventory each stack a list take adds (D580). `StorageMoves` moves one stack,
+  or part of it, into or out of the open storage, the bank's or the guild chest's, by `ExchangeObjectMoveRequest` (negative to
+  take out), takes a list of the bank's stacks whole by `ExchangeTransferToInventoryRequest` (`TakeFromBankAsync`, cut short by
+  the pods, D580), and says how it ended (`StorageMoveOutcome`), a refusal told by the client's information text; `GuildChest.GoToGuildChestAsync` and
   `OpenGuildChestAsync` go to and open the nearest chest, the zaap rule given.
 - **Activities** (D87), in `D3B.Bot.Activities`: a `BotActivity`, written by a module, chooses each step
   from the state, a behavior's worth of work; its other hooks have defaults: when the character is full and how it is
@@ -532,7 +533,9 @@ The bots run in `D3B.Bot`: what each part does today, with the decisions that ma
   pods hold, weighed with the pack's weights, and leaves; a step with something carried goes to the destination and puts in what it
   took: before its takes a round notes each stack's own share, and a put takes only what a stack holds above it. `TransferBags`, one per host, keeps those shares and the items carried for each character with the game connection their ids are of, so that a run started on the same connection puts in first what the last one, stopped, carried (D563); a storage closed under the takes is opened again, three openings in all. `EmptyBagsFirst` puts in the bank, at the run's first step, all the bags hold but what is worn (D564): from the bank, nothing of it
   counted as moved and the round's takes following in the same opening (D575). A put in the bank sends every stack carried whole by
-  one request, as the deposits do, then a stack at a time one its take joined to the character's own (D577); in the chest, a stack at a time. `TransferBags` also keeps, for each character and each way, the items the destination refused for good (`NotExchangeable`, `TypeRefused`), by their ids in the tables, which a run begins with given up (D572). Openings climb the recovery ladder (D518); a missing right, a place out of reach or a
+  one request, as the deposits do, then a stack at a time one its take joined to the character's own (D577). A take out of the bank sends by one list the stacks it
+  takes whole, weighed so that the pods hold them all, then a stack at a time what it takes in part; a list the pods cut ends the
+  opening's takes, one the bank refuses goes a stack at a time (D580). In the chest, a stack at a time. `TransferBags` also keeps, for each character and each way, the items the destination refused for good (`NotExchangeable`, `TypeRefused`), by their ids in the tables, which a run begins with given up (D572). Openings climb the recovery ladder (D518); a missing right, a place out of reach or a
   character too loaded ends it, final. Its report counts the objects moved and each item, and warns of each item given up.
 - **The maps' graphics** (D138), in `D3B.Bot.Interactives`: `GraphicSkills`, one per host, holds what the server said the
   elements of each graphic offer, every skill seen, none for an element that offers none; `GraphicLearner`, an observer of
@@ -643,7 +646,7 @@ Built in session 3b (D35 to D38): the relay of the connection phase, in `D3B.Net
   in its `game` directory, with the messages the game's frames carry), pairs every readable message and enum with its
   counterpart (`ProtocolMatcher`: pins, anchors, fields, then structural scores; `google.protobuf.Any` is its own
   counterpart), audits the result (`ContractAudit`, which counts what partial messages leave out apart from its notes),
-  and writes it beside the pack, `mapping-26.binpb` (`MappingFile`, D342, D383), only when it holds. For what is left open it
+  and writes it beside the pack, `mapping-27.binpb` (`MappingFile`, D342, D383), only when it holds. For what is left open it
   lists the build's messages that fit, which the maintainer pins (D54). The mapping records the schema's SHA-256 and the
   readable protocol's digest (`ProtocolDigest`); `MappingFile.FormatVersion` changes with `mapping.proto` or that
   digest.

@@ -199,6 +199,7 @@ public static class CharacterEvents
                 Storage = storage with { Stacks = storage.Stacks.SetItems(changed.Objects.Where(item => item.Item is not null).Select(item => KeyValuePair.Create(item.Item.Uid, Stored(item)))) },
             },
             StorageObjectRemovedEvent removed when state.Storage is { } storage => state with { Storage = storage with { Stacks = storage.Stacks.Remove(removed.Uid) } },
+            StorageObjectsRemovedEvent removed when state.Storage is { } storage => state with { Storage = storage with { Stacks = storage.Stacks.RemoveRange(removed.Uids) } },
             StorageKamasUpdateEvent kamas when state.Storage is { } storage => state with { Storage = storage with { Kamas = kamas.Kamas } },
             ExchangeLeaveEvent => state with { Storage = null, Exchange = null },
             ExchangeRequestedEvent { Type: ExchangeType.Player } asked when asked.SourceId == self || asked.TargetId == self => state with
@@ -213,6 +214,10 @@ public static class CharacterEvents
             },
             InventoryContentEvent content => state with { Inventory = Stacks(content.Objects), Kamas = content.Kamas },
             ObjectAddedEvent { Object: { Item: not null } added } => state with { Inventory = state.Inventory.SetItem(added.Item.Uid, Stack(added)) },
+            ObjectsAddedEvent added => state with
+            {
+                Inventory = state.Inventory.SetItems(added.Objects.Where(stack => stack.Item is not null).Select(stack => KeyValuePair.Create(stack.Item.Uid, Stack(stack)))),
+            },
             ObjectQuantityEvent { Object: { } changed } when state.Inventory.TryGetValue(changed.Uid, out var stack) => state with
             {
                 Inventory = state.Inventory.SetItem(changed.Uid, stack with { Quantity = changed.Quantity }),

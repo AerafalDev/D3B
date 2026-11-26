@@ -66,6 +66,36 @@ message ExchangeTransferFromInventoryRequest {
   repeated int32 uids = 1;
 }
 
+// Moves stacks of the storage into the inventory, whole: the bank's list take, measured on the owner's captures of 20 to 26
+// November on the client 3.7.14.18 (D580), 70 requests of 1 to 169 ids, the client never sending it in the guild's chest. The
+// server answers 28 ms later, in one millisecond, with the storage's stacks removed (StorageObjectsRemovedEvent), the
+// inventory's added, each keeping its id and never joined to a stack of the same item (ObjectsAddedEvent), then the weight.
+// When the pods cannot hold them all, it takes stacks whole while they fit, then of one more stack what they hold, which
+// stays in the storage with its new quantity (StorageObjectUpdateEvent) and comes in as a new stack, and says so with text
+// 266. It moves nothing, saying why, when the inventory can take none (text 267), or when the last bank action was asked
+// less than about a quarter of a second before (text 268).
+message ExchangeTransferToInventoryRequest {
+  repeated int32 uids = 1;
+}
+
+// Moves every stack of the storage into the inventory: the bank's take of everything, 27 requests in the same captures,
+// answered as a list naming every stack.
+message ExchangeTransferAllToInventoryRequest {
+  // No capture sets it.
+  ExchangeTransferKind kind = 1;
+}
+
+// What the take of everything moves. Seven values in this build; none is measured, the client sending the first.
+enum ExchangeTransferKind {
+  EXCHANGE_TRANSFER_KIND_VALUE_0 = 0;
+  EXCHANGE_TRANSFER_KIND_VALUE_1 = 1;
+  EXCHANGE_TRANSFER_KIND_VALUE_2 = 2;
+  EXCHANGE_TRANSFER_KIND_VALUE_3 = 3;
+  EXCHANGE_TRANSFER_KIND_VALUE_4 = 4;
+  EXCHANGE_TRANSFER_KIND_VALUE_5 = 5;
+  EXCHANGE_TRANSFER_KIND_VALUE_6 = 6;
+}
+
 // Moves kamas between the inventory and the storage: positive into the storage, negative out of it, as the captures
 // took them out. The server answers nothing to none, to more than the side they leave holds, or outside the storage's
 // exchange.
@@ -165,6 +195,13 @@ message StorageObjectRemovedEvent {
   option (d3b.readable.partial) = true;
 
   int32 uid = 1;
+}
+
+// Stacks gone from the storage, whole, as a list take out of the bank removes them.
+message StorageObjectsRemovedEvent {
+  option (d3b.readable.partial) = true;
+
+  repeated int32 uids = 2;
 }
 
 // Asks a character of the map for an exchange: the follower its leader, in the captures (D435). The server tells both of
