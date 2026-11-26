@@ -519,14 +519,14 @@ public sealed class DungeonActivity : BotActivity
         {
             var lacking = DungeonKeys.Lacking(follower.State, dungeons, dungeon);
 
-            // Its turn already reckoned the keys: a follower they no longer cover, such as one a key was spent for meanwhile, is
-            // left to it, which leaves the dungeon out at the next step.
+            // Its turn reckoned the keys before the gathering: a follower they no longer cover, such as one left behind that came
+            // back meanwhile (D490), ends the step, so that the next step's turn leaves the dungeon out rather than enter without it.
             if (!DungeonKeys.TryCover(spare, lacking))
-                return false;
+                return true;
 
             Volatile.Write(ref _report, Report! with { Doing = GameText.Of(DungeonTexts.Text("DoingHandKeys"), GameTextValue.Of(follower.State.Name)) });
 
-            if (await GroupHand.GiveAsync(context, _bots.Groups, follower, DungeonKeys.StacksOf(context.State, lacking), cancellationToken).ConfigureAwait(false))
+            if (await GroupHand.GiveAsync(context, _bots.Groups, follower, DungeonKeys.StacksOf(context.State, lacking), bot => DungeonKeys.Lacking(bot.State, dungeons, dungeon).Count is 0, cancellationToken).ConfigureAwait(false))
             {
                 _unhanded = 0;
             }

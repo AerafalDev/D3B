@@ -20,8 +20,12 @@ D442. Refines D528 and D529. Builds D442, D458, D482, D523, D524.*
   an exchange, before the keeper is talked to. The follower asks the exchange as at the bank (D442), once a round; the master
   accepts after the client's display time, moves the key in by `ExchangeObjectMoveRequest`, the only request naming a quantity
   (D482), says it is ready 3.5 s after the last change (D458), and the follower says it is ready after it, which concludes.
-  Then each enters by itself (D528). An exchange that does not conclude, the master waiting 30 s at each wait as at the bank,
-  is tried again; three in a row shut the dungeon for the run (D524), lest the group wait at its door for ever.
+  Then each enters by itself (D528). The key has gone only once the master's stack is lessened and the follower's own state
+  shows it, each bot hearing its inventory from its own connection: an exchange left, which ends as one concluded, gives
+  nothing, and the master neither gives a second key nor reads its follower still keyless. An exchange that does not give the
+  key, the master waiting 30 s at each wait as at the bank, is tried again; three in a row shut the dungeon for the run (D524),
+  lest the group wait at its door for ever. A follower the gathering brings back, its keys not reckoned in the turn, ends the
+  step, so that the next leaves the dungeon out rather than enter without it.
 - **Not measured, tested on the fake game only**: a master moving objects into an exchange its follower asked, which the
   protocol lets either side do; whether the server takes a key given that way, a key being no bound object in the tables.
   To see in game: a mule with no key entering behind its master, the master one key fewer.

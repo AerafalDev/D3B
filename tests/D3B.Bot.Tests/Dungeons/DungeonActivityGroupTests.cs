@@ -132,11 +132,17 @@ public sealed class DungeonActivityGroupTests
         Both(masterConnection, connection, new ExchangeReadyEvent { Ready = true, CharacterId = TestGroup.MasterId });
 
         Assert.Equal(new ExchangeReadyRequest { Step = 1, Ready = true }, await TestGroup.SentAsync(play, connection, 4));
-        masterConnection.Server(new ObjectQuantityEvent { Object = new ObjectQuantity { Uid = 12, Quantity = 1 } });
-        connection.Server(new ObjectAddedEvent { Object = Stack(46, TestPlay.DungeonKeyId, 1) });
         Both(masterConnection, connection, new ExchangeReadyEvent { Ready = false, CharacterId = TestGroup.FollowerId });
         Both(masterConnection, connection, new ExchangeReadyEvent { Ready = false, CharacterId = TestGroup.MasterId });
         Both(masterConnection, connection, new ExchangeLeaveEvent());
+
+        // Each bot hears its own inventory from its own connection, in an order not measured: the master waits for both, so
+        // that it neither gives a second key nor reads its follower still keyless.
+        await TestGroup.SettleAsync(master, follower);
+        masterConnection.Server(new ObjectQuantityEvent { Object = new ObjectQuantity { Uid = 12, Quantity = 1 } });
+        await TestGroup.SettleAsync(master, follower);
+        Assert.Equal(3, masterConnection.Sent.Count);
+        connection.Server(new ObjectAddedEvent { Object = Stack(46, TestPlay.DungeonKeyId, 1) });
 
         // Given, the master talks to the keeper with the key it kept, and enters.
         Assert.Equal(new NpcActionRequest { Action = 3, MapId = TestPlay.InsideMapId, NpcActorId = TestPlay.WayActorId }, await TestGroup.SentAsync(play, masterConnection, 4));
@@ -153,6 +159,72 @@ public sealed class DungeonActivityGroupTests
         Assert.Equal(new NpcActionRequest { Action = 3, MapId = TestPlay.InsideMapId, NpcActorId = TestPlay.WayActorId }, await TestGroup.SentAsync(play, connection, 5));
         Assert.Equal(TestPlay.DungeonId, run.Activity.DungeonInside);
         run.Stop();
+        follow.Stop();
+    }
+
+    [Fact]
+    public async Task AnExchangeThatClosesWithNoKeyMovedIsNoKeyGivenAndThreeShutTheDungeon()
+    {
+        // Such as the player closing the window by hand (D455): the exchange is left, nothing moved (D569).
+        await using var play = new TestPlay();
+        var (masterConnection, master) = await TestGroup.MasterAsync(play, 300, TestPlay.InsideMapId);
+        var (connection, follower) = await TestGroup.FollowerAsync(play, 301, TestPlay.InsideMapId);
+
+        masterConnection.Server(new InventoryContentEvent { Objects = { Stack(12, TestPlay.DungeonKeyId, 2) } });
+        connection.Server(new InventoryContentEvent { Objects = { Stack(40, TestPlay.Ash, 1) } });
+        masterConnection.Server(TestGroup.Party(TestGroup.PartyId, TestGroup.MasterId, TestGroup.MasterId));
+        masterConnection.Server(new PartyNewMemberEvent { PartyId = TestGroup.PartyId, Member = new Character { Id = TestGroup.FollowerId } });
+        connection.Server(TestGroup.Party(TestGroup.PartyId, TestGroup.MasterId, TestGroup.MasterId, TestGroup.FollowerId));
+
+        var follow = follower.StartActivity(new FollowActivity(new FollowSettings { Master = TestGroup.Master.ToId() }, play.Bots, play.Tables));
+
+        Assert.IsType<PartyAutoOptionTwoOffRequest>(await TestGroup.SentAsync(play, connection, 2));
+
+        var run = master.StartActivity(new DungeonActivity(new DungeonSettings { Dungeons = [TestPlay.DungeonId], RestartAfterFailure = false }, play.Tables, bots: play.Bots));
+
+        for (var round = 0; round < 3; round++)
+        {
+            Assert.IsType<ExchangePlayerRequest>(await TestGroup.SentAsync(play, connection, 3 + (2 * round)));
+            Both(masterConnection, connection, new ExchangeRequestedEvent { Type = ExchangeType.Player, SourceId = TestGroup.FollowerId, TargetId = TestGroup.MasterId });
+            Assert.IsType<ExchangeAcceptRequest>(await TestGroup.SentAsync(play, masterConnection, 1 + (3 * round)));
+            Both(masterConnection, connection, new ExchangeStartedWithPlayerEvent { Type = ExchangeType.Player });
+            Assert.IsType<ExchangeObjectMoveRequest>(await TestGroup.SentAsync(play, masterConnection, 2 + (3 * round)));
+            Both(masterConnection, connection, new ExchangeObjectsAddedEvent());
+            Assert.IsType<ExchangeReadyRequest>(await TestGroup.SentAsync(play, masterConnection, 3 + (3 * round)));
+            Both(masterConnection, connection, new ExchangeReadyEvent { Ready = true, CharacterId = TestGroup.MasterId });
+            Assert.IsType<ExchangeReadyRequest>(await TestGroup.SentAsync(play, connection, 4 + (2 * round)));
+            Both(masterConnection, connection, new ExchangeLeaveEvent());
+        }
+
+        await TestGroup.UntilAsync(play, () => run.IsOver, "the activity over");
+        Assert.Equal("Follower, who follows the character, took none of the keys the character gives it at the dungeon's door.", Said(run));
+        Assert.Equal(3, connection.Sent.Count(request => request is ExchangePlayerRequest));
+        Assert.DoesNotContain(masterConnection.Sent, request => request is NpcActionRequest);
+        follow.Stop();
+    }
+
+    [Fact]
+    public async Task TwoKeylessFollowersAndOneSpareKeyLeaveTheDungeonOutNamingTheOneItDoesNotCover()
+    {
+        // The spare keys cover the followers in the chain's order, each key once (D569): the second is not covered.
+        await using var play = new TestPlay();
+        var (master, follow, _, masterConnection) = await GroupAsync(play, followerKey: false);
+        var (secondConnection, second) = await TestGroup.SecondAsync(play, 302);
+
+        masterConnection.Server(new ObjectQuantityEvent { Object = new ObjectQuantity { Uid = 12, Quantity = 2 } });
+        secondConnection.Server(Carrying(TestPlay.Ash));
+        await master.ProcessedAsync();
+        await second.ProcessedAsync();
+
+        var secondRun = second.StartActivity(new FollowActivity(new FollowSettings { Master = TestGroup.Master.ToId() }, play.Bots, play.Tables));
+
+        await TestGroup.UntilAsync(play, () => play.Bots.Groups.FollowersOf(TestGroup.Master).Count is 2, "both followers in the group");
+
+        var run = master.StartActivity(new DungeonActivity(new DungeonSettings { Dungeons = [TestPlay.DungeonId], RestartAfterFailure = false }, play.Tables, bots: play.Bots));
+
+        Assert.Equal(ActivityOutcome.Failed, await run.Completion);
+        Assert.Equal("Second, who follows the character, carries neither the dungeon's key nor a keyring that opens it, and the character has no key to spare.", Said(run));
+        secondRun.Stop();
         follow.Stop();
     }
 

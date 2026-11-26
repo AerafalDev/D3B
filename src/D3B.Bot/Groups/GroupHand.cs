@@ -1,4 +1,5 @@
 using D3B.Bot.Banks;
+using D3B.Bot.Characters;
 using D3B.Bot.Runtime;
 using D3B.Protocol.Game;
 
@@ -25,16 +26,19 @@ internal static class GroupHand
     /// <param name="groups">The host's groups, which tell the follower to ask.</param>
     /// <param name="follower">The follower.</param>
     /// <param name="stacks">Each of the master's stacks and the quantity given.</param>
+    /// <param name="received">Whether the follower's own state shows what it was given.</param>
     /// <param name="cancellationToken">The step's token.</param>
-    /// <returns>Whether the exchange concluded.</returns>
-    public static async Task<bool> GiveAsync(BotContext context, GroupDirectory groups, BotActor follower, IReadOnlyList<(int Uid, int Quantity)> stacks, CancellationToken cancellationToken)
+    /// <returns>Whether the objects went: the exchange concluded, the master's stacks lessened and the follower's state showing them.</returns>
+    public static async Task<bool> GiveAsync(BotContext context, GroupDirectory groups, BotActor follower, IReadOnlyList<(int Uid, int Quantity)> stacks, Func<BotActor, bool> received, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(context);
         ArgumentNullException.ThrowIfNull(groups);
         ArgumentNullException.ThrowIfNull(follower);
         ArgumentNullException.ThrowIfNull(stacks);
+        ArgumentNullException.ThrowIfNull(received);
 
         var id = follower.Key.CharacterId;
+        var before = stacks.ToDictionary(stack => stack.Uid, stack => context.State.Inventory.TryGetValue(stack.Uid, out var carried) ? carried.Quantity : 0);
 
         using var handing = groups.Hand(context.Actor.Key, follower.Key);
 
@@ -79,6 +83,23 @@ internal static class GroupHand
         // The follower's readiness after the master's concludes it.
         if (!await context.WaitUntilAsync(state => state.Exchange is null, _exchangeWait, cancellationToken).ConfigureAwait(false))
             return await LeftAsync(context, cancellationToken).ConfigureAwait(false);
+
+        // An exchange left, the server's refusal or the player's hand (D455), ends the same way as one concluded: only the
+        // master's stacks lessened say the objects went. Each bot hears its inventory from its own connection, so the master
+        // waits for both, lest it give again or read its follower still lacking them.
+        bool Lessened(CharacterState state)
+        {
+            return stacks.All(stack => (state.Inventory.TryGetValue(stack.Uid, out var left) ? left.Quantity : 0) <= before[stack.Uid] - stack.Quantity);
+        }
+
+        if (!await context.WaitUntilAsync(Lessened, context.Delays.Answer, cancellationToken).ConfigureAwait(false))
+            return false;
+
+        if (!received(follower))
+            await GroupWaits.AnyAsync([(follower, received)], Task.Delay(Timeout.Infinite, cancellationToken), context.Time, context.Delays.Answer, cancellationToken).ConfigureAwait(false);
+
+        if (!received(follower))
+            return false;
 
         GroupLog.Handed(context.Log, context.Actor.Key.CharacterId, id, stacks.Count);
 

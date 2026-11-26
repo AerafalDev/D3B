@@ -349,7 +349,7 @@ follower) on the same map, the capture of every connection on; a capture's conte
 - Clue solving, hint NPCs, dungeon routes.
 - **Dungeons** (D520 to D529), begun on 2026-11-25 at the owner's ask, ahead of steps 7e and 11: an activity of its own that
   reads the client's dungeon table and follows the server from room to room, several dungeons of a profile in turn, a character alone first, every keyed dungeon by
-  its keepers' replies' French words, entered with the keyring or a key carried. Four pull requests, each test-first on the fake
+  its keepers' replies' French words, entered with the keyring or a key carried. Five pull requests, each test-first on the fake
   game:
   1. The pack's dungeon table, format 14 (`DungeonCatalog`), and entering: the level and the key checked, the door reached, the
      keeper talked to, each reply chosen among those offered. Merged (#429).
