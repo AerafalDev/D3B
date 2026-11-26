@@ -90,6 +90,28 @@ internal sealed class BehaviorActivity : BotActivity, IDisposable, IBehaviorCont
     /// <remarks>The step playing's; out of an activity's node, none, for a behavior has no setting of its own.</remarks>
     public override ChallengePlay Challenges => _visit?.Current?.Challenges ?? ChallengePlay.None;
 
+    /// <inheritdoc/>
+    public override IReadOnlyList<int> MountRaces => _visit?.Current?.MountRaces ?? [];
+
+    /// <inheritdoc/>
+    public override bool CapturesSouls => _visit?.Current?.CapturesSouls ?? false;
+
+    /// <inheritdoc/>
+    /// <remarks>
+    /// The step playing's: measured on the owner's four harvesters of 25 November, a profile's harvest whose unloading failed was
+    /// never restarted, the behavior answering no for every activity, and each idled until the server closed its connection (D519).
+    /// </remarks>
+    public override bool RestartsAfterFailure => _visit?.Current?.RestartsAfterFailure ?? false;
+
+    /// <inheritdoc/>
+    public override DateTimeOffset? WaitingUntil => _visit?.Current?.WaitingUntil;
+
+    /// <inheritdoc/>
+    public override int? DungeonInside => _visit?.Current?.DungeonInside;
+
+    /// <inheritdoc/>
+    public override bool BanksTheGroup => _visit?.Current?.BanksTheGroup ?? false;
+
     /// <summary>Gets the activity an activity's node plays now, which the behavior speaks for, if one does.</summary>
     internal BotActivity? Playing => _visit?.Current;
 
@@ -231,9 +253,23 @@ internal sealed class BehaviorActivity : BotActivity, IDisposable, IBehaviorCont
     }
 
     /// <inheritdoc/>
+    public override bool Keeps(InventoryItem stack)
+    {
+        ArgumentNullException.ThrowIfNull(stack);
+
+        return _visit?.Current?.Keeps(stack) ?? false;
+    }
+
+    /// <inheritdoc/>
     public override Task<bool> UnloadAsync(BotContext context, CancellationToken cancellationToken)
     {
         return _visit?.Current?.UnloadAsync(context, cancellationToken) ?? base.UnloadAsync(context, cancellationToken);
+    }
+
+    /// <inheritdoc/>
+    public override void OnGroupUnloaded()
+    {
+        _visit?.Current?.OnGroupUnloaded();
     }
 
     /// <inheritdoc/>
@@ -255,6 +291,13 @@ internal sealed class BehaviorActivity : BotActivity, IDisposable, IBehaviorCont
     }
 
     /// <inheritdoc/>
+    /// <remarks>The step playing's activity begins anew; the behavior keeps its state and its place in a list (D421, D519).</remarks>
+    public override void Restart()
+    {
+        _visit?.Current?.Restart();
+    }
+
+    /// <inheritdoc/>
     public override Task RecoverAsync(BotContext context, Interruption reason, CancellationToken cancellationToken)
     {
         return _visit?.Current?.RecoverAsync(context, reason, cancellationToken) ?? base.RecoverAsync(context, reason, cancellationToken);
@@ -266,6 +309,7 @@ internal sealed class BehaviorActivity : BotActivity, IDisposable, IBehaviorCont
         ArgumentNullException.ThrowIfNull(bot);
 
         Attach(bot);
+        _visit?.Current?.Watch(bot);
 
         var view = View(bot, bot.State);
         var before = _seen;

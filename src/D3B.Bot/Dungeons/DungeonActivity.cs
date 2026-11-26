@@ -328,7 +328,7 @@ public sealed class DungeonActivity : BotActivity
     {
         ArgumentNullException.ThrowIfNull(stack);
 
-        return _loot.ContainsKey(stack.ItemId) && !IsKey(stack.ItemId);
+        return _loot.ContainsKey(stack.ItemId) && !IsKey(stack.ItemId) && _tables.Items.IsDeposited(stack.ItemId);
     }
 
     /// <inheritdoc/>

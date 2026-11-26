@@ -1,5 +1,7 @@
 using System.Globalization;
 using D3B.Bot.Activities;
+using D3B.Bot.Banks;
+using D3B.Bot.Characters;
 using D3B.Bot.Harvesting;
 using D3B.Bot.Interactives;
 using D3B.Bot.Localization;
@@ -141,6 +143,117 @@ public sealed class HarvestNeverIdleTests : IAsyncDisposable
 
         Assert.Equal(ActivityOutcome.Stopped, await run.Completion);
     }
+
+    // As the owner's four harvesters were on 25 November, unloading into the guild's chest: 90 % of their pods, ash and a quest's
+    // object in the bags, a chest and a banker on the map.
+    private async Task<(TestConnection Connection, BotActor Bot)> FullByTheChestAsync(int otherItemId)
+    {
+        var (connection, bot) = await _play.EnterAsync(301, TestPlay.InsideMapId);
+        var information = TestPlay.Information(301, TestPlay.InsideMapId);
+
+        information.InteractiveElements.Add(new InteractiveElement
+        {
+            ElementId = TestPlay.ChestElementId,
+            InteractiveId = GuildChest.InteractiveId,
+            OnCurrentMap = true,
+            EnabledSkills = { new InteractiveSkill { SkillId = GuildChest.SkillId, InstanceId = 33_001 } },
+        });
+        connection.Server(information);
+        connection.Server(new InventoryContentEvent
+        {
+            Objects =
+            {
+                new InventoryObject { Item = new ObjectItem { Uid = 12, ItemId = TestPlay.Ash, Quantity = 40 }, Position = InventoryItem.NotWorn },
+                new InventoryObject { Item = new ObjectItem { Uid = 13, ItemId = otherItemId, Quantity = 1 }, Position = InventoryItem.NotWorn },
+            },
+        });
+        connection.Server(new InventoryWeightEvent { Weight = 901, MaxWeight = 1_000 });
+        await bot.ProcessedAsync();
+
+        return (connection, bot);
+    }
+
+    private HarvestActivity ToTheGuildChest()
+    {
+        var settings = new HarvestSettings { Resources = [TestPlay.Ash], SubAreas = [TestPlay.SubAreaId], Deposit = HarvestDeposit.AllButWorn, DepositTo = HarvestDepositPlace.GuildChest };
+
+        return new HarvestActivity(settings, _play.World, _play.Tables, _play.Maps, new HarvestSightings(), new GraphicSkills(), _play.Places, new Regrowths(), _play.Time);
+    }
+
+    private static async Task<int> OpenTheChestAsync(TestPlay play, TestConnection connection)
+    {
+        Assert.IsType<InteractiveUseRequest>(await TestWalks.SentAsync(play, connection, 1));
+        connection.Server(new InteractiveUsedEvent { ActorId = TestPlay.CharacterId, ElementId = TestPlay.ChestElementId, SkillId = GuildChest.SkillId });
+        connection.Server(new ExchangeStartedWithTabbedStorageEvent { Type = ExchangeType.GuildChest });
+        connection.Server(new StorageContentEvent());
+
+        // The ash goes, and with it the character's weight.
+        Assert.Equal(new ExchangeObjectMoveRequest { Uid = 12, Quantity = 40 }, await TestWalks.SentAsync(play, connection, 2));
+        connection.Server(new ObjectDeletedEvent { Uid = 12 });
+        connection.Server(new InventoryWeightEvent { Weight = 101, MaxWeight = 1_000 });
+
+        return 3;
+    }
+
+    [Fact]
+    public async Task AHarvestWhoseGuildChestTookAllButAQuestsObjectsGoesOnHarvestingWithoutTheBank()
+    {
+        // Measured on the owner's four captures of 25 November: the chest refused each of a quest's objects with text 356, the bank
+        // then answered nothing to the list of them alone, seven times up the ladder, and the harvest failed with its bags nearly empty;
+        // nothing was sent until the server closed the connection 30 minutes later.
+        var (connection, bot) = await FullByTheChestAsync(TestPlay.QuestObject);
+        var run = bot.StartActivity(ToTheGuildChest());
+        var sent = await OpenTheChestAsync(_play, connection);
+
+        Assert.Equal(new DialogLeaveRequest(), await TestWalks.SentAsync(_play, connection, sent));
+        connection.Server(new ExchangeLeaveEvent { Type = DialogType.Storage });
+
+        var next = await TestWalks.SentAsync(_play, connection, sent + 1);
+
+        Assert.IsNotType<NpcActionRequest>(next);
+        Assert.False(run.IsOver);
+        Assert.Contains(13, bot.State.Inventory.Keys);
+
+        run.Stop();
+        await run.Completion;
+    }
+
+    [Fact]
+    public async Task AHarvestWhoseBankTakesNoneOfWhatTheChestLeftGoesOnOnceItIsNoLongerFull()
+    {
+        // A stack both storages refuse, whatever it is: the bags no longer full, the unloading did what it is for.
+        var (connection, bot) = await FullByTheChestAsync(TestPlay.Bread);
+        var run = bot.StartActivity(ToTheGuildChest());
+        var sent = await OpenTheChestAsync(_play, connection);
+
+        Assert.Equal(new ExchangeObjectMoveRequest { Uid = 13, Quantity = 1 }, await TestWalks.SentAsync(_play, connection, sent));
+        connection.Server(new TextInformationEvent { TextId = GuildChest.RefusedTextId, Type = TextInformationType.Error });
+        Assert.Equal(new DialogLeaveRequest(), await TestWalks.SentAsync(_play, connection, sent + 1));
+        connection.Server(new ExchangeLeaveEvent { Type = DialogType.Storage });
+
+        Assert.IsType<NpcActionRequest>(await TestWalks.SentAsync(_play, connection, sent + 2));
+        connection.Server(new NpcDialogCreationEvent { MapId = TestPlay.InsideMapId, NpcActorId = TestPlay.BankerActorId });
+        connection.Server(new NpcDialogQuestionEvent { MessageId = 48_366, Replies = { new NpcReply { ReplyId = TestPlay.ChestReplyId } } });
+        Assert.IsType<NpcDialogReplyRequest>(await TestWalks.SentAsync(_play, connection, sent + 3));
+        connection.Server(new DialogLeaveEvent { Type = DialogType.Npc });
+        connection.Server(new ExchangeStartedWithStorageEvent { Type = ExchangeType.Storage, MaxSlots = int.MaxValue });
+        connection.Server(new StorageContentEvent());
+
+        // The bank answers nothing to the bread alone.
+        Assert.Equal(new ExchangeTransferFromInventoryRequest { Uids = { 13 } }, await TestWalks.SentAsync(_play, connection, sent + 4));
+        Assert.Equal(new DialogLeaveRequest(), await TestWalks.SentAsync(_play, connection, sent + 5));
+        connection.Server(new ExchangeLeaveEvent { Type = DialogType.Storage });
+
+        var next = await TestWalks.SentAsync(_play, connection, sent + 6);
+
+        Assert.IsNotType<NpcActionRequest>(next);
+        Assert.False(run.IsOver);
+        Assert.Null(run.LastRestart);
+
+        run.Stop();
+        await run.Completion;
+    }
+
 
     [Fact]
     public async Task AUseThatNeverEndsRestartsTheHarvestOnceItFailedSayingWhy()

@@ -199,7 +199,10 @@ public sealed class ActivityRun
     private async Task<ActivityOutcome> LoopAsync()
     {
         using var watching = new CancellationTokenSource();
-        var watch = Activity.RestartsAfterFailure ? WatchProgressAsync(watching.Token) : Task.CompletedTask;
+
+        // Watched from the start whatever the activity says now: a behavior says it of the activity its step plays, which it has
+        // none of before its first step (D519).
+        var watch = WatchProgressAsync(watching.Token);
 
         try
         {
@@ -505,10 +508,11 @@ public sealed class ActivityRun
         return (state.MapId, _bot.FightsBegun, state.Weight, state.IsFighting, _bot.LifeAt(now));
     }
 
-    // The game connection gone, the player's hand, a fight, the wait before a restart, or the activity's own wait: none is the run stuck.
+    // The game connection gone, the player's hand, a fight, the wait before a restart, or the activity's own wait: none is the run stuck;
+    // nor is an activity that would not restart, which no progress never ends.
     private bool IsExcused(DateTimeOffset now)
     {
-        return !_bot.IsConnected || _bot.IsPaused || _bot.State.IsFighting
+        return !Activity.RestartsAfterFailure || !_bot.IsConnected || _bot.IsPaused || _bot.State.IsFighting
             || Volatile.Read(ref _restingUntil) > now.UtcTicks
             || Activity.WaitingUntil > now;
     }

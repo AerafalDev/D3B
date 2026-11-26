@@ -1080,3 +1080,10 @@ or refines another says so in its own entry. Add a line here with every new deci
 
 - [D566](decisions/d566-release-1-1-0.md#d566-the-apps-release-after-101-is-110-holding-the-bank-and-chest-transfer-fixed-and-the-capture-gear-worn-its-mapping-of-format-26-published-first) The app's release after 1.0.1 is 1.1.0, holding the bank and chest transfer fixed and the capture gear worn, its mapping of format 26 published first (2026-11-25)
   - The owner's choice of 1.1.0 over 1.0.2; `mapping-26.binpb` on `client-3.7.14.18`, the tag once both pull requests are on `main`.
+
+## Profiles, never idle until the server's kick (D567, D568)
+
+- [D567](decisions/d567-d568-profiles-never-idle.md#d567-a-profiles-behavior-speaks-for-the-activity-its-step-plays-in-every-way-an-activity-can-say-something-its-restart-after-a-failure-included-and-the-run-watches-its-progress-from-the-start) A profile's behavior speaks for the activity its step plays in every way an activity can say something, its restart after a failure included, and the run watches its progress from the start (2026-11-26)
+  - The owner's report of four kicks on 25 November; restarting the whole behavior, passing on only the restart.
+- [D568](decisions/d567-d568-profiles-never-idle.md#d568-a-deposit-leaves-out-a-quests-objects-which-neither-the-bank-nor-the-guilds-chest-takes-and-what-weighs-nothing-and-a-harvest-unloaded-into-the-chest-goes-on-when-the-bank-then-takes-none-of-the-rest-while-its-bags-are-no-longer-full) A deposit leaves out a quest's objects, which neither the bank nor the guild's chest takes, and what weighs nothing, and a harvest unloaded into the chest goes on when the bank then takes none of the rest while its bags are no longer full (2026-11-26)
+  - Measured on the same captures, the weightless the owner's ask; leaving out a stack once refused, every unloading judged by the pods alone, the bound objects unmeasured.
