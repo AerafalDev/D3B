@@ -92,7 +92,7 @@ Each file holds the decisions of one group of [the index](../decisions-index.md)
 - [Fights, an Eliotrope's portals (D468)](d468-eliotrope-portals.md): 1 decision, 5 KB.
 - [Docs, the README for players (D469)](d469-readme-for-players.md): 1 decision, 2 KB.
 - [Groups, the party kept and the fight's lock (D471)](d471-groups-party-kept-and-lock.md): 1 decision, 5 KB.
-- [Fights, points below 0 and the approach within reach (D470, D472)](d470-fights-phantom-points-and-nearing.md): 2 decisions, 5 KB.
+- [Fights, points below 0 and the approach within reach (D470, D472)](d470-fights-phantom-points-and-nearing.md): 2 decisions, 6 KB.
 - [Fights, the Forgelance's Trident and the fork (D473)](d473-forgelance-trident-fork.md): 1 decision, 4 KB.
 - [Fights, the Pandawa's carrying (D474)](d474-pandawa-carrying.md): 1 decision, 8 KB.
 - [Groups, a follower waits for its master's fight's options (D475)](d475-follower-waits-fight-options.md): 1 decision, 2 KB.
@@ -157,3 +157,4 @@ Each file holds the decisions of one group of [the index](../decisions-index.md)
 - [The app's 1.0.0 and 1.0.1, the transfer taken up after a stop (D561 to D564)](d561-release-1-0-0.md): 4 decisions, 8 KB.
 - [Hunting, capture nets and soul stones worn (D565)](d565-capture-gear.md): 1 decision, 4 KB.
 - [The app's 1.1.0 (D566)](d566-release-1-1-0.md): 1 decision, 1 KB.
+- [Profiles, never idle until the server's kick (D567, D568)](d567-d568-profiles-never-idle.md): 2 decisions, 6 KB.

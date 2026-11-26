@@ -172,7 +172,7 @@ internal sealed class GroupBank : IGroupBank
     // its bags by the player's hand too.
     private bool Deposited(InventoryItem stack)
     {
-        return !stack.IsWorn && stack.Quantity > 0 && !_refused.Contains(stack.Uid) && _kept?.Invoke(stack) != true && (_food || !(_tables.Items.TryGetItem(stack.ItemId, out var item) && item.Heals));
+        return !stack.IsWorn && stack.Quantity > 0 && !_refused.Contains(stack.Uid) && _kept?.Invoke(stack) != true && _tables.Items.IsDeposited(stack.ItemId) && (_food || !(_tables.Items.TryGetItem(stack.ItemId, out var item) && item.Heals));
     }
 
     private bool Carries(CharacterState state)
