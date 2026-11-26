@@ -28,8 +28,12 @@ public sealed class DungeonsModule : IModule
         settings.Dungeons(s => s.Dungeons, DungeonTexts.Text("Dungeons")).Help(DungeonTexts.Text("DungeonsHelp"));
         settings.Number(s => s.Runs, DungeonTexts.Text("Runs"), 0, 1_000).Unit(DungeonTexts.Text("RunsUnit")).Help(DungeonTexts.Text("RunsHelp"));
 
+        settings.Section(DungeonTexts.Text("SectionBank"));
+        settings.Flag(s => s.GoOnFull, DungeonTexts.Text("GoOnFull")).Help(DungeonTexts.Text("GoOnFullHelp"));
+
         settings.Section(DungeonTexts.Text("SectionCare"));
         settings.Number(s => s.LifeShare, DungeonTexts.Text("LifeShare"), 10, 100).Percent().Help(DungeonTexts.Text("LifeShareHelp"));
+        settings.Flag(s => s.Mule, DungeonTexts.Text("Mule")).Help(DungeonTexts.Text("MuleHelp"));
         settings.Flag(s => s.UseZaaps, DungeonTexts.Text("UseZaaps")).Help(DungeonTexts.Text("UseZaapsHelp")).Advanced();
         settings.Flag(s => s.RestartAfterFailure, DungeonTexts.Text("RestartAfterFailure")).Help(DungeonTexts.Text("RestartAfterFailureHelp")).Advanced();
 

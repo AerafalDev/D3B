@@ -41,6 +41,16 @@ public sealed class FightWeightsTests
     }
 
     [Fact]
+    public void AMuleOfTheTeamIsNoFightingAlly()
+    {
+        // The owner's choice (D579): a mule passes its turns, so the AI beside it plays as alone.
+        var fight = Fight(new Fighter { Id = 2, Team = FightTeam.Challenger, BreedId = 11 }, new Fighter { Id = 3, Team = FightTeam.Challenger, BreedId = 11 });
+
+        Assert.Same(TacticWeights.Default, FightPlay.WeightsOf(fight, Self, risky: false, ally => ally is 2 or 3));
+        Assert.Same(TacticWeights.Group, FightPlay.WeightsOf(fight, Self, risky: false, ally => ally is 2));
+    }
+
+    [Fact]
     public void AFightTooRiskyIsPlayedPrudentlyInAGroupToo()
     {
         var fight = Fight(new Fighter { Id = 2, Team = FightTeam.Challenger, BreedId = 11 });

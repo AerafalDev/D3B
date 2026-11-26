@@ -152,4 +152,10 @@
   <data name="DoingTakesKeys" xml:space="preserve">
     <value>Takes a key from {0}</value>
   </data>
+  <data name="Mule" xml:space="preserve">
+    <value>Mule in fights</value>
+  </data>
+  <data name="MuleHelp" xml:space="preserve">
+    <value>In the fights the AI plays, the follower is placed as far from the monsters as it can, says it is ready and passes each of its turns without acting; its master's AI does not count on it.</value>
+  </data>
 </root>

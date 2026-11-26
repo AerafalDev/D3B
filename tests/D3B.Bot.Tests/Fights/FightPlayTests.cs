@@ -1005,6 +1005,39 @@ public sealed class FightPlayTests : IAsyncDisposable
     }
 
     [Fact]
+    public async Task AMuleIsPlacedFarFromTheMonstersReadiedAndEndsEachTurnWithoutActing()
+    {
+        // The owner's choice (D579): a mule is in the fight only to be there, placed as cautiously as the cells allow.
+        var (connection, bot) = await _play.EnterAsync(Far);
+        var monster = Beside(Far, 8, 0);
+        var near = Beside(monster, -3, 0);
+
+        bot.StartActivity(new RewardActivity { Reward = ChallengeReward.Client, Mule = true });
+        await bot.ProcessedAsync();
+
+        var sent = connection.Sent.Count;
+
+        Placement(connection, near, monster);
+        await SentAsync(connection, sent + 1);
+        connection.Server(new FightOptionUpdateEvent { Option = FightOption.Closed, Enabled = true });
+        await SentAsync(connection, sent + 2);
+        connection.Server(new FightOptionUpdateEvent { Option = FightOption.NoSpectators, Enabled = true });
+
+        // The farthest cell is the one it stands on: it says it is ready, never moved within the monster's reach.
+        Assert.True(Assert.IsType<FightReadyRequest>(await SentAsync(connection, sent + 3)).Ready);
+        connection.Server(new FightHumanReadyStateEvent { CharacterId = Self, Ready = true });
+        connection.Server(new FightStartEvent());
+        connection.Server(new FightNewRoundEvent { Round = 1 });
+        connection.Server(new FightTurnEvent { FighterId = Self, Duration = 300, Round = 1 });
+        connection.Server(new FightTurnStartPlayingEvent());
+
+        Assert.IsType<FightTurnFinishRequest>(await SentAsync(connection, sent + 4));
+        NextTurn(connection, 2);
+        Assert.IsType<FightTurnFinishRequest>(await SentAsync(connection, sent + 5));
+        Assert.DoesNotContain(connection.Sent.Skip(sent), request => request is GameActionFightCastRequest or FightPlacementPositionRequest or MapMovementRequest);
+    }
+
+    [Fact]
     public async Task ASoulCaptureTheServerRefusesIsNotTriedAgainThisFight()
     {
         var (connection, sent, monster, _) = await SoulTurnAsync(souls: true, stone: true);

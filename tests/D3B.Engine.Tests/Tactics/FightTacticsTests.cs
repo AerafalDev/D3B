@@ -223,6 +223,18 @@ public sealed class FightTacticsTests
     }
 
     [Fact]
+    public void AMuleIsNotPlacedWhereItWouldReachAnEnemyItBeats()
+    {
+        // The owner's choice (D579): a mule never strikes, so the reach of its blows weighs nothing.
+        var near = Off(-3, 0);
+        var far = Off(-8, 0);
+        var (fight, knowledge) = Fight(Caster(Off(-9, 0)), Biter(-1, Off(2, 0), life: 20));
+
+        Assert.Equal(near, _tactics.Place(fight, [far, near], knowledge, TacticWeights.Default));
+        Assert.Equal(Off(-9, 0), _tactics.Place(fight, [far, near], knowledge, TacticWeights.Mule));
+    }
+
+    [Fact]
     public void ACharacterPlayingBeforeTheEnemiesIsPlacedWhereItStrikesThemFirst()
     {
         var near = Off(-2, 0);

@@ -37,6 +37,11 @@ namespace D3B.Bot.Fights;
 /// character cannot cast, and one answer may be lost (D510); a walk not answered ends the turn.
 /// The client acknowledges the sequences and says it is ready for each turn by itself (client.md).
 /// </para>
+/// <para>
+/// A character whose profile fights as a mule (D579) is placed as far from the threat as the cells allow, weighing no reach of
+/// its own, its challenges' bonus chosen and its readiness said as any other's; each of its turns it ends at once, at the
+/// fight's pace, acting nothing. The AI of the host's other bots counts it as no fighting ally (<see cref="WeightsOf"/>).
+/// </para>
 /// </remarks>
 public static class FightPlay
 {
@@ -74,7 +79,8 @@ public static class FightPlay
         ArgumentNullException.ThrowIfNull(tables);
 
         var self = context.State.Key.CharacterId;
-        var weights = TacticWeights.Default;
+        var mule = context.Actor.Activity is { IsOver: false, Activity: { FightsItsFights: true, FightsAsMule: true } };
+        var weights = mule ? TacticWeights.Mule : TacticWeights.Default;
         var judged = false;
         var risky = false;
         var unanswered = new Dictionary<int, int>();
@@ -110,7 +116,8 @@ public static class FightPlay
                 {
                     var odds = await searches.RunAsync(() => tactics.Odds(start.Fight, start.Knowledge), cancellationToken).ConfigureAwait(false);
 
-                    weights = WeightsOf(state.Fight ?? fight, self, odds.IsRisky);
+                    // The owner's choice (D579): a mule stands as far from the threat as it can, and the others' AI fights as without it.
+                    weights = mule ? TacticWeights.Mule : WeightsOf(state.Fight ?? fight, self, odds.IsRisky, ally => context.Actor.Team?.FightsAsMule(ally) == true);
                     risky = odds.IsRisky;
                     judged = true;
                     FightLog.Judged(context.Log, self, odds.TurnsToWin, odds.TurnsToLose, odds.IsRisky);
@@ -142,6 +149,14 @@ public static class FightPlay
                     continue;
                 }
 
+                if (mule)
+                {
+                    await EndTurnAsync(context, fight.PlayingId ?? self, 0, cancellationToken).ConfigureAwait(false);
+                    await context.WaitUntilAsync(next => next.Fight is not { IsOwnTurn: true }, context.Delays.Answer, cancellationToken).ConfigureAwait(false);
+
+                    continue;
+                }
+
                 // The pack's challenges are read only once a turn may play for one.
                 var play = PlayOf(context);
                 var playedFor = play is ChallengePlay.None || risky || fight.Challenges.IsEmpty ? null : ChallengeOf(fight, tables.Challenges, play, risky, left, fight.PlayingId ?? self);
@@ -160,13 +175,15 @@ public static class FightPlay
     /// <param name="fight">The fight, as the bot knows it.</param>
     /// <param name="self">The character.</param>
     /// <param name="risky">Whether the AI judged the fight too risky.</param>
+    /// <param name="mule">Tells whether an allied character fights as a mule, which passes its turns and is no fighting ally (D579); none, when not given.</param>
     /// <returns>The weights.</returns>
-    internal static TacticWeights WeightsOf(FightState fight, long self, bool risky)
+    internal static TacticWeights WeightsOf(FightState fight, long self, bool risky, Func<long, bool>? mule = null)
     {
         if (risky)
             return TacticWeights.Prudent;
 
-        var allies = fight.Fighters.Values.Any(fighter => fighter.Id != self && fighter.Team == fight.Team && fighter.IsAlive && fighter.BreedId is not null && fighter.SummonerId is null);
+        var allies = fight.Fighters.Values.Any(fighter => fighter.Id != self && fighter.Team == fight.Team && fighter.IsAlive && fighter.BreedId is not null && fighter.SummonerId is null
+            && mule?.Invoke(fighter.Id) != true);
 
         return allies ? TacticWeights.Group : TacticWeights.Default;
     }
@@ -495,6 +512,11 @@ public static class FightPlay
             }
         }
 
+        await EndTurnAsync(context, self, acted, cancellationToken).ConfigureAwait(false);
+    }
+
+    private static async Task EndTurnAsync(BotContext context, long self, int acted, CancellationToken cancellationToken)
+    {
         // The owner's ask (D479): the turn's end waits for no pace once the turn acted. A turn with no action keeps it, and so
         // does one that killed the last enemy, whose fight the server may end meanwhile: a request sent after its end left
         // the bot waiting (D203).

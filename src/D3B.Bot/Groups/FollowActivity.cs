@@ -93,6 +93,7 @@ public sealed class FollowActivity : BotActivity, IDisposable
     private readonly Bots _bots;
     private readonly GameTables _tables;
     private readonly string _masterId;
+    private readonly bool _mule;
     private readonly Lock _joining = new();
 
     // Only the activity's steps, one at a time, read and write them.
@@ -154,6 +155,10 @@ public sealed class FollowActivity : BotActivity, IDisposable
             ? activity.Challenges
             : ChallengePlay.None;
 
+    /// <inheritdoc/>
+    /// <remarks>The follower's own profile's (D579), not its master's: a mule follows a master that fights.</remarks>
+    public override bool FightsAsMule => _mule;
+
     /// <summary>Initializes a new instance of the <see cref="FollowActivity"/> class.</summary>
     /// <param name="settings">The activity's settings: the master.</param>
     /// <param name="bots">The host's bots, the master's among them, and their groups.</param>
@@ -165,6 +170,7 @@ public sealed class FollowActivity : BotActivity, IDisposable
         ArgumentNullException.ThrowIfNull(tables);
 
         _masterId = settings.Master;
+        _mule = settings.Mule;
         _bots = bots;
         _tables = tables;
     }

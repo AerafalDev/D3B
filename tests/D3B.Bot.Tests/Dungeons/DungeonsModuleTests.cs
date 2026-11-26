@@ -29,6 +29,17 @@ public sealed class DungeonsModuleTests
     }
 
     [Fact]
+    public void ADungeonsProfileMayGoOnFullAndMakeItsCharacterAMule()
+    {
+        // The owner's choices (D578, D579): two flags, off by default.
+        var settings = Dungeons().Settings.All;
+
+        Assert.Equal(SettingKind.Flag, Assert.Single(settings, setting => setting.Key == nameof(DungeonSettings.GoOnFull)).Kind);
+        Assert.Equal(SettingKind.Flag, Assert.Single(settings, setting => setting.Key == nameof(DungeonSettings.Mule)).Kind);
+        Assert.False(new DungeonSettings().GoOnFull || new DungeonSettings().Mule);
+    }
+
+    [Fact]
     public void AProfileThatListsNoDungeonBreaksItsRule()
     {
         var settings = Dungeons().Settings;

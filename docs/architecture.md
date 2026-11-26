@@ -281,7 +281,13 @@ The bots run in `D3B.Bot`: what each part does today, with the decisions that ma
   D148, D153, D156), or with none chosen the stack that heals the least of those whose use only heals, by the pack
   (`Food.StackToEat`, D257), until its life is whole; with nothing to eat, it regenerates back to its share alone, looking
   at its life each 10 seconds at least (D258); full, it may deposit in the guild's chest (`GuildChest`, D147), what the chest leaves going to the
-  character's own, the unloading done once the bags are no longer full though the bank took none of it (D568). Between two steps the run lets `BotDelays.BetweenSteps` pass, the client's display time at least (D154).
+  character's own, the unloading done once the bags are no longer full though the bank took none of it (D568). A profile going
+  on full (D578: `HarvestDepositPlace.GoOnFull` beside the two chests, `GoOnFull` in `FightSettings` and `DungeonSettings`)
+  never leaves for the bank on the pods: `IsFull` says no and `Watches` holds no pods, so that neither the run, nor the studio,
+  nor a master's group (`GroupBank.ShareOf`) banks on them, and the card warns once the character carries as much as its pods
+  allow or more (`FullPods`, `ActivityTexts`'s `WarningFull`). A harvest the server refuses while the character is so full
+  ends the harvest, final, saying so: every element of the zone would be refused in turn and the tours go round it for
+  nothing; the server's refusal over the pods is not measured. Between two steps the run lets `BotDelays.BetweenSteps` pass, the client's display time at least (D154).
   An activity gives its figures (`BotActivity.Statistics`,
   `ActivityStatistics`), and a run keeps the character it started with (`ActivityRun.StartedWith`, D146) and counts the
   fights that end while it goes on, the AI's and the player's: won, lost, the character's deaths, the experience and kamas
@@ -367,7 +373,8 @@ The bots run in `D3B.Bot`: what each part does today, with the decisions that ma
   is over (`BotActor.RunInFightAsync`). `FightPlay`, one behavior, the same AI for every character: it waits until the
   server showed the character and its cells, judges the odds (`FightTactics.Odds`), prudent for the fight when it would
   lose (`TacticWeights.Prudent`, D198), beside allies of its group fearing the enemies' threat less (`TacticWeights.Group`,
-  D454, its next turn weighed as alone, D460), closes the fight and blocks spectators (D216), sets the challenges' bonus the
+  D454, its next turn weighed as alone, D460, an ally a bot of the host fighting as a mule counted as none, `IFightTeam.FightsAsMule`,
+  D579), closes the fight and blocks spectators (D216), sets the challenges' bonus the
   activity's profile asks once the server answered the client's own (`BotActivity.ChallengeReward`, D438; a follower its master's,
   D446), places the character
   (`FightTactics.Place`, the threat there only that of the enemies the server's turn order lists before its first turn,
@@ -375,7 +382,9 @@ The bots run in `D3B.Bot`: what each part does today, with the decisions that ma
   it (`ImaginedFights`, `CharacterSpells`), its sword's blow among its casts (D220), sends the plan's first walk or cast,
   waits for the server's answer and the client's acknowledgement, plans again, the states it began the turn with held by
   every plan of the turn (`FightKnowledge.TurnStates`, D503), and ends its turn as soon as the plan is
-  empty. The odds, the placement and every plan are searched on `FightSearches`, the host's threads for the AI, half its
+  empty. A character whose profile fights as a mule (`BotActivity.FightsAsMule`, D579: a flag `Mule` in the follow's, the
+  hunt's, the harvest's and the dungeon's settings) is placed with `TacticWeights.Mule`, the prudent fear and no reach of its
+  own, sets its bonus and says it is ready as any other, and ends each of its turns at once, at the fight's pace, acting nothing. The odds, the placement and every plan are searched on `FightSearches`, the host's threads for the AI, half its
   cores (two at least) and below the normal priority, made by `Bots` at the first fight: the thread pool, which the relay's reads and
   writes run on, is never held by a search (D508).
   A summon of the character's the client controls plays its turns the same, the fight imagined from its view, its

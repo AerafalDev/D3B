@@ -483,6 +483,11 @@ follower) on the same map, the capture of every connection on; a capture's conte
   restart after a failure included, which no profile had, and the run watches its progress from the start; the deposits leave
   out a quest's objects and what weighs nothing, and a harvest unloaded into the guild's chest goes on once no longer full though
   the bank took none of the rest. Left: seen in game; the client's own leaving closing the banker's dialog (status.md).
+- **Going on full and mules** (D578, D579), the owner's report of 2026-11-26, made in code and tests: a harvest, a hunt or a
+  dungeon profile may go on full rather than bank, its card saying the character is full, the harvest ending once the server
+  refuses a harvest over the pods; and the follow's, the hunt's, the harvest's and the dungeon's profiles may make their
+  character a mule, placed away from the threat, ready and passing its turns, which its allies' AI counts as no fighting ally.
+  Left: seen in game (status.md); a mule set on the character rather than the profile is step 7h's (D301).
 - **Spanish** (D554), the owner's ask of 2026-11-25, made on 2026-11-25 in code and tests: the studio's and the modules'
   texts in Spanish beside French and English, chosen in the settings or taken from a Spanish system, and the game's names
   from the client's Spanish texts, pack format 15. Left: the texts read by a Spanish speaker. The pack of format 15

@@ -285,7 +285,7 @@
     <value>The guild's chest</value>
   </data>
   <data name="DepositToHelp" xml:space="preserve">
-    <value>What the guild's chest refuses goes to its own.</value>
+    <value>What the guild's chest refuses goes to its own. Going on full, the character never leaves for the bank on its pods; should the server refuse its harvests over them, the harvest ends.</value>
   </data>
   <data name="SectionCare" xml:space="preserve">
     <value>Care and fights</value>
@@ -544,5 +544,17 @@
   </data>
   <data name="RestartAfterFailureHelp" xml:space="preserve">
     <value>When the activity fails for a reason that may pass, or does nothing for ten minutes, the character is put back in order and the activity starts again, after 30 seconds, then later each time, six times an hour at most: the character is not left idle until the game disconnects it. A profile that cannot work, or your own stop, still ends it.</value>
+  </data>
+  <data name="DepositToGoOnFull" xml:space="preserve">
+    <value>Nowhere: go on full</value>
+  </data>
+  <data name="Mule" xml:space="preserve">
+    <value>Mule in fights</value>
+  </data>
+  <data name="MuleHelp" xml:space="preserve">
+    <value>In the fights the AI plays, the character is placed as far from the monsters as it can, says it is ready and passes each of its turns without acting; its allies' AI does not count on it.</value>
+  </data>
+  <data name="FailRefusedFull" xml:space="preserve">
+    <value>Full, {0} of {1} pods: the server refuses the harvests. Choose a chest to bank in, in the profile.</value>
   </data>
 </root>

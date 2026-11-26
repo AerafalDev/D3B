@@ -98,7 +98,7 @@ internal sealed class HarvestReporter
     {
         if (current is null)
         {
-            Volatile.Write(ref _report, new ActivityReport { Doing = doing });
+            Volatile.Write(ref _report, new ActivityReport { Doing = doing, Warnings = [.. FullOf(state)] });
 
             return;
         }
@@ -199,9 +199,15 @@ internal sealed class HarvestReporter
         return [.. counts];
     }
 
+    // Going on full, the card says the character is full (D578).
+    private List<GameText> FullOf(CharacterState state)
+    {
+        return _settings.DepositTo is HarvestDepositPlace.GoOnFull && FullPods.WarningOf(state) is { } full ? [full] : [];
+    }
+
     private ImmutableArray<GameText> WarningsOf(HarvestZone zone, CharacterState state)
     {
-        var warnings = new List<GameText>();
+        var warnings = FullOf(state);
 
         if (ChestWarning is { } chest)
             warnings.Add(GameText.Of(HarvestTexts.Text(chest)));

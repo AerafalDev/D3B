@@ -152,4 +152,10 @@
   <data name="DoingTakesKeys" xml:space="preserve">
     <value>Toma una llave de {0}</value>
   </data>
+  <data name="Mule" xml:space="preserve">
+    <value>Mula en combate</value>
+  </data>
+  <data name="MuleHelp" xml:space="preserve">
+    <value>En los combates que juega la IA, el seguidor se coloca lo más lejos posible de los monstruos, se pone listo y pasa cada uno de sus turnos sin actuar; la IA de su maestro no cuenta con él.</value>
+  </data>
 </root>

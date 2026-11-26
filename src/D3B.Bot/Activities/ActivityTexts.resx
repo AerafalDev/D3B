@@ -47,4 +47,7 @@
   <data name="NotUnloaded" xml:space="preserve">
     <value>The character could not be unloaded, even once put back in order and out of its map.</value>
   </data>
+  <data name="WarningFull" xml:space="preserve">
+    <value>Full: {0} of {1} pods. The profile goes on without the bank.</value>
+  </data>
 </root>

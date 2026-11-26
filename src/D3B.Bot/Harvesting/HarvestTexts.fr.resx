@@ -285,7 +285,7 @@
     <value>Le coffre de guilde</value>
   </data>
   <data name="DepositToHelp" xml:space="preserve">
-    <value>Ce que le coffre de guilde refuse va dans le sien.</value>
+    <value>Ce que le coffre de guilde refuse va dans le sien. En continuant plein, le perso ne part jamais à la banque à cause de ses pods ; si le serveur refuse ses récoltes au-delà, la récolte s'arrête.</value>
   </data>
   <data name="SectionCare" xml:space="preserve">
     <value>Soins et combats</value>
@@ -544,5 +544,17 @@
   </data>
   <data name="RestartAfterFailureHelp" xml:space="preserve">
     <value>Quand l'activité échoue pour une raison passagère, ou ne fait rien pendant dix minutes, le perso est remis en ordre et l'activité reprend, après 30 secondes, puis de plus en plus tard, six fois par heure au plus : le perso n'est pas laissé inactif jusqu'à ce que le jeu le déconnecte. Un profil impossible, ou votre propre arrêt, l'arrête toujours.</value>
+  </data>
+  <data name="DepositToGoOnFull" xml:space="preserve">
+    <value>Nulle part : continuer plein</value>
+  </data>
+  <data name="Mule" xml:space="preserve">
+    <value>Mule en combat</value>
+  </data>
+  <data name="MuleHelp" xml:space="preserve">
+    <value>Dans les combats que l'IA joue, le perso se place le plus loin possible des monstres, se met prêt et passe chacun de ses tours sans agir ; l'IA de ses alliés ne compte pas sur lui.</value>
+  </data>
+  <data name="FailRefusedFull" xml:space="preserve">
+    <value>Plein, {0} pods sur {1} : le serveur refuse les récoltes. Choisis un coffre où déposer dans le profil.</value>
   </data>
 </root>

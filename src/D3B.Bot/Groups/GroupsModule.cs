@@ -21,6 +21,7 @@ public sealed class GroupsModule : IModule
         services.AddActivity<FollowActivity, FollowSettings>(ActivityId, GroupTexts.Text("Name"), settings =>
         {
             settings.Character(s => s.Master, GroupTexts.Text("Master")).Help(GroupTexts.Text("MasterHelp")).Required();
+            settings.Flag(s => s.Mule, GroupTexts.Text("Mule")).Help(GroupTexts.Text("MuleHelp"));
             settings.Rule(s => s.Master.Length > 0, GroupTexts.Text("RuleMaster"));
         });
     }

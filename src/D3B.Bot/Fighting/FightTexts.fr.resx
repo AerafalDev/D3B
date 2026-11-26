@@ -431,4 +431,16 @@
   <data name="RestartAfterFailureHelp" xml:space="preserve">
     <value>Quand l'activité échoue pour une raison passagère, ou ne fait rien pendant dix minutes, le perso est remis en ordre et l'activité reprend, après 30 secondes, puis de plus en plus tard, six fois par heure au plus : le perso n'est pas laissé inactif jusqu'à ce que le jeu le déconnecte. Un profil impossible, ou votre propre arrêt, l'arrête toujours.</value>
   </data>
+  <data name="GoOnFull" xml:space="preserve">
+    <value>Continuer plein, sans banque</value>
+  </data>
+  <data name="GoOnFullHelp" xml:space="preserve">
+    <value>Le perso ne part jamais à la banque à cause de ses pods : il continue au-delà, en gardant les drops des combats, et marche plus lentement. Sa carte dit quand il est plein.</value>
+  </data>
+  <data name="Mule" xml:space="preserve">
+    <value>Mule en combat</value>
+  </data>
+  <data name="MuleHelp" xml:space="preserve">
+    <value>Dans les combats que l'IA joue, le perso se place le plus loin possible des monstres, se met prêt et passe chacun de ses tours sans agir ; l'IA de ses alliés ne compte pas sur lui.</value>
+  </data>
 </root>

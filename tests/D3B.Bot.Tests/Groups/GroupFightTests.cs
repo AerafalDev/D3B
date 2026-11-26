@@ -1,6 +1,7 @@
 using D3B.Bot.Activities;
 using D3B.Bot.Groups;
 using D3B.Bot.Runtime;
+using D3B.Bot.Tests.Fights;
 using D3B.Bot.Tests.Runtime;
 using D3B.Engine.Maps;
 using D3B.Protocol.Game;
@@ -222,6 +223,23 @@ public sealed class GroupFightTests
         Assert.DoesNotContain(followerConnection.Sent, request => request is FightOptionToggleRequest);
         Assert.False(follower.IsPaused);
         run.Stop();
+    }
+
+    [Fact]
+    public async Task ABotOfTheHostWhoseProfileFightsAsAMuleIsOneToTheOthersFights()
+    {
+        // The owner's choice (D579): the master's AI counts no mule of its group as a fighting ally.
+        await using var play = new TestPlay();
+        var (_, master) = await TestGroup.MasterAsync(play, Far);
+        var (_, follower) = await TestGroup.FollowerAsync(play, 301);
+
+        follower.StartActivity(new RewardActivity { Mule = true });
+        master.StartActivity(new RewardActivity());
+        await TestGroup.SettleAsync(master, follower);
+
+        Assert.True(master.Team!.FightsAsMule(TestGroup.FollowerId));
+        Assert.False(follower.Team!.FightsAsMule(TestGroup.MasterId));
+        Assert.False(master.Team.FightsAsMule(TestGroup.StrangerId));
     }
 
     [Fact]
