@@ -1114,3 +1114,20 @@ or refines another says so in its own entry. Add a line here with every new deci
 
 - [D574](decisions/d574-release-1-1-2.md#d574-the-apps-release-after-111-is-112-holding-the-harvest-that-no-longer-seeks-the-maps-no-way-leads-to-and-the-transfers-lasting-refusals) The app's release after 1.1.1 is 1.1.2, holding the harvest that no longer seeks the maps no way leads to and the transfer's lasting refusals (2026-11-26)
   - The owner's choice of 1.1.2 over 1.2.0, both fixes in it, tagged before either is seen in game; nothing published first.
+
+## The owner's report of 26 November (D575 to D579, D581, D582)
+
+- [D575](decisions/d575-d579-owner-report-26-november.md#d575--empty-the-bags-into-the-bank-first--works-from-the-bank-to-the-guilds-chest-too-the-bags-objects-going-to-the-chest-with-the-banks) « Empty the bags into the bank first » works from the bank to the guild's chest too, the bags' objects going to the chest with the bank's (2026-11-26)
+  - The owner's choice; measured on the two runs of 16:50 and 16:56 UTC; the guild given none of the player's objects, leaving and opening again, rejected.
+- [D576](decisions/d575-d579-owner-report-26-november.md#d576-a-run-begun-on-a-walk-or-a-use-a-stopped-run-left-going-settles-it-before-its-first-step-as-it-leaves-a-storage) A run begun on a walk or a use a stopped run left going settles it before its first step, as it leaves a storage (2026-11-26)
+  - Measured on the Sacrieur's profile change of 16:56 UTC; a shorter busy wait rejected.
+- [D577](decisions/d575-d579-owner-report-26-november.md#d577-the-banks-moves-go-by-lists-what-goes-in-by-one-request-now-what-comes-out-by-the-clients-list-once-mapped) The bank's moves go by lists: what goes in by one request now, what comes out by the client's list once mapped (2026-11-26)
+  - The owner's choice over the puts alone; the takes by list, a mapping of format 27, in a session of their own.
+- [D578](decisions/d575-d579-owner-report-26-november.md#d578-a-profile-may-go-on-full-rather-than-unload-the-fights-still-dropping-and-the-character-walking-slower) A profile may go on full rather than unload, the fights still dropping and the character walking slower (2026-11-26)
+  - The owner's choice over ending the activity; to make in a session of its own.
+- [D579](decisions/d575-d579-owner-report-26-november.md#d579-a-profile-may-make-its-character-a-mule-in-fights-placed-ready-and-passing-each-turn-without-acting) A profile may make its character a mule in fights: placed, ready, and passing each turn without acting (2026-11-26)
+  - The owner's choice over a setting on the character; to make in a session of its own.
+- [D581](decisions/d575-d579-owner-report-26-november.md#d581-the-maps-no-way-leads-to-are-kept-by-the-harvest-for-all-its-tours-through-a-restart-after-a-failure-and-a-sub-area-drawn-again) The maps no way leads to are kept by the harvest for all its tours, through a restart after a failure and a sub-area drawn again (2026-11-26)
+  - Found in the code while measuring the Pandawa; per host rejected.
+- [D582](decisions/d575-d579-owner-report-26-november.md#d582-the-map-a-group-attacked-and-beat-the-harvest-on-stays-out-of-its-tours-and-is-not-harvested-stood-on-until-the-character-is-within-20-levels-of-the-highest-monster-it-fought) The map a group attacked and beat the harvest on stays out of its tours, and is not harvested stood on, until the character is within 20 levels of the highest monster it fought (2026-11-26)
+  - The owner's choices; measured on the 31 losses of 25 and 26 November; the protectors, a group's level, plus 20, rejected.
