@@ -1097,3 +1097,10 @@ or refines another says so in its own entry. Add a line here with every new deci
 
 - [D570](decisions/d569-group-keys.md#d570-the-apps-release-after-110-is-111-holding-the-profiles-that-restart-and-the-masters-spare-keys-given) The app's release after 1.1.0 is 1.1.1, holding the profiles that restart and the master's spare keys given (2026-11-26)
   - The owner's choice of 1.1.1 over 1.2.0, both branches in it; nothing published first, the tag once both pull requests are on `main`.
+
+## The transfer's lasting refusals, and a run begun in a storage left open (D572, D573)
+
+- [D572](decisions/d572-d573-transfer-refusals-and-open-storage.md#d572-an-item-the-destination-refuses-for-good-an-object-bound-to-the-account-or-a-type-the-chests-tab-does-not-take-stays-left-out-of-the-characters-next-transfer-runs-that-way) An item the destination refuses for good, an object bound to the account or a type the chest's tab does not take, stays left out of the character's next transfer runs that way (2026-11-26)
+  - Measured on the owner's run of 26 November 12:57 UTC; every refusal kept, by stack, in the database.
+- [D573](decisions/d572-d573-transfer-refusals-and-open-storage.md#d573-a-run-begun-while-the-character-is-in-a-storage-a-dialog-or-an-exchange-leaves-it-before-its-first-step-rather-than-wait-the-busy-waits-minute) A run begun while the character is in a storage, a dialog or an exchange leaves it before its first step, rather than wait the busy wait's minute (2026-11-26)
+  - The same run, four waits of a minute after the owner's stops; leaving at the stop, a shorter wait, the transfer alone.
