@@ -69,6 +69,9 @@ public sealed class HarvestSettings
     /// <summary>Gets or sets which challenges the AI plays for while it fights; the easy ones unless the profile says otherwise (D466).</summary>
     public ChallengePlay Challenges { get; set; } = ChallengePlay.Easy;
 
+    /// <summary>Gets or sets whether the character fights as a mule in the fights the AI plays: placed, ready, each turn ended at once (D579).</summary>
+    public bool Mule { get; set; }
+
     /// <summary>Gets or sets what the activity does once a fight cut one of its steps (D144).</summary>
     public HarvestAfterFight AfterFight { get; set; } = HarvestAfterFight.Resume;
 

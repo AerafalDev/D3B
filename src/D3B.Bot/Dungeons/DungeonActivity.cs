@@ -1,3 +1,4 @@
+using System.Collections.Immutable;
 using D3B.Bot.Activities;
 using D3B.Bot.Banks;
 using D3B.Bot.Characters;
@@ -72,6 +73,7 @@ public sealed class DungeonActivity : BotActivity
     private readonly BankingPreferences _banking;
     private readonly Bots? _bots;
     private ActivityReport? _report;
+    private GameText? _full;
     private int? _inside;
 
     // The dungeon the character is in, as its followers read it from their own threads (D528): 0 for none, as no id of the table is.
@@ -116,6 +118,9 @@ public sealed class DungeonActivity : BotActivity
 
     /// <inheritdoc/>
     public override bool BanksByTeleport => _banking.UseZaapsOf(false, _settings.UseZaaps);
+
+    /// <inheritdoc/>
+    public override bool FightsAsMule => _settings.Mule;
 
     private int? Inside
     {
@@ -201,6 +206,8 @@ public sealed class DungeonActivity : BotActivity
     public override async Task<bool> StepAsync(BotContext context, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(context);
+
+        SeeFull(context.State);
 
         if (await _busy.WaitAsync(context, Failure, cancellationToken).ConfigureAwait(false) || context.State is not { MapId: { } mapId } state)
             return true;
@@ -288,12 +295,12 @@ public sealed class DungeonActivity : BotActivity
     }
 
     /// <inheritdoc/>
-    /// <remarks>Inside a dungeon the character never banks: leaving would lose the run, the bank waits for the exit (D526).</remarks>
+    /// <remarks>Inside a dungeon the character never banks: leaving would lose the run, the bank waits for the exit (D526). Going on full, it never does (D578).</remarks>
     public override bool IsFull(CharacterState state)
     {
         ArgumentNullException.ThrowIfNull(state);
 
-        if (InDungeon(state) || state.MaxWeight <= 0)
+        if (_settings.GoOnFull || InDungeon(state) || state.MaxWeight <= 0)
             return false;
 
         // The pods the next run is likely to bring: banked before the door rather than full in the middle of a dungeon (D527).
@@ -761,6 +768,21 @@ public sealed class DungeonActivity : BotActivity
                 new ActivityCount(GameText.Counted(DungeonTexts.Text("CountLostOne"), DungeonTexts.Text("CountLostMany"), _lost)),
                 .. _loot.OrderByDescending(pair => pair.Value).Select(pair => new ActivityCount(GameText.Of(DungeonTexts.Text("CountLoot"), GameTextValue.Number(pair.Value), GameTextValue.Item(pair.Key)), pair.Key)),
             ],
+            Warnings = WarningsOf(),
         });
+    }
+
+    // Going on full, the card says the character is full (D578), as each step begins.
+    private void SeeFull(CharacterState state)
+    {
+        _full = _settings.GoOnFull ? FullPods.WarningOf(state) : null;
+
+        if (Report is { } report)
+            Volatile.Write(ref _report, report with { Warnings = WarningsOf() });
+    }
+
+    private ImmutableArray<GameText> WarningsOf()
+    {
+        return _full is { } full ? [full] : [];
     }
 }

@@ -194,4 +194,19 @@
   <data name="FailNoKeyHanded" xml:space="preserve">
     <value>{0}, who follows the character, took none of the keys the character gives it at the dungeon's door.</value>
   </data>
+  <data name="SectionBank" xml:space="preserve">
+    <value>Bank</value>
+  </data>
+  <data name="GoOnFull" xml:space="preserve">
+    <value>Go on full, without the bank</value>
+  </data>
+  <data name="GoOnFullHelp" xml:space="preserve">
+    <value>The character never leaves for the bank on its pods: it goes on over them, still getting the fights' drops, walking slower. Its card says once it is full.</value>
+  </data>
+  <data name="Mule" xml:space="preserve">
+    <value>Mule in fights</value>
+  </data>
+  <data name="MuleHelp" xml:space="preserve">
+    <value>In the fights the AI plays, the character is placed as far from the monsters as it can, says it is ready and passes each of its turns without acting; its allies' AI does not count on it.</value>
+  </data>
 </root>

@@ -3,7 +3,8 @@ namespace D3B.Engine.Tactics;
 /// <summary>How much the AI weighs what it fears against what it wants: the damage the enemies may deal next, the damage it may deal next turn, its own life.</summary>
 /// <remarks>
 /// <see cref="Default"/> fights; <see cref="Prudent"/>, for a fight judged too risky, the owner's choice (D198), fears the
-/// enemies' blows more and holds its own life dearer, so that it heals, shields and keeps its distance sooner.
+/// enemies' blows more and holds its own life dearer, so that it heals, shields and keeps its distance sooner; <see cref="Mule"/>
+/// places a character that never acts.
 /// </remarks>
 public sealed record TacticWeights
 {
@@ -24,6 +25,9 @@ public sealed record TacticWeights
 
     /// <summary>Gets the weights of a fight judged too risky.</summary>
     public static TacticWeights Prudent { get; } = new() { Threat = 1.6, Survival = 3, Approach = 0.5 };
+
+    /// <summary>Gets the weights of a mule, which passes its turns (D579): it fears the enemies' blows as <see cref="Prudent"/> does, and weighs no reach of its own.</summary>
+    public static TacticWeights Mule { get; } = Prudent with { Approach = 0 };
 
     /// <summary>Gets the weight of the life the enemies may take next, before the fighter playing plays again.</summary>
     public double Threat { get; init; } = 1;

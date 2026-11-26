@@ -431,4 +431,16 @@
   <data name="RestartAfterFailureHelp" xml:space="preserve">
     <value>Cuando la actividad falla por un motivo que puede pasar, o no hace nada durante diez minutos, el personaje se vuelve a poner en orden y la actividad empieza de nuevo, tras 30 segundos y luego cada vez más tarde, seis veces por hora como máximo: el personaje no se queda inactivo hasta que el juego lo desconecte. Un perfil que no puede funcionar, o que la detengas tú, la termina igualmente.</value>
   </data>
+  <data name="GoOnFull" xml:space="preserve">
+    <value>Seguir lleno, sin el banco</value>
+  </data>
+  <data name="GoOnFullHelp" xml:space="preserve">
+    <value>El personaje nunca va al banco por sus pods: sigue por encima de ellos, con los drops de los combates, y camina más lento. Su tarjeta dice cuándo está lleno.</value>
+  </data>
+  <data name="Mule" xml:space="preserve">
+    <value>Mula en combate</value>
+  </data>
+  <data name="MuleHelp" xml:space="preserve">
+    <value>En los combates que juega la IA, el personaje se coloca lo más lejos posible de los monstruos, se pone listo y pasa cada uno de sus turnos sin actuar; la IA de sus aliados no cuenta con él.</value>
+  </data>
 </root>

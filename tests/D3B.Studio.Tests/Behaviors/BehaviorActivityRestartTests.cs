@@ -82,6 +82,7 @@ public sealed class BehaviorActivityRestartTests : IAsyncDisposable
         Assert.Equal(SpeakingActivity.Dungeon, activity.DungeonInside);
         Assert.Equal(SpeakingActivity.Until, activity.WaitingUntil);
         Assert.True(activity.CapturesSouls);
+        Assert.True(activity.FightsAsMule);
         Assert.True(activity.RestartsAfterFailure);
         Assert.True(activity.BanksTheGroup);
         Assert.True(activity.Keeps(stack));

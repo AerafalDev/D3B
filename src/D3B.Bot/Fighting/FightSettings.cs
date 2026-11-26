@@ -70,11 +70,17 @@ public sealed class FightSettings
     /// <summary>Gets or sets what goes to the bank.</summary>
     public FightDeposit Deposit { get; set; } = FightDeposit.Loot;
 
+    /// <summary>Gets or sets whether the activity never leaves for the bank on the pods and goes on full, the fights still dropping (D578).</summary>
+    public bool GoOnFull { get; set; }
+
     /// <summary>Gets or sets what the challenges of each fight give, set during the placement; the drops unless the profile says otherwise (D438).</summary>
     public ChallengeReward ChallengeReward { get; set; } = ChallengeReward.Drop;
 
     /// <summary>Gets or sets which challenges the AI plays for; the easy ones unless the profile says otherwise (D466).</summary>
     public ChallengePlay Challenges { get; set; } = ChallengePlay.Easy;
+
+    /// <summary>Gets or sets whether the character fights as a mule: placed, ready, each turn ended at once (D579).</summary>
+    public bool Mule { get; set; }
 
     /// <summary>Gets or sets whether the character captures the wild mounts of the families ticked, taming one a fight with the capture net it wears (D533).</summary>
     public bool CaptureMounts { get; set; }

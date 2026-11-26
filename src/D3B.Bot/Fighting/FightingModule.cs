@@ -64,10 +64,12 @@ public sealed class FightingModule : IModule
         settings.Flag(s => s.UseZaaps, FightTexts.Text("UseZaaps")).Help(FightTexts.Text("UseZaapsHelp")).Advanced();
         settings.Number(s => s.ZaapSaving, FightTexts.Text("ZaapSaving"), 1, 30).Unit(FightTexts.Text("ZaapSavingUnit")).Advanced().VisibleWhen(s => s.UseZaaps);
 
+        // Going on full (D578) leaves the rest of the banking out.
         settings.Section(FightTexts.Text("SectionBank"));
-        settings.Flag(s => s.OwnBanking, FightTexts.Text("OwnBanking")).Help(FightTexts.Text("OwnBankingHelp")).Advanced();
-        settings.Number(s => s.FullAt, FightTexts.Text("FullAt"), 50, 100).Percent().Advanced().VisibleWhen(s => s.OwnBanking);
-        settings.Choice(s => s.Deposit, FightTexts.Text("Deposit"), deposit => FightTexts.Text($"Deposit{deposit}"));
+        settings.Flag(s => s.GoOnFull, FightTexts.Text("GoOnFull")).Help(FightTexts.Text("GoOnFullHelp"));
+        settings.Flag(s => s.OwnBanking, FightTexts.Text("OwnBanking")).Help(FightTexts.Text("OwnBankingHelp")).Advanced().VisibleWhen(s => !s.GoOnFull);
+        settings.Number(s => s.FullAt, FightTexts.Text("FullAt"), 50, 100).Percent().Advanced().VisibleWhen(s => s.OwnBanking && !s.GoOnFull);
+        settings.Choice(s => s.Deposit, FightTexts.Text("Deposit"), deposit => FightTexts.Text($"Deposit{deposit}")).VisibleWhen(s => !s.GoOnFull);
 
         settings.Section(FightTexts.Text("SectionCare"));
         settings.Flag(s => s.Heal, FightTexts.Text("Heal"));
@@ -94,6 +96,7 @@ public sealed class FightingModule : IModule
             .Help(FightTexts.Text("ChallengeRewardHelp"));
         settings.Choice(s => s.Challenges, FightTexts.Text("Challenges"), play => FightTexts.Text($"Challenges{play}"))
             .Help(FightTexts.Text("ChallengesHelp"));
+        settings.Flag(s => s.Mule, FightTexts.Text("Mule")).Help(FightTexts.Text("MuleHelp"));
         settings.Choice(s => s.AfterLostFight, FightTexts.Text("AfterLostFight"), after => FightTexts.Text($"AfterLostFight{after}"))
             .Help(FightTexts.Text("AfterLostFightHelp"))
             .Advanced();

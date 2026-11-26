@@ -47,4 +47,7 @@
   <data name="NotUnloaded" xml:space="preserve">
     <value>No se pudo descargar al personaje, ni siquiera tras volver a ponerlo en orden y sacarlo de su mapa.</value>
   </data>
+  <data name="WarningFull" xml:space="preserve">
+    <value>Lleno: {0} de {1} pods. El perfil sigue sin el banco.</value>
+  </data>
 </root>

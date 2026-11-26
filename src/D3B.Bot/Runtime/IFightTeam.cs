@@ -16,6 +16,11 @@ internal interface IFightTeam
     /// <summary>Gets whether the bot placed itself in its fight's placement and leaves its readiness to the game, so that its master waits for it no more (D477).</summary>
     bool IsPlaced { get; }
 
+    /// <summary>Tells whether a character is a bot of the host whose activity fights as a mule, which the AI counts as no fighting ally (D579).</summary>
+    /// <param name="characterId">The character, a fighter of the bot's fight.</param>
+    /// <returns>Whether it is.</returns>
+    bool FightsAsMule(long characterId);
+
     /// <summary>Waits, within the AI's placement, until the followers that join the bot's fight are placed and ready, or placed when their readiness is the game's (D477).</summary>
     /// <param name="context">The AI's context, in the placement.</param>
     /// <param name="atMost">How long to wait at most.</param>
