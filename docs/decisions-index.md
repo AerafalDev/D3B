@@ -1143,3 +1143,8 @@ or refines another says so in its own entry. Add a line here with every new deci
 
 - [D580](decisions/d580-bank-list-takes.md#d580-the-banks-list-take-its-take-of-everything-and-their-answers-are-read-mapping-format-27-published-first-and-the-transfer-takes-out-of-the-bank-by-a-list) The bank's list take, its take of everything and their answers are read, mapping format 27 published first, and the transfer takes out of the bank by a list (2026-11-26)
   - Measured on the owner's 103 connections of 20 to 26 November; the take of everything for a transfer rejected.
+
+## The app's 1.2.0 (D585)
+
+- [D585](decisions/d585-release-1-2-0.md#d585-the-apps-release-after-112-is-120-holding-going-on-full-the-mules-the-banks-lists-the-transfers-own-load-and-the-harvests-memory) The app's release after 1.1.2 is 1.2.0, holding going on full, the mules, the bank's lists, the transfer's own load and the harvest's memory (2026-11-26)
+  - The owner's choice of 1.2.0 over 1.1.3; mapping 27 published first, the tag once this entry is on `main`.
