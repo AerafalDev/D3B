@@ -236,7 +236,8 @@ The bots run in `D3B.Bot`: what each part does today, with the decisions that ma
   character walking, using, in a dialog or exchange, or on a map not known yet, 10 s a step. Busy a minute
   (`BusyWait.Bound`), it is put back in order with `Recovery.SettleAsync`; still busy a minute later, the activity fails
   saying what held (`BusyKind`), which the run then restarts (D519). A step finding the character free, an interruption, or steps stopped over 20 s (a pause between two)
-  starts the count again.
+  starts the count again. Before a run's first step, `ActivityRun` leaves at once a storage, a dialog or an exchange the character
+  is in (D573), such as the bank a stopped run left open, which no step of the new run opened.
 - **An activity's report** (D131): what it does, how far it is, what it counts, its warnings and what it looks at on the
   map (`BotActivity.Report`, `ActivityReport`), replaced whole and read by the app; its texts name the game's values by
   their ids (`GameText`, in `D3B.Bot.Localization`). One that cannot go on says why (`ActivityException`); a run keeps the
@@ -514,7 +515,7 @@ The bots run in `D3B.Bot`: what each part does today, with the decisions that ma
   (`TransferFilter`), the quantity of each item, what to do with a refusal (`TransferRefusal`), a dry run and the zaaps. A step
   with nothing carried goes to the source, puts back what the destination refused, takes out what the settings choose and the free
   pods hold, weighed with the pack's weights, and leaves; a step with something carried goes to the destination and puts in what it
-  took: before its takes a round notes each stack's own share, and a put takes only what a stack holds above it. `TransferBags`, one per host, keeps those shares and the items carried for each character with the game connection their ids are of, so that a run started on the same connection puts in first what the last one, stopped, carried (D563); a storage closed under the takes is opened again, three openings in all. From the chest to the bank, `EmptyBagsFirst` puts in the bank, at the run's first step, all the bags hold but what is worn (D564). Openings climb the recovery ladder (D518); a missing right, a place out of reach or a
+  took: before its takes a round notes each stack's own share, and a put takes only what a stack holds above it. `TransferBags`, one per host, keeps those shares and the items carried for each character with the game connection their ids are of, so that a run started on the same connection puts in first what the last one, stopped, carried (D563); a storage closed under the takes is opened again, three openings in all. From the chest to the bank, `EmptyBagsFirst` puts in the bank, at the run's first step, all the bags hold but what is worn (D564). `TransferBags` also keeps, for each character and each way, the items the destination refused for good (`NotExchangeable`, `TypeRefused`), by their ids in the tables, which a run begins with given up (D572). Openings climb the recovery ladder (D518); a missing right, a place out of reach or a
   character too loaded ends it, final. Its report counts the objects moved and each item, and warns of each item given up.
 - **The maps' graphics** (D138), in `D3B.Bot.Interactives`: `GraphicSkills`, one per host, holds what the server said the
   elements of each graphic offer, every skill seen, none for an element that offers none; `GraphicLearner`, an observer of

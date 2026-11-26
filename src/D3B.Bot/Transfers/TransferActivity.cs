@@ -290,6 +290,10 @@ public sealed class TransferActivity : BotActivity
 
             GiveUp(context, itemId, refusal);
 
+            // Measured on the owner's run of 2026-11-26 (D572): a bound object went out of the bank and back once a run, four runs in a row.
+            if (refusal is StorageMoveOutcome.NotExchangeable or StorageMoveOutcome.TypeRefused)
+                RefusedForGood()[itemId] = refusal;
+
             switch (_settings.WhenRefused)
             {
                 case TransferRefusal.GiveBack:
@@ -438,6 +442,10 @@ public sealed class TransferActivity : BotActivity
 
         _carry = _bags.For(context.State.Key);
 
+        // What the destination refuses whatever the run is left out from the start, and still said in the warnings.
+        foreach (var (itemId, outcome) in RefusedForGood())
+            _givenUp[itemId] = outcome;
+
         // Between the runs the player may have moved stacks by hand: only the stacks of the items carried keep their shares.
         var bags = context.State.Inventory.Values.Where(stack => !stack.IsWorn).ToDictionary(stack => stack.Uid);
 
@@ -466,6 +474,17 @@ public sealed class TransferActivity : BotActivity
         _carry.Carrying.Clear();
         _carry.GivingBack.Clear();
         _leftInBags = true;
+    }
+
+    private Dictionary<int, StorageMoveOutcome> RefusedForGood()
+    {
+        if (!_carry.Refused.TryGetValue(_settings.Direction, out var refused))
+        {
+            refused = [];
+            _carry.Refused[_settings.Direction] = refused;
+        }
+
+        return refused;
     }
 
     // Each stack of the bags not noted yet is the character's own, whole: called before a round's takes, once what was refused went back.

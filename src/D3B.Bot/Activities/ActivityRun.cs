@@ -131,6 +131,17 @@ public sealed class ActivityRun
         return new ActivityException("The character could not be unloaded, even once put back in order and out of its map.", GameText.Of(ActivityTexts.Text("NotUnloaded")));
     }
 
+    // Measured on the owner's transfer of 2026-11-26 (D573): a run stopped from the app leaves open the bank it was in, and the
+    // next run waited a minute there before its busy wait (D484) left it. A run is started by the player, so it takes the
+    // character as it finds it: a storage, a dialog or an exchange then left at once, no step of this run having opened it.
+    private static async Task<bool> BeginAsync(BotContext context, CancellationToken cancellationToken)
+    {
+        if (context.State.IsInDialog)
+            await Recovery.SettleAsync(context, cancellationToken).ConfigureAwait(false);
+
+        return true;
+    }
+
     /// <summary>Stops the activity: the step in progress is cancelled, and no other starts.</summary>
     public void Stop()
     {
@@ -219,6 +230,7 @@ public sealed class ActivityRun
     private async Task<ActivityOutcome> StepsAsync()
     {
         Interruption? interrupted = null;
+        var begun = false;
 
         _fightsSeen = _bot.FightsBegun;
 
@@ -238,6 +250,12 @@ public sealed class ActivityRun
                     await _bot.RunWhenReadyAsync((context, token) => RecoverAsync(context, reason, token), attempt).ConfigureAwait(false);
                     interrupted = null;
                     SetStatus(ActivityStatus.Waiting);
+                }
+
+                if (!begun)
+                {
+                    await _bot.RunWhenReadyAsync(BeginAsync, attempt).ConfigureAwait(false);
+                    begun = true;
                 }
 
                 switch (await _bot.RunWhenReadyAsync(StepAsync, attempt).ConfigureAwait(false))

@@ -193,6 +193,57 @@ public sealed class TransferActivityTests
     }
 
     [Fact]
+    public async Task AnObjectTheChestRefusesAsBoundIsNotTakenAgainByTheCharactersNextRun()
+    {
+        // Measured on the owner's run of 2026-11-26 12:57 UTC: a mule's bound object, refused with text 356, was taken out of
+        // the bank, refused and put back once a run, four runs in a row, two openings of the bank each time.
+        await using var play = new TestPlay();
+        var (connection, bot) = await InTheBankAsync(play);
+        var bags = new TransferBags();
+        var settings = new TransferSettings { Items = [TestPlay.Ash, TestPlay.Bread] };
+        var first = bot.StartActivity(Transfer(play, settings, bags));
+
+        await OpenBankAsync(play, connection, 1, Stack(BankAsh, TestPlay.Ash, 10), Stack(BankBread, TestPlay.Bread, 4));
+        Assert.Equal(new ExchangeObjectMoveRequest { Uid = BankAsh, Quantity = -10 }, await TestWalks.SentAsync(play, connection, 3));
+        connection.Server(new ObjectAddedEvent { Object = Stack(40, TestPlay.Ash, 10) });
+        connection.Server(new StorageObjectRemovedEvent { Uid = BankAsh });
+        connection.Server(new InventoryWeightEvent { Weight = 450, MaxWeight = 1_000 });
+        Assert.Equal(new ExchangeObjectMoveRequest { Uid = BankBread, Quantity = -4 }, await TestWalks.SentAsync(play, connection, 4));
+        connection.Server(new ObjectAddedEvent { Object = Stack(41, TestPlay.Bread, 4) });
+        connection.Server(new StorageObjectRemovedEvent { Uid = BankBread });
+        connection.Server(new InventoryWeightEvent { Weight = 454, MaxWeight = 1_000 });
+        await LeftAsync(play, connection, 5);
+
+        await OpenChestAsync(play, connection, 6);
+        Assert.Equal(new ExchangeObjectMoveRequest { Uid = 40, Quantity = 10 }, await TestWalks.SentAsync(play, connection, 7));
+        connection.Server(new StorageObjectUpdateEvent { Object = Stack(900, TestPlay.Ash, 10) });
+        connection.Server(new ObjectDeletedEvent { Uid = 40 });
+        connection.Server(new InventoryWeightEvent { Weight = 404, MaxWeight = 1_000 });
+        Assert.Equal(new ExchangeObjectMoveRequest { Uid = 41, Quantity = 4 }, await TestWalks.SentAsync(play, connection, 8));
+        connection.Server(new TextInformationEvent { TextId = GuildChest.RefusedTextId, Type = TextInformationType.Error });
+        await LeftAsync(play, connection, 9);
+
+        await OpenBankAsync(play, connection, 10);
+        Assert.Equal(new ExchangeObjectMoveRequest { Uid = 41, Quantity = 4 }, await TestWalks.SentAsync(play, connection, 12));
+        connection.Server(new StorageObjectUpdateEvent { Object = Stack(BankBread, TestPlay.Bread, 4) });
+        connection.Server(new ObjectDeletedEvent { Uid = 41 });
+        connection.Server(new InventoryWeightEvent { Weight = 400, MaxWeight = 1_000 });
+        await LeftAsync(play, connection, 13);
+        Assert.Equal(ActivityOutcome.Done, await TestWalks.AdvanceUntilDoneAsync(play.Time, first.Completion));
+
+        // The next run opens the bank, finds only the bound bread, and is done without taking it.
+        var transfer = Transfer(play, settings, bags);
+        var next = bot.StartActivity(transfer);
+
+        await OpenBankAsync(play, connection, 14, Stack(BankBread, TestPlay.Bread, 4));
+        await LeftAsync(play, connection, 16);
+
+        Assert.Equal(ActivityOutcome.Done, await TestWalks.AdvanceUntilDoneAsync(play.Time, next.Completion));
+        Assert.Equal(16, connection.Sent.Count);
+        Assert.Equal(["{0} is bound to the account: left out"], Texts(transfer.Report!.Warnings));
+    }
+
+    [Fact]
     public async Task ACharacterTooLoadedToTakeAnythingFailsTheTransferSayingSo()
     {
         await using var play = new TestPlay();

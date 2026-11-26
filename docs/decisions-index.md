@@ -1102,3 +1102,10 @@ or refines another says so in its own entry. Add a line here with every new deci
 
 - [D571](decisions/d571-harvest-no-way.md#d571-a-map-of-the-zone-no-way-leads-to-by-the-world-graph-and-the-characters-rules-stays-out-of-the-zones-next-tours-until-a-level-the-subscription-or-the-zaaps-known-change-and-the-zone-is-not-dropped-from-the-rotation-for-it) A map of the zone no way leads to, by the world graph and the character's rules, stays out of the zone's next tours until a level, the subscription or the zaaps known change, and the zone is not dropped from the rotation for it (2026-11-26)
   - Measured on the farmer's journals and captures of 25 and 26 November; every journey with no way taken as the fact, and filtering each drawn sub-area, rejected.
+
+## The transfer's lasting refusals, and a run begun in a storage left open (D572, D573)
+
+- [D572](decisions/d572-d573-transfer-refusals-and-open-storage.md#d572-an-item-the-destination-refuses-for-good-an-object-bound-to-the-account-or-a-type-the-chests-tab-does-not-take-stays-left-out-of-the-characters-next-transfer-runs-that-way) An item the destination refuses for good, an object bound to the account or a type the chest's tab does not take, stays left out of the character's next transfer runs that way (2026-11-26)
+  - Measured on the owner's run of 26 November 12:57 UTC; every refusal kept, by stack, in the database.
+- [D573](decisions/d572-d573-transfer-refusals-and-open-storage.md#d573-a-run-begun-while-the-character-is-in-a-storage-a-dialog-or-an-exchange-leaves-it-before-its-first-step-rather-than-wait-the-busy-waits-minute) A run begun while the character is in a storage, a dialog or an exchange leaves it before its first step, rather than wait the busy wait's minute (2026-11-26)
+  - The same run, four waits of a minute after the owner's stops; leaving at the stop, a shorter wait, the transfer alone.
