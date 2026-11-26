@@ -231,6 +231,30 @@ public sealed class ActivityRunTests : IAsyncDisposable
     }
 
     [Fact]
+    public async Task ARunBegunInABankAStoppedRunLeftOpenLeavesItBeforeItsFirstStep()
+    {
+        // Measured on the owner's run of 2026-11-26 12:58 UTC: a transfer stopped from the app with the bank open, and the run
+        // started a second later waited a whole minute in it before its busy wait put the character in order (D573).
+        var (connection, bot) = await _play.EnterAsync(396, TestPlay.InsideMapId);
+        connection.Server(new ExchangeStartedWithStorageEvent { Type = ExchangeType.Storage });
+        await bot.ProcessedAsync();
+
+        var activity = new TestActivity();
+        var run = bot.StartActivity(activity);
+
+        bot.Resume();
+
+        Assert.IsType<DialogLeaveRequest>(await connection.SentAsync(1));
+        Assert.Equal(0, activity.Started);
+
+        connection.Server(new ExchangeLeaveEvent { Type = DialogType.Storage });
+
+        Assert.Equal(1, await activity.SteppingAsync(bot));
+        Assert.False(bot.State.IsInDialog);
+        Assert.Equal(ActivityStatus.Stepping, run.Status);
+    }
+
+    [Fact]
     public async Task ADisconnectionHoldsTheActivityUntilTheClientsNewConnectionPlacesTheCharacter()
     {
         var (connection, bot) = await _play.EnterAsync(300);

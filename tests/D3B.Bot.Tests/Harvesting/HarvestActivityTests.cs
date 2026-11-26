@@ -835,13 +835,16 @@ public sealed class HarvestActivityTests : IAsyncDisposable
         var started = _play.Time.GetUtcNow();
         var run = bot.StartActivity(Activity(new HarvestSettings { Resources = [TestPlay.Ash], SubAreas = [TestPlay.SubAreaId] }));
 
-        // The owner's choice (D484): a minute busy at a step's start, the character is put back in order as after an interruption.
+        // The run leaves it before its first step (D573); the server keeping it, a minute busy at a step's start, the character
+        // is put back in order as after an interruption (D484).
         Assert.Equal(new DialogLeaveRequest(), await TestWalks.SentAsync(_play, connection, 1));
+        Assert.True(_play.Time.GetUtcNow() - started < BusyWait.Delay);
+        Assert.Equal(new DialogLeaveRequest(), await TestWalks.SentAsync(_play, connection, 2));
         Assert.True(_play.Time.GetUtcNow() - started >= TimeSpan.FromMinutes(1));
 
         connection.Server(new DialogLeaveEvent());
 
-        await TestWalks.WalkedAsync(_play, connection, 2);
+        await TestWalks.WalkedAsync(_play, connection, 3);
         Assert.False(run.IsOver);
 
         run.Stop();
