@@ -285,7 +285,7 @@
     <value>El cofre del gremio</value>
   </data>
   <data name="DepositToHelp" xml:space="preserve">
-    <value>Lo que el cofre del gremio rechaza va al suyo propio.</value>
+    <value>Lo que el cofre del gremio rechaza va al suyo propio. Siguiendo lleno, el personaje nunca va al banco por sus pods; si el servidor rechaza sus recolecciones por encima, la recolección termina.</value>
   </data>
   <data name="SectionCare" xml:space="preserve">
     <value>Cuidados y combates</value>
@@ -544,5 +544,17 @@
   </data>
   <data name="RestartAfterFailureHelp" xml:space="preserve">
     <value>Cuando la actividad falla por un motivo que puede pasar, o no hace nada durante diez minutos, el personaje se vuelve a poner en orden y la actividad empieza de nuevo, tras 30 segundos y luego cada vez más tarde, seis veces por hora como máximo: el personaje no se queda inactivo hasta que el juego lo desconecte. Un perfil que no puede funcionar, o que la detengas tú, la termina igualmente.</value>
+  </data>
+  <data name="DepositToGoOnFull" xml:space="preserve">
+    <value>En ningún sitio: seguir lleno</value>
+  </data>
+  <data name="Mule" xml:space="preserve">
+    <value>Mula en combate</value>
+  </data>
+  <data name="MuleHelp" xml:space="preserve">
+    <value>En los combates que juega la IA, el personaje se coloca lo más lejos posible de los monstruos, se pone listo y pasa cada uno de sus turnos sin actuar; la IA de sus aliados no cuenta con él.</value>
+  </data>
+  <data name="FailRefusedFull" xml:space="preserve">
+    <value>Lleno, {0} de {1} pods: el servidor rechaza las recolecciones. Elige un cofre donde depositar en el perfil.</value>
   </data>
 </root>

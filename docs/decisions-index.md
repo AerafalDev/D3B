@@ -1131,3 +1131,10 @@ or refines another says so in its own entry. Add a line here with every new deci
   - Found in the code while measuring the Pandawa; per host rejected.
 - [D582](decisions/d575-d579-owner-report-26-november.md#d582-the-map-a-group-attacked-and-beat-the-harvest-on-stays-out-of-its-tours-and-is-not-harvested-stood-on-until-the-character-is-within-20-levels-of-the-highest-monster-it-fought) The map a group attacked and beat the harvest on stays out of its tours, and is not harvested stood on, until the character is within 20 levels of the highest monster it fought (2026-11-26)
   - The owner's choices; measured on the 31 losses of 25 and 26 November; the protectors, a group's level, plus 20, rejected.
+
+## Harvest, a resource found still growing, and what each map holds kept (D583, D584)
+
+- [D583](decisions/d583-d584-harvest-regrowth-and-sightings.md#d583-an-element-a-bot-harvested-found-still-growing-on-a-later-visit-teaches-a-bound-from-below-never-over-twice-the-shortest-time-known-and-holds-its-map-back-half-the-reckoning-more) An element a bot harvested, found still growing on a later visit, teaches a bound from below, never over twice the shortest time known, and holds its map back half the reckoning more (2026-11-26)
+  - Measured on the miner's journals of 26 November; the ceiling the owner's choice over none, or the map held back alone.
+- [D584](decisions/d583-d584-harvest-regrowth-and-sightings.md#d584-what-each-map-holds-its-elements-that-gather-a-resource-is-kept-in-d3bs-database-and-taken-back-at-the-hosts-start-not-whether-they-offered-their-skills) What each map holds, its elements that gather a resource, is kept in D3B's database and taken back at the host's start, not whether they offered their skills (2026-11-26)
+  - Measured on the four harvesters' journals of 26 November; keeping each element's state rejected.

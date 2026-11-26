@@ -942,6 +942,41 @@ public sealed class FightActivityTests : IAsyncDisposable
     }
 
     [Fact]
+    public void AProfileGoingOnFullNeverBanksOnItsPods()
+    {
+        // The owner's choice (D578): a character over its pods still gets the fights' drops.
+        var activity = Activity(new FightSettings { GoOnFull = true });
+
+        Assert.False(activity.IsFull(new CharacterState { Key = TestPlay.Key, Name = "Character", Weight = 1_200, MaxWeight = 1_000 }));
+        Assert.DoesNotContain(activity.Watches, watch => watch.Gauge is WatchedGauge.Pods);
+    }
+
+    [Fact]
+    public async Task AHuntGoingOnFullAttacksOverItsPodsAndItsCardSaysTheCharacterIsFull()
+    {
+        var (connection, bot) = await _play.EnterAsync(433);
+
+        connection.Server(new InventoryWeightEvent { Weight = 1_200, MaxWeight = 1_000 });
+        connection.Server(new MapActorShownEvent { Actors = { GroupActor(GroupId, GroupCell, (Larva, 20)) } });
+        await bot.ProcessedAsync();
+
+        var activity = Activity(new FightSettings { Place = FightPlace.Chosen, SubAreas = [TestPlay.SubAreaId], Heal = false, GoOnFull = true });
+        var run = bot.StartActivity(activity);
+
+        Assert.Equal(GroupCell, await TestWalks.WalkedAsync(_play, connection, 1));
+        Assert.Equal(["Full: 1200 of 1000 pods. The profile goes on without the bank."], activity.Report!.Warnings.Select(TestGroup.Say));
+
+        run.Stop();
+    }
+
+    [Fact]
+    public void AProfileOfMulesHasItsCharacterFightAsAMule()
+    {
+        Assert.True(Activity(new FightSettings { Mule = true }).FightsAsMule);
+        Assert.False(Activity(new FightSettings()).FightsAsMule);
+    }
+
+    [Fact]
     public void AProfileThatCapturesNoMountNamesNoFamily()
     {
         Assert.Empty(Activity(new FightSettings()).MountRaces);

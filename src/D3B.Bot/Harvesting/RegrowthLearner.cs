@@ -15,7 +15,8 @@ namespace D3B.Bot.Harvesting;
 /// A harvest of any actor on the map a connection's character is on is remembered as it ends. The element offering its
 /// skill again, while the character stayed on the map since before that end, gives the whole time; found offering it on a
 /// later visit, by the map's information, the time is a bound from above only, another player having maybe harvested it
-/// meanwhile unseen. An element still harvested on a visit says nothing for the same reason.
+/// meanwhile unseen. An element a bot saw harvested, found still harvested on a visit, gives a bound from below, for the same
+/// reason never over twice the shortest time known (D583).
 /// </para>
 /// <para>
 /// It sees the frames on the relay's read loops: what it keeps of a connection, its map and since when, is that
@@ -67,7 +68,10 @@ internal sealed class RegrowthLearner : IGameObserver
                 case MapInformationEvent information:
                     // The information of a map entered: what grew back was not watched whole.
                     foreach (var element in information.InteractiveElements.Where(element => element.OnCurrentMap))
+                    {
                         GrownBack(information.MapId, element, now, now);
+                        StillGrowing(information.MapId, element, now);
+                    }
 
                     break;
             }
@@ -80,6 +84,15 @@ internal sealed class RegrowthLearner : IGameObserver
         {
             if (_gathering.Value.Contains(skill.SkillId))
                 _regrowths.GrownBack(mapId, element.ElementId, skill.SkillId, at, watchedSince);
+        }
+    }
+
+    private void StillGrowing(long mapId, InteractiveElement element, DateTimeOffset at)
+    {
+        foreach (var skill in element.DisabledSkills)
+        {
+            if (_gathering.Value.Contains(skill.SkillId))
+                _regrowths.StillGrowing(mapId, element.ElementId, skill.SkillId, at);
         }
     }
 

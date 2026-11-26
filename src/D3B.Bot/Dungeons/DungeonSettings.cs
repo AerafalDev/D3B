@@ -15,6 +15,12 @@ public sealed class DungeonSettings
     /// <summary>Gets or sets whether the journey to the dungeon's door may teleport to a zaap.</summary>
     public bool UseZaaps { get; set; } = true;
 
+    /// <summary>Gets or sets whether the activity never leaves for the bank on the pods and goes on full, the fights still dropping (D578).</summary>
+    public bool GoOnFull { get; set; }
+
+    /// <summary>Gets or sets whether the character fights as a mule: placed, ready, each turn ended at once (D579).</summary>
+    public bool Mule { get; set; }
+
     /// <summary>Gets or sets whether a failed or stalled run is put in order and restarted (D519).</summary>
     public bool RestartAfterFailure { get; set; } = true;
 }

@@ -163,3 +163,4 @@ Each file holds the decisions of one group of [the index](../decisions-index.md)
 - [The transfer's lasting refusals, and a run begun in a storage left open (D572, D573)](d572-d573-transfer-refusals-and-open-storage.md): 2 decisions, 4 KB.
 - [The app's 1.1.2 (D574)](d574-release-1-1-2.md): 1 decision, 2 KB.
 - [The owner's report of 26 November: the transfer's own load, a run begun on a walk, lists in the bank, full pods, mules, the harvest's shut maps (D575 to D579, D581, D582)](d575-d579-owner-report-26-november.md): 7 decisions, 12 KB.
+- [Harvest, a resource found still growing, and what each map holds kept (D583, D584)](d583-d584-harvest-regrowth-and-sightings.md): 2 decisions, 6 KB.

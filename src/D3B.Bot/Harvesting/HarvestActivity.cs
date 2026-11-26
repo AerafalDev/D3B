@@ -83,6 +83,7 @@ public sealed class HarvestActivity : BotActivity
     private readonly RecoveryLadder _journeys = new();
     private readonly RecoveryLadder _bankings = new();
     private readonly HashSet<int> _skipped = [];
+    private readonly FullRefusals _fullRefusals = new();
     private List<HarvestRotationZone> _rotation = [];
     private HarvestRotationZone? _current;
     private FrozenSet<int>? _deposited;
@@ -119,9 +120,12 @@ public sealed class HarvestActivity : BotActivity
     public override ActivityStatistics? Statistics => _reporter.Statistics;
 
     /// <inheritdoc/>
-    public override ImmutableArray<ActivityWatch> Watches => _settings.Heal
-        ? [new ActivityWatch(WatchedGauge.Pods, FullAt, WatchAction.Bank), new ActivityWatch(WatchedGauge.Life, _settings.HealBelow, WatchAction.Heal)]
-        : [new ActivityWatch(WatchedGauge.Pods, FullAt, WatchAction.Bank)];
+    /// <remarks>No pods going on full (D578), so that neither the studio nor a master's group banks on them.</remarks>
+    public override ImmutableArray<ActivityWatch> Watches =>
+    [
+        .. _settings.DepositTo is HarvestDepositPlace.GoOnFull ? [] : new[] { new ActivityWatch(WatchedGauge.Pods, FullAt, WatchAction.Bank) },
+        .. _settings.Heal ? new[] { new ActivityWatch(WatchedGauge.Life, _settings.HealBelow, WatchAction.Heal) } : [],
+    ];
 
     /// <inheritdoc/>
     public override int TeleportChanges => _settings.ZaapSaving;
@@ -144,6 +148,9 @@ public sealed class HarvestActivity : BotActivity
 
     /// <inheritdoc/>
     public override ChallengePlay Challenges => _settings.Challenges;
+
+    /// <inheritdoc/>
+    public override bool FightsAsMule => _settings.Mule;
 
     /// <summary>Initializes a new instance of the <see cref="HarvestActivity"/> class.</summary>
     /// <param name="settings">What to harvest, where, and when to bank.</param>
@@ -207,6 +214,13 @@ public sealed class HarvestActivity : BotActivity
     private static ActivityException Impossible(string message, string key)
     {
         return new ActivityException(message, GameText.Of(HarvestTexts.Text(key))) { IsFinal = true };
+    }
+
+    private static ActivityException RefusedFull(CharacterState state)
+    {
+        var reason = GameText.Of(HarvestTexts.Text("FailRefusedFull"), GameTextValue.Number(state.Weight), GameTextValue.Number(state.MaxWeight));
+
+        return new ActivityException($"The server refused a harvest while the character carries {state.Weight} of {state.MaxWeight} pods.", reason) { IsFinal = true };
     }
 
     private static bool HasWanted(HarvestZone zone, CharacterState state)
@@ -299,11 +313,12 @@ public sealed class HarvestActivity : BotActivity
     }
 
     /// <inheritdoc/>
+    /// <remarks>Never going on full (D578): the character harvests over its pods.</remarks>
     public override bool IsFull(CharacterState state)
     {
         ArgumentNullException.ThrowIfNull(state);
 
-        return state.MaxWeight > 0 && state.Weight * 100L >= (long)FullAt * state.MaxWeight;
+        return _settings.DepositTo is not HarvestDepositPlace.GoOnFull && state.MaxWeight > 0 && state.Weight * 100L >= (long)FullAt * state.MaxWeight;
     }
 
     /// <inheritdoc/>
@@ -654,6 +669,8 @@ public sealed class HarvestActivity : BotActivity
 
         if (outcome is UseOutcome.Used)
         {
+            _fullRefusals.Reset();
+
             // The objects come within milliseconds of the harvest's end, in no set order (D75).
             await context.WaitUntilAsync(after => Carried(after, target.ItemId) != before, _objectsDelay, cancellationToken).ConfigureAwait(false);
 
@@ -668,6 +685,18 @@ public sealed class HarvestActivity : BotActivity
         }
         else if (outcome is not UseOutcome.Busy)
         {
+            // Going on full (D578), harvests refused in a row over the pods are the pods' doing, not the elements': every element
+            // of the zone would be refused in turn, the tours going round it for nothing. The harvest ends, saying why.
+            if (outcome is UseOutcome.Refused && _settings.DepositTo is HarvestDepositPlace.GoOnFull && FullPods.Holds(context.State))
+            {
+                if (_fullRefusals.Refused())
+                    throw RefusedFull(context.State);
+            }
+            else if (outcome is UseOutcome.Refused)
+            {
+                _fullRefusals.Reset();
+            }
+
             _skipped.Add(elementId);
 
             // A use that failed, no journey of the tour stops for again on that map: it would call the character back to it at every

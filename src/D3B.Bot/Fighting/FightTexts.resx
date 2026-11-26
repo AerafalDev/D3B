@@ -431,4 +431,16 @@
   <data name="RestartAfterFailureHelp" xml:space="preserve">
     <value>When the activity fails for a reason that may pass, or does nothing for ten minutes, the character is put back in order and the activity starts again, after 30 seconds, then later each time, six times an hour at most: the character is not left idle until the game disconnects it. A profile that cannot work, or your own stop, still ends it.</value>
   </data>
+  <data name="GoOnFull" xml:space="preserve">
+    <value>Go on full, without the bank</value>
+  </data>
+  <data name="GoOnFullHelp" xml:space="preserve">
+    <value>The character never leaves for the bank on its pods: it goes on over them, still getting the fights' drops, walking slower. Its card says once it is full.</value>
+  </data>
+  <data name="Mule" xml:space="preserve">
+    <value>Mule in fights</value>
+  </data>
+  <data name="MuleHelp" xml:space="preserve">
+    <value>In the fights the AI plays, the character is placed as far from the monsters as it can, says it is ready and passes each of its turns without acting; its allies' AI does not count on it.</value>
+  </data>
 </root>

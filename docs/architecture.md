@@ -247,7 +247,7 @@ The bots run in `D3B.Bot`: what each part does today, with the decisions that ma
   `HarvestSettings` and their zone `HarvestZone`, the skills to use, the sub-areas and their maps, the insides apart. Each
   step harvests the wanted resource the server offers at the character's level, the first asked for then the nearest, or
   travels to the nearest map of the tour still to go through (`HarvestTour`): the probable maps first, then those of the
-  world map, then the insides. `HarvestSightings`, one per host, remembers what each map holds; a map never seen is
+  world map, then the insides. `HarvestSightings`, one per host, remembers what each map holds, kept in the database (D584); a map never seen is
   foretold by its elements' graphics (`HarvestZone.Foresee`, D138), and a tour leaves out the maps seen empty, those
   whose graphics all offer none of its skills, and those without elements; an interior of a sub-area that also holds maps on a
   world map (`SubAreaInteriors`, `HarvestZone.Interiors`, the houses of a town, shared with `HuntingGround`) is gone through only
@@ -275,14 +275,23 @@ The bots run in `D3B.Bot`: what each part does today, with the decisions that ma
   then resumes, pauses the bot (`InterruptionResponse.Pause`, `BotActor.Pause`) or stops, as its settings say, and the
   journal names the kind (`BotActivity.Describe`, D144). `Regrowths`, one per host, learns how long each resource takes to
   grow back from every map a bot is on (`RegrowthLearner`): whole when a bot stayed on the map, else a bound from above on
-  a later visit; a tour holds back the maps whose wanted elements all still grow back, by `HarvestSightings`' elements,
+  a later visit, and a bound from below when a visit finds an element a bot harvested still growing, at most twice the
+  shortest time known (D583); a tour holds back the maps whose wanted elements all still grow back, by `HarvestSightings`' elements,
   and waits for the first rather than D128's minute (D145), an element another harvested reckoned from when a bot first
-  saw it so (`SightedElement.DisabledSince`, D262). Before a step, the activity opens a resource bag and, under its
+  saw it so (`SightedElement.DisabledSince`, D262), and a map seen still growing once it should have grown back waits half
+  the reckoning more (D583). Before a step, the activity opens a resource bag and, under its
   share of life, eats the profile's food in one request (`ObjectUse.UseObjectsAsync`, the life reckoned by `BotActor.LifeAt`,
   D148, D153, D156), or with none chosen the stack that heals the least of those whose use only heals, by the pack
   (`Food.StackToEat`, D257), until its life is whole; with nothing to eat, it regenerates back to its share alone, looking
   at its life each 10 seconds at least (D258); full, it may deposit in the guild's chest (`GuildChest`, D147), what the chest leaves going to the
-  character's own, the unloading done once the bags are no longer full though the bank took none of it (D568). Between two steps the run lets `BotDelays.BetweenSteps` pass, the client's display time at least (D154).
+  character's own, the unloading done once the bags are no longer full though the bank took none of it (D568). A profile going
+  on full (D578: `HarvestDepositPlace.GoOnFull` beside the two chests, `GoOnFull` in `FightSettings` and `DungeonSettings`)
+  never leaves for the bank on the pods: `IsFull` says no and `Watches` holds no pods, so that neither the run, nor the studio,
+  nor a master's group (`GroupBank.ShareOf`) banks on them, and the card warns once the character carries as much as its pods
+  allow or more (`FullPods`, `ActivityTexts`'s `WarningFull`). Three harvests in a row the server refuses while the character
+  is so full end the harvest, final, saying so (`FullRefusals`): every element of the zone would be refused in turn and the
+  tours go round it for nothing, while one refusal may be another player's harvest first; the server's refusal over the pods
+  is not measured. Between two steps the run lets `BotDelays.BetweenSteps` pass, the client's display time at least (D154).
   An activity gives its figures (`BotActivity.Statistics`,
   `ActivityStatistics`), and a run keeps the character it started with (`ActivityRun.StartedWith`, D146) and counts the
   fights that end while it goes on, the AI's and the player's: won, lost, the character's deaths, the experience and kamas
@@ -370,7 +379,8 @@ The bots run in `D3B.Bot`: what each part does today, with the decisions that ma
   is over (`BotActor.RunInFightAsync`). `FightPlay`, one behavior, the same AI for every character: it waits until the
   server showed the character and its cells, judges the odds (`FightTactics.Odds`), prudent for the fight when it would
   lose (`TacticWeights.Prudent`, D198), beside allies of its group fearing the enemies' threat less (`TacticWeights.Group`,
-  D454, its next turn weighed as alone, D460), closes the fight and blocks spectators (D216), sets the challenges' bonus the
+  D454, its next turn weighed as alone, D460, an ally a bot of the host fighting as a mule counted as none, its blows out of the odds too
+  (`IFightTeam.FightsAsMule`, `ImaginedFight.Without`, D579), closes the fight and blocks spectators (D216), sets the challenges' bonus the
   activity's profile asks once the server answered the client's own (`BotActivity.ChallengeReward`, D438; a follower its master's,
   D446), places the character
   (`FightTactics.Place`, the threat there only that of the enemies the server's turn order lists before its first turn,
@@ -378,7 +388,9 @@ The bots run in `D3B.Bot`: what each part does today, with the decisions that ma
   it (`ImaginedFights`, `CharacterSpells`), its sword's blow among its casts (D220), sends the plan's first walk or cast,
   waits for the server's answer and the client's acknowledgement, plans again, the states it began the turn with held by
   every plan of the turn (`FightKnowledge.TurnStates`, D503), and ends its turn as soon as the plan is
-  empty. The odds, the placement and every plan are searched on `FightSearches`, the host's threads for the AI, half its
+  empty. A character whose profile fights as a mule (`BotActivity.FightsAsMule`, D579: a flag `Mule` in the follow's, the
+  hunt's, the harvest's and the dungeon's settings) is placed with `TacticWeights.Mule`, the prudent fear and no reach of its
+  own, sets its bonus and says it is ready as any other, and ends each of its turns at once, at the fight's pace, acting nothing. The odds, the placement and every plan are searched on `FightSearches`, the host's threads for the AI, half its
   cores (two at least) and below the normal priority, made by `Bots` at the first fight: the thread pool, which the relay's reads and
   writes run on, is never held by a search (D508).
   A summon of the character's the client controls plays its turns the same, the fight imagined from its view, its
@@ -1129,8 +1141,12 @@ cells in session 9f3 (D275); the NPCs and their dialogs in session 7d3b (D383).
 - **The maps' graphics** (`GraphicRecorder`, D138): what the bots learn of each graphic, its skills as JSON, read into
   `GraphicSkills` once the database opens and written as the bots learn, queued off the relays' loops, whatever the
   client's build.
-- **The resources' growing back** (`RegrowthRecorder`, D145): `Regrowths` by skill, the longest seen whole, how many and the
-  least bound, read back before the host starts and written as the bots learn, as the graphics are.
+- **The resources' growing back** (`RegrowthRecorder`, D145): `Regrowths` by skill, the longest seen whole, how many, the
+  least bound from above and the bound from below (migration `RegrowthFloorAndSightings`, D583), read back before the host
+  starts and written as the bots learn, as the graphics are.
+- **What each map holds** (`SightingRecorder`, D584): `HarvestSightings` by map, its elements that gather a resource as JSON
+  (element, skill, resource), none for a map that holds none, written when they change, not at each harvest, and read back
+  before the host starts as offering their skills (table `Sightings`, migration `RegrowthFloorAndSightings`).
 - **The fights' placement cells** (`PlacementRecorder`, D275): `FightPlacements`, taught by `FightPlacementLearner` from
   every fight any bot begins, one row a map left, map fought on and set of cells: the map left, its area, sub-area and
   coordinates, the map fought on, the challengers' cells (red) and the defenders' (blue), how many fights began so and

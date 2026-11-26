@@ -36,6 +36,7 @@ namespace D3B.Storage;
 /// characters keep, as <see cref="CharacterVariables"/> (D298).
 /// The <see cref="GraphicRecorder"/> keeps what the bots learn of the graphics, which they share as <see cref="GraphicSkills"/>,
 /// the <see cref="RegrowthRecorder"/> how long the resources take to grow back, as <see cref="Regrowths"/> (D145), the
+/// <see cref="SightingRecorder"/> what each map holds, as <see cref="HarvestSightings"/> (D584), the
 /// <see cref="PlacementRecorder"/> every fight's map and placement cells, as <see cref="FightPlacements"/> (D275), the
 /// <see cref="NpcRecorder"/> the NPCs of the maps and what the bots learned of their dialogs, as <see cref="KnownNpcs"/> (D383), and the
 /// <see cref="RunRecorder"/> each run of the bots' activities, which the <see cref="RunBook"/> gives the statistics (D146).
@@ -57,6 +58,9 @@ public sealed class StorageModule : IModule
         services.TryAddSingleton<Regrowths>();
         services.AddSingleton<RegrowthRecorder>();
         services.AddHostedService(provider => provider.GetRequiredService<RegrowthRecorder>());
+        services.TryAddSingleton<HarvestSightings>();
+        services.AddSingleton<SightingRecorder>();
+        services.AddHostedService(provider => provider.GetRequiredService<SightingRecorder>());
         services.TryAddSingleton<FightPlacements>();
         services.AddSingleton<PlacementRecorder>();
         services.AddHostedService(provider => provider.GetRequiredService<PlacementRecorder>());

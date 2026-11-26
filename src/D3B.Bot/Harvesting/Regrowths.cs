@@ -110,4 +110,42 @@ public sealed class Regrowths
 
         return true;
     }
+
+    /// <summary>Learns from an element a bot saw harvested, found still not offering its skill on a later visit (D583).</summary>
+    /// <param name="mapId">The map.</param>
+    /// <param name="elementId">The element's identifier on it.</param>
+    /// <param name="skillId">The skill it gathers.</param>
+    /// <param name="at">When.</param>
+    /// <returns>Whether it taught anything.</returns>
+    /// <remarks>
+    /// Another player may have harvested it again once grown back, unseen, so that it may have taken less: the bound learned never
+    /// goes over twice the shortest time known of the resource, the owner's choice, and nothing is learned of a resource no time
+    /// is known of. Kept in the database, a bound without a ceiling would rise with every such harvest and hold the bots back for good.
+    /// </remarks>
+    public bool StillGrowing(long mapId, int elementId, int skillId, DateTimeOffset at)
+    {
+        if (!_harvests.TryGetValue((mapId, elementId), out var harvest) || harvest.SkillId != skillId)
+            return false;
+
+        while (true)
+        {
+            if (!_skills.TryGetValue(skillId, out var regrowth) || regrowth.Shortest is not { } shortest)
+                return false;
+
+            var took = at - harvest.At;
+            var ceiling = shortest * 2;
+            var bound = took < ceiling ? took : ceiling;
+
+            if (regrowth.AtLeast is { } least && least >= bound)
+                return false;
+
+            // Another bot may have taught the skill meanwhile: the update holds only over what was read.
+            if (_skills.TryUpdate(skillId, regrowth with { AtLeast = bound }, regrowth))
+                break;
+        }
+
+        Learned?.Invoke(skillId);
+
+        return true;
+    }
 }

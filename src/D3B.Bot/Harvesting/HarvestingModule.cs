@@ -39,7 +39,7 @@ public sealed class HarvestingModule : IModule
         // The bots module teaches it; a test's host without one gets it empty.
         services.TryAddSingleton<GraphicSkills>();
         services.TryAddSingleton(services => new GraphicPlaces(services.GetRequiredService<GamePack>(), services.GetRequiredService<GameWorld>()));
-        services.AddSingleton<HarvestSightings>();
+        services.TryAddSingleton<HarvestSightings>();
 
         // Whatever the bots do, every map they are on teaches how long its resources take to grow back (D145).
         services.TryAddSingleton<Regrowths>();
@@ -100,14 +100,19 @@ public sealed class HarvestingModule : IModule
             .Advanced()
             .VisibleWhen(s => s.UseZaaps);
 
+        // Going on full (D578) is a place beside the two chests, in view, which leaves the rest of the banking out.
         settings.Section(HarvestTexts.Text("SectionBank"));
-        settings.Flag(s => s.OwnBanking, HarvestTexts.Text("OwnBanking")).Help(HarvestTexts.Text("OwnBankingHelp")).Advanced();
-        settings.Number(s => s.FullAt, HarvestTexts.Text("FullAt"), 50, 100).Percent().Advanced().VisibleWhen(s => s.OwnBanking);
-        settings.Choice(s => s.Deposit, HarvestTexts.Text("Deposit"), deposit => HarvestTexts.Text(deposit is HarvestDeposit.Harvest ? "DepositHarvest" : "DepositAll"));
-
-        settings.Choice(s => s.DepositTo, HarvestTexts.Text("DepositTo"), place => HarvestTexts.Text($"DepositTo{place}"))
-            .Help(HarvestTexts.Text("DepositToHelp"))
-            .Advanced();
+        settings.Choice(s => s.DepositTo, HarvestTexts.Text("DepositTo"), place => HarvestTexts.Text($"DepositTo{place}")).Help(HarvestTexts.Text("DepositToHelp"));
+        settings.Flag(s => s.OwnBanking, HarvestTexts.Text("OwnBanking"))
+            .Help(HarvestTexts.Text("OwnBankingHelp"))
+            .Advanced()
+            .VisibleWhen(s => s.DepositTo is not HarvestDepositPlace.GoOnFull);
+        settings.Number(s => s.FullAt, HarvestTexts.Text("FullAt"), 50, 100)
+            .Percent()
+            .Advanced()
+            .VisibleWhen(s => s.OwnBanking && s.DepositTo is not HarvestDepositPlace.GoOnFull);
+        settings.Choice(s => s.Deposit, HarvestTexts.Text("Deposit"), deposit => HarvestTexts.Text(deposit is HarvestDeposit.Harvest ? "DepositHarvest" : "DepositAll"))
+            .VisibleWhen(s => s.DepositTo is not HarvestDepositPlace.GoOnFull);
 
         settings.Section(HarvestTexts.Text("SectionCare"));
         settings.Flag(s => s.OpenBags, HarvestTexts.Text("OpenBags")).Help(HarvestTexts.Text("OpenBagsHelp"));
@@ -129,6 +134,7 @@ public sealed class HarvestingModule : IModule
         settings.Choice(s => s.Challenges, HarvestTexts.Text("Challenges"), play => HarvestTexts.Text($"Challenges{play}"))
             .Help(HarvestTexts.Text("ChallengesHelp"))
             .VisibleWhen(s => s.AiFights);
+        settings.Flag(s => s.Mule, HarvestTexts.Text("Mule")).Help(HarvestTexts.Text("MuleHelp")).VisibleWhen(s => s.AiFights);
         settings.Choice(s => s.AfterFight, HarvestTexts.Text("AfterFight"), after => HarvestTexts.Text($"AfterFight{after}"))
             .Help(HarvestTexts.Text("AfterFightHelp"))
             .Advanced();

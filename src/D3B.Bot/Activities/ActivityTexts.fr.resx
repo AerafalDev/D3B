@@ -47,4 +47,7 @@
   <data name="NotUnloaded" xml:space="preserve">
     <value>Le perso n'a pas pu être déchargé, même remis en ordre et sorti de sa carte.</value>
   </data>
+  <data name="WarningFull" xml:space="preserve">
+    <value>Plein : {0} pods sur {1}. Le profil continue sans banque.</value>
+  </data>
 </root>

@@ -22,6 +22,9 @@ internal sealed class RewardActivity : BotActivity
     /// <summary>Gets or sets whether the profile captures the archmonsters' souls (D565).</summary>
     public bool Souls { get; init; }
 
+    /// <summary>Gets or sets whether the character fights as a mule (D579).</summary>
+    public bool Mule { get; init; }
+
     public override bool FightsItsFights => Fights;
 
     public override ChallengeReward ChallengeReward => Reward;
@@ -31,6 +34,8 @@ internal sealed class RewardActivity : BotActivity
     public override IReadOnlyList<int> MountRaces => Races;
 
     public override bool CapturesSouls => Souls;
+
+    public override bool FightsAsMule => Mule;
 
     public override async Task<bool> StepAsync(BotContext context, CancellationToken cancellationToken)
     {

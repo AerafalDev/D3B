@@ -2,6 +2,7 @@ using D3B.Bot.Activities;
 using D3B.Bot.Characters;
 using D3B.Bot.Groups;
 using D3B.Bot.Settings;
+using D3B.Bot.Tests.Runtime;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace D3B.Bot.Tests.Groups;
@@ -46,7 +47,7 @@ public sealed class FollowSettingsTests
     public void TheFollowActivityAsksForItsMasterACharacter()
     {
         var definition = Definition();
-        var master = Assert.Single(definition.Settings.All);
+        var master = definition.Settings.All[0];
 
         Assert.Equal(GroupsModule.ActivityId, definition.Id);
         Assert.Equal(nameof(FollowSettings.Master), master.Key);
@@ -59,6 +60,18 @@ public sealed class FollowSettingsTests
         // A text naming no character is unknown; one naming a character holds.
         Assert.Contains(definition.Settings.Check(new FollowSettings { Master = "nobody" }), problem => problem.Kind is SettingProblemKind.Unknown);
         Assert.Empty(definition.Settings.Check(new FollowSettings { Master = "7:70001" }));
+    }
+
+    [Fact]
+    public async Task AFollowerMayFightAsAMule()
+    {
+        // The owner's choice (D579): a flag of the profile, off by default.
+        await using var play = new TestPlay();
+        var mule = Assert.Single(Definition().Settings.All, setting => setting.Key == nameof(FollowSettings.Mule));
+
+        Assert.Equal(SettingKind.Flag, mule.Kind);
+        Assert.True(new FollowActivity(new FollowSettings { Master = TestGroup.Master.ToId(), Mule = true }, play.Bots, play.Tables).FightsAsMule);
+        Assert.False(new FollowActivity(new FollowSettings { Master = TestGroup.Master.ToId() }, play.Bots, play.Tables).FightsAsMule);
     }
 
     [Fact]

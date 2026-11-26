@@ -42,8 +42,8 @@ public sealed class SettingsCategoriesTests
         Assert.False(what.HasAdvanced);
         Assert.Equal(["Place", "Area", "SubAreas"], Keys(where.InView));
         Assert.Equal(["IsolatedMaps", "UseZaaps", "ZaapSaving"], Keys(where.Advanced));
-        Assert.Equal(["Deposit"], Keys(bank.InView));
-        Assert.Equal(["OwnBanking", "DepositTo"], Keys(bank.Advanced));
+        Assert.Equal(["DepositTo", "Deposit"], Keys(bank.InView));
+        Assert.Equal(["OwnBanking"], Keys(bank.Advanced));
         Assert.Contains("AiFights", Keys(care.InView));
         Assert.Contains("AfterFight", Keys(care.Advanced));
         Assert.All(editor.Sections, section => Assert.Equal(section.Fields.Count, section.InView.Count + section.Advanced.Count));
@@ -90,8 +90,19 @@ public sealed class SettingsCategoriesTests
         ((FlagFieldViewModel)editor.FieldOf("OwnBanking")!).Value = false;
 
         // The share of pods hides with the rule it belongs to and is no longer counted; the rule itself now differs from the model.
-        Assert.Equal(["OwnBanking", "DepositTo"], Keys(bank.Advanced));
+        Assert.Equal(["OwnBanking"], Keys(bank.Advanced));
         Assert.Equal("Avancé · 1 changé", bank.AdvancedText);
+    }
+
+    [Fact]
+    public void GoingOnFullHidesTheRestOfTheBanking()
+    {
+        // The owner's choice (D578): neither the bank nor the chest, so what goes there and when no longer show.
+        var editor = Edit(new HarvestSettings { Mode = HarvestMode.List, Resources = [TestReferences.Ash], OwnBanking = true, DepositTo = HarvestDepositPlace.GoOnFull });
+        var bank = editor.Sections[2];
+
+        Assert.Equal(["DepositTo"], Keys(bank.InView));
+        Assert.Empty(Keys(bank.Advanced));
     }
 
     [Fact]

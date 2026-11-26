@@ -97,6 +97,9 @@ internal sealed class BehaviorActivity : BotActivity, IDisposable, IBehaviorCont
     public override bool CapturesSouls => _visit?.Current?.CapturesSouls ?? false;
 
     /// <inheritdoc/>
+    public override bool FightsAsMule => _visit?.Current?.FightsAsMule ?? false;
+
+    /// <inheritdoc/>
     /// <remarks>
     /// The step playing's: measured on the owner's four harvesters of 25 November, a profile's harvest whose unloading failed was
     /// never restarted, the behavior answering no for every activity, and each idled until the server closed its connection (D519).

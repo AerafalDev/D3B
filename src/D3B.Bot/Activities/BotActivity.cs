@@ -73,6 +73,10 @@ public abstract class BotActivity
     /// <remarks>No by default: the AI casts no capture.</remarks>
     public virtual bool CapturesSouls => false;
 
+    /// <summary>Gets whether the character fights as a mule in the fights the AI plays: placed as far from the threat as it can, ready, and each of its turns ended at once (D579).</summary>
+    /// <remarks>No by default: the AI plays the character's turns. The AI of the host's other bots counts a mule as no fighting ally.</remarks>
+    public virtual bool FightsAsMule => false;
+
     /// <summary>Gets whether the run restarts the activity once it failed or made no progress a while, rather than ending it (D519).</summary>
     /// <remarks>No by default: an activity restarted begins anew (<see cref="Restart"/>), which it must allow. A failure that <see cref="ActivityException.IsFinal"/> still ends it.</remarks>
     public virtual bool RestartsAfterFailure => false;

@@ -194,4 +194,19 @@
   <data name="FailNoKeyHanded" xml:space="preserve">
     <value>{0}, qui suit le perso, n'a pris aucune des clefs que le perso lui donne à la porte du donjon.</value>
   </data>
+  <data name="SectionBank" xml:space="preserve">
+    <value>Banque</value>
+  </data>
+  <data name="GoOnFull" xml:space="preserve">
+    <value>Continuer plein, sans banque</value>
+  </data>
+  <data name="GoOnFullHelp" xml:space="preserve">
+    <value>Le perso ne part jamais à la banque à cause de ses pods : il continue au-delà, en gardant les drops des combats, et marche plus lentement. Sa carte dit quand il est plein.</value>
+  </data>
+  <data name="Mule" xml:space="preserve">
+    <value>Mule en combat</value>
+  </data>
+  <data name="MuleHelp" xml:space="preserve">
+    <value>Dans les combats que l'IA joue, le perso se place le plus loin possible des monstres, se met prêt et passe chacun de ses tours sans agir ; l'IA de ses alliés ne compte pas sur lui.</value>
+  </data>
 </root>

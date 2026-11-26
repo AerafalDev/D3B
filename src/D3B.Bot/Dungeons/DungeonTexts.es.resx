@@ -194,4 +194,19 @@
   <data name="FailNoKeyHanded" xml:space="preserve">
     <value>{0}, que sigue al personaje, no tomó ninguna de las llaves que el personaje le da en la puerta de la mazmorra.</value>
   </data>
+  <data name="SectionBank" xml:space="preserve">
+    <value>Banco</value>
+  </data>
+  <data name="GoOnFull" xml:space="preserve">
+    <value>Seguir lleno, sin el banco</value>
+  </data>
+  <data name="GoOnFullHelp" xml:space="preserve">
+    <value>El personaje nunca va al banco por sus pods: sigue por encima de ellos, con los drops de los combates, y camina más lento. Su tarjeta dice cuándo está lleno.</value>
+  </data>
+  <data name="Mule" xml:space="preserve">
+    <value>Mula en combate</value>
+  </data>
+  <data name="MuleHelp" xml:space="preserve">
+    <value>En los combates que juega la IA, el personaje se coloca lo más lejos posible de los monstruos, se pone listo y pasa cada uno de sus turnos sin actuar; la IA de sus aliados no cuenta con él.</value>
+  </data>
 </root>

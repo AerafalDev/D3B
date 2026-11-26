@@ -662,6 +662,78 @@ public sealed class HarvestActivityTests : IAsyncDisposable
     }
 
     [Fact]
+    public void AProfileGoingOnFullNeverBanksOnItsPods()
+    {
+        // The owner's choice (D578): neither the bank nor the chest, the character goes on over its pods.
+        var activity = Activity(new HarvestSettings { DepositTo = HarvestDepositPlace.GoOnFull });
+
+        Assert.False(activity.IsFull(Weighing(8_000, 7_590)));
+        Assert.DoesNotContain(activity.Watches, watch => watch.Gauge is WatchedGauge.Pods);
+    }
+
+    private async Task<(TestConnection Connection, HarvestActivity Activity, ActivityRun Run)> HarvestingOverItsPodsAsync()
+    {
+        var (connection, bot) = await _play.EnterAsync(433);
+
+        connection.Server(new InventoryWeightEvent { Weight = 7_600, MaxWeight = 7_590 });
+        await bot.ProcessedAsync();
+
+        var activity = Activity(new HarvestSettings { Resources = [TestPlay.Ash], SubAreas = [TestPlay.SubAreaId], DepositTo = HarvestDepositPlace.GoOnFull });
+        var run = bot.StartActivity(activity);
+
+        await TestWalks.WalkedAsync(_play, connection, 1);
+        Assert.Equal(new InteractiveUseRequest { SkillInstanceId = TestPlay.TreeInstanceId, ElementId = TestPlay.TreeElementId }, await connection.SentAsync(2));
+
+        return (connection, activity, run);
+    }
+
+    [Fact]
+    public async Task AHarvestGoingOnFullHarvestsOverItsPodsAndItsCardSaysTheCharacterIsFull()
+    {
+        var (_, activity, run) = await HarvestingOverItsPodsAsync();
+
+        var report = await ReportedAsync(activity, report => !report.Warnings.IsEmpty);
+
+        Assert.Equal(["Full: 7600 of 7590 pods. The profile goes on without the bank."], report.Warnings.Select(Say));
+
+        run.Stop();
+
+        Assert.Equal(ActivityOutcome.Stopped, await run.Completion);
+    }
+
+    [Fact]
+    public async Task AHarvestTheServerRefusesOnceOverThePodsIsLeftAndTheTourGoesOn()
+    {
+        // Another player may have taken the tree an instant before: one refusal says nothing of the pods (D578, FullRefusals).
+        var (connection, _, run) = await HarvestingOverItsPodsAsync();
+
+        connection.Server(new InteractiveUseErrorEvent { ElementId = TestPlay.TreeElementId });
+
+        // The tree left, the tour walks on to its next map.
+        await TestWalks.WalkedAsync(_play, connection, 3);
+        Assert.False(run.IsOver);
+
+        run.Stop();
+
+        Assert.Equal(ActivityOutcome.Stopped, await run.Completion);
+    }
+
+    [Fact]
+    public void TheHarvestEndedOverThePodsSaysWhyAndWhatToChange()
+    {
+        var reason = GameText.Of(HarvestTexts.Text("FailRefusedFull"), GameTextValue.Number(7_600), GameTextValue.Number(7_590));
+
+        Assert.Equal("Full, 7600 of 7590 pods: the server refuses the harvests. Choose a chest to bank in, in the profile.", Say(reason));
+    }
+
+    [Fact]
+    public void AProfileOfMulesHasItsCharacterFightAsAMule()
+    {
+        Assert.True(Activity(new HarvestSettings { Mule = true }).FightsAsMule);
+        Assert.False(Activity(new HarvestSettings()).FightsAsMule);
+    }
+
+    [Fact]
     public async Task AFightAsAHarvestEndsIsAProtectorsAndPausesTheBotWhenTheProfileSaysSo()
     {
         var (connection, bot) = await _play.EnterAsync(433);

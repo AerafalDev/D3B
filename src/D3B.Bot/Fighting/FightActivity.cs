@@ -66,6 +66,7 @@ public sealed class FightActivity : BotActivity
     private long? _skippedOn;
     private ActivityReport? _report;
     private ActivityStatistics? _statistics;
+    private GameText? _full;
     private bool _waitedForElixir;
     private int _failedElixirs;
     private bool _healing;
@@ -91,9 +92,12 @@ public sealed class FightActivity : BotActivity
     public override ActivityStatistics? Statistics => Volatile.Read(ref _statistics);
 
     /// <inheritdoc/>
-    public override ImmutableArray<ActivityWatch> Watches => _settings.Heal
-        ? [new ActivityWatch(WatchedGauge.Pods, FullAt, WatchAction.Bank), new ActivityWatch(WatchedGauge.Life, _settings.HealBelow, WatchAction.Heal)]
-        : [new ActivityWatch(WatchedGauge.Pods, FullAt, WatchAction.Bank)];
+    /// <remarks>No pods going on full (D578), so that neither the studio nor a master's group banks on them.</remarks>
+    public override ImmutableArray<ActivityWatch> Watches =>
+    [
+        .. _settings.GoOnFull ? [] : new[] { new ActivityWatch(WatchedGauge.Pods, FullAt, WatchAction.Bank) },
+        .. _settings.Heal ? new[] { new ActivityWatch(WatchedGauge.Life, _settings.HealBelow, WatchAction.Heal) } : [],
+    ];
 
     /// <inheritdoc/>
     public override int TeleportChanges => _settings.ZaapSaving;
@@ -122,6 +126,9 @@ public sealed class FightActivity : BotActivity
 
     /// <inheritdoc/>
     public override bool CapturesSouls => _settings.CaptureSouls;
+
+    /// <inheritdoc/>
+    public override bool FightsAsMule => _settings.Mule;
 
     /// <summary>Initializes a new instance of the <see cref="FightActivity"/> class.</summary>
     /// <param name="settings">Which groups to attack, where, the upkeep and the bank.</param>
@@ -170,6 +177,8 @@ public sealed class FightActivity : BotActivity
     {
         ArgumentNullException.ThrowIfNull(context);
 
+        SeeFull(context.State);
+
         if (await _busy.WaitAsync(context, Failure, cancellationToken).ConfigureAwait(false) || context.State is not { MapId: { } mapId })
             return true;
 
@@ -204,11 +213,12 @@ public sealed class FightActivity : BotActivity
     }
 
     /// <inheritdoc/>
+    /// <remarks>Never going on full (D578): a character over its pods still gets the fights' drops, the owner says.</remarks>
     public override bool IsFull(CharacterState state)
     {
         ArgumentNullException.ThrowIfNull(state);
 
-        return state.MaxWeight > 0 && state.Weight * 100L >= (long)FullAt * state.MaxWeight;
+        return !_settings.GoOnFull && state.MaxWeight > 0 && state.Weight * 100L >= (long)FullAt * state.MaxWeight;
     }
 
     /// <inheritdoc/>
@@ -693,7 +703,21 @@ public sealed class FightActivity : BotActivity
 
     private void Publish(GameText doing)
     {
-        Volatile.Write(ref _report, new ActivityReport { Doing = doing, Counts = CountsOf() });
+        Volatile.Write(ref _report, new ActivityReport { Doing = doing, Counts = CountsOf(), Warnings = WarningsOf() });
+    }
+
+    // Going on full, the card says the character is full (D578), as each step begins.
+    private void SeeFull(CharacterState state)
+    {
+        _full = _settings.GoOnFull ? FullPods.WarningOf(state) : null;
+
+        if (Report is { } report)
+            Volatile.Write(ref _report, report with { Warnings = WarningsOf() });
+    }
+
+    private ImmutableArray<GameText> WarningsOf()
+    {
+        return _full is { } full ? [full] : [];
     }
 
     private ImmutableArray<ActivityCount> CountsOf()

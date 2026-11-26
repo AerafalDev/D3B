@@ -14,4 +14,7 @@ public sealed class LearnedRegrowth
 
     /// <summary>Gets or sets the least time after a harvest a later visit found it grown back, in milliseconds, if one did.</summary>
     public long? AtMostMilliseconds { get; set; }
+
+    /// <summary>Gets or sets the longest time after a bot's harvest a later visit found it still growing, in milliseconds, at most twice the shortest known, if one did (D583).</summary>
+    public long? AtLeastMilliseconds { get; set; }
 }

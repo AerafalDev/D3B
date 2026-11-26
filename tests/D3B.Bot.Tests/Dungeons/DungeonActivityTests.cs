@@ -593,6 +593,18 @@ public sealed class DungeonActivityTests : IAsyncDisposable
     }
 
     [Fact]
+    public void AProfileGoingOnFullNeverBanksAndOneOfMulesFightsAsAMule()
+    {
+        // The owner's choices (D578, D579).
+        var activity = new DungeonActivity(new DungeonSettings { Dungeons = [TestPlay.DungeonId], GoOnFull = true, Mule = true }, _play.Tables);
+        var full = new CharacterState { Key = TestPlay.Key, Name = "Character", Weight = 1_200, MaxWeight = 1_000, MapId = TestPlay.MapId };
+
+        Assert.False(activity.IsFull(full));
+        Assert.True(activity.FightsAsMule);
+        Assert.False(Activity(TestPlay.DungeonId).FightsAsMule);
+    }
+
+    [Fact]
     public void FullOutsideTheCharacterBanksItsLootButTheKeysAndInsideItNeverBanks()
     {
         var activity = Activity(TestPlay.DungeonId);

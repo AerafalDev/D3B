@@ -9,7 +9,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace D3B.Storage;
 
-/// <summary>D3B's database: the accounts and characters it saw, what the bots learned of the maps' graphics, the NPCs and the fights' placement cells, the runs, and the variables the characters keep (D100, D138, D275, D298).</summary>
+/// <summary>D3B's database: the accounts and characters it saw, what the bots learned of the maps' graphics and resources, the NPCs and the fights' placement cells, the runs, and the variables the characters keep (D100, D138, D275, D298).</summary>
 /// <remarks>The profiles left it for the project's files at session 7b (D296, D304).</remarks>
 public sealed class StorageContext : DbContext
 {
@@ -24,6 +24,9 @@ public sealed class StorageContext : DbContext
 
     /// <summary>Gets how long the resources take to grow back, by the skill that gathers each (D145).</summary>
     public DbSet<LearnedRegrowth> Regrowths => Set<LearnedRegrowth>();
+
+    /// <summary>Gets what each map holds, its elements that gather a resource, as the bots saw it (D584).</summary>
+    public DbSet<LearnedSighting> Sightings => Set<LearnedSighting>();
 
     /// <summary>Gets the fights' placement cells, the map fought on and the one left, as the bots saw fights begin (D275).</summary>
     public DbSet<LearnedPlacement> Placements => Set<LearnedPlacement>();
@@ -74,6 +77,14 @@ public sealed class StorageContext : DbContext
             regrowth.ToTable("Regrowths");
             regrowth.HasKey(learned => learned.SkillId);
             regrowth.Property(learned => learned.SkillId).ValueGeneratedNever();
+        });
+
+        modelBuilder.Entity<LearnedSighting>(sighting =>
+        {
+            sighting.ToTable("Sightings");
+            sighting.HasKey(learned => learned.MapId);
+            sighting.Property(learned => learned.MapId).ValueGeneratedNever();
+            sighting.Property(learned => learned.Elements).HasConversion(elements => SightingJson.Write(elements), json => SightingJson.Read(json), SightingJson.ElementsComparer);
         });
 
         modelBuilder.Entity<LearnedPlacement>(placement =>
