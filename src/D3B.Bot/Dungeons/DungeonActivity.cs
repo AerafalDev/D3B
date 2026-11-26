@@ -42,6 +42,8 @@ namespace D3B.Bot.Dungeons;
 /// A master's followers each enter and leave by themselves behind it, as measured in every captured party (D528): the
 /// activity says which dungeon the character is in (<see cref="DungeonInside"/>), leaves out of its turn a dungeon a follower
 /// cannot enter, and its group banks together outside the dungeons, every member keeping its keys and the keyring (D529).
+/// At the door, before the keeper, it gives each follower lacking a key one of its own by an exchange, keeping what its own
+/// entry needs (<see cref="DungeonKeys"/>, D569): a dungeon is left out only when its spare keys do not cover the followers.
 /// </para>
 /// </remarks>
 public sealed class DungeonActivity : BotActivity
@@ -77,6 +79,7 @@ public sealed class DungeonActivity : BotActivity
     private long? _fightingIn;
     private int _failedJourneys;
     private int _unanswered;
+    private int _unhanded;
     private int _entered;
     private int _rooms;
     private int _lost;
@@ -183,6 +186,11 @@ public sealed class DungeonActivity : BotActivity
         return new ActivityException(message, GameText.Of(DungeonTexts.Text(key)));
     }
 
+    private static ActivityException Failure(string message, string key, GameTextValue value)
+    {
+        return new ActivityException(message, GameText.Of(DungeonTexts.Text(key), value));
+    }
+
     // What the profile, the character's level or what it carries makes impossible, which no restart would change (D519, D523).
     private static ActivityException Impossible(string message, GameText reason)
     {
@@ -224,6 +232,10 @@ public sealed class DungeonActivity : BotActivity
 
         if (mapId == dungeon.EntranceMapId)
         {
+            // A follower lacking a key is given the master's spare one first, so that each enters by itself (D528, D569).
+            if (await HandKeysAsync(context, dungeon, cancellationToken).ConfigureAwait(false))
+                return true;
+
             // The next run enters the dungeon after this one in the profile's list (D524).
             if (await EnterAsync(context, dungeon, cancellationToken).ConfigureAwait(false))
                 _next = (index + 1) % _settings.Dungeons.Count;
@@ -381,6 +393,7 @@ public sealed class DungeonActivity : BotActivity
         _shut.Clear();
         _failedJourneys = 0;
         _unanswered = 0;
+        _unhanded = 0;
     }
 
     private (int Index, Dungeon Dungeon) NextEnterable(BotContext context)
@@ -451,7 +464,10 @@ public sealed class DungeonActivity : BotActivity
         var gate = context.Actor.Gate as GroupGate;
         var dungeons = _tables.Dungeons;
 
-        foreach (var follower in _bots.Groups.FollowersOf(context.Actor.Key))
+        // What the master carries beyond its own entry, which covers the followers lacking a key in turn (D569).
+        var spare = DungeonKeys.Spare(context.State, dungeons, dungeon);
+
+        foreach (var follower in GroupChain.Order(context.State, _bots.Groups.FollowersOf(context.Actor.Key)))
         {
             if (!follower.IsConnected || gate?.IsBehind(follower.Key) == true)
                 continue;
@@ -466,8 +482,8 @@ public sealed class DungeonActivity : BotActivity
                     GameText.Of(DungeonTexts.Text("FailFollowerTooLow"), name, GameTextValue.Number(level), GameTextValue.Number(dungeon.MinLevel)));
             }
 
-            if (!CarriesKey(theirs, dungeons, dungeon))
-                return Impossible($"Follower {follower.Key.CharacterId} carries neither the key of dungeon {dungeon.Id} nor a keyring that opens it.", GameText.Of(DungeonTexts.Text("FailFollowerNoKey"), name));
+            if (!DungeonKeys.TryCover(spare, DungeonKeys.Lacking(theirs, dungeons, dungeon)))
+                return Impossible($"Follower {follower.Key.CharacterId} carries neither the key of dungeon {dungeon.Id} nor a keyring that opens it, and the character has no key to spare.", GameText.Of(DungeonTexts.Text("FailFollowerNoKey"), name));
 
             // A keeper turning a follower away, such as its keyring's charge spent, shuts the dungeon for the group's run (D524).
             if (follower.Activity is { IsOver: false, Activity: FollowActivity follow } && follow.TurnedAwayFrom.Contains(dungeon.Id))
@@ -475,6 +491,55 @@ public sealed class DungeonActivity : BotActivity
         }
 
         return null;
+    }
+
+    // Whether it gave a follower keys this step, one follower an exchange, in the chain's order: at the door, the whole group
+    // gathered there, each follower lacking a key is given what it lacks of the master's spare ones (D569). An exchange that does
+    // not conclude is tried again a few times, then shuts the dungeon for the run, lest the group wait at its door for ever.
+    private async Task<bool> HandKeysAsync(BotContext context, Dungeon dungeon, CancellationToken cancellationToken)
+    {
+        if (_bots is null || context.Actor.Gate is not GroupGate gate)
+            return false;
+
+        var dungeons = _tables.Dungeons;
+
+        bool Keyless(BotActor follower)
+        {
+            return follower.IsConnected && !gate.IsBehind(follower.Key) && DungeonKeys.Lacking(follower.State, dungeons, dungeon).Count > 0;
+        }
+
+        if (!_bots.Groups.FollowersOf(context.Actor.Key).Any(Keyless))
+            return false;
+
+        await gate.GatherAsync(context, cancellationToken).ConfigureAwait(false);
+
+        var spare = DungeonKeys.Spare(context.State, dungeons, dungeon);
+
+        foreach (var follower in GroupChain.Order(context.State, _bots.Groups.FollowersOf(context.Actor.Key)).Where(Keyless))
+        {
+            var lacking = DungeonKeys.Lacking(follower.State, dungeons, dungeon);
+
+            // Its turn reckoned the keys before the gathering: a follower they no longer cover, such as one left behind that came
+            // back meanwhile (D490), ends the step, so that the next step's turn leaves the dungeon out rather than enter without it.
+            if (!DungeonKeys.TryCover(spare, lacking))
+                return true;
+
+            Volatile.Write(ref _report, Report! with { Doing = GameText.Of(DungeonTexts.Text("DoingHandKeys"), GameTextValue.Of(follower.State.Name)) });
+
+            if (await GroupHand.GiveAsync(context, _bots.Groups, follower, DungeonKeys.StacksOf(context.State, lacking), bot => DungeonKeys.Lacking(bot.State, dungeons, dungeon).Count is 0, cancellationToken).ConfigureAwait(false))
+            {
+                _unhanded = 0;
+            }
+            else if (++_unhanded >= MostUnanswered)
+            {
+                _unhanded = 0;
+                _shut[dungeon.Id] = Failure($"Follower {follower.Key.CharacterId} took none of the keys the character gave it at the door of dungeon {dungeon.Id}, {MostUnanswered} times in a row.", "FailNoKeyHanded", GameTextValue.Of(follower.State.Name));
+            }
+
+            return true;
+        }
+
+        return false;
     }
 
     private bool IsKey(int itemId)

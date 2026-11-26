@@ -19,7 +19,8 @@ and fights, alone or in a group, and a desktop app shows what each bot does.
   can keep a Minor Uchronic Elixir going; it wears the best capture net it carries to capture wild Dragodindes, Muldos and
   Volkornes, and the smallest soul stone that suffices to capture archmonsters' souls.
 - **Dungeons**: runs the dungeons your profile lists, in turn, from the keeper to the exit, with the keyring or the keys
-  carried; it banks first when the next run would fill the character.
+  carried; it banks first when the next run would fill the character. In a group, a master with spare keys gives one to
+  each follower that has none before the door.
 - **Fight AI**: plays every class, and the fight's easy challenges.
 - **Groups**: one character leads, the others follow it, fight beside it and bank with it.
 - **Bank and guild chest**: moves items between your bank and your guild's chest, either way: everything, or by category,

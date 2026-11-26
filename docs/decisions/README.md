@@ -158,3 +158,4 @@ Each file holds the decisions of one group of [the index](../decisions-index.md)
 - [Hunting, capture nets and soul stones worn (D565)](d565-capture-gear.md): 1 decision, 4 KB.
 - [The app's 1.1.0 (D566)](d566-release-1-1-0.md): 1 decision, 1 KB.
 - [Profiles, never idle until the server's kick (D567, D568)](d567-d568-profiles-never-idle.md): 2 decisions, 6 KB.
+- [Dungeons, the master's spare keys given to its followers, and the app's 1.1.1 (D569, D570)](d569-group-keys.md): 2 decisions, 5 KB.

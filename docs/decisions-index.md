@@ -1087,3 +1087,13 @@ or refines another says so in its own entry. Add a line here with every new deci
   - The owner's report of four kicks on 25 November; restarting the whole behavior, passing on only the restart.
 - [D568](decisions/d567-d568-profiles-never-idle.md#d568-a-deposit-leaves-out-a-quests-objects-which-neither-the-bank-nor-the-guilds-chest-takes-and-what-weighs-nothing-and-a-harvest-unloaded-into-the-chest-goes-on-when-the-bank-then-takes-none-of-the-rest-while-its-bags-are-no-longer-full) A deposit leaves out a quest's objects, which neither the bank nor the guild's chest takes, and what weighs nothing, and a harvest unloaded into the chest goes on when the bank then takes none of the rest while its bags are no longer full (2026-11-26)
   - Measured on the same captures, the weightless the owner's ask; leaving out a stack once refused, every unloading judged by the pods alone, the bound objects unmeasured.
+
+## Dungeons, the master's spare keys given to its followers (D569)
+
+- [D569](decisions/d569-group-keys.md#d569-at-a-dungeons-door-the-master-gives-each-follower-lacking-a-key-one-of-its-own-by-an-exchange-keeping-what-its-own-entry-needs) At a dungeon's door the master gives each follower lacking a key one of its own by an exchange, keeping what its own entry needs (2026-11-26)
+  - The owner's ask and choice of a key a follower each entry over the keys of the master's planned runs; the follower asks the exchange, the master moves the key in.
+
+## The app's 1.1.1 (D570)
+
+- [D570](decisions/d569-group-keys.md#d570-the-apps-release-after-110-is-111-holding-the-profiles-that-restart-and-the-masters-spare-keys-given) The app's release after 1.1.0 is 1.1.1, holding the profiles that restart and the master's spare keys given (2026-11-26)
+  - The owner's choice of 1.1.1 over 1.2.0, both branches in it; nothing published first, the tag once both pull requests are on `main`.

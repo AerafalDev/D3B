@@ -18,7 +18,7 @@ done when its code, the tests it needs and its docs are in, and every check is g
 | 9 | Fights | In progress, before the blueprints (D169): 9a to 9e3, 9f's states, 9f2's summons, 9f3's bombs, 9f4's marks, 9f5's marks weighed, 9g to 9g6 done, one AI for every character (D244), Incarnam left through its portal (D253); set aside after 9f5 for step 7's studio, every session of it first (D292, D306), but for the owner's reports from game, answered as they come: the hunt attacking every group (D387), its tour leaving interiors out (D388), the AI fleeing less (D390), the harvest and the hunt rotating through sub-areas and the harvest varying its professions (D391, D392), the AI after the players' reports (D407), the harvest and the zones of a map (D424: a resource in another zone is out of reach; D425: the tour goes there through the world graph, out and back, once per tour), the Eliotrope's portals, set and cast through by every character of the bot as the references model them (D468), measured on the captures and walked and pushed through (D492); then the Roublard measured in game against big enemies, the Féca's glyphs and 9f's other mechanisms (D291) |
 | 10 | Several accounts and groups | Begun on 2026-11-18, ahead of step 7's measure in game and 7e, the owner's choice (D429): designed in four sessions (D429 to D434); 10a, the party's protocol, done (D435); 10b next |
 | 11 | Marketplace and crafting | To do |
-| 12 | Treasure hunts and dungeons | Dungeons begun on 2026-11-25 (D520 to D529): the pack's table, entering, the rooms, the exit and the bank merged; the group made in code (D528, D529) |
+| 12 | Treasure hunts and dungeons | Dungeons begun on 2026-11-25 (D520 to D529): the pack's table, entering, the rooms, the exit and the bank merged; the group made in code (D528, D529), the master's spare keys given to its followers (D569) |
 | 13 | The owner's profession scripts | To do |
 
 ## 0. Foundation
@@ -349,7 +349,7 @@ follower) on the same map, the capture of every connection on; a capture's conte
 - Clue solving, hint NPCs, dungeon routes.
 - **Dungeons** (D520 to D529), begun on 2026-11-25 at the owner's ask, ahead of steps 7e and 11: an activity of its own that
   reads the client's dungeon table and follows the server from room to room, several dungeons of a profile in turn, a character alone first, every keyed dungeon by
-  its keepers' replies' French words, entered with the keyring or a key carried. Four pull requests, each test-first on the fake
+  its keepers' replies' French words, entered with the keyring or a key carried. Five pull requests, each test-first on the fake
   game:
   1. The pack's dungeon table, format 14 (`DungeonCatalog`), and entering: the level and the key checked, the door reached, the
      keeper talked to, each reply chosen among those offered. Merged (#429).
@@ -360,6 +360,9 @@ follower) on the same map, the capture of every connection on; a capture's conte
   4. The group (D521, D528, D529): each follower entering behind its master with its own key or keyring and leaving by the exit's
      NPC itself, a dungeon a follower cannot enter left out of the group's turn, and the group banking together outside the
      dungeons, every member keeping its keys. Made in code and tests, on the fake game only.
+  5. The keys shared (D569, the owner's ask of 2026-11-26): at the door the master gives each follower lacking a key one of
+     its own by an exchange, keeping what its own entry needs, a dungeon left out only when its spare keys do not cover the
+     followers. Made in code and tests, on the fake game only.
 
 ## 13. The owner's profession scripts
 

@@ -149,4 +149,7 @@
   <data name="FailNoMaster" xml:space="preserve">
     <value>Aucun maître n'est choisi.</value>
   </data>
+  <data name="DoingTakesKeys" xml:space="preserve">
+    <value>Prend une clef de {0}</value>
+  </data>
 </root>

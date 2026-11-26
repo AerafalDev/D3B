@@ -25,6 +25,7 @@ public sealed class GroupDirectory
     private readonly Lock _lock = new();
     private ImmutableList<Following> _following = [];
     private ImmutableDictionary<CharacterKey, GroupCollect> _collecting = ImmutableDictionary<CharacterKey, GroupCollect>.Empty;
+    private ImmutableDictionary<CharacterKey, GroupHanding> _handing = ImmutableDictionary<CharacterKey, GroupHanding>.Empty;
     private int _rounds;
     private TaskCompletionSource _changed = new(TaskCreationOptions.RunContinuationsAsynchronously);
 
@@ -96,6 +97,31 @@ public sealed class GroupDirectory
         }
     }
 
+    /// <summary>Has a master give a follower objects it lacks, such as a dungeon's key, until the round given back is disposed (D569).</summary>
+    /// <param name="master">The master's character.</param>
+    /// <param name="follower">The follower given them.</param>
+    /// <returns>The round, which the master disposes once the exchange is over.</returns>
+    public IDisposable Hand(CharacterKey master, CharacterKey follower)
+    {
+        lock (_lock)
+        {
+            var handing = new GroupHanding(follower, ++_rounds);
+
+            _handing = _handing.SetItem(master, handing);
+            Raise();
+
+            return new Handing(this, master, handing);
+        }
+    }
+
+    /// <summary>Gets whom a master gives objects to now, if it gives any.</summary>
+    /// <param name="master">The master's character.</param>
+    /// <returns>The follower and the round, or <see langword="null"/>.</returns>
+    public GroupHanding? HandingFrom(CharacterKey master)
+    {
+        return Volatile.Read(ref _handing).GetValueOrDefault(master);
+    }
+
     /// <summary>Gets whose objects a master takes at the bank now, if it takes any.</summary>
     /// <param name="master">The master's character.</param>
     /// <returns>The follower and the round, or <see langword="null"/>.</returns>
@@ -153,6 +179,18 @@ public sealed class GroupDirectory
         }
     }
 
+    private void EndHand(CharacterKey master, GroupHanding handing)
+    {
+        lock (_lock)
+        {
+            if (_handing.GetValueOrDefault(master) != handing)
+                return;
+
+            _handing = _handing.Remove(master);
+            Raise();
+        }
+    }
+
     private void Raise()
     {
         var changed = _changed;
@@ -177,6 +215,25 @@ public sealed class GroupDirectory
         public void Dispose()
         {
             _groups.EndCollect(_master, _collect);
+        }
+    }
+
+    private sealed class Handing : IDisposable
+    {
+        private readonly GroupDirectory _groups;
+        private readonly CharacterKey _master;
+        private readonly GroupHanding _handing;
+
+        public Handing(GroupDirectory groups, CharacterKey master, GroupHanding handing)
+        {
+            _groups = groups;
+            _master = master;
+            _handing = handing;
+        }
+
+        public void Dispose()
+        {
+            _groups.EndHand(_master, _handing);
         }
     }
 
