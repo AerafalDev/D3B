@@ -58,7 +58,7 @@ public sealed class TransfersModule : IModule
 
         settings.Section(TransferTexts.Text("SectionOptions"));
         settings.Choice(s => s.WhenRefused, TransferTexts.Text("WhenRefused"), refusal => TransferTexts.Text($"WhenRefused{refusal}")).Help(TransferTexts.Text("WhenRefusedHelp"));
-        settings.Flag(s => s.EmptyBagsFirst, TransferTexts.Text("EmptyBagsFirst")).Help(TransferTexts.Text("EmptyBagsFirstHelp")).VisibleWhen(s => s.Direction is TransferDirection.GuildChestToBank);
+        settings.Flag(s => s.EmptyBagsFirst, TransferTexts.Text("EmptyBagsFirst")).Help(TransferTexts.Text("EmptyBagsFirstHelp"));
         settings.Flag(s => s.DryRun, TransferTexts.Text("DryRun")).Help(TransferTexts.Text("DryRunHelp"));
         settings.Flag(s => s.UseZaaps, TransferTexts.Text("UseZaaps")).Help(TransferTexts.Text("UseZaapsHelp")).Advanced();
     }

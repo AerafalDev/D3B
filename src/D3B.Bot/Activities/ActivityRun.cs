@@ -133,10 +133,12 @@ public sealed class ActivityRun
 
     // Measured on the owner's transfer of 2026-11-26 (D573): a run stopped from the app leaves open the bank it was in, and the
     // next run waited a minute there before its busy wait (D484) left it. A run is started by the player, so it takes the
-    // character as it finds it: a storage, a dialog or an exchange then left at once, no step of this run having opened it.
+    // character as it finds it: a storage, a dialog or an exchange then left at once, no step of this run having opened it. The
+    // same for a walk or a use a stopped run left going (D576): its Sacrieur's next run waited 23 s on a walk the client never
+    // confirmed, the stopped harvest no longer there to settle it.
     private static async Task<bool> BeginAsync(BotContext context, CancellationToken cancellationToken)
     {
-        if (context.State.IsInDialog)
+        if (context.State is { IsInDialog: true } or { IsWalking: true } or { IsUsing: true } or { IsWalkHeld: true })
             await Recovery.SettleAsync(context, cancellationToken).ConfigureAwait(false);
 
         return true;

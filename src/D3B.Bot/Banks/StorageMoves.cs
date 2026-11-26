@@ -1,7 +1,9 @@
 using System.Collections.Frozen;
+using D3B.Bot.Characters;
 using D3B.Bot.Runtime;
 using D3B.Network.Relay;
 using D3B.Protocol.Game;
+using Google.Protobuf;
 
 namespace D3B.Bot.Banks;
 
@@ -18,7 +20,8 @@ namespace D3B.Bot.Banks;
 /// </para>
 /// <para>
 /// The client also takes a list of stacks, or all, at once, which the server cuts short to what the pods hold with text 266:
-/// those requests are not in the readable protocol, so a stack goes at a time.
+/// those requests are not in the readable protocol, so a stack goes at a time. It puts a list in the bank by the request the
+/// bank's deposits send (<see cref="Banking.DepositAsync"/>), which the transfer uses too (D577); in the chest, a stack at a time.
 /// </para>
 /// </remarks>
 public static class StorageMoves
@@ -41,6 +44,9 @@ public static class StorageMoves
     /// <summary>The text of a chest's tab that does not take a type of object.</summary>
     public const int TypeRefusedTextId = 661;
 
+    /// <summary>The text of a bank action asked less than about 0.55 s after the last, « veuillez attendre {0} seconde(s) » (D577).</summary>
+    public const int TooSoonTextId = 268;
+
     // No guild (659), a guild younger than 30 days (666), no access to the chest (711): the client's information messages.
     private static readonly FrozenSet<int> _noRight = FrozenSet.Create(NoConsultRightTextId, NoDepositRightTextId, NoWithdrawRightTextId, 659, 666, 711);
 
@@ -58,18 +64,15 @@ public static class StorageMoves
         if (context.State.Storage is not { } storage || !storage.Stacks.TryGetValue(uid, out var stack))
             return StorageMoveOutcome.Busy;
 
-        var answered = context.Expect((side, message, _) => side is RelayDirection.FromServer && message switch
+        var request = new ExchangeObjectMoveRequest { Uid = uid, Quantity = -Math.Min(quantity, stack.Quantity) };
+
+        return await MoveAsync(context, request, (side, message, _) => side is RelayDirection.FromServer && message switch
         {
             StorageObjectUpdateEvent { Object.Item: { } changed } => changed.Uid == uid,
             StorageObjectRemovedEvent removed => removed.Uid == uid,
             TextInformationEvent { Type: TextInformationType.Error } => true,
             _ => false,
-        });
-        var weight = context.Expect((side, message, _) => side is RelayDirection.FromServer && message is InventoryWeightEvent);
-
-        await context.SendAsync(new ExchangeObjectMoveRequest { Uid = uid, Quantity = -Math.Min(quantity, stack.Quantity) }, cancellationToken).ConfigureAwait(false);
-
-        return await AnsweredAsync(context, answered, weight, cancellationToken).ConfigureAwait(false);
+        }, cancellationToken).ConfigureAwait(false);
     }
 
     /// <summary>Puts objects of a stack of the inventory into the open storage.</summary>
@@ -88,13 +91,10 @@ public static class StorageMoves
         if (state.Storage is null || !state.Inventory.TryGetValue(uid, out var stack) || stack.IsWorn)
             return StorageMoveOutcome.Busy;
 
-        var answered = context.Expect((side, message, _) => side is RelayDirection.FromServer
-            && message is StorageObjectUpdateEvent or StorageObjectsUpdateEvent or TextInformationEvent { Type: TextInformationType.Error });
-        var weight = context.Expect((side, message, _) => side is RelayDirection.FromServer && message is InventoryWeightEvent);
+        var request = new ExchangeObjectMoveRequest { Uid = uid, Quantity = Math.Min(quantity, stack.Quantity) };
 
-        await context.SendAsync(new ExchangeObjectMoveRequest { Uid = uid, Quantity = Math.Min(quantity, stack.Quantity) }, cancellationToken).ConfigureAwait(false);
-
-        return await AnsweredAsync(context, answered, weight, cancellationToken).ConfigureAwait(false);
+        return await MoveAsync(context, request, (side, message, _) => side is RelayDirection.FromServer
+            && message is StorageObjectUpdateEvent or StorageObjectsUpdateEvent or TextInformationEvent { Type: TextInformationType.Error }, cancellationToken).ConfigureAwait(false);
     }
 
     /// <summary>Tells what a text of the error kind the server answers a move with says.</summary>
@@ -112,12 +112,38 @@ public static class StorageMoves
         };
     }
 
-    private static async Task<StorageMoveOutcome> AnsweredAsync(BotContext context, GameExpectation answered, GameExpectation weight, CancellationToken cancellationToken)
+    // Measured on the owner's connections of 26 November (D577): the server refuses a bank action asked too soon after the last,
+    // with text 268, and takes it asked again a moment later; a refusal so answered is not the item's.
+    private static async Task<StorageMoveOutcome> MoveAsync(BotContext context, ExchangeObjectMoveRequest request, Func<RelayDirection, IMessage, CharacterState, bool> answers, CancellationToken cancellationToken)
+    {
+        for (var attempt = 0; ; attempt++)
+        {
+            var answered = context.Expect(answers);
+            var weight = context.Expect((side, message, _) => side is RelayDirection.FromServer && message is InventoryWeightEvent);
+
+            await context.SendAsync(request, cancellationToken).ConfigureAwait(false);
+
+            var outcome = await AnsweredAsync(context, answered, weight, cancellationToken).ConfigureAwait(false);
+
+            if (outcome is not null)
+                return outcome.Value;
+
+            if (attempt > 0)
+                return StorageMoveOutcome.Refused;
+
+            await Task.Delay(context.Delays.Display, context.Time, cancellationToken).ConfigureAwait(false);
+        }
+    }
+
+    // Null when the server answered that the action came too soon.
+    private static async Task<StorageMoveOutcome?> AnsweredAsync(BotContext context, GameExpectation answered, GameExpectation weight, CancellationToken cancellationToken)
     {
         switch (await answered.WaitAsync(context.Delays.Answer, cancellationToken).ConfigureAwait(false))
         {
             case null:
                 return StorageMoveOutcome.NoAnswer;
+            case TextInformationEvent { TextId: TooSoonTextId }:
+                return null;
             case TextInformationEvent text:
                 return RefusalOf(text.TextId);
         }

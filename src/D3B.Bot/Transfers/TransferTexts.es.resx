@@ -159,7 +159,7 @@
     <value>Vaciar primero la bolsa en el banco</value>
   </data>
   <data name="EmptyBagsFirstHelp" xml:space="preserve">
-    <value>Del cofre del gremio al banco: primero deposita en el banco todo lo que lleva la bolsa salvo lo equipado, también tus propios objetos, para que cada vuelta tome tanto como permitan los pods.</value>
+    <value>Primero deposita en el banco todo lo que lleva la bolsa salvo lo equipado, también tus propios objetos: desde el cofre del gremio, para que cada vuelta tome tanto como permitan los pods; desde el banco, para que los objetos de la bolsa vayan al cofre con el resto, y lo que los ajustes no mueven o el cofre rechaza se queda en el banco.</value>
   </data>
   <data name="DryRun" xml:space="preserve">
     <value>Simulación</value>

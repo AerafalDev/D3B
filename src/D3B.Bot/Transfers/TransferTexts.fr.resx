@@ -159,7 +159,7 @@
     <value>Vider d’abord le sac à la banque</value>
   </data>
   <data name="EmptyBagsFirstHelp" xml:space="preserve">
-    <value>Du coffre de guilde vers la banque : dépose d’abord à la banque tout ce que le sac contient sauf l’équipement porté, vos propres objets aussi, pour que chaque tour prenne autant que les pods le permettent.</value>
+    <value>Dépose d’abord à la banque tout ce que le sac contient sauf l’équipement porté, vos propres objets aussi : depuis le coffre de guilde, pour que chaque tour prenne autant que les pods le permettent ; depuis la banque, pour que les objets du sac partent au coffre avec le reste, ce que les réglages ne déplacent pas ou que le coffre refuse restant à la banque.</value>
   </data>
   <data name="DryRun" xml:space="preserve">
     <value>Simulation</value>

@@ -36,7 +36,7 @@ public sealed class TransferSettings
     /// <summary>Gets or sets what the transfer does with an item the destination refuses.</summary>
     public TransferRefusal WhenRefused { get; set; }
 
-    /// <summary>Gets or sets whether a transfer from the guild's chest first puts in the bank all the bags hold but what is worn, the character's own too, so that its pods are free (D564).</summary>
+    /// <summary>Gets or sets whether the transfer first puts in the bank all the bags hold but what is worn, the character's own too: from the guild's chest so that its pods are free (D564), from the bank so that they go to the chest with the rest (D575).</summary>
     public bool EmptyBagsFirst { get; set; }
 
     /// <summary>Gets or sets whether the transfer only opens the source and says what it would move, moving nothing.</summary>

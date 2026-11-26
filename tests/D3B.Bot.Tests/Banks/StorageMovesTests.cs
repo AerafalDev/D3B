@@ -46,6 +46,24 @@ public sealed class StorageMovesTests
     }
 
     [Fact]
+    public async Task AMoveRefusedAsAskedTooSoonIsAskedOnceMoreAMomentLater()
+    {
+        // Measured on the owner's connections of 2026-11-26 (D577): text 268, a bank action asked less than about 0.55 s after the last.
+        await using var play = new TestPlay();
+        var (connection, bot) = await InTheChestAsync(play);
+        var take = bot.RunAsync((context, token) => context.TakeFromStorageAsync(500, 30, token), TestContext.Current.CancellationToken);
+
+        Assert.Equal(new ExchangeObjectMoveRequest { Uid = 500, Quantity = -30 }, await TestWalks.SentAsync(play, connection, 1));
+        connection.Server(new TextInformationEvent { TextId = StorageMoves.TooSoonTextId, Type = TextInformationType.Error });
+
+        Assert.Equal(new ExchangeObjectMoveRequest { Uid = 500, Quantity = -30 }, await TestWalks.SentAsync(play, connection, 2));
+        connection.Server(new TextInformationEvent { TextId = StorageMoves.TooSoonTextId, Type = TextInformationType.Error });
+
+        Assert.Equal(StorageMoveOutcome.Refused, await take);
+        Assert.Equal(2, connection.Sent.Count);
+    }
+
+    [Fact]
     public async Task ATakeThePodsRefuseIsTooHeavyAndATakeOfAStackTheStorageLacksIsSentNot()
     {
         await using var play = new TestPlay();
