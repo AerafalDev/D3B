@@ -302,7 +302,7 @@ public sealed class HarvestActivity : BotActivity
     {
         ArgumentNullException.ThrowIfNull(stack);
 
-        return _settings.Deposit is HarvestDeposit.AllButWorn || DepositedItems().Contains(stack.ItemId);
+        return (_settings.Deposit is HarvestDeposit.AllButWorn || DepositedItems().Contains(stack.ItemId)) && _tables.Items.IsDeposited(stack.ItemId);
     }
 
     /// <inheritdoc/>
@@ -310,11 +310,9 @@ public sealed class HarvestActivity : BotActivity
     {
         ArgumentNullException.ThrowIfNull(context);
 
-        var deposited = DepositedItems();
-
         Publish(context.State, GameText.Of(HarvestTexts.Text("DoingBank")));
 
-        if (_settings.DepositTo is HarvestDepositPlace.GuildChest && await GuildChestAsync(context, deposited, cancellationToken).ConfigureAwait(false))
+        if (_settings.DepositTo is HarvestDepositPlace.GuildChest && await GuildChestAsync(context, cancellationToken).ConfigureAwait(false))
             return true;
 
         // Measured on the owner's miner of 24 November (D517): no bank found from a mine whose door the server refused once. Any
@@ -323,14 +321,15 @@ public sealed class HarvestActivity : BotActivity
         var outcome = await _bankings.TryAsync(
             context,
             "the bank",
-            token => context.BankAsync(stack => _settings.Deposit is HarvestDeposit.AllButWorn || deposited.Contains(stack.ItemId), 0, useZaaps, token),
-            banked => banked is BankOutcome.Done,
+            token => context.BankAsync(Deposits, 0, useZaaps, token),
+            banked => Unloaded(banked, context.State),
             cancellationToken).ConfigureAwait(false);
 
-        if (outcome is not BankOutcome.Done)
+        if (!Unloaded(outcome, context.State))
             return false;
 
-        _reporter.Banked();
+        if (outcome is BankOutcome.Done)
+            _reporter.Banked();
 
         // Measured: what the settings leave in the inventory may weigh more than the share the character banks at;
         // the activity says so, rather than go back to the bank at every step.
@@ -454,10 +453,18 @@ public sealed class HarvestActivity : BotActivity
         return new ActivityException($"The character is still full once banked, {state.Weight} of {state.MaxWeight} pods.", reason) { IsFinal = true };
     }
 
-    private async Task<bool> GuildChestAsync(BotContext context, FrozenSet<int> deposited, CancellationToken cancellationToken)
+    // The bank took what it may, or none of what the guild's chest left while the bags are no longer full: the unloading did what
+    // it is for, as the owner's bot judged it by the pods (BillBot); measured on 25 November, the harvest ended on a bank that
+    // refused a quest's objects alone, its bags at 2 % of their pods.
+    private bool Unloaded(BankOutcome outcome, CharacterState state)
+    {
+        return outcome is BankOutcome.Done || (outcome is BankOutcome.Refused && !IsFull(state));
+    }
+
+    private async Task<bool> GuildChestAsync(BotContext context, CancellationToken cancellationToken)
     {
         var chests = _places.MapsDrawing(GuildChest.GfxId);
-        var outcome = await context.GuildChestAsync(chests, stack => _settings.Deposit is HarvestDeposit.AllButWorn || deposited.Contains(stack.ItemId), cancellationToken).ConfigureAwait(false);
+        var outcome = await context.GuildChestAsync(chests, Deposits, cancellationToken).ConfigureAwait(false);
 
         if (outcome is BankOutcome.Done)
         {

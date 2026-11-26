@@ -186,7 +186,8 @@ The bots run in `D3B.Bot`: what each part does today, with the decisions that ma
   sought, talks to him, gives the reply of his the question offers, puts the stacks asked for in by one request and the
   kamas by another, and leaves. A journey there that says no path while a way to a bank leads from where the character
   stands, a way that failed on it left out, is not travelled, not without a bank, so the caller tries again (D517).
-  `BankDirectory`, one per host and shared by its bots, holds the banks' insides
+  The activities' deposits, a group master's too, leave out a quest's objects, which neither the bank nor the guild's chest
+  takes, and what weighs nothing (`StoredItems.IsDeposited`, D568). `BankDirectory`, one per host and shared by its bots, holds the banks' insides
   (`WorldInsides`), the bankers and their replies, the insides the server showed holding no banker, and the maps where a
   banker's question offered none of the bank's replies, refused for the run (D251). Walking, using,
   changing maps and travelling answer `Busy` during a dialog or an exchange, which the server refuses a walk during.
@@ -212,8 +213,9 @@ The bots run in `D3B.Bot`: what each part does today, with the decisions that ma
 - **The run's restart** (D519): an activity that `RestartsAfterFailure` (the harvest's and the hunt's, by their profiles'
   `RestartAfterFailure`, on by default) is not ended by a step's error, an unloading that did not unload, or no progress for
   `ActivityRestarts.NoProgress` (10 min with no map changed, no fight begun, no pod gained or banked, no life coming back
-  (`BotActor.LifeAt`); a watch of the run's own
-  cancels the behavior it waits on, the connection gone, the player's hand, a fight and `BotActivity.WaitingUntil` excused).
+  (`BotActor.LifeAt`); a watch of the run's own, on from the run's start (D567),
+  cancels the behavior it waits on, the connection gone, the player's hand, a fight, `BotActivity.WaitingUntil` and an
+  activity that says it would not restart excused).
   The run puts the character back in order (`Recovery.SettleAsync`, status `Restarting`), waits 30 s doubled for each
   restart of the last hour, 8 min at most, then `BotActivity.Restart` begins the activity anew, its counts kept. A failure
   that `ActivityException.IsFinal`, or the seventh of an hour (`ActivityRun.GaveUp`), ends the run; a stopped run is never
@@ -278,7 +280,7 @@ The bots run in `D3B.Bot`: what each part does today, with the decisions that ma
   D148, D153, D156), or with none chosen the stack that heals the least of those whose use only heals, by the pack
   (`Food.StackToEat`, D257), until its life is whole; with nothing to eat, it regenerates back to its share alone, looking
   at its life each 10 seconds at least (D258); full, it may deposit in the guild's chest (`GuildChest`, D147), what the chest leaves going to the
-  character's own. Between two steps the run lets `BotDelays.BetweenSteps` pass, the client's display time at least (D154).
+  character's own, the unloading done once the bags are no longer full though the bank took none of it (D568). Between two steps the run lets `BotDelays.BetweenSteps` pass, the client's display time at least (D154).
   An activity gives its figures (`BotActivity.Statistics`,
   `ActivityStatistics`), and a run keeps the character it started with (`ActivityRun.StartedWith`, D146) and counts the
   fights that end while it goes on, the AI's and the player's: won, lost, the character's deaths, the experience and kamas
@@ -1165,7 +1167,8 @@ moved to `D3B.Studio` (D393), with no new interface:
   where they are) and starts `BehaviorActivity`, the one activity that runs any behavior: each step the leaf chosen, then
   its actions gone through from the first, goals passed, what the state says nothing of played once per visit
   (`StateVisit`), an activity's node delegating to today's activity, which plays nothing at the step it starts, so that the
-  run looks at its pods first (D458); a leaf played to its end and chosen again is done
+  run looks at its pods first (D458), and which the behavior speaks for in every member of `BotActivity`, its restart
+  included, a test checking each by reflection (D567); a leaf played to its end and chosen again is done
   unless it repeats (`BehaviorState.Repeat`: a number of times, for ever or until a condition, D421); no state holding, the run waits. On the bot's loop (`BotActivity.Watch`) rules play on events and an
   urgent state cuts the step. Variables of the run, the character's (`CharacterVariables`, kept by `D3B.Storage`) and the
   bots' (`SharedVariables`). The journal says each state entered and each note; the trace, each decision (D350).

@@ -473,6 +473,11 @@ follower) on the same map, the capture of every connection on; a capture's conte
   D488, the miner's door of D517), made in code and tests: a journey or a banking that fails climbs a bounded recovery ladder
   before it fails, and a run that fails, or makes no progress for 10 minutes, is put in order and restarted, with a growing
   wait and six restarts an hour at most, as the harvest's and the hunt's profiles say. Left: seen in game.
+- **Profiles never idle until the server's kick** (D567, D568), the owner's report of 2026-11-26 after four kicks the night
+  before, made in code and tests from the four captures: a studio profile's behavior passes on every member of its activity, the
+  restart after a failure included, which no profile had, and the run watches its progress from the start; the deposits leave
+  out a quest's objects and what weighs nothing, and a harvest unloaded into the guild's chest goes on once no longer full though
+  the bank took none of the rest. Left: seen in game; the client's own leaving closing the banker's dialog (status.md).
 - **Spanish** (D554), the owner's ask of 2026-11-25, made on 2026-11-25 in code and tests: the studio's and the modules'
   texts in Spanish beside French and English, chosen in the settings or taken from a Spanish system, and the game's names
   from the client's Spanish texts, pack format 15. Left: the texts read by a Spanish speaker. The pack of format 15

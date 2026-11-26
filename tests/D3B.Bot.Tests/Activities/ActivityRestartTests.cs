@@ -111,6 +111,25 @@ public sealed class ActivityRestartTests : IAsyncDisposable
     }
 
     [Fact]
+    public async Task AnActivityItsProfileDoesNotRestartIsNeverCutForNoProgress()
+    {
+        // The run watches every activity's progress from its start (D567): one that would not restart, such as a follower waiting
+        // on its master, waits as long as it must.
+        var (_, bot) = await _play.EnterAsync(300);
+        var activity = new FailingActivity { Restarts = false, Failure = _ => null };
+        var run = bot.StartActivity(activity);
+        var end = _play.Time.GetUtcNow() + ActivityRestarts.Default.NoProgress * 2;
+
+        await _play.AdvanceUntilAsync(() => run.IsOver || _play.Time.GetUtcNow() >= end, TimeSpan.FromSeconds(15));
+
+        Assert.False(run.IsOver);
+        Assert.Equal(1, activity.Started);
+
+        run.Stop();
+        Assert.Equal(ActivityOutcome.Stopped, await run.Completion);
+    }
+
+    [Fact]
     public async Task PastTheRestartsAnHourAllowsTheRunFailsSayingItGaveUp()
     {
         _play.Bots.Restarts = new ActivityRestarts { FirstDelay = TimeSpan.FromSeconds(1), MostPerHour = 3 };

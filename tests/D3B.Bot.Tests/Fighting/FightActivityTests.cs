@@ -943,4 +943,16 @@ public sealed class FightActivityTests : IAsyncDisposable
     {
         Assert.Empty(Activity(new FightSettings()).MountRaces);
     }
+
+    [Fact]
+    public void AHuntBankingAllButWhatIsWornLeavesOutAQuestsObjectsAndWhatWeighsNothing()
+    {
+        // Measured on the owner's captures of 25 November (D568): neither the bank nor the guild's chest takes a quest's objects; what
+        // weighs nothing leaves the pods as they are, the owner's choice.
+        var activity = Activity(new FightSettings { Place = FightPlace.Chosen, SubAreas = [TestPlay.SubAreaId], Deposit = FightDeposit.AllButWorn });
+
+        Assert.True(activity.Deposits(new InventoryItem(20, TestPlay.Ash, 3, InventoryItem.NotWorn)));
+        Assert.False(activity.Deposits(new InventoryItem(21, TestPlay.QuestObject, 1, InventoryItem.NotWorn)));
+        Assert.False(activity.Deposits(new InventoryItem(22, TestPlay.Weightless, 4, InventoryItem.NotWorn)));
+    }
 }

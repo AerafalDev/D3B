@@ -216,7 +216,7 @@ public sealed class FightActivity : BotActivity
     {
         ArgumentNullException.ThrowIfNull(stack);
 
-        return _settings.Deposit is FightDeposit.AllButWorn || _loot.ContainsKey(stack.ItemId);
+        return (_settings.Deposit is FightDeposit.AllButWorn || _loot.ContainsKey(stack.ItemId)) && _tables.Items.IsDeposited(stack.ItemId);
     }
 
     /// <inheritdoc/>
