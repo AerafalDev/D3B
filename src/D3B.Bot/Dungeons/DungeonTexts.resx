@@ -72,7 +72,7 @@
     <value>{0}, who follows the character, is level {1}, and the dungeon lets in from level {2}.</value>
   </data>
   <data name="FailFollowerNoKey" xml:space="preserve">
-    <value>{0}, who follows the character, carries neither the dungeon's key nor a keyring that opens it.</value>
+    <value>{0}, who follows the character, carries neither the dungeon's key nor a keyring that opens it, and the character has no key to spare.</value>
   </data>
   <data name="FailFollowerTurnedAway" xml:space="preserve">
     <value>{0}, who follows the character, was turned away by the dungeon's keeper.</value>
@@ -187,5 +187,11 @@
   </data>
   <data name="RuleDungeons" xml:space="preserve">
     <value>Choose at least one dungeon.</value>
+  </data>
+  <data name="DoingHandKeys" xml:space="preserve">
+    <value>Gives a key to {0}</value>
+  </data>
+  <data name="FailNoKeyHanded" xml:space="preserve">
+    <value>{0}, who follows the character, took none of the keys the character gives it at the dungeon's door.</value>
   </data>
 </root>

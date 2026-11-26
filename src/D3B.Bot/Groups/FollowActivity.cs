@@ -29,7 +29,8 @@ namespace D3B.Bot.Groups;
 /// turns them on by itself 3 to 22 ms after each party it joins, as long as its own window has them on, so the follower
 /// lets the client's display time pass, then turns both off, at each party joined.</item>
 /// <item>The master missing, disconnected or paused, the follower waits where it stands: no follower leads (D432).</item>
-/// <item>With its master, its master taking its objects at the bank, it gives them by an exchange (D433, D442).</item>
+/// <item>With its master, its master taking its objects at the bank, it gives them by an exchange (D433, D442); its master
+/// giving it a dungeon's key it lacks at the door, it takes it by an exchange it asks the same way (D569).</item>
 /// <item>With its master, under the share of life its master's profile heals under, it heals: it eats until its life is
 /// whole the food it carries that only heals, else regenerates up to the share, its master waiting to attack (D441).</item>
 /// <item>With its master, as the master walks, it walks to the cell its master walks to, at once, its exit to the next map
@@ -103,6 +104,7 @@ public sealed class FollowActivity : BotActivity, IDisposable
     private (string? Connection, int Fight)? _joined;
     private int? _over;
     private (string? Connection, int Round)? _giving;
+    private (string? Connection, int Round)? _taking;
     private ImmutableArray<int> _copied;
     private (long Map, int MastersEnd, int Cell)? _copiedTo;
     private int _failedChanges;
@@ -255,6 +257,10 @@ public sealed class FollowActivity : BotActivity, IDisposable
         {
             // Its master taking its objects at the bank (D433, D442).
             if (await GiveAsync(context, seen, cancellationToken).ConfigureAwait(false))
+                return true;
+
+            // Its master giving it a dungeon's key it lacks, at the door (D569).
+            if (await TakeAsync(context, seen, cancellationToken).ConfigureAwait(false))
                 return true;
 
             // In real time first (D447): a follower healing would fall a map behind its master, who walks on.
@@ -837,6 +843,45 @@ public sealed class FollowActivity : BotActivity, IDisposable
         }
 
         await context.WaitUntilAsync(now => now.Exchange is null, _exchangeWait, cancellationToken).ConfigureAwait(false);
+
+        return true;
+    }
+
+    // Whether it took this step: its master giving it what it lacks, such as a dungeon's key before the door (D569), it asks the
+    // master for an exchange once a round, as at the bank, waits for its master to move the objects in and say it is ready, then
+    // says it is ready naming the changes, which concludes.
+    private async Task<bool> TakeAsync(BotContext context, BotSeen master, CancellationToken cancellationToken)
+    {
+        var me = context.Actor;
+        var masterId = master.Bot.Key.CharacterId;
+
+        if (_bots.Groups.HandingFrom(master.Bot.Key) is not { } handing || handing.Follower != me.Key)
+            return false;
+
+        if (context.State.Exchange is not { IsOpen: true } exchange)
+        {
+            if (_taking == (me.ConnectionId, handing.Round))
+                return false;
+
+            _taking = (me.ConnectionId, handing.Round);
+            Publish(GameText.Of(GroupTexts.Text("DoingTakesKeys"), GameTextValue.Of(master.State.Name)));
+            GroupLog.AskingExchange(context.Log, me.Key.CharacterId, masterId);
+            await context.SendAsync(new ExchangePlayerRequest { TargetId = masterId }, cancellationToken).ConfigureAwait(false);
+            await context.WaitUntilAsync(now => now.Exchange is { IsOpen: true }, _exchangeWait, cancellationToken).ConfigureAwait(false);
+
+            return true;
+        }
+
+        if (exchange.IsReady || exchange.SourceId != me.Key.CharacterId)
+            return false;
+
+        await context.WaitUntilAsync(now => now.Exchange is not { IsOpen: true, IsOtherReady: false }, _exchangeWait, cancellationToken).ConfigureAwait(false);
+
+        if (context.State.Exchange is { IsOpen: true, IsOtherReady: true, IsReady: false } given)
+        {
+            await context.SendAsync(new ExchangeReadyRequest { Step = given.Changes, Ready = true }, cancellationToken).ConfigureAwait(false);
+            await context.WaitUntilAsync(now => now.Exchange is null, _exchangeWait, cancellationToken).ConfigureAwait(false);
+        }
 
         return true;
     }

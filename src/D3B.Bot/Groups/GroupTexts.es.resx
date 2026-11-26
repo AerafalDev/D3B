@@ -149,4 +149,7 @@
   <data name="FailNoMaster" xml:space="preserve">
     <value>No se ha elegido ningún líder.</value>
   </data>
+  <data name="DoingTakesKeys" xml:space="preserve">
+    <value>Toma una llave de {0}</value>
+  </data>
 </root>

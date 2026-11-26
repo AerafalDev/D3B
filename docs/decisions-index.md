@@ -1080,3 +1080,13 @@ or refines another says so in its own entry. Add a line here with every new deci
 
 - [D566](decisions/d566-release-1-1-0.md#d566-the-apps-release-after-101-is-110-holding-the-bank-and-chest-transfer-fixed-and-the-capture-gear-worn-its-mapping-of-format-26-published-first) The app's release after 1.0.1 is 1.1.0, holding the bank and chest transfer fixed and the capture gear worn, its mapping of format 26 published first (2026-11-25)
   - The owner's choice of 1.1.0 over 1.0.2; `mapping-26.binpb` on `client-3.7.14.18`, the tag once both pull requests are on `main`.
+
+## Dungeons, the master's spare keys given to its followers (D569)
+
+- [D569](decisions/d569-group-keys.md#d569-at-a-dungeons-door-the-master-gives-each-follower-lacking-a-key-one-of-its-own-by-an-exchange-keeping-what-its-own-entry-needs) At a dungeon's door the master gives each follower lacking a key one of its own by an exchange, keeping what its own entry needs (2026-11-26)
+  - The owner's ask and choice of a key a follower each entry over the keys of the master's planned runs; the follower asks the exchange, the master moves the key in.
+
+## The app's 1.1.1 (D570)
+
+- [D570](decisions/d569-group-keys.md#d570-the-apps-release-after-110-is-111-holding-the-profiles-that-restart-and-the-masters-spare-keys-given) The app's release after 1.1.0 is 1.1.1, holding the profiles that restart and the master's spare keys given (2026-11-26)
+  - The owner's choice of 1.1.1 over 1.2.0, both branches in it; nothing published first, the tag once both pull requests are on `main`.

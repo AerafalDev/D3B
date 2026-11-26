@@ -56,6 +56,9 @@ internal static partial class GroupLog
     [LoggerMessage(Level = LogLevel.Information, Message = "Bot {Character}: was given {Stacks} stacks by its follower {Follower}")]
     public static partial void Given(ILogger logger, long character, long follower, int stacks);
 
+    [LoggerMessage(Level = LogLevel.Information, Message = "Bot {Character}: gave {Stacks} stacks to its follower {Follower}")]
+    public static partial void Handed(ILogger logger, long character, long follower, int stacks);
+
     [LoggerMessage(Level = LogLevel.Information, Message = "Bot {Character}: asks its master {Master} for an exchange")]
     public static partial void AskingExchange(ILogger logger, long character, long master);
 }

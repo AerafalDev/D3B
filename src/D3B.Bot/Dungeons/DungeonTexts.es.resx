@@ -72,7 +72,7 @@
     <value>{0}, que sigue al personaje, es de nivel {1}, y la mazmorra admite a partir del nivel {2}.</value>
   </data>
   <data name="FailFollowerNoKey" xml:space="preserve">
-    <value>{0}, que sigue al personaje, no lleva ni la llave de la mazmorra ni un llavero que la abra.</value>
+    <value>{0}, que sigue al personaje, no lleva ni la llave de la mazmorra ni un llavero que la abra, y el personaje no tiene llave de sobra.</value>
   </data>
   <data name="FailFollowerTurnedAway" xml:space="preserve">
     <value>El guardián de la mazmorra rechazó a {0}, que sigue al personaje.</value>
@@ -187,5 +187,11 @@
   </data>
   <data name="RuleDungeons" xml:space="preserve">
     <value>Elige al menos una mazmorra.</value>
+  </data>
+  <data name="DoingHandKeys" xml:space="preserve">
+    <value>Da una llave a {0}</value>
+  </data>
+  <data name="FailNoKeyHanded" xml:space="preserve">
+    <value>{0}, que sigue al personaje, no tomó ninguna de las llaves que el personaje le da en la puerta de la mazmorra.</value>
   </data>
 </root>
