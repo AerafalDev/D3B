@@ -1109,3 +1109,8 @@ or refines another says so in its own entry. Add a line here with every new deci
   - Measured on the owner's run of 26 November 12:57 UTC; every refusal kept, by stack, in the database.
 - [D573](decisions/d572-d573-transfer-refusals-and-open-storage.md#d573-a-run-begun-while-the-character-is-in-a-storage-a-dialog-or-an-exchange-leaves-it-before-its-first-step-rather-than-wait-the-busy-waits-minute) A run begun while the character is in a storage, a dialog or an exchange leaves it before its first step, rather than wait the busy wait's minute (2026-11-26)
   - The same run, four waits of a minute after the owner's stops; leaving at the stop, a shorter wait, the transfer alone.
+
+## The app's 1.1.2 (D574)
+
+- [D574](decisions/d574-release-1-1-2.md#d574-the-apps-release-after-111-is-112-holding-the-harvest-that-no-longer-seeks-the-maps-no-way-leads-to-and-the-transfers-lasting-refusals) The app's release after 1.1.1 is 1.1.2, holding the harvest that no longer seeks the maps no way leads to and the transfer's lasting refusals (2026-11-26)
+  - The owner's choice of 1.1.2 over 1.2.0, both fixes in it, tagged before either is seen in game; nothing published first.
