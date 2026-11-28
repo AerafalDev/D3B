@@ -479,6 +479,10 @@ follower) on the same map, the capture of every connection on; a capture's conte
   stay out of the zone's next tours until a level, the subscription or the zaaps known change; since D581 through the activity's
   restarts too, and the map an aggression was lost on stays out until the character is within 20 levels of its highest monster, the owner's choice (D582). Left: seen in game; the automatic
   place weighing a sub-area by the maps the character reaches (status.md).
+- **The harvest hurries rather than wait** (D587), the owner's report of 2026-11-28 (the Forgelance miner stopping too often),
+  measured on its journals and `d3b.db`, made in code and tests: the bound from below stays within a quarter over the shortest time
+  known, a map found still growing waits a quarter of it, and a rotation that would wait goes to the maps whose shortest time is
+  past. Left: seen in game.
 - **The resources no bot saw** (D586), the owner's report of 2026-11-28 (rice and silicate never harvested), measured on the
   week's 125 captures and the owner's `d3b.db`, made in code and tests: the automatic place counts a resource no learned graphic
   places on 17 % of the maps of the sub-areas listing it, until a bot sees it; the farmer of 200 goes to the Champs de glace for

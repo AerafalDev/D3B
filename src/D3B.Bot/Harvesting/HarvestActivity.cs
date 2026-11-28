@@ -879,7 +879,8 @@ public sealed class HarvestActivity : BotActivity
     }
 
     // Nothing of the zone is ready now: the activity goes on to the zone of the rotation left longest ago that has maps to go through,
-    // and waits only when every one still grows back or was swept for nothing (D145, D391).
+    // else to a map whose resources' shortest time is past, and waits only when every one still grows back or was swept for nothing
+    // (D145, D391, D587).
     private async Task RotateAsync(BotContext context, HarvestRotationZone current, CancellationToken cancellationToken)
     {
         var now = context.Time.GetUtcNow();
@@ -916,14 +917,18 @@ public sealed class HarvestActivity : BotActivity
         if (_settings.Place is HarvestPlace.Automatic && _rotation.TrueForAll(member => member.Done))
             Draw(context);
 
-        if (NextOf(context, current) is { } next)
+        // The tour just made may have been hurried: the reckoning orders the rotation again while some map is ready by it (D587).
+        HarvestRotation.Calm(_rotation);
+
+        if ((NextOf(context, current) ?? HarvestRotation.Hurry(_rotation, now, current, (_, remaining) => ChangesTo(context, remaining))) is { } next)
         {
             _current = next;
 
             return;
         }
 
-        // Every zone of the rotation still grows back or was swept for nothing: waited for here, until the first should be ready.
+        // Every zone of the rotation still grows back, even by the shortest times known, or was swept for nothing: waited for here,
+        // until the first should be ready.
         if (HarvestRotation.WakeAt(_rotation, now) is { } ready)
         {
             await WaitGrowAsync(context, zone, ready, cancellationToken).ConfigureAwait(false);
