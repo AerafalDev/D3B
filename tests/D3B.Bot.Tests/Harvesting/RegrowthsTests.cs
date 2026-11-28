@@ -65,7 +65,7 @@ public sealed class RegrowthsTests
     }
 
     [Fact]
-    public void AnElementABotHarvestedFoundStillGrowingGivesABoundFromBelowNeverOverTwiceTheShortestKnown()
+    public void AnElementABotHarvestedFoundStillGrowingGivesABoundFromBelowNeverOverAQuarterMoreThanTheShortestKnown()
     {
         var regrowths = new Regrowths();
         var told = new List<int>();
@@ -74,18 +74,18 @@ public sealed class RegrowthsTests
         regrowths.Learned += told.Add;
         regrowths.Harvested(1, 10, 68, _start);
 
-        // Measured on the owner's miner: ore found grown back 11 min after a harvest, and still growing 18 to 30 min after others.
-        Assert.True(regrowths.StillGrowing(1, 10, 68, _start.AddSeconds(900)));
-        Assert.Equal(new Regrowth(null, 0, TimeSpan.FromSeconds(600), TimeSpan.FromSeconds(900)), regrowths.TryGet(68, out var first) ? first : default);
-        Assert.Equal(TimeSpan.FromSeconds(900), regrowths.Reckoned(68));
+        Assert.True(regrowths.StillGrowing(1, 10, 68, _start.AddSeconds(700)));
+        Assert.Equal(new Regrowth(null, 0, TimeSpan.FromSeconds(600), TimeSpan.FromSeconds(700)), regrowths.TryGet(68, out var first) ? first : default);
+        Assert.Equal(TimeSpan.FromSeconds(700), regrowths.Reckoned(68));
 
-        // Another player may have harvested it meanwhile, unseen: the bound stays within twice the shortest time known.
+        // Measured on the owner's Forgelance miner of 28 November: other players harvesting unseen drove the bound of nearly every
+        // ore to the old ceiling, twice the shortest; it now stays within a quarter more.
         Assert.True(regrowths.StillGrowing(1, 10, 68, _start.AddSeconds(3_000)));
-        Assert.Equal(TimeSpan.FromSeconds(1_200), regrowths.Reckoned(68));
+        Assert.Equal(TimeSpan.FromSeconds(750), regrowths.Reckoned(68));
         Assert.False(regrowths.StillGrowing(1, 10, 68, _start.AddSeconds(3_600)));
 
         // A shorter wait, a harvest never seen, or a resource of which no time is known: nothing.
-        Assert.False(regrowths.StillGrowing(1, 10, 68, _start.AddSeconds(700)));
+        Assert.False(regrowths.StillGrowing(1, 10, 68, _start.AddSeconds(650)));
         Assert.False(regrowths.StillGrowing(2, 10, 68, _start.AddSeconds(900)));
         regrowths.Harvested(1, 11, 125, _start);
         Assert.False(regrowths.StillGrowing(1, 11, 125, _start.AddSeconds(900)));
@@ -99,13 +99,13 @@ public sealed class RegrowthsTests
     [Fact]
     public void TheBoundFromBelowWinsOnlyOverAShorterReckoning()
     {
-        Assert.Equal(TimeSpan.FromSeconds(1_100), new Regrowth(TimeSpan.FromSeconds(1_100), 1, TimeSpan.FromSeconds(600), TimeSpan.FromSeconds(900)).Reckoned);
-        Assert.Equal(TimeSpan.FromSeconds(1_000), new Regrowth(TimeSpan.FromSeconds(800), 1, TimeSpan.FromSeconds(600), TimeSpan.FromSeconds(1_000)).Reckoned);
+        Assert.Equal(TimeSpan.FromSeconds(1_100), new Regrowth(TimeSpan.FromSeconds(1_100), 1, TimeSpan.FromSeconds(600), TimeSpan.FromSeconds(700)).Reckoned);
+        Assert.Equal(TimeSpan.FromSeconds(600), new Regrowth(TimeSpan.FromSeconds(500), 1, TimeSpan.FromSeconds(700), TimeSpan.FromSeconds(600)).Reckoned);
         Assert.Equal(TimeSpan.FromSeconds(600), new Regrowth(null, 0, TimeSpan.FromSeconds(600), TimeSpan.FromSeconds(500)).Reckoned);
 
-        // A bound learned before the shortest time known shrank, kept in the database: still never over twice the shortest.
-        Assert.Equal(TimeSpan.FromSeconds(1_200), new Regrowth(null, 0, TimeSpan.FromSeconds(600), TimeSpan.FromSeconds(2_200)).Reckoned);
-        Assert.Equal(TimeSpan.FromSeconds(1_400), new Regrowth(TimeSpan.FromSeconds(700), 1, TimeSpan.FromSeconds(1_100), TimeSpan.FromSeconds(2_200)).Reckoned);
+        // A bound the database kept from the old ceiling, or from before the shortest time known shrank: never over a quarter more.
+        Assert.Equal(TimeSpan.FromSeconds(750), new Regrowth(null, 0, TimeSpan.FromSeconds(600), TimeSpan.FromSeconds(1_200)).Reckoned);
+        Assert.Equal(TimeSpan.FromSeconds(875), new Regrowth(TimeSpan.FromSeconds(700), 1, TimeSpan.FromSeconds(1_100), TimeSpan.FromSeconds(2_200)).Reckoned);
     }
 
     [Fact]
@@ -177,7 +177,7 @@ public sealed class RegrowthsTests
     }
 
     [Fact]
-    public async Task AMapFoundStillGrowingAfterItShouldHaveGrownBackWaitsHalfItsReckoningMore()
+    public async Task AMapFoundStillGrowingAfterItShouldHaveGrownBackWaitsAQuarterOfItsShortestTimeMore()
     {
         await using var play = new TestPlay();
         var settings = new HarvestSettings { Resources = [TestPlay.Ash], SubAreas = [TestPlay.SubAreaId] };
@@ -205,12 +205,45 @@ public sealed class RegrowthsTests
 
         Assert.Equal(_start.AddMinutes(10), tour.NextReady(zone));
 
-        // Seen still growing after: the map waits half its reckoning from that sighting, not again at every tour.
+        // Seen still growing after: the map waits a quarter of the shortest time from that sighting, not again at every tour.
         time.Advance(TimeSpan.FromMinutes(12));
         sightings.SeenElements(TestPlay.MapId, [harvested], _start.AddMinutes(12));
 
-        Assert.Equal(_start.AddMinutes(17), tour.NextReady(zone));
+        Assert.Equal(_start.AddMinutes(14.5), tour.NextReady(zone));
         Assert.Equal(ZoneMapState.Growing, tour.Maps(zone).Single(map => map.MapId == TestPlay.MapId).State);
+    }
+
+    [Fact]
+    public async Task AHurriedTourHoldsAMapBackOnlyUntilTheShortestTimeKnownOfItsResource()
+    {
+        await using var play = new TestPlay();
+        var settings = new HarvestSettings { Resources = [TestPlay.Ash], SubAreas = [TestPlay.SubAreaId] };
+        var zone = HarvestZone.Of(settings, play.World.Atlas, play.World.Graph, play.Tables.Jobs, play.Maps);
+        var sightings = new HarvestSightings();
+        var regrowths = new Regrowths();
+        var time = new FakeTimeProvider(_start);
+        var tour = new HarvestTour(sightings, new GraphicSkills(), regrowths, time);
+        var harvested = new SightedElement(TestPlay.TreeElementId, TestPlay.TreeSkillId, TestPlay.Ash, IsEnabled: false);
+
+        regrowths.Remember(TestPlay.TreeSkillId, new Regrowth(null, 0, TimeSpan.FromMinutes(10), TimeSpan.FromMinutes(12)));
+        regrowths.Harvested(TestPlay.MapId, TestPlay.TreeElementId, TestPlay.TreeSkillId, _start);
+        sightings.SeenElements(TestPlay.MapId, [harvested], _start);
+
+        while (tour.Remaining(zone) is { Count: > 0 } left)
+        {
+            foreach (var map in left)
+                tour.Visit(map);
+        }
+
+        Assert.Equal(_start.AddMinutes(12), tour.NextReady(zone));
+
+        tour.Hurried = true;
+
+        Assert.Equal(_start.AddMinutes(10), tour.NextReady(zone));
+
+        tour.Hurried = false;
+
+        Assert.Equal(_start.AddMinutes(12), tour.NextReady(zone));
     }
 
     [Fact]

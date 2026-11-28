@@ -276,11 +276,13 @@ The bots run in `D3B.Bot`: what each part does today, with the decisions that ma
   then resumes, pauses the bot (`InterruptionResponse.Pause`, `BotActor.Pause`) or stops, as its settings say, and the
   journal names the kind (`BotActivity.Describe`, D144). `Regrowths`, one per host, learns how long each resource takes to
   grow back from every map a bot is on (`RegrowthLearner`): whole when a bot stayed on the map, else a bound from above on
-  a later visit, and a bound from below when a visit finds an element a bot harvested still growing, at most twice the
-  shortest time known (D583); a tour holds back the maps whose wanted elements all still grow back, by `HarvestSightings`' elements,
+  a later visit, and a bound from below when a visit finds an element a bot harvested still growing, at most a quarter over
+  the shortest time known (`Regrowth.Ceiling`, D583, D587); a tour holds back the maps whose wanted elements all still grow back, by `HarvestSightings`' elements,
   and waits for the first rather than D128's minute (D145), an element another harvested reckoned from when a bot first
-  saw it so (`SightedElement.DisabledSince`, D262), and a map seen still growing once it should have grown back waits half
-  the reckoning more (D583). Before a step, the activity opens a resource bag and, under its
+  saw it so (`SightedElement.DisabledSince`, D262), and a map seen still growing once it should have grown back waits a quarter
+  of the shortest time more (D583, D587). When no zone of the rotation has a map ready by the reckoning, `HarvestRotation.Hurry`
+  has the tours hold their maps back only until the shortest time known (`HarvestTour.Hurried`) rather than wait, and the next
+  rotation calms them (`HarvestRotation.Calm`, D587). Before a step, the activity opens a resource bag and, under its
   share of life, eats the profile's food in one request (`ObjectUse.UseObjectsAsync`, the life reckoned by `BotActor.LifeAt`,
   D148, D153, D156), or with none chosen the stack that heals the least of those whose use only heals, by the pack
   (`Food.StackToEat`, D257), until its life is whole; with nothing to eat, it regenerates back to its share alone, looking

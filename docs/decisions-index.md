@@ -1152,3 +1152,7 @@ or refines another says so in its own entry. Add a line here with every new deci
 ## The automatic place, the resources no bot saw (D586)
 
 - [D586](decisions/d586-unseen-resources-count.md#d586-the-automatic-place-counts-a-resource-no-bot-saw-on-a-sixth-of-the-maps-of-the-sub-areas-listing-it-until-one-sees-it) The automatic place counts a resource no bot saw on a sixth of the maps of the sub-areas listing it, until one sees it (2026-11-28)
+
+## The harvest hurries rather than wait (D587)
+
+- [D587](decisions/d587-harvest-hurries.md#d587-when-every-zone-of-the-rotation-would-wait-the-harvest-goes-to-the-maps-whose-resources-shortest-time-known-is-past-and-the-bound-from-below-stays-within-a-quarter-over-that-time) When every zone of the rotation would wait, the harvest goes to the maps whose resources' shortest time known is past, and the bound from below stays within a quarter over that time (2026-11-28)

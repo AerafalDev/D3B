@@ -36,6 +36,41 @@ internal static class HarvestRotation
             .FirstOrDefault();
     }
 
+    /// <summary>
+    /// Finds the zone to go through next once <see cref="Next"/> found none, every tour holding its maps back only until the shortest
+    /// time known of their resources, which the tours keep until <see cref="Calm"/>: so a wait for nothing found wakes at the first
+    /// of those times (D587).
+    /// </summary>
+    /// <param name="zones">The rotation, in the order of the draw.</param>
+    /// <param name="now">The moment.</param>
+    /// <param name="left">The zone the character just left.</param>
+    /// <param name="changesTo">The map changes from where the character stands to a zone's maps left to go through.</param>
+    /// <returns>The zone; <see langword="null"/> when none has a map to see even so, which the activity waits for.</returns>
+    /// <remarks>
+    /// Measured on the owner's Forgelance miner of 28 November: 53 % of its run waited, every zone of its rotation reckoned still growing,
+    /// while ore it had found grown back 11 to 18 min after a harvest was reckoned 22 to 35 min. A journey while waiting costs nothing
+    /// but the journey; the reckoning still orders the tours while some map is ready by it.
+    /// </remarks>
+    public static HarvestRotationZone? Hurry(IReadOnlyList<HarvestRotationZone> zones, DateTimeOffset now, HarvestRotationZone? left, Func<HarvestRotationZone, IReadOnlySet<long>, int?> changesTo)
+    {
+        ArgumentNullException.ThrowIfNull(zones);
+
+        foreach (var zone in zones)
+            zone.Tour.Hurried = true;
+
+        return Next(zones, now, left, changesTo);
+    }
+
+    /// <summary>Has every tour of the rotation hold its maps back by the reckoning of their resources again.</summary>
+    /// <param name="zones">The rotation.</param>
+    public static void Calm(IReadOnlyList<HarvestRotationZone> zones)
+    {
+        ArgumentNullException.ThrowIfNull(zones);
+
+        foreach (var zone in zones)
+            zone.Tour.Hurried = false;
+    }
+
     /// <summary>Finds when the first zone should be ready to go through again.</summary>
     /// <param name="zones">The rotation.</param>
     /// <param name="now">The moment.</param>

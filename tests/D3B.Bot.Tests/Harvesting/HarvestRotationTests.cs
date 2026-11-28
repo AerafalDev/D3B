@@ -1,6 +1,7 @@
 using D3B.Bot.Harvesting;
 using D3B.Bot.Interactives;
 using D3B.Bot.Tests.Runtime;
+using Microsoft.Extensions.Time.Testing;
 
 namespace D3B.Bot.Tests.Harvesting;
 
@@ -150,5 +151,59 @@ public sealed class HarvestRotationTests : IAsyncDisposable
         Assert.Equal(_now.AddSeconds(40), HarvestRotation.WakeAt([gone, dry, later], _now));
         Assert.Equal(_now.AddSeconds(90), HarvestRotation.WakeAt([gone, dry, later], _now.AddSeconds(40)));
         Assert.Null(HarvestRotation.WakeAt([gone, dry, later], _now.AddSeconds(90)));
+    }
+
+    [Fact]
+    public void WhenEveryZoneWouldWaitTheRotationHurriesToAMapWhoseShortestTimeIsPastThenCalmsDown()
+    {
+        var settings = new HarvestSettings { Resources = [TestPlay.Ash], SubAreas = [TestPlay.SubAreaId] };
+        var zone = HarvestZone.Of(settings, _play.World.Atlas, _play.World.Graph, _play.Tables.Jobs, _play.Maps);
+        var sightings = new HarvestSightings();
+        var regrowths = new Regrowths();
+        var growing = new HarvestRotationZone(TestPlay.SubAreaId, zone, new HarvestTour(sightings, new GraphicSkills(), regrowths, new FakeTimeProvider(_now)));
+        var gone = Zone();
+
+        // Ore known to grow back in 10 minutes, but reckoned 12 by a bound from below, harvested 11 minutes ago.
+        regrowths.Remember(TestPlay.TreeSkillId, new Regrowth(null, 0, TimeSpan.FromMinutes(10), TimeSpan.FromMinutes(12)));
+        regrowths.Harvested(TestPlay.MapId, TestPlay.TreeElementId, TestPlay.TreeSkillId, _now.AddMinutes(-11));
+        sightings.SeenElements(TestPlay.MapId, [new SightedElement(TestPlay.TreeElementId, TestPlay.TreeSkillId, TestPlay.Ash, IsEnabled: false)], _now.AddMinutes(-11));
+
+        foreach (var map in zone.Maps.Keys.Where(map => map != TestPlay.MapId))
+            growing.Tour.Visit(map);
+
+        GoThrough(gone);
+
+        Assert.Null(NoWayKnown([gone, growing], _now));
+
+        // Waiting there would do nothing: the map whose shortest time is past is gone to see instead.
+        Assert.Same(growing, HarvestRotation.Hurry([gone, growing], _now, null, (_, _) => null));
+        Assert.True(growing.Tour.Hurried);
+        Assert.Equal([TestPlay.MapId], growing.Tour.Remaining(zone));
+
+        HarvestRotation.Calm([gone, growing]);
+
+        Assert.False(growing.Tour.Hurried);
+        Assert.Empty(growing.Tour.Remaining(zone));
+    }
+
+    [Fact]
+    public void WhenNothingIsToSeeEvenHurriedTheWaitEndsAtTheFirstShortestTime()
+    {
+        var settings = new HarvestSettings { Resources = [TestPlay.Ash], SubAreas = [TestPlay.SubAreaId] };
+        var zone = HarvestZone.Of(settings, _play.World.Atlas, _play.World.Graph, _play.Tables.Jobs, _play.Maps);
+        var sightings = new HarvestSightings();
+        var regrowths = new Regrowths();
+        var growing = new HarvestRotationZone(TestPlay.SubAreaId, zone, new HarvestTour(sightings, new GraphicSkills(), regrowths, new FakeTimeProvider(_now)));
+
+        regrowths.Remember(TestPlay.TreeSkillId, new Regrowth(null, 0, TimeSpan.FromMinutes(10), TimeSpan.FromMinutes(12)));
+        regrowths.Harvested(TestPlay.MapId, TestPlay.TreeElementId, TestPlay.TreeSkillId, _now.AddMinutes(-4));
+        sightings.SeenElements(TestPlay.MapId, [new SightedElement(TestPlay.TreeElementId, TestPlay.TreeSkillId, TestPlay.Ash, IsEnabled: false)], _now.AddMinutes(-4));
+
+        foreach (var map in zone.Maps.Keys.Where(map => map != TestPlay.MapId))
+            growing.Tour.Visit(map);
+
+        Assert.Equal(_now.AddMinutes(8), HarvestRotation.WakeAt([growing], _now));
+        Assert.Null(HarvestRotation.Hurry([growing], _now, null, (_, _) => null));
+        Assert.Equal(_now.AddMinutes(6), HarvestRotation.WakeAt([growing], _now));
     }
 }

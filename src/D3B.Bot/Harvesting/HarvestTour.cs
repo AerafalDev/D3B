@@ -60,6 +60,9 @@ internal sealed class HarvestTour
     /// <summary>Gets the part of a map gone through that the tour comes onto from a neighbouring map, for wanted resources its own part could not reach (D495).</summary>
     public MapLevel? OtherLevel { get; private set; }
 
+    /// <summary>Gets or sets whether the tour holds a map back only until the shortest time known of its resources, rather than their reckoning: while every zone of the rotation would otherwise wait (D587).</summary>
+    public bool Hurried { get; set; }
+
     /// <summary>Gets how many maps this tour went through.</summary>
     public int Visited => _visited.Count;
 
@@ -434,17 +437,18 @@ internal sealed class HarvestTour
             if (!zone.Targets.ContainsKey(element.SkillId))
                 continue;
 
-            if (element.IsEnabled || _regrowths.Reckoned(element.SkillId) is not { } takes)
+            if (element.IsEnabled || !_regrowths.TryGet(element.SkillId, out var regrowth) || (Hurried ? regrowth.Shortest : regrowth.Reckoned) is not { } takes
+                || regrowth.Shortest is not { } shortest)
                 return null;
 
             var harvested = _regrowths.TryGetHarvest(mapId, element.ElementId, out var at) ? at : element.DisabledSince ?? sighting.At;
             var ready = harvested + takes;
 
             // Seen still growing once it should have grown back, the reckoning was short for this one: kept as it was, the map was ready
-            // again at every tour until it grew back, the owner's miner going back 18 to 30 min after its harvests (D583). The visit's
-            // own bound from below makes the reckoning end at that very sighting: it holds the map back too.
+            // again at every tour until it grew back, the owner's miner going back 18 to 30 min after its harvests (D583). Half the
+            // reckoning held it back long after the ore was back on a busy server; a quarter of the shortest time is a few minutes (D587).
             if (sighting.At >= ready)
-                ready = sighting.At + takes / 2;
+                ready = sighting.At + shortest / 4;
 
             if (first is null || ready < first)
                 first = ready;

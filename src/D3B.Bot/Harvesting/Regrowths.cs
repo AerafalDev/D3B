@@ -119,8 +119,8 @@ public sealed class Regrowths
     /// <returns>Whether it taught anything.</returns>
     /// <remarks>
     /// Another player may have harvested it again once grown back, unseen, so that it may have taken less: the bound learned never
-    /// goes over twice the shortest time known of the resource, the owner's choice, and nothing is learned of a resource no time
-    /// is known of. Kept in the database, a bound without a ceiling would rise with every such harvest and hold the bots back for good.
+    /// goes over <see cref="Regrowth.Ceiling"/> times the shortest time known of the resource (D587), and nothing is learned of a
+    /// resource no time is known of. Kept in the database, a bound without a ceiling would rise with every such harvest and hold the bots back for good.
     /// </remarks>
     public bool StillGrowing(long mapId, int elementId, int skillId, DateTimeOffset at)
     {
@@ -133,7 +133,7 @@ public sealed class Regrowths
                 return false;
 
             var took = at - harvest.At;
-            var ceiling = shortest * 2;
+            var ceiling = shortest * Regrowth.Ceiling;
             var bound = took < ceiling ? took : ceiling;
 
             if (regrowth.AtLeast is { } least && least >= bound)
