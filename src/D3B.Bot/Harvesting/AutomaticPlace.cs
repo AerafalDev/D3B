@@ -11,8 +11,8 @@ namespace D3B.Bot.Harvesting;
 /// A sub-area counts, for each resource the character can harvest at its profession's level, the maps the host's learned
 /// graphics place it on (D138), but the isolated maps a tour leaves out (D149, D264), each as much as the resource is
 /// worth: a resource counts half as much every <see cref="HalvingLevels"/> levels below its profession's, so that the zone
-/// follows the character as it rises. While no learned graphic places anything the character can harvest, each sub-area
-/// counts the worth of the resources it lists.
+/// follows the character as it rises. A resource no learned graphic places anywhere, which no bot saw, counts on each map
+/// of the sub-areas listing it <see cref="UnseenShare"/> of its worth, until a bot sees it (D586).
 /// </para>
 /// <para>
 /// A sub-area above the character's level is left out when the settings ask it, its monsters attacking (D144). Measured on
@@ -26,6 +26,14 @@ public static class AutomaticPlace
 {
     /// <summary>The levels below its profession's for which a resource counts half as much.</summary>
     public const int HalvingLevels = 20;
+
+    /// <summary>The share of a sub-area's maps a resource no learned graphic places is reckoned to grow on, in each sub-area listing it (D586).</summary>
+    /// <remarks>Measured on the pack of 3.7.14.18 with the owner's 947 graphics learned: the median learned resource grows on 17 % of the maps of the sub-areas listing it, and in every one of them.</remarks>
+    public const double UnseenShare = 0.17;
+
+    /// <summary>The most resources a sub-area lists for its list to be reckoned on (D586).</summary>
+    /// <remarks>Measured on the pack of 3.7.14.18: the sub-area « Test conventionné », of ten maps in the world graph, lists 85; every other one 23 at most.</remarks>
+    public const int MostListed = 40;
 
     /// <summary>Ranks the sub-areas where a character may harvest, the richest first.</summary>
     /// <param name="targets">The skills the settings use (<see cref="HarvestZone.TargetsOf"/>).</param>
@@ -112,7 +120,6 @@ public static class AutomaticPlace
             items.Add((target.Level, target.ItemId));
         }
 
-        var maps = new Dictionary<int, int>();
         var allowed = new HashSet<int>();
 
         foreach (var subArea in atlas.SubAreas.Span)
@@ -121,59 +128,59 @@ public static class AutomaticPlace
                 allowed.Add(subArea.Id);
         }
 
+        var mapsOf = new Dictionary<int, List<long>>();
+
         foreach (var position in atlas.Positions.Span)
         {
-            if (allowed.Contains(position.SubAreaId) && graph.Contains(position.MapId))
-                maps[position.SubAreaId] = maps.GetValueOrDefault(position.SubAreaId) + 1;
+            if (!allowed.Contains(position.SubAreaId) || !graph.Contains(position.MapId))
+                continue;
+
+            if (!mapsOf.TryGetValue(position.SubAreaId, out var listed))
+                mapsOf[position.SubAreaId] = listed = [];
+
+            listed.Add(position.MapId);
         }
 
-        var offered = new List<(long MapId, int SubAreaId, double Worth, int ItemId)>();
+        var offered = new List<(long MapId, int SubAreaId, double Share, double Worth, int ItemId)>();
 
         foreach (var (item, gathering) in skills)
         {
-            foreach (var map in places.MapsOffering(gathering, graphics))
+            var drawn = places.MapsOffering(gathering, graphics);
+
+            foreach (var map in drawn)
             {
-                if (atlas.TryGetPosition(map, out var position) && maps.ContainsKey(position.SubAreaId))
-                    offered.Add((map, position.SubAreaId, worths[item], item));
+                if (atlas.TryGetPosition(map, out var position) && mapsOf.ContainsKey(position.SubAreaId))
+                    offered.Add((map, position.SubAreaId, 1, worths[item], item));
             }
+
+            // Measured (D586): a resource no bot saw has no graphic learned, so it counted nowhere and no tour went to find it, the
+            // miner's silicate and the farmer's frostiz among them; the sub-areas' lists, which a learned resource always grows in,
+            // stand for it until a bot sees it.
+            if (drawn.Count is 0)
+                offered.AddRange(EstimatedOf(item, worths[item], atlas, mapsOf));
         }
 
         // Measured (D264): the Souterrains, 12 undergrounds apart, ranked first for a miner of 4 by the 22 maps its iron
         // is drawn on, every one isolated, which the tour left out; it went through 6 maps without ore.
         var isolated = isolatedMaps || offered.Count is 0 ? FrozenSet<long>.Empty : IsolatedOf(offered.Select(map => map.SubAreaId).ToHashSet(), atlas, graph);
         var scores = new Dictionary<int, double>();
-        var placed = new Dictionary<int, Dictionary<int, int>>();
+        var placed = new Dictionary<int, Dictionary<int, double>>();
 
-        foreach (var (map, subAreaId, worth, item) in offered)
+        foreach (var (map, subAreaId, share, worth, item) in offered)
         {
             if (isolated.Contains(map))
                 continue;
 
-            scores[subAreaId] = scores.GetValueOrDefault(subAreaId) + worth;
+            scores[subAreaId] = scores.GetValueOrDefault(subAreaId) + (share * worth);
 
             if (!placed.TryGetValue(item, out var where))
                 placed[item] = where = [];
 
-            where[subAreaId] = where.GetValueOrDefault(subAreaId) + 1;
-        }
-
-        if (scores.Count is 0)
-        {
-            foreach (var subArea in atlas.SubAreas.Span)
-            {
-                if (!maps.ContainsKey(subArea.Id))
-                    continue;
-
-                foreach (var item in atlas.HarvestablesOf(subArea))
-                {
-                    if (worths.TryGetValue(item, out var worth))
-                        scores[subArea.Id] = scores.GetValueOrDefault(subArea.Id) + worth;
-                }
-            }
+            where[subAreaId] = where.GetValueOrDefault(subAreaId) + share;
         }
 
         var candidates = scores
-            .Select(score => new PlaceCandidate(score.Key, score.Value, maps[score.Key]))
+            .Select(score => new PlaceCandidate(score.Key, score.Value, mapsOf[score.Key].Count))
             .OrderByDescending(candidate => candidate.Score)
             .ThenBy(candidate => atlas.TryGetSubArea(candidate.SubAreaId, out var subArea) ? subArea.Level : 0)
             .ThenBy(candidate => candidate.SubAreaId)
@@ -182,8 +189,22 @@ public static class AutomaticPlace
         return new PlaceRanking(candidates, TopsOf(jobItems, placed));
     }
 
+    // Every map of the sub-areas listing a resource, each counting the share of them a resource is reckoned to grow on; a sub-area
+    // listing more than any played one does is a test one, left out.
+    private static IEnumerable<(long MapId, int SubAreaId, double Share, double Worth, int ItemId)> EstimatedOf(int item, double worth, WorldAtlas atlas, Dictionary<int, List<long>> mapsOf)
+    {
+        foreach (var subArea in atlas.SubAreas.ToArray())
+        {
+            if (subArea.HarvestableCount > MostListed || !mapsOf.TryGetValue(subArea.Id, out var listed) || !atlas.HarvestablesOf(subArea).Contains(item))
+                continue;
+
+            foreach (var map in listed)
+                yield return (map, subArea.Id, UnseenShare, worth, item);
+        }
+    }
+
     // The highest-level resource of a profession that grows anywhere the tour goes, and the sub-area drawing it on the most maps.
-    private static Dictionary<int, int> TopsOf(Dictionary<int, List<(int Level, int ItemId)>> jobItems, Dictionary<int, Dictionary<int, int>> placed)
+    private static Dictionary<int, int> TopsOf(Dictionary<int, List<(int Level, int ItemId)>> jobItems, Dictionary<int, Dictionary<int, double>> placed)
     {
         var tops = new Dictionary<int, int>();
 

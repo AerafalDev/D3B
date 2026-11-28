@@ -1148,3 +1148,7 @@ or refines another says so in its own entry. Add a line here with every new deci
 
 - [D585](decisions/d585-release-1-2-0.md#d585-the-apps-release-after-112-is-120-holding-going-on-full-the-mules-the-banks-lists-the-transfers-own-load-and-the-harvests-memory) The app's release after 1.1.2 is 1.2.0, holding going on full, the mules, the bank's lists, the transfer's own load and the harvest's memory (2026-11-26)
   - The owner's choice of 1.2.0 over 1.1.3; mapping 27 published first, the tag once this entry is on `main`.
+
+## The automatic place, the resources no bot saw (D586)
+
+- [D586](decisions/d586-unseen-resources-count.md#d586-the-automatic-place-counts-a-resource-no-bot-saw-on-a-sixth-of-the-maps-of-the-sub-areas-listing-it-until-one-sees-it) The automatic place counts a resource no bot saw on a sixth of the maps of the sub-areas listing it, until one sees it (2026-11-28)
