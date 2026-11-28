@@ -166,3 +166,4 @@ Each file holds the decisions of one group of [the index](../decisions-index.md)
 - [Harvest, a resource found still growing, and what each map holds kept (D583, D584)](d583-d584-harvest-regrowth-and-sightings.md): 2 decisions, 6 KB.
 - [The bank's takes by list, mapping format 27 (D580)](d580-bank-list-takes.md): 1 decision, 3 KB.
 - [The app's 1.2.0 (D585)](d585-release-1-2-0.md): 1 decision, 2 KB.
+- [The automatic place, the resources no bot saw (D586)](d586-unseen-resources-count.md): 1 decision, 4 KB.

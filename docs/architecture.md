@@ -302,12 +302,13 @@ The bots run in `D3B.Bot`: what each part does today, with the decisions that ma
   `HarvestZone.TargetsOf`, D165); the place chosen, or chosen by the activity for each character at each tour, the sub-area
   where the learned graphics place the most of what it can harvest at its levels, each 20 levels below a profession's
   halving a resource's worth, not above the character's level, the isolated maps the tour leaves out counting for
-  nothing (`HarvestPlace`, `AutomaticPlace`, D166, D264), its name before
+  nothing, a resource no bot saw counting on 17 % of the maps of the sub-areas listing it, those listing over 40 left out
+  (`AutomaticPlace.UnseenShare`, `MostListed`), until a bot sees it (`HarvestPlace`, `AutomaticPlace`, D166, D264, D586), its name before
   the tour on the card; a zaap only when it saves the profile's number of maps, 5 by default (`HarvestSettings.ZaapSaving`,
   D167), and none on any journey when the profile takes none (`HarvestSettings.UseZaaps`, D436). The module reads a profile stored before as it harvested, and gives six presets (D168).
 - **Harvesting, rotating** (D391): a place the activity chooses is several sub-areas in turn, not one (`HarvestSettings.Rotation`, 10
   by default). `AutomaticPlace.Reckon` ranks the sub-areas and gives each profession's top, the sub-area drawing its highest-level
-  resource on the most maps; `PlaceRotation.Draw`, shared with the fight, draws the rotation from the ten richest the character
+  resource on the most maps, one no bot saw reckoned on its lists (D586); `PlaceRotation.Draw`, shared with the fight, draws the rotation from the ten richest the character
   reaches (`SubAreaReach`), those worth under a quarter of the richest left out, the tops kept up to half the count and the rest
   drawn at random, the richer likelier, an unreachable one replaced by the next. Each zone of the rotation has its own tour
   (`HarvestRotationZone`); a tour done or held back by growing resources, `HarvestRotation.Next` goes, of the zones that have
