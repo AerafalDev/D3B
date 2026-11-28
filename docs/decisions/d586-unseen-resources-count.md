@@ -24,7 +24,8 @@ silicate"); option A chosen by the owner among three, as the lead recommended it
 - **Made.** A resource no learned graphic places anywhere counts, on each map of the sub-areas listing it, 0.17 of its worth
   (`AutomaticPlace.UnseenShare`), the isolated maps out as before (D264), a sub-area listing over 40 left out
   (`AutomaticPlace.MostListed`); it gives a profession's top too (D391). Once a bot sees it, its graphics are learned and only the
-  maps they are drawn on count. The fallback for nothing placed is gone, this covering it.
+  maps they are drawn on count. When nothing is left counted, a resource drawn only on maps the filters leave out, the
+  sub-areas' lists stand as before.
 - **What it gives**, reckoned on the same pack and graphics: the farmer of 200 goes first to the Champs de glace (27.4, against
   22.0 for the Dents de Pierre), now its top for the frostiz; the quisnoa's sub-areas rank 4th and 5th. The lumberjack's
   Forêt des pins perdus, for the pine, ranks 13th (26.6), out of the ten its rotation is drawn from. Silicate stays out for the

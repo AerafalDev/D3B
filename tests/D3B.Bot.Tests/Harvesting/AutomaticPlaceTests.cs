@@ -159,6 +159,51 @@ public sealed class AutomaticPlaceTests : IAsyncDisposable
     }
 
     [Fact]
+    public void AnEstimateCountsTheResourcesWorthHalvedEveryTwentyLevelsBelowItsProfession()
+    {
+        // A lumberjack of 20: the chestnut, of 20, worth one; the ash, of 1, 19 levels below, 2^(-19/20) = 0.5176. Ten maps each.
+        using var world = new SmallWorld([.. Enumerable.Range(1, 10).Select(id => ((long)id, Forest))], [(Forest, [TestPlay.Ash, TestPlay.Chestnut])]);
+
+        Assert.Equal(2.580, Assert.Single(world.Rank(new GraphicSkills(), isolatedMaps: false, lumberjack: 20)).Score, 3);
+    }
+
+    [Fact]
+    public void AnUnseenResourceOfAHigherLevelTakesTheProfessionsTopFromALowerOneDrawn()
+    {
+        // The ash is drawn on all ten of the forest's maps; the chestnut, of a higher level, only listed by the grove's four.
+        using var world = new SmallWorld([.. Enumerable.Range(1, 14).Select(id => ((long)id, id <= 10 ? Forest : Grove))], [(Forest, [TestPlay.Ash]), (Grove, [TestPlay.Chestnut])], drawn: [.. Enumerable.Range(1, 10).Select(id => (long)id)]);
+        var graphics = new GraphicSkills();
+
+        graphics.Learn(TestPlay.TreeGfxId, [TestPlay.TreeSkillId]);
+
+        var ranking = world.Reckon(graphics, isolatedMaps: false, lumberjack: 20);
+
+        Assert.Equal(Grove, ranking.Tops[TestPlay.Lumberjack]);
+        Assert.Equal(Forest, ranking.Candidates[0].SubAreaId);
+    }
+
+    [Fact]
+    public void AResourceDrawnOnlyOnIsolatedMapsFallsBackOnTheSubAreasListingIt()
+    {
+        // The tree is drawn on the forest's isolated map 9 alone, which the tour leaves out; the forest lists the ash.
+        long[] ids = [1, 2, 3, 4, 6, 7, 8, 9];
+        int[] subAreaOf = [Forest, Forest, Forest, Grove, Grove, Grove, Grove, Forest];
+        using var world = new SmallWorld(
+            [.. ids.Select((id, index) => (id, subAreaOf[index]))],
+            [(Forest, [TestPlay.Ash]), (Grove, [])],
+            drawn: [9],
+            links: [(0, 1), (1, 0), (1, 2), (2, 1), (2, 3), (3, 4), (4, 5), (5, 6), (6, 7)]);
+        var graphics = new GraphicSkills();
+
+        graphics.Learn(TestPlay.TreeGfxId, [TestPlay.TreeSkillId]);
+
+        var ranked = Assert.Single(world.Rank(graphics, isolatedMaps: false));
+
+        Assert.Equal(Forest, ranked.SubAreaId);
+        Assert.Equal(1, ranked.Score, 3);
+    }
+
+    [Fact]
     public void WhileNoGraphicPlacesItAProfessionsTopIsTheSubAreaListingItsHighestLevelResourceOnTheMostMaps()
     {
         using var world = new SmallWorld([.. Enumerable.Range(1, 14).Select(id => ((long)id, id <= 4 ? Forest : Grove))], [(Forest, [TestPlay.Ash]), (Grove, [TestPlay.Ash])]);
@@ -229,16 +274,16 @@ public sealed class AutomaticPlaceTests : IAsyncDisposable
             _places = new GraphicPlaces(_pack, new GameWorld(_pack));
         }
 
-        public IReadOnlyList<PlaceCandidate> Rank(GraphicSkills graphics, bool isolatedMaps)
+        public IReadOnlyList<PlaceCandidate> Rank(GraphicSkills graphics, bool isolatedMaps, int lumberjack = 1)
         {
-            return Reckon(graphics, isolatedMaps).Candidates;
+            return Reckon(graphics, isolatedMaps, lumberjack).Candidates;
         }
 
-        public PlaceRanking Reckon(GraphicSkills graphics, bool isolatedMaps)
+        public PlaceRanking Reckon(GraphicSkills graphics, bool isolatedMaps, int lumberjack = 1)
         {
             var settings = Lumberjack(safeLevel: false);
 
-            return AutomaticPlace.Reckon(HarvestZone.TargetsOf(settings, _play.Tables.Jobs).Values, 50, new Dictionary<int, int> { [TestPlay.Lumberjack] = 1 }, false, isolatedMaps, _atlas, _graph, _places, graphics);
+            return AutomaticPlace.Reckon(HarvestZone.TargetsOf(settings, _play.Tables.Jobs).Values, 50, new Dictionary<int, int> { [TestPlay.Lumberjack] = lumberjack }, false, isolatedMaps, _atlas, _graph, _places, graphics);
         }
 
         public void Dispose()

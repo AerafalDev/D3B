@@ -179,6 +179,23 @@ public static class AutomaticPlace
             where[subAreaId] = where.GetValueOrDefault(subAreaId) + share;
         }
 
+        // A resource drawn only where the filters leave nothing, isolated maps or sub-areas above the character's level, made no
+        // estimate: the sub-areas listing what the character can harvest stand for it, as before D586.
+        if (scores.Count is 0)
+        {
+            foreach (var subArea in atlas.SubAreas.Span)
+            {
+                if (!mapsOf.ContainsKey(subArea.Id))
+                    continue;
+
+                foreach (var item in atlas.HarvestablesOf(subArea))
+                {
+                    if (worths.TryGetValue(item, out var worth))
+                        scores[subArea.Id] = scores.GetValueOrDefault(subArea.Id) + worth;
+                }
+            }
+        }
+
         var candidates = scores
             .Select(score => new PlaceCandidate(score.Key, score.Value, mapsOf[score.Key].Count))
             .OrderByDescending(candidate => candidate.Score)
